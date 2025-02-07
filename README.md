@@ -11,7 +11,7 @@ We build Probo for three reasons:
 **We believe in Open-source and community.** It impacts almost all companies, the whole ecosystem should benefit from it. 
 
 ## What can you do with Probo today?
-Not much yet. But it is only the beggining of the journey.
+Not much yet. But it is only the beginning of the journey.
 So far, you have access to **all the security measures necessary to prepare a SOC 2 audit**. 
 
 Soon, we will add:
