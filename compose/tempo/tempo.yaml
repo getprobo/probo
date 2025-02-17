@@ -24,13 +24,13 @@ storage:
   trace:
     backend: "local"
     local:
-      path: "/var/db/tempo"
+      path: "/var/tempo/blocks"
     block:
       bloom_filter_false_positive: .05
       v2_index_downsample_bytes: 1000
       v2_encoding: "zstd"
     wal:
-      path: "/var/db/tempo/wal"
+      path: "/var/tempo/wal"
       v2_encoding: "snappy"
     pool:
       max_workers: 100
