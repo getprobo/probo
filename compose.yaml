@@ -74,7 +74,7 @@ services:
       - "4317:4317"
     volumes:
       - "./compose/tempo/tempo.yaml:/etc/tempo.yaml:ro"
-      - "tempo-data:/var/db/tempo:rw"
+      - "tempo-data:/var/tempo:rw"
 
 volumes:
   postgres-data:
