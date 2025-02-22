@@ -21,7 +21,7 @@ Probo is an open-source compliance platform built for startups that helps you ac
 
 - 🤖 **Smart Vendor Management**
 
-  - Automagic vendor risk assessment in minutes
+  - Automatic vendor risk assessment in minutes
   - AI-driven security questionnaire responses
   - Continuous vendor monitoring and alerts
 
