@@ -13,40 +13,25 @@ Probo is an open-source compliance platform built for startups that helps you ac
 
 ## ✨ Features
 
-- ⚡️ **Lightning-Fast Automation**
+- 💡 **Focus on relevance**
+  - Tailored program: only what matters, so you get SOC-2 ready in just 20 hours.
+  - Context-aware security controls.
+  - Smart task prioritization based on your risk profile.
 
-  - Get SOC-2 ready in just 20 hours instead of months
-  - AI-powered policy generation tailored to your stack
-  - Automated evidence collection from your tools
-
-- 🤖 **Smart Vendor Management**
-
-  - Automagic vendor risk assessment in minutes
-  - AI-driven security questionnaire responses
-  - Continuous vendor monitoring and alerts
-
-- 🔄 **Continuous Compliance**
-
-  - Real-time compliance monitoring
-  - Automated evidence collection from GitHub, AWS, GCP
-  - Instant alerts for compliance drift
-
-- 💡 **Intelligent Guidance**
-
-  - AI-powered compliance recommendations
-  - Context-aware security controls
-  - Smart task prioritization based on your risk profile
+- ⚡️ **Smart automation**
+  - Automated risk assessment.
+  - AI-powered policy generation tailored to your stack.
+  - Pre-filled vendor risk assessment.
 
 - 🔓 **No Vendor Lock-in**
-
-  - Own your compliance data
-  - Export everything, anytime
-  - Open-source transparency
+  - Own your compliance data.
+  - Export everything, anytime.
+  - Open-source transparency.
 
 - 💰 **Cost-Effective**
-  - Free to use
-  - Pay only for audits when needed
-  - No hidden fees or forced costs
+  - Free to use.
+  - Pay for the services you need only.
+  - No hidden fees or forced costs.
 
 ## 🚀 Getting Started
 
