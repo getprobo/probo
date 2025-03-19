@@ -255,6 +255,7 @@ type ComplexityRoot struct {
 		FullName                 func(childComplexity int) int
 		ID                       func(childComplexity int) int
 		Kind                     func(childComplexity int) int
+		Position                 func(childComplexity int) int
 		PrimaryEmailAddress      func(childComplexity int) int
 		UpdatedAt                func(childComplexity int) int
 		Version                  func(childComplexity int) int
@@ -1394,6 +1395,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.People.Kind(childComplexity), true
 
+	case "People.position":
+		if e.complexity.People.Position == nil {
+			break
+		}
+
+		return e.complexity.People.Position(childComplexity), true
+
 	case "People.primaryEmailAddress":
 		if e.complexity.People.PrimaryEmailAddress == nil {
 			break
@@ -2166,6 +2174,8 @@ enum PeopleKind
     )
 }
 
+    
+
 enum ControlImportance
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.ControlImportance") {
   MANDATORY
@@ -2370,6 +2380,7 @@ type People implements Node {
   primaryEmailAddress: String!
   additionalEmailAddresses: [String!]!
   kind: PeopleKind!
+  position: String!
   createdAt: Datetime!
   updatedAt: Datetime!
   version: Int!
@@ -2627,6 +2638,7 @@ input CreatePeopleInput {
   primaryEmailAddress: String!
   additionalEmailAddresses: [String!]
   kind: PeopleKind!
+  position: String!
 }
 
 input UpdatePeopleInput {
@@ -2636,6 +2648,7 @@ input UpdatePeopleInput {
   primaryEmailAddress: String
   additionalEmailAddresses: [String!]
   kind: PeopleKind
+  position: String
 }
 
 enum ServiceCriticality
@@ -9075,6 +9088,44 @@ func (ec *executionContext) fieldContext_People_kind(_ context.Context, field gr
 	return fc, nil
 }
 
+func (ec *executionContext) _People_position(ctx context.Context, field graphql.CollectedField, obj *types.People) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_People_position(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Position, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_People_position(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "People",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _People_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.People) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_People_createdAt(ctx, field)
 	if err != nil {
@@ -9362,6 +9413,8 @@ func (ec *executionContext) fieldContext_PeopleEdge_node(_ context.Context, fiel
 				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
 			case "kind":
 				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
@@ -9643,6 +9696,8 @@ func (ec *executionContext) fieldContext_Policy_owner(_ context.Context, field g
 				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
 			case "kind":
 				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
@@ -10501,6 +10556,8 @@ func (ec *executionContext) fieldContext_Task_assignedTo(_ context.Context, fiel
 				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
 			case "kind":
 				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
@@ -11106,6 +11163,8 @@ func (ec *executionContext) fieldContext_UpdatePeoplePayload_people(_ context.Co
 				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
 			case "kind":
 				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_People_createdAt(ctx, field)
 			case "updatedAt":
@@ -14456,7 +14515,7 @@ func (ec *executionContext) unmarshalInputCreatePeopleInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "fullName", "primaryEmailAddress", "additionalEmailAddresses", "kind"}
+	fieldsInOrder := [...]string{"organizationId", "fullName", "primaryEmailAddress", "additionalEmailAddresses", "kind", "position"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14498,6 +14557,13 @@ func (ec *executionContext) unmarshalInputCreatePeopleInput(ctx context.Context,
 				return it, err
 			}
 			it.Kind = data
+		case "position":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Position = data
 		}
 	}
 
@@ -15378,7 +15444,7 @@ func (ec *executionContext) unmarshalInputUpdatePeopleInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "expectedVersion", "fullName", "primaryEmailAddress", "additionalEmailAddresses", "kind"}
+	fieldsInOrder := [...]string{"id", "expectedVersion", "fullName", "primaryEmailAddress", "additionalEmailAddresses", "kind", "position"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -15427,6 +15493,13 @@ func (ec *executionContext) unmarshalInputUpdatePeopleInput(ctx context.Context,
 				return it, err
 			}
 			it.Kind = data
+		case "position":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("position"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Position = data
 		}
 	}
 
@@ -17719,6 +17792,11 @@ func (ec *executionContext) _People(ctx context.Context, sel ast.SelectionSet, o
 			}
 		case "kind":
 			out.Values[i] = ec._People_kind(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "position":
+			out.Values[i] = ec._People_position(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}

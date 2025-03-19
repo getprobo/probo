@@ -75,6 +75,8 @@ enum PeopleKind
     )
 }
 
+    
+
 enum ControlImportance
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.ControlImportance") {
   MANDATORY
@@ -279,6 +281,7 @@ type People implements Node {
   primaryEmailAddress: String!
   additionalEmailAddresses: [String!]!
   kind: PeopleKind!
+  position: String!
   createdAt: Datetime!
   updatedAt: Datetime!
   version: Int!
@@ -536,6 +539,7 @@ input CreatePeopleInput {
   primaryEmailAddress: String!
   additionalEmailAddresses: [String!]
   kind: PeopleKind!
+  position: String!
 }
 
 input UpdatePeopleInput {
@@ -545,6 +549,7 @@ input UpdatePeopleInput {
   primaryEmailAddress: String
   additionalEmailAddresses: [String!]
   kind: PeopleKind
+  position: String
 }
 
 enum ServiceCriticality

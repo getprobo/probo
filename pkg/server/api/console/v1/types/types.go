@@ -98,6 +98,7 @@ type CreatePeopleInput struct {
 	PrimaryEmailAddress      string              `json:"primaryEmailAddress"`
 	AdditionalEmailAddresses []string            `json:"additionalEmailAddresses,omitempty"`
 	Kind                     coredata.PeopleKind `json:"kind"`
+	Position                 string              `json:"position"`
 }
 
 type CreatePeoplePayload struct {
@@ -307,6 +308,7 @@ type People struct {
 	PrimaryEmailAddress      string              `json:"primaryEmailAddress"`
 	AdditionalEmailAddresses []string            `json:"additionalEmailAddresses"`
 	Kind                     coredata.PeopleKind `json:"kind"`
+	Position                 string              `json:"position"`
 	CreatedAt                time.Time           `json:"createdAt"`
 	UpdatedAt                time.Time           `json:"updatedAt"`
 	Version                  int                 `json:"version"`
@@ -443,6 +445,7 @@ type UpdatePeopleInput struct {
 	PrimaryEmailAddress      *string              `json:"primaryEmailAddress,omitempty"`
 	AdditionalEmailAddresses []string             `json:"additionalEmailAddresses,omitempty"`
 	Kind                     *coredata.PeopleKind `json:"kind,omitempty"`
+	Position                 *string              `json:"position,omitempty"`
 }
 
 type UpdatePeoplePayload struct {
