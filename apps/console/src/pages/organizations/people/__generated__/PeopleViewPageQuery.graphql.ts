@@ -1,9 +1,5 @@
 /**
-<<<<<<< HEAD:apps/console/src/pages/organizations/people/__generated__/PeopleViewQuery.graphql.ts
- * @generated SignedSource<<207a779cf8cbf3e42191be9825d4b653>>
-=======
- * @generated SignedSource<<6b0c95489030980c012399f3d52f6bd8>>
->>>>>>> 1c7bd5f (Add people position field):apps/console/src/pages/__generated__/PeopleOverviewPageQuery.graphql.ts
+ * @generated SignedSource<<cdadd20a25a0fafdbf2a11631351cc81>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,10 +10,10 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type PeopleKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
-export type PeopleViewQuery$variables = {
+export type PeopleViewPageQuery$variables = {
   peopleId: string;
 };
-export type PeopleViewQuery$data = {
+export type PeopleViewPageQuery$data = {
   readonly node: {
     readonly additionalEmailAddresses?: ReadonlyArray<string>;
     readonly createdAt?: string;
@@ -30,9 +26,9 @@ export type PeopleViewQuery$data = {
     readonly version?: number;
   };
 };
-export type PeopleViewQuery = {
-  response: PeopleViewQuery$data;
-  variables: PeopleViewQuery$variables;
+export type PeopleViewPageQuery = {
+  response: PeopleViewPageQuery$data;
+  variables: PeopleViewPageQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -118,7 +114,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "PeopleViewQuery",
+    "name": "PeopleViewPageQuery",
     "selections": [
       {
         "alias": null,
@@ -155,7 +151,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "PeopleViewQuery",
+    "name": "PeopleViewPageQuery",
     "selections": [
       {
         "alias": null,
@@ -194,28 +190,16 @@ return {
     ]
   },
   "params": {
-<<<<<<< HEAD:apps/console/src/pages/organizations/people/__generated__/PeopleViewQuery.graphql.ts
-    "cacheID": "c392876240212ba16428ae5edb843d47",
-=======
-    "cacheID": "c9fe694bbdb3ff98d0758602390870a4",
->>>>>>> 1c7bd5f (Add people position field):apps/console/src/pages/__generated__/PeopleOverviewPageQuery.graphql.ts
+    "cacheID": "dc91b93653feb1dae8a4b886d24ce959",
     "id": null,
     "metadata": {},
-    "name": "PeopleViewQuery",
+    "name": "PeopleViewPageQuery",
     "operationKind": "query",
-<<<<<<< HEAD:apps/console/src/pages/organizations/people/__generated__/PeopleViewQuery.graphql.ts
-    "text": "query PeopleViewQuery(\n  $peopleId: ID!\n) {\n  node(id: $peopleId) {\n    __typename\n    ... on People {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      createdAt\n      updatedAt\n      version\n    }\n    id\n  }\n}\n"
-=======
-    "text": "query PeopleOverviewPageQuery(\n  $peopleId: ID!\n) {\n  node(id: $peopleId) {\n    __typename\n    ... on People {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      position\n      createdAt\n      updatedAt\n      version\n    }\n    id\n  }\n}\n"
->>>>>>> 1c7bd5f (Add people position field):apps/console/src/pages/__generated__/PeopleOverviewPageQuery.graphql.ts
+    "text": "query PeopleViewPageQuery(\n  $peopleId: ID!\n) {\n  node(id: $peopleId) {\n    __typename\n    ... on People {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      position\n      createdAt\n      updatedAt\n      version\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-<<<<<<< HEAD:apps/console/src/pages/organizations/people/__generated__/PeopleViewQuery.graphql.ts
-(node as any).hash = "4fc97d6cd7fc4590b7be7b5a79ae7ab0";
-=======
-(node as any).hash = "6a04371010956846b504ea9e44c54cc4";
->>>>>>> 1c7bd5f (Add people position field):apps/console/src/pages/__generated__/PeopleOverviewPageQuery.graphql.ts
+(node as any).hash = "f12ba6a5acc2a30530f1c6f2340b2191";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7d6cb5fe1c907da0abcadd390ca2b492>>
+ * @generated SignedSource<<9e0de6c1e2a72ad74f44b21f911b4d4b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -228,6 +228,13 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
+                            "name": "position",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
                             "name": "createdAt",
                             "storageKey": null
                           },
@@ -313,7 +320,7 @@ return {
                   "orderBy"
                 ],
                 "handle": "connection",
-                "key": "PeopleListView_peoples",
+                "key": "PeopleListPage_peoples",
                 "kind": "LinkedHandle",
                 "name": "peoples"
               }
@@ -327,12 +334,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "004c9018c6fc0e77855a01138ccc00d9",
+    "cacheID": "0a54df2f281bf411da407a2c3e3dd88e",
     "id": null,
     "metadata": {},
     "name": "PeopleListViewQuery",
     "operationKind": "query",
-    "text": "query PeopleListViewQuery(\n  $organizationId: ID!\n  $first: Int\n  $after: CursorKey\n  $last: Int\n  $before: CursorKey\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...PeopleListView_peoples_pbnwq\n    id\n  }\n}\n\nfragment PeopleListView_peoples_pbnwq on Organization {\n  id\n  peoples(first: $first, after: $after, last: $last, before: $before, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        additionalEmailAddresses\n        kind\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n}\n"
+    "text": "query PeopleListViewQuery(\n  $organizationId: ID!\n  $first: Int\n  $after: CursorKey\n  $last: Int\n  $before: CursorKey\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...PeopleListView_peoples_pbnwq\n    id\n  }\n}\n\nfragment PeopleListView_peoples_pbnwq on Organization {\n  id\n  peoples(first: $first, after: $after, last: $last, before: $before, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        additionalEmailAddresses\n        kind\n        position\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();

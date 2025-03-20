@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b15d81526432872ce19603ad042908db>>
+ * @generated SignedSource<<22971bf0238cf9c5805c47c382480109>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,11 +18,11 @@ export type CreatePeopleInput = {
   position: string;
   primaryEmailAddress: string;
 };
-export type CreatePeopleViewCreatePeopleMutation$variables = {
+export type CreatePeoplePageCreatePeopleMutation$variables = {
   connections: ReadonlyArray<string>;
   input: CreatePeopleInput;
 };
-export type CreatePeopleViewCreatePeopleMutation$data = {
+export type CreatePeoplePageCreatePeopleMutation$data = {
   readonly createPeople: {
     readonly peopleEdge: {
       readonly node: {
@@ -30,14 +30,15 @@ export type CreatePeopleViewCreatePeopleMutation$data = {
         readonly fullName: string;
         readonly id: string;
         readonly kind: PeopleKind;
+        readonly position: string;
         readonly primaryEmailAddress: string;
       };
     };
   };
 };
-export type CreatePeopleViewCreatePeopleMutation = {
-  response: CreatePeopleViewCreatePeopleMutation$data;
-  variables: CreatePeopleViewCreatePeopleMutation$variables;
+export type CreatePeoplePageCreatePeopleMutation = {
+  response: CreatePeoplePageCreatePeopleMutation$data;
+  variables: CreatePeoplePageCreatePeopleMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -108,6 +109,13 @@ v3 = {
           "kind": "ScalarField",
           "name": "kind",
           "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "position",
+          "storageKey": null
         }
       ],
       "storageKey": null
@@ -123,7 +131,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "CreatePeopleViewCreatePeopleMutation",
+    "name": "CreatePeoplePageCreatePeopleMutation",
     "selections": [
       {
         "alias": null,
@@ -148,7 +156,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "CreatePeopleViewCreatePeopleMutation",
+    "name": "CreatePeoplePageCreatePeopleMutation",
     "selections": [
       {
         "alias": null,
@@ -181,16 +189,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f09d8f7be5234f21e7bfabecf8d8b0af",
+    "cacheID": "afdb3bc6d7a5080e40cee97baea4efaa",
     "id": null,
     "metadata": {},
-    "name": "CreatePeopleViewCreatePeopleMutation",
+    "name": "CreatePeoplePageCreatePeopleMutation",
     "operationKind": "mutation",
-    "text": "mutation CreatePeopleViewCreatePeopleMutation(\n  $input: CreatePeopleInput!\n) {\n  createPeople(input: $input) {\n    peopleEdge {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        additionalEmailAddresses\n        kind\n      }\n    }\n  }\n}\n"
+    "text": "mutation CreatePeoplePageCreatePeopleMutation(\n  $input: CreatePeopleInput!\n) {\n  createPeople(input: $input) {\n    peopleEdge {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        additionalEmailAddresses\n        kind\n        position\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ac8a85af6d2902de6f475588679ba038";
+(node as any).hash = "526a7c5eadb073288337fb0f83a45374";
 
 export default node;
