@@ -34,6 +34,7 @@ type (
 		ID                       gid.GID
 		ExpectedVersion          int
 		Kind                     *coredata.PeopleKind
+		Position                 *string
 		FullName                 *string
 		PrimaryEmailAddress      *string
 		AdditionalEmailAddresses *[]string
@@ -45,6 +46,7 @@ type (
 		PrimaryEmailAddress      string
 		AdditionalEmailAddresses []string
 		Kind                     coredata.PeopleKind
+		Position                 string
 	}
 )
 
@@ -102,6 +104,7 @@ func (s PeopleService) Update(
 	params := coredata.UpdatePeopleParams{
 		ExpectedVersion:          req.ExpectedVersion,
 		Kind:                     req.Kind,
+		Position:                 req.Position,
 		FullName:                 req.FullName,
 		PrimaryEmailAddress:      req.PrimaryEmailAddress,
 		AdditionalEmailAddresses: req.AdditionalEmailAddresses,
@@ -136,6 +139,7 @@ func (s PeopleService) Create(
 		ID:                       peopleID,
 		OrganizationID:           req.OrganizationID,
 		Kind:                     req.Kind,
+		Position:                 req.Position,
 		FullName:                 req.FullName,
 		PrimaryEmailAddress:      req.PrimaryEmailAddress,
 		AdditionalEmailAddresses: req.AdditionalEmailAddresses,

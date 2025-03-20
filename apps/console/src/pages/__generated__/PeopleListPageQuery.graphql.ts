@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0e769620c683a087fc071d47649f3ed3>>
+ * @generated SignedSource<<148d16e245e74bd3751fedb5709d0e10>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -228,6 +228,13 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
+                            "name": "position",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
                             "name": "createdAt",
                             "storageKey": null
                           },
@@ -327,12 +334,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b289901944c533975a18564d5af6cd02",
+    "cacheID": "67ba1cdc2fb74f3a10aed289e737463d",
     "id": null,
     "metadata": {},
     "name": "PeopleListPageQuery",
     "operationKind": "query",
-    "text": "query PeopleListPageQuery(\n  $organizationId: ID!\n  $first: Int\n  $after: CursorKey\n  $last: Int\n  $before: CursorKey\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...PeopleListPage_peoples_pbnwq\n    id\n  }\n}\n\nfragment PeopleListPage_peoples_pbnwq on Organization {\n  id\n  peoples(first: $first, after: $after, last: $last, before: $before, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        additionalEmailAddresses\n        kind\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n}\n"
+    "text": "query PeopleListPageQuery(\n  $organizationId: ID!\n  $first: Int\n  $after: CursorKey\n  $last: Int\n  $before: CursorKey\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ...PeopleListPage_peoples_pbnwq\n    id\n  }\n}\n\nfragment PeopleListPage_peoples_pbnwq on Organization {\n  id\n  peoples(first: $first, after: $after, last: $last, before: $before, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        additionalEmailAddresses\n        kind\n        position\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();

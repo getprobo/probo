@@ -97,6 +97,7 @@ function PeopleOverviewPageContent({
 		primaryEmailAddress: data.node.primaryEmailAddress || "",
 		additionalEmailAddresses: data.node.additionalEmailAddresses || [],
 		kind: data.node.kind,
+		position: data.node.position || "",
 	});
 	const [commit] = useMutation(updatePeopleMutation);
 	const [, loadQuery] = useQueryLoader<PeopleOverviewPageQueryType>(
@@ -240,7 +241,7 @@ function PeopleOverviewPageContent({
 										<HelpCircle className="h-4 w-4 text-gray-400" />
 										<Label className="text-sm">Kind</Label>
 									</div>
-									<div className="flex gap-2">
+									<div className="flex gap-2 space-y-2">
 										<button
 											onClick={() => handleFieldChange("kind", "EMPLOYEE")}
 											className={cn(
@@ -277,6 +278,12 @@ function PeopleOverviewPageContent({
 											Service Account
 										</button>
 									</div>
+									<EditableField
+										label="Position"
+										value={formData.position}
+										type="text"
+										onChange={(value) => handleFieldChange("position", value)}
+									/>
 								</div>
 							</div>
 						</div>
