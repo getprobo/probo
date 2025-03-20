@@ -1,11 +1,11 @@
 import { Suspense, useEffect, useTransition } from "react";
 import {
-  graphql,
-  PreloadedQuery,
-  usePreloadedQuery,
-  useQueryLoader,
-  useMutation,
-  usePaginationFragment,
+	graphql,
+	PreloadedQuery,
+	usePreloadedQuery,
+	useQueryLoader,
+	useMutation,
+	usePaginationFragment,
 } from "react-relay";
 import { useSearchParams, useParams } from "react-router";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -62,6 +62,7 @@ const peopleListFragment = graphql`
           primaryEmailAddress
           additionalEmailAddresses
           kind
+          position
           createdAt
           updatedAt
         }
@@ -88,270 +89,278 @@ const deletePeopleMutation = graphql`
 `;
 
 function LoadAboveButton({
-  isLoading,
-  hasMore,
-  onLoadMore,
+	isLoading,
+	hasMore,
+	onLoadMore,
 }: {
-  isLoading: boolean;
-  hasMore: boolean;
-  onLoadMore: () => void;
+	isLoading: boolean;
+	hasMore: boolean;
+	onLoadMore: () => void;
 }) {
-  if (!hasMore) {
-    return null;
-  }
+	if (!hasMore) {
+		return null;
+	}
 
-  return (
-    <div className="flex justify-center">
-      <Button
-        variant="outline"
-        onClick={onLoadMore}
-        disabled={isLoading}
-        className="w-full"
-      >
-        {isLoading ? "Loading..." : "Load above"}
-      </Button>
-    </div>
-  );
+	return (
+		<div className="flex justify-center">
+			<Button
+				variant="outline"
+				onClick={onLoadMore}
+				disabled={isLoading}
+				className="w-full"
+			>
+				{isLoading ? "Loading..." : "Load above"}
+			</Button>
+		</div>
+	);
 }
 
 function LoadBelowButton({
-  isLoading,
-  hasMore,
-  onLoadMore,
+	isLoading,
+	hasMore,
+	onLoadMore,
 }: {
-  isLoading: boolean;
-  hasMore: boolean;
-  onLoadMore: () => void;
+	isLoading: boolean;
+	hasMore: boolean;
+	onLoadMore: () => void;
 }) {
-  if (!hasMore) {
-    return null;
-  }
+	if (!hasMore) {
+		return null;
+	}
 
-  return (
-    <div className="flex justify-center">
-      <Button
-        variant="outline"
-        onClick={onLoadMore}
-        disabled={isLoading || !hasMore}
-        className="w-full"
-      >
-        {isLoading ? "Loading..." : "Load below"}
-      </Button>
-    </div>
-  );
+	return (
+		<div className="flex justify-center">
+			<Button
+				variant="outline"
+				onClick={onLoadMore}
+				disabled={isLoading || !hasMore}
+				className="w-full"
+			>
+				{isLoading ? "Loading..." : "Load below"}
+			</Button>
+		</div>
+	);
 }
 
 function PeopleListContent({
-  queryRef,
+	queryRef,
 }: {
-  queryRef: PreloadedQuery<PeopleListPageQueryType>;
+	queryRef: PreloadedQuery<PeopleListPageQueryType>;
 }) {
-  const data = usePreloadedQuery<PeopleListPageQueryType>(
-    peopleListPageQuery,
-    queryRef
-  );
-  const [, setSearchParams] = useSearchParams();
-  const [, startTransition] = useTransition();
-  const [deletePeople] =
-    useMutation<PeopleListPageDeletePeopleMutation>(deletePeopleMutation);
-  const { organizationId } = useParams();
+	const data = usePreloadedQuery<PeopleListPageQueryType>(
+		peopleListPageQuery,
+		queryRef,
+	);
+	const [, setSearchParams] = useSearchParams();
+	const [, startTransition] = useTransition();
+	const [deletePeople] =
+		useMutation<PeopleListPageDeletePeopleMutation>(deletePeopleMutation);
+	const { organizationId } = useParams();
 
-  const {
-    data: peoplesConnection,
-    loadNext,
-    loadPrevious,
-    hasNext,
-    hasPrevious,
-    isLoadingNext,
-    isLoadingPrevious,
-  } = usePaginationFragment<
-    PeopleListPagePaginationQuery,
-    PeopleListPage_peoples$key
-  >(peopleListFragment, data.organization);
+	const {
+		data: peoplesConnection,
+		loadNext,
+		loadPrevious,
+		hasNext,
+		hasPrevious,
+		isLoadingNext,
+		isLoadingPrevious,
+	} = usePaginationFragment<
+		PeopleListPagePaginationQuery,
+		PeopleListPage_peoples$key
+	>(peopleListFragment, data.organization);
 
-  const peoples =
-    peoplesConnection.peoples.edges.map((edge) => edge.node) ?? [];
-  const pageInfo = peoplesConnection.peoples.pageInfo;
+	const peoples =
+		peoplesConnection.peoples.edges.map((edge) => edge.node) ?? [];
+	const pageInfo = peoplesConnection.peoples.pageInfo;
 
-  return (
-    <>
-      <Helmet>
-        <title>People - Probo</title>
-      </Helmet>
-      <div className="container space-y-6">
-        <PageHeader
-          className="mb-17"
-          title="Employees"
-          description="Keep track of your company's workforce and their progress
+	return (
+		<>
+			<Helmet>
+				<title>People - Probo</title>
+			</Helmet>
+			<div className="container space-y-6">
+				<PageHeader
+					className="mb-17"
+					title="Employees"
+					description="Keep track of your company's workforce and their progress
             towards completing tasks assigned to them."
-          actions={
-            <Button
-              asChild
-              variant="outline"
-              style={{ borderRadius: "0.5rem" }}
-              className="gap-2"
-            >
-              <Link to={`/organizations/${organizationId}/people/create`}>
-                <UserPlus className="h-4 w-4" />
-                Add a person
-              </Link>
-            </Button>
-          }
-        />
+					actions={
+						<Button
+							asChild
+							variant="outline"
+							style={{ borderRadius: "0.5rem" }}
+							className="gap-2"
+						>
+							<Link to={`/organizations/${organizationId}/people/create`}>
+								<UserPlus className="h-4 w-4" />
+								Add a person
+							</Link>
+						</Button>
+					}
+				/>
 
-        <div className="space-y-2">
-          {peoples.map((person) => (
-            <Link
-              key={person?.id}
-              to={`/organizations/${organizationId}/people/${person?.id}`}
-              className="block"
-            >
-              <div className="flex items-center justify-between p-4 rounded-xl border bg-card hover:bg-accent/5 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>{person?.fullName?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{person?.fullName}</p>
-                    {person?.primaryEmailAddress && (
-                      <>
-                        <span className="text-muted-foreground">•</span>
-                        <p className="text-sm text-muted-foreground">
-                          {person.primaryEmailAddress}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="secondary"
-                    className="bg-lime-9 text-white rounded-full px-3 py-0.5 text-xs font-medium"
-                  >
-                    {person?.kind === "EMPLOYEE"
-                      ? "Employee"
-                      : person?.kind === "CONTRACTOR"
-                      ? "Contractor"
-                      : person?.kind === "SERVICE_ACCOUNT"
-                      ? "Service Account"
-                      : "Vendor"}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:bg-transparent hover:[&>svg]:text-destructive"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (
-                        window.confirm(
-                          "Are you sure you want to delete this person?"
-                        )
-                      ) {
-                        deletePeople({
-                          variables: {
-                            connections: [peoplesConnection.peoples.__id],
-                            input: {
-                              peopleId: person.id,
-                            },
-                          },
-                        });
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 transition-colors" />
-                  </Button>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+				<div className="space-y-2">
+					{peoples.map((person) => (
+						<Link
+							key={person?.id}
+							to={`/organizations/${organizationId}/people/${person?.id}`}
+							className="block"
+						>
+							<div className="flex items-center justify-between p-4 rounded-xl border bg-card hover:bg-accent/5 transition-colors">
+								<div className="flex items-center gap-3">
+									<Avatar className="h-8 w-8">
+										<AvatarFallback>{person?.fullName?.[0]}</AvatarFallback>
+									</Avatar>
+									<div className="flex items-center gap-2">
+										<p className="font-medium">{person?.fullName}</p>
+										{person?.primaryEmailAddress && (
+											<>
+												<span className="text-muted-foreground">•</span>
+												<p className="text-sm text-muted-foreground">
+													{person.primaryEmailAddress}
+												</p>
+											</>
+										)}
+										{person?.position && (
+											<>
+												<span className="text-muted-foreground">•</span>
+												<p className="text-sm text-muted-foreground">
+													{person.position}
+												</p>
+											</>
+										)}
+									</div>
+								</div>
+								<div className="flex items-center gap-2">
+									<Badge
+										variant="secondary"
+										className="bg-lime-9 text-white rounded-full px-3 py-0.5 text-xs font-medium"
+									>
+										{person?.kind === "EMPLOYEE"
+											? "Employee"
+											: person?.kind === "CONTRACTOR"
+												? "Contractor"
+												: person?.kind === "SERVICE_ACCOUNT"
+													? "Service Account"
+													: "Vendor"}
+									</Badge>
+									<Button
+										variant="ghost"
+										size="icon"
+										className="h-8 w-8 text-muted-foreground hover:bg-transparent hover:[&>svg]:text-destructive"
+										onClick={(e) => {
+											e.preventDefault();
+											if (
+												window.confirm(
+													"Are you sure you want to delete this person?",
+												)
+											) {
+												deletePeople({
+													variables: {
+														connections: [peoplesConnection.peoples.__id],
+														input: {
+															peopleId: person.id,
+														},
+													},
+												});
+											}
+										}}
+									>
+										<Trash2 className="h-4 w-4 transition-colors" />
+									</Button>
+									<ChevronRight className="h-4 w-4 text-muted-foreground" />
+								</div>
+							</div>
+						</Link>
+					))}
+				</div>
 
-        <LoadAboveButton
-          isLoading={isLoadingPrevious}
-          hasMore={hasPrevious}
-          onLoadMore={() => {
-            startTransition(() => {
-              setSearchParams((prev) => {
-                prev.set("before", pageInfo?.startCursor || "");
-                prev.delete("after");
-                return prev;
-              });
-              loadPrevious(ITEMS_PER_PAGE);
-            });
-          }}
-        />
-        <LoadBelowButton
-          isLoading={isLoadingNext}
-          hasMore={hasNext}
-          onLoadMore={() => {
-            startTransition(() => {
-              setSearchParams((prev) => {
-                prev.set("after", pageInfo?.endCursor || "");
-                prev.delete("before");
-                return prev;
-              });
-              loadNext(ITEMS_PER_PAGE);
-            });
-          }}
-        />
-      </div>
-    </>
-  );
+				<LoadAboveButton
+					isLoading={isLoadingPrevious}
+					hasMore={hasPrevious}
+					onLoadMore={() => {
+						startTransition(() => {
+							setSearchParams((prev) => {
+								prev.set("before", pageInfo?.startCursor || "");
+								prev.delete("after");
+								return prev;
+							});
+							loadPrevious(ITEMS_PER_PAGE);
+						});
+					}}
+				/>
+				<LoadBelowButton
+					isLoading={isLoadingNext}
+					hasMore={hasNext}
+					onLoadMore={() => {
+						startTransition(() => {
+							setSearchParams((prev) => {
+								prev.set("after", pageInfo?.endCursor || "");
+								prev.delete("before");
+								return prev;
+							});
+							loadNext(ITEMS_PER_PAGE);
+						});
+					}}
+				/>
+			</div>
+		</>
+	);
 }
 
 function PeopleListPageFallback() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <div className="h-8 w-48 bg-muted animate-pulse rounded" />
-        <div className="h-4 w-96 bg-muted animate-pulse rounded mt-1" />
-      </div>
-      <div className="rounded-xl border bg-card p-4 space-y-4">
-        <div className="h-5 w-32 bg-muted animate-pulse rounded" />
-        <div className="h-10 w-full bg-muted animate-pulse rounded" />
-      </div>
-      <div className="space-y-2">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-[72px] bg-muted animate-pulse rounded-xl" />
-        ))}
-      </div>
-    </div>
-  );
+	return (
+		<div className="space-y-6">
+			<div>
+				<div className="h-8 w-48 bg-muted animate-pulse rounded" />
+				<div className="h-4 w-96 bg-muted animate-pulse rounded mt-1" />
+			</div>
+			<div className="rounded-xl border bg-card p-4 space-y-4">
+				<div className="h-5 w-32 bg-muted animate-pulse rounded" />
+				<div className="h-10 w-full bg-muted animate-pulse rounded" />
+			</div>
+			<div className="space-y-2">
+				{[1, 2, 3].map((i) => (
+					<div key={i} className="h-[72px] bg-muted animate-pulse rounded-xl" />
+				))}
+			</div>
+		</div>
+	);
 }
 
 export default function PeopleListPage() {
-  const [searchParams] = useSearchParams();
-  const [queryRef, loadQuery] =
-    useQueryLoader<PeopleListPageQueryType>(peopleListPageQuery);
+	const [searchParams] = useSearchParams();
+	const [queryRef, loadQuery] =
+		useQueryLoader<PeopleListPageQueryType>(peopleListPageQuery);
 
-  const { organizationId } = useParams();
+	const { organizationId } = useParams();
 
-  useEffect(() => {
-    const after = searchParams.get("after");
-    const before = searchParams.get("before");
+	useEffect(() => {
+		const after = searchParams.get("after");
+		const before = searchParams.get("before");
 
-    loadQuery({
-      organizationId: organizationId!,
-      first: before ? undefined : ITEMS_PER_PAGE,
-      after: after || undefined,
-      last: before ? ITEMS_PER_PAGE : undefined,
-      before: before || undefined,
-    });
-  }, [loadQuery, organizationId, searchParams]);
+		loadQuery({
+			organizationId: organizationId!,
+			first: before ? undefined : ITEMS_PER_PAGE,
+			after: after || undefined,
+			last: before ? ITEMS_PER_PAGE : undefined,
+			before: before || undefined,
+		});
+	}, [loadQuery, organizationId, searchParams]);
 
-  if (!queryRef) {
-    return <PeopleListPageFallback />;
-  }
+	if (!queryRef) {
+		return <PeopleListPageFallback />;
+	}
 
-  return (
-    <>
-      <Helmet>
-        <title>People - Probo Console</title>
-      </Helmet>
-      <Suspense fallback={<PeopleListPageFallback />}>
-        <PeopleListContent queryRef={queryRef} />
-      </Suspense>
-    </>
-  );
+	return (
+		<>
+			<Helmet>
+				<title>People - Probo Console</title>
+			</Helmet>
+			<Suspense fallback={<PeopleListPageFallback />}>
+				<PeopleListContent queryRef={queryRef} />
+			</Suspense>
+		</>
+	);
 }

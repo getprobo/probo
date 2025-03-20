@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4ff94d3e8f2e4c6c0d8c3ad43abee2d6>>
+ * @generated SignedSource<<6b0c95489030980c012399f3d52f6bd8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,6 +20,7 @@ export type PeopleOverviewPageQuery$data = {
     readonly fullName?: string;
     readonly id?: string;
     readonly kind?: PeopleKind;
+    readonly position?: string;
     readonly primaryEmailAddress?: string;
     readonly updatedAt?: string;
     readonly version?: number;
@@ -84,17 +85,24 @@ v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "createdAt",
+  "name": "position",
   "storageKey": null
 },
 v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "updatedAt",
+  "name": "createdAt",
   "storageKey": null
 },
 v9 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "updatedAt",
+  "storageKey": null
+},
+v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -126,7 +134,8 @@ return {
               (v6/*: any*/),
               (v7/*: any*/),
               (v8/*: any*/),
-              (v9/*: any*/)
+              (v9/*: any*/),
+              (v10/*: any*/)
             ],
             "type": "People",
             "abstractKey": null
@@ -169,7 +178,8 @@ return {
               (v6/*: any*/),
               (v7/*: any*/),
               (v8/*: any*/),
-              (v9/*: any*/)
+              (v9/*: any*/),
+              (v10/*: any*/)
             ],
             "type": "People",
             "abstractKey": null
@@ -180,16 +190,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "1383ca6e8c8b205082cc68223bec1833",
+    "cacheID": "c9fe694bbdb3ff98d0758602390870a4",
     "id": null,
     "metadata": {},
     "name": "PeopleOverviewPageQuery",
     "operationKind": "query",
-    "text": "query PeopleOverviewPageQuery(\n  $peopleId: ID!\n) {\n  node(id: $peopleId) {\n    __typename\n    ... on People {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      createdAt\n      updatedAt\n      version\n    }\n    id\n  }\n}\n"
+    "text": "query PeopleOverviewPageQuery(\n  $peopleId: ID!\n) {\n  node(id: $peopleId) {\n    __typename\n    ... on People {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      position\n      createdAt\n      updatedAt\n      version\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "fa229186ad9e51f3a60b23fa88a882aa";
+(node as any).hash = "6a04371010956846b504ea9e44c54cc4";
 
 export default node;

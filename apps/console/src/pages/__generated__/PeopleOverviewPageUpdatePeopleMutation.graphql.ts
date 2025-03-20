@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4da12585c00c981fc6f2a6f74d5d3ef6>>
+ * @generated SignedSource<<e02da8085af98bfd5ba263b8843a4f89>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type UpdatePeopleInput = {
   fullName?: string | null | undefined;
   id: string;
   kind?: PeopleKind | null | undefined;
+  position?: string | null | undefined;
   primaryEmailAddress?: string | null | undefined;
 };
 export type PeopleOverviewPageUpdatePeopleMutation$variables = {
@@ -28,6 +29,7 @@ export type PeopleOverviewPageUpdatePeopleMutation$data = {
       readonly fullName: string;
       readonly id: string;
       readonly kind: PeopleKind;
+      readonly position: string;
       readonly primaryEmailAddress: string;
       readonly updatedAt: string;
       readonly version: number;
@@ -109,6 +111,13 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
+            "name": "position",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
             "name": "updatedAt",
             "storageKey": null
           },
@@ -144,16 +153,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "6961fac292b72111b2d0a46f078e3efc",
+    "cacheID": "22f85b08dc98528b5f1031f70ed5a818",
     "id": null,
     "metadata": {},
     "name": "PeopleOverviewPageUpdatePeopleMutation",
     "operationKind": "mutation",
-    "text": "mutation PeopleOverviewPageUpdatePeopleMutation(\n  $input: UpdatePeopleInput!\n) {\n  updatePeople(input: $input) {\n    people {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      updatedAt\n      version\n    }\n  }\n}\n"
+    "text": "mutation PeopleOverviewPageUpdatePeopleMutation(\n  $input: UpdatePeopleInput!\n) {\n  updatePeople(input: $input) {\n    people {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      position\n      updatedAt\n      version\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "01a8fefe43cdc344f9a4dd62a60edc6c";
+(node as any).hash = "f9e57c74a2b9cb5b8e49861f01f0d0c5";
 
 export default node;
