@@ -1,5 +1,9 @@
 /**
+<<<<<<< HEAD:apps/console/src/pages/organizations/people/__generated__/PeopleViewUpdatePeopleMutation.graphql.ts
  * @generated SignedSource<<c1c3f4fa54eb6e43c52b088d2b872fee>>
+=======
+ * @generated SignedSource<<e02da8085af98bfd5ba263b8843a4f89>>
+>>>>>>> 1c7bd5f (Add people position field):apps/console/src/pages/__generated__/PeopleOverviewPageUpdatePeopleMutation.graphql.ts
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +20,7 @@ export type UpdatePeopleInput = {
   fullName?: string | null | undefined;
   id: string;
   kind?: PeopleKind | null | undefined;
+  position?: string | null | undefined;
   primaryEmailAddress?: string | null | undefined;
 };
 export type PeopleViewUpdatePeopleMutation$variables = {
@@ -28,6 +33,7 @@ export type PeopleViewUpdatePeopleMutation$data = {
       readonly fullName: string;
       readonly id: string;
       readonly kind: PeopleKind;
+      readonly position: string;
       readonly primaryEmailAddress: string;
       readonly updatedAt: string;
       readonly version: number;
@@ -109,6 +115,13 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
+            "name": "position",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
             "name": "updatedAt",
             "storageKey": null
           },
@@ -144,16 +157,28 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
+<<<<<<< HEAD:apps/console/src/pages/organizations/people/__generated__/PeopleViewUpdatePeopleMutation.graphql.ts
     "cacheID": "96bba526a231dd76ef58d32ec01aac3a",
+=======
+    "cacheID": "22f85b08dc98528b5f1031f70ed5a818",
+>>>>>>> 1c7bd5f (Add people position field):apps/console/src/pages/__generated__/PeopleOverviewPageUpdatePeopleMutation.graphql.ts
     "id": null,
     "metadata": {},
     "name": "PeopleViewUpdatePeopleMutation",
     "operationKind": "mutation",
+<<<<<<< HEAD:apps/console/src/pages/organizations/people/__generated__/PeopleViewUpdatePeopleMutation.graphql.ts
     "text": "mutation PeopleViewUpdatePeopleMutation(\n  $input: UpdatePeopleInput!\n) {\n  updatePeople(input: $input) {\n    people {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      updatedAt\n      version\n    }\n  }\n}\n"
+=======
+    "text": "mutation PeopleOverviewPageUpdatePeopleMutation(\n  $input: UpdatePeopleInput!\n) {\n  updatePeople(input: $input) {\n    people {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      position\n      updatedAt\n      version\n    }\n  }\n}\n"
+>>>>>>> 1c7bd5f (Add people position field):apps/console/src/pages/__generated__/PeopleOverviewPageUpdatePeopleMutation.graphql.ts
   }
 };
 })();
 
+<<<<<<< HEAD:apps/console/src/pages/organizations/people/__generated__/PeopleViewUpdatePeopleMutation.graphql.ts
 (node as any).hash = "957952927fbe2337a180599f34ce961c";
+=======
+(node as any).hash = "f9e57c74a2b9cb5b8e49861f01f0d0c5";
+>>>>>>> 1c7bd5f (Add people position field):apps/console/src/pages/__generated__/PeopleOverviewPageUpdatePeopleMutation.graphql.ts
 
 export default node;

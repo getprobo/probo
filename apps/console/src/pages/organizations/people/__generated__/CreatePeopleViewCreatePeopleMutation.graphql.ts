@@ -1,5 +1,9 @@
 /**
+<<<<<<< HEAD:apps/console/src/pages/organizations/people/__generated__/CreatePeopleViewCreatePeopleMutation.graphql.ts
  * @generated SignedSource<<eb07431152c49241a6e636984bbd5bee>>
+=======
+ * @generated SignedSource<<2c920b8f3d757e127f920e44066f57d6>>
+>>>>>>> 1c7bd5f (Add people position field):apps/console/src/pages/__generated__/CreatePeoplePageCreatePeopleMutation.graphql.ts
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +19,7 @@ export type CreatePeopleInput = {
   fullName: string;
   kind: PeopleKind;
   organizationId: string;
+  position: string;
   primaryEmailAddress: string;
 };
 export type CreatePeopleViewCreatePeopleMutation$variables = {

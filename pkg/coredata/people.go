@@ -31,6 +31,7 @@ type (
 		ID                       gid.GID    `db:"id"`
 		OrganizationID           gid.GID    `db:"organization_id"`
 		Kind                     PeopleKind `db:"kind"`
+		Position                 string     `db:"position"`
 		FullName                 string     `db:"full_name"`
 		PrimaryEmailAddress      string     `db:"primary_email_address"`
 		AdditionalEmailAddresses []string   `db:"additional_email_addresses"`
@@ -47,6 +48,7 @@ type (
 		PrimaryEmailAddress      *string
 		AdditionalEmailAddresses *[]string
 		Kind                     *PeopleKind
+		Position                 *string
 	}
 )
 
@@ -72,6 +74,7 @@ SELECT
     id,
     organization_id,
     kind,
+    position,
     full_name,
     primary_email_address,
     additional_email_addresses,
@@ -118,6 +121,7 @@ INSERT INTO
         id,
         organization_id,
         kind,
+        position,
         full_name,
         primary_email_address,
         additional_email_addresses,
@@ -130,6 +134,7 @@ VALUES (
     @people_id,
     @organization_id,
     @kind,
+    @position,
     @full_name,
     @primary_email_address,
     @additional_email_addresses,
@@ -144,6 +149,7 @@ VALUES (
 		"people_id":                  p.ID,
 		"organization_id":            p.OrganizationID,
 		"kind":                       p.Kind,
+		"position":                   p.Position,
 		"full_name":                  p.FullName,
 		"primary_email_address":      p.PrimaryEmailAddress,
 		"additional_email_addresses": p.AdditionalEmailAddresses,
@@ -186,6 +192,7 @@ SELECT
     id,
     organization_id,
     kind,
+    position,
     full_name,
     primary_email_address,
     additional_email_addresses,
@@ -233,6 +240,7 @@ UPDATE peoples SET
     primary_email_address = COALESCE(@primary_email_address, primary_email_address),
     additional_email_addresses = COALESCE(@additional_email_addresses, additional_email_addresses),
     kind = COALESCE(@kind, kind),
+    position = COALESCE(@position, position),
     updated_at = @updated_at,
     version = version + 1
 WHERE %s
@@ -242,6 +250,7 @@ RETURNING
    	id,
 	organization_id,
 	kind,
+    position,
 	full_name,
 	primary_email_address,
 	additional_email_addresses,
@@ -268,6 +277,9 @@ RETURNING
 	}
 	if params.Kind != nil {
 		args["kind"] = *params.Kind
+	}
+	if params.Position != nil {
+		args["position"] = *params.Position
 	}
 
 	maps.Copy(args, scope.SQLArguments())
