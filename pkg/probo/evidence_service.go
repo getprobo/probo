@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"net/url"
 	"path/filepath"
 	"time"
 
@@ -171,11 +172,16 @@ func (s EvidenceService) GenerateFileURL(
 
 	presignClient := s3.NewPresignClient(s.svc.s3)
 
+	// Use RFC 6266/5987 encoding for filename with UTF-8 support
+	encodedFilename := url.QueryEscape(evidence.Filename)
+	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
+		encodedFilename, encodedFilename)
+
 	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket:                     aws.String(s.svc.bucket),
 		Key:                        aws.String(evidence.ObjectKey),
 		ResponseContentType:        aws.String(evidence.MimeType),
-		ResponseContentDisposition: aws.String(fmt.Sprintf("attachment; filename=\"%s\"", evidence.Filename)),
+		ResponseContentDisposition: aws.String(contentDisposition),
 	}, func(opts *s3.PresignOptions) {
 		opts.Expires = expiresIn
 	})
