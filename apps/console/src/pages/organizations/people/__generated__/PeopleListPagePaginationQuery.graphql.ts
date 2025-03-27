@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6aff6203f26803074cd1ea539096cbed>>
+ * @generated SignedSource<<e4bf584a2e3546486b7b227661d874ae>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,21 +10,21 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type PeopleListViewPaginationQuery$variables = {
+export type PeopleListPagePaginationQuery$variables = {
   after?: string | null | undefined;
   before?: string | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;
 };
-export type PeopleListViewPaginationQuery$data = {
+export type PeopleListPagePaginationQuery$data = {
   readonly node: {
     readonly " $fragmentSpreads": FragmentRefs<"PeopleListView_peoples">;
   };
 };
-export type PeopleListViewPaginationQuery = {
-  response: PeopleListViewPaginationQuery$data;
-  variables: PeopleListViewPaginationQuery$variables;
+export type PeopleListPagePaginationQuery = {
+  response: PeopleListPagePaginationQuery$data;
+  variables: PeopleListPagePaginationQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -119,7 +119,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "PeopleListViewPaginationQuery",
+    "name": "PeopleListPagePaginationQuery",
     "selections": [
       {
         "alias": null,
@@ -156,7 +156,7 @@ return {
       (v3/*: any*/)
     ],
     "kind": "Operation",
-    "name": "PeopleListViewPaginationQuery",
+    "name": "PeopleListPagePaginationQuery",
     "selections": [
       {
         "alias": null,
@@ -222,6 +222,13 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "kind",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "position",
                             "storageKey": null
                           },
                           {
@@ -313,7 +320,7 @@ return {
                   "orderBy"
                 ],
                 "handle": "connection",
-                "key": "PeopleListView_peoples",
+                "key": "PeopleListPage_peoples",
                 "kind": "LinkedHandle",
                 "name": "peoples"
               }
@@ -327,16 +334,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0bd9bfd41ba132557259776c016df0b9",
+    "cacheID": "419570c0b0c6d962d15881238a099899",
     "id": null,
     "metadata": {},
-    "name": "PeopleListViewPaginationQuery",
+    "name": "PeopleListPagePaginationQuery",
     "operationKind": "query",
-    "text": "query PeopleListViewPaginationQuery(\n  $after: CursorKey\n  $before: CursorKey\n  $first: Int\n  $last: Int\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleListView_peoples_pbnwq\n    id\n  }\n}\n\nfragment PeopleListView_peoples_pbnwq on Organization {\n  id\n  peoples(first: $first, after: $after, last: $last, before: $before, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        additionalEmailAddresses\n        kind\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n}\n"
+    "text": "query PeopleListPagePaginationQuery(\n  $after: CursorKey\n  $before: CursorKey\n  $first: Int\n  $last: Int\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...PeopleListView_peoples_pbnwq\n    id\n  }\n}\n\nfragment PeopleListView_peoples_pbnwq on Organization {\n  id\n  peoples(first: $first, after: $after, last: $last, before: $before, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        additionalEmailAddresses\n        kind\n        position\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d30fc5e157c1696a257cd337b6f08e1c";
+(node as any).hash = "5d39113322b8d1952705bc84efc11e04";
 
 export default node;

@@ -13,16 +13,16 @@ import { Badge } from "@/components/ui/badge";
 import { UserPlus, Trash2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
-import type { PeopleListViewQuery as PeopleListViewQueryType } from "./__generated__/PeopleListViewQuery.graphql";
-import type { PeopleListViewDeletePeopleMutation } from "./__generated__/PeopleListViewDeletePeopleMutation.graphql";
-import { PeopleListViewPaginationQuery } from "./__generated__/PeopleListViewPaginationQuery.graphql";
-import { PeopleListView_peoples$key } from "./__generated__/PeopleListView_peoples.graphql";
-import { PageTemplate } from "@/components/PageTemplate";
-import { PeopleListViewSkeleton } from "./PeopleListPage";
+import { Helmet } from "react-helmet-async";
+import type { PeopleListPageQuery as PeopleListPageQueryType } from "./__generated__/PeopleListPageQuery.graphql";
+import type { PeopleListPageDeletePeopleMutation } from "./__generated__/PeopleListPageDeletePeopleMutation.graphql";
+import { PeopleListPagePaginationQuery } from "./__generated__/PeopleListPagePaginationQuery.graphql";
+import { PeopleListPage_peoples$key } from "./__generated__/PeopleListPage_peoples.graphql";
+import { PageHeader } from "@/components/PageHeader";
 
 const ITEMS_PER_PAGE = 25;
 
-const peopleListViewQuery = graphql`
+const peopleListPageQuery = graphql`
   query PeopleListViewQuery(
     $organizationId: ID!
     $first: Int
@@ -39,7 +39,7 @@ const peopleListViewQuery = graphql`
 
 const peopleListFragment = graphql`
   fragment PeopleListView_peoples on Organization
-  @refetchable(queryName: "PeopleListViewPaginationQuery")
+  @refetchable(queryName: "PeopleListPagePaginationQuery")
   @argumentDefinitions(
     first: { type: "Int" }
     after: { type: "CursorKey" }
@@ -53,7 +53,7 @@ const peopleListFragment = graphql`
       last: $last
       before: $before
       orderBy: { direction: ASC, field: FULL_NAME }
-    ) @connection(key: "PeopleListView_peoples") {
+    ) @connection(key: "PeopleListPage_peoples") {
       __id
       edges {
         node {
@@ -62,6 +62,7 @@ const peopleListFragment = graphql`
           primaryEmailAddress
           additionalEmailAddresses
           kind
+          position
           createdAt
           updatedAt
         }
@@ -144,16 +145,16 @@ function LoadBelowButton({
 function PeopleListContent({
   queryRef,
 }: {
-  queryRef: PreloadedQuery<PeopleListViewQueryType>;
+  queryRef: PreloadedQuery<PeopleListPageQueryType>;
 }) {
-  const data = usePreloadedQuery<PeopleListViewQueryType>(
-    peopleListViewQuery,
-    queryRef
+  const data = usePreloadedQuery<PeopleListPageQueryType>(
+    peopleListPageQuery,
+    queryRef,
   );
   const [, setSearchParams] = useSearchParams();
   const [, startTransition] = useTransition();
   const [deletePeople] =
-    useMutation<PeopleListViewDeletePeopleMutation>(deletePeopleMutation);
+    useMutation<PeopleListPageDeletePeopleMutation>(deletePeopleMutation);
   const { organizationId } = useParams();
 
   const {
@@ -165,8 +166,8 @@ function PeopleListContent({
     isLoadingNext,
     isLoadingPrevious,
   } = usePaginationFragment<
-    PeopleListViewPaginationQuery,
-    PeopleListView_peoples$key
+    PeopleListPagePaginationQuery,
+    PeopleListPage_peoples$key
   >(peopleListFragment, data.organization);
 
   const peoples =
@@ -174,25 +175,31 @@ function PeopleListContent({
   const pageInfo = peoplesConnection.peoples.pageInfo;
 
   return (
-    <PageTemplate
-      title="People"
-      description="Keep track of your company's workforce and their progress
-      towards completing tasks assigned to them."
-      actions={
-        <Button
-          asChild
-          variant="outline"
-          style={{ borderRadius: "0.5rem" }}
-          className="gap-2"
-        >
-          <Link to={`/organizations/${organizationId}/people/create`}>
-            <UserPlus className="h-4 w-4" />
-            Add a person
-          </Link>
-        </Button>
-      }
-    >
-      <div className="space-y-6">
+    <>
+      <Helmet>
+        <title>People - Probo</title>
+      </Helmet>
+      <div className="container space-y-6">
+        <PageHeader
+          className="mb-17"
+          title="Employees"
+          description="Keep track of your company's workforce and their progress
+            towards completing tasks assigned to them."
+          actions={
+            <Button
+              asChild
+              variant="outline"
+              style={{ borderRadius: "0.5rem" }}
+              className="gap-2"
+            >
+              <Link to={`/organizations/${organizationId}/people/create`}>
+                <UserPlus className="h-4 w-4" />
+                Add a person
+              </Link>
+            </Button>
+          }
+        />
+
         <div className="space-y-2">
           {peoples.map((person) => (
             <Link
@@ -225,10 +232,10 @@ function PeopleListContent({
                     {person?.kind === "EMPLOYEE"
                       ? "Employee"
                       : person?.kind === "CONTRACTOR"
-                      ? "Contractor"
-                      : person?.kind === "SERVICE_ACCOUNT"
-                      ? "Service Account"
-                      : "Vendor"}
+                        ? "Contractor"
+                        : person?.kind === "SERVICE_ACCOUNT"
+                          ? "Service Account"
+                          : "Vendor"}
                   </Badge>
                   <Button
                     variant="ghost"
@@ -238,7 +245,7 @@ function PeopleListContent({
                       e.preventDefault();
                       if (
                         window.confirm(
-                          "Are you sure you want to delete this person?"
+                          "Are you sure you want to delete this person?",
                         )
                       ) {
                         deletePeople({
@@ -290,14 +297,34 @@ function PeopleListContent({
           }}
         />
       </div>
-    </PageTemplate>
+    </>
   );
 }
 
-export default function PeopleListView() {
+function PeopleListPageFallback() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+        <div className="h-4 w-96 bg-muted animate-pulse rounded mt-1" />
+      </div>
+      <div className="rounded-xl border bg-card p-4 space-y-4">
+        <div className="h-5 w-32 bg-muted animate-pulse rounded" />
+        <div className="h-10 w-full bg-muted animate-pulse rounded" />
+      </div>
+      <div className="space-y-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-[72px] bg-muted animate-pulse rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function PeopleListPage() {
   const [searchParams] = useSearchParams();
   const [queryRef, loadQuery] =
-    useQueryLoader<PeopleListViewQueryType>(peopleListViewQuery);
+    useQueryLoader<PeopleListPageQueryType>(peopleListPageQuery);
 
   const { organizationId } = useParams();
 
@@ -315,12 +342,17 @@ export default function PeopleListView() {
   }, [loadQuery, organizationId, searchParams]);
 
   if (!queryRef) {
-    return <PeopleListViewSkeleton />;
+    return <PeopleListPageFallback />;
   }
 
   return (
-    <Suspense fallback={<PeopleListViewSkeleton />}>
-      <PeopleListContent queryRef={queryRef} />
-    </Suspense>
+    <>
+      <Helmet>
+        <title>People - Probo Console</title>
+      </Helmet>
+      <Suspense fallback={<PeopleListPageFallback />}>
+        <PeopleListContent queryRef={queryRef} />
+      </Suspense>
+    </>
   );
 }

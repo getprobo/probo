@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<207a779cf8cbf3e42191be9825d4b653>>
+ * @generated SignedSource<<cdadd20a25a0fafdbf2a11631351cc81>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,24 +10,25 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type PeopleKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
-export type PeopleViewQuery$variables = {
+export type PeopleViewPageQuery$variables = {
   peopleId: string;
 };
-export type PeopleViewQuery$data = {
+export type PeopleViewPageQuery$data = {
   readonly node: {
     readonly additionalEmailAddresses?: ReadonlyArray<string>;
     readonly createdAt?: string;
     readonly fullName?: string;
     readonly id?: string;
     readonly kind?: PeopleKind;
+    readonly position?: string;
     readonly primaryEmailAddress?: string;
     readonly updatedAt?: string;
     readonly version?: number;
   };
 };
-export type PeopleViewQuery = {
-  response: PeopleViewQuery$data;
-  variables: PeopleViewQuery$variables;
+export type PeopleViewPageQuery = {
+  response: PeopleViewPageQuery$data;
+  variables: PeopleViewPageQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -84,17 +85,24 @@ v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "createdAt",
+  "name": "position",
   "storageKey": null
 },
 v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "updatedAt",
+  "name": "createdAt",
   "storageKey": null
 },
 v9 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "updatedAt",
+  "storageKey": null
+},
+v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -106,7 +114,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "PeopleViewQuery",
+    "name": "PeopleViewPageQuery",
     "selections": [
       {
         "alias": null,
@@ -126,7 +134,8 @@ return {
               (v6/*: any*/),
               (v7/*: any*/),
               (v8/*: any*/),
-              (v9/*: any*/)
+              (v9/*: any*/),
+              (v10/*: any*/)
             ],
             "type": "People",
             "abstractKey": null
@@ -142,7 +151,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "PeopleViewQuery",
+    "name": "PeopleViewPageQuery",
     "selections": [
       {
         "alias": null,
@@ -169,7 +178,8 @@ return {
               (v6/*: any*/),
               (v7/*: any*/),
               (v8/*: any*/),
-              (v9/*: any*/)
+              (v9/*: any*/),
+              (v10/*: any*/)
             ],
             "type": "People",
             "abstractKey": null
@@ -180,16 +190,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c392876240212ba16428ae5edb843d47",
+    "cacheID": "dc91b93653feb1dae8a4b886d24ce959",
     "id": null,
     "metadata": {},
-    "name": "PeopleViewQuery",
+    "name": "PeopleViewPageQuery",
     "operationKind": "query",
-    "text": "query PeopleViewQuery(\n  $peopleId: ID!\n) {\n  node(id: $peopleId) {\n    __typename\n    ... on People {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      createdAt\n      updatedAt\n      version\n    }\n    id\n  }\n}\n"
+    "text": "query PeopleViewPageQuery(\n  $peopleId: ID!\n) {\n  node(id: $peopleId) {\n    __typename\n    ... on People {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      position\n      createdAt\n      updatedAt\n      version\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4fc97d6cd7fc4590b7be7b5a79ae7ab0";
+(node as any).hash = "f12ba6a5acc2a30530f1c6f2340b2191";
 
 export default node;

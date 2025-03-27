@@ -14,20 +14,13 @@ import {
   useMutation,
 } from "react-relay";
 import { Suspense, useEffect, useState, useCallback } from "react";
-import type { PeopleViewQuery as PeopleViewQueryType } from "./__generated__/PeopleViewQuery.graphql";
+import type { PeopleOverviewPageQuery as PeopleOverviewPageQueryType } from "./__generated__/PeopleOverviewPageQuery.graphql";
 import { useParams } from "react-router";
-import { PageTemplate } from "@/components/PageTemplate";
-import { PeopleViewSkeleton } from "./PeoplePage";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Helmet } from "react-helmet-async";
+import { cn } from "@/lib/utils";
 
-const peopleViewQuery = graphql`
-  query PeopleViewQuery($peopleId: ID!) {
+const peopleOverviewPageQuery = graphql`
+  query PeopleViewPageQuery($peopleId: ID!) {
     node(id: $peopleId) {
       ... on People {
         id
@@ -35,6 +28,7 @@ const peopleViewQuery = graphql`
         primaryEmailAddress
         additionalEmailAddresses
         kind
+        position
         createdAt
         updatedAt
         version
@@ -44,7 +38,7 @@ const peopleViewQuery = graphql`
 `;
 
 const updatePeopleMutation = graphql`
-  mutation PeopleViewUpdatePeopleMutation($input: UpdatePeopleInput!) {
+  mutation PeopleViewPageUpdatePeopleMutation($input: UpdatePeopleInput!) {
     updatePeople(input: $input) {
       people {
         id
@@ -52,6 +46,7 @@ const updatePeopleMutation = graphql`
         primaryEmailAddress
         additionalEmailAddresses
         kind
+        position
         updatedAt
         version
       }
@@ -90,21 +85,24 @@ function EditableField({
   );
 }
 
-function PeopleViewContent({
+function PeopleOverviewPageContent({
   queryRef,
 }: {
-  queryRef: PreloadedQuery<PeopleViewQueryType>;
+  queryRef: PreloadedQuery<PeopleOverviewPageQueryType>;
 }) {
-  const data = usePreloadedQuery(peopleViewQuery, queryRef);
+  const data = usePreloadedQuery(peopleOverviewPageQuery, queryRef);
   const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     fullName: data.node.fullName || "",
     primaryEmailAddress: data.node.primaryEmailAddress || "",
     additionalEmailAddresses: data.node.additionalEmailAddresses || [],
     kind: data.node.kind,
+    position: data.node.position || "",
   });
   const [commit] = useMutation(updatePeopleMutation);
-  const [, loadQuery] = useQueryLoader<PeopleViewQueryType>(peopleViewQuery);
+  const [, loadQuery] = useQueryLoader<PeopleOverviewPageQueryType>(
+    peopleOverviewPageQuery,
+  );
   const { toast } = useToast();
 
   const hasChanges = editedFields.size > 0;
@@ -165,8 +163,8 @@ function PeopleViewContent({
   };
 
   return (
-    <PageTemplate title={formData.fullName}>
-      <div className="space-y-6">
+    <>
+      <div className="space-y-6 p-4 md:p-6 lg:p-8">
         <div className="mx-auto max-w-4xl space-y-6">
           <EditableField
             label="Full Name"
@@ -205,7 +203,7 @@ function PeopleViewContent({
                     onClick={() => {
                       const newEmails =
                         formData.additionalEmailAddresses.filter(
-                          (_, i) => i !== index
+                          (_, i) => i !== index,
                         );
                       handleFieldChange("additionalEmailAddresses", newEmails);
                     }}
@@ -243,60 +241,111 @@ function PeopleViewContent({
                     <HelpCircle className="h-4 w-4 text-gray-400" />
                     <Label className="text-sm">Kind</Label>
                   </div>
-                  <Select
-                    value={formData.kind}
-                    onValueChange={(value) => handleFieldChange("kind", value)}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select kind" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EMPLOYEE">Employee</SelectItem>
-                      <SelectItem value="CONTRACTOR">Contractor</SelectItem>
-                      <SelectItem value="SERVICE_ACCOUNT">
-                        Service Account
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex gap-2 space-y-2">
+                    <button
+                      onClick={() => handleFieldChange("kind", "EMPLOYEE")}
+                      className={cn(
+                        "rounded-full px-4 py-1 text-sm transition-colors",
+                        formData.kind === "EMPLOYEE"
+                          ? "bg-blue-100 text-blue-900 ring-2 ring-blue-600 ring-offset-2"
+                          : "bg-gray-100 text-gray-900 hover:bg-gray-200",
+                      )}
+                    >
+                      Employee
+                    </button>
+                    <button
+                      onClick={() => handleFieldChange("kind", "CONTRACTOR")}
+                      className={cn(
+                        "rounded-full px-4 py-1 text-sm transition-colors",
+                        formData.kind === "CONTRACTOR"
+                          ? "bg-purple-100 text-purple-900 ring-2 ring-purple-600 ring-offset-2"
+                          : "bg-gray-100 text-gray-900 hover:bg-gray-200",
+                      )}
+                    >
+                      Contractor
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleFieldChange("kind", "SERVICE_ACCOUNT")
+                      }
+                      className={cn(
+                        "rounded-full px-4 py-1 text-sm transition-colors",
+                        formData.kind === "SERVICE_ACCOUNT"
+                          ? "bg-green-100 text-green-900 ring-2 ring-green-600 ring-offset-2"
+                          : "bg-gray-100 text-gray-900 hover:bg-gray-200",
+                      )}
+                    >
+                      Service Account
+                    </button>
+                  </div>
+                  <EditableField
+                    label="Position"
+                    value={formData.position}
+                    type="text"
+                    onChange={(value) => handleFieldChange("position", value)}
+                  />
                 </div>
               </div>
             </div>
           </Card>
-
-          <div className="mt-6 flex justify-end gap-2">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-              disabled={!hasChanges}
-            >
-              Save Changes
-            </Button>
-          </div>
         </div>
       </div>
-    </PageTemplate>
+
+      {hasChanges && (
+        <div className="fixed bottom-6 right-6 flex gap-2">
+          <Button variant="outline" onClick={handleCancel}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Save Changes
+          </Button>
+        </div>
+      )}
+    </>
   );
 }
 
-export default function PeopleView() {
+function PeopleOverviewPageFallback() {
+  return (
+    <div className="p-6 space-y-6">
+      <div className="space-y-1">
+        <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+        <div className="h-4 w-96 bg-muted animate-pulse rounded" />
+      </div>
+      <div className="space-y-2">
+        {[1, 2].map((i) => (
+          <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function PeopleOverviewPage() {
   const { peopleId } = useParams();
-  const [queryRef, loadQuery] =
-    useQueryLoader<PeopleViewQueryType>(peopleViewQuery);
+  const [queryRef, loadQuery] = useQueryLoader<PeopleOverviewPageQueryType>(
+    peopleOverviewPageQuery,
+  );
 
   useEffect(() => {
     loadQuery({ peopleId: peopleId! });
   }, [loadQuery, peopleId]);
 
   if (!queryRef) {
-    return <PeopleViewSkeleton />;
+    return <PeopleOverviewPageFallback />;
   }
 
   return (
-    <Suspense fallback={<PeopleViewSkeleton />}>
-      <PeopleViewContent queryRef={queryRef} />
-    </Suspense>
+    <>
+      <Helmet>
+        <title>People Overview - Probo Console</title>
+      </Helmet>
+      <Suspense fallback={<PeopleOverviewPageFallback />}>
+        <PeopleOverviewPageContent queryRef={queryRef} />
+      </Suspense>
+    </>
   );
 }

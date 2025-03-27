@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<da4ebef4106cce1470c644c4b8b703a6>>
+ * @generated SignedSource<<84798b19a741ae957a73cdfad46c9158>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,6 +22,7 @@ export type PeopleListView_peoples$data = {
         readonly fullName: string;
         readonly id: string;
         readonly kind: PeopleKind;
+        readonly position: string;
         readonly primaryEmailAddress: string;
         readonly updatedAt: string;
       };
@@ -99,7 +100,7 @@ return {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": require('./PeopleListViewPaginationQuery.graphql'),
+      "operation": require('./PeopleListPagePaginationQuery.graphql'),
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
@@ -123,7 +124,7 @@ return {
       ],
       "concreteType": "PeopleConnection",
       "kind": "LinkedField",
-      "name": "__PeopleListView_peoples_connection",
+      "name": "__PeopleListPage_peoples_connection",
       "plural": false,
       "selections": [
         {
@@ -169,6 +170,13 @@ return {
                   "args": null,
                   "kind": "ScalarField",
                   "name": "kind",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "position",
                   "storageKey": null
                 },
                 {
@@ -257,7 +265,7 @@ return {
           ]
         }
       ],
-      "storageKey": "__PeopleListView_peoples_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"FULL_NAME\"})"
+      "storageKey": "__PeopleListPage_peoples_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"FULL_NAME\"})"
     }
   ],
   "type": "Organization",
@@ -265,6 +273,6 @@ return {
 };
 })();
 
-(node as any).hash = "d30fc5e157c1696a257cd337b6f08e1c";
+(node as any).hash = "5d39113322b8d1952705bc84efc11e04";
 
 export default node;

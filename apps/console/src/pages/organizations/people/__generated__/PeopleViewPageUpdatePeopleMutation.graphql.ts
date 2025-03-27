@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c1c3f4fa54eb6e43c52b088d2b872fee>>
+ * @generated SignedSource<<b2635394b27e7beb548eef560262d82d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,27 +16,29 @@ export type UpdatePeopleInput = {
   fullName?: string | null | undefined;
   id: string;
   kind?: PeopleKind | null | undefined;
+  position?: string | null | undefined;
   primaryEmailAddress?: string | null | undefined;
 };
-export type PeopleViewUpdatePeopleMutation$variables = {
+export type PeopleViewPageUpdatePeopleMutation$variables = {
   input: UpdatePeopleInput;
 };
-export type PeopleViewUpdatePeopleMutation$data = {
+export type PeopleViewPageUpdatePeopleMutation$data = {
   readonly updatePeople: {
     readonly people: {
       readonly additionalEmailAddresses: ReadonlyArray<string>;
       readonly fullName: string;
       readonly id: string;
       readonly kind: PeopleKind;
+      readonly position: string;
       readonly primaryEmailAddress: string;
       readonly updatedAt: string;
       readonly version: number;
     };
   };
 };
-export type PeopleViewUpdatePeopleMutation = {
-  response: PeopleViewUpdatePeopleMutation$data;
-  variables: PeopleViewUpdatePeopleMutation$variables;
+export type PeopleViewPageUpdatePeopleMutation = {
+  response: PeopleViewPageUpdatePeopleMutation$data;
+  variables: PeopleViewPageUpdatePeopleMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -109,6 +111,13 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
+            "name": "position",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
             "name": "updatedAt",
             "storageKey": null
           },
@@ -131,7 +140,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "PeopleViewUpdatePeopleMutation",
+    "name": "PeopleViewPageUpdatePeopleMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -140,20 +149,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "PeopleViewUpdatePeopleMutation",
+    "name": "PeopleViewPageUpdatePeopleMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "96bba526a231dd76ef58d32ec01aac3a",
+    "cacheID": "a054d1a1fa3ff51c0452773e9a1cedf7",
     "id": null,
     "metadata": {},
-    "name": "PeopleViewUpdatePeopleMutation",
+    "name": "PeopleViewPageUpdatePeopleMutation",
     "operationKind": "mutation",
-    "text": "mutation PeopleViewUpdatePeopleMutation(\n  $input: UpdatePeopleInput!\n) {\n  updatePeople(input: $input) {\n    people {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      updatedAt\n      version\n    }\n  }\n}\n"
+    "text": "mutation PeopleViewPageUpdatePeopleMutation(\n  $input: UpdatePeopleInput!\n) {\n  updatePeople(input: $input) {\n    people {\n      id\n      fullName\n      primaryEmailAddress\n      additionalEmailAddresses\n      kind\n      position\n      updatedAt\n      version\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "957952927fbe2337a180599f34ce961c";
+(node as any).hash = "607684c9ed7f882cebf22f67caabb05d";
 
 export default node;
