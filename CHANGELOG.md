@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## Security
+
+- Upgrade Golang dependencies
+- Upgrade Node dependencies
+
 ## [0.11.1] - 2025-04-15
 
 ### Changed
