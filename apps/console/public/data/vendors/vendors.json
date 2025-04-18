@@ -800,5 +800,51 @@
     "privacyPolicyUrl": "https://signal.org/legal/#privacy-policy",
     "termsOfServiceUrl": "https://signal.org/legal/#terms-of-service",
     "statusPageUrl": "https://status.signal.org/"
+  },
+  {
+    "name": "monday.com",
+    "legalName": "Monday.com Ltd.",
+    "headquarterAddress": "Tel Aviv, Israel",
+    "websiteUrl": "https://monday.com",
+    "description": "monday.com is a work management platform that helps teams plan, track, and manage work.",
+    "category": "Work Management",
+    "certifications": [
+      "ISO/IEC 27001:2022",
+      "ISO/IEC 27018:2014",
+      "ISO/IEC 27017:2015",
+      "ISO/IEC 27032:2023",
+      "ISO/IEC 27701:2019",
+      "HIPAA",
+      "GDPR",
+      "CCPA",
+      "SOC 1 Type 2",
+      "SOC 2 Type 2",
+      "SOC 3",
+      "TX RAMP",
+      "CSA"
+    ],
+    "securityPageUrl": "https://monday.com/trustcenter/datasecure/",
+    "privacyPolicyUrl": "https://monday.com/l/privacy/privacy-policy",
+    "termsOfServiceUrl": "https://monday.com/l/legal/tos",
+    "dataProcessingAgreementUrl": "https://monday.com/l/privacy/dpa",
+    "subprocessorsListUrl": "https://monday.com/l/privacy/sub-processors-subsidiaries-support",
+    "businessAssociateAgreementUrl": "https://monday.com/l/privacy/hipaa-baa",
+    "statusPageUrl": "https://status.monday.com",
+    "trustPageUrl": "https://monday.com/trustcenter"
+  },
+  {
+    "name": "Carta",
+    "legalName": "eShares, Inc.",
+    "headquarterAddress": "333 Bush Street, San Francisco, California 94104, United States",
+    "websiteUrl": "https://carta.com",
+    "description": "Carta is a financial technology company that provides a platform for managing employee equity compensation.",
+    "category": "Employee Equity Compensation",
+    "certifications": ["SOC 1 Type 2", "SOC 2 Type 2", "ISO/IEC 27001:2022", "GDPR", "CCPA"],
+    "securityPageUrl": "https://carta.com/security",
+    "privacyPolicyUrl": "https://carta.com/privacy/",
+    "termsOfServiceUrl": "https://carta.com/terms-of-service/",
+    "dataProcessingAgreementUrl": "https://carta.com/legal/carta-europe/data-processor-agreement/",
+    "subprocessorsListUrl": "https://carta.com/legal/carta-europe/data-processor-agreement/",
+    "trustPageUrl": "https://app.conveyor.com/profile/carta"
   }
 ]
