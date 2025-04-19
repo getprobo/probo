@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<121c9ad6ab399476692b98d1838f70d7>>
+ * @generated SignedSource<<f0234c8da839e9d7babc696edb1171aa>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -94,6 +94,13 @@ v8 = {
   "args": null,
   "kind": "ScalarField",
   "name": "id",
+  "storageKey": null
+},
+v9 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "category",
   "storageKey": null
 };
 return {
@@ -228,6 +235,7 @@ return {
                             "name": "description",
                             "storageKey": null
                           },
+                          (v9/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -241,6 +249,66 @@ return {
                             "kind": "ScalarField",
                             "name": "updatedAt",
                             "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "People",
+                            "kind": "LinkedField",
+                            "name": "owner",
+                            "plural": false,
+                            "selections": [
+                              (v8/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "fullName",
+                                "storageKey": null
+                              }
+                            ],
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "first",
+                                "value": 1
+                              }
+                            ],
+                            "concreteType": "MesureConnection",
+                            "kind": "LinkedField",
+                            "name": "mesures",
+                            "plural": false,
+                            "selections": [
+                              {
+                                "alias": null,
+                                "args": null,
+                                "concreteType": "MesureEdge",
+                                "kind": "LinkedField",
+                                "name": "edges",
+                                "plural": true,
+                                "selections": [
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "concreteType": "Mesure",
+                                    "kind": "LinkedField",
+                                    "name": "node",
+                                    "plural": false,
+                                    "selections": [
+                                      (v9/*: any*/),
+                                      (v8/*: any*/)
+                                    ],
+                                    "storageKey": null
+                                  }
+                                ],
+                                "storageKey": null
+                              }
+                            ],
+                            "storageKey": "mesures(first:1)"
                           },
                           (v7/*: any*/)
                         ],
@@ -329,16 +397,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "402fdc7c2f504ba8640e2ecd2f8f2cb8",
+    "cacheID": "398efd65ce3f24d13b357e8cf32c4f6e",
     "id": null,
     "metadata": {},
     "name": "ListRiskViewPaginationQuery",
     "operationKind": "query",
-    "text": "query ListRiskViewPaginationQuery(\n  $after: CursorKey\n  $before: CursorKey\n  $first: Int\n  $last: Int\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ListRiskView_risks_pbnwq\n    id\n  }\n}\n\nfragment ListRiskView_risks_pbnwq on Organization {\n  risks(first: $first, after: $after, last: $last, before: $before) {\n    edges {\n      node {\n        id\n        name\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        treatment\n        description\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n  id\n}\n"
+    "text": "query ListRiskViewPaginationQuery(\n  $after: CursorKey\n  $before: CursorKey\n  $first: Int\n  $last: Int\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ListRiskView_risks_pbnwq\n    id\n  }\n}\n\nfragment ListRiskView_risks_pbnwq on Organization {\n  risks(first: $first, after: $after, last: $last, before: $before) {\n    edges {\n      node {\n        id\n        name\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        treatment\n        description\n        category\n        createdAt\n        updatedAt\n        owner {\n          id\n          fullName\n        }\n        mesures(first: 1) {\n          edges {\n            node {\n              category\n              id\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a5f7d6424459d2a3b471bb0a4f0a4169";
+(node as any).hash = "3fc46af4f252617f4547c988184bb168";
 
 export default node;

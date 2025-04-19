@@ -46,6 +46,7 @@ const editRiskViewQuery = graphql`
         id
         name
         description
+        category
         inherentLikelihood
         inherentImpact
         residualLikelihood
@@ -71,6 +72,7 @@ const updateRiskMutation = graphql`
         id
         name
         description
+        category
         inherentLikelihood
         inherentImpact
         residualLikelihood
@@ -104,6 +106,7 @@ function EditRiskViewContent({
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
   const [inherentLikelihood, setInherentLikelihood] = useState<number>(3);
   const [inherentImpact, setInherentImpact] = useState<number>(3);
   const [residualLikelihood, setResidualLikelihood] = useState<number>(3);
@@ -120,6 +123,7 @@ function EditRiskViewContent({
     if (risk) {
       setName(risk.name || "");
       setDescription(risk.description || "");
+      setCategory(risk.category || "");
       // Set values directly as integers
       setInherentLikelihood(risk.inherentLikelihood || 3);
       setInherentImpact(risk.inherentImpact || 3);
@@ -148,6 +152,7 @@ function EditRiskViewContent({
       id: riskId!,
       name,
       description,
+      category,
       inherentLikelihood,
       inherentImpact,
       residualLikelihood,
@@ -203,6 +208,17 @@ function EditRiskViewContent({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Input
+                id="category"
+                placeholder="Risk category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<feef659391195d68121d9db49de0ffc6>>
+ * @generated SignedSource<<5a97a0d2387d66d74de35ec9b5bc86cf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type RiskTreatment = "ACCEPTED" | "AVOIDED" | "MITIGATED" | "TRANSFERRED";
 export type UpdateRiskInput = {
+  category?: string | null | undefined;
   description?: string | null | undefined;
   id: string;
   inherentImpact?: number | null | undefined;
@@ -27,6 +28,7 @@ export type EditRiskViewUpdateRiskMutation$variables = {
 export type EditRiskViewUpdateRiskMutation$data = {
   readonly updateRisk: {
     readonly risk: {
+      readonly category: string;
       readonly description: string;
       readonly id: string;
       readonly inherentImpact: number;
@@ -99,6 +101,13 @@ v2 = [
             "args": null,
             "kind": "ScalarField",
             "name": "description",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "category",
             "storageKey": null
           },
           {
@@ -187,16 +196,16 @@ return {
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "31fc731869a56e3bdc73aae7c114a385",
+    "cacheID": "a640c5be0a7614478f2d229154d9206a",
     "id": null,
     "metadata": {},
     "name": "EditRiskViewUpdateRiskMutation",
     "operationKind": "mutation",
-    "text": "mutation EditRiskViewUpdateRiskMutation(\n  $input: UpdateRiskInput!\n) {\n  updateRisk(input: $input) {\n    risk {\n      id\n      name\n      description\n      inherentLikelihood\n      inherentImpact\n      residualLikelihood\n      residualImpact\n      treatment\n      updatedAt\n      owner {\n        id\n        fullName\n      }\n    }\n  }\n}\n"
+    "text": "mutation EditRiskViewUpdateRiskMutation(\n  $input: UpdateRiskInput!\n) {\n  updateRisk(input: $input) {\n    risk {\n      id\n      name\n      description\n      category\n      inherentLikelihood\n      inherentImpact\n      residualLikelihood\n      residualImpact\n      treatment\n      updatedAt\n      owner {\n        id\n        fullName\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "777e70d85a1de9db8b625b1f5b109c7e";
+(node as any).hash = "7f4cfbd3d1e3fa396b7ffbcac1e12b0a";
 
 export default node;

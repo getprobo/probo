@@ -150,6 +150,7 @@ type CreateRiskInput struct {
 	OrganizationID     gid.GID                `json:"organizationId"`
 	Name               string                 `json:"name"`
 	Description        string                 `json:"description"`
+	Category           string                 `json:"category"`
 	OwnerID            *gid.GID               `json:"ownerId,omitempty"`
 	Treatment          coredata.RiskTreatment `json:"treatment"`
 	InherentLikelihood int                    `json:"inherentLikelihood"`
@@ -561,6 +562,7 @@ type Risk struct {
 	ID                 gid.GID                `json:"id"`
 	Name               string                 `json:"name"`
 	Description        string                 `json:"description"`
+	Category           string                 `json:"category"`
 	Treatment          coredata.RiskTreatment `json:"treatment"`
 	InherentLikelihood int                    `json:"inherentLikelihood"`
 	InherentImpact     int                    `json:"inherentImpact"`
@@ -689,6 +691,7 @@ type UpdateRiskInput struct {
 	ID                 gid.GID                 `json:"id"`
 	Name               *string                 `json:"name,omitempty"`
 	Description        *string                 `json:"description,omitempty"`
+	Category           *string                 `json:"category,omitempty"`
 	OwnerID            *gid.GID                `json:"ownerId,omitempty"`
 	Treatment          *coredata.RiskTreatment `json:"treatment,omitempty"`
 	InherentLikelihood *int                    `json:"inherentLikelihood,omitempty"`

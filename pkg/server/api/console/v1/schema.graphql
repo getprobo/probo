@@ -627,6 +627,7 @@ type Risk implements Node {
   id: ID!
   name: String!
   description: String!
+  category: String!
   treatment: RiskTreatment!
   inherentLikelihood: Int!
   inherentImpact: Int!
@@ -1090,6 +1091,7 @@ input CreateRiskInput {
   organizationId: ID!
   name: String!
   description: String!
+  category: String!
   ownerId: ID
   treatment: RiskTreatment!
   inherentLikelihood: Int!
@@ -1102,6 +1104,7 @@ input UpdateRiskInput {
   id: ID!
   name: String
   description: String
+  category: String
   ownerId: ID
   treatment: RiskTreatment
   inherentLikelihood: Int

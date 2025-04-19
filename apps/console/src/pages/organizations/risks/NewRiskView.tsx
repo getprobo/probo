@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import PeopleSelector from "@/components/PeopleSelector";
-import { User } from "lucide-react";
+import { User, Loader2 } from "lucide-react";
 import { Suspense } from "react";
 import type { NewRiskViewQuery } from "./__generated__/NewRiskViewQuery.graphql";
 
@@ -43,6 +43,7 @@ interface RiskTemplate {
     likelihood: number;
     recommendedTreatment: string;
   }[];
+  category: string;
 }
 
 const newRiskQuery = graphql`
@@ -64,6 +65,7 @@ const createRiskMutation = graphql`
           id
           name
           description
+          category
           inherentLikelihood
           inherentImpact
           residualLikelihood
@@ -95,14 +97,45 @@ function NewRiskForm({
   const [ownerId, setOwnerId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [riskTemplates, setRiskTemplates] = useState<RiskTemplate[]>([]);
+  const [ownerError, setOwnerError] = useState<string>("");
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
   const { toast } = useToast();
 
   const [createRisk, isInFlight] = useMutation(createRiskMutation);
 
+  // Get unique categories from risk templates
+  const categories = Array.from(new Set(riskTemplates.map(template => template.category)));
+
+  // Filter risks by selected category
+  const filteredRisks = riskTemplates.filter(template => 
+    !selectedCategory || template.category === selectedCategory
+  ).map(template => ({
+    ...template,
+    originalIndex: riskTemplates.findIndex(t => t.name === template.name && t.description === template.description)
+  }));
+
+  // Handle category selection
+  const selectCategory = (category: string) => {
+    setSelectedCategory(category);
+    // Only reset template if we're changing categories
+    if (selectedCategory !== category) {
+      setSelectedTemplate("");
+    }
+    // Focus on the risk dropdown after a short delay to ensure it's rendered
+    setTimeout(() => {
+      const selectTrigger = document.getElementById('template');
+      if (selectTrigger) {
+        selectTrigger.focus();
+      }
+    }, 0);
+  };
+
   useEffect(() => {
     const loadRiskTemplates = async () => {
       try {
+        setIsLoadingTemplates(true);
         const response = await fetch("/data/risks/risks.json");
         const data = await response.json();
         setRiskTemplates(data);
@@ -113,6 +146,8 @@ function NewRiskForm({
           description: "Failed to load risk templates. Please try again.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoadingTemplates(false);
       }
     };
 
@@ -135,33 +170,24 @@ function NewRiskForm({
       return;
     }
 
-    const template = riskTemplates[parseInt(templateId)];
+    const selectedIndex = parseInt(templateId);
+    const template = riskTemplates[selectedIndex];
     if (template) {
       setName(template.name);
       setDescription(template.description);
-
-      // Convert template values to 1-5 scale
-      const likelihoodValue =
-        Math.round(template.variations[0].likelihood * 5) || 3;
-      const impactValue = Math.round(template.variations[0].impact * 5) || 3;
-
-      // Ensure values are in 1-5 range
-      setInherentLikelihood(Math.min(Math.max(likelihoodValue, 1), 5));
-      setInherentImpact(Math.min(Math.max(impactValue, 1), 5));
-
-      // Set residual values to be the same as initial values by default
-      setResidualLikelihood(Math.min(Math.max(likelihoodValue, 1), 5));
-      setResidualImpact(Math.min(Math.max(impactValue, 1), 5));
-
-      // Set recommended treatment if available
-      if (template.variations[0].recommendedTreatment) {
-        setTreatment(template.variations[0].recommendedTreatment.toUpperCase());
-      }
+      setTreatment("MITIGATED");
     }
+  };
+
+  // Clear error when owner is selected
+  const handleOwnerSelect = (id: string | null) => {
+    setOwnerId(id);
+    setOwnerError("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    let hasError = false;
 
     if (!name.trim()) {
       toast({
@@ -169,6 +195,15 @@ function NewRiskForm({
         description: "Please enter a name for the risk.",
         variant: "destructive",
       });
+      hasError = true;
+    }
+
+    if (!ownerId) {
+      setOwnerError("Please select a risk owner");
+      hasError = true;
+    }
+
+    if (hasError) {
       return;
     }
 
@@ -178,6 +213,7 @@ function NewRiskForm({
       organizationId: organizationId!,
       name,
       description,
+      category: selectedCategory,
       inherentLikelihood,
       inherentImpact,
       residualLikelihood,
@@ -242,27 +278,52 @@ function NewRiskForm({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="template">Risk Template</Label>
-              <Select
-                value={selectedTemplate}
-                onValueChange={handleTemplateChange}
-              >
-                <SelectTrigger id="template">
-                  <SelectValue placeholder="Select a risk template" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px] overflow-y-auto">
-                  <SelectItem value="none">Select a template</SelectItem>
-                  {riskTemplates.map((template, index) => (
-                    <SelectItem key={index} value={index.toString()}>
-                      {template.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-tertiary">
-                Select a template to prefill the form or create a custom risk.
-              </p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="template">Risk Template</Label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {isLoadingTemplates ? (
+                    <div className="flex items-center gap-2 text-tertiary">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Loading categories...</span>
+                    </div>
+                  ) : (
+                    categories.map((category) => (
+                      <Button
+                        key={category}
+                        variant={selectedCategory === category ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => selectCategory(category)}
+                        className="rounded-full"
+                      >
+                        {category}
+                      </Button>
+                    ))
+                  )}
+                </div>
+                <Select
+                  value={selectedTemplate}
+                  onValueChange={handleTemplateChange}
+                >
+                  <SelectTrigger id="template">
+                    <SelectValue placeholder="Select a risk template" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px] overflow-y-auto">
+                    <SelectItem value="none">Select a template</SelectItem>
+                    {filteredRisks.map((template) => (
+                      <SelectItem 
+                        key={template.originalIndex} 
+                        value={template.originalIndex.toString()}
+                      >
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-tertiary">
+                  Select a risk template to prefill the form or create a custom risk.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -291,14 +352,18 @@ function NewRiskForm({
               <Label htmlFor="owner" className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 Risk Owner
+                <span className="text-destructive">*</span>
               </Label>
               <PeopleSelector
                 organizationRef={data.organization}
                 selectedPersonId={ownerId}
-                onSelect={setOwnerId}
-                placeholder="Select risk owner (optional)"
-                required={false}
+                onSelect={handleOwnerSelect}
+                placeholder="Select risk owner"
+                required={true}
               />
+              {ownerError && (
+                <p className="text-sm text-destructive mt-1">Please select a risk owner</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">

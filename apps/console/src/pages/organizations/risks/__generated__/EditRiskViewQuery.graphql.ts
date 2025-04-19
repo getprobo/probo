@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fc9fe251d08f57babcab4e395b6c0aec>>
+ * @generated SignedSource<<028d64b4c532fdc04b77de62bd70311b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,6 +20,7 @@ export type EditRiskViewQuery$data = {
     readonly " $fragmentSpreads": FragmentRefs<"PeopleSelector_organization">;
   };
   readonly risk: {
+    readonly category?: string;
     readonly description?: string;
     readonly id?: string;
     readonly inherentImpact?: number;
@@ -82,45 +83,52 @@ v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "inherentLikelihood",
+  "name": "category",
   "storageKey": null
 },
 v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "inherentImpact",
+  "name": "inherentLikelihood",
   "storageKey": null
 },
 v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "residualLikelihood",
+  "name": "inherentImpact",
   "storageKey": null
 },
 v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "residualImpact",
+  "name": "residualLikelihood",
   "storageKey": null
 },
 v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "treatment",
+  "name": "residualImpact",
   "storageKey": null
 },
 v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "fullName",
+  "name": "treatment",
   "storageKey": null
 },
 v12 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "fullName",
+  "storageKey": null
+},
+v13 = {
   "alias": null,
   "args": null,
   "concreteType": "People",
@@ -129,25 +137,25 @@ v12 = {
   "plural": false,
   "selections": [
     (v3/*: any*/),
-    (v11/*: any*/)
+    (v12/*: any*/)
   ],
   "storageKey": null
 },
-v13 = [
+v14 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "organizationId"
   }
 ],
-v14 = {
+v15 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v15 = [
+v16 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -191,7 +199,8 @@ return {
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
-              (v12/*: any*/)
+              (v11/*: any*/),
+              (v13/*: any*/)
             ],
             "type": "Risk",
             "abstractKey": null
@@ -201,7 +210,7 @@ return {
       },
       {
         "alias": "organization",
-        "args": (v13/*: any*/),
+        "args": (v14/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
@@ -236,7 +245,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v14/*: any*/),
+          (v15/*: any*/),
           (v3/*: any*/),
           {
             "kind": "InlineFragment",
@@ -248,7 +257,8 @@ return {
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
-              (v12/*: any*/)
+              (v11/*: any*/),
+              (v13/*: any*/)
             ],
             "type": "Risk",
             "abstractKey": null
@@ -258,20 +268,20 @@ return {
       },
       {
         "alias": "organization",
-        "args": (v13/*: any*/),
+        "args": (v14/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v14/*: any*/),
+          (v15/*: any*/),
           (v3/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v15/*: any*/),
+                "args": (v16/*: any*/),
                 "concreteType": "PeopleConnection",
                 "kind": "LinkedField",
                 "name": "peoples",
@@ -294,7 +304,7 @@ return {
                         "plural": false,
                         "selections": [
                           (v3/*: any*/),
-                          (v11/*: any*/),
+                          (v12/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -302,7 +312,7 @@ return {
                             "name": "primaryEmailAddress",
                             "storageKey": null
                           },
-                          (v14/*: any*/)
+                          (v15/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -346,7 +356,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v15/*: any*/),
+                "args": (v16/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
@@ -365,16 +375,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5d84f3bb7bcc5123adcf8fe776baea73",
+    "cacheID": "cdae5e406ef1b70c372791cc998e82ac",
     "id": null,
     "metadata": {},
     "name": "EditRiskViewQuery",
     "operationKind": "query",
-    "text": "query EditRiskViewQuery(\n  $riskId: ID!\n  $organizationId: ID!\n) {\n  risk: node(id: $riskId) {\n    __typename\n    ... on Risk {\n      id\n      name\n      description\n      inherentLikelihood\n      inherentImpact\n      residualLikelihood\n      residualImpact\n      treatment\n      owner {\n        id\n        fullName\n      }\n    }\n    id\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ...PeopleSelector_organization\n    id\n  }\n}\n\nfragment PeopleSelector_organization on Organization {\n  id\n  peoples(first: 100, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query EditRiskViewQuery(\n  $riskId: ID!\n  $organizationId: ID!\n) {\n  risk: node(id: $riskId) {\n    __typename\n    ... on Risk {\n      id\n      name\n      description\n      category\n      inherentLikelihood\n      inherentImpact\n      residualLikelihood\n      residualImpact\n      treatment\n      owner {\n        id\n        fullName\n      }\n    }\n    id\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ...PeopleSelector_organization\n    id\n  }\n}\n\nfragment PeopleSelector_organization on Organization {\n  id\n  peoples(first: 100, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "616261dd100b7243f955cd94e39e7ac9";
+(node as any).hash = "3ea38c607c8a1d3f18eaa964476f1529";
 
 export default node;

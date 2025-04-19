@@ -16,6 +16,7 @@ import {
   useTransition,
 } from "react";
 import type { ListRiskViewQuery } from "./__generated__/ListRiskViewQuery.graphql";
+import type { RiskTreatment } from "./__generated__/ListRiskView_risks.graphql";
 import { useParams, useSearchParams } from "react-router";
 import { PageTemplate } from "@/components/PageTemplate";
 import { RiskViewSkeleton } from "./ListRiskPage";
@@ -84,8 +85,20 @@ const listRiskViewFragment = graphql`
           residualImpact
           treatment
           description
+          category
           createdAt
           updatedAt
+          owner {
+            id
+            fullName
+          }
+          mesures(first: 1) {
+            edges {
+              node {
+                category
+              }
+            }
+          }
         }
       }
       pageInfo {
@@ -195,6 +208,31 @@ const emptyRiskMatrixColors = {
   low: "bg-green-50 text-black",
   medium: "bg-yellow-50 text-black",
   high: "bg-red-50 text-black",
+};
+
+type RiskNode = {
+  readonly id: string;
+  readonly name: string;
+  readonly inherentLikelihood: number;
+  readonly inherentImpact: number;
+  readonly residualLikelihood: number;
+  readonly residualImpact: number;
+  readonly treatment: RiskTreatment;
+  readonly description: string;
+  readonly category: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly owner: {
+    readonly id: string;
+    readonly fullName: string;
+  } | null;
+  readonly mesures: {
+    readonly edges: ReadonlyArray<{
+      readonly node: {
+        readonly category: string;
+      };
+    }>;
+  };
 };
 
 // Risk Matrix Component
@@ -676,17 +714,23 @@ function ListRiskViewContent({
               <table className="w-full caption-bottom text-sm">
                 <thead className="[&_tr]:border-b">
                   <tr className="border-b transition-colors hover:bg-h-subtle-bg data-[state=selected]:bg-subtle-bg">
-                    <th className="h-12 px-4 text-left align-middle font-medium text-tertiary w-1/2">
+                    <th className="h-12 px-4 text-left align-middle font-medium text-tertiary w-1/6">
+                      Category
+                    </th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-tertiary w-1/3">
                       Name
+                    </th>
+                    <th className="h-12 px-4 text-left align-middle font-medium text-tertiary w-1/6">
+                      Inherent
                     </th>
                     <th className="h-12 px-4 text-left align-middle font-medium text-tertiary w-1/6">
                       Treatment
                     </th>
                     <th className="h-12 px-4 text-left align-middle font-medium text-tertiary w-1/6">
-                      Inherent Severity
+                      Residual
                     </th>
                     <th className="h-12 px-4 text-left align-middle font-medium text-tertiary w-1/6">
-                      Residual Severity
+                      Owner
                     </th>
                     <th className="h-12 px-4 text-left align-middle font-medium text-tertiary w-[120px]">
                       Action
@@ -697,7 +741,7 @@ function ListRiskViewContent({
                   {risks.length === 0 ? (
                     <tr className="border-b transition-colors hover:bg-h-subtle-bg data-[state=selected]:bg-subtle-bg">
                       <td
-                        colSpan={5}
+                        colSpan={7}
                         className="text-center p-4 align-middle text-tertiary"
                       >
                         No risks found. Create a new risk to get started.
@@ -709,7 +753,15 @@ function ListRiskViewContent({
                         key={risk.id}
                         className="border-b transition-colors hover:bg-h-subtle-bg data-[state=selected]:bg-subtle-bg cursor-pointer"
                       >
-                        <td className="p-0 align-middle font-medium w-1/2">
+                        <td className="p-0 align-middle w-1/6">
+                          <Link
+                            to={`/organizations/${organizationId}/risks/${risk.id}`}
+                            className="block p-4 h-full w-full"
+                          >
+                            {risk.category}
+                          </Link>
+                        </td>
+                        <td className="p-0 align-middle font-medium w-1/3">
                           <Link
                             to={`/organizations/${organizationId}/risks/${risk.id}`}
                             className="block p-4 h-full w-full"
@@ -722,35 +774,19 @@ function ListRiskViewContent({
                             to={`/organizations/${organizationId}/risks/${risk.id}`}
                             className="block p-4 h-full w-full"
                           >
-                            {formatTreatment(risk.treatment)}
-                          </Link>
-                        </td>
-                        <td className="p-0 align-middle w-1/6 whitespace-nowrap">
-                          <Link
-                            to={`/organizations/${organizationId}/risks/${risk.id}`}
-                            className="block p-4 h-full w-full"
-                          >
                             <span
                               className="px-2 py-0.5 text-xs rounded-full font-medium inline-block"
                               style={{
                                 backgroundColor:
-                                  risk.inherentLikelihood *
-                                    risk.inherentImpact >=
-                                  20
+                                  risk.inherentLikelihood * risk.inherentImpact >= 20
                                     ? "#ef4444"
-                                    : risk.inherentLikelihood *
-                                        risk.inherentImpact >=
-                                      12
+                                    : risk.inherentLikelihood * risk.inherentImpact >= 12
                                     ? "#f59e0b"
-                                    : risk.inherentLikelihood *
-                                        risk.inherentImpact >=
-                                      5
+                                    : risk.inherentLikelihood * risk.inherentImpact >= 5
                                     ? "#10b981"
                                     : "#94a3b8",
                                 color:
-                                  risk.inherentLikelihood *
-                                    risk.inherentImpact >=
-                                  12
+                                  risk.inherentLikelihood * risk.inherentImpact >= 12
                                     ? "white"
                                     : "inherit",
                               }}
@@ -767,28 +803,28 @@ function ListRiskViewContent({
                             to={`/organizations/${organizationId}/risks/${risk.id}`}
                             className="block p-4 h-full w-full"
                           >
+                            {formatTreatment(risk.treatment)}
+                          </Link>
+                        </td>
+                        <td className="p-0 align-middle w-1/6 whitespace-nowrap">
+                          <Link
+                            to={`/organizations/${organizationId}/risks/${risk.id}`}
+                            className="block p-4 h-full w-full"
+                          >
                             {risk.residualLikelihood && risk.residualImpact ? (
                               <span
                                 className="px-2 py-0.5 text-xs rounded-full font-medium inline-block"
                                 style={{
                                   backgroundColor:
-                                    risk.residualLikelihood *
-                                      risk.residualImpact >=
-                                    20
+                                    risk.residualLikelihood * risk.residualImpact >= 20
                                       ? "#ef4444"
-                                      : risk.residualLikelihood *
-                                          risk.residualImpact >=
-                                        12
+                                      : risk.residualLikelihood * risk.residualImpact >= 12
                                       ? "#f59e0b"
-                                      : risk.residualLikelihood *
-                                          risk.residualImpact >=
-                                        5
+                                      : risk.residualLikelihood * risk.residualImpact >= 5
                                       ? "#10b981"
                                       : "#94a3b8",
                                   color:
-                                    risk.residualLikelihood *
-                                      risk.residualImpact >=
-                                    12
+                                    risk.residualLikelihood * risk.residualImpact >= 12
                                       ? "white"
                                       : "inherit",
                                 }}
@@ -796,12 +832,19 @@ function ListRiskViewContent({
                                 {riskScoreToSeverity(
                                   risk.residualLikelihood * risk.residualImpact
                                 )}{" "}
-                                ({risk.residualLikelihood * risk.residualImpact}
-                                )
+                                ({risk.residualLikelihood * risk.residualImpact})
                               </span>
                             ) : (
                               "Not set"
                             )}
+                          </Link>
+                        </td>
+                        <td className="p-0 align-middle w-1/6">
+                          <Link
+                            to={`/organizations/${organizationId}/risks/${risk.id}`}
+                            className="block p-4 h-full w-full"
+                          >
+                            {risk.owner?.fullName || "Unassigned"}
                           </Link>
                         </td>
                         <td className="p-4 align-middle w-[120px]">

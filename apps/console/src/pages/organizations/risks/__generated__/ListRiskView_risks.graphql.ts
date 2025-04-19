@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9a0b8102088652729e5c161730fe26a9>>
+ * @generated SignedSource<<1dd4443afe99bdd114d082b0d175776d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,12 +17,24 @@ export type ListRiskView_risks$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly category: string;
         readonly createdAt: string;
         readonly description: string;
         readonly id: string;
         readonly inherentImpact: number;
         readonly inherentLikelihood: number;
+        readonly mesures: {
+          readonly edges: ReadonlyArray<{
+            readonly node: {
+              readonly category: string;
+            };
+          }>;
+        };
         readonly name: string;
+        readonly owner: {
+          readonly fullName: string;
+          readonly id: string;
+        } | null | undefined;
         readonly residualImpact: number;
         readonly residualLikelihood: number;
         readonly treatment: RiskTreatment;
@@ -52,6 +64,13 @@ v1 = {
   "args": null,
   "kind": "ScalarField",
   "name": "id",
+  "storageKey": null
+},
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "category",
   "storageKey": null
 };
 return {
@@ -185,6 +204,7 @@ return {
                   "name": "description",
                   "storageKey": null
                 },
+                (v2/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -198,6 +218,65 @@ return {
                   "kind": "ScalarField",
                   "name": "updatedAt",
                   "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "concreteType": "People",
+                  "kind": "LinkedField",
+                  "name": "owner",
+                  "plural": false,
+                  "selections": [
+                    (v1/*: any*/),
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "fullName",
+                      "storageKey": null
+                    }
+                  ],
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": [
+                    {
+                      "kind": "Literal",
+                      "name": "first",
+                      "value": 1
+                    }
+                  ],
+                  "concreteType": "MesureConnection",
+                  "kind": "LinkedField",
+                  "name": "mesures",
+                  "plural": false,
+                  "selections": [
+                    {
+                      "alias": null,
+                      "args": null,
+                      "concreteType": "MesureEdge",
+                      "kind": "LinkedField",
+                      "name": "edges",
+                      "plural": true,
+                      "selections": [
+                        {
+                          "alias": null,
+                          "args": null,
+                          "concreteType": "Mesure",
+                          "kind": "LinkedField",
+                          "name": "node",
+                          "plural": false,
+                          "selections": [
+                            (v2/*: any*/)
+                          ],
+                          "storageKey": null
+                        }
+                      ],
+                      "storageKey": null
+                    }
+                  ],
+                  "storageKey": "mesures(first:1)"
                 },
                 {
                   "alias": null,
@@ -280,6 +359,6 @@ return {
 };
 })();
 
-(node as any).hash = "a5f7d6424459d2a3b471bb0a4f0a4169";
+(node as any).hash = "3fc46af4f252617f4547c988184bb168";
 
 export default node;

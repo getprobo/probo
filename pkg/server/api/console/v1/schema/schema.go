@@ -412,6 +412,7 @@ type ComplexityRoot struct {
 	}
 
 	Risk struct {
+		Category           func(childComplexity int) int
 		Controls           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) int
 		CreatedAt          func(childComplexity int) int
 		Description        func(childComplexity int) int
@@ -2239,6 +2240,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RequestEvidencePayload.EvidenceEdge(childComplexity), true
 
+	case "Risk.category":
+		if e.complexity.Risk.Category == nil {
+			break
+		}
+
+		return e.complexity.Risk.Category(childComplexity), true
+
 	case "Risk.controls":
 		if e.complexity.Risk.Controls == nil {
 			break
@@ -3738,6 +3746,7 @@ type Risk implements Node {
   id: ID!
   name: String!
   description: String!
+  category: String!
   treatment: RiskTreatment!
   inherentLikelihood: Int!
   inherentImpact: Int!
@@ -4201,6 +4210,7 @@ input CreateRiskInput {
   organizationId: ID!
   name: String!
   description: String!
+  category: String!
   ownerId: ID
   treatment: RiskTreatment!
   inherentLikelihood: Int!
@@ -4213,6 +4223,7 @@ input UpdateRiskInput {
   id: ID!
   name: String
   description: String
+  category: String
   ownerId: ID
   treatment: RiskTreatment
   inherentLikelihood: Int
@@ -16837,6 +16848,50 @@ func (ec *executionContext) fieldContext_Risk_description(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Risk_category(ctx context.Context, field graphql.CollectedField, obj *types.Risk) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Risk_category(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Category, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Risk_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Risk",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Risk_treatment(ctx context.Context, field graphql.CollectedField, obj *types.Risk) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Risk_treatment(ctx, field)
 	if err != nil {
@@ -17666,6 +17721,8 @@ func (ec *executionContext) fieldContext_RiskEdge_node(_ context.Context, field 
 				return ec.fieldContext_Risk_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Risk_description(ctx, field)
+			case "category":
+				return ec.fieldContext_Risk_category(ctx, field)
 			case "treatment":
 				return ec.fieldContext_Risk_treatment(ctx, field)
 			case "inherentLikelihood":
@@ -18851,6 +18908,8 @@ func (ec *executionContext) fieldContext_UpdateRiskPayload_risk(_ context.Contex
 				return ec.fieldContext_Risk_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Risk_description(ctx, field)
+			case "category":
+				return ec.fieldContext_Risk_category(ctx, field)
 			case "treatment":
 				return ec.fieldContext_Risk_treatment(ctx, field)
 			case "inherentLikelihood":
@@ -24010,7 +24069,7 @@ func (ec *executionContext) unmarshalInputCreateRiskInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "name", "description", "ownerId", "treatment", "inherentLikelihood", "inherentImpact", "residualLikelihood", "residualImpact"}
+	fieldsInOrder := [...]string{"organizationId", "name", "description", "category", "ownerId", "treatment", "inherentLikelihood", "inherentImpact", "residualLikelihood", "residualImpact"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -24038,6 +24097,13 @@ func (ec *executionContext) unmarshalInputCreateRiskInput(ctx context.Context, o
 				return it, err
 			}
 			it.Description = data
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
 		case "ownerId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
@@ -25561,7 +25627,7 @@ func (ec *executionContext) unmarshalInputUpdateRiskInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "description", "ownerId", "treatment", "inherentLikelihood", "inherentImpact", "residualLikelihood", "residualImpact"}
+	fieldsInOrder := [...]string{"id", "name", "description", "category", "ownerId", "treatment", "inherentLikelihood", "inherentImpact", "residualLikelihood", "residualImpact"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -25589,6 +25655,13 @@ func (ec *executionContext) unmarshalInputUpdateRiskInput(ctx context.Context, o
 				return it, err
 			}
 			it.Description = data
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
 		case "ownerId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
@@ -26024,34 +26097,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case types.Organization:
-		return ec._Organization(ctx, sel, &obj)
-	case *types.Organization:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Organization(ctx, sel, obj)
-	case types.User:
-		return ec._User(ctx, sel, &obj)
-	case *types.User:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._User(ctx, sel, obj)
-	case types.People:
-		return ec._People(ctx, sel, &obj)
-	case *types.People:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._People(ctx, sel, obj)
-	case types.Vendor:
-		return ec._Vendor(ctx, sel, &obj)
-	case *types.Vendor:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Vendor(ctx, sel, obj)
 	case types.VendorComplianceReport:
 		return ec._VendorComplianceReport(ctx, sel, &obj)
 	case *types.VendorComplianceReport:
@@ -26059,27 +26104,20 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._VendorComplianceReport(ctx, sel, obj)
-	case types.Framework:
-		return ec._Framework(ctx, sel, &obj)
-	case *types.Framework:
+	case types.Vendor:
+		return ec._Vendor(ctx, sel, &obj)
+	case *types.Vendor:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._Framework(ctx, sel, obj)
-	case types.Control:
-		return ec._Control(ctx, sel, &obj)
-	case *types.Control:
+		return ec._Vendor(ctx, sel, obj)
+	case types.User:
+		return ec._User(ctx, sel, &obj)
+	case *types.User:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._Control(ctx, sel, obj)
-	case types.Mesure:
-		return ec._Mesure(ctx, sel, &obj)
-	case *types.Mesure:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Mesure(ctx, sel, obj)
+		return ec._User(ctx, sel, obj)
 	case types.Task:
 		return ec._Task(ctx, sel, &obj)
 	case *types.Task:
@@ -26087,20 +26125,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Task(ctx, sel, obj)
-	case types.Evidence:
-		return ec._Evidence(ctx, sel, &obj)
-	case *types.Evidence:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Evidence(ctx, sel, obj)
-	case types.Policy:
-		return ec._Policy(ctx, sel, &obj)
-	case *types.Policy:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Policy(ctx, sel, obj)
 	case types.Risk:
 		return ec._Risk(ctx, sel, &obj)
 	case *types.Risk:
@@ -26108,6 +26132,55 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Risk(ctx, sel, obj)
+	case types.Policy:
+		return ec._Policy(ctx, sel, &obj)
+	case *types.Policy:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Policy(ctx, sel, obj)
+	case types.People:
+		return ec._People(ctx, sel, &obj)
+	case *types.People:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._People(ctx, sel, obj)
+	case types.Organization:
+		return ec._Organization(ctx, sel, &obj)
+	case *types.Organization:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Organization(ctx, sel, obj)
+	case types.Mesure:
+		return ec._Mesure(ctx, sel, &obj)
+	case *types.Mesure:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Mesure(ctx, sel, obj)
+	case types.Framework:
+		return ec._Framework(ctx, sel, &obj)
+	case *types.Framework:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Framework(ctx, sel, obj)
+	case types.Evidence:
+		return ec._Evidence(ctx, sel, &obj)
+	case *types.Evidence:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Evidence(ctx, sel, obj)
+	case types.Control:
+		return ec._Control(ctx, sel, &obj)
+	case *types.Control:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Control(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -29647,6 +29720,11 @@ func (ec *executionContext) _Risk(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "description":
 			out.Values[i] = ec._Risk_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "category":
+			out.Values[i] = ec._Risk_category(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -33521,9 +33599,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 
 func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
 	var vSlice []any
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]string, len(vSlice))
 	for i := range vSlice {
@@ -34262,9 +34338,7 @@ func (ec *executionContext) marshalN__DirectiveLocation2string(ctx context.Conte
 
 func (ec *executionContext) unmarshalN__DirectiveLocation2ᚕstringᚄ(ctx context.Context, v any) ([]string, error) {
 	var vSlice []any
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]string, len(vSlice))
 	for i := range vSlice {
@@ -34844,9 +34918,7 @@ func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v
 		return nil, nil
 	}
 	var vSlice []any
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
+	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]string, len(vSlice))
 	for i := range vSlice {

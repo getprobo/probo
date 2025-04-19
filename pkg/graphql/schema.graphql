@@ -1,0 +1,15 @@
+type Risk {
+  id: ID!
+  organizationId: ID!
+  name: String!
+  description: String!
+  category: String!
+  treatment: RiskTreatment!
+  ownerId: ID
+  inherentLikelihood: Int!
+  inherentImpact: Int!
+  residualLikelihood: Int!
+  residualImpact: Int!
+  createdAt: Time!
+  updatedAt: Time!
+} 

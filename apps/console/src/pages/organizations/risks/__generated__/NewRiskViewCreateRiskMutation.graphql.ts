@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f5de62a6351fe2691ad8aff671be4aad>>
+ * @generated SignedSource<<5b015e6ca9ba83b884026cca65dcdc1c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type RiskTreatment = "ACCEPTED" | "AVOIDED" | "MITIGATED" | "TRANSFERRED";
 export type CreateRiskInput = {
+  category: string;
   description: string;
   inherentImpact: number;
   inherentLikelihood: number;
@@ -29,6 +30,7 @@ export type NewRiskViewCreateRiskMutation$data = {
   readonly createRisk: {
     readonly riskEdge: {
       readonly node: {
+        readonly category: string;
         readonly createdAt: string;
         readonly description: string;
         readonly id: string;
@@ -101,6 +103,13 @@ v3 = {
           "args": null,
           "kind": "ScalarField",
           "name": "description",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "category",
           "storageKey": null
         },
         {
@@ -224,16 +233,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9f296661d12f36362aeecd2a1fd4aa63",
+    "cacheID": "c568f60a75535b2597f860405b4eba79",
     "id": null,
     "metadata": {},
     "name": "NewRiskViewCreateRiskMutation",
     "operationKind": "mutation",
-    "text": "mutation NewRiskViewCreateRiskMutation(\n  $input: CreateRiskInput!\n) {\n  createRisk(input: $input) {\n    riskEdge {\n      node {\n        id\n        name\n        description\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        treatment\n        createdAt\n        updatedAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation NewRiskViewCreateRiskMutation(\n  $input: CreateRiskInput!\n) {\n  createRisk(input: $input) {\n    riskEdge {\n      node {\n        id\n        name\n        description\n        category\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        treatment\n        createdAt\n        updatedAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7f70a20771d9f05f62e952a59c5484e3";
+(node as any).hash = "bcacfff0f67ad5cf0ecbfe26c0a5b6f9";
 
 export default node;
