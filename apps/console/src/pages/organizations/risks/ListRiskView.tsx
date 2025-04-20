@@ -43,8 +43,22 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 const defaultPageSize = 25;
+
+// Define available risk categories
+const RISK_CATEGORIES = [
+  "Compliance & Legal",
+  "Cybersecurity",
+  "Finance",
+  "Human capital",
+  "Operations",
+  "Reputational",
+  "Strategic",
+  "Technology",
+  "Other"
+] as const;
 
 const listRiskViewQuery = graphql`
   query ListRiskViewQuery(
@@ -568,6 +582,9 @@ function ListRiskViewContent({
   // State for toggling between initial and residual risk matrix
   const [showResidualRisk, setShowResidualRisk] = useState(false);
 
+  // State for category filters
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+
   // Setup delete mutation
   const [commitDeleteMutation] =
     useMutation<ListRiskViewDeleteMutation>(deleteRiskMutation);
@@ -588,6 +605,27 @@ function ListRiskViewContent({
   const risks = risksConnection?.risks?.edges?.map((edge) => edge.node) || [];
   const pageInfo = risksConnection?.risks?.pageInfo;
   const connectionId = risksConnection?.risks?.__id;
+
+  // Get unique categories from existing risks
+  const availableCategories = Array.from(new Set(risks.map(risk => risk.category))).sort();
+
+  // Filter risks based on selected categories
+  const filteredRisks = selectedCategories.size === 0 
+    ? risks 
+    : risks.filter(risk => selectedCategories.has(risk.category));
+
+  // Handle category toggle
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(category)) {
+        newSet.delete(category);
+      } else {
+        newSet.add(category);
+      }
+      return newSet;
+    });
+  };
 
   // Handle delete risk
   const handleDeleteRisk = useCallback(() => {
@@ -700,13 +738,27 @@ function ListRiskViewContent({
                 </div>
               </div>
               <RiskMatrix
-                risks={risks}
+                risks={filteredRisks}
                 isResidual={showResidualRisk}
                 organizationId={organizationId || ""}
               />
             </div>
           </CardContent>
         </Card>
+
+        {/* Category Filters */}
+        <div className="flex flex-wrap gap-2">
+          {availableCategories.map((category) => (
+            <Badge
+              key={category}
+              variant={selectedCategories.has(category) ? "default" : "outline"}
+              className="cursor-pointer"
+              onClick={() => toggleCategory(category)}
+            >
+              {category}
+            </Badge>
+          ))}
+        </div>
 
         <Card>
           <CardContent className="p-0">
@@ -738,7 +790,7 @@ function ListRiskViewContent({
                   </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
-                  {risks.length === 0 ? (
+                  {filteredRisks.length === 0 ? (
                     <tr className="border-b transition-colors hover:bg-h-subtle-bg data-[state=selected]:bg-subtle-bg">
                       <td
                         colSpan={7}
@@ -748,7 +800,7 @@ function ListRiskViewContent({
                       </td>
                     </tr>
                   ) : (
-                    risks.map((risk) => (
+                    filteredRisks.map((risk) => (
                       <tr
                         key={risk.id}
                         className="border-b transition-colors hover:bg-h-subtle-bg data-[state=selected]:bg-subtle-bg cursor-pointer"
