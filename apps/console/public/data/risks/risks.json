@@ -76,7 +76,7 @@
   },
   {
     "category": "Cybersecurity",
-    "name": "Loss of data due to poor or nonexistant backup strategy",
+    "name": "Loss of data due to poor or nonexistent backup strategy",
     "description": "Inadequate or nonexistent backups can lead to permanent data loss, potentially halting operations for extended periods."
   },
   {
@@ -132,11 +132,11 @@
   {
     "category": "Cybersecurity",
     "name": "Ineffective change management process",
-    "description": "Without proper control over changes to systems of softwares, unauthorized or untested changes could introduce vulnerabilities"
+    "description": "Without proper control over changes to software systems, unauthorized or untested changes could introduce vulnerabilities."
   },
   {
     "category": "Cybersecurity",
-    "name": "Insufficient incidient response plan",
+    "name": "Insufficient incident response plan",
     "description": "A poorly defined or tested response plan can lead to a slow or inadequate response from the team in reaction to a security breach."
   },
   {
