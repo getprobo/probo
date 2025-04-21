@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router";
 import {
   ConnectionHandler,
@@ -105,31 +105,26 @@ function NewRiskForm({
 
   const [createRisk, isInFlight] = useMutation(createRiskMutation);
 
-  // Get unique categories from risk templates
-  const categories = Array.from(new Set(riskTemplates.map(template => template.category)));
+  const categories = useMemo(
+    () => Array.from(new Set(riskTemplates.map(t => t.category))),
+    [riskTemplates],
+  );
 
-  // Filter risks by selected category
-  const filteredRisks = riskTemplates.filter(template => 
-    !selectedCategory || template.category === selectedCategory
-  ).map(template => ({
-    ...template,
-    originalIndex: riskTemplates.findIndex(t => t.name === template.name && t.description === template.description)
-  }));
+  const filteredRisks = useMemo(
+    () =>
+      riskTemplates
+        .map((t, idx) => ({ ...t, originalIndex: idx }))
+        .filter(t => !selectedCategory || t.category === selectedCategory),
+    [riskTemplates, selectedCategory],
+  );
 
   // Handle category selection
   const selectCategory = (category: string) => {
-    setSelectedCategory(category);
-    // Only reset template if we're changing categories
-    if (selectedCategory !== category) {
-      setSelectedTemplate("");
-    }
-    // Focus on the risk dropdown after a short delay to ensure it's rendered
-    setTimeout(() => {
-      const selectTrigger = document.getElementById('template');
-      if (selectTrigger) {
-        selectTrigger.focus();
-      }
-    }, 0);
+    setSelectedCategory(prev => {
+      if (prev !== category) setSelectedTemplate("");
+      return category;
+    });
+    // If focus management is required, attach a ref to <SelectTrigger> instead.
   };
 
   useEffect(() => {
@@ -176,6 +171,7 @@ function NewRiskForm({
       setName(template.name);
       setDescription(template.description);
       setTreatment("MITIGATED");
+      setSelectedCategory(template.category);
     }
   };
 
