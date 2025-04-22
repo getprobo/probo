@@ -1429,5 +1429,155 @@
     "dataProcessingAgreementUrl": "https://www.framer.com/legal/data-processing-addendum/",
     "subprocessorsListUrl": "https://www.framer.com/legal/sub-processors/",
     "statusPageUrl": "https://www.framerstatus.com/"
+  },
+  {
+    "name": "Cal.com",
+    "legalName": "Cal.com, Inc.",
+    "headquarterAddress": "2261 Market Street #4382, San Francisco, CA 94114, USA",
+    "websiteUrl": "https://cal.com",
+    "description": "Cal.com is an open-source scheduling platform that lets individuals and organizations create customizable booking experiences and integrate scheduling into their products.",
+    "category": "Scheduling / Productivity",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001:2022",
+      "HIPAA",
+      "GDPR",
+      "CCPA"
+    ],
+    "securityPageUrl": "https://cal.com/security",
+    "privacyPolicyUrl": "https://cal.com/privacy",
+    "termsOfServiceUrl": "https://cal.com/terms",
+    "dataProcessingAgreementUrl": "https://security.cal.com/?itemUid=c4223a81-5840-4e11-ac9f-2b812794a67e",
+    "subprocessorsListUrl": "https://security.cal.com/?itemUid=e3fae2ca-94a9-416b-b577-5c90e382df57",
+    "businessAssociateAgreementUrl": "https://app.cal.com/apps/baa-for-hipaa",
+    "trustPageUrl": "https://security.cal.com",
+    "statusPageUrl": "https://status.cal.com"
+  },
+  {
+    "name": "Mailchimp",
+    "legalName": "The Rocket Science Group LLC",
+    "headquarterAddress": "2 Sun Court Suite 400 Peachtree Corners, GA 30092",
+    "websiteUrl": "https://mailchimp.com",
+    "description": "All‑in‑one marketing automation platform that lets organizations create, send, and analyze email campaigns and other customer‑engagement content.",
+    "category": "Marketing Automation",
+  
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO 27001",
+      "Data Privacy Framework (DPF)",
+      "GDPR",
+      "CCPA",
+      "VPAT",
+      "PCI DSS"
+    ],
+    "securityPageUrl": "https://mailchimp.com/about/security/",
+    "privacyPolicyUrl": "https://www.intuit.com/privacy/statement/",
+    "termsOfServiceUrl": "https://mailchimp.com/legal/terms/",
+    "dataProcessingAgreementUrl": "https://mailchimp.com/legal/data-processing-addendum/",
+    "subprocessorsListUrl": "https://mailchimp.com/legal/subprocessors/",
+    "trustPageUrl": "https://www.intuit.com/compliance/",
+    "statusPageUrl": "https://status.mailchimp.com/"
+  },
+  {
+    "name": "Otter.ai",
+    "legalName": "Otter.ai, Inc.",
+    "headquarterAddress": "800 W El Camino Real, Suite 170, Mountain View, CA 94040",
+    "websiteUrl": "https://otter.ai",
+    "description": "AI‑powered meeting assistant that captures, transcribes, and summarizes conversations in real time to make information from meetings searchable and shareable.",
+    "category": "AI Transcription & Meeting Intelligence",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001:2022",
+      "GDPR",
+      "CCPA",
+      "Data Privacy Framework (DPF)"
+    ],
+    "securityPageUrl": "https://otter.ai/privacy-security",
+    "privacyPolicyUrl": "https://otter.ai/privacy-policy",
+    "termsOfServiceUrl": "https://otter.ai/terms-of-service",
+    "dataProcessingAgreementUrl": "https://otter.ai/terms-of-service#data-processing-agreement",
+    "subprocessorsListUrl": "https://otter.ai/subprocessors",
+    "trustPageUrl": "https://otter.ai/privacy-security",
+    "statusPageUrl": "https://status.otter.ai/"
+  },
+  {
+    "name": "Resend",
+    "legalName": "Plus Five Five, Inc.",
+    "headquarterAddress": "2261 Market Street #5039, San Francisco, CA 94114, United States",
+    "websiteUrl": "https://resend.com",
+    "description": "Developer‑focused email delivery platform offering a modern API and tooling to build, test and send transactional and marketing emails at scale.",
+    "category": "Email Delivery Platform",
+    "certifications": [
+      "SOC 2 Type 2",
+      "GDPR",
+      "CCPA",
+      "Data Privacy Framework (DPF)"
+    ],
+    "securityPageUrl": "https://resend.com/security",
+    "privacyPolicyUrl": "https://resend.com/legal/privacy-policy",
+    "termsOfServiceUrl": "https://resend.com/legal/terms-of-service",
+    "dataProcessingAgreementUrl": "https://resend.com/legal/dpa",
+    "subprocessorsListUrl": "https://resend.com/legal/subprocessors",
+    "trustPageUrl": "https://resend.com/security",
+    "statusPageUrl": "https://resend-status.com/"
+  },
+  {
+    "name": "Pylon",
+    "legalName": "Pylon Labs, Inc.",
+    "headquarterAddress": "188 King Street, Unit 502, San Francisco, CA 94107, USA",
+    "websiteUrl": "https://usepylon.com",
+    "description": "Pylon provides a modern unified customer‑support platform for B2B companies, combining ticketing, chat, knowledge base, AI assistance, customer portal and workflows in one tool.",
+    "category": "Customer Support Platform",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO 27001",
+      "GDPR",
+      "HIPAA"
+    ],
+    "securityPageUrl": "https://usepylon.com/security",
+    "privacyPolicyUrl": "https://usepylon.com/privacy",
+    "termsOfServiceUrl": "https://usepylon.com/terms",
+    "dataProcessingAgreementUrl": "https://usepylon.com/data-processing-agreement",
+    "subprocessorsListUrl": "https://usepylon.com/subprocessors",
+    "trustPageUrl": "https://trust.usepylon.com",
+    "statusPageUrl": "https://status.usepylon.com"
+  },
+  {
+    "name": "Loops",
+    "legalName": "Astrodon Inc.",
+    "websiteUrl": "https://loops.so",
+    "description": "Email platform for SaaS companies that lets teams create, send and track product, marketing, and transactional emails from a single interface",
+    "category": "Email Marketing Platform",
+    "certifications": [
+      "GDPR",
+      "CCPA"
+    ],
+    "privacyPolicyUrl": "https://loops.so/privacy",
+    "serviceLevelAgreementUrl": "https://loops.so/terms",
+    "dataProcessingAgreementUrl": "https://loops.so/dpa",
+    "subprocessorsListUrl": "https://loops.so/subprocessors",
+    "statusPageUrl": "https://loops.statuspage.io"
+  },
+  {
+    "name": "Perplexity",
+    "legalName": "Perplexity AI, Inc.",
+    "headquarterAddress": "115 Sansome St, San Francisco, CA 94104-3601, United States",
+    "websiteUrl": "https://www.perplexity.ai",
+    "description": "Generative‑AI answer engine that delivers real‑time, source‑cited answers to user questions.",
+    "category": "AI Answer Engine",
+    "certifications": [
+      "SOC 2 Type 2",
+      "GDPR",
+      "CCPA",
+      "PCI DSS",
+      "CAIQ Lite"
+    ],
+    "securityPageUrl": "https://www.perplexity.ai/hub/security",
+    "privacyPolicyUrl": "https://www.perplexity.ai/hub/legal/privacy-policy",
+    "termsOfServiceUrl": "https://www.perplexity.ai/hub/legal/terms-of-service",
+    "dataProcessingAgreementUrl": "https://www.perplexity.ai/hub/legal/enterprise-terms-of-service",
+    "subprocessorsListUrl": "https://trust.perplexity.ai/",
+    "trustPageUrl": "https://trust.perplexity.ai",
+    "statusPageUrl": "https://status.perplexity.ai/"
   }
 ]
