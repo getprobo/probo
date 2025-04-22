@@ -1553,7 +1553,7 @@
       "CCPA"
     ],
     "privacyPolicyUrl": "https://loops.so/privacy",
-    "serviceLevelAgreementUrl": "https://loops.so/terms",
+    "termsOfServiceUrl": "https://loops.so/terms",
     "dataProcessingAgreementUrl": "https://loops.so/dpa",
     "subprocessorsListUrl": "https://loops.so/subprocessors",
     "statusPageUrl": "https://loops.statuspage.io"
