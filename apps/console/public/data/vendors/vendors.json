@@ -2183,5 +2183,16 @@
     "termsOfServiceUrl": "https://puzzle.io/legal/terms-of-service",
     "trustPageUrl": "https://trust.puzzle.io",
     "statusPageUrl": "https://status.puzzle.io/"
+  },
+  {
+    "name": "Probo",
+    "legalName": "Probo Inc.",
+    "headquarterAddress": "490 Post St, Suite 640,San Francisco, CA 94102, United States",
+    "websiteUrl": "https://www.getprobo.com/",
+    "description": "Probo is an open-source compliance platform that helps startups achieve SOC 2 and ISO 27001 certifications quickly and affordably, with expert guidance and no vendor lock-in.",
+    "category": "Compliance & risk management software",
+    "privacyPolicyUrl": "https://www.getprobo.com/privacy",
+    "termsOfServiceUrl": "https://www.getprobo.com/terms",
+    "subprocessorsListUrl": "https://www.getprobo.com/subprocessors"
   }
 ]
