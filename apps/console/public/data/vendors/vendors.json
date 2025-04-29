@@ -2117,16 +2117,71 @@
     "subprocessorsListUrl": "https://trust.ramp.com/",
     "trustPageUrl": "https://trust.ramp.com/"
   },
-
-  
-
-
-  
-
-  
-  
-
-
-  
-  
+  {
+    "name": "ClickHouse",
+    "legalName": "ClickHouse, Inc.",
+    "headquarterAddress": "650 Castro St., Suite 120 #92426, Mountain View, CA 94041, USA",
+    "websiteUrl": "https://clickhouse.com",
+    "description": "Open-source column-oriented database and managed cloud service for ultra-fast, real-time analytics on large-volume data.",
+    "category": "Real-time Analytics Database",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001",
+      "Data Privacy Framework (DPF)",
+      "HIPAA",
+      "PCI DSS v4.0",
+      "GDPR",
+      "CCPA",
+      "Colorado Privacy Act (CPA)",
+      "Connecticut Data Privacy Act (CTDPA)",
+      "Virginia Consumer Data Protection Act (VCDPA)"
+    ],
+    "securityPageUrl": "https://clickhouse.com/docs/cloud/security/security-and-compliance",
+    "privacyPolicyUrl": "https://clickhouse.com/legal/privacy-policy",
+    "termsOfServiceUrl": "https://clickhouse.com/legal/agreements/terms-of-service",
+    "serviceLevelAgreementUrl": "https://clickhouse.com/legal/agreements/service-level-agreement",
+    "dataProcessingAgreementUrl": "https://clickhouse.com/legal/agreements/data-processing-addendum",
+    "subprocessorsListUrl": "https://clickhouse.com/legal/agreements/subprocessors",
+    "trustPageUrl": "https://trust.clickhouse.com",
+    "statusPageUrl": "https://status.clickhouse.com"
+  },
+  {
+    "name": "Tailscale",
+    "legalName": "Tailscale Inc.",
+    "headquarterAddress": "401-50 Lynn Williams Street, Toronto, ON M6K 3R9, Canada",
+    "websiteUrl": "https://tailscale.com",
+    "description": "Tailscale provides a zero-config mesh VPN and zero-trust networking platform that securely connects devices and services across any network.",
+    "category": "Zero-Trust Networking / Mesh VPN",
+    "certifications": [
+      "SOC 2 Type II",
+      "GDPR",
+      "CCPA"
+    ],
+    "securityPageUrl": "https://tailscale.com/security",
+    "privacyPolicyUrl": "https://tailscale.com/privacy-policy",
+    "termsOfServiceUrl": "https://tailscale.com/terms",
+    "serviceLevelAgreementUrl": "https://tailscale.com/sla",
+    "dataProcessingAgreementUrl": "https://tailscale.com/dpa",
+    "subprocessorsListUrl": "https://tailscale.com/dpa-subprocessors",
+    "trustPageUrl": "https://tailscale.com/legal",
+    "statusPageUrl": "https://status.tailscale.com/"
+  },
+  {
+    "name": "Puzzle",
+    "legalName": "Puzzle Financial Inc.",
+    "headquarterAddress": "575 Market Street, Floor 5, San Francisco, CA 94105, USA",
+    "websiteUrl": "https://puzzle.io",
+    "description": "Puzzle provides modern, real-time accounting software that gives startups automated bookkeeping and instant finance metrics such as cash, burn and runway.",
+    "category": "Accounting Software",
+    "certifications": [
+      "SOC 2 Type 2",
+      "GDPR",
+      "CCPA"
+    ],
+    "securityPageUrl": "https://puzzle.io/security",
+    "privacyPolicyUrl": "https://puzzle.io/legal/privacy",
+    "termsOfServiceUrl": "https://puzzle.io/legal/terms-of-service",
+    "trustPageUrl": "https://trust.puzzle.io",
+    "statusPageUrl": "https://status.puzzle.io/"
+  }
 ]
