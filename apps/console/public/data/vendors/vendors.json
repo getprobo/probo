@@ -1843,7 +1843,7 @@
     "description": "Developer of security, firewall and anti-spam extensions for the Plesk hosting control panel.",
     "category": "Web-hosting security / Plesk extensions",
     "privacyPolicyUrl": "https://www.danami.com/legal/privacy-policy",
-    "termsOfServiceUrl": "https://www.danami.com/legal/terms-of-service",
+    "termsOfServiceUrl": "https://www.danami.com/legal/terms-of-service"
   },
   {
     "name": "New Relic",
@@ -1976,5 +1976,334 @@
     "privacyPolicyUrl": "https://www.plesk.com/legal/#privacy-policy",
     "termsOfServiceUrl": "https://www.plesk.com/legal/#terms-of-use/",
     "subprocessorsListUrl": "https://www.plesk.com/wp-content/uploads/legal/gdpr3.pdf"
+  },
+  {
+    "name": "Plesk",
+    "legalName": "WebPros International GmbH (formerly Plesk International GmbH)",
+    "headquarterAddress": "Vordergasse 59, 8200 Schaffhausen, Switzerland",
+    "websiteUrl": "https://www.plesk.com",
+    "description": "Web-hosting control-panel software for building, securing and running websites and cloud applications.",
+    "category": "Web Hosting Control Panel",
+    "certifications": [
+      "GDPR"
+    ],
+  
+    "securityPageUrl": "https://docs.plesk.com/en-US/obsidian/administrator-guide/plesk-administration/securing-plesk.59464/",
+    "privacyPolicyUrl": "https://www.plesk.com/legal/#privacy-policy",
+    "termsOfServiceUrl": "https://www.plesk.com/legal/#terms-of-use/",
+    "subprocessorsListUrl": "https://www.plesk.com/wp-content/uploads/legal/gdpr3.pdf"
+  },
+  {
+    "name": "Brevo",
+    "legalName": "Sendinblue SAS",
+    "headquarterAddress": "106 boulevard Haussmann, 75008 Paris, France",
+    "websiteUrl": "https://www.brevo.com",
+    "description": "Cloud-based CRM and multichannel marketing platform that lets businesses run email, SMS, WhatsApp and automated campaigns while managing customer relationships from one suite.",
+    "category": "Email Marketing & CRM",
+    "certifications": [
+      "ISO/IES 27001:2013",
+      "GDPR",
+      "CCPA",
+      "CASL"
+    ],
+    "securityPageUrl": "https://www.brevo.com/features/data-security/",
+    "privacyPolicyUrl": "https://www.brevo.com/legal/privacypolicy/",
+    "termsOfServiceUrl": "https://www.brevo.com/legal/termsofuse/",
+    "dataProcessingAgreementUrl": "https://www.brevo.com/legal/termsofuse/#dpa",
+    "subprocessorsListUrl": "https://www.brevo.com/legal/termsofuse/#sub-processors",
+    "trustPageUrl": "https://www.brevo.com/features/data-security/",
+    "statusPageUrl": "https://status.brevo.com/"
+  },
+  {
+    "name": "Better Stack",
+    "legalName": "Better Stack, Inc.",
+    "websiteUrl": "https://betterstack.com",
+    "description": "Developer-first observability platform that unifies log management, uptime monitoring, incident response, and public status pages.",
+    "category": "Observability / Monitoring",
+  
+    "certifications": [
+      "SOC 2 Type 2",
+      "GDPR",
+      "CCPA"
+    ],
+  
+    "securityPageUrl": "https://betterstack.com/security",
+    "privacyPolicyUrl": "https://betterstack.com/privacy",
+    "termsOfServiceUrl": "https://betterstack.com/terms",
+    "dataProcessingAgreementUrl": "https://betterstack.com/dpa",
+    "subprocessorsListUrl": "https://betterstack.com/dpa/schedules",
+    "statusPageUrl": "https://status.betterstack.com/"
+  },
+  {
+    "name": "PlanetScale",
+    "legalName": "PlanetScale, Inc.",
+    "headquarterAddress": "535 Mission Street, 14th Floor, San Francisco, CA 94105, United States",
+    "websiteUrl": "https://planetscale.com",
+    "description": "PlanetScale provides a serverless, MySQL-compatible database-as-a-service built on Vitess that lets developers scale relational workloads without managing infrastructure.",
+    "category": "Database-as-a-Service",
+  
+    "certifications": [
+      "SOC 2 Type 2",
+      "HIPAA",
+      "PCI DSS 4.0",
+      "GDPR",
+      "CCPA",
+      "LGPD"
+    ],
+    "securityPageUrl": "https://planetscale.com/docs/concepts/security",
+    "privacyPolicyUrl": "https://planetscale.com/legal/privacy",
+    "termsOfServiceUrl": "https://planetscale.com/legal/siteterms",
+    "serviceLevelAgreementUrl": "https://planetscale.com/legal/planetscale-service-level-agreement",
+    "dataProcessingAgreementUrl": "https://planetscale.com/legal/data-processing-addendum",
+    "subprocessorsListUrl": "https://planetscale.com/legal/subprocessors",
+    "trustPageUrl": "https://trust.planetscale.com",
+    "statusPageUrl": "https://www.planetscalestatus.com/"
+  },
+  {
+    "name": "Docker",
+    "legalName": "Docker, Inc.",
+    "headquarterAddress": "3790 El Camino Real #1052, Palo Alto, CA 94306, USA",
+    "websiteUrl": "https://www.docker.com",
+    "description": "Developer platform for building, sharing, and running containerized applications.",
+    "category": "Container Platform",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001",
+      "CSA Trusted Cloud",
+      "Data Privacy Framework (DPF)",
+      "GDPR",
+      "CCPA",
+      "APEC",
+      "CPA",
+      "CTDPA",
+      "VCDPA",
+      "UCPA"
+    ],
+    "securityPageUrl": "https://www.docker.com/trust/security/",
+    "privacyPolicyUrl": "https://www.docker.com/legal/docker-privacy-policy/",
+    "termsOfServiceUrl": "https://www.docker.com/legal/docker-terms-service/",
+    "serviceLevelAgreementUrl": "https://www.docker.com/legal/docker-subscription-service-agreement/",
+    "dataProcessingAgreementUrl": "https://www.docker.com/app/uploads/2022/03/2022-Docker-EU-UK-SCC-Data-Processing-Agreement.pdf",
+    "subprocessorsListUrl": "https://www.docker.com/trust/privacy/sub-processors/",
+    "trustPageUrl": "https://www.docker.com/trust/",
+    "statusPageUrl": "https://www.dockerstatus.com/"
+  },
+  {
+    "name": "Brex",
+    "legalName": "Brex Inc.",
+    "headquarterAddress": "650 S 500W Suite 300, Salt Lake City, UT 84101, United States",
+    "websiteUrl": "https://www.brex.com",
+    "description": "AI-powered global spend platform offering corporate cards, expense management, business accounts and travel in one place.",
+    "category": "Spend Management & Corporate Card",
+    "certifications": [
+      "SOC 1 Type 2",
+      "SOC 2 Type 2",
+      "PCI DSS",
+      "GDPR",
+      "CCPA"
+    ],
+    "securityPageUrl": "https://www.brex.com/support/security",
+    "privacyPolicyUrl": "https://www.brex.com/legal/privacy",
+    "termsOfServiceUrl": "https://www.brex.com/legal/user-terms",
+    "dataProcessingAgreementUrl": "https://www.brex.com/legal/dpa",
+    "subprocessorsListUrl": "https://trust-portal.brex.com",
+    "trustPageUrl": "https://trust-portal.brex.com",
+    "statusPageUrl": "https://status.brex.com/"
+  },
+  {
+    "name": "Ramp",
+    "legalName": "Ramp Business Corporation",
+    "headquarterAddress": "28 West 23rd Street, Floor 2, New York, NY 10010 USA",
+    "websiteUrl": "https://ramp.com",
+    "description": "Corporate spend-management platform offering corporate cards, expense automation, bill pay, and vendor management for finance teams.",
+    "category": "Spend Management",
+    "certifications": [
+      "SOC 2 Type 2",
+      "SOC 1 Type 2",
+      "ISO/IEC 27001:2022",
+      "PCI DSS v4.0",
+      "GDPR",
+      "CCPA",
+      "Data Privacy Framework (DPF)"
+    ],
+    "securityPageUrl": "https://ramp.com/security",
+    "privacyPolicyUrl": "https://ramp.com/legal /privacy-policy",
+    "termsOfServiceUrl": "https://ramp.com/legal/platform-agreement",
+    "dataProcessingAgreementUrl": "https://ramp.com/legal/dpa",
+    "subprocessorsListUrl": "https://trust.ramp.com/",
+    "trustPageUrl": "https://trust.ramp.com/"
+  },
+  {
+    "name": "ClickHouse",
+    "legalName": "ClickHouse, Inc.",
+    "headquarterAddress": "650 Castro St., Suite 120 #92426, Mountain View, CA 94041, USA",
+    "websiteUrl": "https://clickhouse.com",
+    "description": "Open-source column-oriented database and managed cloud service for ultra-fast, real-time analytics on large-volume data.",
+    "category": "Real-time Analytics Database",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001",
+      "Data Privacy Framework (DPF)",
+      "HIPAA",
+      "PCI DSS v4.0",
+      "GDPR",
+      "CCPA",
+      "Colorado Privacy Act (CPA)",
+      "Connecticut Data Privacy Act (CTDPA)",
+      "Virginia Consumer Data Protection Act (VCDPA)"
+    ],
+    "securityPageUrl": "https://clickhouse.com/docs/cloud/security/security-and-compliance",
+    "privacyPolicyUrl": "https://clickhouse.com/legal/privacy-policy",
+    "termsOfServiceUrl": "https://clickhouse.com/legal/agreements/terms-of-service",
+    "serviceLevelAgreementUrl": "https://clickhouse.com/legal/agreements/service-level-agreement",
+    "dataProcessingAgreementUrl": "https://clickhouse.com/legal/agreements/data-processing-addendum",
+    "subprocessorsListUrl": "https://clickhouse.com/legal/agreements/subprocessors",
+    "trustPageUrl": "https://trust.clickhouse.com",
+    "statusPageUrl": "https://status.clickhouse.com"
+  },
+  {
+    "name": "Tailscale",
+    "legalName": "Tailscale Inc.",
+    "headquarterAddress": "401-50 Lynn Williams Street, Toronto, ON M6K 3R9, Canada",
+    "websiteUrl": "https://tailscale.com",
+    "description": "Tailscale provides a zero-config mesh VPN and zero-trust networking platform that securely connects devices and services across any network.",
+    "category": "Zero-Trust Networking / Mesh VPN",
+    "certifications": [
+      "SOC 2 Type II",
+      "GDPR",
+      "CCPA"
+    ],
+    "securityPageUrl": "https://tailscale.com/security",
+    "privacyPolicyUrl": "https://tailscale.com/privacy-policy",
+    "termsOfServiceUrl": "https://tailscale.com/terms",
+    "serviceLevelAgreementUrl": "https://tailscale.com/sla",
+    "dataProcessingAgreementUrl": "https://tailscale.com/dpa",
+    "subprocessorsListUrl": "https://tailscale.com/dpa-subprocessors",
+    "trustPageUrl": "https://tailscale.com/legal",
+    "statusPageUrl": "https://status.tailscale.com/"
+  },
+  {
+    "name": "Puzzle",
+    "legalName": "Puzzle Financial Inc.",
+    "headquarterAddress": "575 Market Street, Floor 5, San Francisco, CA 94105, USA",
+    "websiteUrl": "https://puzzle.io",
+    "description": "Puzzle provides modern, real-time accounting software that gives startups automated bookkeeping and instant finance metrics such as cash, burn and runway.",
+    "category": "Accounting Software",
+    "certifications": [
+      "SOC 2 Type 2",
+      "GDPR",
+      "CCPA"
+    ],
+    "securityPageUrl": "https://puzzle.io/security",
+    "privacyPolicyUrl": "https://puzzle.io/legal/privacy",
+    "termsOfServiceUrl": "https://puzzle.io/legal/terms-of-service",
+    "trustPageUrl": "https://trust.puzzle.io",
+    "statusPageUrl": "https://status.puzzle.io/"
+  },
+  {
+    "name": "Probo",
+    "legalName": "Probo Inc.",
+    "headquarterAddress": "490 Post St, Suite 640,San Francisco, CA 94102, United States",
+    "websiteUrl": "https://www.getprobo.com/",
+    "description": "Probo is an open-source compliance platform that helps startups achieve SOC 2 and ISO 27001 certifications quickly and affordably, with expert guidance and no vendor lock-in.",
+    "category": "Compliance & risk management software",
+    "privacyPolicyUrl": "https://www.getprobo.com/privacy",
+    "termsOfServiceUrl": "https://www.getprobo.com/terms",
+    "subprocessorsListUrl": "https://www.getprobo.com/subprocessors"
+  },
+  {
+    "name": "folk",
+    "legalName": "FOLK SAS",
+    "headquarterAddress": "31 Rue des Vinaigriers, 75010 Paris, France",
+    "websiteUrl": "https://www.folk.app",
+    "description": "Lightweight, collaborative CRM that automates contact and relationship management for modern teams.",
+    "category": "CRM",
+    "certifications": [
+      "SOC 2 Type 1",
+      "GDPR",
+      "CCPA"
+    ],
+    "securityPageUrl": "https://help.folk.app/en/articles/5007534-security-privacy",
+    "privacyPolicyUrl": "https://www.folk.app/privacy-policy",
+    "termsOfServiceUrl": "https://www.folk.app/terms-of-use",
+    "subprocessorsListUrl": "https://www.folk.app/privacy-policy#3-list-of-sub-processors",
+    "statusPageUrl": "https://status.folk.app/"
+  },
+  {
+    "name": "Claap",
+    "websiteUrl": "https://www.claap.io",
+    "description": "AI-powered meeting recorder and video workspace that automates post-meeting tasks and CRM enrichment.",
+    "category": "Sales Enablement / AI Meeting Automation",
+    "certifications": [
+      "SOC 2 Type 2",
+      "GDPR",
+      "CCPA"
+    ],
+    "privacyPolicyUrl": "https://www.claap.io/legal/privacy-policy",
+    "termsOfServiceUrl": "https://www.claap.io/legal/terms-and-conditions",
+    "subprocessorsListUrl": "https://www.claap.io/legal/privacy-policy#sub-processors",
+    "statusPageUrl": "https://claap.instatus.com/"
+  },
+  {
+    "name": "Pitch",
+    "legalName": "Pitch Software GmbH",
+    "headquarterAddress": "Joachimstraße 7, 10119 Berlin, Germany",
+    "websiteUrl": "https://pitch.com",
+    "description": "Cloud-based presentation platform that lets teams collaboratively create, design, and share visually engaging slide decks in real time.",
+    "category": "Presentation Software",
+    "certifications": [
+      "GDPR"
+    ],
+    "securityPageUrl": "https://pitch.com/security-policy",
+    "privacyPolicyUrl": "https://pitch.com/privacy-policy",
+    "termsOfServiceUrl": "https://pitch.com/terms-of-use",
+    "dataProcessingAgreementUrl": "https://pitch.com/dpa",
+    "subprocessorsListUrl": "https://pitch.com/dpa#annex-7-2",
+    "businessAssociateAgreementUrl": null,
+    "trustPageUrl": "https://pitch.com/gdpr",
+    "statusPageUrl": "https://status.pitch.com/"
+  },
+  {
+    "name": "Spendesk",
+    "legalName": "Spendesk SAS",
+    "headquarterAddress": "51 Rue de Londres, 75008 Paris, France",
+    "websiteUrl": "https://www.spendesk.com",
+    "description": "Spendesk is a comprehensive spend management platform offering solutions like virtual and physical cards, invoice processing, and expense reimbursements to streamline company spending.",
+    "category": "Spend Management",
+    "certifications": [
+      "GDPR",
+      "ISO/IEC 27001:2022",
+      "DORA"
+    ],
+    "securityPageUrl": "https://www.spendesk.com/spendesk-security/",
+    "privacyPolicyUrl": "https://www.spendesk.com/legals/privacy/",
+    "termsOfServiceUrl": "https://www.spendesk.com/legals/terms/customers/",
+    "dataProcessingAgreementUrl": "https://www.spendesk.com/legals/terms/customers/#Annex-three",
+    "subprocessorsListUrl": "https://www.spendesk.com/legals/subprocessors/",
+    "trustPageUrl": "https://trust.spendesk.com/",
+    "statusPageUrl": "https://status.spendesk.com/"
+  },
+  {
+    "name": "Lever",
+    "legalName": "Lever, Inc.",
+    "headquarterAddress": "1125 Mission Street, San Francisco, CA 94103, United States",
+    "websiteUrl": "https://www.lever.co",
+    "description": "Cloud-based talent-acquisition suite that combines applicant-tracking and candidate-relationship-management tools so organisations can source, engage and hire talent in one place.",
+    "category": "Applicant Tracking / Talent Acquisition",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001",
+      "GDPR",
+      "CAIQ",
+      "CCPA",
+      "EU-U.S. Privacy Shield"
+    ],
+    "securityPageUrl": "https://www.lever.co/security/",
+    "privacyPolicyUrl": "https://www.lever.co/privacy-notice/",
+    "termsOfServiceUrl": "https://www.lever.co/agreements/tos",
+    "serviceLevelAgreementUrl": "https://www.lever.co/agreements/sla/",
+    "dataProcessingAgreementUrl": "https://www.lever.co/agreements/dpa/",
+    "subprocessorsListUrl": "https://www.lever.co/subprocessors-archive-june-2023/",
+    "statusPageUrl": "https://status.lever.co/"
   }
 ]
