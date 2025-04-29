@@ -1789,5 +1789,344 @@
     "subprocessorsListUrl": "https://trust.upstash.com/subprocessors",
     "trustPageUrl": "https://trust.upstash.com",
     "statusPageUrl": "https://status.upstash.com"
-  }
+  },
+  {
+    "name": "bunny.net",
+    "legalName": "BunnyWay d.o.o.",
+    "headquarterAddress": "Dunajska cesta 165, 1000 Ljubljana, Slovenia",
+    "websiteUrl": "https://bunny.net",
+    "description": "Cloud-based content-delivery, edge-storage and optimization platform that accelerates and secures web content worldwide.",
+    "category": "Content Delivery Network (CDN) / Edge Cloud",
+    "certifications": [
+      "ISO 27001",
+      "GDPR"
+    ],
+    "securityPageUrl": "https://bunny.net/shield/",
+    "privacyPolicyUrl": "https://bunny.net/privacy/",
+    "termsOfServiceUrl": "https://bunny.net/tos/",
+    "serviceLevelAgreementUrl": "https://bunny.net/sla/",
+    "subprocessorsListUrl": "https://bunny.net/gdpr/sub-processors/",
+    "statusPageUrl": "https://status.bunny.net/"
+  },
+  {
+    "name": "ClickUp",
+    "legalName": "Mango Technologies, Inc.",
+    "headquarterAddress": "350 Tenth Ave, 5th Floor, San Diego, CA 92101, United States",
+    "websiteUrl": "https://clickup.com",
+    "description": "All-in-one productivity platform for project management, document collaboration, and goal tracking.",
+    "category": "Project Management",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001",
+      "ISO 27017",
+      "ISO 27018",
+      "PCI DSS",
+      "GDPR",
+      "CCPA",
+      "CPRA",
+      "LGPD",
+      "VCDPA"
+    ],
+    "securityPageUrl": "https://clickup.com/security",
+    "privacyPolicyUrl": "https://clickup.com/terms/privacy",
+    "termsOfServiceUrl": "https://clickup.com/terms",
+    "dataProcessingAgreementUrl": "https://clickup.com/terms/dpa",
+    "subprocessorsListUrl": "https://clickup.com/terms/dpa/subprocessors",
+    "trustPageUrl": "https://security.clickup.com",
+    "statusPageUrl": "https://status.clickup.com"
+  },
+  {
+    "name": "Danami",
+    "legalName": "Danami International Inc.",
+    "headquarterAddress": "5314 56 St, Camrose, Alberta T4V 2E5, Canada",
+    "websiteUrl": "https://www.danami.com",
+    "description": "Developer of security, firewall and anti-spam extensions for the Plesk hosting control panel.",
+    "category": "Web-hosting security / Plesk extensions",
+    "privacyPolicyUrl": "https://www.danami.com/legal/privacy-policy",
+    "termsOfServiceUrl": "https://www.danami.com/legal/terms-of-service",
+  },
+  {
+    "name": "New Relic",
+    "legalName": "New Relic, Inc.",
+    "headquarterAddress": "188 Spear St., Suite 1000, San Francisco, CA 94105, USA",
+    "websiteUrl": "https://newrelic.com",
+    "description": "New Relic provides a full-stack observability platform that lets engineering teams monitor, analyze, and improve application, infrastructure, and digital-experience performance in real time.",
+    "category": "Observability / Application Performance Monitoring",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001:2022",
+      "FedRAMP Moderate",
+      "PCI DSS Level 1",
+      "TISAX Level 2",
+      "HITRUST CSF",
+      "HIPAA",
+      "GDPR",
+      "CCPA",
+      "Data Privacy Framework (DPF)"
+    ],
+    "securityPageUrl": "https://newrelic.com/security",
+    "privacyPolicyUrl": "https://newrelic.com/termsandconditions/privacy",
+    "termsOfServiceUrl": "https://newrelic.com/termsandconditions/terms",
+    "serviceLevelAgreementUrl": "https://docs.newrelic.com/docs/licenses/license-information/referenced-policies/service-level-availability-commitment/",
+    "dataProcessingAgreementUrl": "https://newrelic.com/sites/default/files/2023-11/New_Relic_GDPR_DPA_SCCs_Oct_2023_presigned.pdf",
+    "subprocessorsListUrl": "https://newrelic.com/sub-processors",
+    "businessAssociateAgreementUrl": "https://newrelic.com/termsandconditions/hipaabaafaq",
+    "trustPageUrl": "https://newrelic.com/security",
+    "statusPageUrl": "https://status.newrelic.com/"
+  },
+  {
+    "name": "OVHcloud global",
+    "legalName": "OVH Groupe SAS",
+    "headquarterAddress": "2 Rue Kellermann, 59100 Roubaix, France",
+    "websiteUrl": "https://www.ovhcloud.com",
+    "description": "OVHcloud is a French cloud computing company offering public and private cloud products, shared hosting, and dedicated server solutions in 140 countries worldwide.",
+    "category": "Cloud Infrastructure Provider",
+    "certifications": [
+      "ISO/IEC 27001",
+      "ISO/IEC 27017",
+      "ISO/IEC 27018",
+      "ISO/IEC 27701",
+      "CSA STAR",
+      "ISO/IEC 14001",
+      "ISO 50001",
+      "HDS",
+      "ANSSI SecNum Cloud",
+      "ACN",
+      "BSI C5",
+      "ENS",
+      "PCI DSS",
+      "SOC 1",
+      "SOC 2",
+      "SOC 3"
+    ],
+    "securityPageUrl": "https://corporate.ovhcloud.com/en/trusted-cloud/security-certifications/",
+    "privacyPolicyUrl": "https://www.ovhcloud.com/en/terms-and-conditions/privacy-policy/",
+    "termsOfServiceUrl": "https://www.ovhcloud.com/en/terms-and-conditions/contracts/",
+    "dataProcessingAgreementUrl": "https://storage.gra.cloud.ovh.net/v1/AUTH_325716a587c64897acbef9a4a4726e38/contracts/4683679-OVH_Data_Protection_Agreement-IE-5.1.pdf",
+    "subprocessorsListUrl": "https://www.ovh.ie/support/termsofservice/OVH%20IE%20Sub%20processors.pdf",
+    "trustPageUrl": "https://corporate.ovhcloud.com/en/trusted-cloud/security-certifications/",
+    "statusPageUrl": "https://www.status-ovhcloud.com/"
+  },
+  {
+    "name": "OVHcloud US",
+    "legalName": "OVH US LLC",
+    "headquarterAddress": "11950 Democracy Drive, Suite 300, Reston, VA 20190, USA",
+    "websiteUrl": "https://us.ovhcloud.com",
+    "description": "Global cloud-infrastructure provider delivering bare-metal servers, public and private cloud, and web-hosting services at scale.",
+    "category": "Cloud Infrastructure Provider",
+    "certifications": [
+      "ISO/IEC 27001",
+      "ISO/IEC 27017",
+      "ISO/IEC 27018",
+      "ISO/IEC 27701",
+      "SOC 1 Type 2",
+      "SOC 2 Type 2",
+      "SOC 3",
+      "CSA STAR",
+      "HIPAA",
+      "PCI DSS",
+      "Data Privacy Framework (DPF)",
+      "GDPR",
+      "CCPA"
+    ],
+    "securityPageUrl": "https://us.ovhcloud.com/personal-data-protection/security/",
+    "privacyPolicyUrl": "https://us.ovhcloud.com/legal/privacy-policy/",
+    "termsOfServiceUrl": "https://us.ovhcloud.com/legal/terms-of-service/",
+    "serviceLevelAgreementUrl": "https://us.ovhcloud.com/legal/",
+    "dataProcessingAgreementUrl": "https://us.ovhcloud.com/legal/data-processing-agreement/",
+    "subprocessorsListUrl": "https://storage.gra.cloud.ovh.net/v1/AUTH_325716a587c64897acbef9a4a4726e38/contracts/30c4ab8-OVH_Sub_processors-IE-2.0.pdf",
+    "trustPageUrl": "https://us.ovhcloud.com/compliance/",
+    "statusPageUrl": "https://status.us.ovhcloud.com/"
+  },
+  {
+    "name": "Pipedrive",
+    "legalName": "Pipedrive Inc.",
+    "headquarterAddress": "530 Fifth Avenue, 8th Floor, Suite 802, New York, NY 10036, United States",
+    "websiteUrl": "https://www.pipedrive.com",
+    "description": "Pipedrive is a sales-focused CRM platform designed to help small businesses manage leads, track deals, and automate sales processes.",
+    "category": "CRM Software",
+    "certifications": [
+      "SOC 2 Type 2",
+      "SOC 3",
+      "ISO/IEC 27001:2013",
+      "ISO/IEC 27701:2019",
+      "GDPR",
+      "CCPA"
+    ],
+    "securityPageUrl": "https://www.pipedrive.com/en/features/privacy-security",
+    "privacyPolicyUrl": "https://www.pipedrive.com/en/privacy",
+    "termsOfServiceUrl": "https://www.pipedrive.com/en/terms-of-service",
+    "dataProcessingAgreementUrl": "https://www.pipedrive.com/en/privacy/dpa",
+    "subprocessorsListUrl": "https://www.pipedrive.com/en/subprocessors",
+    "trustPageUrl": "https://www.pipedrive.com/en/trust-center",
+    "statusPageUrl": "https://status.pipedrive.com/"
+  },
+  {
+    "name": "Plesk",
+    "legalName": "WebPros International GmbH (formerly Plesk International GmbH)",
+    "headquarterAddress": "Vordergasse 59, 8200 Schaffhausen, Switzerland",
+    "websiteUrl": "https://www.plesk.com",
+    "description": "Web-hosting control-panel software for building, securing and running websites and cloud applications.",
+    "category": "Web Hosting Control Panel",
+    "certifications": [
+      "GDPR"
+    ],
+  
+    "securityPageUrl": "https://docs.plesk.com/en-US/obsidian/administrator-guide/plesk-administration/securing-plesk.59464/",
+    "privacyPolicyUrl": "https://www.plesk.com/legal/#privacy-policy",
+    "termsOfServiceUrl": "https://www.plesk.com/legal/#terms-of-use/",
+    "subprocessorsListUrl": "https://www.plesk.com/wp-content/uploads/legal/gdpr3.pdf"
+  },
+  {
+    "name": "Brevo",
+    "legalName": "Sendinblue SAS",
+    "headquarterAddress": "106 boulevard Haussmann, 75008 Paris, France",
+    "websiteUrl": "https://www.brevo.com",
+    "description": "Cloud-based CRM and multichannel marketing platform that lets businesses run email, SMS, WhatsApp and automated campaigns while managing customer relationships from one suite.",
+    "category": "Email Marketing & CRM",
+    "certifications": [
+      "ISO/IES 27001:2013",
+      "GDPR",
+      "CCPA",
+      "CASL"
+    ],
+    "securityPageUrl": "https://www.brevo.com/features/data-security/",
+    "privacyPolicyUrl": "https://www.brevo.com/legal/privacypolicy/",
+    "termsOfServiceUrl": "https://www.brevo.com/legal/termsofuse/",
+    "dataProcessingAgreementUrl": "https://www.brevo.com/legal/termsofuse/#dpa",
+    "subprocessorsListUrl": "https://www.brevo.com/legal/termsofuse/#sub-processors",
+    "trustPageUrl": "https://www.brevo.com/features/data-security/",
+    "statusPageUrl": "https://status.brevo.com/"
+  },
+  {
+    "name": "Better Stack",
+    "legalName": "Better Stack, Inc.",
+    "websiteUrl": "https://betterstack.com",
+    "description": "Developer-first observability platform that unifies log management, uptime monitoring, incident response, and public status pages.",
+    "category": "Observability / Monitoring",
+  
+    "certifications": [
+      "SOC 2 Type 2",
+      "GDPR",
+      "CCPA"
+    ],
+  
+    "securityPageUrl": "https://betterstack.com/security",
+    "privacyPolicyUrl": "https://betterstack.com/privacy",
+    "termsOfServiceUrl": "https://betterstack.com/terms",
+    "dataProcessingAgreementUrl": "https://betterstack.com/dpa",
+    "subprocessorsListUrl": "https://betterstack.com/dpa/schedules",
+    "statusPageUrl": "https://status.betterstack.com/"
+  },
+  {
+    "name": "PlanetScale",
+    "legalName": "PlanetScale, Inc.",
+    "headquarterAddress": "535 Mission Street, 14th Floor, San Francisco, CA 94105, United States",
+    "websiteUrl": "https://planetscale.com",
+    "description": "PlanetScale provides a serverless, MySQL-compatible database-as-a-service built on Vitess that lets developers scale relational workloads without managing infrastructure.",
+    "category": "Database-as-a-Service",
+  
+    "certifications": [
+      "SOC 2 Type 2",
+      "HIPAA",
+      "PCI DSS 4.0",
+      "GDPR",
+      "CCPA",
+      "LGPD"
+    ],
+    "securityPageUrl": "https://planetscale.com/docs/concepts/security",
+    "privacyPolicyUrl": "https://planetscale.com/legal/privacy",
+    "termsOfServiceUrl": "https://planetscale.com/legal/siteterms",
+    "serviceLevelAgreementUrl": "https://planetscale.com/legal/planetscale-service-level-agreement",
+    "dataProcessingAgreementUrl": "https://planetscale.com/legal/data-processing-addendum",
+    "subprocessorsListUrl": "https://planetscale.com/legal/subprocessors",
+    "trustPageUrl": "https://trust.planetscale.com",
+    "statusPageUrl": "https://www.planetscalestatus.com/"
+  },
+  {
+    "name": "Docker",
+    "legalName": "Docker, Inc.",
+    "headquarterAddress": "3790 El Camino Real #1052, Palo Alto, CA 94306, USA",
+    "websiteUrl": "https://www.docker.com",
+    "description": "Developer platform for building, sharing, and running containerized applications.",
+    "category": "Container Platform",
+    "certifications": [
+      "SOC 2 Type 2",
+      "ISO/IEC 27001",
+      "CSA Trusted Cloud",
+      "Data Privacy Framework (DPF)",
+      "GDPR",
+      "CCPA",
+      "APEC",
+      "CPA",
+      "CTDPA",
+      "VCDPA",
+      "UCPA"
+    ],
+    "securityPageUrl": "https://www.docker.com/trust/security/",
+    "privacyPolicyUrl": "https://www.docker.com/legal/docker-privacy-policy/",
+    "termsOfServiceUrl": "https://www.docker.com/legal/docker-terms-service/",
+    "serviceLevelAgreementUrl": "https://www.docker.com/legal/docker-subscription-service-agreement/",
+    "dataProcessingAgreementUrl": "https://www.docker.com/app/uploads/2022/03/2022-Docker-EU-UK-SCC-Data-Processing-Agreement.pdf",
+    "subprocessorsListUrl": "https://www.docker.com/trust/privacy/sub-processors/",
+    "trustPageUrl": "https://www.docker.com/trust/",
+    "statusPageUrl": "https://www.dockerstatus.com/"
+  },
+  {
+    "name": "Brex",
+    "legalName": "Brex Inc.",
+    "headquarterAddress": "650 S 500W Suite 300, Salt Lake City, UT 84101, United States",
+    "websiteUrl": "https://www.brex.com",
+    "description": "AI-powered global spend platform offering corporate cards, expense management, business accounts and travel in one place.",
+    "category": "Spend Management & Corporate Card",
+    "certifications": [
+      "SOC 1 Type 2",
+      "SOC 2 Type 2",
+      "PCI DSS",
+      "GDPR",
+      "CCPA"
+    ],
+    "securityPageUrl": "https://www.brex.com/support/security",
+    "privacyPolicyUrl": "https://www.brex.com/legal/privacy",
+    "termsOfServiceUrl": "https://www.brex.com/legal/user-terms",
+    "dataProcessingAgreementUrl": "https://www.brex.com/legal/dpa",
+    "subprocessorsListUrl": "https://trust-portal.brex.com",
+    "trustPageUrl": "https://trust-portal.brex.com",
+    "statusPageUrl": "https://status.brex.com/"
+  },
+  {
+    "name": "Ramp",
+    "legalName": "Ramp Business Corporation",
+    "headquarterAddress": "28 West 23rd Street, Floor 2, New York, NY 10010 USA",
+    "websiteUrl": "https://ramp.com",
+    "description": "Corporate spend-management platform offering corporate cards, expense automation, bill pay, and vendor management for finance teams.",
+    "category": "Spend Management",
+    "certifications": [
+      "SOC 2 Type 2",
+      "SOC 1 Type 2",
+      "ISO/IEC 27001:2022",
+      "PCI DSS v4.0",
+      "GDPR",
+      "CCPA",
+      "Data Privacy Framework (DPF)"
+    ],
+    "securityPageUrl": "https://ramp.com/security",
+    "privacyPolicyUrl": "https://ramp.com/legal /privacy-policy",
+    "termsOfServiceUrl": "https://ramp.com/legal/platform-agreement",
+    "dataProcessingAgreementUrl": "https://ramp.com/legal/dpa",
+    "subprocessorsListUrl": "https://trust.ramp.com/",
+    "trustPageUrl": "https://trust.ramp.com/"
+  },
+
+  
+
+
+  
+
+  
+  
+
+
+  
+  
 ]
