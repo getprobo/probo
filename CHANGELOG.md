@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.18.1] - 2025-04-30
+
 ### Fixed
 
 Fix typo `mesure` instead of `measure`
