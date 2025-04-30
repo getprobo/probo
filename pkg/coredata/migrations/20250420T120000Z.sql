@@ -289,7 +289,7 @@ INSERT INTO peoples (
 )
 SELECT 
     o.tenant_id,
-    encode(generate_gid(decode_base64_unpadded(o.tenant_id), 8), 'base64'),
+    generate_gid(decode_base64_unpadded(o.tenant_id), 8),
     o.id,
     u.fullname,
     u.email_address,

@@ -27,27 +27,27 @@ import (
 )
 
 type (
-	MesureService struct {
+	MeasureService struct {
 		svc *TenantService
 	}
 
-	CreateMesureRequest struct {
+	CreateMeasureRequest struct {
 		OrganizationID gid.GID
 		Name           string
 		Description    string
 		Category       string
 	}
 
-	UpdateMesureRequest struct {
+	UpdateMeasureRequest struct {
 		ID          gid.GID
 		Name        *string
 		Description *string
 		Category    *string
-		State       *coredata.MesureState
+		State       *coredata.MeasureState
 	}
 
-	ImportMesureRequest struct {
-		Mesures []struct {
+	ImportMeasureRequest struct {
+		Measures []struct {
 			Name        string `json:"name"`
 			Category    string `json:"category"`
 			ReferenceID string `json:"reference-id"`
@@ -65,21 +65,21 @@ type (
 					Name        string                `json:"name"`
 				} `json:"requested-evidences"`
 			} `json:"tasks"`
-		} `json:"mesures"`
+		} `json:"measures"`
 	}
 )
 
-func (s MesureService) ListForRiskID(
+func (s MeasureService) ListForRiskID(
 	ctx context.Context,
 	riskID gid.GID,
-	cursor *page.Cursor[coredata.MesureOrderField],
-) (*page.Page[*coredata.Mesure, coredata.MesureOrderField], error) {
-	var mesures coredata.Mesures
+	cursor *page.Cursor[coredata.MeasureOrderField],
+) (*page.Page[*coredata.Measure, coredata.MeasureOrderField], error) {
+	var measures coredata.Measures
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return mesures.LoadByRiskID(ctx, conn, s.svc.scope, riskID, cursor)
+			return measures.LoadByRiskID(ctx, conn, s.svc.scope, riskID, cursor)
 		},
 	)
 
@@ -87,20 +87,20 @@ func (s MesureService) ListForRiskID(
 		return nil, err
 	}
 
-	return page.NewPage(mesures, cursor), nil
+	return page.NewPage(measures, cursor), nil
 }
 
-func (s MesureService) ListForControlID(
+func (s MeasureService) ListForControlID(
 	ctx context.Context,
 	controlID gid.GID,
-	cursor *page.Cursor[coredata.MesureOrderField],
-) (*page.Page[*coredata.Mesure, coredata.MesureOrderField], error) {
-	var mesures coredata.Mesures
+	cursor *page.Cursor[coredata.MeasureOrderField],
+) (*page.Page[*coredata.Measure, coredata.MeasureOrderField], error) {
+	var measures coredata.Measures
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return mesures.LoadByControlID(ctx, conn, s.svc.scope, controlID, cursor)
+			return measures.LoadByControlID(ctx, conn, s.svc.scope, controlID, cursor)
 		},
 	)
 
@@ -108,19 +108,19 @@ func (s MesureService) ListForControlID(
 		return nil, err
 	}
 
-	return page.NewPage(mesures, cursor), nil
+	return page.NewPage(measures, cursor), nil
 }
 
-func (s MesureService) Get(
+func (s MeasureService) Get(
 	ctx context.Context,
-	mesureID gid.GID,
-) (*coredata.Mesure, error) {
-	mesure := &coredata.Mesure{}
+	measureID gid.GID,
+) (*coredata.Measure, error) {
+	measure := &coredata.Measure{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return mesure.LoadByID(ctx, conn, s.svc.scope, mesureID)
+			return measure.LoadByID(ctx, conn, s.svc.scope, measureID)
 		},
 	)
 
@@ -128,46 +128,46 @@ func (s MesureService) Get(
 		return nil, err
 	}
 
-	return mesure, nil
+	return measure, nil
 }
 
-func (s MesureService) Import(
+func (s MeasureService) Import(
 	ctx context.Context,
 	organizationID gid.GID,
-	req ImportMesureRequest,
-) (*page.Page[*coredata.Mesure, coredata.MesureOrderField], error) {
-	importedMesures := coredata.Mesures{}
+	req ImportMeasureRequest,
+) (*page.Page[*coredata.Measure, coredata.MeasureOrderField], error) {
+	importedMeasures := coredata.Measures{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			for i := range req.Mesures {
+			for i := range req.Measures {
 				now := time.Now()
 
-				mesureID, err := gid.NewGID(organizationID.TenantID(), coredata.MesureEntityType)
+				measureID, err := gid.NewGID(organizationID.TenantID(), coredata.MeasureEntityType)
 				if err != nil {
 					return fmt.Errorf("cannot create global id: %w", err)
 				}
 
-				mesure := &coredata.Mesure{
-					ID:             mesureID,
+				measure := &coredata.Measure{
+					ID:             measureID,
 					OrganizationID: organizationID,
-					Name:           req.Mesures[i].Name,
+					Name:           req.Measures[i].Name,
 					Description:    "",
-					Category:       req.Mesures[i].Category,
-					State:          coredata.MesureStateNotStarted,
-					ReferenceID:    req.Mesures[i].ReferenceID,
+					Category:       req.Measures[i].Category,
+					State:          coredata.MeasureStateNotStarted,
+					ReferenceID:    req.Measures[i].ReferenceID,
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}
 
-				importedMesures = append(importedMesures, mesure)
+				importedMeasures = append(importedMeasures, measure)
 
-				if err := mesure.Upsert(ctx, tx, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot upsert mesure: %w", err)
+				if err := measure.Upsert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot upsert measure: %w", err)
 				}
 
-				for j := range req.Mesures[i].Tasks {
+				for j := range req.Measures[i].Tasks {
 					taskID, err := gid.NewGID(organizationID.TenantID(), coredata.TaskEntityType)
 					if err != nil {
 						return fmt.Errorf("cannot create global id: %w", err)
@@ -175,10 +175,10 @@ func (s MesureService) Import(
 
 					task := &coredata.Task{
 						ID:          taskID,
-						MesureID:    mesure.ID,
-						Name:        req.Mesures[i].Tasks[j].Name,
-						Description: req.Mesures[i].Tasks[j].Description,
-						ReferenceID: req.Mesures[i].Tasks[j].ReferenceID,
+						MeasureID:   measure.ID,
+						Name:        req.Measures[i].Tasks[j].Name,
+						Description: req.Measures[i].Tasks[j].Description,
+						ReferenceID: req.Measures[i].Tasks[j].ReferenceID,
 						State:       coredata.TaskStateTodo,
 						CreatedAt:   now,
 						UpdatedAt:   now,
@@ -188,7 +188,7 @@ func (s MesureService) Import(
 						return fmt.Errorf("cannot upsert task: %w", err)
 					}
 
-					for k := range req.Mesures[i].Tasks[j].RequestedEvidences {
+					for k := range req.Measures[i].Tasks[j].RequestedEvidences {
 						evidenceID, err := gid.NewGID(organizationID.TenantID(), coredata.EvidenceEntityType)
 						if err != nil {
 							return fmt.Errorf("cannot create global id: %w", err)
@@ -198,9 +198,9 @@ func (s MesureService) Import(
 							State:       coredata.EvidenceStateRequested,
 							ID:          evidenceID,
 							TaskID:      task.ID,
-							ReferenceID: req.Mesures[i].Tasks[j].RequestedEvidences[k].ReferenceID,
-							Type:        req.Mesures[i].Tasks[j].RequestedEvidences[k].Type,
-							Description: req.Mesures[i].Tasks[j].RequestedEvidences[k].Name,
+							ReferenceID: req.Measures[i].Tasks[j].RequestedEvidences[k].ReferenceID,
+							Type:        req.Measures[i].Tasks[j].RequestedEvidences[k].Type,
+							Description: req.Measures[i].Tasks[j].RequestedEvidences[k].Name,
 							CreatedAt:   now,
 							UpdatedAt:   now,
 						}
@@ -211,7 +211,7 @@ func (s MesureService) Import(
 					}
 				}
 
-				for _, standard := range req.Mesures[i].Standards {
+				for _, standard := range req.Measures[i].Standards {
 					framework := &coredata.Framework{}
 					if err := framework.LoadByReferenceID(ctx, tx, s.svc.scope, standard.Framework); err != nil {
 						continue
@@ -222,14 +222,14 @@ func (s MesureService) Import(
 						continue
 					}
 
-					controlMesure := &coredata.ControlMesure{
+					controlMeasure := &coredata.ControlMeasure{
 						ControlID: control.ID,
-						MesureID:  mesure.ID,
+						MeasureID: measure.ID,
 						CreatedAt: now,
 					}
 
-					if err := controlMesure.Upsert(ctx, tx, s.svc.scope); err != nil {
-						return fmt.Errorf("cannot insert control mesure: %w", err)
+					if err := controlMeasure.Upsert(ctx, tx, s.svc.scope); err != nil {
+						return fmt.Errorf("cannot insert control measure: %w", err)
 					}
 				}
 			}
@@ -239,55 +239,55 @@ func (s MesureService) Import(
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot import mesures: %w", err)
+		return nil, fmt.Errorf("cannot import measures: %w", err)
 	}
 
 	cursor := page.NewCursor(
-		len(importedMesures),
+		len(importedMeasures),
 		nil,
 		page.Head,
-		page.OrderBy[coredata.MesureOrderField]{
-			Field:     coredata.MesureOrderFieldCreatedAt,
+		page.OrderBy[coredata.MeasureOrderField]{
+			Field:     coredata.MeasureOrderFieldCreatedAt,
 			Direction: page.OrderDirectionAsc,
 		},
 	)
 
-	return page.NewPage(importedMesures, cursor), nil
+	return page.NewPage(importedMeasures, cursor), nil
 }
 
-func (s MesureService) Update(
+func (s MeasureService) Update(
 	ctx context.Context,
-	req UpdateMesureRequest,
-) (*coredata.Mesure, error) {
-	mesure := &coredata.Mesure{ID: req.ID}
+	req UpdateMeasureRequest,
+) (*coredata.Measure, error) {
+	measure := &coredata.Measure{ID: req.ID}
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := mesure.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load mesure: %w", err)
+			if err := measure.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
+				return fmt.Errorf("cannot load measure: %w", err)
 			}
 
 			if req.Name != nil {
-				mesure.Name = *req.Name
+				measure.Name = *req.Name
 			}
 
 			if req.Description != nil {
-				mesure.Description = *req.Description
+				measure.Description = *req.Description
 			}
 
 			if req.Category != nil {
-				mesure.Category = *req.Category
+				measure.Category = *req.Category
 			}
 
 			if req.State != nil {
-				mesure.State = *req.State
+				measure.State = *req.State
 			}
 
-			mesure.UpdatedAt = time.Now()
+			measure.UpdatedAt = time.Now()
 
-			if err := mesure.Update(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot update mesure: %w", err)
+			if err := measure.Update(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update measure: %w", err)
 			}
 
 			return nil
@@ -297,20 +297,20 @@ func (s MesureService) Update(
 		return nil, err
 	}
 
-	return mesure, nil
+	return measure, nil
 }
 
-func (s MesureService) ListForOrganizationID(
+func (s MeasureService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
-	cursor *page.Cursor[coredata.MesureOrderField],
-) (*page.Page[*coredata.Mesure, coredata.MesureOrderField], error) {
-	var mesures coredata.Mesures
+	cursor *page.Cursor[coredata.MeasureOrderField],
+) (*page.Page[*coredata.Measure, coredata.MeasureOrderField], error) {
+	var measures coredata.Measures
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return mesures.LoadByOrganizationID(
+			return measures.LoadByOrganizationID(
 				ctx,
 				conn,
 				s.svc.scope,
@@ -324,17 +324,17 @@ func (s MesureService) ListForOrganizationID(
 		return nil, err
 	}
 
-	return page.NewPage(mesures, cursor), nil
+	return page.NewPage(measures, cursor), nil
 }
 
-func (s MesureService) Create(
+func (s MeasureService) Create(
 	ctx context.Context,
-	req CreateMesureRequest,
-) (*coredata.Mesure, error) {
+	req CreateMeasureRequest,
+) (*coredata.Measure, error) {
 	now := time.Now()
-	mesureID, err := gid.NewGID(s.svc.scope.GetTenantID(), coredata.MesureEntityType)
+	measureID, err := gid.NewGID(s.svc.scope.GetTenantID(), coredata.MeasureEntityType)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create mesure global id: %w", err)
+		return nil, fmt.Errorf("cannot create measure global id: %w", err)
 	}
 
 	referenceID, err := uuid.NewV4()
@@ -342,14 +342,14 @@ func (s MesureService) Create(
 		return nil, fmt.Errorf("cannot generate reference id: %w", err)
 	}
 
-	mesure := &coredata.Mesure{
-		ID:             mesureID,
+	measure := &coredata.Measure{
+		ID:             measureID,
 		OrganizationID: req.OrganizationID,
 		Name:           req.Name,
 		Description:    req.Description,
 		Category:       req.Category,
-		ReferenceID:    "custom-mesure-" + referenceID.String(),
-		State:          coredata.MesureStateNotStarted,
+		ReferenceID:    "custom-measure-" + referenceID.String(),
+		State:          coredata.MeasureStateNotStarted,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -357,8 +357,8 @@ func (s MesureService) Create(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := mesure.Insert(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot insert mesure: %w", err)
+			if err := measure.Insert(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert measure: %w", err)
 			}
 
 			return nil
@@ -369,18 +369,18 @@ func (s MesureService) Create(
 		return nil, err
 	}
 
-	return mesure, nil
+	return measure, nil
 }
 
-func (s MesureService) Delete(
+func (s MeasureService) Delete(
 	ctx context.Context,
-	mesureID gid.GID,
+	measureID gid.GID,
 ) error {
 	return s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
-		mesure := &coredata.Mesure{ID: mesureID}
+		measure := &coredata.Measure{ID: measureID}
 
-		if err := mesure.Delete(ctx, conn, s.svc.scope); err != nil {
-			return fmt.Errorf("cannot delete mesure: %w", err)
+		if err := measure.Delete(ctx, conn, s.svc.scope); err != nil {
+			return fmt.Errorf("cannot delete measure: %w", err)
 		}
 
 		return nil

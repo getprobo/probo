@@ -134,10 +134,10 @@ export function NavMain() {
 function getNavItems(organizationId?: string): NavItem[] {
   return [
     {
-      title: "Mesures",
+      title: "Measures",
       icon: ClipboardList,
       url: organizationId
-        ? `/organizations/${organizationId}/mesures`
+        ? `/organizations/${organizationId}/measures`
         : undefined,
     },
     {

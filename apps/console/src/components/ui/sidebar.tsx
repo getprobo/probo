@@ -69,7 +69,7 @@ const SidebarProvider = React.forwardRef<
     const [openMobile, setOpenMobile] = React.useState(false);
 
     // This is the internal state of the sidebar.
-    // We use openProp and setOpenProp for mesure from outside the component.
+    // We use openProp and setOpenProp for measure from outside the component.
     const [_open, _setOpen] = React.useState(defaultOpen);
     const open = openProp ?? _open;
     const setOpen = React.useCallback(

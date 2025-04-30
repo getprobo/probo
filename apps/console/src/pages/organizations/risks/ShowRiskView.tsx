@@ -54,11 +54,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  ShowRiskViewOrganizationMesuresQuery,
-  ShowRiskViewOrganizationMesuresQuery$data,
-} from "./__generated__/ShowRiskViewOrganizationMesuresQuery.graphql";
-import { ShowRiskViewCreateRiskMesureMappingMutation } from "./__generated__/ShowRiskViewCreateRiskMesureMappingMutation.graphql";
-import { ShowRiskViewDeleteRiskMesureMappingMutation } from "./__generated__/ShowRiskViewDeleteRiskMesureMappingMutation.graphql";
+  ShowRiskViewOrganizationMeasuresQuery,
+  ShowRiskViewOrganizationMeasuresQuery$data,
+} from "./__generated__/ShowRiskViewOrganizationMeasuresQuery.graphql";
+import { ShowRiskViewCreateRiskMeasureMappingMutation } from "./__generated__/ShowRiskViewCreateRiskMeasureMappingMutation.graphql";
+import { ShowRiskViewDeleteRiskMeasureMappingMutation } from "./__generated__/ShowRiskViewDeleteRiskMeasureMappingMutation.graphql";
 import {
   ShowRiskViewOrganizationPoliciesQuery,
   ShowRiskViewOrganizationPoliciesQuery$data,
@@ -85,7 +85,7 @@ const showRiskViewQuery = graphql`
         note
         createdAt
         updatedAt
-        mesures(first: 100) @connection(key: "Risk__mesures") {
+        measures(first: 100) @connection(key: "Risk__measures") {
           edges {
             node {
               id
@@ -122,13 +122,13 @@ const showRiskViewQuery = graphql`
   }
 `;
 
-// Add query to fetch all mesures for the organization
-const organizationMesuresQuery = graphql`
-  query ShowRiskViewOrganizationMesuresQuery($organizationId: ID!) {
+// Add query to fetch all measures for the organization
+const organizationMeasuresQuery = graphql`
+  query ShowRiskViewOrganizationMeasuresQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       id
       ... on Organization {
-        mesures(first: 100) @connection(key: "Organization__mesures") {
+        measures(first: 100) @connection(key: "Organization__measures") {
           edges {
             node {
               id
@@ -163,23 +163,23 @@ const organizationPoliciesQuery = graphql`
   }
 `;
 
-// Add mutation to create risk-mesure mapping
-const createRiskMesureMappingMutation = graphql`
-  mutation ShowRiskViewCreateRiskMesureMappingMutation(
-    $input: CreateRiskMesureMappingInput!
+// Add mutation to create risk-measure mapping
+const createRiskMeasureMappingMutation = graphql`
+  mutation ShowRiskViewCreateRiskMeasureMappingMutation(
+    $input: CreateRiskMeasureMappingInput!
   ) {
-    createRiskMesureMapping(input: $input) {
+    createRiskMeasureMapping(input: $input) {
       success
     }
   }
 `;
 
-// Add mutation to delete risk-mesure mapping
-const deleteRiskMesureMappingMutation = graphql`
-  mutation ShowRiskViewDeleteRiskMesureMappingMutation(
-    $input: DeleteRiskMesureMappingInput!
+// Add mutation to delete risk-measure mapping
+const deleteRiskMeasureMappingMutation = graphql`
+  mutation ShowRiskViewDeleteRiskMeasureMappingMutation(
+    $input: DeleteRiskMeasureMappingInput!
   ) {
-    deleteRiskMesureMapping(input: $input) {
+    deleteRiskMeasureMapping(input: $input) {
       success
     }
   }
@@ -329,8 +329,8 @@ function ShowRiskViewContent({
     risk.inherentImpact!
   );
 
-  // Fix typing for mesures
-  const mesures = risk.mesures?.edges?.map((edge) => edge.node) || [];
+  // Fix typing for measures
+  const measures = risk.measures?.edges?.map((edge) => edge.node) || [];
   const residualSeverity = getRiskSeverity(
     risk.residualLikelihood!,
     risk.residualImpact!
@@ -342,17 +342,17 @@ function ShowRiskViewContent({
   // Fix typing for controls
   const controls = risk.controls?.edges?.map((edge) => edge.node) || [];
 
-  // Add state for mesure mapping dialog
-  const [isMesureDialogOpen, setIsMesureDialogOpen] = useState(false);
-  const [organizationMesuresData, setOrganizationMesuresData] =
-    useState<ShowRiskViewOrganizationMesuresQuery$data | null>(null);
-  const [mesureSearchQuery, setMesureSearchQuery] = useState("");
+  // Add state for measure mapping dialog
+  const [isMeasureDialogOpen, setIsMeasureDialogOpen] = useState(false);
+  const [organizationMeasuresData, setOrganizationMeasuresData] =
+    useState<ShowRiskViewOrganizationMeasuresQuery$data | null>(null);
+  const [measureSearchQuery, setMeasureSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  const [isLoadingMesures, setIsLoadingMesures] = useState(false);
-  const [linkingMesures, setLinkingMesures] = useState<Record<string, boolean>>(
+  const [isLoadingMeasures, setIsLoadingMeasures] = useState(false);
+  const [linkingMeasures, setLinkingMeasures] = useState<Record<string, boolean>>(
     {}
   );
-  const [unlinkingMesures, setUnlinkingMesures] = useState<
+  const [unlinkingMeasures, setUnlinkingMeasures] = useState<
     Record<string, boolean>
   >({});
 
@@ -370,13 +370,13 @@ function ShowRiskViewContent({
   >({});
 
   // Setup mutation hooks
-  const [createRiskMesureMapping] =
-    useMutation<ShowRiskViewCreateRiskMesureMappingMutation>(
-      createRiskMesureMappingMutation
+  const [createRiskMeasureMapping] =
+    useMutation<ShowRiskViewCreateRiskMeasureMappingMutation>(
+      createRiskMeasureMappingMutation
     );
-  const [deleteRiskMesureMapping] =
-    useMutation<ShowRiskViewDeleteRiskMesureMappingMutation>(
-      deleteRiskMesureMappingMutation
+  const [deleteRiskMeasureMapping] =
+    useMutation<ShowRiskViewDeleteRiskMeasureMappingMutation>(
+      deleteRiskMeasureMappingMutation
     );
 
   // Setup policy mutation hooks
@@ -391,13 +391,13 @@ function ShowRiskViewContent({
 
   // Clear filters when dialog closes
   useEffect(() => {
-    if (!isMesureDialogOpen) {
-      setMesureSearchQuery("");
+    if (!isMeasureDialogOpen) {
+      setMeasureSearchQuery("");
       setCategoryFilter(null);
-      setLinkingMesures({});
-      setUnlinkingMesures({});
+      setLinkingMeasures({});
+      setUnlinkingMeasures({});
     }
-  }, [isMesureDialogOpen]);
+  }, [isMeasureDialogOpen]);
 
   // Clear filters when policy dialog closes
   useEffect(() => {
@@ -408,30 +408,30 @@ function ShowRiskViewContent({
     }
   }, [isPolicyDialogOpen]);
 
-  // Load mesures data when needed
-  const loadMesuresData = useCallback(() => {
+  // Load measures data when needed
+  const loadMeasuresData = useCallback(() => {
     if (!organizationId || !risk.id) return;
 
-    setIsLoadingMesures(true);
+    setIsLoadingMeasures(true);
 
-    // Fetch all mesures for the organization
-    fetchQuery<ShowRiskViewOrganizationMesuresQuery>(
+    // Fetch all measures for the organization
+    fetchQuery<ShowRiskViewOrganizationMeasuresQuery>(
       environment,
-      organizationMesuresQuery,
+      organizationMeasuresQuery,
       {
         organizationId,
       }
     ).subscribe({
       next: (data) => {
-        setOrganizationMesuresData(data);
-        setIsLoadingMesures(false);
+        setOrganizationMeasuresData(data);
+        setIsLoadingMeasures(false);
       },
       error: (error: Error) => {
-        console.error("Error fetching organization mesures:", error);
-        setIsLoadingMesures(false);
+        console.error("Error fetching organization measures:", error);
+        setIsLoadingMeasures(false);
         toast({
           title: "Error",
-          description: "Failed to load mesures.",
+          description: "Failed to load measures.",
           variant: "destructive",
         });
       },
@@ -469,49 +469,49 @@ function ShowRiskViewContent({
   }, [risk.id, environment, organizationId, toast]);
 
   // Helper functions
-  const getMesures = useCallback(() => {
-    if (!organizationMesuresData?.organization?.mesures?.edges) return [];
-    return organizationMesuresData.organization.mesures.edges.map(
+  const getMeasures = useCallback(() => {
+    if (!organizationMeasuresData?.organization?.measures?.edges) return [];
+    return organizationMeasuresData.organization.measures.edges.map(
       (edge) => edge.node
     );
-  }, [organizationMesuresData]);
+  }, [organizationMeasuresData]);
 
-  const getMesureCategories = useCallback(() => {
-    const mesures = getMesures();
+  const getMeasureCategories = useCallback(() => {
+    const measures = getMeasures();
     const categories = new Set<string>();
 
-    mesures.forEach((mesure) => {
-      if (mesure.category) {
-        categories.add(mesure.category);
+    measures.forEach((measure) => {
+      if (measure.category) {
+        categories.add(measure.category);
       }
     });
 
     return Array.from(categories).sort();
-  }, [getMesures]);
+  }, [getMeasures]);
 
-  const filteredMesures = useCallback(() => {
-    const mesures = getMesures();
-    if (!mesureSearchQuery && !categoryFilter) return mesures;
+  const filteredMeasures = useCallback(() => {
+    const measures = getMeasures();
+    if (!measureSearchQuery && !categoryFilter) return measures;
 
-    return mesures.filter((mesure) => {
+    return measures.filter((measure) => {
       // Filter by search query
       const matchesSearch =
-        !mesureSearchQuery ||
-        mesure.name.toLowerCase().includes(mesureSearchQuery.toLowerCase()) ||
-        (mesure.description &&
-          mesure.description
+        !measureSearchQuery ||
+        measure.name.toLowerCase().includes(measureSearchQuery.toLowerCase()) ||
+        (measure.description &&
+          measure.description
             .toLowerCase()
-            .includes(mesureSearchQuery.toLowerCase()));
+            .includes(measureSearchQuery.toLowerCase()));
 
       // Filter by category
       const matchesCategory =
         !categoryFilter ||
         categoryFilter === "all" ||
-        mesure.category === categoryFilter;
+        measure.category === categoryFilter;
 
       return matchesSearch && matchesCategory;
     });
-  }, [getMesures, mesureSearchQuery, categoryFilter]);
+  }, [getMeasures, measureSearchQuery, categoryFilter]);
 
   // Helper functions for policies
   const getPolicies = useCallback(() => {
@@ -533,38 +533,38 @@ function ShowRiskViewContent({
     });
   }, [getPolicies, policySearchQuery]);
 
-  // Handle linking a mesure to this risk
-  const handleLinkMesure = useCallback(
+  // Handle linking a measure to this risk
+  const handleLinkMeasure = useCallback(
     (
-      mesure: NonNullable<
+      measure: NonNullable<
         NonNullable<
-          ShowRiskViewOrganizationMesuresQuery$data["organization"]
-        >["mesures"]
+          ShowRiskViewOrganizationMeasuresQuery$data["organization"]
+        >["measures"]
       >["edges"][0]["node"]
     ) => {
       if (!risk.id) return;
 
-      // Track this specific mesure as linking
-      setLinkingMesures((prev) => ({ ...prev, [mesure.id]: true }));
+      // Track this specific measure as linking
+      setLinkingMeasures((prev) => ({ ...prev, [measure.id]: true }));
 
-      createRiskMesureMapping({
+      createRiskMeasureMapping({
         variables: {
           input: {
             riskId: risk.id,
-            mesureId: mesure.id,
+            measureId: measure.id,
           },
         },
         onCompleted: (_, errors) => {
-          setLinkingMesures((prev) => ({
+          setLinkingMeasures((prev) => ({
             ...prev,
-            [mesure.id]: false,
+            [measure.id]: false,
           }));
 
           if (errors && errors.length > 0) {
-            console.error("Error linking mesure:", errors);
+            console.error("Error linking measure:", errors);
             toast({
               title: "Error",
-              description: "Failed to link mesure. Please try again.",
+              description: "Failed to link measure. Please try again.",
               variant: "destructive",
             });
             return;
@@ -585,58 +585,58 @@ function ShowRiskViewContent({
 
           toast({
             title: "Success",
-            description: `Linked mesure "${mesure.name}" to this risk.`,
+            description: `Linked measure "${measure.name}" to this risk.`,
           });
         },
         onError: (error) => {
-          setLinkingMesures((prev) => ({
+          setLinkingMeasures((prev) => ({
             ...prev,
-            [mesure.id]: false,
+            [measure.id]: false,
           }));
-          console.error("Error linking mesure:", error);
+          console.error("Error linking measure:", error);
           toast({
             title: "Error",
-            description: "Failed to link mesure. Please try again.",
+            description: "Failed to link measure. Please try again.",
             variant: "destructive",
           });
         },
       });
     },
-    [risk.id, createRiskMesureMapping, toast, environment, loadQuery]
+    [risk.id, createRiskMeasureMapping, toast, environment, loadQuery]
   );
 
-  // Handle unlinking a mesure from this risk
-  const handleUnlinkMesure = useCallback(
+  // Handle unlinking a measure from this risk
+  const handleUnlinkMeasure = useCallback(
     (
-      mesure: NonNullable<
+      measure: NonNullable<
         NonNullable<
-          ShowRiskViewOrganizationMesuresQuery$data["organization"]
-        >["mesures"]
+          ShowRiskViewOrganizationMeasuresQuery$data["organization"]
+        >["measures"]
       >["edges"][0]["node"]
     ) => {
       if (!risk.id) return;
 
-      // Track this specific mesure as unlinking
-      setUnlinkingMesures((prev) => ({ ...prev, [mesure.id]: true }));
+      // Track this specific measure as unlinking
+      setUnlinkingMeasures((prev) => ({ ...prev, [measure.id]: true }));
 
-      deleteRiskMesureMapping({
+      deleteRiskMeasureMapping({
         variables: {
           input: {
             riskId: risk.id,
-            mesureId: mesure.id,
+            measureId: measure.id,
           },
         },
         onCompleted: (_, errors) => {
-          setUnlinkingMesures((prev) => ({
+          setUnlinkingMeasures((prev) => ({
             ...prev,
-            [mesure.id]: false,
+            [measure.id]: false,
           }));
 
           if (errors && errors.length > 0) {
-            console.error("Error unlinking mesure:", errors);
+            console.error("Error unlinking measure:", errors);
             toast({
               title: "Error",
-              description: "Failed to unlink mesure. Please try again.",
+              description: "Failed to unlink measure. Please try again.",
               variant: "destructive",
             });
             return;
@@ -657,24 +657,24 @@ function ShowRiskViewContent({
 
           toast({
             title: "Success",
-            description: `Unlinked mesure "${mesure.name}" from this risk.`,
+            description: `Unlinked measure "${measure.name}" from this risk.`,
           });
         },
         onError: (error) => {
-          setUnlinkingMesures((prev) => ({
+          setUnlinkingMeasures((prev) => ({
             ...prev,
-            [mesure.id]: false,
+            [measure.id]: false,
           }));
-          console.error("Error unlinking mesure:", error);
+          console.error("Error unlinking measure:", error);
           toast({
             title: "Error",
-            description: "Failed to unlink mesure. Please try again.",
+            description: "Failed to unlink measure. Please try again.",
             variant: "destructive",
           });
         },
       });
     },
-    [risk.id, deleteRiskMesureMapping, toast, environment, loadQuery]
+    [risk.id, deleteRiskMeasureMapping, toast, environment, loadQuery]
   );
 
   // Handle linking a policy to this risk
@@ -994,10 +994,10 @@ function ShowRiskViewContent({
                         {risk.residualLikelihood! * risk.residualImpact!})
                       </span>
                       {risk.treatment === "MITIGATED" &&
-                        risk.mesures?.edges &&
-                        risk.mesures.edges.length > 0 &&
-                        ` with ${risk.mesures.edges.length} ${
-                          risk.mesures.edges.length === 1
+                        risk.measures?.edges &&
+                        risk.measures.edges.length > 0 &&
+                        ` with ${risk.measures.edges.length} ${
+                          risk.measures.edges.length === 1
                             ? "measure"
                             : "measures"
                         }`}
@@ -1022,53 +1022,53 @@ function ShowRiskViewContent({
           </Card>
         )}
 
-        <Tabs defaultValue="mesures" className="w-full">
+        <Tabs defaultValue="measures" className="w-full">
           <TabsList>
-            <TabsTrigger value="mesures">Mesures</TabsTrigger>
+            <TabsTrigger value="measures">Measures</TabsTrigger>
             <TabsTrigger value="policies">Policies</TabsTrigger>
             <TabsTrigger value="controls">Controls</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="mesures" className="space-y-4">
+          <TabsContent value="measures" className="space-y-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Risk Mesures</h2>
+              <h2 className="text-xl font-semibold">Risk Measures</h2>
               <Button
                 onClick={() => {
-                  setIsMesureDialogOpen(true);
-                  loadMesuresData();
+                  setIsMeasureDialogOpen(true);
+                  loadMeasuresData();
                 }}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Link Mesure
+                Link Measure
               </Button>
             </div>
-            {risk.mesures?.edges && risk.mesures.edges.length > 0 ? (
+            {risk.measures?.edges && risk.measures.edges.length > 0 ? (
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-full">Mesure</TableHead>
+                      <TableHead className="w-full">Measure</TableHead>
                       <TableHead className="w-20">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {risk.mesures?.edges.map(({ node: mesure }) => (
-                      <TableRow key={mesure.id}>
+                    {risk.measures?.edges.map(({ node: measure }) => (
+                      <TableRow key={measure.id}>
                         <TableCell>
                           <Link
-                            to={`/organizations/${organizationId}/mesures/${mesure.id}`}
+                            to={`/organizations/${organizationId}/measures/${measure.id}`}
                             className="font-medium text-blue-600 hover:underline"
                           >
-                            {mesure.name}
+                            {measure.name}
                           </Link>
                         </TableCell>
                         <TableCell>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleUnlinkMesure(mesure)}
-                            disabled={unlinkingMesures[mesure.id] || false}
-                            title="Unlink mesure"
+                            onClick={() => handleUnlinkMeasure(measure)}
+                            disabled={unlinkingMeasures[measure.id] || false}
+                            title="Unlink measure"
                           >
                             <Trash2 className="h-4 w-4 text-danger" />
                           </Button>
@@ -1080,7 +1080,7 @@ function ShowRiskViewContent({
               </div>
             ) : (
               <div className="text-center py-10 text-secondary">
-                <p>No mesures associated with this risk.</p>
+                <p>No measures associated with this risk.</p>
               </div>
             )}
           </TabsContent>
@@ -1089,15 +1089,6 @@ function ShowRiskViewContent({
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Risk Policies</h2>
               <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  asChild
-                >
-                  <Link to={`/organizations/${organizationId}/policies/new?riskId=${risk.id}`}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Version
-                  </Link>
-                </Button>
                 <Button
                   onClick={() => {
                     setIsPolicyDialogOpen(true);
@@ -1189,15 +1180,15 @@ function ShowRiskViewContent({
           </TabsContent>
         </Tabs>
 
-        {/* Dialog for linking mesures */}
-        <Dialog open={isMesureDialogOpen} onOpenChange={setIsMesureDialogOpen}>
+        {/* Dialog for linking measures */}
+        <Dialog open={isMeasureDialogOpen} onOpenChange={setIsMeasureDialogOpen}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <DialogTitle>Manage Risk Mesures</DialogTitle>
+                  <DialogTitle>Manage Risk Measures</DialogTitle>
                   <DialogDescription>
-                    Link or unlink mesures to manage this risk.
+                    Link or unlink measures to manage this risk.
                   </DialogDescription>
                 </div>
               </div>
@@ -1209,10 +1200,10 @@ function ShowRiskViewContent({
                   <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-tertiary" />
                     <Input
-                      placeholder="Search mesures..."
+                      placeholder="Search measures..."
                       className="pl-8"
-                      value={mesureSearchQuery}
-                      onChange={(e) => setMesureSearchQuery(e.target.value)}
+                      value={measureSearchQuery}
+                      onChange={(e) => setMeasureSearchQuery(e.target.value)}
                     />
                   </div>
                 </div>
@@ -1227,7 +1218,7 @@ function ShowRiskViewContent({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {getMesureCategories().map((category) => (
+                    {getMeasureCategories().map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
                       </SelectItem>
@@ -1237,35 +1228,35 @@ function ShowRiskViewContent({
               </div>
 
               <div className="border rounded-md max-h-96 overflow-y-auto">
-                {isLoadingMesures ? (
-                  <div className="p-4 text-center">Loading mesures...</div>
-                ) : filteredMesures().length === 0 ? (
-                  <div className="p-4 text-center">No mesures found.</div>
+                {isLoadingMeasures ? (
+                  <div className="p-4 text-center">Loading measures...</div>
+                ) : filteredMeasures().length === 0 ? (
+                  <div className="p-4 text-center">No measures found.</div>
                 ) : (
                   <div className="divide-y">
-                    {filteredMesures().map((mesure) => {
+                    {filteredMeasures().map((measure) => {
                       // For each render, recalculate linked status directly against the current risk data
-                      const isLinked = risk.mesures?.edges?.some(
-                        (edge) => edge.node.id === mesure.id
+                      const isLinked = risk.measures?.edges?.some(
+                        (edge) => edge.node.id === measure.id
                       );
-                      const isLinking = linkingMesures[mesure.id] || false;
-                      const isUnlinking = unlinkingMesures[mesure.id] || false;
+                      const isLinking = linkingMeasures[measure.id] || false;
+                      const isUnlinking = unlinkingMeasures[measure.id] || false;
 
                       return (
                         <div
-                          key={mesure.id}
+                          key={measure.id}
                           className="relative p-4 hover:bg-blue-50 transition-colors duration-150"
                         >
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                              <h3 className="font-medium">{mesure.name}</h3>
-                              {mesure.category && (
+                              <h3 className="font-medium">{measure.name}</h3>
+                              {measure.category && (
                                 <Badge
                                   variant="outline"
                                   className="text-xs font-normal"
                                 >
                                   <Tag className="h-3 w-3 mr-1" />
-                                  {mesure.category}
+                                  {measure.category}
                                 </Badge>
                               )}
                             </div>
@@ -1274,7 +1265,7 @@ function ShowRiskViewContent({
                                 size="sm"
                                 variant="outline"
                                 disabled={isUnlinking}
-                                onClick={() => handleUnlinkMesure(mesure)}
+                                onClick={() => handleUnlinkMeasure(measure)}
                                 className="text-red-600 border-red-200 hover:bg-red-50"
                               >
                                 {isUnlinking ? "Unlinking..." : "Unlink"}
@@ -1283,7 +1274,7 @@ function ShowRiskViewContent({
                               <Button
                                 size="sm"
                                 disabled={isLinking}
-                                onClick={() => handleLinkMesure(mesure)}
+                                onClick={() => handleLinkMeasure(measure)}
                               >
                                 {isLinking ? "Linking..." : "Link"}
                               </Button>
@@ -1300,7 +1291,7 @@ function ShowRiskViewContent({
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setIsMesureDialogOpen(false)}
+                onClick={() => setIsMeasureDialogOpen(false)}
               >
                 Close
               </Button>

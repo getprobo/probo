@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d4fc01f5c38bce1054b2198af7e021f2>>
+ * @generated SignedSource<<c0daa0e600804b3750294c11acacec17>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -280,15 +280,15 @@ return {
                                 "value": 1
                               }
                             ],
-                            "concreteType": "MesureConnection",
+                            "concreteType": "MeasureConnection",
                             "kind": "LinkedField",
-                            "name": "mesures",
+                            "name": "measures",
                             "plural": false,
                             "selections": [
                               {
                                 "alias": null,
                                 "args": null,
-                                "concreteType": "MesureEdge",
+                                "concreteType": "MeasureEdge",
                                 "kind": "LinkedField",
                                 "name": "edges",
                                 "plural": true,
@@ -296,7 +296,7 @@ return {
                                   {
                                     "alias": null,
                                     "args": null,
-                                    "concreteType": "Mesure",
+                                    "concreteType": "Measure",
                                     "kind": "LinkedField",
                                     "name": "node",
                                     "plural": false,
@@ -310,7 +310,7 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": "mesures(first:1)"
+                            "storageKey": "measures(first:1)"
                           },
                           (v8/*: any*/)
                         ],
@@ -399,12 +399,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "519139d7f492b8d719abf1b0e788853a",
+    "cacheID": "3e7d8e722a266ae4e1892ad472d29e69",
     "id": null,
     "metadata": {},
     "name": "ListRiskViewQuery",
     "operationKind": "query",
-    "text": "query ListRiskViewQuery(\n  $organizationId: ID!\n  $first: Int\n  $after: CursorKey\n  $last: Int\n  $before: CursorKey\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...ListRiskView_risks_pbnwq\n  }\n}\n\nfragment ListRiskView_risks_pbnwq on Organization {\n  risks(first: $first, after: $after, last: $last, before: $before) {\n    edges {\n      node {\n        id\n        name\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        treatment\n        description\n        category\n        createdAt\n        updatedAt\n        owner {\n          id\n          fullName\n        }\n        mesures(first: 1) {\n          edges {\n            node {\n              category\n              id\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n  id\n}\n"
+    "text": "query ListRiskViewQuery(\n  $organizationId: ID!\n  $first: Int\n  $after: CursorKey\n  $last: Int\n  $before: CursorKey\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...ListRiskView_risks_pbnwq\n  }\n}\n\nfragment ListRiskView_risks_pbnwq on Organization {\n  risks(first: $first, after: $after, last: $last, before: $before) {\n    edges {\n      node {\n        id\n        name\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        treatment\n        description\n        category\n        createdAt\n        updatedAt\n        owner {\n          id\n          fullName\n        }\n        measures(first: 1) {\n          edges {\n            node {\n              category\n              id\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

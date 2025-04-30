@@ -13,6 +13,7 @@ import AuthLayout from "./layouts/AuthLayout";
 import { RelayEnvironment } from "./RelayEnvironment";
 import { AuthenticationRoutes } from "./pages/authentication/Routes";
 import { OrganizationsRoutes } from "./pages/organizations/Routes";
+import SigningRequestsPage from "./pages/SigningRequestsPage";
 
 posthog.init(process.env.POSTHOG_KEY!, {
   api_host: process.env.POSTHOG_HOST,
@@ -51,6 +52,11 @@ function App() {
                   <Route
                     path="organizations/*"
                     element={<OrganizationsRoutes />}
+                  />
+
+                  <Route
+                    path="policies/signing-requests"
+                    element={<SigningRequestsPage />}
                   />
 
                   <Route

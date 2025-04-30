@@ -45,7 +45,7 @@ type ResolverRoot interface {
 	Control() ControlResolver
 	Evidence() EvidenceResolver
 	Framework() FrameworkResolver
-	Mesure() MesureResolver
+	Measure() MeasureResolver
 	Mutation() MutationResolver
 	Organization() OrganizationResolver
 	Policy() PolicyResolver
@@ -95,7 +95,7 @@ type ComplexityRoot struct {
 		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
 		ID          func(childComplexity int) int
-		Mesures     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MesureOrderBy) int
+		Measures    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) int
 		Name        func(childComplexity int) int
 		Policies    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) int
 		ReferenceID func(childComplexity int) int
@@ -112,7 +112,7 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	CreateControlMesureMappingPayload struct {
+	CreateControlMeasureMappingPayload struct {
 		Success func(childComplexity int) int
 	}
 
@@ -132,8 +132,8 @@ type ComplexityRoot struct {
 		FrameworkEdge func(childComplexity int) int
 	}
 
-	CreateMesurePayload struct {
-		MesureEdge func(childComplexity int) int
+	CreateMeasurePayload struct {
+		MeasureEdge func(childComplexity int) int
 	}
 
 	CreateOrganizationPayload struct {
@@ -149,7 +149,7 @@ type ComplexityRoot struct {
 		PolicyVersionEdge func(childComplexity int) int
 	}
 
-	CreateRiskMesureMappingPayload struct {
+	CreateRiskMeasureMappingPayload struct {
 		Success func(childComplexity int) int
 	}
 
@@ -173,7 +173,7 @@ type ComplexityRoot struct {
 		VendorRiskAssessmentEdge func(childComplexity int) int
 	}
 
-	DeleteControlMesureMappingPayload struct {
+	DeleteControlMeasureMappingPayload struct {
 		Success func(childComplexity int) int
 	}
 
@@ -189,8 +189,8 @@ type ComplexityRoot struct {
 		DeletedFrameworkID func(childComplexity int) int
 	}
 
-	DeleteMesurePayload struct {
-		DeletedMesureID func(childComplexity int) int
+	DeleteMeasurePayload struct {
+		DeletedMeasureID func(childComplexity int) int
 	}
 
 	DeleteOrganizationPayload struct {
@@ -205,7 +205,7 @@ type ComplexityRoot struct {
 		DeletedPolicyID func(childComplexity int) int
 	}
 
-	DeleteRiskMesureMappingPayload struct {
+	DeleteRiskMeasureMappingPayload struct {
 		Success func(childComplexity int) int
 	}
 
@@ -280,15 +280,15 @@ type ComplexityRoot struct {
 		FrameworkEdge func(childComplexity int) int
 	}
 
-	ImportMesurePayload struct {
-		MesureEdges func(childComplexity int) int
+	ImportMeasurePayload struct {
+		MeasureEdges func(childComplexity int) int
 	}
 
 	InviteUserPayload struct {
 		Success func(childComplexity int) int
 	}
 
-	Mesure struct {
+	Measure struct {
 		Category    func(childComplexity int) int
 		Controls    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) int
 		CreatedAt   func(childComplexity int) int
@@ -301,12 +301,12 @@ type ComplexityRoot struct {
 		UpdatedAt   func(childComplexity int) int
 	}
 
-	MesureConnection struct {
+	MeasureConnection struct {
 		Edges    func(childComplexity int) int
 		PageInfo func(childComplexity int) int
 	}
 
-	MesureEdge struct {
+	MeasureEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
@@ -314,46 +314,47 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AssignTask                   func(childComplexity int, input types.AssignTaskInput) int
 		ConfirmEmail                 func(childComplexity int, input types.ConfirmEmailInput) int
-		CreateControlMesureMapping   func(childComplexity int, input types.CreateControlMesureMappingInput) int
+		CreateControlMeasureMapping  func(childComplexity int, input types.CreateControlMeasureMappingInput) int
 		CreateControlPolicyMapping   func(childComplexity int, input types.CreateControlPolicyMappingInput) int
 		CreateDraftPolicyVersion     func(childComplexity int, input types.CreateDraftPolicyVersionInput) int
 		CreateEvidence               func(childComplexity int, input types.CreateEvidenceInput) int
 		CreateFramework              func(childComplexity int, input types.CreateFrameworkInput) int
-		CreateMesure                 func(childComplexity int, input types.CreateMesureInput) int
+		CreateMeasure                func(childComplexity int, input types.CreateMeasureInput) int
 		CreateOrganization           func(childComplexity int, input types.CreateOrganizationInput) int
 		CreatePeople                 func(childComplexity int, input types.CreatePeopleInput) int
 		CreatePolicy                 func(childComplexity int, input types.CreatePolicyInput) int
 		CreateRisk                   func(childComplexity int, input types.CreateRiskInput) int
-		CreateRiskMesureMapping      func(childComplexity int, input types.CreateRiskMesureMappingInput) int
+		CreateRiskMeasureMapping     func(childComplexity int, input types.CreateRiskMeasureMappingInput) int
 		CreateRiskPolicyMapping      func(childComplexity int, input types.CreateRiskPolicyMappingInput) int
 		CreateTask                   func(childComplexity int, input types.CreateTaskInput) int
 		CreateVendor                 func(childComplexity int, input types.CreateVendorInput) int
 		CreateVendorRiskAssessment   func(childComplexity int, input types.CreateVendorRiskAssessmentInput) int
-		DeleteControlMesureMapping   func(childComplexity int, input types.DeleteControlMesureMappingInput) int
+		DeleteControlMeasureMapping  func(childComplexity int, input types.DeleteControlMeasureMappingInput) int
 		DeleteControlPolicyMapping   func(childComplexity int, input types.DeleteControlPolicyMappingInput) int
 		DeleteEvidence               func(childComplexity int, input types.DeleteEvidenceInput) int
 		DeleteFramework              func(childComplexity int, input types.DeleteFrameworkInput) int
-		DeleteMesure                 func(childComplexity int, input types.DeleteMesureInput) int
+		DeleteMeasure                func(childComplexity int, input types.DeleteMeasureInput) int
 		DeleteOrganization           func(childComplexity int, input types.DeleteOrganizationInput) int
 		DeletePeople                 func(childComplexity int, input types.DeletePeopleInput) int
 		DeletePolicy                 func(childComplexity int, input types.DeletePolicyInput) int
 		DeleteRisk                   func(childComplexity int, input types.DeleteRiskInput) int
-		DeleteRiskMesureMapping      func(childComplexity int, input types.DeleteRiskMesureMappingInput) int
+		DeleteRiskMeasureMapping     func(childComplexity int, input types.DeleteRiskMeasureMappingInput) int
 		DeleteRiskPolicyMapping      func(childComplexity int, input types.DeleteRiskPolicyMappingInput) int
 		DeleteTask                   func(childComplexity int, input types.DeleteTaskInput) int
 		DeleteVendor                 func(childComplexity int, input types.DeleteVendorInput) int
 		DeleteVendorComplianceReport func(childComplexity int, input types.DeleteVendorComplianceReportInput) int
 		FulfillEvidence              func(childComplexity int, input types.FulfillEvidenceInput) int
 		ImportFramework              func(childComplexity int, input types.ImportFrameworkInput) int
-		ImportMesure                 func(childComplexity int, input types.ImportMesureInput) int
+		ImportMeasure                func(childComplexity int, input types.ImportMeasureInput) int
 		InviteUser                   func(childComplexity int, input types.InviteUserInput) int
 		PublishPolicyVersion         func(childComplexity int, input types.PublishPolicyVersionInput) int
 		RemoveUser                   func(childComplexity int, input types.RemoveUserInput) int
 		RequestEvidence              func(childComplexity int, input types.RequestEvidenceInput) int
 		RequestSignature             func(childComplexity int, input types.RequestSignatureInput) int
+		SendSigningNotifications     func(childComplexity int, input types.SendSigningNotificationsInput) int
 		UnassignTask                 func(childComplexity int, input types.UnassignTaskInput) int
 		UpdateFramework              func(childComplexity int, input types.UpdateFrameworkInput) int
-		UpdateMesure                 func(childComplexity int, input types.UpdateMesureInput) int
+		UpdateMeasure                func(childComplexity int, input types.UpdateMeasureInput) int
 		UpdateOrganization           func(childComplexity int, input types.UpdateOrganizationInput) int
 		UpdatePeople                 func(childComplexity int, input types.UpdatePeopleInput) int
 		UpdatePolicyVersion          func(childComplexity int, input types.UpdatePolicyVersionInput) int
@@ -369,7 +370,7 @@ type ComplexityRoot struct {
 		Frameworks func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
 		ID         func(childComplexity int) int
 		LogoURL    func(childComplexity int) int
-		Mesures    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MesureOrderBy) int
+		Measures   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) int
 		Name       func(childComplexity int) int
 		Peoples    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy) int
 		Policies   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) int
@@ -515,7 +516,7 @@ type ComplexityRoot struct {
 		InherentImpact     func(childComplexity int) int
 		InherentLikelihood func(childComplexity int) int
 		InherentSeverity   func(childComplexity int) int
-		Mesures            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MesureOrderBy) int
+		Measures           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) int
 		Name               func(childComplexity int) int
 		Note               func(childComplexity int) int
 		Owner              func(childComplexity int) int
@@ -535,6 +536,10 @@ type ComplexityRoot struct {
 	RiskEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	SendSigningNotificationsPayload struct {
+		Success func(childComplexity int) int
 	}
 
 	Session struct {
@@ -572,8 +577,8 @@ type ComplexityRoot struct {
 		Framework func(childComplexity int) int
 	}
 
-	UpdateMesurePayload struct {
-		Mesure func(childComplexity int) int
+	UpdateMeasurePayload struct {
+		Measure func(childComplexity int) int
 	}
 
 	UpdateOrganizationPayload struct {
@@ -715,7 +720,7 @@ type ComplexityRoot struct {
 }
 
 type ControlResolver interface {
-	Mesures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MesureOrderBy) (*types.MesureConnection, error)
+	Measures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error)
 	Policies(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) (*types.PolicyConnection, error)
 }
 type EvidenceResolver interface {
@@ -724,10 +729,10 @@ type EvidenceResolver interface {
 type FrameworkResolver interface {
 	Controls(ctx context.Context, obj *types.Framework, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error)
 }
-type MesureResolver interface {
-	Tasks(ctx context.Context, obj *types.Mesure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error)
-	Risks(ctx context.Context, obj *types.Mesure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy) (*types.RiskConnection, error)
-	Controls(ctx context.Context, obj *types.Mesure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error)
+type MeasureResolver interface {
+	Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error)
+	Risks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy) (*types.RiskConnection, error)
+	Controls(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error)
 }
 type MutationResolver interface {
 	CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error)
@@ -746,13 +751,13 @@ type MutationResolver interface {
 	UpdateFramework(ctx context.Context, input types.UpdateFrameworkInput) (*types.UpdateFrameworkPayload, error)
 	ImportFramework(ctx context.Context, input types.ImportFrameworkInput) (*types.ImportFrameworkPayload, error)
 	DeleteFramework(ctx context.Context, input types.DeleteFrameworkInput) (*types.DeleteFrameworkPayload, error)
-	CreateMesure(ctx context.Context, input types.CreateMesureInput) (*types.CreateMesurePayload, error)
-	UpdateMesure(ctx context.Context, input types.UpdateMesureInput) (*types.UpdateMesurePayload, error)
-	ImportMesure(ctx context.Context, input types.ImportMesureInput) (*types.ImportMesurePayload, error)
-	DeleteMesure(ctx context.Context, input types.DeleteMesureInput) (*types.DeleteMesurePayload, error)
-	CreateControlMesureMapping(ctx context.Context, input types.CreateControlMesureMappingInput) (*types.CreateControlMesureMappingPayload, error)
+	CreateMeasure(ctx context.Context, input types.CreateMeasureInput) (*types.CreateMeasurePayload, error)
+	UpdateMeasure(ctx context.Context, input types.UpdateMeasureInput) (*types.UpdateMeasurePayload, error)
+	ImportMeasure(ctx context.Context, input types.ImportMeasureInput) (*types.ImportMeasurePayload, error)
+	DeleteMeasure(ctx context.Context, input types.DeleteMeasureInput) (*types.DeleteMeasurePayload, error)
+	CreateControlMeasureMapping(ctx context.Context, input types.CreateControlMeasureMappingInput) (*types.CreateControlMeasureMappingPayload, error)
 	CreateControlPolicyMapping(ctx context.Context, input types.CreateControlPolicyMappingInput) (*types.CreateControlPolicyMappingPayload, error)
-	DeleteControlMesureMapping(ctx context.Context, input types.DeleteControlMesureMappingInput) (*types.DeleteControlMesureMappingPayload, error)
+	DeleteControlMeasureMapping(ctx context.Context, input types.DeleteControlMeasureMappingInput) (*types.DeleteControlMeasureMappingPayload, error)
 	DeleteControlPolicyMapping(ctx context.Context, input types.DeleteControlPolicyMappingInput) (*types.DeleteControlPolicyMappingPayload, error)
 	CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error)
 	UpdateTask(ctx context.Context, input types.UpdateTaskInput) (*types.UpdateTaskPayload, error)
@@ -762,8 +767,8 @@ type MutationResolver interface {
 	CreateRisk(ctx context.Context, input types.CreateRiskInput) (*types.CreateRiskPayload, error)
 	UpdateRisk(ctx context.Context, input types.UpdateRiskInput) (*types.UpdateRiskPayload, error)
 	DeleteRisk(ctx context.Context, input types.DeleteRiskInput) (*types.DeleteRiskPayload, error)
-	CreateRiskMesureMapping(ctx context.Context, input types.CreateRiskMesureMappingInput) (*types.CreateRiskMesureMappingPayload, error)
-	DeleteRiskMesureMapping(ctx context.Context, input types.DeleteRiskMesureMappingInput) (*types.DeleteRiskMesureMappingPayload, error)
+	CreateRiskMeasureMapping(ctx context.Context, input types.CreateRiskMeasureMappingInput) (*types.CreateRiskMeasureMappingPayload, error)
+	DeleteRiskMeasureMapping(ctx context.Context, input types.DeleteRiskMeasureMappingInput) (*types.DeleteRiskMeasureMappingPayload, error)
 	CreateRiskPolicyMapping(ctx context.Context, input types.CreateRiskPolicyMappingInput) (*types.CreateRiskPolicyMappingPayload, error)
 	DeleteRiskPolicyMapping(ctx context.Context, input types.DeleteRiskPolicyMappingInput) (*types.DeleteRiskPolicyMappingPayload, error)
 	RequestEvidence(ctx context.Context, input types.RequestEvidenceInput) (*types.RequestEvidencePayload, error)
@@ -778,6 +783,7 @@ type MutationResolver interface {
 	CreateDraftPolicyVersion(ctx context.Context, input types.CreateDraftPolicyVersionInput) (*types.CreateDraftPolicyVersionPayload, error)
 	UpdatePolicyVersion(ctx context.Context, input types.UpdatePolicyVersionInput) (*types.UpdatePolicyVersionPayload, error)
 	RequestSignature(ctx context.Context, input types.RequestSignatureInput) (*types.RequestSignaturePayload, error)
+	SendSigningNotifications(ctx context.Context, input types.SendSigningNotificationsInput) (*types.SendSigningNotificationsPayload, error)
 	CreateVendorRiskAssessment(ctx context.Context, input types.CreateVendorRiskAssessmentInput) (*types.CreateVendorRiskAssessmentPayload, error)
 }
 type OrganizationResolver interface {
@@ -788,7 +794,7 @@ type OrganizationResolver interface {
 	Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
 	Peoples(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy) (*types.PeopleConnection, error)
 	Policies(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) (*types.PolicyConnection, error)
-	Mesures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MesureOrderBy) (*types.MesureConnection, error)
+	Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error)
 	Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy) (*types.RiskConnection, error)
 }
 type PolicyResolver interface {
@@ -815,7 +821,7 @@ type QueryResolver interface {
 }
 type RiskResolver interface {
 	Owner(ctx context.Context, obj *types.Risk) (*types.People, error)
-	Mesures(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MesureOrderBy) (*types.MesureConnection, error)
+	Measures(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error)
 	Policies(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) (*types.PolicyConnection, error)
 	Controls(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error)
 }
@@ -963,17 +969,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Control.ID(childComplexity), true
 
-	case "Control.mesures":
-		if e.complexity.Control.Mesures == nil {
+	case "Control.measures":
+		if e.complexity.Control.Measures == nil {
 			break
 		}
 
-		args, err := ec.field_Control_mesures_args(context.TODO(), rawArgs)
+		args, err := ec.field_Control_measures_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Control.Mesures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.MesureOrderBy)), true
+		return e.complexity.Control.Measures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.MeasureOrderBy)), true
 
 	case "Control.name":
 		if e.complexity.Control.Name == nil {
@@ -1036,12 +1042,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ControlEdge.Node(childComplexity), true
 
-	case "CreateControlMesureMappingPayload.success":
-		if e.complexity.CreateControlMesureMappingPayload.Success == nil {
+	case "CreateControlMeasureMappingPayload.success":
+		if e.complexity.CreateControlMeasureMappingPayload.Success == nil {
 			break
 		}
 
-		return e.complexity.CreateControlMesureMappingPayload.Success(childComplexity), true
+		return e.complexity.CreateControlMeasureMappingPayload.Success(childComplexity), true
 
 	case "CreateControlPolicyMappingPayload.success":
 		if e.complexity.CreateControlPolicyMappingPayload.Success == nil {
@@ -1071,12 +1077,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CreateFrameworkPayload.FrameworkEdge(childComplexity), true
 
-	case "CreateMesurePayload.mesureEdge":
-		if e.complexity.CreateMesurePayload.MesureEdge == nil {
+	case "CreateMeasurePayload.measureEdge":
+		if e.complexity.CreateMeasurePayload.MeasureEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateMesurePayload.MesureEdge(childComplexity), true
+		return e.complexity.CreateMeasurePayload.MeasureEdge(childComplexity), true
 
 	case "CreateOrganizationPayload.organizationEdge":
 		if e.complexity.CreateOrganizationPayload.OrganizationEdge == nil {
@@ -1106,12 +1112,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CreatePolicyPayload.PolicyVersionEdge(childComplexity), true
 
-	case "CreateRiskMesureMappingPayload.success":
-		if e.complexity.CreateRiskMesureMappingPayload.Success == nil {
+	case "CreateRiskMeasureMappingPayload.success":
+		if e.complexity.CreateRiskMeasureMappingPayload.Success == nil {
 			break
 		}
 
-		return e.complexity.CreateRiskMesureMappingPayload.Success(childComplexity), true
+		return e.complexity.CreateRiskMeasureMappingPayload.Success(childComplexity), true
 
 	case "CreateRiskPayload.riskEdge":
 		if e.complexity.CreateRiskPayload.RiskEdge == nil {
@@ -1148,12 +1154,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CreateVendorRiskAssessmentPayload.VendorRiskAssessmentEdge(childComplexity), true
 
-	case "DeleteControlMesureMappingPayload.success":
-		if e.complexity.DeleteControlMesureMappingPayload.Success == nil {
+	case "DeleteControlMeasureMappingPayload.success":
+		if e.complexity.DeleteControlMeasureMappingPayload.Success == nil {
 			break
 		}
 
-		return e.complexity.DeleteControlMesureMappingPayload.Success(childComplexity), true
+		return e.complexity.DeleteControlMeasureMappingPayload.Success(childComplexity), true
 
 	case "DeleteControlPolicyMappingPayload.success":
 		if e.complexity.DeleteControlPolicyMappingPayload.Success == nil {
@@ -1176,12 +1182,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DeleteFrameworkPayload.DeletedFrameworkID(childComplexity), true
 
-	case "DeleteMesurePayload.deletedMesureId":
-		if e.complexity.DeleteMesurePayload.DeletedMesureID == nil {
+	case "DeleteMeasurePayload.deletedMeasureId":
+		if e.complexity.DeleteMeasurePayload.DeletedMeasureID == nil {
 			break
 		}
 
-		return e.complexity.DeleteMesurePayload.DeletedMesureID(childComplexity), true
+		return e.complexity.DeleteMeasurePayload.DeletedMeasureID(childComplexity), true
 
 	case "DeleteOrganizationPayload.deletedOrganizationId":
 		if e.complexity.DeleteOrganizationPayload.DeletedOrganizationID == nil {
@@ -1204,12 +1210,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DeletePolicyPayload.DeletedPolicyID(childComplexity), true
 
-	case "DeleteRiskMesureMappingPayload.success":
-		if e.complexity.DeleteRiskMesureMappingPayload.Success == nil {
+	case "DeleteRiskMeasureMappingPayload.success":
+		if e.complexity.DeleteRiskMeasureMappingPayload.Success == nil {
 			break
 		}
 
-		return e.complexity.DeleteRiskMesureMappingPayload.Success(childComplexity), true
+		return e.complexity.DeleteRiskMeasureMappingPayload.Success(childComplexity), true
 
 	case "DeleteRiskPayload.deletedRiskId":
 		if e.complexity.DeleteRiskPayload.DeletedRiskID == nil {
@@ -1440,12 +1446,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ImportFrameworkPayload.FrameworkEdge(childComplexity), true
 
-	case "ImportMesurePayload.mesureEdges":
-		if e.complexity.ImportMesurePayload.MesureEdges == nil {
+	case "ImportMeasurePayload.measureEdges":
+		if e.complexity.ImportMeasurePayload.MeasureEdges == nil {
 			break
 		}
 
-		return e.complexity.ImportMesurePayload.MesureEdges(childComplexity), true
+		return e.complexity.ImportMeasurePayload.MeasureEdges(childComplexity), true
 
 	case "InviteUserPayload.success":
 		if e.complexity.InviteUserPayload.Success == nil {
@@ -1454,118 +1460,118 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.InviteUserPayload.Success(childComplexity), true
 
-	case "Mesure.category":
-		if e.complexity.Mesure.Category == nil {
+	case "Measure.category":
+		if e.complexity.Measure.Category == nil {
 			break
 		}
 
-		return e.complexity.Mesure.Category(childComplexity), true
+		return e.complexity.Measure.Category(childComplexity), true
 
-	case "Mesure.controls":
-		if e.complexity.Mesure.Controls == nil {
+	case "Measure.controls":
+		if e.complexity.Measure.Controls == nil {
 			break
 		}
 
-		args, err := ec.field_Mesure_controls_args(context.TODO(), rawArgs)
+		args, err := ec.field_Measure_controls_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mesure.Controls(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ControlOrderBy)), true
+		return e.complexity.Measure.Controls(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ControlOrderBy)), true
 
-	case "Mesure.createdAt":
-		if e.complexity.Mesure.CreatedAt == nil {
+	case "Measure.createdAt":
+		if e.complexity.Measure.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.Mesure.CreatedAt(childComplexity), true
+		return e.complexity.Measure.CreatedAt(childComplexity), true
 
-	case "Mesure.description":
-		if e.complexity.Mesure.Description == nil {
+	case "Measure.description":
+		if e.complexity.Measure.Description == nil {
 			break
 		}
 
-		return e.complexity.Mesure.Description(childComplexity), true
+		return e.complexity.Measure.Description(childComplexity), true
 
-	case "Mesure.id":
-		if e.complexity.Mesure.ID == nil {
+	case "Measure.id":
+		if e.complexity.Measure.ID == nil {
 			break
 		}
 
-		return e.complexity.Mesure.ID(childComplexity), true
+		return e.complexity.Measure.ID(childComplexity), true
 
-	case "Mesure.name":
-		if e.complexity.Mesure.Name == nil {
+	case "Measure.name":
+		if e.complexity.Measure.Name == nil {
 			break
 		}
 
-		return e.complexity.Mesure.Name(childComplexity), true
+		return e.complexity.Measure.Name(childComplexity), true
 
-	case "Mesure.risks":
-		if e.complexity.Mesure.Risks == nil {
+	case "Measure.risks":
+		if e.complexity.Measure.Risks == nil {
 			break
 		}
 
-		args, err := ec.field_Mesure_risks_args(context.TODO(), rawArgs)
+		args, err := ec.field_Measure_risks_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mesure.Risks(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.RiskOrderBy)), true
+		return e.complexity.Measure.Risks(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.RiskOrderBy)), true
 
-	case "Mesure.state":
-		if e.complexity.Mesure.State == nil {
+	case "Measure.state":
+		if e.complexity.Measure.State == nil {
 			break
 		}
 
-		return e.complexity.Mesure.State(childComplexity), true
+		return e.complexity.Measure.State(childComplexity), true
 
-	case "Mesure.tasks":
-		if e.complexity.Mesure.Tasks == nil {
+	case "Measure.tasks":
+		if e.complexity.Measure.Tasks == nil {
 			break
 		}
 
-		args, err := ec.field_Mesure_tasks_args(context.TODO(), rawArgs)
+		args, err := ec.field_Measure_tasks_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mesure.Tasks(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.TaskOrderBy)), true
+		return e.complexity.Measure.Tasks(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.TaskOrderBy)), true
 
-	case "Mesure.updatedAt":
-		if e.complexity.Mesure.UpdatedAt == nil {
+	case "Measure.updatedAt":
+		if e.complexity.Measure.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.Mesure.UpdatedAt(childComplexity), true
+		return e.complexity.Measure.UpdatedAt(childComplexity), true
 
-	case "MesureConnection.edges":
-		if e.complexity.MesureConnection.Edges == nil {
+	case "MeasureConnection.edges":
+		if e.complexity.MeasureConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.MesureConnection.Edges(childComplexity), true
+		return e.complexity.MeasureConnection.Edges(childComplexity), true
 
-	case "MesureConnection.pageInfo":
-		if e.complexity.MesureConnection.PageInfo == nil {
+	case "MeasureConnection.pageInfo":
+		if e.complexity.MeasureConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.MesureConnection.PageInfo(childComplexity), true
+		return e.complexity.MeasureConnection.PageInfo(childComplexity), true
 
-	case "MesureEdge.cursor":
-		if e.complexity.MesureEdge.Cursor == nil {
+	case "MeasureEdge.cursor":
+		if e.complexity.MeasureEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.MesureEdge.Cursor(childComplexity), true
+		return e.complexity.MeasureEdge.Cursor(childComplexity), true
 
-	case "MesureEdge.node":
-		if e.complexity.MesureEdge.Node == nil {
+	case "MeasureEdge.node":
+		if e.complexity.MeasureEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.MesureEdge.Node(childComplexity), true
+		return e.complexity.MeasureEdge.Node(childComplexity), true
 
 	case "Mutation.assignTask":
 		if e.complexity.Mutation.AssignTask == nil {
@@ -1591,17 +1597,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.ConfirmEmail(childComplexity, args["input"].(types.ConfirmEmailInput)), true
 
-	case "Mutation.createControlMesureMapping":
-		if e.complexity.Mutation.CreateControlMesureMapping == nil {
+	case "Mutation.createControlMeasureMapping":
+		if e.complexity.Mutation.CreateControlMeasureMapping == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createControlMesureMapping_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_createControlMeasureMapping_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateControlMesureMapping(childComplexity, args["input"].(types.CreateControlMesureMappingInput)), true
+		return e.complexity.Mutation.CreateControlMeasureMapping(childComplexity, args["input"].(types.CreateControlMeasureMappingInput)), true
 
 	case "Mutation.createControlPolicyMapping":
 		if e.complexity.Mutation.CreateControlPolicyMapping == nil {
@@ -1651,17 +1657,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateFramework(childComplexity, args["input"].(types.CreateFrameworkInput)), true
 
-	case "Mutation.createMesure":
-		if e.complexity.Mutation.CreateMesure == nil {
+	case "Mutation.createMeasure":
+		if e.complexity.Mutation.CreateMeasure == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createMesure_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_createMeasure_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateMesure(childComplexity, args["input"].(types.CreateMesureInput)), true
+		return e.complexity.Mutation.CreateMeasure(childComplexity, args["input"].(types.CreateMeasureInput)), true
 
 	case "Mutation.createOrganization":
 		if e.complexity.Mutation.CreateOrganization == nil {
@@ -1711,17 +1717,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateRisk(childComplexity, args["input"].(types.CreateRiskInput)), true
 
-	case "Mutation.createRiskMesureMapping":
-		if e.complexity.Mutation.CreateRiskMesureMapping == nil {
+	case "Mutation.createRiskMeasureMapping":
+		if e.complexity.Mutation.CreateRiskMeasureMapping == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createRiskMesureMapping_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_createRiskMeasureMapping_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateRiskMesureMapping(childComplexity, args["input"].(types.CreateRiskMesureMappingInput)), true
+		return e.complexity.Mutation.CreateRiskMeasureMapping(childComplexity, args["input"].(types.CreateRiskMeasureMappingInput)), true
 
 	case "Mutation.createRiskPolicyMapping":
 		if e.complexity.Mutation.CreateRiskPolicyMapping == nil {
@@ -1771,17 +1777,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateVendorRiskAssessment(childComplexity, args["input"].(types.CreateVendorRiskAssessmentInput)), true
 
-	case "Mutation.deleteControlMesureMapping":
-		if e.complexity.Mutation.DeleteControlMesureMapping == nil {
+	case "Mutation.deleteControlMeasureMapping":
+		if e.complexity.Mutation.DeleteControlMeasureMapping == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteControlMesureMapping_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteControlMeasureMapping_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteControlMesureMapping(childComplexity, args["input"].(types.DeleteControlMesureMappingInput)), true
+		return e.complexity.Mutation.DeleteControlMeasureMapping(childComplexity, args["input"].(types.DeleteControlMeasureMappingInput)), true
 
 	case "Mutation.deleteControlPolicyMapping":
 		if e.complexity.Mutation.DeleteControlPolicyMapping == nil {
@@ -1819,17 +1825,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteFramework(childComplexity, args["input"].(types.DeleteFrameworkInput)), true
 
-	case "Mutation.deleteMesure":
-		if e.complexity.Mutation.DeleteMesure == nil {
+	case "Mutation.deleteMeasure":
+		if e.complexity.Mutation.DeleteMeasure == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteMesure_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteMeasure_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteMesure(childComplexity, args["input"].(types.DeleteMesureInput)), true
+		return e.complexity.Mutation.DeleteMeasure(childComplexity, args["input"].(types.DeleteMeasureInput)), true
 
 	case "Mutation.deleteOrganization":
 		if e.complexity.Mutation.DeleteOrganization == nil {
@@ -1879,17 +1885,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteRisk(childComplexity, args["input"].(types.DeleteRiskInput)), true
 
-	case "Mutation.deleteRiskMesureMapping":
-		if e.complexity.Mutation.DeleteRiskMesureMapping == nil {
+	case "Mutation.deleteRiskMeasureMapping":
+		if e.complexity.Mutation.DeleteRiskMeasureMapping == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteRiskMesureMapping_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_deleteRiskMeasureMapping_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteRiskMesureMapping(childComplexity, args["input"].(types.DeleteRiskMesureMappingInput)), true
+		return e.complexity.Mutation.DeleteRiskMeasureMapping(childComplexity, args["input"].(types.DeleteRiskMeasureMappingInput)), true
 
 	case "Mutation.deleteRiskPolicyMapping":
 		if e.complexity.Mutation.DeleteRiskPolicyMapping == nil {
@@ -1963,17 +1969,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.ImportFramework(childComplexity, args["input"].(types.ImportFrameworkInput)), true
 
-	case "Mutation.importMesure":
-		if e.complexity.Mutation.ImportMesure == nil {
+	case "Mutation.importMeasure":
+		if e.complexity.Mutation.ImportMeasure == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_importMesure_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_importMeasure_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ImportMesure(childComplexity, args["input"].(types.ImportMesureInput)), true
+		return e.complexity.Mutation.ImportMeasure(childComplexity, args["input"].(types.ImportMeasureInput)), true
 
 	case "Mutation.inviteUser":
 		if e.complexity.Mutation.InviteUser == nil {
@@ -2035,6 +2041,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.RequestSignature(childComplexity, args["input"].(types.RequestSignatureInput)), true
 
+	case "Mutation.sendSigningNotifications":
+		if e.complexity.Mutation.SendSigningNotifications == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_sendSigningNotifications_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SendSigningNotifications(childComplexity, args["input"].(types.SendSigningNotificationsInput)), true
+
 	case "Mutation.unassignTask":
 		if e.complexity.Mutation.UnassignTask == nil {
 			break
@@ -2059,17 +2077,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateFramework(childComplexity, args["input"].(types.UpdateFrameworkInput)), true
 
-	case "Mutation.updateMesure":
-		if e.complexity.Mutation.UpdateMesure == nil {
+	case "Mutation.updateMeasure":
+		if e.complexity.Mutation.UpdateMeasure == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateMesure_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updateMeasure_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateMesure(childComplexity, args["input"].(types.UpdateMesureInput)), true
+		return e.complexity.Mutation.UpdateMeasure(childComplexity, args["input"].(types.UpdateMeasureInput)), true
 
 	case "Mutation.updateOrganization":
 		if e.complexity.Mutation.UpdateOrganization == nil {
@@ -2200,17 +2218,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Organization.LogoURL(childComplexity), true
 
-	case "Organization.mesures":
-		if e.complexity.Organization.Mesures == nil {
+	case "Organization.measures":
+		if e.complexity.Organization.Measures == nil {
 			break
 		}
 
-		args, err := ec.field_Organization_mesures_args(context.TODO(), rawArgs)
+		args, err := ec.field_Organization_measures_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Organization.Mesures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.MesureOrderBy)), true
+		return e.complexity.Organization.Measures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.MeasureOrderBy)), true
 
 	case "Organization.name":
 		if e.complexity.Organization.Name == nil {
@@ -2836,17 +2854,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Risk.InherentSeverity(childComplexity), true
 
-	case "Risk.mesures":
-		if e.complexity.Risk.Mesures == nil {
+	case "Risk.measures":
+		if e.complexity.Risk.Measures == nil {
 			break
 		}
 
-		args, err := ec.field_Risk_mesures_args(context.TODO(), rawArgs)
+		args, err := ec.field_Risk_measures_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Risk.Mesures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.MesureOrderBy)), true
+		return e.complexity.Risk.Measures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.MeasureOrderBy)), true
 
 	case "Risk.name":
 		if e.complexity.Risk.Name == nil {
@@ -2943,6 +2961,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.RiskEdge.Node(childComplexity), true
+
+	case "SendSigningNotificationsPayload.success":
+		if e.complexity.SendSigningNotificationsPayload.Success == nil {
+			break
+		}
+
+		return e.complexity.SendSigningNotificationsPayload.Success(childComplexity), true
 
 	case "Session.expiresAt":
 		if e.complexity.Session.ExpiresAt == nil {
@@ -3068,12 +3093,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.UpdateFrameworkPayload.Framework(childComplexity), true
 
-	case "UpdateMesurePayload.mesure":
-		if e.complexity.UpdateMesurePayload.Mesure == nil {
+	case "UpdateMeasurePayload.measure":
+		if e.complexity.UpdateMeasurePayload.Measure == nil {
 			break
 		}
 
-		return e.complexity.UpdateMesurePayload.Mesure(childComplexity), true
+		return e.complexity.UpdateMeasurePayload.Measure(childComplexity), true
 
 	case "UpdateOrganizationPayload.organization":
 		if e.complexity.UpdateOrganizationPayload.Organization == nil {
@@ -3625,31 +3650,31 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputConfirmEmailInput,
 		ec.unmarshalInputConnectorOrder,
 		ec.unmarshalInputControlOrder,
-		ec.unmarshalInputCreateControlMesureMappingInput,
+		ec.unmarshalInputCreateControlMeasureMappingInput,
 		ec.unmarshalInputCreateControlPolicyMappingInput,
 		ec.unmarshalInputCreateDraftPolicyVersionInput,
 		ec.unmarshalInputCreateEvidenceInput,
 		ec.unmarshalInputCreateFrameworkInput,
-		ec.unmarshalInputCreateMesureInput,
+		ec.unmarshalInputCreateMeasureInput,
 		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreatePeopleInput,
 		ec.unmarshalInputCreatePolicyInput,
 		ec.unmarshalInputCreateRiskInput,
-		ec.unmarshalInputCreateRiskMesureMappingInput,
+		ec.unmarshalInputCreateRiskMeasureMappingInput,
 		ec.unmarshalInputCreateRiskPolicyMappingInput,
 		ec.unmarshalInputCreateTaskInput,
 		ec.unmarshalInputCreateVendorInput,
 		ec.unmarshalInputCreateVendorRiskAssessmentInput,
-		ec.unmarshalInputDeleteControlMesureMappingInput,
+		ec.unmarshalInputDeleteControlMeasureMappingInput,
 		ec.unmarshalInputDeleteControlPolicyMappingInput,
 		ec.unmarshalInputDeleteEvidenceInput,
 		ec.unmarshalInputDeleteFrameworkInput,
-		ec.unmarshalInputDeleteMesureInput,
+		ec.unmarshalInputDeleteMeasureInput,
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeletePeopleInput,
 		ec.unmarshalInputDeletePolicyInput,
 		ec.unmarshalInputDeleteRiskInput,
-		ec.unmarshalInputDeleteRiskMesureMappingInput,
+		ec.unmarshalInputDeleteRiskMeasureMappingInput,
 		ec.unmarshalInputDeleteRiskPolicyMappingInput,
 		ec.unmarshalInputDeleteTaskInput,
 		ec.unmarshalInputDeleteVendorComplianceReportInput,
@@ -3658,9 +3683,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputFrameworkOrder,
 		ec.unmarshalInputFulfillEvidenceInput,
 		ec.unmarshalInputImportFrameworkInput,
-		ec.unmarshalInputImportMesureInput,
+		ec.unmarshalInputImportMeasureInput,
 		ec.unmarshalInputInviteUserInput,
-		ec.unmarshalInputMesureOrder,
+		ec.unmarshalInputMeasureOrder,
 		ec.unmarshalInputOrganizationOrder,
 		ec.unmarshalInputPeopleOrder,
 		ec.unmarshalInputPolicyOrder,
@@ -3672,10 +3697,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRequestEvidenceInput,
 		ec.unmarshalInputRequestSignatureInput,
 		ec.unmarshalInputRiskOrder,
+		ec.unmarshalInputSendSigningNotificationsInput,
 		ec.unmarshalInputTaskOrder,
 		ec.unmarshalInputUnassignTaskInput,
 		ec.unmarshalInputUpdateFrameworkInput,
-		ec.unmarshalInputUpdateMesureInput,
+		ec.unmarshalInputUpdateMeasureInput,
 		ec.unmarshalInputUpdateOrganizationInput,
 		ec.unmarshalInputUpdatePeopleInput,
 		ec.unmarshalInputUpdatePolicyInput,
@@ -3799,6 +3825,7 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
+
 # Scalars
 scalar CursorKey
 scalar Void
@@ -3826,23 +3853,23 @@ enum OrderDirection
   DESC @goEnum(value: "github.com/getprobo/probo/pkg/page.OrderDirectionDesc")
 }
 
-enum MesureState
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MesureState") {
+enum MeasureState
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MeasureState") {
   NOT_STARTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MesureStateNotStarted"
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateNotStarted"
     )
   IN_PROGRESS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MesureStateInProgress"
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateInProgress"
     )
   NOT_APPLICABLE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MesureStateNotApplicable"
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateNotApplicable"
     )
   IMPLEMENTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MesureStateImplemented"
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateImplemented"
     )
 }
 
@@ -3956,11 +3983,11 @@ enum ControlOrderField
     )
 }
 
-enum MesureOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MesureOrderField") {
+enum MeasureOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MeasureOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MesureOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureOrderFieldCreatedAt"
     )
 }
 
@@ -4107,12 +4134,12 @@ input ControlOrder
   field: ControlOrderField!
 }
 
-input MesureOrder
+input MeasureOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.MesureOrderBy"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.MeasureOrderBy"
   ) {
   direction: OrderDirection!
-  field: MesureOrderField!
+  field: MeasureOrderField!
 }
 
 input TaskOrder
@@ -4231,13 +4258,13 @@ type Organization implements Node {
     orderBy: PolicyOrder
   ): PolicyConnection! @goField(forceResolver: true)
 
-  mesures(
+  measures(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: MesureOrder
-  ): MesureConnection! @goField(forceResolver: true)
+    orderBy: MeasureOrder
+  ): MeasureConnection! @goField(forceResolver: true)
 
   risks(
     first: Int
@@ -4357,13 +4384,13 @@ type Control implements Node {
   name: String!
   description: String!
 
-  mesures(
+  measures(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: MesureOrder
-  ): MesureConnection! @goField(forceResolver: true)
+    orderBy: MeasureOrder
+  ): MeasureConnection! @goField(forceResolver: true)
 
   policies(
     first: Int
@@ -4377,12 +4404,12 @@ type Control implements Node {
   updatedAt: Datetime!
 }
 
-type Mesure implements Node {
+type Measure implements Node {
   id: ID!
   category: String!
   name: String!
   description: String!
-  state: MesureState!
+  state: MeasureState!
 
   tasks(
     first: Int
@@ -4491,13 +4518,13 @@ type Risk implements Node {
 
   owner: People @goField(forceResolver: true)
 
-  mesures(
+  measures(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: MesureOrder
-  ): MesureConnection! @goField(forceResolver: true)
+    orderBy: MeasureOrder
+  ): MeasureConnection! @goField(forceResolver: true)
 
   policies(
     first: Int
@@ -4598,14 +4625,14 @@ type ControlEdge {
   node: Control!
 }
 
-type MesureConnection {
-  edges: [MesureEdge!]!
+type MeasureConnection {
+  edges: [MeasureEdge!]!
   pageInfo: PageInfo!
 }
 
-type MesureEdge {
+type MeasureEdge {
   cursor: CursorKey!
-  node: Mesure!
+  node: Measure!
 }
 
 type TaskConnection {
@@ -4727,22 +4754,22 @@ type Mutation {
   importFramework(input: ImportFrameworkInput!): ImportFrameworkPayload!
   deleteFramework(input: DeleteFrameworkInput!): DeleteFrameworkPayload!
 
-  # Mesure mutations
-  createMesure(input: CreateMesureInput!): CreateMesurePayload!
-  updateMesure(input: UpdateMesureInput!): UpdateMesurePayload!
-  importMesure(input: ImportMesureInput!): ImportMesurePayload!
-  deleteMesure(input: DeleteMesureInput!): DeleteMesurePayload!
+  # Measure mutations
+  createMeasure(input: CreateMeasureInput!): CreateMeasurePayload!
+  updateMeasure(input: UpdateMeasureInput!): UpdateMeasurePayload!
+  importMeasure(input: ImportMeasureInput!): ImportMeasurePayload!
+  deleteMeasure(input: DeleteMeasureInput!): DeleteMeasurePayload!
 
   # Control mutations
-  createControlMesureMapping(
-    input: CreateControlMesureMappingInput!
-  ): CreateControlMesureMappingPayload!
+  createControlMeasureMapping(
+    input: CreateControlMeasureMappingInput!
+  ): CreateControlMeasureMappingPayload!
   createControlPolicyMapping(
     input: CreateControlPolicyMappingInput!
   ): CreateControlPolicyMappingPayload!
-  deleteControlMesureMapping(
-    input: DeleteControlMesureMappingInput!
-  ): DeleteControlMesureMappingPayload!
+  deleteControlMeasureMapping(
+    input: DeleteControlMeasureMappingInput!
+  ): DeleteControlMeasureMappingPayload!
   deleteControlPolicyMapping(
     input: DeleteControlPolicyMappingInput!
   ): DeleteControlPolicyMappingPayload!
@@ -4758,12 +4785,12 @@ type Mutation {
   createRisk(input: CreateRiskInput!): CreateRiskPayload!
   updateRisk(input: UpdateRiskInput!): UpdateRiskPayload!
   deleteRisk(input: DeleteRiskInput!): DeleteRiskPayload!
-  createRiskMesureMapping(
-    input: CreateRiskMesureMappingInput!
-  ): CreateRiskMesureMappingPayload!
-  deleteRiskMesureMapping(
-    input: DeleteRiskMesureMappingInput!
-  ): DeleteRiskMesureMappingPayload!
+  createRiskMeasureMapping(
+    input: CreateRiskMeasureMappingInput!
+  ): CreateRiskMeasureMappingPayload!
+  deleteRiskMeasureMapping(
+    input: DeleteRiskMeasureMappingInput!
+  ): DeleteRiskMeasureMappingPayload!
 
   createRiskPolicyMapping(
     input: CreateRiskPolicyMappingInput!
@@ -4793,6 +4820,7 @@ type Mutation {
   createDraftPolicyVersion(input: CreateDraftPolicyVersionInput!): CreateDraftPolicyVersionPayload!
   updatePolicyVersion(input: UpdatePolicyVersionInput!): UpdatePolicyVersionPayload!
   requestSignature(input: RequestSignatureInput!): RequestSignaturePayload!
+  sendSigningNotifications(input: SendSigningNotificationsInput!): SendSigningNotificationsPayload!
 
   createVendorRiskAssessment(input: CreateVendorRiskAssessmentInput!): CreateVendorRiskAssessmentPayload!
 }
@@ -4901,28 +4929,28 @@ input DeleteFrameworkInput {
   frameworkId: ID!
 }
 
-input CreateMesureInput {
+input CreateMeasureInput {
   organizationId: ID!
   name: String!
   description: String!
   category: String!
 }
 
-input UpdateMesureInput {
+input UpdateMeasureInput {
   id: ID!
   name: String
   description: String
   category: String
-  state: MesureState
+  state: MeasureState
 }
 
-input ImportMesureInput {
+input ImportMeasureInput {
   organizationId: ID!
   file: Upload!
 }
 
 input CreateTaskInput {
-  mesureId: ID!
+  measureId: ID!
   name: String!
   description: String!
   timeEstimate: Duration
@@ -4950,9 +4978,9 @@ input UnassignTaskInput {
   taskId: ID!
 }
 
-input CreateControlMesureMappingInput {
+input CreateControlMeasureMappingInput {
   controlId: ID!
-  mesureId: ID!
+  measureId: ID!
 }
 
 input CreateControlPolicyMappingInput {
@@ -4960,9 +4988,9 @@ input CreateControlPolicyMappingInput {
   policyId: ID!
 }
 
-input DeleteControlMesureMappingInput {
+input DeleteControlMeasureMappingInput {
   controlId: ID!
-  mesureId: ID!
+  measureId: ID!
 }
 
 input DeleteControlPolicyMappingInput {
@@ -5002,14 +5030,14 @@ input DeleteRiskInput {
   riskId: ID!
 }
 
-input CreateRiskMesureMappingInput {
+input CreateRiskMeasureMappingInput {
   riskId: ID!
-  mesureId: ID!
+  measureId: ID!
 }
 
-input DeleteRiskMesureMappingInput {
+input DeleteRiskMeasureMappingInput {
   riskId: ID!
-  mesureId: ID!
+  measureId: ID!
 }
 
 input CreateRiskPolicyMappingInput {
@@ -5148,16 +5176,16 @@ type DeleteFrameworkPayload {
   deletedFrameworkId: ID!
 }
 
-type CreateMesurePayload {
-  mesureEdge: MesureEdge!
+type CreateMeasurePayload {
+  measureEdge: MeasureEdge!
 }
 
-type UpdateMesurePayload {
-  mesure: Mesure!
+type UpdateMeasurePayload {
+  measure: Measure!
 }
 
-type ImportMesurePayload {
-  mesureEdges: [MesureEdge!]!
+type ImportMeasurePayload {
+  measureEdges: [MeasureEdge!]!
 }
 
 type CreateTaskPayload {
@@ -5180,7 +5208,7 @@ type UnassignTaskPayload {
   task: Task!
 }
 
-type CreateControlMesureMappingPayload {
+type CreateControlMeasureMappingPayload {
   success: Boolean!
 }
 
@@ -5188,7 +5216,7 @@ type CreateControlPolicyMappingPayload {
   success: Boolean!
 }
 
-type DeleteControlMesureMappingPayload {
+type DeleteControlMeasureMappingPayload {
   success: Boolean!
 }
 
@@ -5208,11 +5236,11 @@ type DeleteRiskPayload {
   deletedRiskId: ID!
 }
 
-type CreateRiskMesureMappingPayload {
+type CreateRiskMeasureMappingPayload {
   success: Boolean!
 }
 
-type DeleteRiskMesureMappingPayload {
+type DeleteRiskMeasureMappingPayload {
   success: Boolean!
 }
 
@@ -5320,12 +5348,12 @@ type CreateVendorRiskAssessmentPayload {
   vendorRiskAssessmentEdge: VendorRiskAssessmentEdge!
 }
 
-input DeleteMesureInput {
-  mesureId: ID!
+input DeleteMeasureInput {
+  measureId: ID!
 }
 
-type DeleteMesurePayload {
-  deletedMesureId: ID!
+type DeleteMeasurePayload {
+  deletedMeasureId: ID!
 }
 
 type PolicyVersion implements Node {
@@ -5435,7 +5463,14 @@ input UpdatePolicyVersionInput {
 type UpdatePolicyVersionPayload {
   policyVersion: PolicyVersion!
 }
-`, BuiltIn: false},
+
+input SendSigningNotificationsInput {
+  organizationId: ID!
+}
+
+type SendSigningNotificationsPayload {
+  success: Boolean!
+}`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -5443,37 +5478,37 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Control_mesures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Control_measures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Control_mesures_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_Control_measures_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Control_mesures_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_Control_measures_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Control_mesures_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_Control_measures_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Control_mesures_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_Control_measures_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Control_mesures_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_Control_measures_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Control_mesures_argsFirst(
+func (ec *executionContext) field_Control_measures_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -5486,7 +5521,7 @@ func (ec *executionContext) field_Control_mesures_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_mesures_argsAfter(
+func (ec *executionContext) field_Control_measures_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -5499,7 +5534,7 @@ func (ec *executionContext) field_Control_mesures_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_mesures_argsLast(
+func (ec *executionContext) field_Control_measures_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -5512,7 +5547,7 @@ func (ec *executionContext) field_Control_mesures_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_mesures_argsBefore(
+func (ec *executionContext) field_Control_measures_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -5525,16 +5560,16 @@ func (ec *executionContext) field_Control_mesures_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_mesures_argsOrderBy(
+func (ec *executionContext) field_Control_measures_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (*types.MesureOrderBy, error) {
+) (*types.MeasureOrderBy, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOMesureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureOrderBy(ctx, tmp)
+		return ec.unmarshalOMeasureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureOrderBy(ctx, tmp)
 	}
 
-	var zeroVal *types.MesureOrderBy
+	var zeroVal *types.MeasureOrderBy
 	return zeroVal, nil
 }
 
@@ -5728,37 +5763,37 @@ func (ec *executionContext) field_Framework_controls_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_controls_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Measure_controls_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mesure_controls_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_Measure_controls_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Mesure_controls_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_Measure_controls_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Mesure_controls_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_Measure_controls_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Mesure_controls_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_Measure_controls_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Mesure_controls_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_Measure_controls_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Mesure_controls_argsFirst(
+func (ec *executionContext) field_Measure_controls_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -5771,7 +5806,7 @@ func (ec *executionContext) field_Mesure_controls_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_controls_argsAfter(
+func (ec *executionContext) field_Measure_controls_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -5784,7 +5819,7 @@ func (ec *executionContext) field_Mesure_controls_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_controls_argsLast(
+func (ec *executionContext) field_Measure_controls_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -5797,7 +5832,7 @@ func (ec *executionContext) field_Mesure_controls_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_controls_argsBefore(
+func (ec *executionContext) field_Measure_controls_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -5810,7 +5845,7 @@ func (ec *executionContext) field_Mesure_controls_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_controls_argsOrderBy(
+func (ec *executionContext) field_Measure_controls_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*types.ControlOrderBy, error) {
@@ -5823,37 +5858,37 @@ func (ec *executionContext) field_Mesure_controls_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_risks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Measure_risks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mesure_risks_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_Measure_risks_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Mesure_risks_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_Measure_risks_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Mesure_risks_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_Measure_risks_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Mesure_risks_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_Measure_risks_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Mesure_risks_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_Measure_risks_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Mesure_risks_argsFirst(
+func (ec *executionContext) field_Measure_risks_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -5866,7 +5901,7 @@ func (ec *executionContext) field_Mesure_risks_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_risks_argsAfter(
+func (ec *executionContext) field_Measure_risks_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -5879,7 +5914,7 @@ func (ec *executionContext) field_Mesure_risks_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_risks_argsLast(
+func (ec *executionContext) field_Measure_risks_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -5892,7 +5927,7 @@ func (ec *executionContext) field_Mesure_risks_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_risks_argsBefore(
+func (ec *executionContext) field_Measure_risks_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -5905,7 +5940,7 @@ func (ec *executionContext) field_Mesure_risks_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_risks_argsOrderBy(
+func (ec *executionContext) field_Measure_risks_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*types.RiskOrderBy, error) {
@@ -5918,37 +5953,37 @@ func (ec *executionContext) field_Mesure_risks_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_tasks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Measure_tasks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mesure_tasks_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_Measure_tasks_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Mesure_tasks_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_Measure_tasks_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Mesure_tasks_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_Measure_tasks_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Mesure_tasks_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_Measure_tasks_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Mesure_tasks_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_Measure_tasks_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Mesure_tasks_argsFirst(
+func (ec *executionContext) field_Measure_tasks_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -5961,7 +5996,7 @@ func (ec *executionContext) field_Mesure_tasks_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_tasks_argsAfter(
+func (ec *executionContext) field_Measure_tasks_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -5974,7 +6009,7 @@ func (ec *executionContext) field_Mesure_tasks_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_tasks_argsLast(
+func (ec *executionContext) field_Measure_tasks_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -5987,7 +6022,7 @@ func (ec *executionContext) field_Mesure_tasks_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_tasks_argsBefore(
+func (ec *executionContext) field_Measure_tasks_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -6000,7 +6035,7 @@ func (ec *executionContext) field_Mesure_tasks_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mesure_tasks_argsOrderBy(
+func (ec *executionContext) field_Measure_tasks_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*types.TaskOrderBy, error) {
@@ -6059,26 +6094,26 @@ func (ec *executionContext) field_Mutation_confirmEmail_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createControlMesureMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_createControlMeasureMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_createControlMesureMapping_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createControlMeasureMapping_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createControlMesureMapping_argsInput(
+func (ec *executionContext) field_Mutation_createControlMeasureMapping_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.CreateControlMesureMappingInput, error) {
+) (types.CreateControlMeasureMappingInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreateControlMesureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlMesureMappingInput(ctx, tmp)
+		return ec.unmarshalNCreateControlMeasureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlMeasureMappingInput(ctx, tmp)
 	}
 
-	var zeroVal types.CreateControlMesureMappingInput
+	var zeroVal types.CreateControlMeasureMappingInput
 	return zeroVal, nil
 }
 
@@ -6174,26 +6209,26 @@ func (ec *executionContext) field_Mutation_createFramework_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createMesure_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_createMeasure_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_createMesure_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createMeasure_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createMesure_argsInput(
+func (ec *executionContext) field_Mutation_createMeasure_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.CreateMesureInput, error) {
+) (types.CreateMeasureInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreateMesureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateMesureInput(ctx, tmp)
+		return ec.unmarshalNCreateMeasureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateMeasureInput(ctx, tmp)
 	}
 
-	var zeroVal types.CreateMesureInput
+	var zeroVal types.CreateMeasureInput
 	return zeroVal, nil
 }
 
@@ -6266,26 +6301,26 @@ func (ec *executionContext) field_Mutation_createPolicy_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createRiskMesureMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_createRiskMeasureMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_createRiskMesureMapping_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createRiskMeasureMapping_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createRiskMesureMapping_argsInput(
+func (ec *executionContext) field_Mutation_createRiskMeasureMapping_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.CreateRiskMesureMappingInput, error) {
+) (types.CreateRiskMeasureMappingInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreateRiskMesureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskMesureMappingInput(ctx, tmp)
+		return ec.unmarshalNCreateRiskMeasureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskMeasureMappingInput(ctx, tmp)
 	}
 
-	var zeroVal types.CreateRiskMesureMappingInput
+	var zeroVal types.CreateRiskMeasureMappingInput
 	return zeroVal, nil
 }
 
@@ -6404,26 +6439,26 @@ func (ec *executionContext) field_Mutation_createVendor_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteControlMesureMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_deleteControlMeasureMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_deleteControlMesureMapping_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_deleteControlMeasureMapping_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deleteControlMesureMapping_argsInput(
+func (ec *executionContext) field_Mutation_deleteControlMeasureMapping_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.DeleteControlMesureMappingInput, error) {
+) (types.DeleteControlMeasureMappingInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNDeleteControlMesureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlMesureMappingInput(ctx, tmp)
+		return ec.unmarshalNDeleteControlMeasureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlMeasureMappingInput(ctx, tmp)
 	}
 
-	var zeroVal types.DeleteControlMesureMappingInput
+	var zeroVal types.DeleteControlMeasureMappingInput
 	return zeroVal, nil
 }
 
@@ -6496,26 +6531,26 @@ func (ec *executionContext) field_Mutation_deleteFramework_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteMesure_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_deleteMeasure_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_deleteMesure_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_deleteMeasure_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deleteMesure_argsInput(
+func (ec *executionContext) field_Mutation_deleteMeasure_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.DeleteMesureInput, error) {
+) (types.DeleteMeasureInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNDeleteMesureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMesureInput(ctx, tmp)
+		return ec.unmarshalNDeleteMeasureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMeasureInput(ctx, tmp)
 	}
 
-	var zeroVal types.DeleteMesureInput
+	var zeroVal types.DeleteMeasureInput
 	return zeroVal, nil
 }
 
@@ -6588,26 +6623,26 @@ func (ec *executionContext) field_Mutation_deletePolicy_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteRiskMesureMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_deleteRiskMeasureMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_deleteRiskMesureMapping_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_deleteRiskMeasureMapping_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deleteRiskMesureMapping_argsInput(
+func (ec *executionContext) field_Mutation_deleteRiskMeasureMapping_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.DeleteRiskMesureMappingInput, error) {
+) (types.DeleteRiskMeasureMappingInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNDeleteRiskMesureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskMesureMappingInput(ctx, tmp)
+		return ec.unmarshalNDeleteRiskMeasureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskMeasureMappingInput(ctx, tmp)
 	}
 
-	var zeroVal types.DeleteRiskMesureMappingInput
+	var zeroVal types.DeleteRiskMeasureMappingInput
 	return zeroVal, nil
 }
 
@@ -6772,26 +6807,26 @@ func (ec *executionContext) field_Mutation_importFramework_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_importMesure_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_importMeasure_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_importMesure_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_importMeasure_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_importMesure_argsInput(
+func (ec *executionContext) field_Mutation_importMeasure_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.ImportMesureInput, error) {
+) (types.ImportMeasureInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNImportMesureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportMesureInput(ctx, tmp)
+		return ec.unmarshalNImportMeasureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportMeasureInput(ctx, tmp)
 	}
 
-	var zeroVal types.ImportMesureInput
+	var zeroVal types.ImportMeasureInput
 	return zeroVal, nil
 }
 
@@ -6910,6 +6945,29 @@ func (ec *executionContext) field_Mutation_requestSignature_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_sendSigningNotifications_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_sendSigningNotifications_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_sendSigningNotifications_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.SendSigningNotificationsInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNSendSigningNotificationsInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSendSigningNotificationsInput(ctx, tmp)
+	}
+
+	var zeroVal types.SendSigningNotificationsInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_unassignTask_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -6956,26 +7014,26 @@ func (ec *executionContext) field_Mutation_updateFramework_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updateMesure_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_updateMeasure_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_updateMesure_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_updateMeasure_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_updateMesure_argsInput(
+func (ec *executionContext) field_Mutation_updateMeasure_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.UpdateMesureInput, error) {
+) (types.UpdateMeasureInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNUpdateMesureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMesureInput(ctx, tmp)
+		return ec.unmarshalNUpdateMeasureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMeasureInput(ctx, tmp)
 	}
 
-	var zeroVal types.UpdateMesureInput
+	var zeroVal types.UpdateMeasureInput
 	return zeroVal, nil
 }
 
@@ -7330,37 +7388,37 @@ func (ec *executionContext) field_Organization_frameworks_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_mesures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Organization_measures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Organization_mesures_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_Organization_measures_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Organization_mesures_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_Organization_measures_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Organization_mesures_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_Organization_measures_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Organization_mesures_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_Organization_measures_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Organization_mesures_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_Organization_measures_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Organization_mesures_argsFirst(
+func (ec *executionContext) field_Organization_measures_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -7373,7 +7431,7 @@ func (ec *executionContext) field_Organization_mesures_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_mesures_argsAfter(
+func (ec *executionContext) field_Organization_measures_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -7386,7 +7444,7 @@ func (ec *executionContext) field_Organization_mesures_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_mesures_argsLast(
+func (ec *executionContext) field_Organization_measures_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -7399,7 +7457,7 @@ func (ec *executionContext) field_Organization_mesures_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_mesures_argsBefore(
+func (ec *executionContext) field_Organization_measures_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -7412,16 +7470,16 @@ func (ec *executionContext) field_Organization_mesures_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_mesures_argsOrderBy(
+func (ec *executionContext) field_Organization_measures_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (*types.MesureOrderBy, error) {
+) (*types.MeasureOrderBy, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOMesureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureOrderBy(ctx, tmp)
+		return ec.unmarshalOMeasureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureOrderBy(ctx, tmp)
 	}
 
-	var zeroVal *types.MesureOrderBy
+	var zeroVal *types.MeasureOrderBy
 	return zeroVal, nil
 }
 
@@ -8344,37 +8402,37 @@ func (ec *executionContext) field_Risk_controls_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Risk_mesures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Risk_measures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Risk_mesures_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_Risk_measures_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Risk_mesures_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_Risk_measures_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Risk_mesures_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_Risk_measures_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Risk_mesures_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_Risk_measures_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Risk_mesures_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_Risk_measures_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Risk_mesures_argsFirst(
+func (ec *executionContext) field_Risk_measures_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -8387,7 +8445,7 @@ func (ec *executionContext) field_Risk_mesures_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Risk_mesures_argsAfter(
+func (ec *executionContext) field_Risk_measures_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -8400,7 +8458,7 @@ func (ec *executionContext) field_Risk_mesures_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Risk_mesures_argsLast(
+func (ec *executionContext) field_Risk_measures_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -8413,7 +8471,7 @@ func (ec *executionContext) field_Risk_mesures_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Risk_mesures_argsBefore(
+func (ec *executionContext) field_Risk_measures_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -8426,16 +8484,16 @@ func (ec *executionContext) field_Risk_mesures_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Risk_mesures_argsOrderBy(
+func (ec *executionContext) field_Risk_measures_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (*types.MesureOrderBy, error) {
+) (*types.MeasureOrderBy, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOMesureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureOrderBy(ctx, tmp)
+		return ec.unmarshalOMeasureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureOrderBy(ctx, tmp)
 	}
 
-	var zeroVal *types.MesureOrderBy
+	var zeroVal *types.MeasureOrderBy
 	return zeroVal, nil
 }
 
@@ -9745,8 +9803,8 @@ func (ec *executionContext) fieldContext_Control_description(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Control_mesures(ctx context.Context, field graphql.CollectedField, obj *types.Control) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Control_mesures(ctx, field)
+func (ec *executionContext) _Control_measures(ctx context.Context, field graphql.CollectedField, obj *types.Control) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Control_measures(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9759,7 +9817,7 @@ func (ec *executionContext) _Control_mesures(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Control().Mesures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.MesureOrderBy))
+		return ec.resolvers.Control().Measures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.MeasureOrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9771,12 +9829,12 @@ func (ec *executionContext) _Control_mesures(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.MesureConnection)
+	res := resTmp.(*types.MeasureConnection)
 	fc.Result = res
-	return ec.marshalNMesureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureConnection(ctx, field.Selections, res)
+	return ec.marshalNMeasureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Control_mesures(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Control_measures(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Control",
 		Field:      field,
@@ -9785,11 +9843,11 @@ func (ec *executionContext) fieldContext_Control_mesures(ctx context.Context, fi
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_MesureConnection_edges(ctx, field)
+				return ec.fieldContext_MeasureConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_MesureConnection_pageInfo(ctx, field)
+				return ec.fieldContext_MeasureConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type MesureConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MeasureConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -9799,7 +9857,7 @@ func (ec *executionContext) fieldContext_Control_mesures(ctx context.Context, fi
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Control_mesures_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Control_measures_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -10150,8 +10208,8 @@ func (ec *executionContext) fieldContext_ControlEdge_node(_ context.Context, fie
 				return ec.fieldContext_Control_name(ctx, field)
 			case "description":
 				return ec.fieldContext_Control_description(ctx, field)
-			case "mesures":
-				return ec.fieldContext_Control_mesures(ctx, field)
+			case "measures":
+				return ec.fieldContext_Control_measures(ctx, field)
 			case "policies":
 				return ec.fieldContext_Control_policies(ctx, field)
 			case "createdAt":
@@ -10165,8 +10223,8 @@ func (ec *executionContext) fieldContext_ControlEdge_node(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateControlMesureMappingPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.CreateControlMesureMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateControlMesureMappingPayload_success(ctx, field)
+func (ec *executionContext) _CreateControlMeasureMappingPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.CreateControlMeasureMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateControlMeasureMappingPayload_success(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10196,9 +10254,9 @@ func (ec *executionContext) _CreateControlMesureMappingPayload_success(ctx conte
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateControlMesureMappingPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateControlMeasureMappingPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateControlMesureMappingPayload",
+		Object:     "CreateControlMeasureMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -10403,8 +10461,8 @@ func (ec *executionContext) fieldContext_CreateFrameworkPayload_frameworkEdge(_ 
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateMesurePayload_mesureEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateMesurePayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateMesurePayload_mesureEdge(ctx, field)
+func (ec *executionContext) _CreateMeasurePayload_measureEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateMeasurePayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateMeasurePayload_measureEdge(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10417,7 +10475,7 @@ func (ec *executionContext) _CreateMesurePayload_mesureEdge(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MesureEdge, nil
+		return obj.MeasureEdge, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10429,25 +10487,25 @@ func (ec *executionContext) _CreateMesurePayload_mesureEdge(ctx context.Context,
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.MesureEdge)
+	res := resTmp.(*types.MeasureEdge)
 	fc.Result = res
-	return ec.marshalNMesureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureEdge(ctx, field.Selections, res)
+	return ec.marshalNMeasureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateMesurePayload_mesureEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateMeasurePayload_measureEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateMesurePayload",
+		Object:     "CreateMeasurePayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_MesureEdge_cursor(ctx, field)
+				return ec.fieldContext_MeasureEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_MesureEdge_node(ctx, field)
+				return ec.fieldContext_MeasureEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type MesureEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MeasureEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -10653,8 +10711,8 @@ func (ec *executionContext) fieldContext_CreatePolicyPayload_policyVersionEdge(_
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateRiskMesureMappingPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskMesureMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateRiskMesureMappingPayload_success(ctx, field)
+func (ec *executionContext) _CreateRiskMeasureMappingPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskMeasureMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateRiskMeasureMappingPayload_success(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10684,9 +10742,9 @@ func (ec *executionContext) _CreateRiskMesureMappingPayload_success(ctx context.
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateRiskMesureMappingPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateRiskMeasureMappingPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateRiskMesureMappingPayload",
+		Object:     "CreateRiskMeasureMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -10941,8 +10999,8 @@ func (ec *executionContext) fieldContext_CreateVendorRiskAssessmentPayload_vendo
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteControlMesureMappingPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.DeleteControlMesureMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteControlMesureMappingPayload_success(ctx, field)
+func (ec *executionContext) _DeleteControlMeasureMappingPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.DeleteControlMeasureMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteControlMeasureMappingPayload_success(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10972,9 +11030,9 @@ func (ec *executionContext) _DeleteControlMesureMappingPayload_success(ctx conte
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteControlMesureMappingPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteControlMeasureMappingPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeleteControlMesureMappingPayload",
+		Object:     "DeleteControlMeasureMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -11117,8 +11175,8 @@ func (ec *executionContext) fieldContext_DeleteFrameworkPayload_deletedFramework
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteMesurePayload_deletedMesureId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteMesurePayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteMesurePayload_deletedMesureId(ctx, field)
+func (ec *executionContext) _DeleteMeasurePayload_deletedMeasureId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteMeasurePayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteMeasurePayload_deletedMeasureId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11131,7 +11189,7 @@ func (ec *executionContext) _DeleteMesurePayload_deletedMesureId(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DeletedMesureID, nil
+		return obj.DeletedMeasureID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11148,9 +11206,9 @@ func (ec *executionContext) _DeleteMesurePayload_deletedMesureId(ctx context.Con
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteMesurePayload_deletedMesureId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteMeasurePayload_deletedMeasureId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeleteMesurePayload",
+		Object:     "DeleteMeasurePayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -11293,8 +11351,8 @@ func (ec *executionContext) fieldContext_DeletePolicyPayload_deletedPolicyId(_ c
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteRiskMesureMappingPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.DeleteRiskMesureMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteRiskMesureMappingPayload_success(ctx, field)
+func (ec *executionContext) _DeleteRiskMeasureMappingPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.DeleteRiskMeasureMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteRiskMeasureMappingPayload_success(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11324,9 +11382,9 @@ func (ec *executionContext) _DeleteRiskMesureMappingPayload_success(ctx context.
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteRiskMesureMappingPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteRiskMeasureMappingPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeleteRiskMesureMappingPayload",
+		Object:     "DeleteRiskMeasureMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12838,8 +12896,8 @@ func (ec *executionContext) fieldContext_ImportFrameworkPayload_frameworkEdge(_ 
 	return fc, nil
 }
 
-func (ec *executionContext) _ImportMesurePayload_mesureEdges(ctx context.Context, field graphql.CollectedField, obj *types.ImportMesurePayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ImportMesurePayload_mesureEdges(ctx, field)
+func (ec *executionContext) _ImportMeasurePayload_measureEdges(ctx context.Context, field graphql.CollectedField, obj *types.ImportMeasurePayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImportMeasurePayload_measureEdges(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12852,7 +12910,7 @@ func (ec *executionContext) _ImportMesurePayload_mesureEdges(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.MesureEdges, nil
+		return obj.MeasureEdges, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12864,25 +12922,25 @@ func (ec *executionContext) _ImportMesurePayload_mesureEdges(ctx context.Context
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*types.MesureEdge)
+	res := resTmp.([]*types.MeasureEdge)
 	fc.Result = res
-	return ec.marshalNMesureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNMeasureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ImportMesurePayload_mesureEdges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_ImportMeasurePayload_measureEdges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "ImportMesurePayload",
+		Object:     "ImportMeasurePayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_MesureEdge_cursor(ctx, field)
+				return ec.fieldContext_MeasureEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_MesureEdge_node(ctx, field)
+				return ec.fieldContext_MeasureEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type MesureEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MeasureEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -12932,8 +12990,8 @@ func (ec *executionContext) fieldContext_InviteUserPayload_success(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Mesure_id(ctx context.Context, field graphql.CollectedField, obj *types.Mesure) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mesure_id(ctx, field)
+func (ec *executionContext) _Measure_id(ctx context.Context, field graphql.CollectedField, obj *types.Measure) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Measure_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12963,9 +13021,9 @@ func (ec *executionContext) _Mesure_id(ctx context.Context, field graphql.Collec
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mesure_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Measure_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mesure",
+		Object:     "Measure",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12976,8 +13034,8 @@ func (ec *executionContext) fieldContext_Mesure_id(_ context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _Mesure_category(ctx context.Context, field graphql.CollectedField, obj *types.Mesure) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mesure_category(ctx, field)
+func (ec *executionContext) _Measure_category(ctx context.Context, field graphql.CollectedField, obj *types.Measure) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Measure_category(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13007,9 +13065,9 @@ func (ec *executionContext) _Mesure_category(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mesure_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Measure_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mesure",
+		Object:     "Measure",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -13020,8 +13078,8 @@ func (ec *executionContext) fieldContext_Mesure_category(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Mesure_name(ctx context.Context, field graphql.CollectedField, obj *types.Mesure) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mesure_name(ctx, field)
+func (ec *executionContext) _Measure_name(ctx context.Context, field graphql.CollectedField, obj *types.Measure) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Measure_name(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13051,9 +13109,9 @@ func (ec *executionContext) _Mesure_name(ctx context.Context, field graphql.Coll
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mesure_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Measure_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mesure",
+		Object:     "Measure",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -13064,8 +13122,8 @@ func (ec *executionContext) fieldContext_Mesure_name(_ context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Mesure_description(ctx context.Context, field graphql.CollectedField, obj *types.Mesure) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mesure_description(ctx, field)
+func (ec *executionContext) _Measure_description(ctx context.Context, field graphql.CollectedField, obj *types.Measure) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Measure_description(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13095,9 +13153,9 @@ func (ec *executionContext) _Mesure_description(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mesure_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Measure_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mesure",
+		Object:     "Measure",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -13108,8 +13166,8 @@ func (ec *executionContext) fieldContext_Mesure_description(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Mesure_state(ctx context.Context, field graphql.CollectedField, obj *types.Mesure) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mesure_state(ctx, field)
+func (ec *executionContext) _Measure_state(ctx context.Context, field graphql.CollectedField, obj *types.Measure) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Measure_state(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13134,26 +13192,26 @@ func (ec *executionContext) _Mesure_state(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(coredata.MesureState)
+	res := resTmp.(coredata.MeasureState)
 	fc.Result = res
-	return ec.marshalNMesureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState(ctx, field.Selections, res)
+	return ec.marshalNMeasureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mesure_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Measure_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mesure",
+		Object:     "Measure",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type MesureState does not have child fields")
+			return nil, errors.New("field of type MeasureState does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mesure_tasks(ctx context.Context, field graphql.CollectedField, obj *types.Mesure) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mesure_tasks(ctx, field)
+func (ec *executionContext) _Measure_tasks(ctx context.Context, field graphql.CollectedField, obj *types.Measure) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Measure_tasks(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13166,7 +13224,7 @@ func (ec *executionContext) _Mesure_tasks(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mesure().Tasks(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.TaskOrderBy))
+		return ec.resolvers.Measure().Tasks(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.TaskOrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13183,9 +13241,9 @@ func (ec *executionContext) _Mesure_tasks(ctx context.Context, field graphql.Col
 	return ec.marshalNTaskConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTaskConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mesure_tasks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Measure_tasks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mesure",
+		Object:     "Measure",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -13206,15 +13264,15 @@ func (ec *executionContext) fieldContext_Mesure_tasks(ctx context.Context, field
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mesure_tasks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Measure_tasks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mesure_risks(ctx context.Context, field graphql.CollectedField, obj *types.Mesure) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mesure_risks(ctx, field)
+func (ec *executionContext) _Measure_risks(ctx context.Context, field graphql.CollectedField, obj *types.Measure) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Measure_risks(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13227,7 +13285,7 @@ func (ec *executionContext) _Mesure_risks(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mesure().Risks(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.RiskOrderBy))
+		return ec.resolvers.Measure().Risks(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.RiskOrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13244,9 +13302,9 @@ func (ec *executionContext) _Mesure_risks(ctx context.Context, field graphql.Col
 	return ec.marshalNRiskConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRiskConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mesure_risks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Measure_risks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mesure",
+		Object:     "Measure",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -13267,15 +13325,15 @@ func (ec *executionContext) fieldContext_Mesure_risks(ctx context.Context, field
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mesure_risks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Measure_risks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mesure_controls(ctx context.Context, field graphql.CollectedField, obj *types.Mesure) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mesure_controls(ctx, field)
+func (ec *executionContext) _Measure_controls(ctx context.Context, field graphql.CollectedField, obj *types.Measure) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Measure_controls(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13288,7 +13346,7 @@ func (ec *executionContext) _Mesure_controls(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mesure().Controls(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ControlOrderBy))
+		return ec.resolvers.Measure().Controls(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ControlOrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13305,9 +13363,9 @@ func (ec *executionContext) _Mesure_controls(ctx context.Context, field graphql.
 	return ec.marshalNControlConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mesure_controls(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Measure_controls(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mesure",
+		Object:     "Measure",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -13328,15 +13386,15 @@ func (ec *executionContext) fieldContext_Mesure_controls(ctx context.Context, fi
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mesure_controls_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Measure_controls_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mesure_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Mesure) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mesure_createdAt(ctx, field)
+func (ec *executionContext) _Measure_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Measure) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Measure_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13366,9 +13424,9 @@ func (ec *executionContext) _Mesure_createdAt(ctx context.Context, field graphql
 	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mesure_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Measure_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mesure",
+		Object:     "Measure",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -13379,8 +13437,8 @@ func (ec *executionContext) fieldContext_Mesure_createdAt(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Mesure_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Mesure) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mesure_updatedAt(ctx, field)
+func (ec *executionContext) _Measure_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Measure) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Measure_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13410,9 +13468,9 @@ func (ec *executionContext) _Mesure_updatedAt(ctx context.Context, field graphql
 	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mesure_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Measure_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Mesure",
+		Object:     "Measure",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -13423,8 +13481,8 @@ func (ec *executionContext) fieldContext_Mesure_updatedAt(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _MesureConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.MesureConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MesureConnection_edges(ctx, field)
+func (ec *executionContext) _MeasureConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.MeasureConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MeasureConnection_edges(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13449,32 +13507,32 @@ func (ec *executionContext) _MesureConnection_edges(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*types.MesureEdge)
+	res := resTmp.([]*types.MeasureEdge)
 	fc.Result = res
-	return ec.marshalNMesureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNMeasureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MesureConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MeasureConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MesureConnection",
+		Object:     "MeasureConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_MesureEdge_cursor(ctx, field)
+				return ec.fieldContext_MeasureEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_MesureEdge_node(ctx, field)
+				return ec.fieldContext_MeasureEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type MesureEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MeasureEdge", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _MesureConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.MesureConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MesureConnection_pageInfo(ctx, field)
+func (ec *executionContext) _MeasureConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.MeasureConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MeasureConnection_pageInfo(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13504,9 +13562,9 @@ func (ec *executionContext) _MesureConnection_pageInfo(ctx context.Context, fiel
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MesureConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MeasureConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MesureConnection",
+		Object:     "MeasureConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -13527,8 +13585,8 @@ func (ec *executionContext) fieldContext_MesureConnection_pageInfo(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _MesureEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.MesureEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MesureEdge_cursor(ctx, field)
+func (ec *executionContext) _MeasureEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.MeasureEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MeasureEdge_cursor(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13558,9 +13616,9 @@ func (ec *executionContext) _MesureEdge_cursor(ctx context.Context, field graphq
 	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MesureEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MeasureEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MesureEdge",
+		Object:     "MeasureEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -13571,8 +13629,8 @@ func (ec *executionContext) fieldContext_MesureEdge_cursor(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _MesureEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.MesureEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MesureEdge_node(ctx, field)
+func (ec *executionContext) _MeasureEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.MeasureEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MeasureEdge_node(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13597,41 +13655,41 @@ func (ec *executionContext) _MesureEdge_node(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.Mesure)
+	res := resTmp.(*types.Measure)
 	fc.Result = res
-	return ec.marshalNMesure2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesure(ctx, field.Selections, res)
+	return ec.marshalNMeasure2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasure(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MesureEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MeasureEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MesureEdge",
+		Object:     "MeasureEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Mesure_id(ctx, field)
+				return ec.fieldContext_Measure_id(ctx, field)
 			case "category":
-				return ec.fieldContext_Mesure_category(ctx, field)
+				return ec.fieldContext_Measure_category(ctx, field)
 			case "name":
-				return ec.fieldContext_Mesure_name(ctx, field)
+				return ec.fieldContext_Measure_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Mesure_description(ctx, field)
+				return ec.fieldContext_Measure_description(ctx, field)
 			case "state":
-				return ec.fieldContext_Mesure_state(ctx, field)
+				return ec.fieldContext_Measure_state(ctx, field)
 			case "tasks":
-				return ec.fieldContext_Mesure_tasks(ctx, field)
+				return ec.fieldContext_Measure_tasks(ctx, field)
 			case "risks":
-				return ec.fieldContext_Mesure_risks(ctx, field)
+				return ec.fieldContext_Measure_risks(ctx, field)
 			case "controls":
-				return ec.fieldContext_Mesure_controls(ctx, field)
+				return ec.fieldContext_Measure_controls(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Mesure_createdAt(ctx, field)
+				return ec.fieldContext_Measure_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Mesure_updatedAt(ctx, field)
+				return ec.fieldContext_Measure_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Mesure", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Measure", field.Name)
 		},
 	}
 	return fc, nil
@@ -14581,8 +14639,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteFramework(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createMesure(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createMesure(ctx, field)
+func (ec *executionContext) _Mutation_createMeasure(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createMeasure(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14595,7 +14653,7 @@ func (ec *executionContext) _Mutation_createMesure(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateMesure(rctx, fc.Args["input"].(types.CreateMesureInput))
+		return ec.resolvers.Mutation().CreateMeasure(rctx, fc.Args["input"].(types.CreateMeasureInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14607,12 +14665,12 @@ func (ec *executionContext) _Mutation_createMesure(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.CreateMesurePayload)
+	res := resTmp.(*types.CreateMeasurePayload)
 	fc.Result = res
-	return ec.marshalNCreateMesurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateMesurePayload(ctx, field.Selections, res)
+	return ec.marshalNCreateMeasurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateMeasurePayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createMesure(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createMeasure(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -14620,10 +14678,10 @@ func (ec *executionContext) fieldContext_Mutation_createMesure(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "mesureEdge":
-				return ec.fieldContext_CreateMesurePayload_mesureEdge(ctx, field)
+			case "measureEdge":
+				return ec.fieldContext_CreateMeasurePayload_measureEdge(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CreateMesurePayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CreateMeasurePayload", field.Name)
 		},
 	}
 	defer func() {
@@ -14633,15 +14691,15 @@ func (ec *executionContext) fieldContext_Mutation_createMesure(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createMesure_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createMeasure_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateMesure(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateMesure(ctx, field)
+func (ec *executionContext) _Mutation_updateMeasure(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateMeasure(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14654,7 +14712,7 @@ func (ec *executionContext) _Mutation_updateMesure(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateMesure(rctx, fc.Args["input"].(types.UpdateMesureInput))
+		return ec.resolvers.Mutation().UpdateMeasure(rctx, fc.Args["input"].(types.UpdateMeasureInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14666,12 +14724,12 @@ func (ec *executionContext) _Mutation_updateMesure(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.UpdateMesurePayload)
+	res := resTmp.(*types.UpdateMeasurePayload)
 	fc.Result = res
-	return ec.marshalNUpdateMesurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMesurePayload(ctx, field.Selections, res)
+	return ec.marshalNUpdateMeasurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMeasurePayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateMesure(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateMeasure(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -14679,10 +14737,10 @@ func (ec *executionContext) fieldContext_Mutation_updateMesure(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "mesure":
-				return ec.fieldContext_UpdateMesurePayload_mesure(ctx, field)
+			case "measure":
+				return ec.fieldContext_UpdateMeasurePayload_measure(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type UpdateMesurePayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UpdateMeasurePayload", field.Name)
 		},
 	}
 	defer func() {
@@ -14692,15 +14750,15 @@ func (ec *executionContext) fieldContext_Mutation_updateMesure(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateMesure_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateMeasure_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_importMesure(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_importMesure(ctx, field)
+func (ec *executionContext) _Mutation_importMeasure(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_importMeasure(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14713,7 +14771,7 @@ func (ec *executionContext) _Mutation_importMesure(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ImportMesure(rctx, fc.Args["input"].(types.ImportMesureInput))
+		return ec.resolvers.Mutation().ImportMeasure(rctx, fc.Args["input"].(types.ImportMeasureInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14725,12 +14783,12 @@ func (ec *executionContext) _Mutation_importMesure(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.ImportMesurePayload)
+	res := resTmp.(*types.ImportMeasurePayload)
 	fc.Result = res
-	return ec.marshalNImportMesurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportMesurePayload(ctx, field.Selections, res)
+	return ec.marshalNImportMeasurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportMeasurePayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_importMesure(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_importMeasure(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -14738,10 +14796,10 @@ func (ec *executionContext) fieldContext_Mutation_importMesure(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "mesureEdges":
-				return ec.fieldContext_ImportMesurePayload_mesureEdges(ctx, field)
+			case "measureEdges":
+				return ec.fieldContext_ImportMeasurePayload_measureEdges(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ImportMesurePayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type ImportMeasurePayload", field.Name)
 		},
 	}
 	defer func() {
@@ -14751,15 +14809,15 @@ func (ec *executionContext) fieldContext_Mutation_importMesure(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_importMesure_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_importMeasure_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteMesure(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteMesure(ctx, field)
+func (ec *executionContext) _Mutation_deleteMeasure(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteMeasure(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14772,7 +14830,7 @@ func (ec *executionContext) _Mutation_deleteMesure(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteMesure(rctx, fc.Args["input"].(types.DeleteMesureInput))
+		return ec.resolvers.Mutation().DeleteMeasure(rctx, fc.Args["input"].(types.DeleteMeasureInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14784,12 +14842,12 @@ func (ec *executionContext) _Mutation_deleteMesure(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.DeleteMesurePayload)
+	res := resTmp.(*types.DeleteMeasurePayload)
 	fc.Result = res
-	return ec.marshalNDeleteMesurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMesurePayload(ctx, field.Selections, res)
+	return ec.marshalNDeleteMeasurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMeasurePayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteMesure(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteMeasure(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -14797,10 +14855,10 @@ func (ec *executionContext) fieldContext_Mutation_deleteMesure(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "deletedMesureId":
-				return ec.fieldContext_DeleteMesurePayload_deletedMesureId(ctx, field)
+			case "deletedMeasureId":
+				return ec.fieldContext_DeleteMeasurePayload_deletedMeasureId(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DeleteMesurePayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DeleteMeasurePayload", field.Name)
 		},
 	}
 	defer func() {
@@ -14810,15 +14868,15 @@ func (ec *executionContext) fieldContext_Mutation_deleteMesure(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteMesure_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteMeasure_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createControlMesureMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createControlMesureMapping(ctx, field)
+func (ec *executionContext) _Mutation_createControlMeasureMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createControlMeasureMapping(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14831,7 +14889,7 @@ func (ec *executionContext) _Mutation_createControlMesureMapping(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateControlMesureMapping(rctx, fc.Args["input"].(types.CreateControlMesureMappingInput))
+		return ec.resolvers.Mutation().CreateControlMeasureMapping(rctx, fc.Args["input"].(types.CreateControlMeasureMappingInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14843,12 +14901,12 @@ func (ec *executionContext) _Mutation_createControlMesureMapping(ctx context.Con
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.CreateControlMesureMappingPayload)
+	res := resTmp.(*types.CreateControlMeasureMappingPayload)
 	fc.Result = res
-	return ec.marshalNCreateControlMesureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlMesureMappingPayload(ctx, field.Selections, res)
+	return ec.marshalNCreateControlMeasureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlMeasureMappingPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createControlMesureMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createControlMeasureMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -14857,9 +14915,9 @@ func (ec *executionContext) fieldContext_Mutation_createControlMesureMapping(ctx
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "success":
-				return ec.fieldContext_CreateControlMesureMappingPayload_success(ctx, field)
+				return ec.fieldContext_CreateControlMeasureMappingPayload_success(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CreateControlMesureMappingPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CreateControlMeasureMappingPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -14869,7 +14927,7 @@ func (ec *executionContext) fieldContext_Mutation_createControlMesureMapping(ctx
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createControlMesureMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createControlMeasureMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -14935,8 +14993,8 @@ func (ec *executionContext) fieldContext_Mutation_createControlPolicyMapping(ctx
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteControlMesureMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteControlMesureMapping(ctx, field)
+func (ec *executionContext) _Mutation_deleteControlMeasureMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteControlMeasureMapping(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14949,7 +15007,7 @@ func (ec *executionContext) _Mutation_deleteControlMesureMapping(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteControlMesureMapping(rctx, fc.Args["input"].(types.DeleteControlMesureMappingInput))
+		return ec.resolvers.Mutation().DeleteControlMeasureMapping(rctx, fc.Args["input"].(types.DeleteControlMeasureMappingInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14961,12 +15019,12 @@ func (ec *executionContext) _Mutation_deleteControlMesureMapping(ctx context.Con
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.DeleteControlMesureMappingPayload)
+	res := resTmp.(*types.DeleteControlMeasureMappingPayload)
 	fc.Result = res
-	return ec.marshalNDeleteControlMesureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlMesureMappingPayload(ctx, field.Selections, res)
+	return ec.marshalNDeleteControlMeasureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlMeasureMappingPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteControlMesureMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteControlMeasureMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -14975,9 +15033,9 @@ func (ec *executionContext) fieldContext_Mutation_deleteControlMesureMapping(ctx
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "success":
-				return ec.fieldContext_DeleteControlMesureMappingPayload_success(ctx, field)
+				return ec.fieldContext_DeleteControlMeasureMappingPayload_success(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DeleteControlMesureMappingPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DeleteControlMeasureMappingPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -14987,7 +15045,7 @@ func (ec *executionContext) fieldContext_Mutation_deleteControlMesureMapping(ctx
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteControlMesureMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteControlMeasureMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -15525,8 +15583,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteRisk(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createRiskMesureMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createRiskMesureMapping(ctx, field)
+func (ec *executionContext) _Mutation_createRiskMeasureMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createRiskMeasureMapping(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15539,7 +15597,7 @@ func (ec *executionContext) _Mutation_createRiskMesureMapping(ctx context.Contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateRiskMesureMapping(rctx, fc.Args["input"].(types.CreateRiskMesureMappingInput))
+		return ec.resolvers.Mutation().CreateRiskMeasureMapping(rctx, fc.Args["input"].(types.CreateRiskMeasureMappingInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15551,12 +15609,12 @@ func (ec *executionContext) _Mutation_createRiskMesureMapping(ctx context.Contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.CreateRiskMesureMappingPayload)
+	res := resTmp.(*types.CreateRiskMeasureMappingPayload)
 	fc.Result = res
-	return ec.marshalNCreateRiskMesureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskMesureMappingPayload(ctx, field.Selections, res)
+	return ec.marshalNCreateRiskMeasureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskMeasureMappingPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createRiskMesureMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createRiskMeasureMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15565,9 +15623,9 @@ func (ec *executionContext) fieldContext_Mutation_createRiskMesureMapping(ctx co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "success":
-				return ec.fieldContext_CreateRiskMesureMappingPayload_success(ctx, field)
+				return ec.fieldContext_CreateRiskMeasureMappingPayload_success(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CreateRiskMesureMappingPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CreateRiskMeasureMappingPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -15577,15 +15635,15 @@ func (ec *executionContext) fieldContext_Mutation_createRiskMesureMapping(ctx co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createRiskMesureMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createRiskMeasureMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteRiskMesureMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteRiskMesureMapping(ctx, field)
+func (ec *executionContext) _Mutation_deleteRiskMeasureMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteRiskMeasureMapping(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15598,7 +15656,7 @@ func (ec *executionContext) _Mutation_deleteRiskMesureMapping(ctx context.Contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteRiskMesureMapping(rctx, fc.Args["input"].(types.DeleteRiskMesureMappingInput))
+		return ec.resolvers.Mutation().DeleteRiskMeasureMapping(rctx, fc.Args["input"].(types.DeleteRiskMeasureMappingInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15610,12 +15668,12 @@ func (ec *executionContext) _Mutation_deleteRiskMesureMapping(ctx context.Contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.DeleteRiskMesureMappingPayload)
+	res := resTmp.(*types.DeleteRiskMeasureMappingPayload)
 	fc.Result = res
-	return ec.marshalNDeleteRiskMesureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskMesureMappingPayload(ctx, field.Selections, res)
+	return ec.marshalNDeleteRiskMeasureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskMeasureMappingPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteRiskMesureMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteRiskMeasureMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15624,9 +15682,9 @@ func (ec *executionContext) fieldContext_Mutation_deleteRiskMesureMapping(ctx co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "success":
-				return ec.fieldContext_DeleteRiskMesureMappingPayload_success(ctx, field)
+				return ec.fieldContext_DeleteRiskMeasureMappingPayload_success(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DeleteRiskMesureMappingPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DeleteRiskMeasureMappingPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -15636,7 +15694,7 @@ func (ec *executionContext) fieldContext_Mutation_deleteRiskMesureMapping(ctx co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteRiskMesureMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteRiskMeasureMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -16473,6 +16531,65 @@ func (ec *executionContext) fieldContext_Mutation_requestSignature(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_sendSigningNotifications(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_sendSigningNotifications(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SendSigningNotifications(rctx, fc.Args["input"].(types.SendSigningNotificationsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.SendSigningNotificationsPayload)
+	fc.Result = res
+	return ec.marshalNSendSigningNotificationsPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSendSigningNotificationsPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_sendSigningNotifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_SendSigningNotificationsPayload_success(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SendSigningNotificationsPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_sendSigningNotifications_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createVendorRiskAssessment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createVendorRiskAssessment(ctx, field)
 	if err != nil {
@@ -17027,8 +17144,8 @@ func (ec *executionContext) fieldContext_Organization_policies(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Organization_mesures(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Organization_mesures(ctx, field)
+func (ec *executionContext) _Organization_measures(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_measures(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -17041,7 +17158,7 @@ func (ec *executionContext) _Organization_mesures(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organization().Mesures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.MesureOrderBy))
+		return ec.resolvers.Organization().Measures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.MeasureOrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17053,12 +17170,12 @@ func (ec *executionContext) _Organization_mesures(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.MesureConnection)
+	res := resTmp.(*types.MeasureConnection)
 	fc.Result = res
-	return ec.marshalNMesureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureConnection(ctx, field.Selections, res)
+	return ec.marshalNMeasureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Organization_mesures(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Organization_measures(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Organization",
 		Field:      field,
@@ -17067,11 +17184,11 @@ func (ec *executionContext) fieldContext_Organization_mesures(ctx context.Contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_MesureConnection_edges(ctx, field)
+				return ec.fieldContext_MeasureConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_MesureConnection_pageInfo(ctx, field)
+				return ec.fieldContext_MeasureConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type MesureConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MeasureConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -17081,7 +17198,7 @@ func (ec *executionContext) fieldContext_Organization_mesures(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Organization_mesures_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Organization_measures_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -17442,8 +17559,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "policies":
 				return ec.fieldContext_Organization_policies(ctx, field)
-			case "mesures":
-				return ec.fieldContext_Organization_mesures(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
 				return ec.fieldContext_Organization_risks(ctx, field)
 			case "createdAt":
@@ -21305,8 +21422,8 @@ func (ec *executionContext) fieldContext_Risk_owner(_ context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Risk_mesures(ctx context.Context, field graphql.CollectedField, obj *types.Risk) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Risk_mesures(ctx, field)
+func (ec *executionContext) _Risk_measures(ctx context.Context, field graphql.CollectedField, obj *types.Risk) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Risk_measures(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21319,7 +21436,7 @@ func (ec *executionContext) _Risk_mesures(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Risk().Mesures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.MesureOrderBy))
+		return ec.resolvers.Risk().Measures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.MeasureOrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21331,12 +21448,12 @@ func (ec *executionContext) _Risk_mesures(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.MesureConnection)
+	res := resTmp.(*types.MeasureConnection)
 	fc.Result = res
-	return ec.marshalNMesureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureConnection(ctx, field.Selections, res)
+	return ec.marshalNMeasureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Risk_mesures(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Risk_measures(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Risk",
 		Field:      field,
@@ -21345,11 +21462,11 @@ func (ec *executionContext) fieldContext_Risk_mesures(ctx context.Context, field
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_MesureConnection_edges(ctx, field)
+				return ec.fieldContext_MeasureConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_MesureConnection_pageInfo(ctx, field)
+				return ec.fieldContext_MeasureConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type MesureConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MeasureConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -21359,7 +21476,7 @@ func (ec *executionContext) fieldContext_Risk_mesures(ctx context.Context, field
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Risk_mesures_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Risk_measures_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -21789,8 +21906,8 @@ func (ec *executionContext) fieldContext_RiskEdge_node(_ context.Context, field 
 				return ec.fieldContext_Risk_note(ctx, field)
 			case "owner":
 				return ec.fieldContext_Risk_owner(ctx, field)
-			case "mesures":
-				return ec.fieldContext_Risk_mesures(ctx, field)
+			case "measures":
+				return ec.fieldContext_Risk_measures(ctx, field)
 			case "policies":
 				return ec.fieldContext_Risk_policies(ctx, field)
 			case "controls":
@@ -21801,6 +21918,50 @@ func (ec *executionContext) fieldContext_RiskEdge_node(_ context.Context, field 
 				return ec.fieldContext_Risk_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Risk", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SendSigningNotificationsPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.SendSigningNotificationsPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SendSigningNotificationsPayload_success(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Success, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SendSigningNotificationsPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SendSigningNotificationsPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -22651,8 +22812,8 @@ func (ec *executionContext) fieldContext_UpdateFrameworkPayload_framework(_ cont
 	return fc, nil
 }
 
-func (ec *executionContext) _UpdateMesurePayload_mesure(ctx context.Context, field graphql.CollectedField, obj *types.UpdateMesurePayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateMesurePayload_mesure(ctx, field)
+func (ec *executionContext) _UpdateMeasurePayload_measure(ctx context.Context, field graphql.CollectedField, obj *types.UpdateMeasurePayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateMeasurePayload_measure(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22665,7 +22826,7 @@ func (ec *executionContext) _UpdateMesurePayload_mesure(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Mesure, nil
+		return obj.Measure, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -22677,41 +22838,41 @@ func (ec *executionContext) _UpdateMesurePayload_mesure(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.Mesure)
+	res := resTmp.(*types.Measure)
 	fc.Result = res
-	return ec.marshalNMesure2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesure(ctx, field.Selections, res)
+	return ec.marshalNMeasure2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasure(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdateMesurePayload_mesure(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdateMeasurePayload_measure(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "UpdateMesurePayload",
+		Object:     "UpdateMeasurePayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Mesure_id(ctx, field)
+				return ec.fieldContext_Measure_id(ctx, field)
 			case "category":
-				return ec.fieldContext_Mesure_category(ctx, field)
+				return ec.fieldContext_Measure_category(ctx, field)
 			case "name":
-				return ec.fieldContext_Mesure_name(ctx, field)
+				return ec.fieldContext_Measure_name(ctx, field)
 			case "description":
-				return ec.fieldContext_Mesure_description(ctx, field)
+				return ec.fieldContext_Measure_description(ctx, field)
 			case "state":
-				return ec.fieldContext_Mesure_state(ctx, field)
+				return ec.fieldContext_Measure_state(ctx, field)
 			case "tasks":
-				return ec.fieldContext_Mesure_tasks(ctx, field)
+				return ec.fieldContext_Measure_tasks(ctx, field)
 			case "risks":
-				return ec.fieldContext_Mesure_risks(ctx, field)
+				return ec.fieldContext_Measure_risks(ctx, field)
 			case "controls":
-				return ec.fieldContext_Mesure_controls(ctx, field)
+				return ec.fieldContext_Measure_controls(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Mesure_createdAt(ctx, field)
+				return ec.fieldContext_Measure_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Mesure_updatedAt(ctx, field)
+				return ec.fieldContext_Measure_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Mesure", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Measure", field.Name)
 		},
 	}
 	return fc, nil
@@ -22774,8 +22935,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_peoples(ctx, field)
 			case "policies":
 				return ec.fieldContext_Organization_policies(ctx, field)
-			case "mesures":
-				return ec.fieldContext_Organization_mesures(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
 				return ec.fieldContext_Organization_risks(ctx, field)
 			case "createdAt":
@@ -23046,8 +23207,8 @@ func (ec *executionContext) fieldContext_UpdateRiskPayload_risk(_ context.Contex
 				return ec.fieldContext_Risk_note(ctx, field)
 			case "owner":
 				return ec.fieldContext_Risk_owner(ctx, field)
-			case "mesures":
-				return ec.fieldContext_Risk_mesures(ctx, field)
+			case "measures":
+				return ec.fieldContext_Risk_measures(ctx, field)
 			case "policies":
 				return ec.fieldContext_Risk_policies(ctx, field)
 			case "controls":
@@ -28598,14 +28759,14 @@ func (ec *executionContext) unmarshalInputControlOrder(ctx context.Context, obj 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateControlMesureMappingInput(ctx context.Context, obj any) (types.CreateControlMesureMappingInput, error) {
-	var it types.CreateControlMesureMappingInput
+func (ec *executionContext) unmarshalInputCreateControlMeasureMappingInput(ctx context.Context, obj any) (types.CreateControlMeasureMappingInput, error) {
+	var it types.CreateControlMeasureMappingInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"controlId", "mesureId"}
+	fieldsInOrder := [...]string{"controlId", "measureId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -28619,13 +28780,13 @@ func (ec *executionContext) unmarshalInputCreateControlMesureMappingInput(ctx co
 				return it, err
 			}
 			it.ControlID = data
-		case "mesureId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mesureId"))
+		case "measureId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("measureId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.MesureID = data
+			it.MeasureID = data
 		}
 	}
 
@@ -28796,8 +28957,8 @@ func (ec *executionContext) unmarshalInputCreateFrameworkInput(ctx context.Conte
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateMesureInput(ctx context.Context, obj any) (types.CreateMesureInput, error) {
-	var it types.CreateMesureInput
+func (ec *executionContext) unmarshalInputCreateMeasureInput(ctx context.Context, obj any) (types.CreateMeasureInput, error) {
+	var it types.CreateMeasureInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -29071,14 +29232,14 @@ func (ec *executionContext) unmarshalInputCreateRiskInput(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateRiskMesureMappingInput(ctx context.Context, obj any) (types.CreateRiskMesureMappingInput, error) {
-	var it types.CreateRiskMesureMappingInput
+func (ec *executionContext) unmarshalInputCreateRiskMeasureMappingInput(ctx context.Context, obj any) (types.CreateRiskMeasureMappingInput, error) {
+	var it types.CreateRiskMeasureMappingInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"riskId", "mesureId"}
+	fieldsInOrder := [...]string{"riskId", "measureId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -29092,13 +29253,13 @@ func (ec *executionContext) unmarshalInputCreateRiskMesureMappingInput(ctx conte
 				return it, err
 			}
 			it.RiskID = data
-		case "mesureId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mesureId"))
+		case "measureId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("measureId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.MesureID = data
+			it.MeasureID = data
 		}
 	}
 
@@ -29146,20 +29307,20 @@ func (ec *executionContext) unmarshalInputCreateTaskInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"mesureId", "name", "description", "timeEstimate", "assignedToId"}
+	fieldsInOrder := [...]string{"measureId", "name", "description", "timeEstimate", "assignedToId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "mesureId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mesureId"))
+		case "measureId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("measureId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.MesureID = data
+			it.MeasureID = data
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -29409,14 +29570,14 @@ func (ec *executionContext) unmarshalInputCreateVendorRiskAssessmentInput(ctx co
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeleteControlMesureMappingInput(ctx context.Context, obj any) (types.DeleteControlMesureMappingInput, error) {
-	var it types.DeleteControlMesureMappingInput
+func (ec *executionContext) unmarshalInputDeleteControlMeasureMappingInput(ctx context.Context, obj any) (types.DeleteControlMeasureMappingInput, error) {
+	var it types.DeleteControlMeasureMappingInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"controlId", "mesureId"}
+	fieldsInOrder := [...]string{"controlId", "measureId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -29430,13 +29591,13 @@ func (ec *executionContext) unmarshalInputDeleteControlMesureMappingInput(ctx co
 				return it, err
 			}
 			it.ControlID = data
-		case "mesureId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mesureId"))
+		case "measureId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("measureId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.MesureID = data
+			it.MeasureID = data
 		}
 	}
 
@@ -29531,27 +29692,27 @@ func (ec *executionContext) unmarshalInputDeleteFrameworkInput(ctx context.Conte
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeleteMesureInput(ctx context.Context, obj any) (types.DeleteMesureInput, error) {
-	var it types.DeleteMesureInput
+func (ec *executionContext) unmarshalInputDeleteMeasureInput(ctx context.Context, obj any) (types.DeleteMeasureInput, error) {
+	var it types.DeleteMeasureInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"mesureId"}
+	fieldsInOrder := [...]string{"measureId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "mesureId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mesureId"))
+		case "measureId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("measureId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.MesureID = data
+			it.MeasureID = data
 		}
 	}
 
@@ -29666,14 +29827,14 @@ func (ec *executionContext) unmarshalInputDeleteRiskInput(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeleteRiskMesureMappingInput(ctx context.Context, obj any) (types.DeleteRiskMesureMappingInput, error) {
-	var it types.DeleteRiskMesureMappingInput
+func (ec *executionContext) unmarshalInputDeleteRiskMeasureMappingInput(ctx context.Context, obj any) (types.DeleteRiskMeasureMappingInput, error) {
+	var it types.DeleteRiskMeasureMappingInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"riskId", "mesureId"}
+	fieldsInOrder := [...]string{"riskId", "measureId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -29687,13 +29848,13 @@ func (ec *executionContext) unmarshalInputDeleteRiskMesureMappingInput(ctx conte
 				return it, err
 			}
 			it.RiskID = data
-		case "mesureId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mesureId"))
+		case "measureId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("measureId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.MesureID = data
+			it.MeasureID = data
 		}
 	}
 
@@ -29965,8 +30126,8 @@ func (ec *executionContext) unmarshalInputImportFrameworkInput(ctx context.Conte
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputImportMesureInput(ctx context.Context, obj any) (types.ImportMesureInput, error) {
-	var it types.ImportMesureInput
+func (ec *executionContext) unmarshalInputImportMeasureInput(ctx context.Context, obj any) (types.ImportMeasureInput, error) {
+	var it types.ImportMeasureInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -30040,8 +30201,8 @@ func (ec *executionContext) unmarshalInputInviteUserInput(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputMesureOrder(ctx context.Context, obj any) (types.MesureOrderBy, error) {
-	var it types.MesureOrderBy
+func (ec *executionContext) unmarshalInputMeasureOrder(ctx context.Context, obj any) (types.MeasureOrderBy, error) {
+	var it types.MeasureOrderBy
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -30063,7 +30224,7 @@ func (ec *executionContext) unmarshalInputMesureOrder(ctx context.Context, obj a
 			it.Direction = data
 		case "field":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNMesureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureOrderField(ctx, v)
+			data, err := ec.unmarshalNMeasureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureOrderField(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -30448,6 +30609,33 @@ func (ec *executionContext) unmarshalInputRiskOrder(ctx context.Context, obj any
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSendSigningNotificationsInput(ctx context.Context, obj any) (types.SendSigningNotificationsInput, error) {
+	var it types.SendSigningNotificationsInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputTaskOrder(ctx context.Context, obj any) (types.TaskOrderBy, error) {
 	var it types.TaskOrderBy
 	asMap := map[string]any{}
@@ -30550,8 +30738,8 @@ func (ec *executionContext) unmarshalInputUpdateFrameworkInput(ctx context.Conte
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateMesureInput(ctx context.Context, obj any) (types.UpdateMesureInput, error) {
-	var it types.UpdateMesureInput
+func (ec *executionContext) unmarshalInputUpdateMeasureInput(ctx context.Context, obj any) (types.UpdateMeasureInput, error) {
+	var it types.UpdateMeasureInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -30594,7 +30782,7 @@ func (ec *executionContext) unmarshalInputUpdateMesureInput(ctx context.Context,
 			it.Category = data
 		case "state":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
-			data, err := ec.unmarshalOMesureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState(ctx, v)
+			data, err := ec.unmarshalOMeasureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -31371,13 +31559,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Organization(ctx, sel, obj)
-	case types.Mesure:
-		return ec._Mesure(ctx, sel, &obj)
-	case *types.Mesure:
+	case types.Measure:
+		return ec._Measure(ctx, sel, &obj)
+	case *types.Measure:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._Mesure(ctx, sel, obj)
+		return ec._Measure(ctx, sel, obj)
 	case types.Framework:
 		return ec._Framework(ctx, sel, &obj)
 	case *types.Framework:
@@ -31671,7 +31859,7 @@ func (ec *executionContext) _Control(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "mesures":
+		case "measures":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -31680,7 +31868,7 @@ func (ec *executionContext) _Control(ctx context.Context, sel ast.SelectionSet, 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Control_mesures(ctx, field, obj)
+				res = ec._Control_measures(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -31864,19 +32052,19 @@ func (ec *executionContext) _ControlEdge(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
-var createControlMesureMappingPayloadImplementors = []string{"CreateControlMesureMappingPayload"}
+var createControlMeasureMappingPayloadImplementors = []string{"CreateControlMeasureMappingPayload"}
 
-func (ec *executionContext) _CreateControlMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateControlMesureMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createControlMesureMappingPayloadImplementors)
+func (ec *executionContext) _CreateControlMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateControlMeasureMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createControlMeasureMappingPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateControlMesureMappingPayload")
+			out.Values[i] = graphql.MarshalString("CreateControlMeasureMappingPayload")
 		case "success":
-			out.Values[i] = ec._CreateControlMesureMappingPayload_success(ctx, field, obj)
+			out.Values[i] = ec._CreateControlMeasureMappingPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -32059,19 +32247,19 @@ func (ec *executionContext) _CreateFrameworkPayload(ctx context.Context, sel ast
 	return out
 }
 
-var createMesurePayloadImplementors = []string{"CreateMesurePayload"}
+var createMeasurePayloadImplementors = []string{"CreateMeasurePayload"}
 
-func (ec *executionContext) _CreateMesurePayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateMesurePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createMesurePayloadImplementors)
+func (ec *executionContext) _CreateMeasurePayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateMeasurePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createMeasurePayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateMesurePayload")
-		case "mesureEdge":
-			out.Values[i] = ec._CreateMesurePayload_mesureEdge(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("CreateMeasurePayload")
+		case "measureEdge":
+			out.Values[i] = ec._CreateMeasurePayload_measureEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -32220,19 +32408,19 @@ func (ec *executionContext) _CreatePolicyPayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var createRiskMesureMappingPayloadImplementors = []string{"CreateRiskMesureMappingPayload"}
+var createRiskMeasureMappingPayloadImplementors = []string{"CreateRiskMeasureMappingPayload"}
 
-func (ec *executionContext) _CreateRiskMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateRiskMesureMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createRiskMesureMappingPayloadImplementors)
+func (ec *executionContext) _CreateRiskMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateRiskMeasureMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createRiskMeasureMappingPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateRiskMesureMappingPayload")
+			out.Values[i] = graphql.MarshalString("CreateRiskMeasureMappingPayload")
 		case "success":
-			out.Values[i] = ec._CreateRiskMesureMappingPayload_success(ctx, field, obj)
+			out.Values[i] = ec._CreateRiskMeasureMappingPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -32454,19 +32642,19 @@ func (ec *executionContext) _CreateVendorRiskAssessmentPayload(ctx context.Conte
 	return out
 }
 
-var deleteControlMesureMappingPayloadImplementors = []string{"DeleteControlMesureMappingPayload"}
+var deleteControlMeasureMappingPayloadImplementors = []string{"DeleteControlMeasureMappingPayload"}
 
-func (ec *executionContext) _DeleteControlMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteControlMesureMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteControlMesureMappingPayloadImplementors)
+func (ec *executionContext) _DeleteControlMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteControlMeasureMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteControlMeasureMappingPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteControlMesureMappingPayload")
+			out.Values[i] = graphql.MarshalString("DeleteControlMeasureMappingPayload")
 		case "success":
-			out.Values[i] = ec._DeleteControlMesureMappingPayload_success(ctx, field, obj)
+			out.Values[i] = ec._DeleteControlMeasureMappingPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -32610,19 +32798,19 @@ func (ec *executionContext) _DeleteFrameworkPayload(ctx context.Context, sel ast
 	return out
 }
 
-var deleteMesurePayloadImplementors = []string{"DeleteMesurePayload"}
+var deleteMeasurePayloadImplementors = []string{"DeleteMeasurePayload"}
 
-func (ec *executionContext) _DeleteMesurePayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteMesurePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteMesurePayloadImplementors)
+func (ec *executionContext) _DeleteMeasurePayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteMeasurePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteMeasurePayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteMesurePayload")
-		case "deletedMesureId":
-			out.Values[i] = ec._DeleteMesurePayload_deletedMesureId(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("DeleteMeasurePayload")
+		case "deletedMeasureId":
+			out.Values[i] = ec._DeleteMeasurePayload_deletedMeasureId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -32766,19 +32954,19 @@ func (ec *executionContext) _DeletePolicyPayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var deleteRiskMesureMappingPayloadImplementors = []string{"DeleteRiskMesureMappingPayload"}
+var deleteRiskMeasureMappingPayloadImplementors = []string{"DeleteRiskMeasureMappingPayload"}
 
-func (ec *executionContext) _DeleteRiskMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteRiskMesureMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteRiskMesureMappingPayloadImplementors)
+func (ec *executionContext) _DeleteRiskMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteRiskMeasureMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteRiskMeasureMappingPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteRiskMesureMappingPayload")
+			out.Values[i] = graphql.MarshalString("DeleteRiskMeasureMappingPayload")
 		case "success":
-			out.Values[i] = ec._DeleteRiskMesureMappingPayload_success(ctx, field, obj)
+			out.Values[i] = ec._DeleteRiskMeasureMappingPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -33463,19 +33651,19 @@ func (ec *executionContext) _ImportFrameworkPayload(ctx context.Context, sel ast
 	return out
 }
 
-var importMesurePayloadImplementors = []string{"ImportMesurePayload"}
+var importMeasurePayloadImplementors = []string{"ImportMeasurePayload"}
 
-func (ec *executionContext) _ImportMesurePayload(ctx context.Context, sel ast.SelectionSet, obj *types.ImportMesurePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, importMesurePayloadImplementors)
+func (ec *executionContext) _ImportMeasurePayload(ctx context.Context, sel ast.SelectionSet, obj *types.ImportMeasurePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, importMeasurePayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("ImportMesurePayload")
-		case "mesureEdges":
-			out.Values[i] = ec._ImportMesurePayload_mesureEdges(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("ImportMeasurePayload")
+		case "measureEdges":
+			out.Values[i] = ec._ImportMeasurePayload_measureEdges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -33541,39 +33729,39 @@ func (ec *executionContext) _InviteUserPayload(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var mesureImplementors = []string{"Mesure", "Node"}
+var measureImplementors = []string{"Measure", "Node"}
 
-func (ec *executionContext) _Mesure(ctx context.Context, sel ast.SelectionSet, obj *types.Mesure) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, mesureImplementors)
+func (ec *executionContext) _Measure(ctx context.Context, sel ast.SelectionSet, obj *types.Measure) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, measureImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Mesure")
+			out.Values[i] = graphql.MarshalString("Measure")
 		case "id":
-			out.Values[i] = ec._Mesure_id(ctx, field, obj)
+			out.Values[i] = ec._Measure_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "category":
-			out.Values[i] = ec._Mesure_category(ctx, field, obj)
+			out.Values[i] = ec._Measure_category(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "name":
-			out.Values[i] = ec._Mesure_name(ctx, field, obj)
+			out.Values[i] = ec._Measure_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "description":
-			out.Values[i] = ec._Mesure_description(ctx, field, obj)
+			out.Values[i] = ec._Measure_description(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "state":
-			out.Values[i] = ec._Mesure_state(ctx, field, obj)
+			out.Values[i] = ec._Measure_state(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -33586,7 +33774,7 @@ func (ec *executionContext) _Mesure(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Mesure_tasks(ctx, field, obj)
+				res = ec._Measure_tasks(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -33622,7 +33810,7 @@ func (ec *executionContext) _Mesure(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Mesure_risks(ctx, field, obj)
+				res = ec._Measure_risks(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -33658,7 +33846,7 @@ func (ec *executionContext) _Mesure(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Mesure_controls(ctx, field, obj)
+				res = ec._Measure_controls(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -33686,12 +33874,12 @@ func (ec *executionContext) _Mesure(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "createdAt":
-			out.Values[i] = ec._Mesure_createdAt(ctx, field, obj)
+			out.Values[i] = ec._Measure_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
-			out.Values[i] = ec._Mesure_updatedAt(ctx, field, obj)
+			out.Values[i] = ec._Measure_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -33718,24 +33906,24 @@ func (ec *executionContext) _Mesure(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
-var mesureConnectionImplementors = []string{"MesureConnection"}
+var measureConnectionImplementors = []string{"MeasureConnection"}
 
-func (ec *executionContext) _MesureConnection(ctx context.Context, sel ast.SelectionSet, obj *types.MesureConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, mesureConnectionImplementors)
+func (ec *executionContext) _MeasureConnection(ctx context.Context, sel ast.SelectionSet, obj *types.MeasureConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, measureConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("MesureConnection")
+			out.Values[i] = graphql.MarshalString("MeasureConnection")
 		case "edges":
-			out.Values[i] = ec._MesureConnection_edges(ctx, field, obj)
+			out.Values[i] = ec._MeasureConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "pageInfo":
-			out.Values[i] = ec._MesureConnection_pageInfo(ctx, field, obj)
+			out.Values[i] = ec._MeasureConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -33762,24 +33950,24 @@ func (ec *executionContext) _MesureConnection(ctx context.Context, sel ast.Selec
 	return out
 }
 
-var mesureEdgeImplementors = []string{"MesureEdge"}
+var measureEdgeImplementors = []string{"MeasureEdge"}
 
-func (ec *executionContext) _MesureEdge(ctx context.Context, sel ast.SelectionSet, obj *types.MesureEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, mesureEdgeImplementors)
+func (ec *executionContext) _MeasureEdge(ctx context.Context, sel ast.SelectionSet, obj *types.MeasureEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, measureEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("MesureEdge")
+			out.Values[i] = graphql.MarshalString("MeasureEdge")
 		case "cursor":
-			out.Values[i] = ec._MesureEdge_cursor(ctx, field, obj)
+			out.Values[i] = ec._MeasureEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "node":
-			out.Values[i] = ec._MesureEdge_node(ctx, field, obj)
+			out.Values[i] = ec._MeasureEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -33937,37 +34125,37 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createMesure":
+		case "createMeasure":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createMesure(ctx, field)
+				return ec._Mutation_createMeasure(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateMesure":
+		case "updateMeasure":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateMesure(ctx, field)
+				return ec._Mutation_updateMeasure(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "importMesure":
+		case "importMeasure":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_importMesure(ctx, field)
+				return ec._Mutation_importMeasure(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteMesure":
+		case "deleteMeasure":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteMesure(ctx, field)
+				return ec._Mutation_deleteMeasure(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createControlMesureMapping":
+		case "createControlMeasureMapping":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createControlMesureMapping(ctx, field)
+				return ec._Mutation_createControlMeasureMapping(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -33979,9 +34167,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteControlMesureMapping":
+		case "deleteControlMeasureMapping":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteControlMesureMapping(ctx, field)
+				return ec._Mutation_deleteControlMeasureMapping(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -34049,16 +34237,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createRiskMesureMapping":
+		case "createRiskMeasureMapping":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createRiskMesureMapping(ctx, field)
+				return ec._Mutation_createRiskMeasureMapping(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteRiskMesureMapping":
+		case "deleteRiskMeasureMapping":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteRiskMesureMapping(ctx, field)
+				return ec._Mutation_deleteRiskMeasureMapping(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -34157,6 +34345,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "requestSignature":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_requestSignature(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sendSigningNotifications":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_sendSigningNotifications(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -34461,7 +34656,7 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "mesures":
+		case "measures":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -34470,7 +34665,7 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Organization_mesures(ctx, field, obj)
+				res = ec._Organization_measures(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -35996,7 +36191,7 @@ func (ec *executionContext) _Risk(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "mesures":
+		case "measures":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -36005,7 +36200,7 @@ func (ec *executionContext) _Risk(ctx context.Context, sel ast.SelectionSet, obj
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Risk_mesures(ctx, field, obj)
+				res = ec._Risk_measures(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -36199,6 +36394,45 @@ func (ec *executionContext) _RiskEdge(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "node":
 			out.Values[i] = ec._RiskEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var sendSigningNotificationsPayloadImplementors = []string{"SendSigningNotificationsPayload"}
+
+func (ec *executionContext) _SendSigningNotificationsPayload(ctx context.Context, sel ast.SelectionSet, obj *types.SendSigningNotificationsPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sendSigningNotificationsPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SendSigningNotificationsPayload")
+		case "success":
+			out.Values[i] = ec._SendSigningNotificationsPayload_success(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -36570,19 +36804,19 @@ func (ec *executionContext) _UpdateFrameworkPayload(ctx context.Context, sel ast
 	return out
 }
 
-var updateMesurePayloadImplementors = []string{"UpdateMesurePayload"}
+var updateMeasurePayloadImplementors = []string{"UpdateMeasurePayload"}
 
-func (ec *executionContext) _UpdateMesurePayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateMesurePayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateMesurePayloadImplementors)
+func (ec *executionContext) _UpdateMeasurePayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateMeasurePayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateMeasurePayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateMesurePayload")
-		case "mesure":
-			out.Values[i] = ec._UpdateMesurePayload_mesure(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("UpdateMeasurePayload")
+		case "measure":
+			out.Values[i] = ec._UpdateMeasurePayload_measure(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -38579,23 +38813,23 @@ var (
 	}
 )
 
-func (ec *executionContext) unmarshalNCreateControlMesureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlMesureMappingInput(ctx context.Context, v any) (types.CreateControlMesureMappingInput, error) {
-	res, err := ec.unmarshalInputCreateControlMesureMappingInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateControlMeasureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlMeasureMappingInput(ctx context.Context, v any) (types.CreateControlMeasureMappingInput, error) {
+	res, err := ec.unmarshalInputCreateControlMeasureMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCreateControlMesureMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateControlMesureMappingPayload) graphql.Marshaler {
-	return ec._CreateControlMesureMappingPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNCreateControlMeasureMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateControlMeasureMappingPayload) graphql.Marshaler {
+	return ec._CreateControlMeasureMappingPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCreateControlMesureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateControlMesureMappingPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNCreateControlMeasureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateControlMeasureMappingPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._CreateControlMesureMappingPayload(ctx, sel, v)
+	return ec._CreateControlMeasureMappingPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateControlPolicyMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlPolicyMappingInput(ctx context.Context, v any) (types.CreateControlPolicyMappingInput, error) {
@@ -38674,23 +38908,23 @@ func (ec *executionContext) marshalNCreateFrameworkPayload2ᚖgithubᚗcomᚋget
 	return ec._CreateFrameworkPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreateMesureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateMesureInput(ctx context.Context, v any) (types.CreateMesureInput, error) {
-	res, err := ec.unmarshalInputCreateMesureInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateMeasureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateMeasureInput(ctx context.Context, v any) (types.CreateMeasureInput, error) {
+	res, err := ec.unmarshalInputCreateMeasureInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCreateMesurePayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateMesurePayload(ctx context.Context, sel ast.SelectionSet, v types.CreateMesurePayload) graphql.Marshaler {
-	return ec._CreateMesurePayload(ctx, sel, &v)
+func (ec *executionContext) marshalNCreateMeasurePayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateMeasurePayload(ctx context.Context, sel ast.SelectionSet, v types.CreateMeasurePayload) graphql.Marshaler {
+	return ec._CreateMeasurePayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCreateMesurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateMesurePayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateMesurePayload) graphql.Marshaler {
+func (ec *executionContext) marshalNCreateMeasurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateMeasurePayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateMeasurePayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._CreateMesurePayload(ctx, sel, v)
+	return ec._CreateMeasurePayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateOrganizationInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateOrganizationInput(ctx context.Context, v any) (types.CreateOrganizationInput, error) {
@@ -38755,23 +38989,23 @@ func (ec *executionContext) unmarshalNCreateRiskInput2githubᚗcomᚋgetproboᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateRiskMesureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskMesureMappingInput(ctx context.Context, v any) (types.CreateRiskMesureMappingInput, error) {
-	res, err := ec.unmarshalInputCreateRiskMesureMappingInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateRiskMeasureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskMeasureMappingInput(ctx context.Context, v any) (types.CreateRiskMeasureMappingInput, error) {
+	res, err := ec.unmarshalInputCreateRiskMeasureMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCreateRiskMesureMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateRiskMesureMappingPayload) graphql.Marshaler {
-	return ec._CreateRiskMesureMappingPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNCreateRiskMeasureMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateRiskMeasureMappingPayload) graphql.Marshaler {
+	return ec._CreateRiskMeasureMappingPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCreateRiskMesureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateRiskMesureMappingPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNCreateRiskMeasureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateRiskMeasureMappingPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._CreateRiskMesureMappingPayload(ctx, sel, v)
+	return ec._CreateRiskMeasureMappingPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNCreateRiskPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateRiskPayload) graphql.Marshaler {
@@ -38927,23 +39161,23 @@ func (ec *executionContext) marshalNDatetime2timeᚐTime(ctx context.Context, se
 	return res
 }
 
-func (ec *executionContext) unmarshalNDeleteControlMesureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlMesureMappingInput(ctx context.Context, v any) (types.DeleteControlMesureMappingInput, error) {
-	res, err := ec.unmarshalInputDeleteControlMesureMappingInput(ctx, v)
+func (ec *executionContext) unmarshalNDeleteControlMeasureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlMeasureMappingInput(ctx context.Context, v any) (types.DeleteControlMeasureMappingInput, error) {
+	res, err := ec.unmarshalInputDeleteControlMeasureMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeleteControlMesureMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteControlMesureMappingPayload) graphql.Marshaler {
-	return ec._DeleteControlMesureMappingPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNDeleteControlMeasureMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteControlMeasureMappingPayload) graphql.Marshaler {
+	return ec._DeleteControlMeasureMappingPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDeleteControlMesureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteControlMesureMappingPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNDeleteControlMeasureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteControlMeasureMappingPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._DeleteControlMesureMappingPayload(ctx, sel, v)
+	return ec._DeleteControlMeasureMappingPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteControlPolicyMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlPolicyMappingInput(ctx context.Context, v any) (types.DeleteControlPolicyMappingInput, error) {
@@ -39003,23 +39237,23 @@ func (ec *executionContext) marshalNDeleteFrameworkPayload2ᚖgithubᚗcomᚋget
 	return ec._DeleteFrameworkPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDeleteMesureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMesureInput(ctx context.Context, v any) (types.DeleteMesureInput, error) {
-	res, err := ec.unmarshalInputDeleteMesureInput(ctx, v)
+func (ec *executionContext) unmarshalNDeleteMeasureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMeasureInput(ctx context.Context, v any) (types.DeleteMeasureInput, error) {
+	res, err := ec.unmarshalInputDeleteMeasureInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeleteMesurePayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMesurePayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteMesurePayload) graphql.Marshaler {
-	return ec._DeleteMesurePayload(ctx, sel, &v)
+func (ec *executionContext) marshalNDeleteMeasurePayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMeasurePayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteMeasurePayload) graphql.Marshaler {
+	return ec._DeleteMeasurePayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDeleteMesurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMesurePayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteMesurePayload) graphql.Marshaler {
+func (ec *executionContext) marshalNDeleteMeasurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMeasurePayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteMeasurePayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._DeleteMesurePayload(ctx, sel, v)
+	return ec._DeleteMeasurePayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteOrganizationInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationInput(ctx context.Context, v any) (types.DeleteOrganizationInput, error) {
@@ -39084,23 +39318,23 @@ func (ec *executionContext) unmarshalNDeleteRiskInput2githubᚗcomᚋgetproboᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNDeleteRiskMesureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskMesureMappingInput(ctx context.Context, v any) (types.DeleteRiskMesureMappingInput, error) {
-	res, err := ec.unmarshalInputDeleteRiskMesureMappingInput(ctx, v)
+func (ec *executionContext) unmarshalNDeleteRiskMeasureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskMeasureMappingInput(ctx context.Context, v any) (types.DeleteRiskMeasureMappingInput, error) {
+	res, err := ec.unmarshalInputDeleteRiskMeasureMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeleteRiskMesureMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteRiskMesureMappingPayload) graphql.Marshaler {
-	return ec._DeleteRiskMesureMappingPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNDeleteRiskMeasureMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteRiskMeasureMappingPayload) graphql.Marshaler {
+	return ec._DeleteRiskMeasureMappingPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDeleteRiskMesureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskMesureMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteRiskMesureMappingPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNDeleteRiskMeasureMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteRiskMeasureMappingPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._DeleteRiskMesureMappingPayload(ctx, sel, v)
+	return ec._DeleteRiskMeasureMappingPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNDeleteRiskPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteRiskPayload) graphql.Marshaler {
@@ -39497,23 +39731,23 @@ func (ec *executionContext) marshalNImportFrameworkPayload2ᚖgithubᚗcomᚋget
 	return ec._ImportFrameworkPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNImportMesureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportMesureInput(ctx context.Context, v any) (types.ImportMesureInput, error) {
-	res, err := ec.unmarshalInputImportMesureInput(ctx, v)
+func (ec *executionContext) unmarshalNImportMeasureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportMeasureInput(ctx context.Context, v any) (types.ImportMeasureInput, error) {
+	res, err := ec.unmarshalInputImportMeasureInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNImportMesurePayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportMesurePayload(ctx context.Context, sel ast.SelectionSet, v types.ImportMesurePayload) graphql.Marshaler {
-	return ec._ImportMesurePayload(ctx, sel, &v)
+func (ec *executionContext) marshalNImportMeasurePayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportMeasurePayload(ctx context.Context, sel ast.SelectionSet, v types.ImportMeasurePayload) graphql.Marshaler {
+	return ec._ImportMeasurePayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNImportMesurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportMesurePayload(ctx context.Context, sel ast.SelectionSet, v *types.ImportMesurePayload) graphql.Marshaler {
+func (ec *executionContext) marshalNImportMeasurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportMeasurePayload(ctx context.Context, sel ast.SelectionSet, v *types.ImportMeasurePayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._ImportMesurePayload(ctx, sel, v)
+	return ec._ImportMeasurePayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
@@ -39550,31 +39784,31 @@ func (ec *executionContext) marshalNInviteUserPayload2ᚖgithubᚗcomᚋgetprobo
 	return ec._InviteUserPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMesure2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesure(ctx context.Context, sel ast.SelectionSet, v *types.Mesure) graphql.Marshaler {
+func (ec *executionContext) marshalNMeasure2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasure(ctx context.Context, sel ast.SelectionSet, v *types.Measure) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Mesure(ctx, sel, v)
+	return ec._Measure(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMesureConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureConnection(ctx context.Context, sel ast.SelectionSet, v types.MesureConnection) graphql.Marshaler {
-	return ec._MesureConnection(ctx, sel, &v)
+func (ec *executionContext) marshalNMeasureConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureConnection(ctx context.Context, sel ast.SelectionSet, v types.MeasureConnection) graphql.Marshaler {
+	return ec._MeasureConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNMesureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureConnection(ctx context.Context, sel ast.SelectionSet, v *types.MesureConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNMeasureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureConnection(ctx context.Context, sel ast.SelectionSet, v *types.MeasureConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._MesureConnection(ctx, sel, v)
+	return ec._MeasureConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMesureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.MesureEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNMeasureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.MeasureEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -39598,7 +39832,7 @@ func (ec *executionContext) marshalNMesureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋp
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMesureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNMeasureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -39618,24 +39852,24 @@ func (ec *executionContext) marshalNMesureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋp
 	return ret
 }
 
-func (ec *executionContext) marshalNMesureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureEdge(ctx context.Context, sel ast.SelectionSet, v *types.MesureEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNMeasureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureEdge(ctx context.Context, sel ast.SelectionSet, v *types.MeasureEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._MesureEdge(ctx, sel, v)
+	return ec._MeasureEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNMesureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureOrderField(ctx context.Context, v any) (coredata.MesureOrderField, error) {
+func (ec *executionContext) unmarshalNMeasureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureOrderField(ctx context.Context, v any) (coredata.MeasureOrderField, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNMesureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureOrderField[tmp]
+	res := unmarshalNMeasureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureOrderField[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNMesureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.MesureOrderField) graphql.Marshaler {
-	res := graphql.MarshalString(marshalNMesureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureOrderField[v])
+func (ec *executionContext) marshalNMeasureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.MeasureOrderField) graphql.Marshaler {
+	res := graphql.MarshalString(marshalNMeasureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureOrderField[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -39645,22 +39879,22 @@ func (ec *executionContext) marshalNMesureOrderField2githubᚗcomᚋgetproboᚋp
 }
 
 var (
-	unmarshalNMesureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureOrderField = map[string]coredata.MesureOrderField{
-		"CREATED_AT": coredata.MesureOrderFieldCreatedAt,
+	unmarshalNMeasureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureOrderField = map[string]coredata.MeasureOrderField{
+		"CREATED_AT": coredata.MeasureOrderFieldCreatedAt,
 	}
-	marshalNMesureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureOrderField = map[coredata.MesureOrderField]string{
-		coredata.MesureOrderFieldCreatedAt: "CREATED_AT",
+	marshalNMeasureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureOrderField = map[coredata.MeasureOrderField]string{
+		coredata.MeasureOrderFieldCreatedAt: "CREATED_AT",
 	}
 )
 
-func (ec *executionContext) unmarshalNMesureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState(ctx context.Context, v any) (coredata.MesureState, error) {
+func (ec *executionContext) unmarshalNMeasureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState(ctx context.Context, v any) (coredata.MeasureState, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNMesureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState[tmp]
+	res := unmarshalNMeasureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNMesureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState(ctx context.Context, sel ast.SelectionSet, v coredata.MesureState) graphql.Marshaler {
-	res := graphql.MarshalString(marshalNMesureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState[v])
+func (ec *executionContext) marshalNMeasureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState(ctx context.Context, sel ast.SelectionSet, v coredata.MeasureState) graphql.Marshaler {
+	res := graphql.MarshalString(marshalNMeasureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -39670,17 +39904,17 @@ func (ec *executionContext) marshalNMesureState2githubᚗcomᚋgetproboᚋprobo�
 }
 
 var (
-	unmarshalNMesureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState = map[string]coredata.MesureState{
-		"NOT_STARTED":    coredata.MesureStateNotStarted,
-		"IN_PROGRESS":    coredata.MesureStateInProgress,
-		"NOT_APPLICABLE": coredata.MesureStateNotApplicable,
-		"IMPLEMENTED":    coredata.MesureStateImplemented,
+	unmarshalNMeasureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState = map[string]coredata.MeasureState{
+		"NOT_STARTED":    coredata.MeasureStateNotStarted,
+		"IN_PROGRESS":    coredata.MeasureStateInProgress,
+		"NOT_APPLICABLE": coredata.MeasureStateNotApplicable,
+		"IMPLEMENTED":    coredata.MeasureStateImplemented,
 	}
-	marshalNMesureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState = map[coredata.MesureState]string{
-		coredata.MesureStateNotStarted:    "NOT_STARTED",
-		coredata.MesureStateInProgress:    "IN_PROGRESS",
-		coredata.MesureStateNotApplicable: "NOT_APPLICABLE",
-		coredata.MesureStateImplemented:   "IMPLEMENTED",
+	marshalNMeasureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState = map[coredata.MeasureState]string{
+		coredata.MeasureStateNotStarted:    "NOT_STARTED",
+		coredata.MeasureStateInProgress:    "IN_PROGRESS",
+		coredata.MeasureStateNotApplicable: "NOT_APPLICABLE",
+		coredata.MeasureStateImplemented:   "IMPLEMENTED",
 	}
 )
 
@@ -40544,6 +40778,25 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNSendSigningNotificationsInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSendSigningNotificationsInput(ctx context.Context, v any) (types.SendSigningNotificationsInput, error) {
+	res, err := ec.unmarshalInputSendSigningNotificationsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSendSigningNotificationsPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSendSigningNotificationsPayload(ctx context.Context, sel ast.SelectionSet, v types.SendSigningNotificationsPayload) graphql.Marshaler {
+	return ec._SendSigningNotificationsPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSendSigningNotificationsPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSendSigningNotificationsPayload(ctx context.Context, sel ast.SelectionSet, v *types.SendSigningNotificationsPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SendSigningNotificationsPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -40748,23 +41001,23 @@ func (ec *executionContext) marshalNUpdateFrameworkPayload2ᚖgithubᚗcomᚋget
 	return ec._UpdateFrameworkPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUpdateMesureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMesureInput(ctx context.Context, v any) (types.UpdateMesureInput, error) {
-	res, err := ec.unmarshalInputUpdateMesureInput(ctx, v)
+func (ec *executionContext) unmarshalNUpdateMeasureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMeasureInput(ctx context.Context, v any) (types.UpdateMeasureInput, error) {
+	res, err := ec.unmarshalInputUpdateMeasureInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUpdateMesurePayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMesurePayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateMesurePayload) graphql.Marshaler {
-	return ec._UpdateMesurePayload(ctx, sel, &v)
+func (ec *executionContext) marshalNUpdateMeasurePayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMeasurePayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateMeasurePayload) graphql.Marshaler {
+	return ec._UpdateMeasurePayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUpdateMesurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMesurePayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateMesurePayload) graphql.Marshaler {
+func (ec *executionContext) marshalNUpdateMeasurePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMeasurePayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateMeasurePayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._UpdateMesurePayload(ctx, sel, v)
+	return ec._UpdateMeasurePayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateOrganizationInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateOrganizationInput(ctx context.Context, v any) (types.UpdateOrganizationInput, error) {
@@ -41731,43 +41984,43 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) unmarshalOMesureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMesureOrderBy(ctx context.Context, v any) (*types.MesureOrderBy, error) {
+func (ec *executionContext) unmarshalOMeasureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureOrderBy(ctx context.Context, v any) (*types.MeasureOrderBy, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputMesureOrder(ctx, v)
+	res, err := ec.unmarshalInputMeasureOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOMesureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState(ctx context.Context, v any) (*coredata.MesureState, error) {
+func (ec *executionContext) unmarshalOMeasureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState(ctx context.Context, v any) (*coredata.MeasureState, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalOMesureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState[tmp]
+	res := unmarshalOMeasureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState[tmp]
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOMesureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState(ctx context.Context, sel ast.SelectionSet, v *coredata.MesureState) graphql.Marshaler {
+func (ec *executionContext) marshalOMeasureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState(ctx context.Context, sel ast.SelectionSet, v *coredata.MeasureState) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	res := graphql.MarshalString(marshalOMesureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState[*v])
+	res := graphql.MarshalString(marshalOMeasureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState[*v])
 	return res
 }
 
 var (
-	unmarshalOMesureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState = map[string]coredata.MesureState{
-		"NOT_STARTED":    coredata.MesureStateNotStarted,
-		"IN_PROGRESS":    coredata.MesureStateInProgress,
-		"NOT_APPLICABLE": coredata.MesureStateNotApplicable,
-		"IMPLEMENTED":    coredata.MesureStateImplemented,
+	unmarshalOMeasureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState = map[string]coredata.MeasureState{
+		"NOT_STARTED":    coredata.MeasureStateNotStarted,
+		"IN_PROGRESS":    coredata.MeasureStateInProgress,
+		"NOT_APPLICABLE": coredata.MeasureStateNotApplicable,
+		"IMPLEMENTED":    coredata.MeasureStateImplemented,
 	}
-	marshalOMesureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMesureState = map[coredata.MesureState]string{
-		coredata.MesureStateNotStarted:    "NOT_STARTED",
-		coredata.MesureStateInProgress:    "IN_PROGRESS",
-		coredata.MesureStateNotApplicable: "NOT_APPLICABLE",
-		coredata.MesureStateImplemented:   "IMPLEMENTED",
+	marshalOMeasureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState = map[coredata.MeasureState]string{
+		coredata.MeasureStateNotStarted:    "NOT_STARTED",
+		coredata.MeasureStateInProgress:    "IN_PROGRESS",
+		coredata.MeasureStateNotApplicable: "NOT_APPLICABLE",
+		coredata.MeasureStateImplemented:   "IMPLEMENTED",
 	}
 )
 

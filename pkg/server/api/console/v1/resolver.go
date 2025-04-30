@@ -18,9 +18,11 @@ package console_v1
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -35,6 +37,7 @@ import (
 	"github.com/getprobo/probo/pkg/saferedirect"
 	"github.com/getprobo/probo/pkg/securecookie"
 	"github.com/getprobo/probo/pkg/server/api/console/v1/schema"
+	"github.com/getprobo/probo/pkg/statelesstoken"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"github.com/go-chi/chi/v5"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -76,6 +79,68 @@ func UserFromContext(ctx context.Context) *coredata.User {
 
 func NewMux(proboSvc *probo.Service, usrmgrSvc *usrmgr.Service, authCfg AuthConfig, connectorRegistry *connector.ConnectorRegistry, safeRedirect *saferedirect.SafeRedirect) *chi.Mux {
 	r := chi.NewMux()
+
+	r.Get(
+		"/policies/signing-requests",
+		func(w http.ResponseWriter, r *http.Request) {
+			token := r.Header.Get("Authorization")
+			if token == "" {
+				http.Error(w, "token is required", http.StatusUnauthorized)
+				return
+			}
+
+			token = strings.TrimPrefix(token, "Bearer ")
+			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](authCfg.CookieSecret, probo.TokenTypeSigningRequest, token)
+			if err != nil {
+				http.Error(w, "invalid token", http.StatusUnauthorized)
+				return
+			}
+
+			svc := proboSvc.WithTenant(data.Data.OrganizationID.TenantID())
+
+			requests, err := svc.Policies.ListSigningRequests(r.Context(), data.Data.OrganizationID, data.Data.PeopleID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(requests)
+		},
+	)
+
+	r.Post(
+		"/policies/signing-requests/{policy_version_id}/sign",
+		func(w http.ResponseWriter, r *http.Request) {
+			token := r.Header.Get("Authorization")
+			if token == "" {
+				http.Error(w, "token is required", http.StatusUnauthorized)
+				return
+			}
+
+			token = strings.TrimPrefix(token, "Bearer ")
+			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](authCfg.CookieSecret, probo.TokenTypeSigningRequest, token)
+			if err != nil {
+				http.Error(w, "invalid token", http.StatusUnauthorized)
+				return
+			}
+
+			policyVersionID, err := gid.ParseGID(chi.URLParam(r, "policy_version_id"))
+			if err != nil {
+				http.Error(w, "invalid policy version id", http.StatusBadRequest)
+				return
+			}
+
+			svc := proboSvc.WithTenant(data.Data.OrganizationID.TenantID())
+
+			if err := svc.Policies.SignPolicyVersion(r.Context(), policyVersionID, data.Data.PeopleID); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			w.WriteHeader(http.StatusOK)
+		},
+	)
 
 	r.Post("/auth/register", SignUpHandler(usrmgrSvc, authCfg))
 	r.Post("/auth/login", SignInHandler(usrmgrSvc, authCfg))

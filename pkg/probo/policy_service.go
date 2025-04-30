@@ -3,19 +3,22 @@ package probo
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
+	"github.com/getprobo/probo/pkg/statelesstoken"
+	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 )
 
-type PolicyService struct {
-	svc *TenantService
-}
-
 type (
+	PolicyService struct {
+		svc *TenantService
+	}
+
 	CreatePolicyRequest struct {
 		OrganizationID gid.GID
 		Title          string
@@ -34,6 +37,15 @@ type (
 		RequestedBy     gid.GID
 		Signatory       gid.GID
 	}
+
+	SigningRequestData struct {
+		OrganizationID gid.GID `json:"organization_id"`
+		PeopleID       gid.GID `json:"people_id"`
+	}
+)
+
+const (
+	TokenTypeSigningRequest = "signing_request"
 )
 
 func (s *PolicyService) Get(
@@ -161,6 +173,170 @@ func (s *PolicyService) Create(
 	}
 
 	return policy, policyVersion, nil
+}
+
+func (s *PolicyService) ListSigningRequests(
+	ctx context.Context,
+	organizationID gid.GID,
+	peopleID gid.GID,
+) ([]map[string]any, error) {
+	q := `
+SELECT 
+  p.title, 
+  pv.content,
+  pv.id AS policy_version_id
+FROM
+	policies p 
+	INNER JOIN policy_versions pv ON pv.policy_id = p.id 
+	INNER JOIN policy_version_signatures pvs ON pvs.policy_version_id = pv.id 
+WHERE 
+    p.tenant_id = $1
+	AND pvs.signed_by = $2
+	AND pvs.signed_at IS NULL
+`
+
+	var results []map[string]any
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			rows, err := conn.Query(ctx, q, s.svc.scope.GetTenantID(), peopleID)
+			if err != nil {
+				return fmt.Errorf("cannot query policies: %w", err)
+			}
+
+			results, err = pgx.CollectRows(rows, pgx.RowToMap)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
+}
+
+func (s *PolicyService) SendSigningNotifications(
+	ctx context.Context,
+	organizationID gid.GID,
+) error {
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			var peoples coredata.Peoples
+			if err := peoples.LoadAwaitingSigning(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot load people: %w", err)
+			}
+
+			for _, people := range peoples {
+				now := time.Now()
+
+				emailID, err := gid.NewGID(s.svc.scope.GetTenantID(), coredata.EmailEntityType)
+				if err != nil {
+					return fmt.Errorf("cannot create email global id: %w", err)
+				}
+
+				token, err := statelesstoken.NewToken(
+					s.svc.tokenSecret,
+					TokenTypeSigningRequest,
+					time.Hour*24*7,
+					SigningRequestData{
+						OrganizationID: organizationID,
+						PeopleID:       people.ID,
+					},
+				)
+				if err != nil {
+					return fmt.Errorf("cannot create signing request token: %w", err)
+				}
+
+				signRequestURL := url.URL{
+					Scheme: "https",
+					Host:   s.svc.hostname,
+					Path:   "/policies/signing-requests",
+					RawQuery: url.Values{
+						"token": []string{token},
+					}.Encode(),
+				}
+
+				email := &coredata.Email{
+					ID:             emailID,
+					RecipientEmail: people.PrimaryEmailAddress,
+					RecipientName:  people.FullName,
+					Subject:        "Probo - Policies Signing Request",
+					TextBody:       fmt.Sprintf("Hi,\nYou have documents awaiting your signature. Please follow this link to sign them: %s", signRequestURL.String()),
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				if err := email.Insert(ctx, tx); err != nil {
+					return fmt.Errorf("cannot insert email: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return fmt.Errorf("cannot send signing notifications: %w", err)
+	}
+
+	return nil
+}
+
+func (s *PolicyService) SignPolicyVersion(
+	ctx context.Context,
+	policyVersionID gid.GID,
+	signatory gid.GID,
+) error {
+	policyVersion := &coredata.PolicyVersion{}
+	policyVersionSignature := &coredata.PolicyVersionSignature{}
+	now := time.Now()
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := policyVersion.LoadByID(ctx, conn, s.svc.scope, policyVersionID); err != nil {
+				return fmt.Errorf("cannot load policy version %q: %w", policyVersionID, err)
+			}
+
+			if policyVersion.Status != coredata.PolicyStatusPublished {
+				return fmt.Errorf("cannot sign unpublished version")
+			}
+
+			if err := policyVersionSignature.LoadByPolicyVersionIDAndSignatory(ctx, conn, s.svc.scope, policyVersionID, signatory); err != nil {
+				return fmt.Errorf("cannot load policy version signature: %w", err)
+			}
+
+			if policyVersionSignature.State == coredata.PolicyVersionSignatureStateSigned {
+				return fmt.Errorf("policy version already signed")
+			}
+
+			policyVersionSignature.State = coredata.PolicyVersionSignatureStateSigned
+			policyVersionSignature.SignedAt = &now
+			policyVersionSignature.UpdatedAt = now
+
+			if err := policyVersion.Update(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update policy version: %w", err)
+			}
+
+			if err := policyVersionSignature.Update(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update policy version signature: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return fmt.Errorf("cannot sign policy version: %w", err)
+	}
+
+	return nil
 }
 
 func (s *PolicyService) UpdateVersion(

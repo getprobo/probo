@@ -29,6 +29,7 @@ import { format } from "date-fns";
 import type { PolicyListViewQuery, PolicyListViewQuery$data } from "./__generated__/PolicyListViewQuery.graphql";
 import type { PolicyListViewDeleteMutation } from "./__generated__/PolicyListViewDeleteMutation.graphql";
 import type { PolicyListViewCreateMutation } from "./__generated__/PolicyListViewCreateMutation.graphql";
+import type { PolicyListViewSendSigningNotificationsMutation } from "./__generated__/PolicyListViewSendSigningNotificationsMutation.graphql";
 import { PageTemplate } from "@/components/PageTemplate";
 import { PolicyListViewSkeleton } from "./PolicyListPage";
 import {
@@ -117,6 +118,13 @@ const createPolicyMutation = graphql`
   }
 `;
 
+const sendSigningNotificationsMutation = graphql`
+  mutation PolicyListViewSendSigningNotificationsMutation($input: SendSigningNotificationsInput!) {
+    sendSigningNotifications(input: $input) {
+      success
+    }
+  }
+`;
 function PolicyTableRow({
   policy,
   organizationId,
@@ -360,7 +368,10 @@ function CreatePolicyModal({
                 className={`text-4xl leading-tight font-bold outline-none focus:outline-none ${!title ? 'text-gray-400' : 'text-black'}`}
                 contentEditable
                 suppressContentEditableWarning
-                onInput={(e) => setTitle(e.currentTarget.textContent || "")}
+                onInput={(e) => {
+                  const newText = e.currentTarget.textContent || "";
+                  setTitle(newText);
+                }}
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 onClick={(e) => {
                   if (!title) {
@@ -368,12 +379,22 @@ function CreatePolicyModal({
                   }
                 }}
                 onFocus={(e) => {
-                  if (!title) {
+                  if (e.currentTarget.textContent === "Enter policy title...") {
                     e.currentTarget.textContent = '';
                   }
                 }}
+                onBlur={(e) => {
+                  if (!e.currentTarget.textContent?.trim()) {
+                    e.currentTarget.textContent = "Enter policy title...";
+                    setTitle("");
+                  }
+                }}
+                ref={(el) => {
+                  if (el && !el.textContent) {
+                    el.textContent = title || "Enter policy title...";
+                  }
+                }}
               >
-                {title || "Enter policy title..."}
               </h1>
             </div>
             <Textarea
@@ -452,6 +473,8 @@ function PolicyListViewContent({
   
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
+  const [sendSigningNotifications, _] = useMutation<PolicyListViewSendSigningNotificationsMutation>(sendSigningNotificationsMutation);
+
   const handleOpenModal = () => {
     setCreateModalOpen(true);
   };
@@ -460,14 +483,29 @@ function PolicyListViewContent({
     setCreateModalOpen(open);
   };
 
+  const handleSendSigningNotifications = () => {
+    sendSigningNotifications({
+      variables: {
+        input: {
+          organizationId: organizationId!,
+        },
+      },
+    });
+  };
+
   return (
     <PageTemplate
       title="Policies"
       actions={
-        <Button onClick={handleOpenModal}>
-          <Plus className="mr-2 h-4 w-4" />
-          New policy
+        <div>
+          <Button onClick={handleOpenModal}>
+            <Plus className="mr-2 h-4 w-4" />
+            New policy
         </Button>
+        <Button onClick={handleSendSigningNotifications}>
+            Send signing notifications
+          </Button>
+        </div>
       }
     >
       {/* Policy table */}

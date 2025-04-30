@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5d1745636bcff5f05d946bcd613463e5>>
+ * @generated SignedSource<<48d940f6040fa9375ac915ce8851c658>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MesureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED";
+export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED";
 export type RiskTreatment = "ACCEPTED" | "AVOIDED" | "MITIGATED" | "TRANSFERRED";
 export type ShowRiskViewQuery$variables = {
   riskId: string;
@@ -32,7 +32,7 @@ export type ShowRiskViewQuery$data = {
     readonly id: string;
     readonly inherentImpact?: number;
     readonly inherentLikelihood?: number;
-    readonly mesures?: {
+    readonly measures?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly category: string;
@@ -40,7 +40,7 @@ export type ShowRiskViewQuery$data = {
           readonly description: string;
           readonly id: string;
           readonly name: string;
-          readonly state: MesureState;
+          readonly state: MeasureState;
         };
       }>;
     };
@@ -224,7 +224,7 @@ v17 = [
   {
     "alias": null,
     "args": null,
-    "concreteType": "MesureEdge",
+    "concreteType": "MeasureEdge",
     "kind": "LinkedField",
     "name": "edges",
     "plural": true,
@@ -232,7 +232,7 @@ v17 = [
       {
         "alias": null,
         "args": null,
-        "concreteType": "Mesure",
+        "concreteType": "Measure",
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
@@ -377,11 +377,11 @@ return {
               (v12/*: any*/),
               (v13/*: any*/),
               {
-                "alias": "mesures",
+                "alias": "measures",
                 "args": null,
-                "concreteType": "MesureConnection",
+                "concreteType": "MeasureConnection",
                 "kind": "LinkedField",
-                "name": "__Risk__mesures_connection",
+                "name": "__Risk__measures_connection",
                 "plural": false,
                 "selections": (v17/*: any*/),
                 "storageKey": null
@@ -450,21 +450,21 @@ return {
               {
                 "alias": null,
                 "args": (v20/*: any*/),
-                "concreteType": "MesureConnection",
+                "concreteType": "MeasureConnection",
                 "kind": "LinkedField",
-                "name": "mesures",
+                "name": "measures",
                 "plural": false,
                 "selections": (v17/*: any*/),
-                "storageKey": "mesures(first:100)"
+                "storageKey": "measures(first:100)"
               },
               {
                 "alias": null,
                 "args": (v20/*: any*/),
                 "filters": null,
                 "handle": "connection",
-                "key": "Risk__mesures",
+                "key": "Risk__measures",
                 "kind": "LinkedHandle",
-                "name": "mesures"
+                "name": "measures"
               },
               {
                 "alias": null,
@@ -514,7 +514,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a88eba4c398c292d41deaddd1d77bb3b",
+    "cacheID": "487765d92cad8c0915ad4fee24d7e702",
     "id": null,
     "metadata": {
       "connection": [
@@ -524,7 +524,7 @@ return {
           "direction": "forward",
           "path": [
             "node",
-            "mesures"
+            "measures"
           ]
         },
         {
@@ -549,11 +549,11 @@ return {
     },
     "name": "ShowRiskViewQuery",
     "operationKind": "query",
-    "text": "query ShowRiskViewQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    id\n    ... on Risk {\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      inherentLikelihood\n      inherentImpact\n      residualLikelihood\n      residualImpact\n      note\n      createdAt\n      updatedAt\n      mesures(first: 100) {\n        edges {\n          node {\n            id\n            name\n            description\n            category\n            createdAt\n            state\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      policies(first: 100) {\n        edges {\n          node {\n            id\n            title\n            createdAt\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      controls(first: 100) {\n        edges {\n          node {\n            id\n            referenceId\n            name\n            description\n            createdAt\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query ShowRiskViewQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    id\n    ... on Risk {\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      inherentLikelihood\n      inherentImpact\n      residualLikelihood\n      residualImpact\n      note\n      createdAt\n      updatedAt\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            name\n            description\n            category\n            createdAt\n            state\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      policies(first: 100) {\n        edges {\n          node {\n            id\n            title\n            createdAt\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      controls(first: 100) {\n        edges {\n          node {\n            id\n            referenceId\n            name\n            description\n            createdAt\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "96158658ecb7c406fc969e086917c03e";
+(node as any).hash = "b8506a3dd8980cd16b5344b990471533";
 
 export default node;

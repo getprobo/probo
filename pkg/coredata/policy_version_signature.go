@@ -53,6 +53,53 @@ func (pvs PolicyVersionSignature) CursorKey(orderBy PolicyVersionSignatureOrderF
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+func (pvs *PolicyVersionSignature) LoadByPolicyVersionIDAndSignatory(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	policyVersionID gid.GID,
+	signatory gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	policy_version_id,
+	state,
+	signed_by,
+	signed_at,
+	requested_at,
+	requested_by,
+	created_at,
+	updated_at
+FROM
+	policy_version_signatures
+WHERE
+	%s
+	AND policy_version_id = @policy_version_id
+	AND signed_by = @signatory
+LIMIT 1
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"policy_version_id": policyVersionID, "signatory": signatory}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query policy version signature: %w", err)
+	}
+
+	policyVersionSignature, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[PolicyVersionSignature])
+	if err != nil {
+		return fmt.Errorf("cannot collect policy version signature: %w", err)
+	}
+
+	*pvs = policyVersionSignature
+
+	return nil
+}
+
 func (pvs *PolicyVersionSignature) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -192,6 +239,43 @@ WHERE
 	}
 
 	*pvss = policyVersionSignatures
+
+	return nil
+}
+
+func (pvs *PolicyVersionSignature) Update(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+UPDATE policy_version_signatures
+SET
+	state = @state,
+	signed_by = @signed_by,
+	signed_at = @signed_at,
+	updated_at = @updated_at
+WHERE
+	%s
+	AND id = @id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"id":         pvs.ID,
+		"state":      pvs.State,
+		"signed_by":  pvs.SignedBy,
+		"signed_at":  pvs.SignedAt,
+		"updated_at": pvs.UpdatedAt,
+	}
+
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update policy version signature: %w", err)
+	}
 
 	return nil
 }

@@ -16,7 +16,7 @@ import { OrganizationBreadcrumbBreadcrumbPeopleOverviewQuery } from "./__generat
 import { OrganizationBreadcrumbBreadcrumbPolicyOverviewQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbPolicyOverviewQuery.graphql";
 import { OrganizationBreadcrumbBreadcrumbVendorOverviewQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbVendorOverviewQuery.graphql";
 import { OrganizationBreadcrumbOrganizationQuery } from "./__generated__/OrganizationBreadcrumbOrganizationQuery.graphql";
-import { OrganizationBreadcrumbBreadcrumbMesureViewQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbMesureViewQuery.graphql";
+import { OrganizationBreadcrumbBreadcrumbMeasureViewQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbMeasureViewQuery.graphql";
 import { OrganizationBreadcrumbBreadcrumbControlQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbControlQuery.graphql";
 import { OrganizationBreadcrumbBreadcrumbRiskShowQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbRiskShowQuery.graphql";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -314,15 +314,15 @@ function BreadcrumbPolicyOverview() {
   );
 }
 
-function BreadcrumbMesureList() {
+function BreadcrumbMeasureList() {
   const { organizationId } = useParams();
 
   return (
     <>
       <BreadcrumbSeparator />
       <BreadcrumbItem>
-        <BreadcrumbNavLink to={`/organizations/${organizationId}/mesures`}>
-          Mesures
+        <BreadcrumbNavLink to={`/organizations/${organizationId}/measures`}>
+          Measures
         </BreadcrumbNavLink>
       </BreadcrumbItem>
       <Outlet />
@@ -330,22 +330,22 @@ function BreadcrumbMesureList() {
   );
 }
 
-function BreadcrumbMesureView() {
-  const { organizationId, mesureId } = useParams();
+function BreadcrumbMeasureView() {
+  const { organizationId, measureId } = useParams();
   const data =
-    useLazyLoadQuery<OrganizationBreadcrumbBreadcrumbMesureViewQuery>(
+    useLazyLoadQuery<OrganizationBreadcrumbBreadcrumbMeasureViewQuery>(
       graphql`
-        query OrganizationBreadcrumbBreadcrumbMesureViewQuery($mesureId: ID!) {
-          mesure: node(id: $mesureId) {
+        query OrganizationBreadcrumbBreadcrumbMeasureViewQuery($measureId: ID!) {
+          measure: node(id: $measureId) {
             id
-            ... on Mesure {
+            ... on Measure {
               name
               category
             }
           }
         }
       `,
-      { mesureId: mesureId! }
+      { measureId: measureId! }
     );
 
   return (
@@ -353,17 +353,17 @@ function BreadcrumbMesureView() {
       <BreadcrumbSeparator />
       <BreadcrumbItem>
         <BreadcrumbNavLink
-          to={`/organizations/${organizationId}/mesures#${data.mesure.category}`}
+          to={`/organizations/${organizationId}/measures#${data.measure.category}`}
         >
-          {data.mesure.category}
+          {data.measure.category}
         </BreadcrumbNavLink>
       </BreadcrumbItem>
       <BreadcrumbSeparator />
       <BreadcrumbItem>
         <BreadcrumbNavLink
-          to={`/organizations/${organizationId}/mesures/${mesureId}`}
+          to={`/organizations/${organizationId}/measures/${measureId}`}
         >
-          {data.mesure.name}
+          {data.measure.name}
         </BreadcrumbNavLink>
       </BreadcrumbItem>
       <Outlet />
@@ -461,13 +461,13 @@ export function BreadCrumb() {
           </ErrorBoundary>
         }
       >
-        <Route path="mesures" element={<BreadcrumbMesureList />}>
+        <Route path="measures" element={<BreadcrumbMeasureList />}>
           <Route path="new" element={<New />} />
           <Route
-            path=":mesureId"
+            path=":measureId"
             element={
               <Suspense>
-                <BreadcrumbMesureView />
+                <BreadcrumbMeasureView />
               </Suspense>
             }
           >

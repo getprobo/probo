@@ -59,9 +59,9 @@ type (
 	}
 )
 
-func (s RiskService) ListForMesureID(
+func (s RiskService) ListForMeasureID(
 	ctx context.Context,
-	mesureID gid.GID,
+	measureID gid.GID,
 	cursor *page.Cursor[coredata.RiskOrderField],
 ) (*page.Page[*coredata.Risk, coredata.RiskOrderField], error) {
 	var risks coredata.Risks
@@ -69,7 +69,7 @@ func (s RiskService) ListForMesureID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return risks.LoadByMesureID(ctx, conn, s.svc.scope, mesureID, cursor)
+			return risks.LoadByMeasureID(ctx, conn, s.svc.scope, measureID, cursor)
 		},
 	)
 
@@ -120,14 +120,14 @@ func (s RiskService) DeletePolicyMapping(
 	)
 }
 
-func (s RiskService) CreateMesureMapping(
+func (s RiskService) CreateMeasureMapping(
 	ctx context.Context,
 	riskID gid.GID,
-	mesureID gid.GID,
+	measureID gid.GID,
 ) error {
-	riskMesure := &coredata.RiskMesure{
+	riskMeasure := &coredata.RiskMeasure{
 		RiskID:    riskID,
-		MesureID:  mesureID,
+		MeasureID: measureID,
 		TenantID:  s.svc.scope.GetTenantID(),
 		CreatedAt: time.Now(),
 	}
@@ -135,19 +135,19 @@ func (s RiskService) CreateMesureMapping(
 	return s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return riskMesure.Insert(ctx, conn, s.svc.scope)
+			return riskMeasure.Insert(ctx, conn, s.svc.scope)
 		},
 	)
 }
 
-func (s RiskService) DeleteMesureMapping(
+func (s RiskService) DeleteMeasureMapping(
 	ctx context.Context,
 	riskID gid.GID,
-	mesureID gid.GID,
+	measureID gid.GID,
 ) error {
-	riskMesure := &coredata.RiskMesure{
+	riskMeasure := &coredata.RiskMeasure{
 		RiskID:    riskID,
-		MesureID:  mesureID,
+		MeasureID: measureID,
 		TenantID:  s.svc.scope.GetTenantID(),
 		CreatedAt: time.Now(),
 	}
@@ -155,7 +155,7 @@ func (s RiskService) DeleteMesureMapping(
 	return s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return riskMesure.Delete(ctx, conn, s.svc.scope)
+			return riskMeasure.Delete(ctx, conn, s.svc.scope)
 		},
 	)
 }

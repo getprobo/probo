@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -174,9 +175,15 @@ func (s OrganizationService) GenerateLogoURL(
 
 	presignClient := s3.NewPresignClient(s.svc.s3)
 
+	encodedFilename := url.QueryEscape(organization.Name)
+	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
+		encodedFilename, encodedFilename)
+
 	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket: aws.String(s.svc.bucket),
-		Key:    aws.String(organization.LogoObjectKey),
+		Bucket:                     aws.String(s.svc.bucket),
+		Key:                        aws.String(organization.LogoObjectKey),
+		ResponseCacheControl:       aws.String("max-age=3600, public"),
+		ResponseContentDisposition: aws.String(contentDisposition),
 	}, func(opts *s3.PresignOptions) {
 		opts.Expires = expiresIn
 	})

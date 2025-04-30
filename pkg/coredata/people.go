@@ -293,3 +293,52 @@ WHERE %s
 
 	return nil
 }
+
+func (p *Peoples) LoadAwaitingSigning(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+WITH signatories AS (
+	SELECT
+		signed_by
+	FROM
+		policy_version_signatures
+	WHERE
+	    %s
+		AND state = 'REQUESTED'
+	GROUP BY
+		signed_by
+)
+SELECT
+	id,
+	organization_id,
+	kind,
+	user_id,
+	full_name,
+	primary_email_address,
+	additional_email_addresses,
+	created_at,
+	updated_at
+FROM
+	peoples
+INNER JOIN signatories ON peoples.id = signatories.signed_by
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	rows, err := conn.Query(ctx, q, scope.SQLArguments())
+	if err != nil {
+		return fmt.Errorf("cannot query people: %w", err)
+	}
+
+	peoples, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[People])
+	if err != nil {
+		return fmt.Errorf("cannot collect people: %w", err)
+	}
+
+	*p = peoples
+
+	return nil
+}

@@ -170,7 +170,7 @@ function NewFrameworkViewContent() {
   return (
     <PageTemplate
       title="Create Framework"
-      description="Create a new framework to organize your mesures"
+      description="Create a new framework to organize your measures"
     >
       <Card className="max-w-2xl">
         <form onSubmit={handleSubmit} className="p-6 space-y-6">

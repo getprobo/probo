@@ -106,7 +106,7 @@ const listRiskViewFragment = graphql`
             id
             fullName
           }
-          mesures(first: 1) {
+          measures(first: 1) {
             edges {
               node {
                 category
@@ -240,7 +240,7 @@ type RiskNode = {
     readonly id: string;
     readonly fullName: string;
   } | null;
-  readonly mesures: {
+  readonly measures: {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly category: string;

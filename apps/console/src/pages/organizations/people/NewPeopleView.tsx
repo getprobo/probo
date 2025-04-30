@@ -114,7 +114,7 @@ function NewPeopleViewContent() {
           ),
           ConnectionHandler.getConnectionID(
             organizationId!,
-            "MesureView_peoples",
+            "MeasureView_peoples",
             {
               orderBy: {
                 direction: "ASC",

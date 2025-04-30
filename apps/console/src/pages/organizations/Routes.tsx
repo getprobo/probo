@@ -11,10 +11,10 @@ import { FrameworkListPage } from "./frameworks/FrameworkListPage";
 import { FrameworkPage } from "./frameworks/FrameworkPage";
 import { NewFrameworkPage } from "./frameworks/NewFrameworkPage";
 import { ControlPage } from "./frameworks/controls/ControlPage";
-import { EditMesurePage } from "./mesures/EditMesurePage";
-import { MesureListPage } from "./mesures/MesureListPage";
-import { MesurePage } from "./mesures/MesurePage";
-import { NewMesurePage } from "./mesures/NewMesurePage";
+import { EditMeasurePage } from "./measures/EditMeasurePage";
+import { MeasureListPage } from "./measures/MeasureListPage";
+import { MeasurePage } from "./measures/MeasurePage";
+import { NewMeasurePage } from "./measures/NewMeasurePage";
 import { NewPeoplePage } from "./people/NewPeoplePage";
 import { PeopleListPage } from "./people/PeopleListPage";
 import { PeoplePage } from "./people/PeoplePage";
@@ -47,10 +47,10 @@ export function OrganizationsRoutes() {
           <Route path="edit" element={<EditFrameworkPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
-        <Route path="mesures" element={<MesureListPage />} />
-        <Route path="mesures/new" element={<NewMesurePage />} />
-        <Route path="mesures/:mesureId" element={<MesurePage />} />
-        <Route path="mesures/:mesureId/edit" element={<EditMesurePage />} />
+        <Route path="measures" element={<MeasureListPage />} />
+        <Route path="measures/new" element={<NewMeasurePage />} />
+        <Route path="measures/:measureId" element={<MeasurePage />} />
+        <Route path="measures/:measureId/edit" element={<EditMeasurePage />} />
         <Route path="vendors/:vendorId" element={<VendorPage />} />
         <Route path="policies" element={<PolicyListPage />} />
         <Route path="policies/:policyId" element={<ShowPolicyPage />} />

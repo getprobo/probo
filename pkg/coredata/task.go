@@ -30,7 +30,7 @@ import (
 type (
 	Task struct {
 		ID           gid.GID        `db:"id"`
-		MesureID     gid.GID        `db:"mesure_id"`
+		MeasureID    gid.GID        `db:"measure_id"`
 		Name         string         `db:"name"`
 		Description  string         `db:"description"`
 		State        TaskState      `db:"state"`
@@ -62,7 +62,7 @@ func (c *Task) LoadByID(
 	q := `
 SELECT
     id,
-    mesure_id,
+    measure_id,
     name,
     description,
     state,
@@ -109,7 +109,7 @@ INSERT INTO
     tasks (
         tenant_id,
         id,
-        mesure_id,
+        measure_id,
         name,
         description,
         reference_id,
@@ -122,7 +122,7 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @task_id,
-    @mesure_id,
+    @measure_id,
     @name,
     @description,
     @reference_id,
@@ -137,7 +137,7 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"tenant_id":     scope.GetTenantID(),
 		"task_id":       c.ID,
-		"mesure_id":     c.MesureID,
+		"measure_id":    c.MeasureID,
 		"name":          c.Name,
 		"description":   c.Description,
 		"reference_id":  c.ReferenceID,
@@ -161,7 +161,7 @@ INSERT INTO
     tasks (
         tenant_id,
         id,
-        mesure_id,
+        measure_id,
         name,
         description,
         reference_id,
@@ -174,7 +174,7 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @task_id,
-    @mesure_id,
+    @measure_id,
     @name,
     @description,
     @reference_id,
@@ -184,13 +184,13 @@ VALUES (
     @created_at,
     @updated_at
 )
-ON CONFLICT (mesure_id, reference_id) DO UPDATE SET
+ON CONFLICT (measure_id, reference_id) DO UPDATE SET
     name = @name,
     description = @description,
     updated_at = @updated_at
 RETURNING
     id,
-    mesure_id,
+    measure_id,
     name,
     description,
     reference_id,
@@ -204,7 +204,7 @@ RETURNING
 	args := pgx.StrictNamedArgs{
 		"tenant_id":     scope.GetTenantID(),
 		"task_id":       c.ID,
-		"mesure_id":     c.MesureID,
+		"measure_id":    c.MeasureID,
 		"name":          c.Name,
 		"description":   c.Description,
 		"reference_id":  c.ReferenceID,
@@ -229,17 +229,17 @@ RETURNING
 	return nil
 }
 
-func (c *Tasks) LoadByMesureID(
+func (c *Tasks) LoadByMeasureID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	mesureID gid.GID,
+	measureID gid.GID,
 	cursor *page.Cursor[TaskOrderField],
 ) error {
 	q := `
 SELECT
     id,
-    mesure_id,
+    measure_id,
     name,
     description,
     state,
@@ -252,12 +252,12 @@ FROM
     tasks
 WHERE
     %s
-    AND mesure_id = @mesure_id
+    AND measure_id = @measure_id
     AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"mesure_id": mesureID}
+	args := pgx.StrictNamedArgs{"measure_id": measureID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -323,7 +323,7 @@ WHERE %s
     AND id = @task_id
 RETURNING 
     id,
-    mesure_id,
+    measure_id,
     name,
     description,
     reference_id,
@@ -371,7 +371,7 @@ WHERE %s
     AND id = @task_id
 RETURNING 
     id,
-    mesure_id,
+    measure_id,
     name,
     description,
     reference_id,

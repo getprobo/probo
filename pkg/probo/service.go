@@ -31,17 +31,20 @@ type (
 		s3            *s3.Client
 		bucket        string
 		encryptionKey cipher.EncryptionKey
+		hostname      string
+		tokenSecret   string
 	}
 
 	TenantService struct {
-		pg            *pg.Client
-		s3            *s3.Client
-		bucket        string
-		encryptionKey cipher.EncryptionKey
-		scope         coredata.Scoper
-
+		pg                      *pg.Client
+		s3                      *s3.Client
+		bucket                  string
+		encryptionKey           cipher.EncryptionKey
+		scope                   coredata.Scoper
+		hostname                string
+		tokenSecret             string
 		Frameworks              *FrameworkService
-		Mesures                 *MesureService
+		Measures                *MeasureService
 		Tasks                   *TaskService
 		Evidences               *EvidenceService
 		Organizations           *OrganizationService
@@ -61,6 +64,8 @@ func NewService(
 	pgClient *pg.Client,
 	s3Client *s3.Client,
 	bucket string,
+	hostname string,
+	tokenSecret string,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -71,6 +76,8 @@ func NewService(
 		s3:            s3Client,
 		bucket:        bucket,
 		encryptionKey: encryptionKey,
+		hostname:      hostname,
+		tokenSecret:   tokenSecret,
 	}
 
 	return svc, nil
@@ -82,11 +89,13 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		s3:            s.s3,
 		bucket:        s.bucket,
 		encryptionKey: s.encryptionKey,
+		hostname:      s.hostname,
 		scope:         coredata.NewScope(tenantID),
+		tokenSecret:   s.tokenSecret,
 	}
 
 	tenantService.Frameworks = &FrameworkService{svc: tenantService}
-	tenantService.Mesures = &MesureService{svc: tenantService}
+	tenantService.Measures = &MeasureService{svc: tenantService}
 	tenantService.Tasks = &TaskService{svc: tenantService}
 	tenantService.Evidences = &EvidenceService{svc: tenantService}
 	tenantService.Peoples = &PeopleService{svc: tenantService}

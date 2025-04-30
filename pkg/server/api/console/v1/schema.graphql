@@ -12,6 +12,7 @@ directive @goModel(
 
 directive @goEnum(value: String) on ENUM_VALUE
 
+
 # Scalars
 scalar CursorKey
 scalar Void
@@ -39,23 +40,23 @@ enum OrderDirection
   DESC @goEnum(value: "github.com/getprobo/probo/pkg/page.OrderDirectionDesc")
 }
 
-enum MesureState
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MesureState") {
+enum MeasureState
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MeasureState") {
   NOT_STARTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MesureStateNotStarted"
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateNotStarted"
     )
   IN_PROGRESS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MesureStateInProgress"
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateInProgress"
     )
   NOT_APPLICABLE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MesureStateNotApplicable"
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateNotApplicable"
     )
   IMPLEMENTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MesureStateImplemented"
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateImplemented"
     )
 }
 
@@ -169,11 +170,11 @@ enum ControlOrderField
     )
 }
 
-enum MesureOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MesureOrderField") {
+enum MeasureOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MeasureOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MesureOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureOrderFieldCreatedAt"
     )
 }
 
@@ -320,12 +321,12 @@ input ControlOrder
   field: ControlOrderField!
 }
 
-input MesureOrder
+input MeasureOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.MesureOrderBy"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.MeasureOrderBy"
   ) {
   direction: OrderDirection!
-  field: MesureOrderField!
+  field: MeasureOrderField!
 }
 
 input TaskOrder
@@ -444,13 +445,13 @@ type Organization implements Node {
     orderBy: PolicyOrder
   ): PolicyConnection! @goField(forceResolver: true)
 
-  mesures(
+  measures(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: MesureOrder
-  ): MesureConnection! @goField(forceResolver: true)
+    orderBy: MeasureOrder
+  ): MeasureConnection! @goField(forceResolver: true)
 
   risks(
     first: Int
@@ -570,13 +571,13 @@ type Control implements Node {
   name: String!
   description: String!
 
-  mesures(
+  measures(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: MesureOrder
-  ): MesureConnection! @goField(forceResolver: true)
+    orderBy: MeasureOrder
+  ): MeasureConnection! @goField(forceResolver: true)
 
   policies(
     first: Int
@@ -590,12 +591,12 @@ type Control implements Node {
   updatedAt: Datetime!
 }
 
-type Mesure implements Node {
+type Measure implements Node {
   id: ID!
   category: String!
   name: String!
   description: String!
-  state: MesureState!
+  state: MeasureState!
 
   tasks(
     first: Int
@@ -704,13 +705,13 @@ type Risk implements Node {
 
   owner: People @goField(forceResolver: true)
 
-  mesures(
+  measures(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: MesureOrder
-  ): MesureConnection! @goField(forceResolver: true)
+    orderBy: MeasureOrder
+  ): MeasureConnection! @goField(forceResolver: true)
 
   policies(
     first: Int
@@ -811,14 +812,14 @@ type ControlEdge {
   node: Control!
 }
 
-type MesureConnection {
-  edges: [MesureEdge!]!
+type MeasureConnection {
+  edges: [MeasureEdge!]!
   pageInfo: PageInfo!
 }
 
-type MesureEdge {
+type MeasureEdge {
   cursor: CursorKey!
-  node: Mesure!
+  node: Measure!
 }
 
 type TaskConnection {
@@ -940,22 +941,22 @@ type Mutation {
   importFramework(input: ImportFrameworkInput!): ImportFrameworkPayload!
   deleteFramework(input: DeleteFrameworkInput!): DeleteFrameworkPayload!
 
-  # Mesure mutations
-  createMesure(input: CreateMesureInput!): CreateMesurePayload!
-  updateMesure(input: UpdateMesureInput!): UpdateMesurePayload!
-  importMesure(input: ImportMesureInput!): ImportMesurePayload!
-  deleteMesure(input: DeleteMesureInput!): DeleteMesurePayload!
+  # Measure mutations
+  createMeasure(input: CreateMeasureInput!): CreateMeasurePayload!
+  updateMeasure(input: UpdateMeasureInput!): UpdateMeasurePayload!
+  importMeasure(input: ImportMeasureInput!): ImportMeasurePayload!
+  deleteMeasure(input: DeleteMeasureInput!): DeleteMeasurePayload!
 
   # Control mutations
-  createControlMesureMapping(
-    input: CreateControlMesureMappingInput!
-  ): CreateControlMesureMappingPayload!
+  createControlMeasureMapping(
+    input: CreateControlMeasureMappingInput!
+  ): CreateControlMeasureMappingPayload!
   createControlPolicyMapping(
     input: CreateControlPolicyMappingInput!
   ): CreateControlPolicyMappingPayload!
-  deleteControlMesureMapping(
-    input: DeleteControlMesureMappingInput!
-  ): DeleteControlMesureMappingPayload!
+  deleteControlMeasureMapping(
+    input: DeleteControlMeasureMappingInput!
+  ): DeleteControlMeasureMappingPayload!
   deleteControlPolicyMapping(
     input: DeleteControlPolicyMappingInput!
   ): DeleteControlPolicyMappingPayload!
@@ -971,12 +972,12 @@ type Mutation {
   createRisk(input: CreateRiskInput!): CreateRiskPayload!
   updateRisk(input: UpdateRiskInput!): UpdateRiskPayload!
   deleteRisk(input: DeleteRiskInput!): DeleteRiskPayload!
-  createRiskMesureMapping(
-    input: CreateRiskMesureMappingInput!
-  ): CreateRiskMesureMappingPayload!
-  deleteRiskMesureMapping(
-    input: DeleteRiskMesureMappingInput!
-  ): DeleteRiskMesureMappingPayload!
+  createRiskMeasureMapping(
+    input: CreateRiskMeasureMappingInput!
+  ): CreateRiskMeasureMappingPayload!
+  deleteRiskMeasureMapping(
+    input: DeleteRiskMeasureMappingInput!
+  ): DeleteRiskMeasureMappingPayload!
 
   createRiskPolicyMapping(
     input: CreateRiskPolicyMappingInput!
@@ -1006,6 +1007,7 @@ type Mutation {
   createDraftPolicyVersion(input: CreateDraftPolicyVersionInput!): CreateDraftPolicyVersionPayload!
   updatePolicyVersion(input: UpdatePolicyVersionInput!): UpdatePolicyVersionPayload!
   requestSignature(input: RequestSignatureInput!): RequestSignaturePayload!
+  sendSigningNotifications(input: SendSigningNotificationsInput!): SendSigningNotificationsPayload!
 
   createVendorRiskAssessment(input: CreateVendorRiskAssessmentInput!): CreateVendorRiskAssessmentPayload!
 }
@@ -1114,28 +1116,28 @@ input DeleteFrameworkInput {
   frameworkId: ID!
 }
 
-input CreateMesureInput {
+input CreateMeasureInput {
   organizationId: ID!
   name: String!
   description: String!
   category: String!
 }
 
-input UpdateMesureInput {
+input UpdateMeasureInput {
   id: ID!
   name: String
   description: String
   category: String
-  state: MesureState
+  state: MeasureState
 }
 
-input ImportMesureInput {
+input ImportMeasureInput {
   organizationId: ID!
   file: Upload!
 }
 
 input CreateTaskInput {
-  mesureId: ID!
+  measureId: ID!
   name: String!
   description: String!
   timeEstimate: Duration
@@ -1163,9 +1165,9 @@ input UnassignTaskInput {
   taskId: ID!
 }
 
-input CreateControlMesureMappingInput {
+input CreateControlMeasureMappingInput {
   controlId: ID!
-  mesureId: ID!
+  measureId: ID!
 }
 
 input CreateControlPolicyMappingInput {
@@ -1173,9 +1175,9 @@ input CreateControlPolicyMappingInput {
   policyId: ID!
 }
 
-input DeleteControlMesureMappingInput {
+input DeleteControlMeasureMappingInput {
   controlId: ID!
-  mesureId: ID!
+  measureId: ID!
 }
 
 input DeleteControlPolicyMappingInput {
@@ -1215,14 +1217,14 @@ input DeleteRiskInput {
   riskId: ID!
 }
 
-input CreateRiskMesureMappingInput {
+input CreateRiskMeasureMappingInput {
   riskId: ID!
-  mesureId: ID!
+  measureId: ID!
 }
 
-input DeleteRiskMesureMappingInput {
+input DeleteRiskMeasureMappingInput {
   riskId: ID!
-  mesureId: ID!
+  measureId: ID!
 }
 
 input CreateRiskPolicyMappingInput {
@@ -1361,16 +1363,16 @@ type DeleteFrameworkPayload {
   deletedFrameworkId: ID!
 }
 
-type CreateMesurePayload {
-  mesureEdge: MesureEdge!
+type CreateMeasurePayload {
+  measureEdge: MeasureEdge!
 }
 
-type UpdateMesurePayload {
-  mesure: Mesure!
+type UpdateMeasurePayload {
+  measure: Measure!
 }
 
-type ImportMesurePayload {
-  mesureEdges: [MesureEdge!]!
+type ImportMeasurePayload {
+  measureEdges: [MeasureEdge!]!
 }
 
 type CreateTaskPayload {
@@ -1393,7 +1395,7 @@ type UnassignTaskPayload {
   task: Task!
 }
 
-type CreateControlMesureMappingPayload {
+type CreateControlMeasureMappingPayload {
   success: Boolean!
 }
 
@@ -1401,7 +1403,7 @@ type CreateControlPolicyMappingPayload {
   success: Boolean!
 }
 
-type DeleteControlMesureMappingPayload {
+type DeleteControlMeasureMappingPayload {
   success: Boolean!
 }
 
@@ -1421,11 +1423,11 @@ type DeleteRiskPayload {
   deletedRiskId: ID!
 }
 
-type CreateRiskMesureMappingPayload {
+type CreateRiskMeasureMappingPayload {
   success: Boolean!
 }
 
-type DeleteRiskMesureMappingPayload {
+type DeleteRiskMeasureMappingPayload {
   success: Boolean!
 }
 
@@ -1533,12 +1535,12 @@ type CreateVendorRiskAssessmentPayload {
   vendorRiskAssessmentEdge: VendorRiskAssessmentEdge!
 }
 
-input DeleteMesureInput {
-  mesureId: ID!
+input DeleteMeasureInput {
+  measureId: ID!
 }
 
-type DeleteMesurePayload {
-  deletedMesureId: ID!
+type DeleteMeasurePayload {
+  deletedMeasureId: ID!
 }
 
 type PolicyVersion implements Node {
@@ -1647,4 +1649,12 @@ input UpdatePolicyVersionInput {
 
 type UpdatePolicyVersionPayload {
   policyVersion: PolicyVersion!
+}
+
+input SendSigningNotificationsInput {
+  organizationId: ID!
+}
+
+type SendSigningNotificationsPayload {
+  success: Boolean!
 }

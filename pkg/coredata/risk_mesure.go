@@ -26,32 +26,32 @@ import (
 )
 
 type (
-	RiskMesure struct {
+	RiskMeasure struct {
 		RiskID    gid.GID      `db:"risk_id"`
-		MesureID  gid.GID      `db:"mesure_id"`
+		MeasureID gid.GID      `db:"measure_id"`
 		TenantID  gid.TenantID `db:"tenant_id"`
 		CreatedAt time.Time    `db:"created_at"`
 	}
 
-	RiskMesures []*RiskMesure
+	RiskMeasures []*RiskMeasure
 )
 
-func (rm RiskMesure) Insert(
+func (rm RiskMeasure) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
 INSERT INTO
-    risks_mesures (
+    risks_measures (
         risk_id,
-        mesure_id,
+        measure_id,
         tenant_id,
         created_at
     )
 VALUES (
     @risk_id,
-    @mesure_id,
+    @measure_id,
     @tenant_id,
     @created_at
 );
@@ -59,7 +59,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"risk_id":    rm.RiskID,
-		"mesure_id":  rm.MesureID,
+		"measure_id": rm.MeasureID,
 		"tenant_id":  scope.GetTenantID(),
 		"created_at": rm.CreatedAt,
 	}
@@ -67,7 +67,7 @@ VALUES (
 	return err
 }
 
-func (rm RiskMesure) Delete(
+func (rm RiskMeasure) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -75,18 +75,18 @@ func (rm RiskMesure) Delete(
 	q := `
 DELETE
 FROM
-    risks_mesures
+    risks_measures
 WHERE
     %s
     AND risk_id = @risk_id
-    AND mesure_id = @mesure_id;
+    AND measure_id = @measure_id;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"risk_id":   rm.RiskID,
-		"mesure_id": rm.MesureID,
+		"risk_id":    rm.RiskID,
+		"measure_id": rm.MeasureID,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

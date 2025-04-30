@@ -304,6 +304,7 @@ func (s EvidenceService) GenerateFileURL(
 	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket:                     aws.String(s.svc.bucket),
 		Key:                        aws.String(evidence.ObjectKey),
+		ResponseCacheControl:       aws.String("max-age=3600, public"),
 		ResponseContentType:        aws.String(evidence.MimeType),
 		ResponseContentDisposition: aws.String(contentDisposition),
 	}, func(opts *s3.PresignOptions) {

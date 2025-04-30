@@ -56,5 +56,5 @@ SET current_published_version = 1
 WHERE EXISTS (
     SELECT 1 FROM policy_versions pv 
     WHERE pv.policy_id = p.id 
-    AND pv.status = 'PUBLISHED'
+    AND pv.status = 'ACTIVE'
 );

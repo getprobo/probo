@@ -20,16 +20,16 @@ import (
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
-// Mesures is the resolver for the mesures field.
-func (r *controlResolver) Mesures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MesureOrderBy) (*types.MesureConnection, error) {
+// Measures is the resolver for the measures field.
+func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.MesureOrderField]{
-		Field:     coredata.MesureOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
+		Field:     coredata.MeasureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MesureOrderField]{
+		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -37,12 +37,12 @@ func (r *controlResolver) Mesures(ctx context.Context, obj *types.Control, first
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Mesures.ListForControlID(ctx, obj.ID, cursor)
+	page, err := svc.Measures.ListForControlID(ctx, obj.ID, cursor)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list mesures: %w", err)
+		return nil, fmt.Errorf("cannot list measures: %w", err)
 	}
 
-	return types.NewMesureConnection(page), nil
+	return types.NewMeasureConnection(page), nil
 }
 
 // Policies is the resolver for the policies field.
@@ -113,7 +113,7 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 }
 
 // Tasks is the resolver for the tasks field.
-func (r *mesureResolver) Tasks(ctx context.Context, obj *types.Mesure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
+func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
@@ -129,16 +129,16 @@ func (r *mesureResolver) Tasks(ctx context.Context, obj *types.Mesure, first *in
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Tasks.ListForMesureID(ctx, obj.ID, cursor)
+	page, err := svc.Tasks.ListForMeasureID(ctx, obj.ID, cursor)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list mesure tasks: %w", err)
+		return nil, fmt.Errorf("cannot list measure tasks: %w", err)
 	}
 
 	return types.NewTaskConnection(page), nil
 }
 
 // Risks is the resolver for the risks field.
-func (r *mesureResolver) Risks(ctx context.Context, obj *types.Mesure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy) (*types.RiskConnection, error) {
+func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy) (*types.RiskConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
@@ -154,16 +154,16 @@ func (r *mesureResolver) Risks(ctx context.Context, obj *types.Mesure, first *in
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Risks.ListForMesureID(ctx, obj.ID, cursor)
+	page, err := svc.Risks.ListForMeasureID(ctx, obj.ID, cursor)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list mesure risks: %w", err)
+		return nil, fmt.Errorf("cannot list measure risks: %w", err)
 	}
 
 	return types.NewRiskConnection(page), nil
 }
 
 // Controls is the resolver for the controls field.
-func (r *mesureResolver) Controls(ctx context.Context, obj *types.Mesure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error) {
+func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -179,9 +179,9 @@ func (r *mesureResolver) Controls(ctx context.Context, obj *types.Mesure, first 
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Controls.ListForMesureID(ctx, obj.ID, cursor)
+	page, err := svc.Controls.ListForMeasureID(ctx, obj.ID, cursor)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list mesure controls: %w", err)
+		return nil, fmt.Errorf("cannot list measure controls: %w", err)
 	}
 
 	return types.NewControlConnection(page), nil
@@ -530,30 +530,30 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 	}, nil
 }
 
-// // CreateMesure is the resolver for the createMesure field.
-func (r *mutationResolver) CreateMesure(ctx context.Context, input types.CreateMesureInput) (*types.CreateMesurePayload, error) {
+// // CreateMeasure is the resolver for the createMeasure field.
+func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.CreateMeasureInput) (*types.CreateMeasurePayload, error) {
 	svc := GetTenantService(ctx, r.proboSvc, input.OrganizationID.TenantID())
 
-	mesure, err := svc.Mesures.Create(ctx, probo.CreateMesureRequest{
+	measure, err := svc.Measures.Create(ctx, probo.CreateMeasureRequest{
 		OrganizationID: input.OrganizationID,
 		Name:           input.Name,
 		Description:    input.Description,
 		Category:       input.Category,
 	})
 	if err != nil {
-		panic(fmt.Errorf("cannot create mesure: %w", err))
+		panic(fmt.Errorf("cannot create measure: %w", err))
 	}
 
-	return &types.CreateMesurePayload{
-		MesureEdge: types.NewMesureEdge(mesure, coredata.MesureOrderFieldCreatedAt),
+	return &types.CreateMeasurePayload{
+		MeasureEdge: types.NewMeasureEdge(measure, coredata.MeasureOrderFieldCreatedAt),
 	}, nil
 }
 
-// UpdateMesure is the resolver for the updateMesure field.
-func (r *mutationResolver) UpdateMesure(ctx context.Context, input types.UpdateMesureInput) (*types.UpdateMesurePayload, error) {
+// UpdateMeasure is the resolver for the updateMeasure field.
+func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.UpdateMeasureInput) (*types.UpdateMeasurePayload, error) {
 	svc := GetTenantService(ctx, r.proboSvc, input.ID.TenantID())
 
-	mesure, err := svc.Mesures.Update(ctx, probo.UpdateMesureRequest{
+	measure, err := svc.Measures.Update(ctx, probo.UpdateMeasureRequest{
 		ID:          input.ID,
 		Name:        input.Name,
 		Description: input.Description,
@@ -561,62 +561,62 @@ func (r *mutationResolver) UpdateMesure(ctx context.Context, input types.UpdateM
 		State:       input.State,
 	})
 	if err != nil {
-		panic(fmt.Errorf("cannot update mesure: %w", err))
+		panic(fmt.Errorf("cannot update measure: %w", err))
 	}
 
-	return &types.UpdateMesurePayload{
-		Mesure: types.NewMesure(mesure),
+	return &types.UpdateMeasurePayload{
+		Measure: types.NewMeasure(measure),
 	}, nil
 }
 
-// ImportMesure is the resolver for the importMesure field.
-func (r *mutationResolver) ImportMesure(ctx context.Context, input types.ImportMesureInput) (*types.ImportMesurePayload, error) {
+// ImportMeasure is the resolver for the importMeasure field.
+func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.ImportMeasureInput) (*types.ImportMeasurePayload, error) {
 	svc := GetTenantService(ctx, r.proboSvc, input.OrganizationID.TenantID())
 
-	var req probo.ImportMesureRequest
-	if err := json.NewDecoder(input.File.File).Decode(&req.Mesures); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal mesure: %w", err)
+	var req probo.ImportMeasureRequest
+	if err := json.NewDecoder(input.File.File).Decode(&req.Measures); err != nil {
+		return nil, fmt.Errorf("cannot unmarshal measure: %w", err)
 	}
 
-	mesures, err := svc.Mesures.Import(ctx, input.OrganizationID, req)
+	measures, err := svc.Measures.Import(ctx, input.OrganizationID, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot import mesure: %w", err)
+		return nil, fmt.Errorf("cannot import measure: %w", err)
 	}
 
-	mesureEdges := make([]*types.MesureEdge, len(mesures.Data))
-	for i, mesure := range mesures.Data {
-		mesureEdges[i] = types.NewMesureEdge(mesure, coredata.MesureOrderFieldCreatedAt)
+	measureEdges := make([]*types.MeasureEdge, len(measures.Data))
+	for i, measure := range measures.Data {
+		measureEdges[i] = types.NewMeasureEdge(measure, coredata.MeasureOrderFieldCreatedAt)
 	}
 
-	return &types.ImportMesurePayload{
-		MesureEdges: mesureEdges,
+	return &types.ImportMeasurePayload{
+		MeasureEdges: measureEdges,
 	}, nil
 }
 
-// DeleteMesure is the resolver for the deleteMesure field.
-func (r *mutationResolver) DeleteMesure(ctx context.Context, input types.DeleteMesureInput) (*types.DeleteMesurePayload, error) {
-	svc := GetTenantService(ctx, r.proboSvc, input.MesureID.TenantID())
+// DeleteMeasure is the resolver for the deleteMeasure field.
+func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.DeleteMeasureInput) (*types.DeleteMeasurePayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.MeasureID.TenantID())
 
-	err := svc.Mesures.Delete(ctx, input.MesureID)
+	err := svc.Measures.Delete(ctx, input.MeasureID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete mesure: %w", err))
+		panic(fmt.Errorf("cannot delete measure: %w", err))
 	}
 
-	return &types.DeleteMesurePayload{
-		DeletedMesureID: input.MesureID,
+	return &types.DeleteMeasurePayload{
+		DeletedMeasureID: input.MeasureID,
 	}, nil
 }
 
-// CreateControlMesureMapping is the resolver for the createControlMesureMapping field.
-func (r *mutationResolver) CreateControlMesureMapping(ctx context.Context, input types.CreateControlMesureMappingInput) (*types.CreateControlMesureMappingPayload, error) {
-	svc := GetTenantService(ctx, r.proboSvc, input.MesureID.TenantID())
+// CreateControlMeasureMapping is the resolver for the createControlMeasureMapping field.
+func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, input types.CreateControlMeasureMappingInput) (*types.CreateControlMeasureMappingPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.MeasureID.TenantID())
 
-	err := svc.Controls.CreateMesureMapping(ctx, input.ControlID, input.MesureID)
+	err := svc.Controls.CreateMeasureMapping(ctx, input.ControlID, input.MeasureID)
 	if err != nil {
-		panic(fmt.Errorf("cannot create control mesure mapping: %w", err))
+		panic(fmt.Errorf("cannot create control measure mapping: %w", err))
 	}
 
-	return &types.CreateControlMesureMappingPayload{
+	return &types.CreateControlMeasureMappingPayload{
 		Success: true,
 	}, nil
 }
@@ -635,16 +635,16 @@ func (r *mutationResolver) CreateControlPolicyMapping(ctx context.Context, input
 	}, nil
 }
 
-// DeleteControlMesureMapping is the resolver for the deleteControlMesureMapping field.
-func (r *mutationResolver) DeleteControlMesureMapping(ctx context.Context, input types.DeleteControlMesureMappingInput) (*types.DeleteControlMesureMappingPayload, error) {
-	svc := GetTenantService(ctx, r.proboSvc, input.MesureID.TenantID())
+// DeleteControlMeasureMapping is the resolver for the deleteControlMeasureMapping field.
+func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, input types.DeleteControlMeasureMappingInput) (*types.DeleteControlMeasureMappingPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.MeasureID.TenantID())
 
-	err := svc.Controls.DeleteMesureMapping(ctx, input.ControlID, input.MesureID)
+	err := svc.Controls.DeleteMeasureMapping(ctx, input.ControlID, input.MeasureID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete control mesure mapping: %w", err))
+		panic(fmt.Errorf("cannot delete control measure mapping: %w", err))
 	}
 
-	return &types.DeleteControlMesureMappingPayload{
+	return &types.DeleteControlMeasureMappingPayload{
 		Success: true,
 	}, nil
 }
@@ -665,10 +665,10 @@ func (r *mutationResolver) DeleteControlPolicyMapping(ctx context.Context, input
 
 // CreateTask is the resolver for the createTask field.
 func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error) {
-	svc := GetTenantService(ctx, r.proboSvc, input.MesureID.TenantID())
+	svc := GetTenantService(ctx, r.proboSvc, input.MeasureID.TenantID())
 
 	task, err := svc.Tasks.Create(ctx, probo.CreateTaskRequest{
-		MesureID:     input.MesureID,
+		MeasureID:    input.MeasureID,
 		Name:         input.Name,
 		Description:  input.Description,
 		TimeEstimate: input.TimeEstimate,
@@ -816,30 +816,30 @@ func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRis
 	}, nil
 }
 
-// CreateRiskMesureMapping is the resolver for the createRiskMesureMapping field.
-func (r *mutationResolver) CreateRiskMesureMapping(ctx context.Context, input types.CreateRiskMesureMappingInput) (*types.CreateRiskMesureMappingPayload, error) {
+// CreateRiskMeasureMapping is the resolver for the createRiskMeasureMapping field.
+func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input types.CreateRiskMeasureMappingInput) (*types.CreateRiskMeasureMappingPayload, error) {
 	svc := GetTenantService(ctx, r.proboSvc, input.RiskID.TenantID())
 
-	err := svc.Risks.CreateMesureMapping(ctx, input.RiskID, input.MesureID)
+	err := svc.Risks.CreateMeasureMapping(ctx, input.RiskID, input.MeasureID)
 	if err != nil {
-		panic(fmt.Errorf("cannot create risk mesure mapping: %w", err))
+		panic(fmt.Errorf("cannot create risk measure mapping: %w", err))
 	}
 
-	return &types.CreateRiskMesureMappingPayload{
+	return &types.CreateRiskMeasureMappingPayload{
 		Success: true,
 	}, nil
 }
 
-// DeleteRiskMesureMapping is the resolver for the deleteRiskMesureMapping field.
-func (r *mutationResolver) DeleteRiskMesureMapping(ctx context.Context, input types.DeleteRiskMesureMappingInput) (*types.DeleteRiskMesureMappingPayload, error) {
+// DeleteRiskMeasureMapping is the resolver for the deleteRiskMeasureMapping field.
+func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input types.DeleteRiskMeasureMappingInput) (*types.DeleteRiskMeasureMappingPayload, error) {
 	svc := GetTenantService(ctx, r.proboSvc, input.RiskID.TenantID())
 
-	err := svc.Risks.DeleteMesureMapping(ctx, input.RiskID, input.MesureID)
+	err := svc.Risks.DeleteMeasureMapping(ctx, input.RiskID, input.MeasureID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete risk mesure mapping: %w", err))
+		panic(fmt.Errorf("cannot delete risk measure mapping: %w", err))
 	}
 
-	return &types.DeleteRiskMesureMappingPayload{
+	return &types.DeleteRiskMeasureMappingPayload{
 		Success: true,
 	}, nil
 }
@@ -1134,6 +1134,20 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 	}, nil
 }
 
+// SendSigningNotifications is the resolver for the sendSigningNotifications field.
+func (r *mutationResolver) SendSigningNotifications(ctx context.Context, input types.SendSigningNotificationsInput) (*types.SendSigningNotificationsPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.OrganizationID.TenantID())
+
+	err := svc.Policies.SendSigningNotifications(ctx, input.OrganizationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot send signing notifications: %w", err))
+	}
+
+	return &types.SendSigningNotificationsPayload{
+		Success: true,
+	}, nil
+}
+
 // CreateVendorRiskAssessment is the resolver for the createVendorRiskAssessment field.
 func (r *mutationResolver) CreateVendorRiskAssessment(ctx context.Context, input types.CreateVendorRiskAssessmentInput) (*types.CreateVendorRiskAssessmentPayload, error) {
 	svc := GetTenantService(ctx, r.proboSvc, input.VendorID.TenantID())
@@ -1313,16 +1327,16 @@ func (r *organizationResolver) Policies(ctx context.Context, obj *types.Organiza
 	return types.NewPolicyConnection(page), nil
 }
 
-// Mesures is the resolver for the mesures field.
-func (r *organizationResolver) Mesures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MesureOrderBy) (*types.MesureConnection, error) {
+// Measures is the resolver for the measures field.
+func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.MesureOrderField]{
-		Field:     coredata.MesureOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
+		Field:     coredata.MeasureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MesureOrderField]{
+		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1330,12 +1344,12 @@ func (r *organizationResolver) Mesures(ctx context.Context, obj *types.Organizat
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Mesures.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := svc.Measures.ListForOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list organization mesures: %w", err))
+		panic(fmt.Errorf("cannot list organization measures: %w", err))
 	}
 
-	return types.NewMesureConnection(page), nil
+	return types.NewMeasureConnection(page), nil
 }
 
 // Risks is the resolver for the risks field.
@@ -1578,13 +1592,13 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		return types.NewFramework(framework), nil
-	case coredata.MesureEntityType:
-		mesure, err := svc.Mesures.Get(ctx, id)
+	case coredata.MeasureEntityType:
+		measure, err := svc.Measures.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("cannot get mesure: %w", err))
+			panic(fmt.Errorf("cannot get measure: %w", err))
 		}
 
-		return types.NewMesure(mesure), nil
+		return types.NewMeasure(measure), nil
 	case coredata.TaskEntityType:
 		task, err := svc.Tasks.Get(ctx, id)
 		if err != nil {
@@ -1674,16 +1688,16 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Peopl
 	return types.NewPeople(owner), nil
 }
 
-// Mesures is the resolver for the mesures field.
-func (r *riskResolver) Mesures(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MesureOrderBy) (*types.MesureConnection, error) {
+// Measures is the resolver for the measures field.
+func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.MesureOrderField]{
-		Field:     coredata.MesureOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
+		Field:     coredata.MeasureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.MesureOrderField]{
+		pageOrderBy = page.OrderBy[coredata.MeasureOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1691,12 +1705,12 @@ func (r *riskResolver) Mesures(ctx context.Context, obj *types.Risk, first *int,
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Mesures.ListForRiskID(ctx, obj.ID, cursor)
+	page, err := svc.Measures.ListForRiskID(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list risk mesures: %w", err))
+		panic(fmt.Errorf("cannot list risk measures: %w", err))
 	}
 
-	return types.NewMesureConnection(page), nil
+	return types.NewMeasureConnection(page), nil
 }
 
 // Policies is the resolver for the policies field.
@@ -1985,8 +1999,8 @@ func (r *Resolver) Evidence() schema.EvidenceResolver { return &evidenceResolver
 // Framework returns schema.FrameworkResolver implementation.
 func (r *Resolver) Framework() schema.FrameworkResolver { return &frameworkResolver{r} }
 
-// Mesure returns schema.MesureResolver implementation.
-func (r *Resolver) Mesure() schema.MesureResolver { return &mesureResolver{r} }
+// Measure returns schema.MeasureResolver implementation.
+func (r *Resolver) Measure() schema.MeasureResolver { return &measureResolver{r} }
 
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
@@ -2036,7 +2050,7 @@ func (r *Resolver) Viewer() schema.ViewerResolver { return &viewerResolver{r} }
 type controlResolver struct{ *Resolver }
 type evidenceResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
-type mesureResolver struct{ *Resolver }
+type measureResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type policyResolver struct{ *Resolver }

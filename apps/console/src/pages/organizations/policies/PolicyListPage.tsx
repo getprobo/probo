@@ -16,7 +16,7 @@ export function PolicyListViewSkeleton() {
         <div className="bg-subtle-bg animate-pulse h-9 w-1/6 rounded-lg" />
       }
     >
-      {/* Search and filter mesures skeleton */}
+      {/* Search and filter measures skeleton */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-1 h-10 bg-subtle-bg animate-pulse rounded" />
         <div className="flex gap-2">

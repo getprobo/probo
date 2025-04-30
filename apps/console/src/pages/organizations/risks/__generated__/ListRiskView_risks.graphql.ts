@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1dd4443afe99bdd114d082b0d175776d>>
+ * @generated SignedSource<<ff2ba5959c29398eb8e36b013c459b6b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,7 +23,7 @@ export type ListRiskView_risks$data = {
         readonly id: string;
         readonly inherentImpact: number;
         readonly inherentLikelihood: number;
-        readonly mesures: {
+        readonly measures: {
           readonly edges: ReadonlyArray<{
             readonly node: {
               readonly category: string;
@@ -247,15 +247,15 @@ return {
                       "value": 1
                     }
                   ],
-                  "concreteType": "MesureConnection",
+                  "concreteType": "MeasureConnection",
                   "kind": "LinkedField",
-                  "name": "mesures",
+                  "name": "measures",
                   "plural": false,
                   "selections": [
                     {
                       "alias": null,
                       "args": null,
-                      "concreteType": "MesureEdge",
+                      "concreteType": "MeasureEdge",
                       "kind": "LinkedField",
                       "name": "edges",
                       "plural": true,
@@ -263,7 +263,7 @@ return {
                         {
                           "alias": null,
                           "args": null,
-                          "concreteType": "Mesure",
+                          "concreteType": "Measure",
                           "kind": "LinkedField",
                           "name": "node",
                           "plural": false,
@@ -276,7 +276,7 @@ return {
                       "storageKey": null
                     }
                   ],
-                  "storageKey": "mesures(first:1)"
+                  "storageKey": "measures(first:1)"
                 },
                 {
                   "alias": null,
@@ -359,6 +359,6 @@ return {
 };
 })();
 
-(node as any).hash = "3fc46af4f252617f4547c988184bb168";
+(node as any).hash = "064cf25e6278fd29f1e474d9a65c6d18";
 
 export default node;

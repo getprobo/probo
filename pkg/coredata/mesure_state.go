@@ -20,65 +20,65 @@ import (
 )
 
 type (
-	MesureState uint8
+	MeasureState uint8
 )
 
 const (
-	MesureStateNotStarted MesureState = iota
-	MesureStateInProgress
-	MesureStateNotApplicable
-	MesureStateImplemented
+	MeasureStateNotStarted MeasureState = iota
+	MeasureStateInProgress
+	MeasureStateNotApplicable
+	MeasureStateImplemented
 )
 
-func (ms MesureState) MarshalText() ([]byte, error) {
+func (ms MeasureState) MarshalText() ([]byte, error) {
 	return []byte(ms.String()), nil
 }
 
-func (ms *MesureState) UnmarshalText(data []byte) error {
+func (ms *MeasureState) UnmarshalText(data []byte) error {
 	val := string(data)
 
 	switch val {
-	case MesureStateNotStarted.String():
-		*ms = MesureStateNotStarted
-	case MesureStateInProgress.String():
-		*ms = MesureStateInProgress
-	case MesureStateNotApplicable.String():
-		*ms = MesureStateNotApplicable
-	case MesureStateImplemented.String():
-		*ms = MesureStateImplemented
+	case MeasureStateNotStarted.String():
+		*ms = MeasureStateNotStarted
+	case MeasureStateInProgress.String():
+		*ms = MeasureStateInProgress
+	case MeasureStateNotApplicable.String():
+		*ms = MeasureStateNotApplicable
+	case MeasureStateImplemented.String():
+		*ms = MeasureStateImplemented
 	default:
-		return fmt.Errorf("invalid MesureState value: %q", val)
+		return fmt.Errorf("invalid MeasureState value: %q", val)
 	}
 
 	return nil
 }
 
-func (ms MesureState) String() string {
+func (ms MeasureState) String() string {
 	var val string
 
 	switch ms {
-	case MesureStateNotStarted:
+	case MeasureStateNotStarted:
 		val = "NOT_STARTED"
-	case MesureStateInProgress:
+	case MeasureStateInProgress:
 		val = "IN_PROGRESS"
-	case MesureStateNotApplicable:
+	case MeasureStateNotApplicable:
 		val = "NOT_APPLICABLE"
-	case MesureStateImplemented:
+	case MeasureStateImplemented:
 		val = "IMPLEMENTED"
 	}
 
 	return val
 }
 
-func (ms *MesureState) Scan(value any) error {
+func (ms *MeasureState) Scan(value any) error {
 	val, ok := value.(string)
 	if !ok {
-		return fmt.Errorf("invalid scan source for MesureState, expected string got %T", value)
+		return fmt.Errorf("invalid scan source for MeasureState, expected string got %T", value)
 	}
 
 	return ms.UnmarshalText([]byte(val))
 }
 
-func (ms MesureState) Value() (driver.Value, error) {
+func (ms MeasureState) Value() (driver.Value, error) {
 	return ms.String(), nil
 }

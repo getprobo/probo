@@ -76,9 +76,9 @@ func (s ControlService) ListForPolicyID(
 	return page.NewPage(controls, cursor), nil
 }
 
-func (s ControlService) ListForMesureID(
+func (s ControlService) ListForMeasureID(
 	ctx context.Context,
-	mesureID gid.GID,
+	measureID gid.GID,
 	cursor *page.Cursor[coredata.ControlOrderField],
 ) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
 	var controls coredata.Controls
@@ -86,7 +86,7 @@ func (s ControlService) ListForMesureID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return controls.LoadByMesureID(ctx, conn, s.svc.scope, mesureID, cursor)
+			return controls.LoadByMeasureID(ctx, conn, s.svc.scope, measureID, cursor)
 		},
 	)
 
@@ -97,14 +97,14 @@ func (s ControlService) ListForMesureID(
 	return page.NewPage(controls, cursor), nil
 }
 
-func (s ControlService) CreateMesureMapping(
+func (s ControlService) CreateMeasureMapping(
 	ctx context.Context,
 	controlID gid.GID,
-	mesureID gid.GID,
+	measureID gid.GID,
 ) error {
-	controlMesure := &coredata.ControlMesure{
+	controlMeasure := &coredata.ControlMeasure{
 		ControlID: controlID,
-		MesureID:  mesureID,
+		MeasureID: measureID,
 		TenantID:  s.svc.scope.GetTenantID(),
 		CreatedAt: time.Now(),
 	}
@@ -112,19 +112,19 @@ func (s ControlService) CreateMesureMapping(
 	return s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return controlMesure.Insert(ctx, conn, s.svc.scope)
+			return controlMeasure.Insert(ctx, conn, s.svc.scope)
 		},
 	)
 }
 
-func (s ControlService) DeleteMesureMapping(
+func (s ControlService) DeleteMeasureMapping(
 	ctx context.Context,
 	controlID gid.GID,
-	mesureID gid.GID,
+	measureID gid.GID,
 ) error {
-	controlMesure := &coredata.ControlMesure{
+	controlMeasure := &coredata.ControlMeasure{
 		ControlID: controlID,
-		MesureID:  mesureID,
+		MeasureID: measureID,
 		TenantID:  s.svc.scope.GetTenantID(),
 		CreatedAt: time.Now(),
 	}
@@ -132,7 +132,7 @@ func (s ControlService) DeleteMesureMapping(
 	return s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return controlMesure.Delete(ctx, conn, s.svc.scope)
+			return controlMeasure.Delete(ctx, conn, s.svc.scope)
 		},
 	)
 }

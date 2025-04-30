@@ -15,26 +15,26 @@
 package coredata
 
 type (
-	MesureOrderField string
+	MeasureOrderField string
 )
 
 const (
-	MesureOrderFieldCreatedAt MesureOrderField = "CREATED_AT"
+	MeasureOrderFieldCreatedAt MeasureOrderField = "CREATED_AT"
 )
 
-func (p MesureOrderField) Column() string {
+func (p MeasureOrderField) Column() string {
 	return string(p)
 }
 
-func (p MesureOrderField) String() string {
+func (p MeasureOrderField) String() string {
 	return string(p)
 }
 
-func (p MesureOrderField) MarshalText() ([]byte, error) {
+func (p MeasureOrderField) MarshalText() ([]byte, error) {
 	return []byte(p.String()), nil
 }
 
-func (p *MesureOrderField) UnmarshalText(text []byte) error {
-	*p = MesureOrderField(text)
+func (p *MeasureOrderField) UnmarshalText(text []byte) error {
+	*p = MeasureOrderField(text)
 	return nil
 }

@@ -20,31 +20,31 @@ import (
 )
 
 type (
-	MesureOrderBy OrderBy[coredata.MesureOrderField]
+	MeasureOrderBy OrderBy[coredata.MeasureOrderField]
 )
 
-func NewMesureConnection(p *page.Page[*coredata.Mesure, coredata.MesureOrderField]) *MesureConnection {
-	var edges = make([]*MesureEdge, len(p.Data))
+func NewMeasureConnection(p *page.Page[*coredata.Measure, coredata.MeasureOrderField]) *MeasureConnection {
+	var edges = make([]*MeasureEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewMesureEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewMeasureEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &MesureConnection{
+	return &MeasureConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
 	}
 }
 
-func NewMesureEdge(c *coredata.Mesure, orderBy coredata.MesureOrderField) *MesureEdge {
-	return &MesureEdge{
+func NewMeasureEdge(c *coredata.Measure, orderBy coredata.MeasureOrderField) *MeasureEdge {
+	return &MeasureEdge{
 		Cursor: c.CursorKey(orderBy),
-		Node:   NewMesure(c),
+		Node:   NewMeasure(c),
 	}
 }
 
-func NewMesure(c *coredata.Mesure) *Mesure {
-	return &Mesure{
+func NewMeasure(c *coredata.Measure) *Measure {
+	return &Measure{
 		ID:          c.ID,
 		Category:    c.Category,
 		Name:        c.Name,

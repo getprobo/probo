@@ -63,14 +63,14 @@ type ConnectorOrder struct {
 }
 
 type Control struct {
-	ID          gid.GID           `json:"id"`
-	ReferenceID string            `json:"referenceId"`
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	Mesures     *MesureConnection `json:"mesures"`
-	Policies    *PolicyConnection `json:"policies"`
-	CreatedAt   time.Time         `json:"createdAt"`
-	UpdatedAt   time.Time         `json:"updatedAt"`
+	ID          gid.GID            `json:"id"`
+	ReferenceID string             `json:"referenceId"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Measures    *MeasureConnection `json:"measures"`
+	Policies    *PolicyConnection  `json:"policies"`
+	CreatedAt   time.Time          `json:"createdAt"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
 }
 
 func (Control) IsNode()             {}
@@ -86,12 +86,12 @@ type ControlEdge struct {
 	Node   *Control       `json:"node"`
 }
 
-type CreateControlMesureMappingInput struct {
+type CreateControlMeasureMappingInput struct {
 	ControlID gid.GID `json:"controlId"`
-	MesureID  gid.GID `json:"mesureId"`
+	MeasureID gid.GID `json:"measureId"`
 }
 
-type CreateControlMesureMappingPayload struct {
+type CreateControlMeasureMappingPayload struct {
 	Success bool `json:"success"`
 }
 
@@ -135,15 +135,15 @@ type CreateFrameworkPayload struct {
 	FrameworkEdge *FrameworkEdge `json:"frameworkEdge"`
 }
 
-type CreateMesureInput struct {
+type CreateMeasureInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Name           string  `json:"name"`
 	Description    string  `json:"description"`
 	Category       string  `json:"category"`
 }
 
-type CreateMesurePayload struct {
-	MesureEdge *MesureEdge `json:"mesureEdge"`
+type CreateMeasurePayload struct {
+	MeasureEdge *MeasureEdge `json:"measureEdge"`
 }
 
 type CreateOrganizationInput struct {
@@ -192,12 +192,12 @@ type CreateRiskInput struct {
 	Note               *string                `json:"note,omitempty"`
 }
 
-type CreateRiskMesureMappingInput struct {
-	RiskID   gid.GID `json:"riskId"`
-	MesureID gid.GID `json:"mesureId"`
+type CreateRiskMeasureMappingInput struct {
+	RiskID    gid.GID `json:"riskId"`
+	MeasureID gid.GID `json:"measureId"`
 }
 
-type CreateRiskMesureMappingPayload struct {
+type CreateRiskMeasureMappingPayload struct {
 	Success bool `json:"success"`
 }
 
@@ -215,7 +215,7 @@ type CreateRiskPolicyMappingPayload struct {
 }
 
 type CreateTaskInput struct {
-	MesureID     gid.GID        `json:"mesureId"`
+	MeasureID    gid.GID        `json:"measureId"`
 	Name         string         `json:"name"`
 	Description  string         `json:"description"`
 	TimeEstimate *time.Duration `json:"timeEstimate,omitempty"`
@@ -265,12 +265,12 @@ type CreateVendorRiskAssessmentPayload struct {
 	VendorRiskAssessmentEdge *VendorRiskAssessmentEdge `json:"vendorRiskAssessmentEdge"`
 }
 
-type DeleteControlMesureMappingInput struct {
+type DeleteControlMeasureMappingInput struct {
 	ControlID gid.GID `json:"controlId"`
-	MesureID  gid.GID `json:"mesureId"`
+	MeasureID gid.GID `json:"measureId"`
 }
 
-type DeleteControlMesureMappingPayload struct {
+type DeleteControlMeasureMappingPayload struct {
 	Success bool `json:"success"`
 }
 
@@ -299,12 +299,12 @@ type DeleteFrameworkPayload struct {
 	DeletedFrameworkID gid.GID `json:"deletedFrameworkId"`
 }
 
-type DeleteMesureInput struct {
-	MesureID gid.GID `json:"mesureId"`
+type DeleteMeasureInput struct {
+	MeasureID gid.GID `json:"measureId"`
 }
 
-type DeleteMesurePayload struct {
-	DeletedMesureID gid.GID `json:"deletedMesureId"`
+type DeleteMeasurePayload struct {
+	DeletedMeasureID gid.GID `json:"deletedMeasureId"`
 }
 
 type DeleteOrganizationInput struct {
@@ -335,12 +335,12 @@ type DeleteRiskInput struct {
 	RiskID gid.GID `json:"riskId"`
 }
 
-type DeleteRiskMesureMappingInput struct {
-	RiskID   gid.GID `json:"riskId"`
-	MesureID gid.GID `json:"mesureId"`
+type DeleteRiskMeasureMappingInput struct {
+	RiskID    gid.GID `json:"riskId"`
+	MeasureID gid.GID `json:"measureId"`
 }
 
-type DeleteRiskMesureMappingPayload struct {
+type DeleteRiskMeasureMappingPayload struct {
 	Success bool `json:"success"`
 }
 
@@ -450,13 +450,13 @@ type ImportFrameworkPayload struct {
 	FrameworkEdge *FrameworkEdge `json:"frameworkEdge"`
 }
 
-type ImportMesureInput struct {
+type ImportMeasureInput struct {
 	OrganizationID gid.GID        `json:"organizationId"`
 	File           graphql.Upload `json:"file"`
 }
 
-type ImportMesurePayload struct {
-	MesureEdges []*MesureEdge `json:"mesureEdges"`
+type ImportMeasurePayload struct {
+	MeasureEdges []*MeasureEdge `json:"measureEdges"`
 }
 
 type InviteUserInput struct {
@@ -469,30 +469,30 @@ type InviteUserPayload struct {
 	Success bool `json:"success"`
 }
 
-type Mesure struct {
-	ID          gid.GID              `json:"id"`
-	Category    string               `json:"category"`
-	Name        string               `json:"name"`
-	Description string               `json:"description"`
-	State       coredata.MesureState `json:"state"`
-	Tasks       *TaskConnection      `json:"tasks"`
-	Risks       *RiskConnection      `json:"risks"`
-	Controls    *ControlConnection   `json:"controls"`
-	CreatedAt   time.Time            `json:"createdAt"`
-	UpdatedAt   time.Time            `json:"updatedAt"`
+type Measure struct {
+	ID          gid.GID               `json:"id"`
+	Category    string                `json:"category"`
+	Name        string                `json:"name"`
+	Description string                `json:"description"`
+	State       coredata.MeasureState `json:"state"`
+	Tasks       *TaskConnection       `json:"tasks"`
+	Risks       *RiskConnection       `json:"risks"`
+	Controls    *ControlConnection    `json:"controls"`
+	CreatedAt   time.Time             `json:"createdAt"`
+	UpdatedAt   time.Time             `json:"updatedAt"`
 }
 
-func (Mesure) IsNode()             {}
-func (this Mesure) GetID() gid.GID { return this.ID }
+func (Measure) IsNode()             {}
+func (this Measure) GetID() gid.GID { return this.ID }
 
-type MesureConnection struct {
-	Edges    []*MesureEdge `json:"edges"`
-	PageInfo *PageInfo     `json:"pageInfo"`
+type MeasureConnection struct {
+	Edges    []*MeasureEdge `json:"edges"`
+	PageInfo *PageInfo      `json:"pageInfo"`
 }
 
-type MesureEdge struct {
+type MeasureEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
-	Node   *Mesure        `json:"node"`
+	Node   *Measure       `json:"node"`
 }
 
 type Mutation struct {
@@ -508,7 +508,7 @@ type Organization struct {
 	Vendors    *VendorConnection    `json:"vendors"`
 	Peoples    *PeopleConnection    `json:"peoples"`
 	Policies   *PolicyConnection    `json:"policies"`
-	Mesures    *MesureConnection    `json:"mesures"`
+	Measures   *MeasureConnection   `json:"measures"`
 	Risks      *RiskConnection      `json:"risks"`
 	CreatedAt  time.Time            `json:"createdAt"`
 	UpdatedAt  time.Time            `json:"updatedAt"`
@@ -703,7 +703,7 @@ type Risk struct {
 	ResidualSeverity   int                    `json:"residualSeverity"`
 	Note               string                 `json:"note"`
 	Owner              *People                `json:"owner,omitempty"`
-	Mesures            *MesureConnection      `json:"mesures"`
+	Measures           *MeasureConnection     `json:"measures"`
 	Policies           *PolicyConnection      `json:"policies"`
 	Controls           *ControlConnection     `json:"controls"`
 	CreatedAt          time.Time              `json:"createdAt"`
@@ -721,6 +721,14 @@ type RiskConnection struct {
 type RiskEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Risk          `json:"node"`
+}
+
+type SendSigningNotificationsInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+}
+
+type SendSigningNotificationsPayload struct {
+	Success bool `json:"success"`
 }
 
 type Session struct {
@@ -771,16 +779,16 @@ type UpdateFrameworkPayload struct {
 	Framework *Framework `json:"framework"`
 }
 
-type UpdateMesureInput struct {
-	ID          gid.GID               `json:"id"`
-	Name        *string               `json:"name,omitempty"`
-	Description *string               `json:"description,omitempty"`
-	Category    *string               `json:"category,omitempty"`
-	State       *coredata.MesureState `json:"state,omitempty"`
+type UpdateMeasureInput struct {
+	ID          gid.GID                `json:"id"`
+	Name        *string                `json:"name,omitempty"`
+	Description *string                `json:"description,omitempty"`
+	Category    *string                `json:"category,omitempty"`
+	State       *coredata.MeasureState `json:"state,omitempty"`
 }
 
-type UpdateMesurePayload struct {
-	Mesure *Mesure `json:"mesure"`
+type UpdateMeasurePayload struct {
+	Measure *Measure `json:"measure"`
 }
 
 type UpdateOrganizationInput struct {

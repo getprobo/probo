@@ -197,7 +197,15 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create usrmgr service: %w", err)
 	}
 
-	proboService, err := probo.NewService(ctx, impl.cfg.EncryptionKey, pgClient, s3Client, impl.cfg.AWS.Bucket)
+	proboService, err := probo.NewService(
+		ctx,
+		impl.cfg.EncryptionKey,
+		pgClient,
+		s3Client,
+		impl.cfg.AWS.Bucket,
+		impl.cfg.Hostname,
+		impl.cfg.Auth.Cookie.Secret,
+	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
 	}

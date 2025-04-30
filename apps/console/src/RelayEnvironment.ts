@@ -108,9 +108,15 @@ const fetchRelay: FetchFunction = async (
 };
 
 function createRelayEnvironment() {
+  const source = new RecordSource();
+  const store = new Store(source, {
+    queryCacheExpirationTime: 1 * 60 * 1000,
+    gcReleaseBufferSize: 20,
+  });
+
   return new Environment({
     network: Network.create(fetchRelay),
-    store: new Store(new RecordSource()),
+    store,
   });
 }
 

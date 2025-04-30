@@ -28,37 +28,37 @@ import (
 )
 
 type (
-	Mesure struct {
+	Measure struct {
 		ID             gid.GID      `db:"id"`
 		TenantID       gid.TenantID `db:"tenant_id"`
 		OrganizationID gid.GID      `db:"organization_id"`
 		Category       string       `db:"category"`
 		Name           string       `db:"name"`
 		Description    string       `db:"description"`
-		State          MesureState  `db:"state"`
+		State          MeasureState `db:"state"`
 		ReferenceID    string       `db:"reference_id"`
 		CreatedAt      time.Time    `db:"created_at"`
 		UpdatedAt      time.Time    `db:"updated_at"`
 	}
 
-	Mesures []*Mesure
+	Measures []*Measure
 )
 
-func (m Mesure) CursorKey(orderBy MesureOrderField) page.CursorKey {
+func (m Measure) CursorKey(orderBy MeasureOrderField) page.CursorKey {
 	switch orderBy {
-	case MesureOrderFieldCreatedAt:
+	case MeasureOrderFieldCreatedAt:
 		return page.NewCursorKey(m.ID, m.CreatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (m *Mesures) LoadByRiskID(
+func (m *Measures) LoadByRiskID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	riskID gid.GID,
-	cursor *page.Cursor[MesureOrderField],
+	cursor *page.Cursor[MeasureOrderField],
 ) error {
 	q := `
 WITH msrs AS (
@@ -74,9 +74,9 @@ WITH msrs AS (
 		m.created_at,
 		m.updated_at
 	FROM
-		mesures m
+		measures m
 	INNER JOIN
-		risks_mesures rm ON m.id = rm.mesure_id
+		risks_measures rm ON m.id = rm.measure_id
 	WHERE
 		rm.risk_id = @risk_id
 )
@@ -104,25 +104,25 @@ WHERE %s
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query mesures: %w", err)
+		return fmt.Errorf("cannot query measures: %w", err)
 	}
 
-	mesures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Mesure])
+	measures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Measure])
 	if err != nil {
-		return fmt.Errorf("cannot collect mesures: %w", err)
+		return fmt.Errorf("cannot collect measures: %w", err)
 	}
 
-	*m = mesures
+	*m = measures
 
 	return nil
 }
 
-func (m *Mesures) LoadByControlID(
+func (m *Measures) LoadByControlID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	controlID gid.GID,
-	cursor *page.Cursor[MesureOrderField],
+	cursor *page.Cursor[MeasureOrderField],
 ) error {
 	q := `
 WITH mtgtns AS (
@@ -138,9 +138,9 @@ WITH mtgtns AS (
 		m.created_at,
 		m.updated_at
 	FROM
-		mesures m
+		measures m
 	INNER JOIN
-		controls_mesures cm ON m.id = cm.mesure_id
+		controls_measures cm ON m.id = cm.measure_id
 	WHERE
 		cm.control_id = @control_id
 )
@@ -168,25 +168,25 @@ WHERE %s
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query mesures: %w", err)
+		return fmt.Errorf("cannot query measures: %w", err)
 	}
 
-	mesures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Mesure])
+	measures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Measure])
 	if err != nil {
-		return fmt.Errorf("cannot collect mesures: %w", err)
+		return fmt.Errorf("cannot collect measures: %w", err)
 	}
 
-	*m = mesures
+	*m = measures
 
 	return nil
 }
 
-func (m *Mesures) LoadByOrganizationID(
+func (m *Measures) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
-	cursor *page.Cursor[MesureOrderField],
+	cursor *page.Cursor[MeasureOrderField],
 ) error {
 	q := `
 SELECT
@@ -201,7 +201,7 @@ SELECT
     created_at,
     updated_at
 FROM
-    mesures
+    measures
 WHERE
     %s
     AND organization_id = @organization_id
@@ -215,24 +215,24 @@ WHERE
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query mesures: %w", err)
+		return fmt.Errorf("cannot query measures: %w", err)
 	}
 
-	mesures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Mesure])
+	measures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Measure])
 	if err != nil {
-		return fmt.Errorf("cannot collect mesures: %w", err)
+		return fmt.Errorf("cannot collect measures: %w", err)
 	}
 
-	*m = mesures
+	*m = measures
 
 	return nil
 }
 
-func (m *Mesure) LoadByID(
+func (m *Measure) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	mesureID gid.GID,
+	measureID gid.GID,
 ) error {
 	q := `
 SELECT
@@ -247,41 +247,41 @@ SELECT
     created_at,
     updated_at
 FROM
-    mesures
+    measures
 WHERE
     %s
-    AND id = @mesure_id
+    AND id = @measure_id
 LIMIT 1;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"mesure_id": mesureID}
+	args := pgx.StrictNamedArgs{"measure_id": measureID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query mesures: %w", err)
+		return fmt.Errorf("cannot query measures: %w", err)
 	}
 
-	mesure, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Mesure])
+	measure, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Measure])
 	if err != nil {
-		return fmt.Errorf("cannot collect mesures: %w", err)
+		return fmt.Errorf("cannot collect measures: %w", err)
 	}
 
-	*m = mesure
+	*m = measure
 
 	return nil
 }
 
-func (m *Mesure) Upsert(
+func (m *Measure) Upsert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
 INSERT INTO
-    mesures (
+    measures (
         tenant_id,
         id,
         organization_id,
@@ -295,7 +295,7 @@ INSERT INTO
 	)
 VALUES (
     @tenant_id,
-    @mesure_id,
+    @measure_id,
     @organization_id,
 	@category,
     @name,
@@ -325,7 +325,7 @@ RETURNING
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
-		"mesure_id":       m.ID,
+		"measure_id":      m.ID,
 		"organization_id": m.OrganizationID,
 		"category":        m.Category,
 		"name":            m.Name,
@@ -338,27 +338,27 @@ RETURNING
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("cannot query mesures: %w", err)
+		return fmt.Errorf("cannot query measures: %w", err)
 	}
 
-	mesure, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Mesure])
+	measure, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Measure])
 	if err != nil {
-		return fmt.Errorf("cannot collect mesures: %w", err)
+		return fmt.Errorf("cannot collect measures: %w", err)
 	}
 
-	*m = mesure
+	*m = measure
 
 	return nil
 }
 
-func (m Mesure) Insert(
+func (m Measure) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
 INSERT INTO
-    mesures (
+    measures (
         tenant_id,
         id,
         organization_id,
@@ -372,7 +372,7 @@ INSERT INTO
     )
 VALUES (
     @tenant_id,
-    @mesure_id,
+    @measure_id,
     @organization_id,
 	@category,
     @name,
@@ -386,7 +386,7 @@ VALUES (
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
-		"mesure_id":       m.ID,
+		"measure_id":      m.ID,
 		"organization_id": m.OrganizationID,
 		"category":        m.Category,
 		"name":            m.Name,
@@ -400,13 +400,13 @@ VALUES (
 	return err
 }
 
-func (m *Mesure) Update(
+func (m *Measure) Update(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
-UPDATE mesures
+UPDATE measures
 SET
   name = @name,
   description = @description,
@@ -414,12 +414,12 @@ SET
   state = @state,
   updated_at = @updated_at
 WHERE %s
-    AND id = @mesure_id
+    AND id = @measure_id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{
-		"mesure_id":   m.ID,
+		"measure_id":  m.ID,
 		"name":        m.Name,
 		"description": m.Description,
 		"category":    m.Category,
@@ -433,19 +433,19 @@ WHERE %s
 	return err
 }
 
-func (m *Mesure) Delete(
+func (m *Measure) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM mesures
+DELETE FROM measures
 WHERE %s
-    AND id = @mesure_id
+    AND id = @measure_id
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"mesure_id": m.ID}
+	args := pgx.StrictNamedArgs{"measure_id": m.ID}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)

@@ -90,7 +90,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	corsOpts := cors.Options{
 		AllowedOrigins:     s.cfg.AllowedOrigins,
 		AllowedMethods:     []string{"GET", "POST", "PUT", "DELETE", "HEAD"},
-		AllowedHeaders:     []string{"content-type", "traceparent"},
+		AllowedHeaders:     []string{"content-type", "traceparent", "authorization"},
 		ExposedHeaders:     []string{"x-Request-id"},
 		AllowCredentials:   true,
 		MaxAge:             600, // 10 minutes (chrome >= 76 maximum value c.f. https://source.chromium.org/chromium/chromium/src/+/main:services/network/public/cpp/cors/preflight_result.cc;drc=52002151773d8cd9ffc5f557cd7cc880fddcae3e;l=36)

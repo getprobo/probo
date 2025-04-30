@@ -124,6 +124,52 @@ const relayPlugin = {
   },
 };
 
+const htmlPlugin = {
+  name: 'html-plugin',
+  setup(build) {
+    build.onEnd(async (result) => {
+      // do not run this in watch mode
+      if (process.argv[2] === "watch") {
+        return;
+      }
+
+      if (result.errors.length > 0) {
+        return;
+      }
+
+      if (!result.metafile) {
+        console.error('Metafile not available');
+        return;
+      }
+
+      const outputs = Object.keys(result.metafile.outputs);
+      
+      const jsOutputs = outputs.filter(file => file.endsWith('.js') && file.includes('/App-'));
+      const cssOutputs = outputs.filter(file => file.endsWith('.css') && file.includes('/App-'));
+      
+      if (jsOutputs.length === 0 || cssOutputs.length === 0) {
+        console.error('Could not find entry point outputs');
+        return;
+      }
+
+      const jsFile = path.basename(jsOutputs[0]);
+      const cssFile = path.basename(cssOutputs[0]);
+      
+      console.log('Found JS file:', jsFile);
+      console.log('Found CSS file:', cssFile);
+
+      const htmlPath = path.join(process.cwd(), 'dist', 'index.html');
+      let html = await fs.readFile(htmlPath, "utf8");
+      
+      html = html.replace('"/App.css"', `"/${cssFile}"`);
+      html = html.replace('"/App.js"', `"/${jsFile}"`);
+      
+      await fs.writeFile(htmlPath, html);
+      console.log("Successfully updated index.html with hashed filenames");
+    });
+  }
+};
+
 const defaultOptions = {
   logLevel: "info",
   entryPoints: ["src/App.tsx"],
@@ -133,10 +179,11 @@ const defaultOptions = {
   outdir: "dist",
   assetNames: "assets/[name]-[hash]",
   chunkNames: "chunks/[name]-[hash]",
-  entryNames: "[dir]/[name]",
+  entryNames: "[dir]/[name]-[hash]",
   splitting: true,
   format: "esm",
   sourcemap: "external",
+  metafile: true,
   loader: {
     ".png": "file",
     ".jpg": "file",
@@ -147,6 +194,7 @@ const defaultOptions = {
   plugins: [
     relayPlugin,
     hotReloading,
+    htmlPlugin,
     postCssPlugin({
       plugins: [tailwindcssPlugin(), autoprefixer()],
     }),
@@ -163,7 +211,11 @@ const [, , command] = process.argv;
 if (command === "watch") {
   runRelayCompilerInWatchMode();
 
-  const ctx = await esbuild.context({ ...defaultOptions, minify: false });
+  const ctx = await esbuild.context({ 
+    ...defaultOptions, 
+    minify: false,
+    entryNames: "[dir]/[name]" 
+  });
   await ctx.watch();
   let { host, port } = await ctx.serve({ servedir: "dist" });
   http

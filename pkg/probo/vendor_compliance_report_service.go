@@ -169,6 +169,7 @@ func (s VendorComplianceReportService) GenerateFileURL(
 	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket:                     aws.String(s.svc.bucket),
 		Key:                        aws.String(vendorComplianceReport.FileKey),
+		ResponseCacheControl:       aws.String("max-age=3600, public"),
 		ResponseContentDisposition: aws.String(contentDisposition),
 	}, func(opts *s3.PresignOptions) {
 		opts.Expires = expiresIn
