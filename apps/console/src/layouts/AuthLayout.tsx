@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
-import { ReactNode } from "react";
+import type {PropsWithChildren} from "react";
 
-export default function AuthLayout({ children }: { children: ReactNode }) {
+export default function AuthLayout({ children }: PropsWithChildren) {
   return (
     <div className="flex min-h-screen flex-col">
       <div className="flex flex-1">

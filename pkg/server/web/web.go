@@ -23,6 +23,8 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
+	"os"
+	"regexp"
 	"strings"
 
 	"github.com/getprobo/probo/apps/console"
@@ -36,6 +38,9 @@ type Server struct {
 }
 
 func NewServer() (*Server, error) {
+	if os.Getenv("APP_ENV") == "dev" {
+		return NewDevServer()
+	}
 	subFS, err := fs.Sub(console.StaticFiles, "dist")
 	if err != nil {
 		return nil, err
@@ -103,6 +108,48 @@ func NewServer() (*Server, error) {
 		spaFS:        http.FS(subFS),
 		indexETag:    indexETag,
 		indexContent: indexContent,
+		etags:        etags,
+	}, nil
+}
+
+func NewDevServer() (*Server, error) {
+	publicFS := os.DirFS("./apps/console/public")
+
+	etags := make(map[string]string)
+
+	html, err := os.ReadFile("./apps/console/index.html")
+	if err != nil {
+		return nil, err
+	}
+
+	// Inject vite client code
+	re := regexp.MustCompile(`(?m)^\s*<script.*src="([^"]*)".*$`)
+	matches := re.FindStringSubmatch(string(html))
+	if len(matches) < 2 {
+		return nil, fmt.Errorf("no script tag found in the index.html template")
+	}
+
+	htmlStr := re.ReplaceAllString(string(html),
+		fmt.Sprintf(`
+		<script type="module" src="http://[::1]:%[1]d/@vite/client"></script>
+		<script src="http://[::1]:%[1]d%[2]s" type="module"></script>
+		`, 5173, matches[1]))
+
+	// Add react preamble for react plugin
+	htmlStr = strings.ReplaceAll(htmlStr, "<body", fmt.Sprintf(`
+		<body>
+		<script type="module">
+			import RefreshRuntime from 'http://[::1]:%[1]d/@react-refresh'
+			RefreshRuntime.injectIntoGlobalHook(window)
+			window.$RefreshReg$ = () => {}
+			window.$RefreshSig$ = () => (type) => type
+			window.__vite_plugin_react_preamble_installed__ = true
+		</script><body`, 5173))
+
+	return &Server{
+		spaFS:        http.FS(publicFS),
+		indexETag:    "",
+		indexContent: []byte(htmlStr),
 		etags:        etags,
 	}, nil
 }

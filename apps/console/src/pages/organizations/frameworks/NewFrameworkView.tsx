@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NewFrameworkViewCreateFrameworkMutation } from "./__generated__/NewFrameworkViewCreateFrameworkMutation.graphql";
+import { type NewFrameworkViewCreateFrameworkMutation } from "./__generated__/NewFrameworkViewCreateFrameworkMutation.graphql";
 import { PageTemplate } from "@/components/PageTemplate";
 import { NewFrameworkViewSkeleton } from "./NewFrameworkPage";
 

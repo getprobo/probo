@@ -1,11 +1,11 @@
 import {
   graphql,
-  PreloadedQuery,
+  type PreloadedQuery,
   usePreloadedQuery,
   useQueryLoader,
 } from "react-relay";
 import { useParams } from "react-router";
-import { FrameworkViewQuery } from "./__generated__/FrameworkViewQuery.graphql";
+import { type FrameworkViewQuery } from "./__generated__/FrameworkViewQuery.graphql";
 import { Suspense, useEffect } from "react";
 import { Control } from "./controls/Control";
 import { FrameworkViewSkeleton } from "./FrameworkPage";

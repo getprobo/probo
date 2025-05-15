@@ -18,7 +18,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { NavUser_viewer$key } from "./__generated__/NavUser_viewer.graphql";
+import { type NavUser_viewer$key } from "./__generated__/NavUser_viewer.graphql";
 import { buildEndpoint } from "@/utils";
 
 export const navUserFragment = graphql`

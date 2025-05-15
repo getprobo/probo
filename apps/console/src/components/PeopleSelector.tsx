@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PeopleSelector_organization$key } from "./__generated__/PeopleSelector_organization.graphql";
+import { type PeopleSelector_organization$key } from "./__generated__/PeopleSelector_organization.graphql";
 
 const peopleSelectorFragment = graphql`
   fragment PeopleSelector_organization on Organization {

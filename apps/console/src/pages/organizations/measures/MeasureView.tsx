@@ -3,7 +3,7 @@ import {
   useEffect,
   useState,
   useRef,
-  DragEvent,
+  type DragEvent,
   useCallback,
 } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router";
@@ -81,32 +81,32 @@ import { Badge } from "@/components/ui/badge";
 
 import { PageTemplate } from "@/components/PageTemplate";
 import { MeasureViewSkeleton } from "./MeasurePage";
-import { MeasureViewUpdateTaskStateMutation as MeasureViewUpdateTaskStateMutationType } from "./__generated__/MeasureViewUpdateTaskStateMutation.graphql";
-import { MeasureViewCreateTaskMutation as MeasureViewCreateTaskMutationType } from "./__generated__/MeasureViewCreateTaskMutation.graphql";
-import { MeasureViewDeleteTaskMutation as MeasureViewDeleteTaskMutationType } from "./__generated__/MeasureViewDeleteTaskMutation.graphql";
-import { MeasureViewDeleteEvidenceMutation as MeasureViewDeleteEvidenceMutationType } from "./__generated__/MeasureViewDeleteEvidenceMutation.graphql";
-import { MeasureViewAssignTaskMutation as MeasureViewAssignTaskMutationType } from "./__generated__/MeasureViewAssignTaskMutation.graphql";
-import { MeasureViewUnassignTaskMutation as MeasureViewUnassignTaskMutationType } from "./__generated__/MeasureViewUnassignTaskMutation.graphql";
-import { MeasureViewUpdateMeasureStateMutation as MeasureViewUpdateMeasureStateMutationType } from "./__generated__/MeasureViewUpdateMeasureStateMutation.graphql";
-import { MeasureViewQuery as MeasureViewQueryType } from "./__generated__/MeasureViewQuery.graphql";
+import { type MeasureViewUpdateTaskStateMutation as MeasureViewUpdateTaskStateMutationType } from "./__generated__/MeasureViewUpdateTaskStateMutation.graphql";
+import { type MeasureViewCreateTaskMutation as MeasureViewCreateTaskMutationType } from "./__generated__/MeasureViewCreateTaskMutation.graphql";
+import { type MeasureViewDeleteTaskMutation as MeasureViewDeleteTaskMutationType } from "./__generated__/MeasureViewDeleteTaskMutation.graphql";
+import { type MeasureViewDeleteEvidenceMutation as MeasureViewDeleteEvidenceMutationType } from "./__generated__/MeasureViewDeleteEvidenceMutation.graphql";
+import { type MeasureViewAssignTaskMutation as MeasureViewAssignTaskMutationType } from "./__generated__/MeasureViewAssignTaskMutation.graphql";
+import { type MeasureViewUnassignTaskMutation as MeasureViewUnassignTaskMutationType } from "./__generated__/MeasureViewUnassignTaskMutation.graphql";
+import { type MeasureViewUpdateMeasureStateMutation as MeasureViewUpdateMeasureStateMutationType } from "./__generated__/MeasureViewUpdateMeasureStateMutation.graphql";
+import { type MeasureViewQuery as MeasureViewQueryType } from "./__generated__/MeasureViewQuery.graphql";
 import {
-  MeasureViewOrganizationQuery,
-  MeasureViewOrganizationQuery$data,
+  type MeasureViewOrganizationQuery,
+  type MeasureViewOrganizationQuery$data,
 } from "./__generated__/MeasureViewOrganizationQuery.graphql";
 import {
-  MeasureViewFrameworksQuery,
-  MeasureViewFrameworksQuery$data,
+  type MeasureViewFrameworksQuery,
+  type MeasureViewFrameworksQuery$data,
 } from "./__generated__/MeasureViewFrameworksQuery.graphql";
 import {
-  MeasureViewLinkedControlsQuery,
-  MeasureViewLinkedControlsQuery$data,
+  type MeasureViewLinkedControlsQuery,
+  type MeasureViewLinkedControlsQuery$data,
 } from "./__generated__/MeasureViewLinkedControlsQuery.graphql";
-import { MeasureViewFulfillEvidenceMutation as MeasureViewFulfillEvidenceMutationType } from "./__generated__/MeasureViewFulfillEvidenceMutation.graphql";
-import { MeasureViewCreateControlMappingMutation } from "./__generated__/MeasureViewCreateControlMappingMutation.graphql";
-import { MeasureViewDeleteControlMappingMutation } from "./__generated__/MeasureViewDeleteControlMappingMutation.graphql";
-import { MeasureViewRisksQuery$data } from "./__generated__/MeasureViewRisksQuery.graphql";
-import { MeasureViewRisksQuery } from "./__generated__/MeasureViewRisksQuery.graphql";
-import { MeasureViewDeleteMeasureMutation } from "./__generated__/MeasureViewDeleteMeasureMutation.graphql";
+import { type MeasureViewFulfillEvidenceMutation as MeasureViewFulfillEvidenceMutationType } from "./__generated__/MeasureViewFulfillEvidenceMutation.graphql";
+import { type MeasureViewCreateControlMappingMutation } from "./__generated__/MeasureViewCreateControlMappingMutation.graphql";
+import { type MeasureViewDeleteControlMappingMutation } from "./__generated__/MeasureViewDeleteControlMappingMutation.graphql";
+import { type MeasureViewRisksQuery$data } from "./__generated__/MeasureViewRisksQuery.graphql";
+import { type MeasureViewRisksQuery } from "./__generated__/MeasureViewRisksQuery.graphql";
+import { type MeasureViewDeleteMeasureMutation } from "./__generated__/MeasureViewDeleteMeasureMutation.graphql";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 
@@ -1141,7 +1141,7 @@ function MeasureViewContent({
       if (taskForEvidence) {
         // This is a task-specific evidence
         const evidenceConnectionId = getEvidenceConnectionId(taskForEvidence.id);
-        
+
         // Upload the URI file as task evidence
         uploadTaskEvidence({
           variables: {
@@ -1180,7 +1180,7 @@ function MeasureViewContent({
       } else {
         // This is a measure-level evidence
         const evidenceConnectionId = getMeasureEvidenceConnectionId();
-        
+
         // Upload the URI file as measure evidence
         uploadMeasureEvidence({
           variables: {
@@ -2222,10 +2222,10 @@ function MeasureViewContent({
           <TabsTrigger value="evidence" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
             Evidence
-            {((measureWithEvidences.evidences?.edges && measureWithEvidences.evidences.edges.length > 0) || 
+            {((measureWithEvidences.evidences?.edges && measureWithEvidences.evidences.edges.length > 0) ||
               tasks.some((task) => task.evidences?.edges && task.evidences.edges.length > 0)) && (
               <span className="ml-1.5 bg-blue-100 text-blue-800 rounded-full text-xs px-2 py-0.5">
-                {(measureWithEvidences.evidences?.edges?.length || 0) + 
+                {(measureWithEvidences.evidences?.edges?.length || 0) +
                  tasks.reduce(
                   (count, task) => count + (task.evidences?.edges?.length || 0),
                   0,

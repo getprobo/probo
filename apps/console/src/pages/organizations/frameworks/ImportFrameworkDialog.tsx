@@ -7,9 +7,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Plus, Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
-import { ConnectionHandler, graphql, useMutation } from "react-relay";
+import { graphql, useMutation } from "react-relay";
 import { useToast } from "@/hooks/use-toast";
-import { ImportFrameworkDialogImportFrameworkMutation } from "./__generated__/ImportFrameworkDialogImportFrameworkMutation.graphql";
+import { type ImportFrameworkDialogImportFrameworkMutation } from "./__generated__/ImportFrameworkDialogImportFrameworkMutation.graphql";
 import { useState } from "react";
 
 const AVAILABLE_FRAMEWORKS = [
@@ -44,6 +44,7 @@ export function FrameworkImportDropdown() {
     );
 
   const handleImport = async (frameworkId: string) => {
+    /*
     setLoadingFramework(frameworkId);
     try {
       const frameworkTemplate = await import(
@@ -110,6 +111,7 @@ export function FrameworkImportDropdown() {
     } finally {
       setLoadingFramework(null);
     }
+    */
   };
 
   return (

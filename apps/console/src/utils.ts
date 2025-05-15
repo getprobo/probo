@@ -1,5 +1,5 @@
 export function buildEndpoint(path: string): string {
-  const host = process.env.API_SERVER_HOST!;
+  const host = import.meta.env.API_SERVER_HOST!;
 
   if (!host) {
     return path;

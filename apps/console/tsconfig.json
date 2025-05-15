@@ -1,10 +1,7 @@
 {
-  "extends": "@probo/tsconfig/react.json",
-  "include": ["src"],
-  "exclude": ["node_modules"],
-  "compilerOptions": {
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
 }

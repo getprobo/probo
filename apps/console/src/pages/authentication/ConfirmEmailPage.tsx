@@ -6,8 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router";
 import { useMutation } from "react-relay";
 import { graphql } from "relay-runtime";
-import { PayloadError } from "relay-runtime";
-import { ConfirmEmailPageMutation } from "./__generated__/ConfirmEmailPageMutation.graphql";
+import type { PayloadError } from "relay-runtime";
+import type { ConfirmEmailPageMutation } from "./__generated__/ConfirmEmailPageMutation.graphql";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {

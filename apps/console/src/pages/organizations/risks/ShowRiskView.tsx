@@ -2,7 +2,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router";
 import {
   graphql,
-  PreloadedQuery,
+  type PreloadedQuery,
   usePreloadedQuery,
   useQueryLoader,
   useMutation,
@@ -54,17 +54,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  ShowRiskViewOrganizationMeasuresQuery,
-  ShowRiskViewOrganizationMeasuresQuery$data,
+  type ShowRiskViewOrganizationMeasuresQuery,
+  type ShowRiskViewOrganizationMeasuresQuery$data,
 } from "./__generated__/ShowRiskViewOrganizationMeasuresQuery.graphql";
-import { ShowRiskViewCreateRiskMeasureMappingMutation } from "./__generated__/ShowRiskViewCreateRiskMeasureMappingMutation.graphql";
-import { ShowRiskViewDeleteRiskMeasureMappingMutation } from "./__generated__/ShowRiskViewDeleteRiskMeasureMappingMutation.graphql";
+import { type ShowRiskViewCreateRiskMeasureMappingMutation } from "./__generated__/ShowRiskViewCreateRiskMeasureMappingMutation.graphql";
+import { type ShowRiskViewDeleteRiskMeasureMappingMutation } from "./__generated__/ShowRiskViewDeleteRiskMeasureMappingMutation.graphql";
 import {
-  ShowRiskViewOrganizationPoliciesQuery,
-  ShowRiskViewOrganizationPoliciesQuery$data,
+  type ShowRiskViewOrganizationPoliciesQuery,
+  type ShowRiskViewOrganizationPoliciesQuery$data,
 } from "./__generated__/ShowRiskViewOrganizationPoliciesQuery.graphql";
-import { ShowRiskViewCreateRiskPolicyMappingMutation } from "./__generated__/ShowRiskViewCreateRiskPolicyMappingMutation.graphql";
-import { ShowRiskViewDeleteRiskPolicyMappingMutation } from "./__generated__/ShowRiskViewDeleteRiskPolicyMappingMutation.graphql";
+import { type ShowRiskViewCreateRiskPolicyMappingMutation } from "./__generated__/ShowRiskViewCreateRiskPolicyMappingMutation.graphql";
+import { type ShowRiskViewDeleteRiskPolicyMappingMutation } from "./__generated__/ShowRiskViewDeleteRiskPolicyMappingMutation.graphql";
 
 const showRiskViewQuery = graphql`
   query ShowRiskViewQuery($riskId: ID!) {

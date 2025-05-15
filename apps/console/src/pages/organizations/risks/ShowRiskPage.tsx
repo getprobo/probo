@@ -1,10 +1,8 @@
 import { PageTemplateSkeleton } from "@/components/PageTemplate";
 import { Suspense } from "react";
-import { lazy } from "@probo/react-lazy";
 import { useLocation } from "react-router";
 import { ErrorBoundaryWithLocation } from "../ErrorBoundary";
-
-const ShowRiskView = lazy(() => import("./ShowRiskView"));
+import ShowRiskView from "@/pages/organizations/risks/ShowRiskView.tsx";
 
 export function ShowRiskViewSkeleton() {
   return (

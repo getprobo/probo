@@ -26,21 +26,21 @@ import {
 } from "react-relay";
 import { useParams, Link } from "react-router";
 import {
-  ControlLinkedMeasuresQuery$data,
-  ControlLinkedMeasuresQuery,
+  type ControlLinkedMeasuresQuery$data,
+  type ControlLinkedMeasuresQuery,
 } from "./__generated__/ControlLinkedMeasuresQuery.graphql";
 import {
-  ControlOrganizationMeasuresQuery$data,
-  ControlOrganizationMeasuresQuery,
+  type ControlOrganizationMeasuresQuery$data,
+  type ControlOrganizationMeasuresQuery,
 } from "./__generated__/ControlOrganizationMeasuresQuery.graphql";
-import { ControlFragment_Control$key } from "./__generated__/ControlFragment_Control.graphql";
+import { type ControlFragment_Control$key } from "./__generated__/ControlFragment_Control.graphql";
 import {
-  ControlLinkedPoliciesQuery$data,
-  ControlLinkedPoliciesQuery,
+  type ControlLinkedPoliciesQuery$data,
+  type ControlLinkedPoliciesQuery,
 } from "./__generated__/ControlLinkedPoliciesQuery.graphql";
 import {
-  ControlOrganizationPoliciesQuery$data,
-  ControlOrganizationPoliciesQuery,
+  type ControlOrganizationPoliciesQuery$data,
+  type ControlOrganizationPoliciesQuery,
 } from "./__generated__/ControlOrganizationPoliciesQuery.graphql";
 
 const controlFragment = graphql`

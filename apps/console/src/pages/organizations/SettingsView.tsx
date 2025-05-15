@@ -130,7 +130,7 @@ function SettingsViewContent({
   const [inviteFullName, setInviteFullName] = useState("");
   const [isInviting, setIsInviting] = useState(false);
   const [organizationName, setOrganizationName] = useState(
-    organization.name || "",
+    organization.name || ""
   );
   const [isUploading, setIsUploading] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
@@ -154,12 +154,12 @@ function SettingsViewContent({
   // Filter out connectors that are already connected
   const connectedConnectorIds = connectors.map((connector) => connector.name);
   const notConnectedConnectors = availableConnectors.filter(
-    (connector) => !connectedConnectorIds.includes(connector.id),
+    (connector) => !connectedConnectorIds.includes(connector.id)
   );
 
   const [updateOrganization] =
     useMutation<SettingsViewUpdateOrganizationMutationType>(
-      updateOrganizationMutation,
+      updateOrganizationMutation
     );
 
   const [inviteUser] =
@@ -520,7 +520,7 @@ function SettingsViewContent({
                             <span className="text-sm text-tertiary">
                               {connector.type} · Connected on{" "}
                               {new Date(
-                                connector.createdAt,
+                                connector.createdAt
                               ).toLocaleDateString()}
                             </span>
                           </div>
@@ -559,23 +559,23 @@ function SettingsViewContent({
                           <a
                             href={(() => {
                               const baseUrl =
-                                process.env.API_SERVER_HOST ||
+                                import.meta.env.API_SERVER_HOST ||
                                 window.location.origin;
                               const url = new URL(
                                 "/api/console/v1/connectors/initiate",
-                                baseUrl,
+                                baseUrl
                               );
                               url.searchParams.append(
                                 "organization_id",
-                                organization.id,
+                                organization.id
                               );
                               url.searchParams.append(
                                 "connector_id",
-                                connector.id,
+                                connector.id
                               );
                               url.searchParams.append(
                                 "continue",
-                                window.location.href,
+                                window.location.href
                               );
                               return url.toString();
                             })()}
