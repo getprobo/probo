@@ -1,8 +1,8 @@
-import { Suspense, useEffect, useState, useCallback, ReactNode, useRef } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
+import { useParams, useNavigate } from "react-router";
 import {
   graphql,
-  PreloadedQuery,
+  type PreloadedQuery,
   usePreloadedQuery,
   useQueryLoader,
   useMutation,
@@ -14,15 +14,14 @@ import {
   Edit,
   Trash2,
   MoreHorizontal,
-  X,
   FileSignature,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { PageTemplate } from "@/components/PageTemplate";
 import type { ShowPolicyViewQuery } from "./__generated__/ShowPolicyViewQuery.graphql";
-import { ShowPolicyViewPublishMutation } from "./__generated__/ShowPolicyViewPublishMutation.graphql";
-import { ShowPolicyViewCreateDraftMutation } from "./__generated__/ShowPolicyViewCreateDraftMutation.graphql";
+import { type ShowPolicyViewPublishMutation } from "./__generated__/ShowPolicyViewPublishMutation.graphql";
+import { type ShowPolicyViewCreateDraftMutation } from "./__generated__/ShowPolicyViewCreateDraftMutation.graphql";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ShowPolicyViewSkeleton } from "./ShowPolicyPage";
@@ -141,7 +140,7 @@ function ShowPolicyContent({
   );
   const policy = data.node;
   const { organizationId } = useParams();
-  
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const [queryRef2, loadQuery] =
@@ -324,23 +323,23 @@ function ShowPolicyContent({
       });
       return;
     }
-    
+
     // Get version nodes and signatures from the fragment data we have
     const versionNodes = policyData?.policyVersions?.edges?.map(edge => edge.node) || [];
     const currentVersion = versionNodes.find(v => v.version === latestVersionNode?.version);
     const signatures = currentVersion?.signatures?.edges?.map(edge => edge.node) || [];
-    
+
     // Create temporary div to render and capture markdown
     const tempDiv = document.createElement('div');
     const root = createRoot(tempDiv);
-    
+
     // Render the markdown content to HTML
     root.render(
       <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
         {latestVersionNode?.content || 'No content available'}
       </ReactMarkdown>
     );
-    
+
     // Give React a moment to render the content
     setTimeout(() => {
       const renderedMarkdown = tempDiv.innerHTML;
@@ -369,7 +368,7 @@ function ShowPolicyContent({
           </table>
         `;
       }
-      
+
       // Create the print document content with the policy document data
       printWindow.document.write(`
         <!DOCTYPE html>
@@ -446,22 +445,22 @@ function ShowPolicyContent({
           </body>
         </html>
       `);
-      
+
       // Trigger print
       printWindow.document.close();
       printWindow.focus();
-      
+
       // Use setTimeout to give the browser time to load any resources
       setTimeout(() => {
         printWindow.print();
         // Optional: close the window after printing
         // printWindow.close();
       }, 500);
-      
+
       // Clean up
       root.unmount();
     }, 100);
-    
+
   }, [policy, latestVersionNode, formatDate, toast, policyData, data.organization.name!]);
 
   return (

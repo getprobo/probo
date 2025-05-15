@@ -20,7 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
+import type {
   OrganizationSwitcher_organizations$key,
   OrganizationSwitcher_organizations$data,
 } from "./__generated__/OrganizationSwitcher_organizations.graphql";

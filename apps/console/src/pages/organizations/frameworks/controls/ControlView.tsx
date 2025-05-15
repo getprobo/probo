@@ -1,12 +1,12 @@
 import {
   graphql,
-  PreloadedQuery,
+  type PreloadedQuery,
   usePreloadedQuery,
   useQueryLoader,
 } from "react-relay";
 import { ControlViewSkeleton } from "./ControlPage";
 import { Suspense, useEffect } from "react";
-import { ControlViewQuery } from "./__generated__/ControlViewQuery.graphql";
+import { type ControlViewQuery } from "./__generated__/ControlViewQuery.graphql";
 import { useParams } from "react-router";
 import { Control } from "./Control";
 

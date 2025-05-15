@@ -1,14 +1,13 @@
 import { Suspense, useEffect, useState, useRef } from "react";
 import {
   graphql,
-  PreloadedQuery,
+  type PreloadedQuery,
   usePreloadedQuery,
   useQueryLoader,
   useMutation,
   ConnectionHandler,
 } from "react-relay";
 import { useParams, Link } from "react-router";
-import { Badge } from "@/components/ui/badge";
 import {
   ChevronRight,
   ChevronDown,
@@ -21,11 +20,11 @@ import {
 } from "lucide-react";
 import { PageTemplate } from "@/components/PageTemplate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MeasureListViewQuery as MeasureListViewQueryType } from "./__generated__/MeasureListViewQuery.graphql";
+import { type MeasureListViewQuery as MeasureListViewQueryType } from "./__generated__/MeasureListViewQuery.graphql";
 import { MeasureListViewSkeleton } from "./MeasureListPage";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { MeasureListViewImportMeasureMutation as MeasureListViewImportMeasureMutationType } from "./__generated__/MeasureListViewImportMeasureMutation.graphql";
+import { type MeasureListViewImportMeasureMutation as MeasureListViewImportMeasureMutationType } from "./__generated__/MeasureListViewImportMeasureMutation.graphql";
 import {
   Tooltip,
   TooltipContent,

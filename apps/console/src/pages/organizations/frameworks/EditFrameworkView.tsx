@@ -4,7 +4,7 @@ import {
   graphql,
   useMutation,
   usePreloadedQuery,
-  PreloadedQuery,
+  type PreloadedQuery,
   useQueryLoader,
 } from "react-relay";
 import { Button } from "@/components/ui/button";
@@ -15,8 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { EditFrameworkViewUpdateFrameworkMutation } from "./__generated__/EditFrameworkViewUpdateFrameworkMutation.graphql";
-import { EditFrameworkViewQuery } from "./__generated__/EditFrameworkViewQuery.graphql";
+import { type EditFrameworkViewUpdateFrameworkMutation } from "./__generated__/EditFrameworkViewUpdateFrameworkMutation.graphql";
+import { type EditFrameworkViewQuery } from "./__generated__/EditFrameworkViewQuery.graphql";
 import { PageTemplate } from "@/components/PageTemplate";
 import { EditFrameworkViewSkeleton } from "./EditFrameworkPage";
 

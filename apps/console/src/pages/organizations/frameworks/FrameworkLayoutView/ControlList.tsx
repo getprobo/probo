@@ -1,5 +1,5 @@
 import { graphql, useFragment } from "react-relay";
-import { ControlList_List$key } from "./__generated__/ControlList_List.graphql";
+import { type ControlList_List$key } from "./__generated__/ControlList_List.graphql";
 import { NavLink, useParams } from "react-router";
 import { cn } from "@/lib/utils";
 

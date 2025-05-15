@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useTransition } from "react";
 import {
   graphql,
-  PreloadedQuery,
+  type PreloadedQuery,
   usePreloadedQuery,
   useQueryLoader,
   useMutation,
@@ -15,8 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import type { PeopleListViewQuery as PeopleListViewQueryType } from "./__generated__/PeopleListViewQuery.graphql";
 import type { PeopleListViewDeletePeopleMutation } from "./__generated__/PeopleListViewDeletePeopleMutation.graphql";
-import { PeopleListViewPaginationQuery } from "./__generated__/PeopleListViewPaginationQuery.graphql";
-import { PeopleListView_peoples$key } from "./__generated__/PeopleListView_peoples.graphql";
+import type { PeopleListViewPaginationQuery } from "./__generated__/PeopleListViewPaginationQuery.graphql";
+import type { PeopleListView_peoples$key } from "./__generated__/PeopleListView_peoples.graphql";
 import { PageTemplate } from "@/components/PageTemplate";
 import { PeopleListViewSkeleton } from "./PeopleListPage";
 

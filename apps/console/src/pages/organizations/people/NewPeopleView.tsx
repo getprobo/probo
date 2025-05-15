@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NewPeopleViewCreatePeopleMutation } from "./__generated__/NewPeopleViewCreatePeopleMutation.graphql";
+import type { NewPeopleViewCreatePeopleMutation } from "./__generated__/NewPeopleViewCreatePeopleMutation.graphql";
 import { PageTemplate } from "@/components/PageTemplate";
 import { NewPeopleViewSkeleton } from "./NewPeoplePage";
 

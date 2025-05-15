@@ -3,12 +3,10 @@ import { ConnectionHandler, graphql, useMutation } from "react-relay";
 import { useParams, useNavigate } from "react-router";
 import { PageTemplate } from "@/components/PageTemplate";
 import { useToast } from "@/hooks/use-toast";
-import { NewMeasureViewCreateMeasureMutation } from "./__generated__/NewMeasureViewCreateMeasureMutation.graphql";
+import { type NewMeasureViewCreateMeasureMutation } from "./__generated__/NewMeasureViewCreateMeasureMutation.graphql";
 import { EditableField } from "@/components/EditableField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 
 const createMeasureMutation = graphql`
   mutation NewMeasureViewCreateMeasureMutation(

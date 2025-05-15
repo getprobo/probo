@@ -1,6 +1,6 @@
 import {
   Environment,
-  FetchFunction,
+  type FetchFunction,
   Network,
   RecordSource,
   Store,

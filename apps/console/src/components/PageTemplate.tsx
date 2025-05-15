@@ -1,10 +1,10 @@
-import { FC, ReactNode } from "react";
+import type { FC, ReactNode } from "react";
 import {
   PageContainer,
-  PageContainerProps,
+  type PageContainerProps,
   PageContainerSkeleton,
 } from "./PageContainer";
-import { PageHeader, PageHeaderProps, PageHeaderSkeleton } from "./PageHeader";
+import { PageHeader, type PageHeaderProps, PageHeaderSkeleton } from "./PageHeader";
 
 export const PageTemplate: FC<PageContainerProps & PageHeaderProps> = ({
   actions,

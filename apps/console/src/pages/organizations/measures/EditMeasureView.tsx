@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState } from "react";
 import {
   graphql,
-  PreloadedQuery,
+  type PreloadedQuery,
   useMutation,
   usePreloadedQuery,
   useQueryLoader,
@@ -9,14 +9,12 @@ import {
 import { useParams, useNavigate } from "react-router";
 import { PageTemplate } from "@/components/PageTemplate";
 import { useToast } from "@/hooks/use-toast";
-import { EditMeasureViewUpdateMeasureMutation } from "./__generated__/EditMeasureViewUpdateMeasureMutation.graphql";
+import { type EditMeasureViewUpdateMeasureMutation } from "./__generated__/EditMeasureViewUpdateMeasureMutation.graphql";
 import { EditableField } from "@/components/EditableField";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
 import { EditMeasureViewSkeleton } from "./EditMeasurePage";
-import { EditMeasureViewQuery } from "./__generated__/EditMeasureViewQuery.graphql";
+import { type EditMeasureViewQuery } from "./__generated__/EditMeasureViewQuery.graphql";
 
 const editMeasureQuery = graphql`
   query EditMeasureViewQuery($measureId: ID!) {

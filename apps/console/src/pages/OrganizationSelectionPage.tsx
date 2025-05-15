@@ -11,7 +11,7 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Plus } from "lucide-react";
-import { OrganizationSelectionPageQuery } from "./__generated__/OrganizationSelectionPageQuery.graphql";
+import type { OrganizationSelectionPageQuery } from "./__generated__/OrganizationSelectionPageQuery.graphql";
 
 const organizationSelectionQuery = graphql`
   query OrganizationSelectionPageQuery {

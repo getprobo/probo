@@ -18,8 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { HelpCircle } from "lucide-react";
-import { CreateOrganizationViewCreateOrganizationMutation } from "./__generated__/CreateOrganizationViewCreateOrganizationMutation.graphql";
-import { CreateOrganizationViewViewerQuery } from "./__generated__/CreateOrganizationViewViewerQuery.graphql";
+import { type CreateOrganizationViewCreateOrganizationMutation } from "./__generated__/CreateOrganizationViewCreateOrganizationMutation.graphql";
+import { type CreateOrganizationViewViewerQuery } from "./__generated__/CreateOrganizationViewViewerQuery.graphql";
 import { PageTemplate } from "@/components/PageTemplate";
 
 const createOrganizationMutation = graphql`

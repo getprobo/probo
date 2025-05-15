@@ -1,7 +1,7 @@
-import { Component, ErrorInfo, ReactNode } from "react";
-import { ErrorPage } from "@/pages/ErrorPage";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import { UnAuthenticatedError } from "@/RelayEnvironment";
 import { Navigate } from "react-router";
+import {ErrorPage} from "../pages/ErrorPage.tsx";
 
 interface ErrorBoundaryProps {
   children: ReactNode;

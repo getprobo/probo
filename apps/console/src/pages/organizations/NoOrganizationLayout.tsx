@@ -1,6 +1,6 @@
-import { NavLink, Outlet, Route, Routes, To } from "react-router";
+import { NavLink, Outlet, Route, Routes, type To } from "react-router";
 import { AppSidebar } from "@/components/AppSidebar";
-import { ReactNode, Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,

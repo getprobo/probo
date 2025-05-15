@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState, useTransition } from "react";
 import {
   graphql,
-  PreloadedQuery,
+  type PreloadedQuery,
   usePreloadedQuery,
   useQueryLoader,
   useMutation,
@@ -18,18 +18,18 @@ import Fuse from "fuse.js";
 import { useToast } from "@/hooks/use-toast";
 import { PageTemplate } from "@/components/PageTemplate";
 import { ListVendorViewSkeleton } from "./ListVendorPage";
-import { ListVendorViewCreateVendorMutation } from "./__generated__/ListVendorViewCreateVendorMutation.graphql";
-import { ListVendorViewPaginationQuery } from "./__generated__/ListVendorViewPaginationQuery.graphql";
-import { ListVendorView_vendors$key } from "./__generated__/ListVendorView_vendors.graphql";
-import { ListVendorViewQuery } from "./__generated__/ListVendorViewQuery.graphql";
-import { ListVendorViewDeleteVendorMutation } from "./__generated__/ListVendorViewDeleteVendorMutation.graphql";
+import { type ListVendorViewCreateVendorMutation } from "./__generated__/ListVendorViewCreateVendorMutation.graphql";
+import { type ListVendorViewPaginationQuery } from "./__generated__/ListVendorViewPaginationQuery.graphql";
+import { type ListVendorView_vendors$key } from "./__generated__/ListVendorView_vendors.graphql";
+import { type ListVendorViewQuery } from "./__generated__/ListVendorViewQuery.graphql";
+import { type ListVendorViewDeleteVendorMutation } from "./__generated__/ListVendorViewDeleteVendorMutation.graphql";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Vendor, Vendors } from "@probo/vendors";
+import type { Vendor, Vendors } from "@probo/vendors";
 
 const ITEMS_PER_PAGE = 25;
 

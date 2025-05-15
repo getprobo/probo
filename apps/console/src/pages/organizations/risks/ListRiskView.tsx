@@ -19,8 +19,8 @@ import type { ListRiskViewQuery } from "./__generated__/ListRiskViewQuery.graphq
 import { useParams, useSearchParams } from "react-router";
 import { PageTemplate } from "@/components/PageTemplate";
 import { RiskViewSkeleton } from "./ListRiskPage";
-import { ListRiskViewPaginationQuery } from "./__generated__/ListRiskViewPaginationQuery.graphql";
-import { ListRiskView_risks$key } from "./__generated__/ListRiskView_risks.graphql";
+import { type ListRiskViewPaginationQuery } from "./__generated__/ListRiskViewPaginationQuery.graphql";
+import { type ListRiskView_risks$key } from "./__generated__/ListRiskView_risks.graphql";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router";
@@ -34,7 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ListRiskViewDeleteMutation } from "./__generated__/ListRiskViewDeleteMutation.graphql";
+import { type ListRiskViewDeleteMutation } from "./__generated__/ListRiskViewDeleteMutation.graphql";
 import {
   Popover,
   PopoverContent,
