@@ -1,0 +1,44 @@
+{
+  "name": "console2",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "relay": "npx relay-compiler",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@probo/i18n": "1.0.0",
+    "@probo/ui": "1.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-error-boundary": "^6.0.0",
+    "react-relay": "^19.0.0",
+    "react-router": "^7.6.0",
+    "relay-runtime": "^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@tailwindcss/vite": "^4.1.7",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@types/react-relay": "^18.2.1",
+    "@types/relay-runtime": "^19.0.1",
+    "@vitejs/plugin-react": "^4.4.1",
+    "babel-plugin-relay": "^19.0.0",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "graphql": "^16.11.0",
+    "prettier": "^3.5.3",
+    "relay-compiler": "^19.0.0",
+    "tailwindcss": "^4.1.7",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.30.1",
+    "vite": "^6.3.5"
+  }
+}

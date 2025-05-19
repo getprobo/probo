@@ -54,32 +54,40 @@ pkg/server/api/console/v1/types/types.go \
 pkg/server/api/console/v1/v1_resolver.go: pkg/server/api/console/v1/gqlgen.yaml pkg/server/api/console/v1/schema.graphql
 	$(GO_GENERATE) ./pkg/server/api/console/v1
 
+.PHONY: help
+help: ## Show this help
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+.PHONY:dev
+dev: ## Start the development server
+	parallel -j 2 --line-buffer ::: "gow -r=false run cmd/probod/main.go" "cd apps/console && npm run dev"
+
 .PHONY: fmt
-fmt: fmt-go
+fmt: fmt-go ## Format Go code
 
 .PHONY: fmt-go
-fmt-go:
+fmt-go: ## Format Go code
 	go fmt ./...
 
 .PHONY: clean
-clean:
+clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf bin/*
 	$(RM) -rf node_modules
 	$(RM) -rf apps/console/{dist,node_modules}
 
 .PHONY: stack-up
-stack-up:
+stack-up: ## Start the docker stack as a deamon
 	$(DOCKER_COMPOSE) up -d
 
 .PHONY: stack-down
-stack-down:
+stack-down: ## Stop the docker stack
 	$(DOCKER_COMPOSE) down
 
 .PHONY: stack-ps
-stack-ps:
+stack-ps: ## List the docker stack containers
 	$(DOCKER_COMPOSE) ps
 
 .PHONY: psql
-psql:
+psql: ## Open a psql shell to the postgres container
 	$(DOCKER_COMPOSE) exec postgres psql -U probod -d probod
 
