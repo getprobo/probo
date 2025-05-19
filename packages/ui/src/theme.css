@@ -1,0 +1,166 @@
+@theme {
+    --font-sans: "Geist", "sans-serif";
+    --color-*: initial;
+
+    --color-level-0: #fffffb;
+    --color-level-1: #ffffff;
+    --color-level-2: #ffffff;
+    --color-level-3: #141e12;
+
+    /* Text colors */
+    --color-txt-primary: #141e12;
+    --color-invert: #fcfdfc;
+    --color-txt-secondary: #6b716a;
+    --color-txt-tertiary: #818780;
+    --color-txt-quaternary: #d8dcd8;
+    --color-txt-disabled: #000000;
+    --color-txt-accent: #93c926;
+    --color-txt-danger: #cd2b31;
+    --color-txt-success: #5d770d;
+    --color-txt-info: #006adc;
+    --color-txt-warning: #ad5700;
+
+    /* Backgrounds */
+    --color-primary: #141e12;
+    --color-invert: #ffffff;
+    --color-secondary: #ffffff;
+    --color-tertiary: #ffffff;
+    --color-subtle: #054d0507;
+    --color-highlight: #0027000d;
+    --color-active: #e4f7c7;
+    --color-accent: #141e12;
+    --color-danger: #ffefef;
+    --color-danger-plain: #dc3d43;
+    --color-danger-dark: #dc3d43;
+    --color-success: #eefadc;
+    --color-info: #edf6ff;
+    --color-warning: #fff4d5;
+    --color-dialog: #141e12;
+
+    /* Borders */
+    --color-border-solid: #ecefec;
+    --color-border-low: #022a0213;
+    --color-border-mid: #001a0027;
+    --color-border-strong: #051a013d;
+    --color-border-active: #141e12;
+    --color-border-accent: #93c926;
+    --color-border-danger: #dc3d43;
+    --color-border-success: #93c926;
+    --color-border-warning: #ffa01c;
+    --color-border-info: #0081f1;
+
+    /* Hover */
+    --color-primary-hover: #273025;
+    --color-invert-hover: #f8faf8;
+    --color-secondary-hover: #f8faf8;
+    --color-tertiary-hover: #054d0507;
+    --color-subtle-hover: #0027000d;
+    --color-highlight-hover: #022a0213;
+    --color-accent-hover: #1e2c1c;
+    --color-active-hover: #d7f2b0;
+    --color-danger-hover: #cf393f;
+
+    /* Pressed */
+    --color-primary-pressed: #30392e;
+    --color-invert-pressed: #f2f4f2;
+    --color-secondary-pressed: #f2f4f2;
+    --color-tertiary-pressed: #0027000d;
+    --color-subtle-pressed: #022a0213;
+    --color-highlight-pressed: #02210219;
+    --color-accent-pressed: #293a25;
+    --color-active-pressed: #c9e894;
+    --color-danger-pressed: #c6373c;
+
+    /* text-5xl */
+    --text-5xl: 3rem;
+    --text-5xl--line-height: 3rem;
+    --text-5xl--letter-spacing: -1.6px;
+    --text-5xl--font-weight: 600;
+
+    /* text-4xl */
+    --text-4xl: 2.25rem;
+    --text-4xl--line-height: 2.5rem;
+    --text-4xl--letter-spacing: -1.2px;
+    --text-4xl--font-weight: 600;
+
+    /* text-3xl */
+    --text-3xl: 1.875rem;
+    --text-3xl--line-height: 2.25rem;
+    --text-3xl--letter-spacing: -1px;
+    --text-3xl--font-weight: 600;
+
+    /* text-2xl */
+    --text-2xl: 1.5rem;
+    --text-2xl--line-height: 2rem;
+    --text-2xl--letter-spacing: -0.6px;
+    --text-2xl--font-weight: 600;
+
+    /* text-xl */
+    --text-xl: 1.25rem;
+    --text-xl--line-height: 1.75rem;
+    --text-xl--letter-spacing: -0.4px;
+    --text-xl--font-weight: 600;
+
+    /* text-xl-medium */
+    --text-xl-medium: 1.25rem;
+    --text-xl-medium--line-height: 1.75rem;
+    --text-xl-medium--letter-spacing: -0.4px;
+    --text-xl-medium--font-weight: 500;
+
+    /* text-lg */
+    --text-lg: 1.125rem;
+    --text-lg--line-height: 1.75rem;
+    --text-lg--letter-spacing: 0px;
+    --text-lg--font-weight: 400;
+
+    /* text-base */
+    --text-base: 1rem;
+    --text-base--line-height: 1.5rem;
+    --text-base--letter-spacing: 0px;
+    --text-base--font-weight: 400;
+
+    /* text-base-link */
+    --text-base-link: 1rem;
+    --text-base-link--line-height: 1.5rem;
+    --text-base-link--letter-spacing: 0px;
+    --text-base-link--font-weight: 400;
+
+    /* text-sm */
+    --text-sm: 0.875rem;
+    --text-sm--line-height: 1.25rem;
+    --text-sm--letter-spacing: 0px;
+    --text-sm--font-weight: 400;
+
+    /* text-sm-link */
+    --text-sm-link: 0.875rem;
+    --text-sm-link--line-height: 1.25rem;
+    --text-sm-link--letter-spacing: 0px;
+    --text-sm-link--font-weight: 500;
+
+    /* text-xs */
+    --text-xs: 0.75rem;
+    --text-xs--line-height: 1rem;
+    --text-xs--letter-spacing: 0px;
+    --text-xs--font-weight: 400;
+
+    /* text-xxs */
+    --text-xxs: 0.6875rem;
+    --text-xxs--line-height: 0.875rem;
+    --text-xxs--letter-spacing: 0px;
+    --text-xxs--font-weight: 400;
+
+    /* Shadows */
+    --shadow-*: initial;
+    --shadow-base:
+        0px 1px 3px 0px rgba(11, 19, 36, 0.1),
+        0px -1px 0px 0px rgba(0, 0, 0, 0.1) inset;
+    --shadow-hover:
+        0px 2px 6px 0px rgba(11, 19, 36, 0.1),
+        0px -1px 0px 0px rgba(0, 0, 0, 0.1) inset;
+    --shadow-focus: 0px 0px 0px 4px rgba(135, 190, 34, 0.5);
+    --shadow-mid:
+        0px 2px 4px 0px rgba(0, 0, 0, 0.08),
+        0px 2px 12px 0px rgba(0, 0, 0, 0.06);
+}
+
+@import "tw-animate-css";
