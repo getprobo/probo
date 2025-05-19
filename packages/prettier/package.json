@@ -1,0 +1,12 @@
+{
+  "name": "@probo/prettier",
+  "private": true,
+  "version": "1.0.0",
+  "description": "",
+  "main": "prettier.config.js",
+  "scripts": {
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

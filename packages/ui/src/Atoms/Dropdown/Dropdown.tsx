@@ -1,0 +1,79 @@
+import type { FC, PropsWithChildren, ReactNode } from "react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { clsx } from "clsx";
+import type { IconProps } from "../Icons/type.ts";
+import { tv } from "tailwind-variants";
+
+type Props = PropsWithChildren<{
+    toggle: ReactNode;
+    className?: string;
+}>;
+
+export function Dropdown({ children, toggle, className }: Props) {
+    return (
+        <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>{toggle}</DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+                <DropdownMenu.Content
+                    className={clsx(
+                        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-dropdown-menu-content-transform-origin]",
+                        "z-50 p-2 shadow-mid min-w-[8rem] bg-surface-1 overflow-y-auto overflow-x-hidden rounded-2xl border-border-low",
+                        className,
+                    )}
+                    sideOffset={5}
+                >
+                    {children}
+                </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+    );
+}
+
+export function DropdownSeparator() {
+    return <DropdownMenu.Separator className="h-[1px] bg-border-low my-2" />;
+}
+
+type DropdownItemProps = PropsWithChildren<{
+    className?: string;
+    icon?: FC<IconProps>;
+    asChild?: boolean;
+    variant?: "primary" | "tertiary" | "danger";
+}>;
+
+const dropdownItem = tv({
+    base: "text-txt-primary flex items-center gap-2 hover:bg-tertiary-hover active:bg-tertiary-pressed cursor-pointer p-2",
+    variants: {
+        variant: {
+            primary: "text-txt-primary",
+            tertiary: "text-txt-tertiary",
+            danger: "text-txt-danger",
+        },
+    },
+    defaultVariants: {
+        variant: "primary",
+    },
+});
+
+export function DropdownItem({
+    icon: IconComponent,
+    variant,
+    className,
+    children,
+    asChild,
+}: DropdownItemProps) {
+    return (
+        <DropdownMenu.Item
+            className={clsx(dropdownItem({ variant }), className)}
+            asChild={asChild}
+        >
+            {asChild ? (
+                children
+            ) : (
+                <>
+                    {IconComponent && <IconComponent size={16} />}
+                    {children}
+                </>
+            )}
+        </DropdownMenu.Item>
+    );
+}
