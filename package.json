@@ -15,5 +15,8 @@
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "volta": {
+    "node": "22.15.0"
+  }
 }
