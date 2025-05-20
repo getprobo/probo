@@ -1,4 +1,4 @@
-import { Outlet, useParams } from "react-router";
+import { Link, Navigate, Outlet, useParams } from "react-router";
 import {
   DropdownSeparator,
   IconArrowBoxLeft,
@@ -13,13 +13,21 @@ import {
   IconTodo,
   Layout,
   SidebarItem,
-  UserDropdown,
+  UserDropdown as UserDropdownRoot,
   UserDropdownItem,
+  Skeleton,
+  Dropdown,
+  Button,
+  DropdownItem,
+  IconChevronGrabberVertical,
+  IconPlusLarge,
+  Avatar,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery } from "react-relay";
 import type { MainLayoutQuery as MainLayoutQueryType } from "./__generated__/MainLayoutQuery.graphql";
+import { Suspense } from "react";
 
 const MainLayoutQuery = graphql`
   query MainLayoutQuery {
@@ -29,42 +37,45 @@ const MainLayoutQuery = graphql`
         fullName
         email
       }
+      organizations(first: 25) @connection(key: "MainLayout_organizations") {
+        __id
+        edges {
+          node {
+            id
+            name
+            logoUrl
+          }
+        }
+      }
     }
   }
 `;
 
+/**
+ * Site layout with a header and a sidebar
+ */
 export function MainLayout() {
   const { organizationId } = useParams();
   const { __ } = useTranslate();
-  const user = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {}).viewer
-    .user;
 
   const prefix = `/organizations/${organizationId}`;
+
+  if (!organizationId) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <Layout
       header={
         <>
-          <div className="mr-auto"></div>
-          <UserDropdown fullName={user.fullName} email={user.email}>
-            <UserDropdownItem
-              to="/settings"
-              icon={IconSettingsGear2}
-              label={__("Settings")}
-            />
-            <UserDropdownItem
-              to="/settings"
-              icon={IconCircleQuestionmark}
-              label={__("Help")}
-            />
-            <DropdownSeparator />
-            <UserDropdownItem
-              variant="danger"
-              to="/logout"
-              icon={IconArrowBoxLeft}
-              label="Logout"
-            />
-          </UserDropdown>
+          <div className="mr-auto">
+            <Suspense fallback={<Skeleton className="w-20 h-8" />}>
+              <OrganizationSelector organizationId={organizationId} />
+            </Suspense>
+          </div>
+          <Suspense fallback={<Skeleton className="w-32 h-8" />}>
+            <UserDropdown />
+          </Suspense>
         </>
       }
       sidebar={
@@ -114,5 +125,77 @@ export function MainLayout() {
     >
       <Outlet />
     </Layout>
+  );
+}
+
+function UserDropdown() {
+  const { __ } = useTranslate();
+  const user = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {}).viewer
+    .user;
+  return (
+    <UserDropdownRoot fullName={user.fullName} email={user.email}>
+      <UserDropdownItem
+        to="/settings"
+        icon={IconSettingsGear2}
+        label={__("Settings")}
+      />
+      <UserDropdownItem
+        to="/settings"
+        icon={IconCircleQuestionmark}
+        label={__("Help")}
+      />
+      <DropdownSeparator />
+      <UserDropdownItem
+        variant="danger"
+        to="/logout"
+        icon={IconArrowBoxLeft}
+        label="Logout"
+      />
+    </UserDropdownRoot>
+  );
+}
+
+function OrganizationSelector({ organizationId }: { organizationId: string }) {
+  const organizations = useLazyLoadQuery<MainLayoutQueryType>(
+    MainLayoutQuery,
+    {}
+  ).viewer.organizations.edges.map((edge) => edge.node);
+  const currentOrganization = organizations.find(
+    (organization) => organization.id === organizationId
+  );
+  const { __ } = useTranslate();
+
+  return (
+    <Dropdown
+      toggle={
+        <Button
+          className="-ml-3"
+          variant="tertiary"
+          iconAfter={IconChevronGrabberVertical}
+        >
+          {currentOrganization?.name}
+        </Button>
+      }
+    >
+      {organizations.map((organization) => (
+        <DropdownItem
+          asChild
+          key={organization.id}
+          icon={IconCircleQuestionmark}
+        >
+          <Link to={`/organizations/${organization.id}`}>
+            <Avatar src={organization.logoUrl} name={organization.name} />
+            {organization.name}
+          </Link>
+        </DropdownItem>
+      ))}
+      <DropdownSeparator />
+      <DropdownItem asChild icon={IconPlusLarge}>
+        <Link to="/organizations/new">
+          <IconPlusLarge size={16} />
+          {__("Add organization")}
+        </Link>
+      </DropdownItem>
+    </Dropdown>
   );
 }
