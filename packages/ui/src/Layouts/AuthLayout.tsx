@@ -1,13 +1,12 @@
 import logo from "../assets/android-chrome-512x512.png";
 import { useTranslate } from "@probo/i18n";
 import { Outlet } from "react-router";
-import { Toasts } from "../Atoms/Toasts/Toasts";
 
 export function AuthLayout() {
     const { __ } = useTranslate();
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen">
-            <div className="bg-surface-0 flex flex-col items-center justify-center">
+            <div className="bg-level-0 flex flex-col items-center justify-center">
                 <div className="max-w-112">
                     <Outlet />
                 </div>
@@ -21,7 +20,6 @@ export function AuthLayout() {
                     </span>
                 </div>
             </div>
-            <Toasts />
         </div>
     );
 }
