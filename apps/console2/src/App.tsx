@@ -1,7 +1,12 @@
-import { ErrorBoundary } from "react-error-boundary";
 import { RouterProvider } from "react-router";
-import { routes } from "./routes";
+import { router } from "./routes";
+import { Toasts } from "@probo/ui";
 
 export function App() {
-  return <RouterProvider router={routes} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toasts />
+    </>
+  );
 }
