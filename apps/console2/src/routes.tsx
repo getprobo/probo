@@ -1,10 +1,14 @@
-import { createBrowserRouter, useRouteError } from "react-router";
+import {
+  createBrowserRouter,
+  useRouteError,
+  type RouteObject,
+} from "react-router";
 import { MainLayout } from "./layouts/MainLayout";
+import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
+import { lazy, Suspense, type FC } from "react";
 import { UnAuthenticatedError } from "./providers/RelayProviders";
-import { AuthLayout } from "@probo/ui";
-import { LoginPage } from "./pages/auth/LoginPage";
 
-function Demo() {
+function ErrorBoundary() {
   const error = useRouteError();
   if (error instanceof UnAuthenticatedError) {
     return <div></div>;
@@ -13,26 +17,71 @@ function Demo() {
   return <div>error</div>;
 }
 
-export const routes = createBrowserRouter([
+type Route = {
+  path: string;
+  Component: FC;
+  children?: Route[];
+  ErrorBoundary?: FC;
+  fallback?: FC;
+};
+
+const routes = [
   {
     path: "/auth",
     Component: AuthLayout,
     children: [
       {
         path: "login",
-        element: <LoginPage />,
+        Component: lazy(() => import("./pages/auth/LoginPage")),
       },
     ],
   },
   {
     path: "/",
-    Component: MainLayout,
-    ErrorBoundary: Demo,
+    Component: CenteredLayout,
+    fallback: CenteredLayoutSkeleton,
     children: [
       {
-        path: "/",
-        element: <div>Home</div>,
+        path: "",
+        Component: lazy(() => import("./pages/OrganizationsPage")),
+      },
+      {
+        path: "organizations/new",
+        Component: lazy(
+          () => import("./pages/organizations/NewOrganizationPage")
+        ),
       },
     ],
   },
-]);
+  {
+    path: "/organizations/:organizationId",
+    Component: MainLayout,
+    ErrorBoundary: ErrorBoundary,
+    children: [
+      {
+        path: "risks",
+        Component: lazy(() => import("./pages/organizations/risks/RisksPage")),
+      },
+    ],
+  },
+] satisfies Route[];
+
+/**
+ * Wrap component with a suspense to handle lazy loading & relay loading states
+ */
+function routeTransformer(route: Route): RouteObject {
+  if ("fallback" in route && route.fallback) {
+    return {
+      ...route,
+      children: route.children?.map(routeTransformer),
+      Component: () => (
+        <Suspense fallback={<route.fallback />}>
+          <route.Component />
+        </Suspense>
+      ),
+    } as RouteObject;
+  }
+  return route as RouteObject;
+}
+
+export const router = createBrowserRouter(routes.map(routeTransformer));
