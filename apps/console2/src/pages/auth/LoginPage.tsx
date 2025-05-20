@@ -1,9 +1,9 @@
 import { useTranslate } from "@probo/i18n";
 import { Button, Input, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 
-export function LoginPage() {
+export default function LoginPage() {
   const { __ } = useTranslate();
   const navigate = useNavigate();
   const { toast } = useToast();

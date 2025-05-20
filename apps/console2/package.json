@@ -11,8 +11,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@probo/hooks": "1.0.0",
     "@probo/i18n": "1.0.0",
     "@probo/ui": "1.0.0",
+    "@radix-ui/react-dialog": "^1.1.14",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-error-boundary": "^6.0.0",
