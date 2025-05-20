@@ -10,6 +10,7 @@
     /* Text colors */
     --color-txt-primary: #141e12;
     --color-invert: #fcfdfc;
+    --color-txt-invert: var(--color-invert);
     --color-txt-secondary: #6b716a;
     --color-txt-tertiary: #818780;
     --color-txt-quaternary: #d8dcd8;
@@ -162,5 +163,3 @@
         0px 2px 4px 0px rgba(0, 0, 0, 0.08),
         0px 2px 12px 0px rgba(0, 0, 0, 0.06);
 }
-
-@import "tw-animate-css";

@@ -60,7 +60,7 @@ help: ## Show this help
 
 .PHONY:dev
 dev: ## Start the development server
-	parallel -j 2 --line-buffer ::: "gow -r=false run cmd/probod/main.go" "cd apps/console && npm run dev"
+	parallel -j 2 --line-buffer ::: "gow -r=false run cmd/probod/main.go" "cd apps/console2 && npm run dev"
 
 .PHONY: fmt
 fmt: fmt-go ## Format Go code

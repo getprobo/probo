@@ -6,6 +6,7 @@ import {
 } from "react";
 import { clsx } from "clsx";
 import { IconCollapse, IconExpand } from "../Icons";
+import { Button } from "../Button/Button";
 
 const sidebarContext = createContext({ open: true });
 
@@ -15,21 +16,17 @@ export function Sidebar({ children }: PropsWithChildren) {
         <sidebarContext.Provider value={{ open }}>
             <aside
                 className={clsx(
-                    "border-r border-border-solid relative pt-12 flex-none",
+                    "border-r border-border-solid relative pt-16 flex-none",
                     open ? "px-4 w-[260px]" : "px-2",
                 )}
             >
                 {children}
-                <button
+                <Button
+                    variant="tertiary"
+                    icon={open ? IconCollapse : IconExpand}
                     onClick={() => setOpen(!open)}
-                    className="cursor-pointer absolute bottom-4 left-4"
-                >
-                    {open ? (
-                        <IconCollapse size={16} />
-                    ) : (
-                        <IconExpand size={16} />
-                    )}
-                </button>
+                    className="absolute bottom-4 left-4"
+                />
             </aside>
         </sidebarContext.Provider>
     );
