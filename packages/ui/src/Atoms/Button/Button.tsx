@@ -4,7 +4,6 @@ import type {
     FC,
     PropsWithChildren,
 } from "react";
-import { forwardRef } from "react";
 import { Link } from "react-router";
 import { tv, type VariantProps } from "tailwind-variants";
 
@@ -56,28 +55,25 @@ type Props = PropsWithChildren<
         | AnchorHTMLAttributes<HTMLAnchorElement>
     );
 
-export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, Props>(
-    (props, ref) => {
-        const Component = props.to ? Link : "button";
-        const {
-            icon: IconComponent,
-            iconAfter: IconAfterComponent,
-            children,
-            onClick,
-            ...componentProps
-        } = props;
-        return (
-            <Component
-                {...componentProps}
-                onClick={onClick}
-                // @ts-expect-error Component is too dynamic
-                ref={ref}
-                className={button({ ...props, empty: !children })}
-            >
-                {IconComponent && <IconComponent size={16} />}
-                {children}
-                {IconAfterComponent && <IconAfterComponent size={16} />}
-            </Component>
-        );
-    },
-);
+export const Button = (props: Props) => {
+    const Component = props.to ? Link : "button";
+    const {
+        icon: IconComponent,
+        iconAfter: IconAfterComponent,
+        children,
+        onClick,
+        ...componentProps
+    } = props;
+    return (
+        // @ts-expect-error Component is too dynamic
+        <Component
+            {...componentProps}
+            onClick={onClick}
+            className={button({ ...props, empty: !children })}
+        >
+            {IconComponent && <IconComponent size={16} />}
+            {children}
+            {IconAfterComponent && <IconAfterComponent size={16} />}
+        </Component>
+    );
+};

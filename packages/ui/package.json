@@ -6,14 +6,16 @@
     "main": "src/index.ts",
     "scripts": {
         "lint": "eslint .",
-        "dev": "storybook dev -p 6006",
-        "build": "storybook build"
+        "dev": "storybook dev -p 6006 --no-open",
+        "build": "storybook build",
+        "check": "tsc --noEmit -p tsconfig.app.json"
     },
     "prettier": "@probo/prettier",
     "dependencies": {
         "@probo/helpers": "1.0.0",
         "@probo/i18n": "1.0.0",
         "@radix-ui/react-dropdown-menu": "^2.1.14",
+        "@radix-ui/react-scroll-area": "^1.2.9",
         "@tailwindcss/vite": "^4.1.7",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
@@ -30,7 +32,6 @@
         "@eslint/js": "^9.25.0",
         "@probo/prettier": "1.0.0",
         "@storybook/addon-essentials": "^8.6.13",
-        "@storybook/addon-onboarding": "^8.6.13",
         "@storybook/blocks": "^8.6.13",
         "@storybook/experimental-addon-test": "^8.6.13",
         "@storybook/react": "^8.6.13",

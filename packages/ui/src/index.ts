@@ -20,7 +20,10 @@ export {
     DropdownItem,
 } from "./Atoms/Dropdown/Dropdown";
 export { Avatar } from "./Atoms/Avatar/Avatar";
-export { Input } from "./Atoms/Input/Input";
+export { Field } from "./Molecules/Field/Field.tsx";
+export { Input } from "./Atoms/Input/Input.tsx";
+export { Select, Option } from "./Atoms/Select/Select.tsx";
+export { Label } from "./Atoms/Label/Label";
 
 // Molecules
 export {
