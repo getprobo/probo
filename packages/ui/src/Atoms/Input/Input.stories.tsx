@@ -9,10 +9,4 @@ export default {
 
 type Story = StoryObj<typeof Input>;
 
-export const Default: Story = {
-    args: {
-        label: "Label",
-        name: "id",
-        help: "e.g. This is a hint",
-    },
-};
+export const Default: Story = {};

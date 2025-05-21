@@ -1,21 +1,25 @@
 {
   "name": "probo",
   "description": "Probo monorepo containing applications and shared packages",
-  "packageManager": "npm@11.1.0",
   "engines": {
     "node": "22.x"
   },
   "workspaces": [
-    "apps/*",
+    "apps/console2",
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "check": "turbo run check"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.3"
   },
   "license": "MIT",
+  "packageManager": "bun@1.2.4",
   "volta": {
     "node": "22.15.1"
   }
