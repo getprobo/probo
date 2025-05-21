@@ -24,8 +24,16 @@ export const Default: Story = {
     },
 };
 
-export const NoChildren: Story = {
+export const Dashed: Story = {
     args: {
-        placeholder: "Select an option",
+        ...Default.args,
+        variant: "dashed",
+    },
+};
+
+export const Invalid: Story = {
+    args: {
+        ...Default.args,
+        invalid: true,
     },
 };
