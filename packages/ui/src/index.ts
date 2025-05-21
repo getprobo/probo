@@ -22,8 +22,10 @@ export {
 export { Avatar } from "./Atoms/Avatar/Avatar";
 export { Field } from "./Molecules/Field/Field.tsx";
 export { Input } from "./Atoms/Input/Input.tsx";
+export { Textarea } from "./Atoms/Textarea/Textarea.tsx";
 export { Select, Option } from "./Atoms/Select/Select.tsx";
 export { Label } from "./Atoms/Label/Label";
+export { PropertyRow } from "./Atoms/PropertyRow/PropertyRow";
 
 // Molecules
 export {

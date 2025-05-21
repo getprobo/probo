@@ -16,3 +16,10 @@ export const Default: Story = {
         help: "e.g. This is a hint",
     },
 };
+
+export const Invalid: Story = {
+    args: {
+        ...Default.args,
+        error: "This is an error",
+    },
+};

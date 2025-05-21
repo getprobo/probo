@@ -1,14 +1,13 @@
-import type { HTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 import { tv } from "tailwind-variants";
+import { Label as RadixLabel } from "@radix-ui/react-label";
 
-type Props = HTMLAttributes<HTMLLabelElement> & {
-    htmlFor?: string;
-};
+type Props = ComponentProps<typeof RadixLabel>;
 
 const label = tv({
-    base: "text-sm font-medium text-txt-primary",
+    base: "block text-sm font-medium text-txt-primary mb-[6px]",
 });
 
 export function Label({ ...props }: Props) {
-    return <label {...props} className={label(props)} />;
+    return <RadixLabel {...props} className={label(props)} />;
 }
