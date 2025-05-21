@@ -1,16 +1,27 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { App } from "./App.tsx";
-import { RelayProvider } from "./providers/RelayProviders.tsx";
-import { TranslatorProvider } from "./providers/TranslatorProvider.tsx";
+import { App } from "./App";
+import { RelayProvider } from "./providers/RelayProviders";
+import { TranslatorProvider } from "./providers/TranslatorProvider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RelayProvider>
-      <TranslatorProvider>
-        <App />
-      </TranslatorProvider>
-    </RelayProvider>
+    <QueryClientProvider client={queryClient}>
+      <RelayProvider>
+        <TranslatorProvider>
+          <App />
+        </TranslatorProvider>
+      </RelayProvider>
+    </QueryClientProvider>
   </StrictMode>
 );
