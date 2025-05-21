@@ -1,13 +1,13 @@
 import { useTranslate } from "@probo/i18n";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { OrganizationSelectionPageQuery as OrganizationSelectionPageQueryType } from "./__generated__/OrganizationSelectionPageQuery.graphql";
+import type { OrganizationsPageQuery as OrganizationsPageQueryType } from "./__generated__/OrganizationsPageQuery.graphql";
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { Avatar, Button, Card, IconPlusLarge } from "@probo/ui";
 
-const OrganizationSelectionPageQuery = graphql`
-  query OrganizationSelectionPageQuery {
+const OrganizationsPageQuery = graphql`
+  query OrganizationsPageQuery {
     viewer {
       organizations(first: 25) {
         edges {
@@ -22,11 +22,11 @@ const OrganizationSelectionPageQuery = graphql`
   }
 `;
 
-export default function OrganizationSelectionPage() {
+export default function OrganizationsPage() {
   const { __ } = useTranslate();
   const navigate = useNavigate();
-  const data = useLazyLoadQuery<OrganizationSelectionPageQueryType>(
-    OrganizationSelectionPageQuery,
+  const data = useLazyLoadQuery<OrganizationsPageQueryType>(
+    OrganizationsPageQuery,
     {}
   );
 
