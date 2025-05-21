@@ -11,6 +11,6 @@ type Story = StoryObj<typeof Avatar>;
 
 export const Default: Story = {
     args: {
-        fullName: "John Doe",
+        name: "John Doe",
     },
 };

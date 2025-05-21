@@ -1,6 +1,6 @@
 /**
  * A type safe version of Object.keys
  */
-export function objectKeys<T>(object: T) {
+export function objectKeys<T extends Record<string, unknown>>(object: T) {
     return Object.keys(object) as (keyof T)[];
 }
