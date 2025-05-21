@@ -18,14 +18,14 @@ export function UserDropdown({ fullName, children, email }: Props) {
             className="w-60"
             toggle={
                 <Button variant="tertiary">
-                    <Avatar fullName={fullName} />
+                    <Avatar name={fullName} />
                     <span>{fullName}</span>
                     <IconChevronDown size={16} />
                 </Button>
             }
         >
             <div className="flex gap-2 items-center">
-                <Avatar fullName={fullName} size="l" />
+                <Avatar name={fullName} size="l" />
                 <div>
                     <p className="text-sm font-medium text-txt-primary">
                         {fullName}

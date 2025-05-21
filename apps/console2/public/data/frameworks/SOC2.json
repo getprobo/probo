@@ -1,0 +1,250 @@
+{
+  "name": "SOC 2",
+  "id": "SOC2",
+  "controls": [
+    {
+      "id": "CC1.1",
+      "name": "COSO Principle 1: The entity demonstrates a commitment to integrity and ethical values."
+    },
+    {
+      "id": "CC1.2",
+      "name": "COSO Principle 2: The board of directors demonstrates independence from management and exercises oversight of the development and performance of internal control."
+    },
+    {
+      "id": "CC1.3",
+      "name": "COSO Principle 3: Management establishes, with board oversight, structures, reporting lines, and appropriate authorities and responsibilities in the pursuit of objectives."
+    },
+    {
+      "id": "CC1.4",
+      "name": "COSO Principle 4: The entity demonstrates a individuals in alignment with objectives."
+    },
+    {
+      "id": "CC1.5",
+      "name": "COSO Principle 5: The entity holds individuals in the pursuit of objectives."
+    },
+    {
+      "id": "CC2.1",
+      "name": "COSO Principle 13: The entity obtains or generates functioning of internal control."
+    },
+    {
+      "id": "CC2.2",
+      "name": "COSO Principle 14: The entity internally communicates information, including objectives and responsibilities for internal control, necessary to support the functioning of internal control."
+    },
+    {
+      "id": "CC2.3",
+      "name": "COSO Principle 15: The entity communicates with functioning of internal control."
+    },
+    {
+      "id": "CC3.1",
+      "name": "COSO Principle 6: The entity specifies objectives with assessment of risks relating to objectives."
+    },
+    {
+      "id": "CC3.2",
+      "name": "COSO Principle 7: The entity identifies risks to the achievement of its objectives across the entity and analyzes risks as a basis for determining how the risks should be managed."
+    },
+    {
+      "id": "CC3.3",
+      "name": "COSO Principle 8: The entity considers the potential objectives."
+    },
+    {
+      "id": "CC3.4",
+      "name": "COSO Principle 9: The entity identifies and assesses internal control."
+    },
+    {
+      "id": "CC4.1",
+      "name": "COSO Principle 16: The entity selects, develops, and performs ongoing and/or separate evaluations to ascertain whether the components of internal control are present and functioning."
+    },
+    {
+      "id": "CC4.2",
+      "name": "COSO Principle 17: The entity evaluates and communicates internal control deficiencies in a timely corrective action, including senior management and the board of directors, as appropriate."
+    },
+    {
+      "id": "CC5.1",
+      "name": "COSO Principle 10: The entity selects and develops control activities that contribute to the mitigation of risks to the achievement of objectives to acceptable levels."
+    },
+    {
+      "id": "CC5.2",
+      "name": "COSO Principle 11: The entity also selects and support the achievement of objectives."
+    },
+    {
+      "id": "CC5.3",
+      "name": "COSO Principle 12: The entity deploys control activities through policies that establish what is expected and in procedures that put policies into action."
+    },
+    {
+      "id": "CC6.1",
+      "name": "The entity implements logical access security software, infrastructure, and architectures over protected information assets to protect them from security events to meet the entity’s objectives."
+    },
+    {
+      "id": "CC6.2",
+      "name": "Prior to issuing system credentials and granting system access, the entity registers and authorizes new internal and external users whose access is administered by the entity. For those users whose access is administered by the entity, user system credentials are removed when user access is no longer authorized."
+    },
+    {
+      "id": "CC6.3",
+      "name": "The entity authorizes, modifies, or removes access to data, software, functions, and other protected information assets based on roles, responsibilities, or the system design and changes, giving consideration to the concepts of least privilege and segregation of duties, to meet the entity’s objectives."
+    },
+    {
+      "id": "CC6.4",
+      "name": "The entity restricts physical access to facilities and protected information assets (for example, data center locations) to authorized personnel to meet the entity’s objectives."
+    },
+    {
+      "id": "CC6.5",
+      "name": "The entity discontinues logical and physical protections over physical assets only after the ability to read or diminished and is no longer required to meet the entity’s objectives."
+    },
+    {
+      "id": "CC6.6",
+      "name": "The entity implements logical access security measures system boundaries."
+    },
+    {
+      "id": "CC6.7",
+      "name": "The entity restricts the transmission, movement, and removal of information to authorized internal and transmission, movement, or removal to meet the entity’s objectives."
+    },
+    {
+      "id": "CC6.8",
+      "name": "The entity implements controls to prevent or detect and software to meet the entity’s objectives."
+    },
+    {
+      "id": "CC7.1",
+      "name": "To meet its objectives, the entity uses detection and monitoring procedures to identify (1) changes to vulnerabilities, and (2) susceptibilities to newly discovered vulnerabilities."
+    },
+    {
+      "id": "CC7.2",
+      "name": "The entity monitors system components and the operation of those components for anomalies that are indicative of malicious acts, natural disasters, and errors affecting the entity’s ability to meet its objectives; anomalies are analyzed to determine whether they represent security events."
+    },
+    {
+      "id": "CC7.3",
+      "name": "The entity evaluates security events to determine whether they could or have resulted in a failure of the entity to meet its objectives (security incidents) and, if so, takes actions to prevent or address such failures."
+    },
+    {
+      "id": "CC7.4",
+      "name": "The entity responds to identified security incidents by executing a defined incident response program to understand, contain, remediate, and communicate security incidents, as appropriate."
+    },
+    {
+      "id": "CC7.5",
+      "name": "The entity identifies, develops, and implements activities to recover from identified security incidents."
+    },
+    {
+      "id": "CC8.1",
+      "name": "The entity authorizes, designs, develops or acquires, configures, documents, tests, approves, and implements changes to infrastructure, data, software, and procedures to meet its objectives."
+    },
+    {
+      "id": "CC9.1",
+      "name": "The entity identifies, selects, and develops risk business disruptions."
+    },
+    {
+      "id": "CC9.2",
+      "name": "The entity assesses and manages risks associated with vendors and business partners."
+    },
+    {
+      "id": "A1.1",
+      "name": "The entity maintains, monitors, and evaluates current processing capacity and use of system components capacity demand and to enable the implementation of additional capacity to help meet its objectives."
+    },
+    {
+      "id": "A1.2",
+      "name": "The entity authorizes, designs, develops or acquires, implements, operates, approves, maintains, and back-up processes, and recovery infrastructure to meet its objectives."
+    },
+    {
+      "id": "A1.3",
+      "name": "The entity tests recovery plan procedures supporting system recovery to meet its objectives."
+    },
+    {
+      "id": "C1.1",
+      "name": "The entity identifies and maintains confidential confidentiality."
+    },
+    {
+      "id": "C1.2",
+      "name": "The entity disposes of confidential information to meet the entity’s objectives related to confidentiality."
+    },
+    {
+      "id": "PI1.1",
+      "name": "The entity obtains or generates, uses, and communicates relevant, quality information regarding the objectives processed and product and service specifications, to support the use of products and services."
+    },
+    {
+      "id": "PI1.2",
+      "name": "The entity implements policies and procedures over system inputs, including controls over completeness and accuracy, to result in products, services, and reporting to meet the entity’s objectives."
+    },
+    {
+      "id": "PI1.3",
+      "name": "The entity implements policies and procedures over reporting to meet the entity’s objectives."
+    },
+    {
+      "id": "PI1.4",
+      "name": "The entity implements policies and procedures to make available or deliver output completely, accurately, and timely in accordance with specifications to meet the entity’s objectives."
+    },
+    {
+      "id": "PI1.5",
+      "name": "The entity implements policies and procedures to store inputs, items in processing, and outputs completely, accurately, and timely in accordance with system specifications to meet the entity’s objectives."
+    },
+    {
+      "id": "P1.1",
+      "name": "The entity provides notice to data subjects about its privacy practices to meet the entity’s objectives related to privacy. The notice is updated and communicated to entity’s privacy practices, including changes in the use of personal information, to meet the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P2.1",
+      "name": "The entity communicates choices available regarding the collection, use, retention, disclosure, and disposal of personal information to the data subjects and the consequences, if any, of each choice. Explicit consent for the collection, use, retention, disclosure, and disposal of personal information is obtained from data subjects or other authorized persons, if required. Such consent is obtained only for the intended purpose of the information to meet the entity’s objectives related to privacy. The entity’s basis for determining implicit consent for the collection, use, retention, disclosure, and disposal of personal information is documented."
+    },
+    {
+      "id": "P3.1",
+      "name": "Personal information is collected consistent with the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P3.2",
+      "name": "For information requiring explicit consent, the entity communicates the need for such consent, as well as the consequences of a failure to provide consent for the request for personal information, and obtains the consent prior to the collection of the information to meet the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P4.1",
+      "name": "The entity limits the use of personal information to the privacy."
+    },
+    {
+      "id": "P4.2",
+      "name": "The entity retains personal information consistent with the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P4.3",
+      "name": "The entity securely disposes of personal information to meet the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P5.1",
+      "name": "The entity grants identified and authenticated data subjects the ability to access their stored personal information for review and, upon request, provides physical or electronic copies of that information to data subjects to meet the entity’s objectives related to privacy. If access is denied, data subjects are informed of the denial and reason for such denial, as required, to meet the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P5.2",
+      "name": "The entity corrects, amends, or appends personal information based on information provided by data subjects and communicates such information to third parties, as committed or required, to meet the entity’s objectives related to privacy. If a request for correction is denied, data subjects are informed of the denial and reason for such denial to meet the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P6.1",
+      "name": "The entity discloses personal information to third parties with the explicit consent of data subjects, and such consent is obtained prior to disclosure to meet the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P6.2",
+      "name": "The entity creates and retains a complete, accurate, and timely record of authorized disclosures of personal information to meet the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P6.3",
+      "name": "The entity creates and retains a complete, accurate, and timely record of detected or reported unauthorized information to meet the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P6.4",
+      "name": "The entity obtains privacy commitments from vendors and other third parties who have access to personal information to meet the entity’s objectives related to privacy. The entity assesses those parties’ compliance on a periodic and as-needed basis and takes corrective action, if necessary."
+    },
+    {
+      "id": "P6.5",
+      "name": "The entity obtains commitments from vendors and other third parties with access to personal information to notify the entity in the event of actual or suspected unauthorized disclosures of personal information. Such notifications are reported to appropriate personnel and acted on in accordance with established incident response procedures to meet the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P6.6",
+      "name": "The entity provides notification of breaches and others to meet the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P6.7",
+      "name": "The entity provides data subjects with an accounting of the personal information held and disclosure of the subjects’ request, to meet the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P7.1",
+      "name": "The entity collects and maintains accurate, up-to-date, the entity’s objectives related to privacy."
+    },
+    {
+      "id": "P8.1",
+      "name": "The entity implements a process for receiving, addressing, resolving, and communicating the resolution of inquiries, complaints, and disputes from data subjects and others and periodically monitors compliance to meet the entity’s objectives related to privacy. Corrections and other necessary actions related to identified deficiencies are made or taken in a timely manner."
+    }
+  ]
+}

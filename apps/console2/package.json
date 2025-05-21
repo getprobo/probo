@@ -8,6 +8,7 @@
     "relay": "npx relay-compiler",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "check": "tsc --noEmit -p tsconfig.app.json",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -15,6 +16,8 @@
     "@probo/i18n": "1.0.0",
     "@probo/ui": "1.0.0",
     "@radix-ui/react-dialog": "^1.1.14",
+    "@radix-ui/react-select": "^2.2.5",
+    "@tanstack/react-query": "^5.76.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-error-boundary": "^6.0.0",
