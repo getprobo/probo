@@ -8,7 +8,7 @@ import { Link } from "react-router";
 import { tv, type VariantProps } from "tailwind-variants";
 
 const button = tv({
-    base: "flex items-center justify-center gap-[6px] px-3 py-2 rounded-full cursor-pointer text-sm font-medium h-8",
+    base: "flex items-center justify-center gap-[6px] px-3 py-2 rounded-full cursor-pointer text-sm font-medium h-8 focus:outline-none",
     variants: {
         variant: {
             primary:

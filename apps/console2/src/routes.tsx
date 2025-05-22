@@ -50,7 +50,7 @@ const routes = [
       {
         path: "organizations/new",
         Component: lazy(
-          () => import("./pages/organizations/NewOrganizationPage"),
+          () => import("./pages/organizations/NewOrganizationPage")
         ),
       },
     ],
@@ -61,6 +61,13 @@ const routes = [
     ErrorBoundary: ErrorBoundary,
     children: [
       {
+        path: "vendors",
+        fallback: PageSkeleton,
+        Component: lazy(
+          () => import("./pages/organizations/vendors/VendorsPage")
+        ),
+      },
+      {
         path: "risks",
         fallback: RisksPageSkeleton,
         Component: lazy(() => import("./pages/organizations/risks/RisksPage")),
@@ -69,7 +76,7 @@ const routes = [
         path: "risks/:riskId",
         fallback: PageSkeleton,
         Component: lazy(
-          () => import("./pages/organizations/risks/RiskDetailPage"),
+          () => import("./pages/organizations/risks/RiskDetailPage")
         ),
       },
     ],

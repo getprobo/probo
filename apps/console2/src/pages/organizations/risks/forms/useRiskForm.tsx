@@ -45,7 +45,7 @@ export const riskSchema = z.object({
   inherentImpact: z.number({ coerce: true }).min(1).max(5),
   residualLikelihood: z.number({ coerce: true }).min(1).max(5),
   residualImpact: z.number({ coerce: true }).min(1).max(5),
-  note: z.string(),
+  note: z.string().optional(),
 });
 
 export const useRiskForm = (riskKey?: RiskKey) => {
@@ -56,19 +56,7 @@ export const useRiskForm = (riskKey?: RiskKey) => {
           ...risk,
           ownerId: risk.owner?.id,
         }
-      : {
-          category: "Compliance & Legal",
-          name: "Contractual risk due to poorly drafted agreements",
-          description:
-            "Weak contracts leads to disputes, missed deliverables, or revenue leakage",
-          ownerId: "a_YJLJ5RAAIACAAAAZbuSmzPhFPhoMEQ",
-          treatment: "MITIGATED",
-          inherentLikelihood: 5,
-          inherentImpact: 5,
-          residualLikelihood: 5,
-          residualImpact: 5,
-          note: "Hello worlds this is a test",
-        },
+      : {},
   });
 };
 

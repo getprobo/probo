@@ -19,6 +19,7 @@ type Props = {
     children?: ReactNode;
     onOpenChange?: (open: boolean) => void;
     open?: boolean;
+    className?: string;
 };
 
 export function Dialog({
@@ -27,6 +28,7 @@ export function Dialog({
     children,
     onOpenChange,
     open,
+    className,
 }: Props) {
     return (
         <Root open={open} onOpenChange={onOpenChange}>
@@ -42,6 +44,7 @@ export function Dialog({
                     aria-describedby={undefined}
                     className={clsx(
                         "fixed inset-0 m-auto z-50 w-full h-max bg-level-2 rounded-2xl max-w-5xl w-[95%]",
+                        className,
                         `duration-200
                             data-[state=open]:animate-in data-[state=closed]:animate-out
                             data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0
@@ -53,7 +56,11 @@ export function Dialog({
                     <div className="flex justify-between items-center p-3 border-b border-b-border-low">
                         <Title className="text-sm font-medium">{title}</Title>
                         <Close asChild>
-                            <Button variant="tertiary" icon={IconCrossLargeX} />
+                            <Button
+                                tabIndex={-1}
+                                variant="tertiary"
+                                icon={IconCrossLargeX}
+                            />
                         </Close>
                     </div>
                     {children}

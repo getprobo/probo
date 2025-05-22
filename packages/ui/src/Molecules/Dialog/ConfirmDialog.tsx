@@ -48,7 +48,12 @@ export function ConfirmDialog(props: Props) {
         <>
             {children}
             <Portal>
-                <Dialog open={open} onOpenChange={setOpen} title={title}>
+                <Dialog
+                    open={open}
+                    onOpenChange={setOpen}
+                    title={title}
+                    className="max-w-[500px]"
+                >
                     <DialogContent>
                         <p className="text-sm text-txt-secondary p-4">
                             {props.message}

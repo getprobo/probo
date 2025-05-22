@@ -25,7 +25,7 @@ import type {
 import FormRiskDialog from "./FormRiskDialog";
 import { usePageTitle } from "@probo/hooks";
 import { useOrganizationId } from "../../../hooks/useOrganizationId";
-import { useDeleteRiskMutation } from "../../../mutations/Risks";
+import { useDeleteRiskMutation } from "../../../graph/RiskGraph";
 
 const riskQuery = graphql`
   query RiskDetailPageQuery($riskId: ID!) {
