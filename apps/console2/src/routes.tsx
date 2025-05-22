@@ -7,6 +7,7 @@ import { MainLayout } from "./layouts/MainLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import { lazy, Suspense, type FC } from "react";
 import { UnAuthenticatedError } from "./providers/RelayProviders";
+import { RisksPageSkeleton } from "./pages/organizations/risks/skeletons/RisksPage";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -60,6 +61,7 @@ const routes = [
     children: [
       {
         path: "risks",
+        fallback: RisksPageSkeleton,
         Component: lazy(() => import("./pages/organizations/risks/RisksPage")),
       },
     ],
@@ -72,6 +74,7 @@ const routes = [
 function routeTransformer(route: Route): RouteObject {
   if ("fallback" in route && route.fallback) {
     const fallback = <route.fallback />;
+    console.log(fallback, route.path);
     return {
       ...route,
       children: route.children?.map(routeTransformer),
@@ -82,7 +85,10 @@ function routeTransformer(route: Route): RouteObject {
       ),
     } as RouteObject;
   }
-  return route as RouteObject;
+  return {
+    ...route,
+    children: route.children?.map(routeTransformer),
+  };
 }
 
 export const router = createBrowserRouter(routes.map(routeTransformer));
