@@ -7,7 +7,7 @@ type Props = {
 } & InputHTMLAttributes<HTMLInputElement>;
 
 export const input = tv({
-    base: "py-[6px] bg-secondary border border-border-mid rounded-[10px] hover:border-border-strong focus:shadow-focus text-sm px-3 w-full bg-secondary disabled:bg-transparent",
+    base: "py-[6px] bg-secondary border border-border-mid rounded-[10px] hover:border-border-strong focus:shadow-focus text-sm px-3 w-full bg-secondary disabled:bg-transparent focus:outline-none",
     variants: {
         invalid: {
             true: "border-border-danger",

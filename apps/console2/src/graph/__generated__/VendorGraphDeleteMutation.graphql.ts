@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5102c0f9ea660855dc5db7c6b16fd64b>>
+ * @generated SignedSource<<6b924850fd9bad48c4fe32c331a7770b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,21 +9,21 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type DeleteRiskInput = {
-  riskId: string;
+export type DeleteVendorInput = {
+  vendorId: string;
 };
-export type RisksDeleteMutation$variables = {
+export type VendorGraphDeleteMutation$variables = {
   connections: ReadonlyArray<string>;
-  input: DeleteRiskInput;
+  input: DeleteVendorInput;
 };
-export type RisksDeleteMutation$data = {
-  readonly deleteRisk: {
-    readonly deletedRiskId: string;
+export type VendorGraphDeleteMutation$data = {
+  readonly deleteVendor: {
+    readonly deletedVendorId: string;
   };
 };
-export type RisksDeleteMutation = {
-  response: RisksDeleteMutation$data;
-  variables: RisksDeleteMutation$variables;
+export type VendorGraphDeleteMutation = {
+  response: VendorGraphDeleteMutation$data;
+  variables: VendorGraphDeleteMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -48,7 +48,7 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "deletedRiskId",
+  "name": "deletedVendorId",
   "storageKey": null
 };
 return {
@@ -59,14 +59,14 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "RisksDeleteMutation",
+    "name": "VendorGraphDeleteMutation",
     "selections": [
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "DeleteRiskPayload",
+        "concreteType": "DeleteVendorPayload",
         "kind": "LinkedField",
-        "name": "deleteRisk",
+        "name": "deleteVendor",
         "plural": false,
         "selections": [
           (v3/*: any*/)
@@ -84,14 +84,14 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "RisksDeleteMutation",
+    "name": "VendorGraphDeleteMutation",
     "selections": [
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "DeleteRiskPayload",
+        "concreteType": "DeleteVendorPayload",
         "kind": "LinkedField",
-        "name": "deleteRisk",
+        "name": "deleteVendor",
         "plural": false,
         "selections": [
           (v3/*: any*/),
@@ -102,7 +102,7 @@ return {
             "handle": "deleteEdge",
             "key": "",
             "kind": "ScalarHandle",
-            "name": "deletedRiskId",
+            "name": "deletedVendorId",
             "handleArgs": [
               {
                 "kind": "Variable",
@@ -117,16 +117,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f4273ec8d2cd76543169a6d1b7cd72b3",
+    "cacheID": "866254027729839312bc72c942de3111",
     "id": null,
     "metadata": {},
-    "name": "RisksDeleteMutation",
+    "name": "VendorGraphDeleteMutation",
     "operationKind": "mutation",
-    "text": "mutation RisksDeleteMutation(\n  $input: DeleteRiskInput!\n) {\n  deleteRisk(input: $input) {\n    deletedRiskId\n  }\n}\n"
+    "text": "mutation VendorGraphDeleteMutation(\n  $input: DeleteVendorInput!\n) {\n  deleteVendor(input: $input) {\n    deletedVendorId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ad609ad0f9c749fe47f2bd0d382777bb";
+(node as any).hash = "82648f6825e035f9abe617d5f641d537";
 
 export default node;

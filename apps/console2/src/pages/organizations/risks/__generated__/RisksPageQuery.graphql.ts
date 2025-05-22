@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5ce40300f73da895316795164a9bcf88>>
+ * @generated SignedSource<<8bfe33d4131ba478fc7cb040fac9197c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,6 +21,7 @@ export type RisksPageQuery$variables = {
 export type RisksPageQuery$data = {
   readonly organization: {
     readonly risks?: {
+      readonly __id: string;
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly category: string;
@@ -192,7 +193,19 @@ v17 = {
   ],
   "storageKey": null
 },
-v18 = [
+v18 = {
+  "kind": "ClientExtension",
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "__id",
+      "storageKey": null
+    }
+  ]
+},
+v19 = [
   {
     "kind": "Variable",
     "name": "after",
@@ -284,7 +297,8 @@ return {
                     ],
                     "storageKey": null
                   },
-                  (v17/*: any*/)
+                  (v17/*: any*/),
+                  (v18/*: any*/)
                 ],
                 "storageKey": null
               }
@@ -325,7 +339,7 @@ return {
             "selections": [
               {
                 "alias": null,
-                "args": (v18/*: any*/),
+                "args": (v19/*: any*/),
                 "concreteType": "RiskConnection",
                 "kind": "LinkedField",
                 "name": "risks",
@@ -390,13 +404,14 @@ return {
                     ],
                     "storageKey": null
                   },
-                  (v17/*: any*/)
+                  (v17/*: any*/),
+                  (v18/*: any*/)
                 ],
                 "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v18/*: any*/),
+                "args": (v19/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "RisksPage_risks",
@@ -436,6 +451,6 @@ return {
 };
 })();
 
-(node as any).hash = "bf112f97f377b95f3b83ec949e5d5e2f";
+(node as any).hash = "7f07b7d980ca4566fbd96b734cb0f04e";
 
 export default node;

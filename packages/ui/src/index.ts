@@ -15,6 +15,7 @@ export { Button } from "./Atoms/Button/Button";
 export { Card } from "./Atoms/Card/Card";
 export { Breadcrumb } from "./Atoms/Breadcrumb/Breadcrumb";
 export { Badge } from "./Atoms/Badge/Badge";
+export { Spinner } from "./Atoms/Spinner/Spinner";
 export {
     Dropdown,
     ActionDropdown,
@@ -43,6 +44,7 @@ export { SeverityBadge } from "./Molecules/Badge/SeverityBadge.tsx";
 export { ConfirmDialog } from "./Molecules/Dialog/ConfirmDialog.tsx";
 export { RisksChart } from "./Molecules/Risks/RisksChart";
 export { RiskOverview } from "./Molecules/Risks/RiskOverview";
+export { Combobox, ComboboxItem } from "./Molecules/Combobox/Combobox";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";
