@@ -30,8 +30,9 @@ import { useMemo, useState } from "react";
 import { usePageTitle } from "@probo/hooks";
 import type { RisksPageDeleteMutation } from "./__generated__/RisksPageDeleteMutation.graphql";
 import { useMutationWithToasts } from "../../../hooks/useMutationWithToasts";
-import { sprintf } from "@probo/helpers";
+import { getTreatment, sprintf } from "@probo/helpers";
 import type { ItemOf } from "../../../types";
+import { useDeleteRiskMutation } from "../../../mutations/Risks";
 
 const risksQuery = graphql`
   query RisksPageQuery(
@@ -65,17 +66,6 @@ const risksQuery = graphql`
   }
 `;
 
-const deleteRiskMutation = graphql`
-  mutation RisksPageDeleteMutation(
-    $input: DeleteRiskInput!
-    $connections: [ID!]!
-  ) {
-    deleteRisk(input: $input) {
-      deletedRiskId @deleteEdge(connections: $connections)
-    }
-  }
-`;
-
 export default function RisksPage() {
   const { __ } = useTranslate();
   const data = useLazyLoadQuery<RisksPageQueryType>(risksQuery, {
@@ -85,18 +75,9 @@ export default function RisksPage() {
   const [editedRisk, setEditedRisk] = useState<ItemOf<typeof risks> | null>(
     null
   );
-  const treatmentLabels = useMemo(() => {
-    return {
-      MITIGATED: __("Mitigate"),
-      ACCEPTED: __("Accept"),
-      TRANSFERRED: __("Transfer"),
-      AVOIDED: __("Avoid"),
-    } as Record<RiskTreatment, string>;
-  }, [__]);
   const organizationId = useOrganizationId();
 
-  const [deleteRisk] =
-    useMutationWithToasts<RisksPageDeleteMutation>(deleteRiskMutation);
+  const [deleteRisk] = useDeleteRiskMutation();
 
   const onDelete = (riskId: string) => {
     const connectionId = ConnectionHandler.getConnectionID(
@@ -108,8 +89,6 @@ export default function RisksPage() {
         input: { riskId },
         connections: [connectionId],
       },
-      successMessage: __("Risk deleted successfully."),
-      errorMessage: __("Failed to delete risk. Please try again."),
     });
   };
 
@@ -124,6 +103,7 @@ export default function RisksPage() {
       </PageHeader>
       {editedRisk && (
         <FormRiskDialog
+          open
           risk={editedRisk}
           onSuccess={() => setEditedRisk(null)}
         />
@@ -161,7 +141,7 @@ export default function RisksPage() {
             >
               <Td>{risk.name}</Td>
               <Td>{risk.category}</Td>
-              <Td>{treatmentLabels[risk.treatment]}</Td>
+              <Td>{getTreatment(__, risk.treatment)}</Td>
               <Td>
                 <RiskBadge
                   score={risk.inherentLikelihood * risk.inherentImpact}

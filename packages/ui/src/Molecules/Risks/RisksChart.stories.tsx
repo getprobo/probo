@@ -3,7 +3,7 @@ import { RisksChart } from "./RisksChart";
 import type { Meta, StoryObj } from "@storybook/react";
 
 export default {
-    title: "Molecules/RisksChart",
+    title: "Molecules/Risks/RisksChart",
     component: RisksChart,
     argTypes: {},
 } satisfies Meta<typeof RisksChart>;

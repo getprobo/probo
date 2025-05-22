@@ -1,5 +1,5 @@
 // Layouts
-export { Layout } from "./Layouts/Layout";
+export { Layout, Drawer } from "./Layouts/Layout";
 export { AuthLayout } from "./Layouts/AuthLayout";
 export { ErrorLayout } from "./Layouts/ErrorLayout";
 export {
@@ -14,6 +14,7 @@ export { SidebarItem } from "./Atoms/Sidebar/SidebarItem";
 export { Button } from "./Atoms/Button/Button";
 export { Card } from "./Atoms/Card/Card";
 export { Breadcrumb } from "./Atoms/Breadcrumb/Breadcrumb";
+export { Badge } from "./Atoms/Badge/Badge";
 export {
     Dropdown,
     ActionDropdown,
@@ -40,7 +41,8 @@ export { Dialog, DialogContent, DialogFooter } from "./Molecules/Dialog/Dialog";
 export { RiskBadge } from "./Molecules/Badge/RiskBadge";
 export { SeverityBadge } from "./Molecules/Badge/SeverityBadge.tsx";
 export { ConfirmDialog } from "./Molecules/Dialog/ConfirmDialog.tsx";
-export { RisksChart } from "./Molecules/RisksChart/RisksChart";
+export { RisksChart } from "./Molecules/Risks/RisksChart";
+export { RiskOverview } from "./Molecules/Risks/RiskOverview";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";

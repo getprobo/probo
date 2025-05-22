@@ -2,11 +2,19 @@ import type { HTMLAttributes } from "react";
 import { tv } from "tailwind-variants";
 
 type Props = {
-    variant?: "success" | "warning" | "danger" | "info" | "neutral" | "outline";
+    variant?:
+        | "success"
+        | "warning"
+        | "danger"
+        | "info"
+        | "neutral"
+        | "outline"
+        | "highlight";
+    size?: "sm" | "md";
 } & HTMLAttributes<HTMLDivElement>;
 
 const badge = tv({
-    base: "text-xs font-medium py-[2px] px-[6px] rounded-lg w-max",
+    base: "font-medium rounded-lg w-max flex gap-1 items-center",
     variants: {
         variant: {
             success: "bg-success text-txt-success",
@@ -15,10 +23,18 @@ const badge = tv({
             info: "bg-info text-txt-info",
             neutral: "bg-subtle text-txt-secondary",
             outline: "text-txt-tertiary border border-border-low",
+            highlight: "bg-highlight text-txt-primary",
         },
+        size: {
+            sm: "text-xs py-[2px] px-[6px]",
+            md: "text-sm py-[6px] px-2",
+        },
+    },
+    defaultVariants: {
+        size: "md",
     },
 });
 
 export function Badge(props: Props) {
-    return <div className={badge(props)} {...props} />;
+    return <div {...props} className={badge(props)} />;
 }

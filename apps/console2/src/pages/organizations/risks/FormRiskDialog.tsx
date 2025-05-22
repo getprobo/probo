@@ -72,7 +72,12 @@ const updateRiskMutation = graphql`
 /**
  * Dialog to create or update a risk
  */
-export default function FormRiskDialog({ trigger, risk, onSuccess }: Props) {
+export default function FormRiskDialog({
+  trigger,
+  risk,
+  onSuccess,
+  open,
+}: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
@@ -131,11 +136,11 @@ export default function FormRiskDialog({ trigger, risk, onSuccess }: Props) {
   });
 
   const [showNote, toggleNote] = useToggle(false);
-  const [open, setOpen] = useState(!!risk);
+  const [isOpen, setOpen] = useState(open);
 
   return (
     <Dialog
-      open={open}
+      open={isOpen}
       onOpenChange={setOpen}
       trigger={trigger}
       title={
