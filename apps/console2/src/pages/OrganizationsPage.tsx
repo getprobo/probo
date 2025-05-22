@@ -37,7 +37,7 @@ export default function OrganizationsPage() {
   // Redirect to the first organization if only one exists
   useEffect(() => {
     if (organizations.length === 1) {
-      // navigate(`/organizations/${organizations[0].id}`);
+      navigate(`/organizations/${organizations[0].id}`);
     }
   }, [organizations]);
 

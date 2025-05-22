@@ -14,6 +14,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
     "@probo/hooks": "1.0.0",
+    "@probo/helpers": "1.0.0",
     "@probo/i18n": "1.0.0",
     "@probo/ui": "1.0.0",
     "@radix-ui/react-dialog": "^1.1.14",
