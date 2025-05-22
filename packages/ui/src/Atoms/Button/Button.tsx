@@ -37,8 +37,8 @@ const button = tv({
 
 type Props = PropsWithChildren<
     {
-        icon?: FC<{ size: number }>;
-        iconAfter?: FC<{ size: number }>;
+        icon?: FC<{ size: number; className?: string }>;
+        iconAfter?: FC<{ size: number; className?: string }>;
         disabled?: boolean;
         onClick?: () => void;
         variant?:
@@ -71,9 +71,11 @@ export const Button = (props: Props) => {
             onClick={onClick}
             className={button({ ...props, empty: !children })}
         >
-            {IconComponent && <IconComponent size={16} />}
+            {IconComponent && <IconComponent size={16} className="flex-none" />}
             {children}
-            {IconAfterComponent && <IconAfterComponent size={16} />}
+            {IconAfterComponent && (
+                <IconAfterComponent size={16} className="flex-none" />
+            )}
         </Component>
     );
 };
