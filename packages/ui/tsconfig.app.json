@@ -23,6 +23,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"],
+  "include": ["src", "../../apps/console2/src/types.ts"],
   "exclude": ["src/Atoms/Icons/generator.ts"]
 }

@@ -16,6 +16,7 @@ export { Card } from "./Atoms/Card/Card";
 export { Breadcrumb } from "./Atoms/Breadcrumb/Breadcrumb";
 export {
     Dropdown,
+    ActionDropdown,
     DropdownSeparator,
     DropdownItem,
 } from "./Atoms/Dropdown/Dropdown";
@@ -26,6 +27,7 @@ export { Textarea } from "./Atoms/Textarea/Textarea.tsx";
 export { Select, Option } from "./Atoms/Select/Select.tsx";
 export { Label } from "./Atoms/Label/Label";
 export { PropertyRow } from "./Atoms/PropertyRow/PropertyRow";
+export { Table, Thead, Tr, Tbody, Td, Th } from "./Atoms/Table/Table";
 
 // Molecules
 export {
@@ -35,6 +37,9 @@ export {
 export { PageHeader } from "./Molecules/PageHeader/PageHeader";
 export { Skeleton } from "./Atoms/Skeleton/Skeleton";
 export { Dialog, DialogContent, DialogFooter } from "./Molecules/Dialog/Dialog";
+export { RiskBadge } from "./Molecules/Badge/RiskBadge";
+export { SeverityBadge } from "./Molecules/Badge/SeverityBadge.tsx";
+export { ConfirmDialog } from "./Molecules/Dialog/ConfirmDialog.tsx";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";

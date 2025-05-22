@@ -13,106 +13,135 @@ import {
   PropertyRow,
   IconPlusLarge,
   Textarea,
-  useToast,
 } from "@probo/ui";
 import { useMemo, useState, type ReactNode } from "react";
 import { useFetchQuery } from "../../../hooks/useFetchQuery";
-import { graphql } from "relay-runtime";
-import { UserSelect } from "../../../components/form/UserSelect";
+import { ConnectionHandler, graphql } from "relay-runtime";
+import { PeopleSelect } from "../../../components/form/PeopleSelect";
 import { useOrganizationId } from "../../../hooks/useOrganizationId";
 import { useToggle } from "@probo/hooks";
 import {
   ControlledField,
   ControlledSelect,
 } from "../../../components/form/ControlledField";
-import { useRiskForm, type RiskForm } from "./forms/useRiskForm";
-import { useMutation } from "react-relay";
+import { useRiskForm, type RiskForm, type RiskKey } from "./forms/useRiskForm";
+import type { FieldErrors } from "react-hook-form";
+import { useMutationWithToasts } from "../../../hooks/useMutationWithToasts";
+import type { FormRiskDialogMutation } from "./__generated__/FormRiskDialogMutation.graphql";
+import type { FormRiskDialogUpdateRiskMutation } from "./__generated__/FormRiskDialogUpdateRiskMutation.graphql";
 
 type Props = {
-  trigger: ReactNode;
+  trigger?: ReactNode;
+  open?: boolean;
+  risk?: RiskKey;
+  onSuccess?: () => void;
 };
 
-type Risk = {
+type RiskTemplate = {
   category: string;
   name: string;
   description: string;
 };
 
 const createRiskMutation = graphql`
-  mutation NewRiskDialogMutation(
+  mutation FormRiskDialogMutation(
     $input: CreateRiskInput!
     $connections: [ID!]!
   ) {
     createRisk(input: $input) {
       riskEdge @prependEdge(connections: $connections) {
         node {
-          id
-          name
-          description
-          category
-          inherentLikelihood
-          inherentImpact
-          residualLikelihood
-          residualImpact
-          treatment
-          createdAt
-          updatedAt
+          ...useRiskFormFragment
         }
       }
     }
   }
 `;
 
-export default function NewRiskDialog({ trigger }: Props) {
+const updateRiskMutation = graphql`
+  mutation FormRiskDialogUpdateRiskMutation($input: UpdateRiskInput!) {
+    updateRisk(input: $input) {
+      risk {
+        ...useRiskFormFragment
+      }
+    }
+  }
+`;
+
+/**
+ * Dialog to create or update a risk
+ */
+export default function FormRiskDialog({ trigger, risk, onSuccess }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
-  const { control, handleSubmit, setValue, register, watch, formState } =
-    useRiskForm(organizationId);
+  const { control, handleSubmit, setValue, register, watch, formState, reset } =
+    useRiskForm(risk);
   const errors = formState.errors ?? {};
-  const [createRisk, isLoading] = useMutation(createRiskMutation);
-  const { toast } = useToast();
+  const [createRisk, isLoadingCreate] =
+    useMutationWithToasts<FormRiskDialogMutation>(createRiskMutation);
+  const [updateRisk, isLoadingUpdate] =
+    useMutationWithToasts<FormRiskDialogUpdateRiskMutation>(updateRiskMutation);
+  const isLoading = isLoadingCreate || isLoadingUpdate;
 
-  const onTemplateChange = (risk: Risk) => {
+  const onTemplateChange = (risk: RiskTemplate) => {
     setValue("name", risk.name);
     setValue("description", risk.description);
   };
 
   const onSubmit = handleSubmit((data) => {
+    if (risk) {
+      updateRisk({
+        variables: {
+          input: {
+            id: risk.id,
+            ...data,
+          },
+        },
+        successMessage: __("Risk updated successfully."),
+        errorMessage: __("Failed to update risk. Please try again."),
+        onSuccess: () => {
+          setOpen(false);
+          onSuccess?.();
+        },
+      });
+      return;
+    }
+    const connectionID = ConnectionHandler.getConnectionID(
+      organizationId,
+      "RisksPage_risks"
+    );
     createRisk({
       variables: {
-        input: data,
+        input: {
+          ...data,
+          organizationId,
+        },
+        connections: [connectionID],
       },
-      onCompleted: (response, error) => {
-        if (error) {
-          toast({
-            title: __("Error"),
-            description: __("Failed to create risk. Please try again."),
-            variant: "error",
-          });
-          return;
-        }
-
-        toast({
-          title: __("Success"),
-          description: __("Risk created successfully."),
-          variant: "success",
-        });
-
+      successMessage: __("Risk created successfully."),
+      errorMessage: __("Failed to create risk. Please try again."),
+      onSuccess: () => {
         setOpen(false);
+        reset();
+        onSuccess?.();
       },
     });
   });
 
   const [showNote, toggleNote] = useToggle(false);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(!!risk);
 
   return (
     <Dialog
       open={open}
       onOpenChange={setOpen}
       trigger={trigger}
-      title={<Breadcrumb items={[__("Risks"), __("New Risk")]}></Breadcrumb>}
+      title={
+        <Breadcrumb
+          items={[__("Risks"), risk ? __("Edit Risk") : __("New Risk")]}
+        />
+      }
     >
       <form onSubmit={onSubmit}>
         <DialogContent className="grid grid-cols-[1fr_420px]">
@@ -124,6 +153,7 @@ export default function NewRiskDialog({ trigger }: Props) {
               watch={watch}
             />
             <Field
+              type="text"
               {...register("name")}
               error={errors.name?.message}
               label={__("Risk name")}
@@ -162,7 +192,7 @@ export default function NewRiskDialog({ trigger }: Props) {
               label={__("Owner")}
               error={errors.ownerId?.message}
             >
-              <UserSelect
+              <PeopleSelect
                 name="ownerId"
                 control={control}
                 organization={organizationId}
@@ -209,7 +239,7 @@ export default function NewRiskDialog({ trigger }: Props) {
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isLoading}>
-            {__("Create risk")}
+            {risk ? __("Update risk") : __("Create risk")}
           </Button>
         </DialogFooter>
       </form>
@@ -224,9 +254,14 @@ function ImpactAndLikelihood({
   errors,
 }: {
   label: string;
-  prefix: string;
+  prefix: "inherent" | "residual";
   control: RiskForm["control"];
-  errors: Record<string, { message: string }>;
+  errors: FieldErrors<{
+    inherentImpact: string;
+    inherentLikelihood: string;
+    residualImpact: string;
+    residualLikelihood: string;
+  }>;
 }) {
   const { __ } = useTranslate();
   return (
@@ -271,14 +306,17 @@ function TemplateSelector({
   control,
   watch,
 }: {
-  onChange: (risk: Risk) => void;
+  onChange: (risk: RiskTemplate) => void;
   control: RiskForm["control"];
   watch: RiskForm["watch"];
 }) {
   const { __ } = useTranslate();
-  const { data: risks } = useFetchQuery<Risk[]>("/data/risks/risks.json", {
-    staleTime: 100_000,
-  });
+  const { data: risks } = useFetchQuery<RiskTemplate[]>(
+    "/data/risks/risks.json",
+    {
+      staleTime: 100_000,
+    }
+  );
 
   const categories = useMemo(
     () => Array.from(new Set(risks?.map((t) => t.category))),

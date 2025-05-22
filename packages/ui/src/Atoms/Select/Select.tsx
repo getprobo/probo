@@ -85,6 +85,9 @@ const findSelectedOption = (
     children: unknown[],
     condition: (c: { props: Record<string, unknown> }) => boolean,
 ): ReactNode => {
+    if (children.length === 1) {
+        debugger;
+    }
     const selectedOptions = children.find(
         // @ts-expect-error We know that the children are ReactElements with props
         (c) => isValidElement(c) && condition(c),
@@ -109,7 +112,7 @@ export function Select({
               (c) => c.props.value?.toString() === value?.toString(),
           )
         : undefined;
-
+    console.log(childrenArr, valueNode);
     return (
         <Root onValueChange={onValueChange} value={value}>
             <Trigger className={trigger({ ...props })} {...props}>
