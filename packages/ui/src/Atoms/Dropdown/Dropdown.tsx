@@ -31,8 +31,12 @@ export function Dropdown({ children, toggle, className }: Props) {
     );
 }
 
-export function DropdownSeparator() {
-    return <DropdownMenu.Separator className="h-[1px] bg-border-low my-2" />;
+export function DropdownSeparator({ className }: { className?: string }) {
+    return (
+        <DropdownMenu.Separator
+            className={clsx("h-[1px] bg-border-low my-2", className)}
+        />
+    );
 }
 
 type DropdownItemProps = PropsWithChildren<{
@@ -86,7 +90,9 @@ export function DropdownItem({
                 children
             ) : (
                 <>
-                    {IconComponent && <IconComponent size={16} />}
+                    {IconComponent && (
+                        <IconComponent size={16} className="flex-none" />
+                    )}
                     {children}
                 </>
             )}

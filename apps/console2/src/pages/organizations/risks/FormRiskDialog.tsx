@@ -29,6 +29,7 @@ import type { FieldErrors } from "react-hook-form";
 import { useMutationWithToasts } from "../../../hooks/useMutationWithToasts";
 import type { FormRiskDialogMutation } from "./__generated__/FormRiskDialogMutation.graphql";
 import type { FormRiskDialogUpdateRiskMutation } from "./__generated__/FormRiskDialogUpdateRiskMutation.graphql";
+import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
 
 type Props = {
   trigger?: ReactNode;
@@ -276,11 +277,11 @@ function ImpactAndLikelihood({
           placeholder={__("Select impact level")}
           error={errors?.[`${prefix}Impact`]?.message}
         >
-          <Option value="1">1 - Negligible</Option>
-          <Option value="2">2 - Low</Option>
-          <Option value="3">3 - Moderate</Option>
-          <Option value="4">4 - Significant</Option>
-          <Option value="5">5 - Catastrophic</Option>
+          {getRiskImpacts(__).map((i) => (
+            <Option key={i.value} value={i.value}>
+              {i.value} - {i.label}
+            </Option>
+          ))}
         </ControlledField>
         <ControlledField
           control={control}
@@ -290,11 +291,11 @@ function ImpactAndLikelihood({
           placeholder={__("Select likelihood level")}
           error={errors?.[`${prefix}Likelihood`]?.message}
         >
-          <Option value="1">1 - Improbable</Option>
-          <Option value="2">2 - Remote</Option>
-          <Option value="3">3 - Occasional</Option>
-          <Option value="4">4 - Probable</Option>
-          <Option value="5">5 - Frequent</Option>
+          {getRiskLikelihoods(__).map((l) => (
+            <Option key={l.value} value={l.value}>
+              {l.value} - {l.label}
+            </Option>
+          ))}
         </ControlledField>
       </Card>
     </div>
