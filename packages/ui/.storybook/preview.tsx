@@ -17,7 +17,9 @@ const preview: Preview = {
         (Story, { parameters }) => {
             return (
                 <BrowserRouter>
-                    <Story />
+                    <div className="text-txt-primary">
+                        <Story />
+                    </div>
                 </BrowserRouter>
             );
         },

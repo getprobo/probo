@@ -85,9 +85,6 @@ const findSelectedOption = (
     children: unknown[],
     condition: (c: { props: Record<string, unknown> }) => boolean,
 ): ReactNode => {
-    if (children.length === 1) {
-        debugger;
-    }
     const selectedOptions = children.find(
         // @ts-expect-error We know that the children are ReactElements with props
         (c) => isValidElement(c) && condition(c),

@@ -71,6 +71,7 @@ function PeopleSelectWithQuery({
             id={name}
             variant="editor"
             placeholder={__("Select an owner")}
+            onValueChange={field.onChange}
             {...field}
           >
             {people?.map((p) => (

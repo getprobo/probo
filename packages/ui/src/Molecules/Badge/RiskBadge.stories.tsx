@@ -12,9 +12,9 @@ type Story = StoryObj<typeof RiskBadge>;
 export const Default: Story = {
     render: () => (
         <div className="space-y-2">
-            <RiskBadge score={10} />
-            <RiskBadge score={8} />
-            <RiskBadge score={0} />
+            <RiskBadge level={10} />
+            <RiskBadge level={8} />
+            <RiskBadge level={0} />
         </div>
     ),
 };

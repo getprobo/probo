@@ -53,5 +53,33 @@ export function useTranslate() {
   return {
     lang,
     __: translate,
+
+    dateFormat: (
+      date: Date | string | null | undefined,
+      options?: Intl.DateTimeFormatOptions
+    ) => {
+      if (!date) {
+        return "";
+      }
+      if (typeof date === "string") {
+        return new Intl.DateTimeFormat(lang, options).format(parseDate(date));
+      }
+      return new Intl.DateTimeFormat(lang, options).format(date);
+    },
   };
+}
+
+function parseDate(date: Date | string): Date {
+  if (typeof date === "string") {
+    if (date.includes("T")) {
+      return new Date(date);
+    }
+    const parts = date.split("-");
+    return new Date(
+      parseInt(parts[0], 10),
+      parts[1] ? parseInt(parts[1], 10) - 1 : 0,
+      parts[2] ? parseInt(parts[2], 10) : 1
+    );
+  }
+  return date;
 }

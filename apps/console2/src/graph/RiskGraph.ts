@@ -1,10 +1,13 @@
 import { graphql } from "relay-runtime";
 import { useTranslate } from "@probo/i18n";
 import { useMutationWithToasts } from "../hooks/useMutationWithToasts";
-import type { RisksDeleteMutation } from "./__generated__/RisksDeleteMutation.graphql";
+import type { RiskGraphDeleteMutation } from "./__generated__/RiskGraphDeleteMutation.graphql";
 
 const deleteRiskMutation = graphql`
-  mutation RisksDeleteMutation($input: DeleteRiskInput!, $connections: [ID!]!) {
+  mutation RiskGraphDeleteMutation(
+    $input: DeleteRiskInput!
+    $connections: [ID!]!
+  ) {
     deleteRisk(input: $input) {
       deletedRiskId @deleteEdge(connections: $connections)
     }
@@ -14,7 +17,7 @@ const deleteRiskMutation = graphql`
 export function useDeleteRiskMutation() {
   const { __ } = useTranslate();
 
-  return useMutationWithToasts<RisksDeleteMutation>(deleteRiskMutation, {
+  return useMutationWithToasts<RiskGraphDeleteMutation>(deleteRiskMutation, {
     successMessage: __("Risk deleted successfully."),
     errorMessage: __("Failed to delete risk. Please try again."),
   });
