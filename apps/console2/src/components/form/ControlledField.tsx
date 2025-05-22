@@ -1,4 +1,4 @@
-import type { ComponentProps, JSXElementConstructor } from "react";
+import type { ComponentProps, JSX, JSXElementConstructor } from "react";
 import { Field } from "@probo/ui";
 import { Controller, type Control } from "react-hook-form";
 import { Select } from "@probo/ui";

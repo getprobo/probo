@@ -16,6 +16,8 @@ type BaseProps<T extends string, P> = {
 type Props =
     | BaseProps<never, ComponentProps<typeof Input>>
     | BaseProps<"text", ComponentProps<typeof Input>>
+    | BaseProps<"email", ComponentProps<typeof Input>>
+    | BaseProps<"password", ComponentProps<typeof Input>>
     | BaseProps<"textarea", ComponentProps<typeof Textarea>>
     | BaseProps<"select", ComponentProps<typeof Select>>;
 
