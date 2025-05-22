@@ -9,23 +9,34 @@ export default {
 
 type Story = StoryObj<typeof Badge>;
 
+const sizes = ["sm", "md"] as const;
+const variants = [
+    "success",
+    "warning",
+    "danger",
+    "info",
+    "neutral",
+    "outline",
+    "highlight",
+] as const;
+
 export const Default: Story = {
     render: () => (
-        <>
-            {(
-                [
-                    "success",
-                    "warning",
-                    "danger",
-                    "info",
-                    "neutral",
-                    "outline",
-                ] as const
-            ).map((variant) => (
-                <Badge key={variant} variant={variant}>
-                    {variant}
-                </Badge>
+        <div className="space-y-4">
+            {sizes.map((size) => (
+                <div key={size} className="space-y-1">
+                    <div className="text-xs text-txt-secondary">
+                        Size : {size}
+                    </div>
+                    <div className="flex gap-2">
+                        {variants.map((variant) => (
+                            <Badge key={variant} variant={variant} size={size}>
+                                {variant}
+                            </Badge>
+                        ))}
+                    </div>
+                </div>
             ))}
-        </>
+        </div>
     ),
 };

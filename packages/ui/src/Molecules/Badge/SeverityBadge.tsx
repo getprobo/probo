@@ -2,35 +2,29 @@ import { useTranslate } from "@probo/i18n";
 import { Badge } from "../../Atoms/Badge/Badge.tsx";
 
 type Props = {
-    severity: number;
+    score: number;
 };
 
-const badgeVariant = (severity: number) => {
-    if (severity >= 75) {
+const badgeVariant = (score: number) => {
+    if (score >= 15) {
         return "danger";
     }
-    if (severity >= 50) {
+    if (score >= 5) {
         return "warning";
     }
-    if (severity >= 25) {
-        return "info";
-    }
-    return "success";
+    return "neutral";
 };
 
-export function SeverityBadge({ severity }: Props) {
+export function SeverityBadge({ score }: Props) {
     const { __ } = useTranslate();
     const label = () => {
-        if (severity >= 75) {
+        if (score >= 15) {
             return __("Critical");
         }
-        if (severity >= 50) {
+        if (score >= 5) {
             return __("High");
         }
-        if (severity >= 25) {
-            return __("Low");
-        }
-        return __("None");
+        return __("Negligible");
     };
-    return <Badge variant={badgeVariant(severity)}>{label()}</Badge>;
+    return <Badge variant={badgeVariant(score)}>{label()}</Badge>;
 }

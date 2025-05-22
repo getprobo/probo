@@ -3,3 +3,4 @@
 @import "@probo/ui/src/theme.css";
 @import "tw-animate-css";
 @source "../../../packages/ui/src";
+@source "../../../packages/helpers/src";

@@ -7,7 +7,8 @@ import { MainLayout } from "./layouts/MainLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import { lazy, Suspense, type FC } from "react";
 import { UnAuthenticatedError } from "./providers/RelayProviders";
-import { RisksPageSkeleton } from "./pages/organizations/risks/skeletons/RisksPage";
+import { RisksPageSkeleton } from "./components/skeletons/RisksPageSkeleton.tsx";
+import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -49,7 +50,7 @@ const routes = [
       {
         path: "organizations/new",
         Component: lazy(
-          () => import("./pages/organizations/NewOrganizationPage")
+          () => import("./pages/organizations/NewOrganizationPage"),
         ),
       },
     ],
@@ -64,6 +65,13 @@ const routes = [
         fallback: RisksPageSkeleton,
         Component: lazy(() => import("./pages/organizations/risks/RisksPage")),
       },
+      {
+        path: "risks/:riskId",
+        fallback: PageSkeleton,
+        Component: lazy(
+          () => import("./pages/organizations/risks/RiskDetailPage"),
+        ),
+      },
     ],
   },
 ] satisfies Route[];
@@ -74,7 +82,6 @@ const routes = [
 function routeTransformer(route: Route): RouteObject {
   if ("fallback" in route && route.fallback) {
     const fallback = <route.fallback />;
-    console.log(fallback, route.path);
     return {
       ...route,
       children: route.children?.map(routeTransformer),
