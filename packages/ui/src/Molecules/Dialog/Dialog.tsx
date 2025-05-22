@@ -14,7 +14,7 @@ import { useTranslate } from "@probo/i18n";
 import clsx from "clsx";
 
 type Props = {
-    trigger: ReactNode;
+    trigger?: ReactNode;
     title: ReactNode;
     children?: ReactNode;
     onOpenChange?: (open: boolean) => void;
@@ -30,7 +30,7 @@ export function Dialog({
 }: Props) {
     return (
         <Root open={open} onOpenChange={onOpenChange}>
-            <Trigger asChild>{trigger}</Trigger>
+            {trigger && <Trigger asChild>{trigger}</Trigger>}
             <Portal>
                 <Overlay
                     className={clsx(

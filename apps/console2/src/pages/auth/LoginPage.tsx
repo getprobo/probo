@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { Button, Input, useToast } from "@probo/ui";
+import { Button, Field, useToast } from "@probo/ui";
 import type { FormEventHandler } from "react";
 import { Link, useNavigate } from "react-router";
 
@@ -46,14 +46,14 @@ export default function LoginPage() {
       <p className="text-center text-txt-tertiary mt-1 mb-6">
         {__("Enter your email below to login to your account")}
       </p>
-      <Input
+      <Field
         required
         placeholder={__("Email")}
         name="email"
         type="email"
         label={__("Email")}
       />
-      <Input
+      <Field
         required
         placeholder={__("Password")}
         name="password"

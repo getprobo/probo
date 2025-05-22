@@ -1,8 +1,10 @@
-import type { FC, PropsWithChildren, ReactNode } from "react";
+import type { ComponentProps, FC, PropsWithChildren, ReactNode } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { clsx } from "clsx";
 import type { IconProps } from "../Icons/type.ts";
 import { tv } from "tailwind-variants";
+import { IconDotGrid1x3Horizontal } from "../Icons/IconDotGrid1x3Horizontal.tsx";
+import { Button } from "../Button/Button.tsx";
 
 type Props = PropsWithChildren<{
     toggle: ReactNode;
@@ -38,7 +40,8 @@ type DropdownItemProps = PropsWithChildren<{
     icon?: FC<IconProps>;
     asChild?: boolean;
     variant?: "primary" | "tertiary" | "danger";
-}>;
+}> &
+    ComponentProps<typeof DropdownMenu.Item>;
 
 const dropdownItem = tv({
     base: "text-txt-primary flex items-center gap-2 hover:bg-tertiary-hover active:bg-tertiary-pressed cursor-pointer p-2",
@@ -54,15 +57,28 @@ const dropdownItem = tv({
     },
 });
 
+export function ActionDropdown(props: Omit<Props, "toggle">) {
+    return (
+        <Dropdown
+            {...props}
+            toggle={
+                <Button variant="tertiary" icon={IconDotGrid1x3Horizontal} />
+            }
+        />
+    );
+}
+
 export function DropdownItem({
     icon: IconComponent,
     variant,
     className,
     children,
     asChild,
+    ...props
 }: DropdownItemProps) {
     return (
         <DropdownMenu.Item
+            {...props}
             className={clsx(dropdownItem({ variant }), className)}
             asChild={asChild}
         >
