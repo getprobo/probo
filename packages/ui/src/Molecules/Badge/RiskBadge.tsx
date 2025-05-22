@@ -2,29 +2,59 @@ import { useTranslate } from "@probo/i18n";
 import { Badge } from "../../Atoms/Badge/Badge";
 
 type Props = {
-    score: number;
+    level: number | string;
 };
 
-const badgeVariant = (score: number) => {
-    if (score >= 15) {
-        return "danger";
+const badgeVariant = (level: string | number) => {
+    if (typeof level === "number") {
+        if (level >= 15) {
+            return "CRITICAL";
+        }
+        if (level >= 8) {
+            return "HIGH";
+        }
+        return "LOW";
     }
-    if (score >= 8) {
-        return "warning";
+    switch (level) {
+        case "CRITICAL":
+            return "danger";
+        case "HIGH":
+            return "warning";
+        case "LOW":
+            return "success";
+        case "MEDIUM":
+            return "info";
+        default:
+            return "neutral";
     }
-    return "success";
 };
 
-export function RiskBadge({ score }: Props) {
+export function RiskBadge({ level }: Props) {
     const { __ } = useTranslate();
     const label = () => {
-        if (score >= 15) {
-            return __("High");
+        if (typeof level === "number") {
+            if (level >= 15) {
+                return __("High");
+            }
+            if (level >= 8) {
+                return __("Medium");
+            }
+            return __("Low");
         }
-        if (score >= 8) {
-            return __("Medium");
+        switch (level) {
+            case "CRITICAL":
+                return __("Critical");
+            case "HIGH":
+                return __("High");
+            case "LOW":
+                return __("Low");
+            case "MEDIUM":
+                return __("Medium");
+            case "NONE":
+                return __("None");
+            default:
+                return __("Low");
         }
-        return __("Low");
     };
-    return <Badge variant={badgeVariant(score)}>{label()}</Badge>;
+    return <Badge variant={badgeVariant(level)}>{label()}</Badge>;
 }

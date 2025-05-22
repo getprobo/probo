@@ -12,6 +12,7 @@
     },
     "prettier": "@probo/prettier",
     "dependencies": {
+        "@ariakit/react": "^0.4.17",
         "@probo/helpers": "1.0.0",
         "@probo/i18n": "1.0.0",
         "@radix-ui/react-dropdown-menu": "^2.1.14",

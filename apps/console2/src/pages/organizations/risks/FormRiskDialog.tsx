@@ -36,6 +36,7 @@ type Props = {
   open?: boolean;
   risk?: RiskKey;
   onSuccess?: () => void;
+  connection: string;
 };
 
 type RiskTemplate = {
@@ -77,6 +78,7 @@ export default function FormRiskDialog({
   risk,
   onSuccess,
   open,
+  connection,
 }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -113,17 +115,13 @@ export default function FormRiskDialog({
       });
       return;
     }
-    const connectionID = ConnectionHandler.getConnectionID(
-      organizationId,
-      "RisksPage_risks"
-    );
     createRisk({
       variables: {
         input: {
           ...data,
           organizationId,
         },
-        connections: [connectionID],
+        connections: [connection],
       },
       successMessage: __("Risk created successfully."),
       errorMessage: __("Failed to create risk. Please try again."),
@@ -236,6 +234,7 @@ export default function FormRiskDialog({
               />
               {showNote && (
                 <Textarea
+                  {...register("note")}
                   className="animate-in slide-in-from-top-2"
                   placeholder={__("Add any additional notes about this risk")}
                 />
@@ -283,7 +282,7 @@ function ImpactAndLikelihood({
           error={errors?.[`${prefix}Impact`]?.message}
         >
           {getRiskImpacts(__).map((i) => (
-            <Option key={i.value} value={i.value}>
+            <Option key={i.value} value={i.value.toString()}>
               {i.value} - {i.label}
             </Option>
           ))}
@@ -297,7 +296,7 @@ function ImpactAndLikelihood({
           error={errors?.[`${prefix}Likelihood`]?.message}
         >
           {getRiskLikelihoods(__).map((l) => (
-            <Option key={l.value} value={l.value}>
+            <Option key={l.value} value={l.value.toString()}>
               {l.value} - {l.label}
             </Option>
           ))}

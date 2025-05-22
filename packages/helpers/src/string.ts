@@ -7,3 +7,16 @@ export function sprintf(str: string, ...params: unknown[]): string {
         return params[i++] as string;
     });
 }
+
+export function faviconUrl(url?: string | null): string | null {
+    if (!url) {
+        return null;
+    }
+
+    try {
+        const parsedUrl = new URL(url);
+        return `https://www.google.com/s2/favicons?domain=${parsedUrl.hostname}&sz=64`;
+    } catch (e) {
+        return null;
+    }
+}
