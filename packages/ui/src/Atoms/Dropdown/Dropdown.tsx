@@ -61,12 +61,19 @@ const dropdownItem = tv({
     },
 });
 
-export function ActionDropdown(props: Omit<Props, "toggle">) {
+export function ActionDropdown(
+    props: Omit<Props, "toggle"> & {
+        variant?: ComponentProps<typeof Button>["variant"];
+    },
+) {
     return (
         <Dropdown
             {...props}
             toggle={
-                <Button variant="tertiary" icon={IconDotGrid1x3Horizontal} />
+                <Button
+                    variant={props.variant ?? "tertiary"}
+                    icon={IconDotGrid1x3Horizontal}
+                />
             }
         />
     );

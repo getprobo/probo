@@ -8,19 +8,24 @@ import type { MutationParameters, GraphQLTaggedNode } from "relay-runtime";
  * A decorated useMutation hook that emits toast notifications on success or error.
  */
 export function useMutationWithToasts<T extends MutationParameters>(
-  query: GraphQLTaggedNode
+  query: GraphQLTaggedNode,
+  baseOptions?: {
+    successMessage?: string;
+    errorMessage?: string;
+  }
 ) {
   const [mutate, isLoading] = useMutation<T>(query);
   const { toast } = useToast();
   const { __ } = useTranslate();
   const mutateWithToast = useCallback(
     (
-      options: UseMutationConfig<T> & {
+      queryOptions: UseMutationConfig<T> & {
         onSuccess?: () => void;
-        successMessage: string;
+        successMessage?: string;
         errorMessage?: string;
       }
     ) => {
+      const options = { ...baseOptions, ...queryOptions };
       mutate({
         ...options,
         onCompleted: (_, error) => {
@@ -35,7 +40,8 @@ export function useMutationWithToasts<T extends MutationParameters>(
           }
           toast({
             title: __("Success"),
-            description: options.successMessage,
+            description:
+              options.successMessage ?? __("Operation completed successfully"),
             variant: "success",
           });
           options.onSuccess?.();
