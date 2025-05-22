@@ -1,10 +1,10 @@
 export { objectKeys } from "./object";
-export { sprintf } from "./string";
+export { sprintf, faviconUrl } from "./string";
 export {
     getTreatment,
     getRiskImpacts,
     getRiskLikelihoods,
     getSeverity,
 } from "./risk";
-export { times, groupBy } from "./array";
+export { times, groupBy, isEmpty } from "./array";
 export { randomInt } from "./number";

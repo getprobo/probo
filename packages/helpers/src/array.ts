@@ -18,3 +18,13 @@ export function groupBy<T>(
         {} as Record<string, T[]>,
     );
 }
+
+/**
+ * Check that a value is empty (null, undefined, empty string, empty array, empty object)
+ */
+export function isEmpty(v: unknown) {
+    if (Array.isArray(v)) {
+        return v.find((v) => !isEmpty(v)) === undefined;
+    }
+    return !v;
+}

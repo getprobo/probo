@@ -19,20 +19,15 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { IconPlusLarge } from "@probo/ui";
 import FormRiskDialog from "./FormRiskDialog";
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 import { useLazyLoadQuery } from "react-relay";
-import type {
-  RisksPageQuery as RisksPageQueryType,
-  RiskTreatment,
-} from "./__generated__/RisksPageQuery.graphql";
+import type { RisksPageQuery as RisksPageQueryType } from "./__generated__/RisksPageQuery.graphql";
 import { useOrganizationId } from "../../../hooks/useOrganizationId";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { usePageTitle } from "@probo/hooks";
-import type { RisksPageDeleteMutation } from "./__generated__/RisksPageDeleteMutation.graphql";
-import { useMutationWithToasts } from "../../../hooks/useMutationWithToasts";
 import { getTreatment, sprintf } from "@probo/helpers";
 import type { ItemOf } from "../../../types";
-import { useDeleteRiskMutation } from "../../../mutations/Risks";
+import { useDeleteRiskMutation } from "../../../graph/RiskGraph";
 
 const risksQuery = graphql`
   query RisksPageQuery(
@@ -46,6 +41,7 @@ const risksQuery = graphql`
       ... on Organization {
         risks(first: $first, after: $after, last: $last, before: $before)
           @connection(key: "RisksPage_risks") {
+          __id
           edges {
             node {
               id
@@ -78,16 +74,14 @@ export default function RisksPage() {
   const organizationId = useOrganizationId();
 
   const [deleteRisk] = useDeleteRiskMutation();
+  const connectionId = data.organization!.risks!.__id;
 
   const onDelete = (riskId: string) => {
-    const connectionId = ConnectionHandler.getConnectionID(
-      organizationId,
-      "RisksPage_risks"
-    );
+    risks;
     deleteRisk({
       variables: {
         input: { riskId },
-        connections: [connectionId],
+        connections: [],
       },
     });
   };
@@ -98,6 +92,7 @@ export default function RisksPage() {
     <div className="space-y-6">
       <PageHeader title={__("Risks")}>
         <FormRiskDialog
+          connection={connectionId}
           trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
         />
       </PageHeader>
@@ -105,6 +100,7 @@ export default function RisksPage() {
         <FormRiskDialog
           open
           risk={editedRisk}
+          connection={connectionId}
           onSuccess={() => setEditedRisk(null)}
         />
       )}
@@ -144,12 +140,12 @@ export default function RisksPage() {
               <Td>{getTreatment(__, risk.treatment)}</Td>
               <Td>
                 <RiskBadge
-                  score={risk.inherentLikelihood * risk.inherentImpact}
+                  level={risk.inherentLikelihood * risk.inherentImpact}
                 />
               </Td>
               <Td>
                 <RiskBadge
-                  score={risk.residualLikelihood * risk.residualImpact}
+                  level={risk.residualLikelihood * risk.residualImpact}
                 />
               </Td>
               <Td>
