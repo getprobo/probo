@@ -40,6 +40,7 @@ export { Dialog, DialogContent, DialogFooter } from "./Molecules/Dialog/Dialog";
 export { RiskBadge } from "./Molecules/Badge/RiskBadge";
 export { SeverityBadge } from "./Molecules/Badge/SeverityBadge.tsx";
 export { ConfirmDialog } from "./Molecules/Dialog/ConfirmDialog.tsx";
+export { RisksChart } from "./Molecules/RisksChart/RisksChart";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";
