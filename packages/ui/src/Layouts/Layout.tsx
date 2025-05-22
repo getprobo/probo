@@ -10,7 +10,7 @@ type Props = PropsWithChildren<{
 
 export function Layout({ header, sidebar, children }: Props) {
     return (
-        <div>
+        <div className="text-txt-primary bg-level-0">
             <header className="absolute z-2 left-0 right-0 px-4 flex items-center border-b border-border-solid h-12 bg-level-1">
                 <Logo className="w-12 h-5" />
                 <svg
@@ -27,8 +27,10 @@ export function Layout({ header, sidebar, children }: Props) {
             </header>
             <div className="flex h-screen">
                 <Sidebar>{sidebar}</Sidebar>
-                <main className="p-12 pt-24 max-w-[1200px] w-full mx-auto overflow-y-auto">
-                    {children}
+                <main className="overflow-y-auto w-full mt-12">
+                    <div className="py-12 px-8 max-w-[1200px] w-full mx-auto">
+                        {children}
+                    </div>
                 </main>
             </div>
             <Toasts />

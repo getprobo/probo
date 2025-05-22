@@ -14,6 +14,7 @@ import {
   IconTrashCan,
   IconPencil,
   ConfirmDialog,
+  RisksChart,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { IconPlusLarge } from "@probo/ui";
@@ -127,6 +128,19 @@ export default function RisksPage() {
           onSuccess={() => setEditedRisk(null)}
         />
       )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <RisksChart
+          organizationId={organizationId}
+          type="inherent"
+          risks={risks}
+        />
+        <RisksChart
+          organizationId={organizationId}
+          type="residual"
+          risks={risks}
+        />
+      </div>
       <Table>
         <Thead>
           <Tr>
