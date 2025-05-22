@@ -71,11 +71,12 @@ const routes = [
  */
 function routeTransformer(route: Route): RouteObject {
   if ("fallback" in route && route.fallback) {
+    const fallback = <route.fallback />;
     return {
       ...route,
       children: route.children?.map(routeTransformer),
       Component: () => (
-        <Suspense fallback={<route.fallback />}>
+        <Suspense fallback={fallback}>
           <route.Component />
         </Suspense>
       ),
