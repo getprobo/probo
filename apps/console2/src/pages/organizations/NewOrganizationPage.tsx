@@ -1,4 +1,4 @@
-import { Button, Card, Input, PageHeader, useToast } from "@probo/ui";
+import { Button, Card, Field, PageHeader, useToast } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { ConnectionHandler, graphql } from "relay-runtime";
 import { useLazyLoadQuery, useMutation } from "react-relay";
@@ -98,7 +98,7 @@ export default function NewOrganizationPage() {
           <p className="text-txt-tertiary text-sm mb-4">
             {__("Enter the basic information about your organization.")}
           </p>
-          <Input
+          <Field
             required
             name="name"
             type="text"
