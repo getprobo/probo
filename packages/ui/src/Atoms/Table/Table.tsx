@@ -13,7 +13,7 @@ export function Table({ children }: PropsWithChildren) {
 
 export function Thead({ children }: PropsWithChildren) {
     return (
-        <thead className="text-xs text-txt-tertiary font-semibold">
+        <thead className="text-xs text-txt-tertiary font-semibold border-border-low border-b">
             {children}
         </thead>
     );
@@ -30,7 +30,7 @@ export function Tr({ children, to }: PropsWithChildren<{ to?: string }>) {
         <TrContext value={{ to }}>
             <tr
                 className={clsx(
-                    "border-border-low border",
+                    "border-border-low border-y first:border-none last:border-none",
                     to && "hover:bg-subtle",
                 )}
             >
@@ -54,7 +54,7 @@ export function Td({
 }: PropsWithChildren<{ noLink?: boolean }>) {
     const { to } = useContext(TrContext);
     if (!to || noLink) {
-        return <td className="first:pl-6 last:pr-6 py-3">{children}</td>;
+        return <td className="first:pl-6 py-3">{children}</td>;
     }
     return (
         <td className="first:*:pl-6 *:block last:*:pr-6 py-3">
