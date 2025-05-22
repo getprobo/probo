@@ -9,8 +9,8 @@ import {
     DropdownSeparator,
 } from "../../Atoms/Dropdown/Dropdown";
 import { IconChevronRight, IconFire3 } from "../../Atoms/Icons";
-import { Button } from "../../Atoms/Button/Button";
 import { Link } from "react-router";
+import { levelColors } from "./constants";
 
 type Props = {
     organizationId: string;
@@ -26,21 +26,6 @@ type Risk = {
     residualLikelihood: number;
     residualImpact: number;
 };
-
-const levelColors = [
-    {
-        color: "bg-txt-success",
-        bg: "bg-success",
-    },
-    {
-        color: "bg-txt-warning",
-        bg: "bg-warning",
-    },
-    {
-        color: "bg-txt-danger",
-        bg: "bg-danger",
-    },
-] as const;
 
 const getLevel = (score: number): 0 | 1 | 2 => {
     if (score >= 15) {

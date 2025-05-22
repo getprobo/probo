@@ -112,7 +112,7 @@ export function Select({
               (c) => c.props.value?.toString() === value?.toString(),
           )
         : undefined;
-    console.log(childrenArr, valueNode);
+
     return (
         <Root onValueChange={onValueChange} value={value}>
             <Trigger className={trigger({ ...props })} {...props}>
