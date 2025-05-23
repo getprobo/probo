@@ -25,7 +25,7 @@ export function getRiskImpacts(__: Translator) {
     ];
 }
 
-export function getTreatment(__: Translator, treatment: string): string {
+export function getTreatment(__: Translator, treatment?: string): string {
     switch (treatment) {
         case "MITIGATED":
             return __("Mitigate");
