@@ -2,9 +2,14 @@ import { ConnectionHandler, graphql } from "relay-runtime";
 import { useTranslate } from "@probo/i18n";
 import { useMutationWithToasts } from "../useMutationWithToasts.ts";
 import type { RiskGraphDeleteMutation } from "./__generated__/RiskGraphDeleteMutation.graphql.ts";
-import { useLazyLoadQuery, useRefetchableFragment } from "react-relay";
+import {
+  useLazyLoadQuery,
+  usePreloadedQuery,
+  useRefetchableFragment,
+  type PreloadedQuery,
+} from "react-relay";
 import { useOrganizationId } from "../useOrganizationId.ts";
-import type { RiskGraphQuery } from "./__generated__/RiskGraphQuery.graphql.ts";
+import type { RiskGraphListQuery } from "./__generated__/RiskGraphListQuery.graphql.ts";
 import type { RiskGraphFragment$key } from "./__generated__/RiskGraphFragment.graphql.ts";
 
 const deleteRiskMutation = graphql`
@@ -27,8 +32,8 @@ export function useDeleteRiskMutation() {
   });
 }
 
-const risksQuery = graphql`
-  query RiskGraphQuery($organizationId: ID!) {
+export const risksQuery = graphql`
+  query RiskGraphListQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       id
       ...RiskGraphFragment
@@ -74,13 +79,11 @@ const risksFragment = graphql`
 
 export const RisksConnectionKey = "RisksListQuery_risks";
 
-export function useRisksQuery() {
-  const data = useLazyLoadQuery<RiskGraphQuery>(risksQuery, {
-    organizationId: useOrganizationId(),
-  });
+export function useRisksQuery(queryRef: PreloadedQuery<RiskGraphListQuery>) {
+  const data = usePreloadedQuery(risksQuery, queryRef);
   const [dataFragment, refetch] = useRefetchableFragment(
     risksFragment,
-    data.organization as RiskGraphFragment$key,
+    data.organization as RiskGraphFragment$key
   );
   const risks = dataFragment?.risks?.edges.map((edge) => edge.node);
   return {
@@ -88,7 +91,26 @@ export function useRisksQuery() {
     refetch,
     connectionId: ConnectionHandler.getConnectionID(
       data.organization.id,
-      RisksConnectionKey,
+      RisksConnectionKey
     ),
   };
 }
+
+export const riskNodeQuery = graphql`
+  query RiskGraphNodeQuery($riskId: ID!) {
+    node(id: $riskId) {
+      ... on Risk {
+        name
+        description
+        treatment
+        owner {
+          id
+          fullName
+        }
+        note
+        ...useRiskFormFragment
+        ...RiskOverviewTabFragment
+      }
+    }
+  }
+`;
