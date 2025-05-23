@@ -1,0 +1,498 @@
+{
+  "id": "ISO/IEC 27001:2022",
+  "name": "ISO 27001 (2022)",
+  "controls": [
+    {
+      "id": "4.1",
+      "name": "Context of the organization - Understanding the organization and its context"
+    },
+    {
+      "id": "4.2",
+      "name": "Context of the organization - Understanding the needs of interested parties"
+    },
+    {
+      "id": "4.3",
+      "name": "Context of the organization - Determining the scope of the information security management system"
+    },
+    {
+      "id": "4.4",
+      "name": "Context of the organization - Information security management system"
+    },
+    {
+      "id": "5.1",
+      "name": "Leadership - Leadership and commitment"
+    },
+    {
+      "id": "5.2",
+      "name": "Leadership - Policy"
+    },
+    {
+      "id": "5.3",
+      "name": "Leadership - Organizational roles, responsibilities and authorities"
+    },
+    {
+      "id": "6.1.1",
+      "name": "Planning - General actions to address risks and opportunities"
+    },
+    {
+      "id": "6.1.2",
+      "name": "Planning - Information security risk assessment"
+    },
+    {
+      "id": "6.1.3",
+      "name": "Planning - Information security risk treatment"
+    },
+    {
+      "id": "6.2",
+      "name": "Planning - Information security objective and planning to achieve them"
+    },
+    {
+      "id": "6.3",
+      "name": "Planning - Planning of Changes"
+    },
+    {
+      "id": "7.1",
+      "name": "Support - Resources"
+    },
+    {
+      "id": "7.2",
+      "name": "Support - Competence"
+    },
+    {
+      "id": "7.3",
+      "name": "Support - Awareness"
+    },
+    {
+      "id": "7.4",
+      "name": "Support - Communication"
+    },
+    {
+      "id": "7.5.1",
+      "name": "Support - Documented information"
+    },
+    {
+      "id": "7.5.2",
+      "name": "Support - Creating and Updating"
+    },
+    {
+      "id": "7.5.3",
+      "name": "Support - Control of documented information"
+    },
+    {
+      "id": "8.1",
+      "name": "Operation - Operation planning and control"
+    },
+    {
+      "id": "8.2",
+      "name": "Operation - Information security risk assessment"
+    },
+    {
+      "id": "8.3",
+      "name": "Operation - Information security risk treatment"
+    },
+    {
+      "id": "9.1",
+      "name": "Performance evaluation - Monitoring, measurement, analysis, and evaluation"
+    },
+    {
+      "id": "9.2.1",
+      "name": "Performance evaluation - Internal Audit - General"
+    },
+    {
+      "id": "9.2.2",
+      "name": "Performance evaluation - Internal Audit Program"
+    },
+    {
+      "id": "9.3.1",
+      "name": "Performance evaluation - Management review - General"
+    },
+    {
+      "id": "9.3.2",
+      "name": "Performance evaluation - Management review inputs"
+    },
+    {
+      "id": "9.3.3",
+      "name": "Performance evaluation - Management review results"
+    },
+    {
+      "id": "10.1",
+      "name": "Improvement - Continual Improvement"
+    },
+    {
+      "id": "10.2",
+      "name": "Improvement - Nonconformity and corrective action"
+    },
+    {
+      "id": "A.5.1",
+      "name": "Organizational - Policies for information security"
+    },
+    {
+      "id": "A.5.2",
+      "name": "Organizational - Information security roles and responsibilities"
+    },
+    {
+      "id": "A.5.3",
+      "name": "Organizational - Segregation of duties"
+    },
+    {
+      "id": "A.5.4",
+      "name": "Organizational - Management responsibilities"
+    },
+    {
+      "id": "A.5.5",
+      "name": "Organizational - Contact with authorities"
+    },
+    {
+      "id": "A.5.6",
+      "name": "Organizational - Contact with special interest groups"
+    },
+    {
+      "id": "A.5.7",
+      "name": "Organizational - Threat Intelligence"
+    },
+    {
+      "id": "A.5.8",
+      "name": "Organizational - Information security in project management"
+    },
+    {
+      "id": "A.5.9",
+      "name": "Organizational - Inventory of information and other associated assets"
+    },
+    {
+      "id": "A.5.10",
+      "name": "Organizational - Acceptable use of information and other associated assets"
+    },
+    {
+      "id": "A.5.11",
+      "name": "Organizational - Return of assets"
+    },
+    {
+      "id": "A.5.12",
+      "name": "Organizational - Classification of information"
+    },
+    {
+      "id": "A.5.13",
+      "name": "Organizational - Labelling of information"
+    },
+    {
+      "id": "A.5.14",
+      "name": "Organizational - Information transfer"
+    },
+    {
+      "id": "A.5.15",
+      "name": "Organizational - Access control"
+    },
+    {
+      "id": "A.5.16",
+      "name": "Organizational - Identity management"
+    },
+    {
+      "id": "A.5.17",
+      "name": "Organizational - Authentication information"
+    },
+    {
+      "id": "A.5.18",
+      "name": "Organizational - Access rights"
+    },
+    {
+      "id": "A.5.19",
+      "name": "Organizational - Information security in supplier relationships"
+    },
+    {
+      "id": "A.5.20",
+      "name": "Organizational - Addressing information security within supplier agreements"
+    },
+    {
+      "id": "A.5.21",
+      "name": "Organizational - Managing information security in the ICT supply chain"
+    },
+    {
+      "id": "A.5.22",
+      "name": "Organizational - Monitoring, review and change management of supplier services"
+    },
+    {
+      "id": "A.5.23",
+      "name": "Organizational - Information security for use of cloud services"
+    },
+    {
+      "id": "A.5.24",
+      "name": "Organizational - Information security incident management planning and preparation"
+    },
+    {
+      "id": "A.5.25",
+      "name": "Organizational - Assessment and decision on information security events"
+    },
+    {
+      "id": "A.5.26",
+      "name": "Organizational - Response to information security incidents"
+    },
+    {
+      "id": "A.5.27",
+      "name": "Organizational - Learning from information security incidents"
+    },
+    {
+      "id": "A.5.28",
+      "name": "Organizational - Collection of evidence"
+    },
+    {
+      "id": "A.5.29",
+      "name": "Organizational - Information security during disruption"
+    },
+    {
+      "id": "A.5.30",
+      "name": "Organizational - ICT readiness for business continuity"
+    },
+    {
+      "id": "A.5.31",
+      "name": "Organizational - Legal, statutory, regulatory and contractual requirements"
+    },
+    {
+      "id": "A.5.32",
+      "name": "Organizational - Intellectual property rights"
+    },
+    {
+      "id": "A.5.33",
+      "name": "Organizational - Protection of records"
+    },
+    {
+      "id": "A.5.34",
+      "name": "Organizational - Privacy and protection of PII"
+    },
+    {
+      "id": "A.5.35",
+      "name": "Organizational - Independent review of information security"
+    },
+    {
+      "id": "A.5.36",
+      "name": "Organizational - Compliance with policies, rules and standards for information security"
+    },
+    {
+      "id": "A.5.37",
+      "name": "Organizational - Documented operating procedures"
+    },
+    {
+      "id": "A.6.1",
+      "name": "People - Screening"
+    },
+    {
+      "id": "A.6.2",
+      "name": "People - Terms and conditions of employment"
+    },
+    {
+      "id": "A.6.3",
+      "name": "People - Information security awareness, education and training"
+    },
+    {
+      "id": "A.6.4",
+      "name": "People - Disciplinary process"
+    },
+    {
+      "id": "A.6.5",
+      "name": "People - Responsibilities after termination or change of employment"
+    },
+    {
+      "id": "A.6.6",
+      "name": "People - Confidentiality or non-disclosure agreements"
+    },
+    {
+      "id": "A.6.7",
+      "name": "People - Remote working"
+    },
+    {
+      "id": "A.6.8",
+      "name": "People - Information security event reporting"
+    },
+    {
+      "id": "A.7.1",
+      "name": "Physical - Physical security perimeters"
+    },
+    {
+      "id": "A.7.2",
+      "name": "Physical - Physical entry"
+    },
+    {
+      "id": "A.7.3",
+      "name": "Physical - Securing offices, rooms and facilities"
+    },
+    {
+      "id": "A.7.4",
+      "name": "Physical - Physical security monitoring"
+    },
+    {
+      "id": "A.7.5",
+      "name": "Physical - Protecting against physical and environmental threats"
+    },
+    {
+      "id": "A.7.6",
+      "name": "Physical - Working in secure areas"
+    },
+    {
+      "id": "A.7.7",
+      "name": "Physical - Clear desk and clear screen"
+    },
+    {
+      "id": "A.7.8",
+      "name": "Physical - Equipment siting and protection"
+    },
+    {
+      "id": "A.7.9",
+      "name": "Physical - Security of assets off-premises"
+    },
+    {
+      "id": "A.7.10",
+      "name": "Physical - Storage media"
+    },
+    {
+      "id": "A.7.11",
+      "name": "Physical - Supporting utilities"
+    },
+    {
+      "id": "A.7.12",
+      "name": "Physical - Cabling security"
+    },
+    {
+      "id": "A.7.13",
+      "name": "Physical - Equipment maintenance"
+    },
+    {
+      "id": "A.7.14",
+      "name": "Physical - Secure disposal or re-use of equipment"
+    },
+    {
+      "id": "A.8.1",
+      "name": "Technological - User endpoint devices"
+    },
+    {
+      "id": "A.8.2",
+      "name": "Technological - Privileged access rights"
+    },
+    {
+      "id": "A.8.3",
+      "name": "Technological - Information access restriction"
+    },
+    {
+      "id": "A.8.4",
+      "name": "Technological - Access to source code"
+    },
+    {
+      "id": "A.8.5",
+      "name": "Technological - Secure authentication"
+    },
+    {
+      "id": "A.8.6",
+      "name": "Technological - Capacity management"
+    },
+    {
+      "id": "A.8.7",
+      "name": "Technological - Protection against malware"
+    },
+    {
+      "id": "A.8.8",
+      "name": "Technological - Management of technical vulnerabilities"
+    },
+    {
+      "id": "A.8.9",
+      "name": "Technological - Configuration management"
+    },
+    {
+      "id": "A.8.10",
+      "name": "Technological - Information deletion"
+    },
+    {
+      "id": "A.8.11",
+      "name": "Technological - Data masking"
+    },
+    {
+      "id": "A.8.12",
+      "name": "Technological - Data leakage prevention"
+    },
+    {
+      "id": "A.8.13",
+      "name": "Technological - Information backup"
+    },
+    {
+      "id": "A.8.14",
+      "name": "Technological - Redundancy of information processing facilities"
+    },
+    {
+      "id": "A.8.15",
+      "name": "Technological - Logging"
+    },
+    {
+      "id": "A.8.16",
+      "name": "Technological - Monitoring activities"
+    },
+    {
+      "id": "A.8.17",
+      "name": "Technological - Clock synchronization"
+    },
+    {
+      "id": "A.8.18",
+      "name": "Technological - Use of privileged utility programs"
+    },
+    {
+      "id": "A.8.19",
+      "name": "Technological - Installation of software on operational systems"
+    },
+    {
+      "id": "A.8.20",
+      "name": "Technological - Networks security"
+    },
+    {
+      "id": "A.8.21",
+      "name": "Technological - Security of network services"
+    },
+    {
+      "id": "A.8.22",
+      "name": "Technological - Segregation of networks"
+    },
+    {
+      "id": "A.8.23",
+      "name": "Technological - Web filtering"
+    },
+    {
+      "id": "A.8.24",
+      "name": "Technological - Use of cryptography"
+    },
+    {
+      "id": "A.8.25",
+      "name": "Technological - Secure development life cycle"
+    },
+    {
+      "id": "A.8.26",
+      "name": "Technological - Application security requirements"
+    },
+    {
+      "id": "A.8.27",
+      "name": "Technological - Secure system architecture and engineering principles"
+    },
+    {
+      "id": "A.8.28",
+      "name": "Technological - Secure coding"
+    },
+    {
+      "id": "A.8.29",
+      "name": "Technological - Security testing in development and acceptance"
+    },
+    {
+      "id": "A.8.30",
+      "name": "Technological - Outsourced development"
+    },
+    {
+      "id": "A.8.31",
+      "name": "Technological - Separation of development, test and production environments"
+    },
+    {
+      "id": "A.8.32",
+      "name": "Technological - Change management"
+    },
+    {
+      "id": "A.8.33",
+      "name": "Technological - Test information"
+    },
+    {
+      "id": "A.8.34",
+      "name": "Technological - Protection of information systems during audit testing"
+    }
+  ]
+}
