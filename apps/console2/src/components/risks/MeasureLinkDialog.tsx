@@ -144,7 +144,7 @@ function MeasureLinkDialogContent(props: Omit<Props, "trigger">) {
           ))}
         </Select>
       </div>
-      <div className="space-y-2 divide-y divide-border-low">
+      <div className="divide-y divide-border-low">
         {filteredMeasures.map((measure) => (
           <MeasureRow key={measure.id} measure={measure} {...props} />
         ))}
@@ -168,6 +168,9 @@ function MeasureRow(props: RowProps) {
   const isFetching = isFetchingAttach || isFetchingDetach;
 
   const onClick = () => {
+    if (isFetching) {
+      return;
+    }
     const action = isLinked ? detachMeasure : attachMeasure;
     action({
       variables: {
@@ -181,7 +184,10 @@ function MeasureRow(props: RowProps) {
   };
 
   return (
-    <div className="py-4 flex items-center gap-4 hover:bg-subtle">
+    <div
+      className="py-4 flex items-center gap-4 hover:bg-subtle cursor-pointer"
+      onClick={onClick}
+    >
       {props.measure.name}
       <Badge variant="neutral">{props.measure.category}</Badge>
       <Button
@@ -189,7 +195,6 @@ function MeasureRow(props: RowProps) {
         icon={isLinked ? IconTrashCan : IconPlusLarge}
         className="ml-auto"
         variant={isLinked ? "secondary" : "primary"}
-        onClick={onClick}
       >
         {isLinked ? __("Unlink") : __("Link")}
       </Button>

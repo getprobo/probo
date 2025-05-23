@@ -138,7 +138,7 @@ export default function FormRiskDialog({
   });
 
   const [showNote, toggleNote] = useToggle(false);
-  const [isOpen, setOpen] = useState(open);
+  const [isOpen, setOpen] = useState(!!open);
 
   return (
     <Dialog
@@ -362,6 +362,7 @@ function TemplateSelector({
           ))}
         </ControlledSelect>
         <Select
+          key={selectedCategory}
           variant={templates?.length === 0 ? "dashed" : "default"}
           placeholder={__("Select template")}
           onValueChange={onTemplateChange}
