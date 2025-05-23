@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6efbbaf2cb9056e26a38c89835260547>>
+ * @generated SignedSource<<3485aabb6e5e1992e2f0c089deaf4b2d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,7 +24,7 @@ export type RiskGraphNodeQuery$data = {
       readonly id: string;
     } | null | undefined;
     readonly treatment?: RiskTreatment;
-    readonly " $fragmentSpreads": FragmentRefs<"RiskOverviewTabFragment" | "useRiskFormFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"RiskMeasuresTabFragment" | "RiskOverviewTabFragment" | "useRiskFormFragment">;
   };
 };
 export type RiskGraphNodeQuery = {
@@ -100,7 +100,28 @@ v7 = {
   "kind": "ScalarField",
   "name": "note",
   "storageKey": null
-};
+},
+v8 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "__typename",
+  "storageKey": null
+},
+v9 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "category",
+  "storageKey": null
+},
+v10 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 100
+  }
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -133,6 +154,11 @@ return {
                 "args": null,
                 "kind": "FragmentSpread",
                 "name": "RiskOverviewTabFragment"
+              },
+              {
+                "args": null,
+                "kind": "FragmentSpread",
+                "name": "RiskMeasuresTabFragment"
               }
             ],
             "type": "Risk",
@@ -159,13 +185,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "__typename",
-            "storageKey": null
-          },
+          (v8/*: any*/),
           (v5/*: any*/),
           {
             "kind": "InlineFragment",
@@ -175,13 +195,7 @@ return {
               (v4/*: any*/),
               (v6/*: any*/),
               (v7/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "category",
-                "storageKey": null
-              },
+              (v9/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -223,6 +237,111 @@ return {
                 "kind": "ScalarField",
                 "name": "residualRiskScore",
                 "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": (v10/*: any*/),
+                "concreteType": "MeasureConnection",
+                "kind": "LinkedField",
+                "name": "measures",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "MeasureEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Measure",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v5/*: any*/),
+                          (v2/*: any*/),
+                          (v3/*: any*/),
+                          (v9/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "createdAt",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "state",
+                            "storageKey": null
+                          },
+                          (v8/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "cursor",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "PageInfo",
+                    "kind": "LinkedField",
+                    "name": "pageInfo",
+                    "plural": false,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "endCursor",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "hasNextPage",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  },
+                  {
+                    "kind": "ClientExtension",
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "__id",
+                        "storageKey": null
+                      }
+                    ]
+                  }
+                ],
+                "storageKey": "measures(first:100)"
+              },
+              {
+                "alias": null,
+                "args": (v10/*: any*/),
+                "filters": null,
+                "handle": "connection",
+                "key": "Risk__measures",
+                "kind": "LinkedHandle",
+                "name": "measures"
               }
             ],
             "type": "Risk",
@@ -234,16 +353,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f3e35dd3d4ea0933858541184c664b4d",
+    "cacheID": "fc9da3522dfacf8b5f887a0ebbd3e21e",
     "id": null,
     "metadata": {},
     "name": "RiskGraphNodeQuery",
     "operationKind": "query",
-    "text": "query RiskGraphNodeQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    ... on Risk {\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      note\n      ...useRiskFormFragment\n      ...RiskOverviewTabFragment\n    }\n    id\n  }\n}\n\nfragment RiskOverviewTabFragment on Risk {\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "query RiskGraphNodeQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    ... on Risk {\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      note\n      ...useRiskFormFragment\n      ...RiskOverviewTabFragment\n      ...RiskMeasuresTabFragment\n    }\n    id\n  }\n}\n\nfragment RiskMeasuresTabFragment on Risk {\n  id\n  measures(first: 100) {\n    edges {\n      node {\n        id\n        name\n        description\n        category\n        createdAt\n        state\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskOverviewTabFragment on Risk {\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "76afe5fc70188381350154bdba7aa066";
+(node as any).hash = "c742a5b3e536eabc8dca8b680f763a04";
 
 export default node;
