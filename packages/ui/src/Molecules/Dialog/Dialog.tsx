@@ -70,23 +70,35 @@ export function Dialog({
     );
 }
 
-export function DialogFooter({ children }: { children?: ReactNode }) {
+export function DialogFooter({
+    children,
+    exitLabel,
+}: {
+    children?: ReactNode;
+    exitLabel?: string;
+}) {
     const { __ } = useTranslate();
     return (
         <footer className="flex justify-end items-center p-3 border-t border-t-border-low gap-2">
             <Close asChild>
-                <Button variant="secondary">{__("Cancel")}</Button>
+                <Button variant="secondary">{exitLabel ?? __("Cancel")}</Button>
             </Close>
             {children}
         </footer>
     );
 }
 
-export function DialogContent(props: HTMLAttributes<HTMLDivElement>) {
+export function DialogContent(
+    props: HTMLAttributes<HTMLDivElement> & { padded?: boolean },
+) {
     return (
         <div
             {...props}
-            className={clsx("overflow-y-auto", props.className)}
+            className={clsx(
+                "overflow-y-auto",
+                props.className,
+                props.padded && "p-6",
+            )}
             style={{
                 maxHeight: "min(640px, calc(100vh - 140px))",
             }}

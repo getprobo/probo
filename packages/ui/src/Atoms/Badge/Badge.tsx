@@ -31,6 +31,7 @@ const badge = tv({
         },
     },
     defaultVariants: {
+        variant: "neutral",
         size: "sm",
     },
 });
