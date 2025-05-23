@@ -3,12 +3,10 @@ import { useTranslate } from "@probo/i18n";
 import { useMutationWithToasts } from "../useMutationWithToasts.ts";
 import type { RiskGraphDeleteMutation } from "./__generated__/RiskGraphDeleteMutation.graphql.ts";
 import {
-  useLazyLoadQuery,
   usePreloadedQuery,
   useRefetchableFragment,
   type PreloadedQuery,
 } from "react-relay";
-import { useOrganizationId } from "../useOrganizationId.ts";
 import type { RiskGraphListQuery } from "./__generated__/RiskGraphListQuery.graphql.ts";
 import type { RiskGraphFragment$key } from "./__generated__/RiskGraphFragment.graphql.ts";
 

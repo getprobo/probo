@@ -18,7 +18,7 @@ const SortableContext = createContext({
     direction: "DESC",
     field: "CREATED_AT",
   },
-  onOrderChange: (order: any) => {},
+  onOrderChange: (() => {}) as (order: Order) => void,
 });
 
 const defaultOrder = {
@@ -26,7 +26,7 @@ const defaultOrder = {
   field: "CREATED_AT",
 } as Order;
 
-export function SortableTable<T extends Order>({
+export function SortableTable({
   refetch,
   ...props
 }: ComponentProps<typeof Table> & {

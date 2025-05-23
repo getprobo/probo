@@ -29,6 +29,7 @@ type Props = PropsWithChildren<
         variant?: "default" | "editor" | "dashed";
         invalid?: boolean;
         disabled?: boolean;
+        className?: string;
     } & Omit<ComponentProps<typeof Root>, "onChange">
 >;
 
@@ -112,11 +113,11 @@ export function Select({
 
     return (
         <Root onValueChange={onValueChange} value={value}>
-            <Trigger className={trigger({ ...props })} {...props}>
+            <Trigger {...props} className={trigger({ ...props })}>
                 <div className="text-ellipsis overflow-hidden">
                     <Value placeholder={placeholder}>
                         {valueNode ? (
-                            <span className="flex items-center gap-2">
+                            <span className="flex items-center gap-2 overflow-hidden text-ellipsis w-full">
                                 {valueNode}
                             </span>
                         ) : null}
