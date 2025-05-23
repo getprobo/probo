@@ -9,22 +9,22 @@ const badgeVariant = (score: number) => {
     if (score >= 15) {
         return "danger";
     }
-    if (score >= 5) {
+    if (score > 6) {
         return "warning";
     }
-    return "neutral";
+    return "success";
 };
 
 export function SeverityBadge({ score }: Props) {
     const { __ } = useTranslate();
     const label = () => {
         if (score >= 15) {
-            return __("Critical");
-        }
-        if (score >= 5) {
             return __("High");
         }
-        return __("Negligible");
+        if (score > 6) {
+            return __("Medium");
+        }
+        return __("Low");
     };
     return <Badge variant={badgeVariant(score)}>{label()}</Badge>;
 }

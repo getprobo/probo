@@ -1,8 +1,8 @@
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
-import { useMutationWithToasts } from "../hooks/useMutationWithToasts";
-import type { VendorGraphCreateMutation } from "./__generated__/VendorGraphCreateMutation.graphql";
-import type { VendorGraphDeleteMutation } from "./__generated__/VendorGraphDeleteMutation.graphql";
+import { useMutationWithToasts } from "../useMutationWithToasts.ts";
+import type { VendorGraphCreateMutation } from "./__generated__/VendorGraphCreateMutation.graphql.ts";
+import type { VendorGraphDeleteMutation } from "./__generated__/VendorGraphDeleteMutation.graphql.ts";
 
 const createVendorMutation = graphql`
   mutation VendorGraphCreateMutation(
@@ -32,7 +32,7 @@ export function useCreateVendorMutation() {
     {
       successMessage: __("Vendor created successfully."),
       errorMessage: __("Failed to create vendor. Please try again."),
-    }
+    },
   );
 }
 
@@ -55,6 +55,6 @@ export function useDeleteVendorMutation() {
     {
       successMessage: __("Vendor deleted successfully."),
       errorMessage: __("Failed to delete vendor. Please try again."),
-    }
+    },
   );
 }
