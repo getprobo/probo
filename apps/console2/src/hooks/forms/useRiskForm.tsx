@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { useFormWithSchema } from "../../../../hooks/useFormWithSchema";
+import { useFormWithSchema } from "../useFormWithSchema";
 import { graphql } from "relay-runtime";
 import type {
   useRiskFormFragment$data,

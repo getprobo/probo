@@ -24,7 +24,11 @@ import {
   ControlledField,
   ControlledSelect,
 } from "../../../components/form/ControlledField";
-import { useRiskForm, type RiskForm, type RiskKey } from "./forms/useRiskForm";
+import {
+  useRiskForm,
+  type RiskForm,
+  type RiskKey,
+} from "../../../hooks/forms/useRiskForm";
 import type { FieldErrors } from "react-hook-form";
 import { useMutationWithToasts } from "../../../hooks/useMutationWithToasts";
 import type { FormRiskDialogMutation } from "./__generated__/FormRiskDialogMutation.graphql";
