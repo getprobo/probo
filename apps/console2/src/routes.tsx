@@ -1,5 +1,6 @@
 import {
   createBrowserRouter,
+  redirect,
   useLoaderData,
   useRouteError,
   type RouteObject,
@@ -7,9 +8,9 @@ import {
 import { MainLayout } from "./layouts/MainLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import {
+  Fragment,
   lazy,
   Suspense,
-  useEffect,
   type FC,
   type LazyExoticComponent,
 } from "react";
@@ -22,6 +23,7 @@ import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
 import { loadQuery, type PreloadedQuery } from "react-relay";
 import { riskNodeQuery, risksQuery } from "./hooks/graph/RiskGraph.ts";
 import { useCleanup } from "./hooks/useDelayedEffect.ts";
+import { riskRoutes } from "./routes/riskRoutes.ts";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -32,9 +34,9 @@ function ErrorBoundary() {
   return <div>error</div>;
 }
 
-type Route = {
+export type AppRoute = {
   Component: FC<any> | LazyExoticComponent<FC<any>>;
-  children?: Route[];
+  children?: AppRoute[];
   fallback?: FC;
   queryLoader?: (params: Record<string, string>) => PreloadedQuery<any>;
 } & Omit<RouteObject, "Component" | "children">;
@@ -62,7 +64,7 @@ const routes = [
       {
         path: "organizations/new",
         Component: lazy(
-          () => import("./pages/organizations/NewOrganizationPage"),
+          () => import("./pages/organizations/NewOrganizationPage")
         ),
       },
     ],
@@ -76,45 +78,22 @@ const routes = [
         path: "vendors",
         fallback: PageSkeleton,
         Component: lazy(
-          () => import("./pages/organizations/vendors/VendorsPage"),
+          () => import("./pages/organizations/vendors/VendorsPage")
         ),
       },
-      {
-        path: "risks",
-        fallback: RisksPageSkeleton,
-        queryLoader: ({ organizationId }) =>
-          loadQuery(relayEnvironment, risksQuery, { organizationId }),
-        Component: lazy(() => import("./pages/organizations/risks/RisksPage")),
-      },
-      {
-        path: "risks/:riskId",
-        fallback: PageSkeleton,
-        queryLoader: ({ riskId }) =>
-          loadQuery(relayEnvironment, riskNodeQuery, { riskId }),
-        Component: lazy(
-          () => import("./pages/organizations/risks/RiskDetailPage"),
-        ),
-        children: [
-          {
-            path: "",
-            Component: lazy(
-              () => import("./pages/organizations/risks/RiskOverviewTab"),
-            ),
-          },
-        ],
-      },
+      ...riskRoutes,
     ],
   },
-] satisfies Route[];
+] satisfies AppRoute[];
 
 /**
- * Wrap component with a suspense to handle lazy loading & relay loading states
+ * Wrap components with suspense to handle lazy loading & relay loading states
  */
 function routeTransformer({
   fallback: FallbackComponent,
   queryLoader,
   ...route
-}: Route): RouteObject {
+}: AppRoute): RouteObject {
   let result = { ...route };
   if (FallbackComponent) {
     result = {
@@ -133,10 +112,7 @@ function routeTransformer({
         const query = queryLoader(params as Record<string, string>);
         return {
           queryRef: query,
-          dispose: () => {
-            console.log("cleaning up query");
-            query.dispose();
-          },
+          dispose: query.dispose,
         };
       },
       Component: () => {

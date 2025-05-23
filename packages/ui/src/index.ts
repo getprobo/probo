@@ -30,6 +30,7 @@ export { Select, Option } from "./Atoms/Select/Select.tsx";
 export { Label } from "./Atoms/Label/Label";
 export { PropertyRow } from "./Atoms/PropertyRow/PropertyRow";
 export { Table, Thead, Tr, Tbody, Td, Th } from "./Atoms/Table/Table";
+export { Tabs, TabLink } from "./Atoms/Tabs/Tabs";
 
 // Molecules
 export {
