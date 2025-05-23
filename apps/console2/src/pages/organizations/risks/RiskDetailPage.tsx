@@ -21,13 +21,13 @@ import { ConnectionHandler } from "relay-runtime";
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import FormRiskDialog from "./FormRiskDialog";
 import { usePageTitle } from "@probo/hooks";
-import { useOrganizationId } from "../../../hooks/useOrganizationId";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import {
   riskNodeQuery,
   RisksConnectionKey,
   useDeleteRiskMutation,
-} from "../../../hooks/graph/RiskGraph";
-import type { RiskGraphNodeQuery } from "../../../hooks/graph/__generated__/RiskGraphNodeQuery.graphql";
+} from "/hooks/graph/RiskGraph";
+import type { RiskGraphNodeQuery } from "/hooks/graph/__generated__/RiskGraphNodeQuery.graphql";
 
 type Props = {
   queryRef: PreloadedQuery<RiskGraphNodeQuery>;

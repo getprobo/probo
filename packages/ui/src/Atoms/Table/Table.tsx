@@ -19,8 +19,15 @@ export function Thead({ children }: PropsWithChildren) {
     );
 }
 
-export function Th({ children }: PropsWithChildren) {
-    return <th className="first:pl-6 last:pr-6 py-3">{children}</th>;
+export function Th({
+    children,
+    className,
+}: PropsWithChildren<{ className?: string }>) {
+    return (
+        <th className={clsx("first:pl-6 last:pr-6 py-3", className)}>
+            {children}
+        </th>
+    );
 }
 
 const TrContext = createContext({} as { to?: string });
@@ -54,7 +61,7 @@ export function Td({
 }: PropsWithChildren<{ noLink?: boolean }>) {
     const { to } = useContext(TrContext);
     if (!to || noLink) {
-        return <td className="first:pl-6 py-3">{children}</td>;
+        return <td className="first:pl-6 last:pr-6 py-3">{children}</td>;
     }
     return (
         <td className="first:*:pl-6 *:block last:*:pr-6 py-3">

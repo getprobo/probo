@@ -1,27 +1,15 @@
 import {
   createBrowserRouter,
-  redirect,
   useLoaderData,
   useRouteError,
   type RouteObject,
 } from "react-router";
 import { MainLayout } from "./layouts/MainLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
-import {
-  Fragment,
-  lazy,
-  Suspense,
-  type FC,
-  type LazyExoticComponent,
-} from "react";
-import {
-  relayEnvironment,
-  UnAuthenticatedError,
-} from "./providers/RelayProviders";
-import { RisksPageSkeleton } from "./components/skeletons/RisksPageSkeleton.tsx";
+import { lazy, Suspense, type FC, type LazyExoticComponent } from "react";
+import { UnAuthenticatedError } from "./providers/RelayProviders";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
-import { loadQuery, type PreloadedQuery } from "react-relay";
-import { riskNodeQuery, risksQuery } from "./hooks/graph/RiskGraph.ts";
+import { type PreloadedQuery } from "react-relay";
 import { useCleanup } from "./hooks/useDelayedEffect.ts";
 import { riskRoutes } from "./routes/riskRoutes.ts";
 
