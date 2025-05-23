@@ -11,50 +11,27 @@ import {
   IconTrashCan,
   PageHeader,
   PropertyRow,
-  RiskOverview,
 } from "@probo/ui";
-import { useNavigate, useParams } from "react-router";
+import { Outlet, useNavigate, useParams } from "react-router";
 import { useTranslate } from "@probo/i18n";
 import { getTreatment, sprintf } from "@probo/helpers";
-import { ConnectionHandler, graphql } from "relay-runtime";
-import { useLazyLoadQuery } from "react-relay";
-import type {
-  RiskDetailPageQuery,
-  RiskDetailPageQuery$data,
-} from "./__generated__/RiskDetailPageQuery.graphql";
+import { ConnectionHandler } from "relay-runtime";
+import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import FormRiskDialog from "./FormRiskDialog";
 import { usePageTitle } from "@probo/hooks";
 import { useOrganizationId } from "../../../hooks/useOrganizationId";
 import {
+  riskNodeQuery,
   RisksConnectionKey,
   useDeleteRiskMutation,
 } from "../../../hooks/graph/RiskGraph";
+import type { RiskGraphNodeQuery } from "../../../hooks/graph/__generated__/RiskGraphNodeQuery.graphql";
 
-const riskQuery = graphql`
-  query RiskDetailPageQuery($riskId: ID!) {
-    node(id: $riskId) {
-      ... on Risk {
-        name
-        description
-        treatment
-        owner {
-          id
-          fullName
-        }
-        inherentLikelihood
-        inherentImpact
-        residualLikelihood
-        residualImpact
-        note
-        createdAt
-        updatedAt
-        ...useRiskFormFragment
-      }
-    }
-  }
-`;
+type Props = {
+  queryRef: PreloadedQuery<RiskGraphNodeQuery>;
+};
 
-export default function RiskDetailPage() {
+export default function RiskDetailPage(props: Props) {
   const { riskId } = useParams<{ riskId: string }>();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
@@ -64,8 +41,8 @@ export default function RiskDetailPage() {
   }
 
   const { __ } = useTranslate();
-  const data = useLazyLoadQuery<RiskDetailPageQuery>(riskQuery, { riskId });
-  const risk = data.node as Required<RiskDetailPageQuery$data["node"]>;
+  const data = usePreloadedQuery(riskNodeQuery, props.queryRef);
+  const risk = data.node;
   const [deleteRisk] = useDeleteRiskMutation();
 
   usePageTitle(risk.name ?? "Risk detail");
@@ -73,7 +50,7 @@ export default function RiskDetailPage() {
   const onDelete = (riskId: string) => {
     const connectionId = ConnectionHandler.getConnectionID(
       organizationId,
-      RisksConnectionKey,
+      RisksConnectionKey
     );
     deleteRisk({
       variables: {
@@ -114,9 +91,9 @@ export default function RiskDetailPage() {
             <ConfirmDialog
               message={sprintf(
                 __(
-                  'This will permanently delete the risk "%s". This action cannot be undone.',
+                  'This will permanently delete the risk "%s". This action cannot be undone.'
                 ),
-                risk.name,
+                risk.name
               )}
               onConfirm={() => onDelete(riskId)}
             >
@@ -130,10 +107,7 @@ export default function RiskDetailPage() {
 
       <PageHeader title={risk.name} />
 
-      <div className="grid grid-cols-2">
-        <RiskOverview type="inherent" risk={risk} />
-        <RiskOverview type="residual" risk={risk} />
-      </div>
+      <Outlet context={{ risk }} />
 
       <Drawer>
         <PropertyRow label={__("Owner")}>
