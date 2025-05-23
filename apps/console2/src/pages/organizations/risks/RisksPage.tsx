@@ -111,7 +111,7 @@ export default function RisksPage(props: Props) {
               <Td>
                 <SeverityBadge score={risk.residualRiskScore} />
               </Td>
-              <Td noLink>
+              <Td noLink className="text-end">
                 <ActionDropdown>
                   <DropdownItem
                     icon={IconPencil}
