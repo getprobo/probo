@@ -20,15 +20,15 @@ import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import { ConnectionHandler, graphql } from "relay-runtime";
 import { useLazyLoadQuery } from "react-relay";
-import { useOrganizationId } from "../../../hooks/useOrganizationId";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import type {
   VendorsPageQuery,
   VendorsPageQuery$data,
 } from "./__generated__/VendorsPageQuery.graphql";
 import { faviconUrl, sprintf } from "@probo/helpers";
-import type { NodeOf } from "../../../types";
+import type { NodeOf } from "/types";
 import { CreateVendorDialog } from "./CreateVendorDialog";
-import { useDeleteVendorMutation } from "../../../hooks/graph/VendorGraph";
+import { useDeleteVendorMutation } from "/hooks/graph/VendorGraph";
 
 const vendorsQuery = graphql`
   query VendorsPageQuery($organizationId: ID!) {
@@ -84,7 +84,7 @@ export default function VendorsPage() {
       <PageHeader
         title={__("Vendors")}
         description={__(
-          "Vendors are third-party services that your company uses. Add them to keep track of their risk and compliance status.",
+          "Vendors are third-party services that your company uses. Add them to keep track of their risk and compliance status."
         )}
       >
         <CreateVendorDialog
@@ -142,7 +142,7 @@ function VendorRow({
         connections: [
           ConnectionHandler.getConnectionID(
             organizationId,
-            "VendorsPage_vendors",
+            "VendorsPage_vendors"
           ),
         ],
       },
@@ -182,9 +182,9 @@ function VendorRow({
           <ConfirmDialog
             message={sprintf(
               __(
-                'This will permanently delete the vendor "%s". This action cannot be undone.',
+                'This will permanently delete the vendor "%s". This action cannot be undone.'
               ),
-              vendor.name,
+              vendor.name
             )}
             onConfirm={() => onDelete(vendor.id)}
           >
