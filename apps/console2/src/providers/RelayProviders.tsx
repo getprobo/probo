@@ -30,7 +30,7 @@ const fetchRelay: FetchFunction = async (
   request,
   variables,
   _,
-  uploadables
+  uploadables,
 ) => {
   const requestInit: RequestInit = {
     method: "POST",
@@ -46,7 +46,7 @@ const fetchRelay: FetchFunction = async (
         operationName: request.name,
         query: request.text,
         variables: variables,
-      })
+      }),
     );
 
     const uploadableMap: {
@@ -80,7 +80,7 @@ const fetchRelay: FetchFunction = async (
 
   const response = await fetch(
     import.meta.env.VITE_API_URL + "/api/console/v1/query",
-    requestInit
+    requestInit,
   );
 
   if (response.status === 500) {
@@ -100,8 +100,8 @@ const fetchRelay: FetchFunction = async (
       `Error fetching GraphQL query '${
         request.name
       }' with variables '${JSON.stringify(variables)}': ${JSON.stringify(
-        json.errors
-      )}`
+        json.errors,
+      )}`,
     );
   }
 
@@ -114,7 +114,7 @@ const store = new Store(source, {
   gcReleaseBufferSize: 20,
 });
 
-const environment = new Environment({
+export const relayEnvironment = new Environment({
   network: Network.create(fetchRelay),
   store,
 });
@@ -124,7 +124,7 @@ const environment = new Environment({
  */
 export const RelayProvider = ({ children }: PropsWithChildren) => {
   return (
-    <RelayEnvironmentProvider environment={environment}>
+    <RelayEnvironmentProvider environment={relayEnvironment}>
       {children}
     </RelayEnvironmentProvider>
   );
