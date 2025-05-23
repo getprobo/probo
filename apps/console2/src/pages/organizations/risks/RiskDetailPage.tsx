@@ -11,6 +11,8 @@ import {
   IconTrashCan,
   PageHeader,
   PropertyRow,
+  TabLink,
+  Tabs,
 } from "@probo/ui";
 import { Outlet, useNavigate, useParams } from "react-router";
 import { useTranslate } from "@probo/i18n";
@@ -106,6 +108,19 @@ export default function RiskDetailPage(props: Props) {
       </div>
 
       <PageHeader title={risk.name} />
+
+      <Tabs>
+        <TabLink
+          to={`/organizations/${organizationId}/risks/${riskId}/overview`}
+        >
+          {__("Overview")}
+        </TabLink>
+        <TabLink
+          to={`/organizations/${organizationId}/risks/${riskId}/measures`}
+        >
+          {__("Measures")}
+        </TabLink>
+      </Tabs>
 
       <Outlet context={{ risk }} />
 
