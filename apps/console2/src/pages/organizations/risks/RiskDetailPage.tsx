@@ -1,6 +1,7 @@
 import {
   ActionDropdown,
   Avatar,
+  Badge,
   Breadcrumb,
   Button,
   ConfirmDialog,
@@ -11,7 +12,6 @@ import {
   PageHeader,
   PropertyRow,
   RiskOverview,
-  Badge,
 } from "@probo/ui";
 import { useNavigate, useParams } from "react-router";
 import { useTranslate } from "@probo/i18n";
@@ -25,7 +25,10 @@ import type {
 import FormRiskDialog from "./FormRiskDialog";
 import { usePageTitle } from "@probo/hooks";
 import { useOrganizationId } from "../../../hooks/useOrganizationId";
-import { useDeleteRiskMutation } from "../../../graph/RiskGraph";
+import {
+  RisksConnectionKey,
+  useDeleteRiskMutation,
+} from "../../../hooks/graph/RiskGraph";
 
 const riskQuery = graphql`
   query RiskDetailPageQuery($riskId: ID!) {
@@ -70,7 +73,7 @@ export default function RiskDetailPage() {
   const onDelete = (riskId: string) => {
     const connectionId = ConnectionHandler.getConnectionID(
       organizationId,
-      "RisksPage_risks"
+      RisksConnectionKey,
     );
     deleteRisk({
       variables: {
@@ -111,9 +114,9 @@ export default function RiskDetailPage() {
             <ConfirmDialog
               message={sprintf(
                 __(
-                  'This will permanently delete the risk "%s". This action cannot be undone.'
+                  'This will permanently delete the risk "%s". This action cannot be undone.',
                 ),
-                risk.name
+                risk.name,
               )}
               onConfirm={() => onDelete(riskId)}
             >

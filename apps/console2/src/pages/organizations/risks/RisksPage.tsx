@@ -1,87 +1,48 @@
 import {
+  ActionDropdown,
   Button,
+  ConfirmDialog,
+  DropdownItem,
+  IconPencil,
+  IconPlusLarge,
+  IconTrashCan,
   PageHeader,
+  RisksChart,
+  SeverityBadge,
+  Tbody,
   Td,
-  Tr,
   Th,
   Thead,
-  Tbody,
-  Table,
-  RiskBadge,
-  SeverityBadge,
-  ActionDropdown,
-  DropdownItem,
-  IconTrashCan,
-  IconPencil,
-  ConfirmDialog,
-  RisksChart,
+  Tr,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { IconPlusLarge } from "@probo/ui";
 import FormRiskDialog from "./FormRiskDialog";
-import { graphql } from "relay-runtime";
-import { useLazyLoadQuery } from "react-relay";
-import type { RisksPageQuery as RisksPageQueryType } from "./__generated__/RisksPageQuery.graphql";
 import { useOrganizationId } from "../../../hooks/useOrganizationId";
 import { useState } from "react";
 import { usePageTitle } from "@probo/hooks";
 import { getTreatment, sprintf } from "@probo/helpers";
 import type { ItemOf } from "../../../types";
-import { useDeleteRiskMutation } from "../../../graph/RiskGraph";
-
-const risksQuery = graphql`
-  query RisksPageQuery(
-    $organizationId: ID!
-    $first: Int
-    $after: CursorKey
-    $last: Int
-    $before: CursorKey
-  ) {
-    organization: node(id: $organizationId) {
-      ... on Organization {
-        risks(first: $first, after: $after, last: $last, before: $before)
-          @connection(key: "RisksPage_risks") {
-          __id
-          edges {
-            node {
-              id
-              name
-              category
-              treatment
-              inherentLikelihood
-              inherentImpact
-              residualLikelihood
-              residualImpact
-              inherentSeverity
-              ...useRiskFormFragment
-            }
-          }
-        }
-      }
-    }
-  }
-`;
+import {
+  useDeleteRiskMutation,
+  useRisksQuery,
+} from "../../../hooks/graph/RiskGraph";
+import { SortableTable, SortableTh } from "../../../components/SortableTable";
 
 export default function RisksPage() {
   const { __ } = useTranslate();
-  const data = useLazyLoadQuery<RisksPageQueryType>(risksQuery, {
-    organizationId: useOrganizationId(),
-  });
-  const risks = data.organization?.risks?.edges.map((edge) => edge.node);
   const [editedRisk, setEditedRisk] = useState<ItemOf<typeof risks> | null>(
-    null
+    null,
   );
   const organizationId = useOrganizationId();
 
   const [deleteRisk] = useDeleteRiskMutation();
-  const connectionId = data.organization!.risks!.__id;
+  const { connectionId, risks, refetch } = useRisksQuery();
 
   const onDelete = (riskId: string) => {
-    risks;
     deleteRisk({
       variables: {
         input: { riskId },
-        connections: [],
+        connections: [connectionId],
       },
     });
   };
@@ -117,15 +78,18 @@ export default function RisksPage() {
           risks={risks}
         />
       </div>
-      <Table>
+      <SortableTable refetch={refetch}>
         <Thead>
           <Tr>
-            <Th>{__("Risk name")}</Th>
-            <Th>{__("Category")}</Th>
-            <Th>{__("Treatment")}</Th>
-            <Th>{__("Initial Risk")}</Th>
-            <Th>{__("Residual Risk")}</Th>
-            <Th>{__("Severity")}</Th>
+            <SortableTh field="NAME">{__("Risk name")}</SortableTh>
+            <SortableTh field="CATEGORY">{__("Category")}</SortableTh>
+            <SortableTh field="TREATMENT">{__("Treatment")}</SortableTh>
+            <SortableTh field="INHERENT_RISK_SCORE">
+              {__("Initial Risk")}
+            </SortableTh>
+            <SortableTh field="RESIDUAL_RISK_SCORE">
+              {__("Residual Risk")}
+            </SortableTh>
             <Th></Th>
           </Tr>
         </Thead>
@@ -139,17 +103,10 @@ export default function RisksPage() {
               <Td>{risk.category}</Td>
               <Td>{getTreatment(__, risk.treatment)}</Td>
               <Td>
-                <RiskBadge
-                  level={risk.inherentLikelihood * risk.inherentImpact}
-                />
+                <SeverityBadge score={risk.inherentRiskScore} />
               </Td>
               <Td>
-                <RiskBadge
-                  level={risk.residualLikelihood * risk.residualImpact}
-                />
-              </Td>
-              <Td>
-                <SeverityBadge severity={risk.inherentSeverity} />
+                <SeverityBadge score={risk.residualRiskScore} />
               </Td>
               <Td noLink>
                 <ActionDropdown>
@@ -162,9 +119,9 @@ export default function RisksPage() {
                   <ConfirmDialog
                     message={sprintf(
                       __(
-                        'This will permanently delete the risk "%s". This action cannot be undone.'
+                        'This will permanently delete the risk "%s". This action cannot be undone.',
                       ),
-                      risk.name
+                      risk.name,
                     )}
                     onConfirm={() => onDelete(risk.id)}
                   >
@@ -177,7 +134,7 @@ export default function RisksPage() {
             </Tr>
           ))}
         </Tbody>
-      </Table>
+      </SortableTable>
     </div>
   );
 }

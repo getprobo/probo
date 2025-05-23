@@ -11,11 +11,11 @@ import {
 import { useVendorSearch } from "../../../hooks/useVendorSearch";
 import { faviconUrl } from "@probo/helpers";
 import type { Vendor } from "@probo/vendors";
-import { useCreateVendorMutation } from "../../../graph/VendorGraph";
-import { useState } from "react";
+import { useCreateVendorMutation } from "../../../hooks/graph/VendorGraph";
+import { type ReactNode, useState } from "react";
 
 type Props = {
-  trigger: React.ReactNode;
+  trigger: ReactNode;
   organizationId: string;
   connection: string;
 };

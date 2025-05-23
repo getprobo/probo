@@ -12,10 +12,10 @@ type Story = StoryObj<typeof SeverityBadge>;
 export const Default: Story = {
     render: () => (
         <div className="space-y-2">
-            <SeverityBadge severity={75} />
-            <SeverityBadge severity={50} />
-            <SeverityBadge severity={25} />
-            <SeverityBadge severity={0} />
+            <SeverityBadge score={75} />
+            <SeverityBadge score={50} />
+            <SeverityBadge score={25} />
+            <SeverityBadge score={0} />
         </div>
     ),
 };
