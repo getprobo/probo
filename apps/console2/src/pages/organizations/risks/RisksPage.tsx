@@ -17,21 +17,18 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import FormRiskDialog from "./FormRiskDialog";
-import { useOrganizationId } from "../../../hooks/useOrganizationId";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useState } from "react";
 import { usePageTitle } from "@probo/hooks";
 import { getTreatment, sprintf } from "@probo/helpers";
-import type { ItemOf } from "../../../types";
-import {
-  useDeleteRiskMutation,
-  useRisksQuery,
-} from "../../../hooks/graph/RiskGraph";
-import { SortableTable, SortableTh } from "../../../components/SortableTable";
+import type { ItemOf } from "/types";
+import { useDeleteRiskMutation, useRisksQuery } from "/hooks/graph/RiskGraph";
+import { SortableTable, SortableTh } from "/components/SortableTable";
 import type { PreloadedQuery } from "react-relay";
-import type { RiskGraphQuery } from "../../../hooks/graph/__generated__/RiskGraphQuery.graphql";
+import type { RiskGraphListQuery } from "/hooks/graph/__generated__/RiskGraphListQuery.graphql";
 
 type Props = {
-  queryRef: PreloadedQuery<RiskGraphQuery>;
+  queryRef: PreloadedQuery<RiskGraphListQuery>;
 };
 
 export default function RisksPage(props: Props) {

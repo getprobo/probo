@@ -8,12 +8,12 @@ type Props = {
 const badgeVariant = (level: string | number) => {
     if (typeof level === "number") {
         if (level >= 15) {
-            return "CRITICAL";
+            level = "CRITICAL";
+        } else if (level >= 8) {
+            level = "HIGH";
+        } else {
+            level = "LOW";
         }
-        if (level >= 8) {
-            return "HIGH";
-        }
-        return "LOW";
     }
     switch (level) {
         case "CRITICAL":

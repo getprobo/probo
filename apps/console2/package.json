@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "relay": "npx relay-compiler",
-    "build": "vite build",
+    "build": "tsc -b && vite build",
     "lint": "eslint .",
     "check": "tsc --noEmit -p tsconfig.app.json",
     "preview": "vite preview"
@@ -36,6 +36,7 @@
   "devDependencies": {
     "@eslint/js": "^9.25.0",
     "@tailwindcss/vite": "^4.1.7",
+    "@types/node": "^22.15.21",
     "@types/react": "^19.1.2",
     "@types/react-dom": "^19.1.2",
     "@types/react-relay": "^18.2.1",

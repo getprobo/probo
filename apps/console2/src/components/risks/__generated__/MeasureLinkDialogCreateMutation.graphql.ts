@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bce124e2ad364bd742c5d2b2a92f768b>>
+ * @generated SignedSource<<391c4db090caa19c60582c18d426764a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,16 +9,26 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED" | "%future added value";
 export type CreateRiskMeasureMappingInput = {
   measureId: string;
   riskId: string;
 };
 export type MeasureLinkDialogCreateMutation$variables = {
+  connections: ReadonlyArray<string>;
   input: CreateRiskMeasureMappingInput;
 };
 export type MeasureLinkDialogCreateMutation$data = {
   readonly createRiskMeasureMapping: {
-    readonly success: boolean;
+    readonly measureEdge: {
+      readonly node: {
+        readonly category: string;
+        readonly description: string;
+        readonly id: string;
+        readonly name: string;
+        readonly state: MeasureState;
+      };
+    };
   };
 };
 export type MeasureLinkDialogCreateMutation = {
@@ -27,67 +37,156 @@ export type MeasureLinkDialogCreateMutation = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = [
+var v0 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "connections"
+},
+v1 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "input"
+},
+v2 = [
   {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "input"
+    "kind": "Variable",
+    "name": "input",
+    "variableName": "input"
   }
 ],
-v1 = [
-  {
-    "alias": null,
-    "args": [
-      {
-        "kind": "Variable",
-        "name": "input",
-        "variableName": "input"
-      }
-    ],
-    "concreteType": "CreateRiskMeasureMappingPayload",
-    "kind": "LinkedField",
-    "name": "createRiskMeasureMapping",
-    "plural": false,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "success",
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
-  }
-];
+v3 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "MeasureEdge",
+  "kind": "LinkedField",
+  "name": "measureEdge",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "Measure",
+      "kind": "LinkedField",
+      "name": "node",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "id",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "name",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "description",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "category",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "state",
+          "storageKey": null
+        }
+      ],
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+};
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/)
+    ],
     "kind": "Fragment",
     "metadata": null,
     "name": "MeasureLinkDialogCreateMutation",
-    "selections": (v1/*: any*/),
+    "selections": [
+      {
+        "alias": null,
+        "args": (v2/*: any*/),
+        "concreteType": "CreateRiskMeasureMappingPayload",
+        "kind": "LinkedField",
+        "name": "createRiskMeasureMapping",
+        "plural": false,
+        "selections": [
+          (v3/*: any*/)
+        ],
+        "storageKey": null
+      }
+    ],
     "type": "Mutation",
     "abstractKey": null
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v1/*: any*/),
+      (v0/*: any*/)
+    ],
     "kind": "Operation",
     "name": "MeasureLinkDialogCreateMutation",
-    "selections": (v1/*: any*/)
+    "selections": [
+      {
+        "alias": null,
+        "args": (v2/*: any*/),
+        "concreteType": "CreateRiskMeasureMappingPayload",
+        "kind": "LinkedField",
+        "name": "createRiskMeasureMapping",
+        "plural": false,
+        "selections": [
+          (v3/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "filters": null,
+            "handle": "prependEdge",
+            "key": "",
+            "kind": "LinkedHandle",
+            "name": "measureEdge",
+            "handleArgs": [
+              {
+                "kind": "Variable",
+                "name": "connections",
+                "variableName": "connections"
+              }
+            ]
+          }
+        ],
+        "storageKey": null
+      }
+    ]
   },
   "params": {
-    "cacheID": "f7117ee68c2d7b6c2ceca56c054a4892",
+    "cacheID": "309f3c90d91577e2f1c95ea69848ce5a",
     "id": null,
     "metadata": {},
     "name": "MeasureLinkDialogCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation MeasureLinkDialogCreateMutation(\n  $input: CreateRiskMeasureMappingInput!\n) {\n  createRiskMeasureMapping(input: $input) {\n    success\n  }\n}\n"
+    "text": "mutation MeasureLinkDialogCreateMutation(\n  $input: CreateRiskMeasureMappingInput!\n) {\n  createRiskMeasureMapping(input: $input) {\n    measureEdge {\n      node {\n        id\n        name\n        description\n        category\n        state\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b54abd7d4d4f88ff7d54bfa35121a015";
+(node as any).hash = "bd012f06e39d5a04f4c1a2d2026f497e";
 
 export default node;
