@@ -27,16 +27,22 @@ import {
   useRisksQuery,
 } from "../../../hooks/graph/RiskGraph";
 import { SortableTable, SortableTh } from "../../../components/SortableTable";
+import type { PreloadedQuery } from "react-relay";
+import type { RiskGraphQuery } from "../../../hooks/graph/__generated__/RiskGraphQuery.graphql";
 
-export default function RisksPage() {
+type Props = {
+  queryRef: PreloadedQuery<RiskGraphQuery>;
+};
+
+export default function RisksPage(props: Props) {
   const { __ } = useTranslate();
   const [editedRisk, setEditedRisk] = useState<ItemOf<typeof risks> | null>(
-    null,
+    null
   );
   const organizationId = useOrganizationId();
 
   const [deleteRisk] = useDeleteRiskMutation();
-  const { connectionId, risks, refetch } = useRisksQuery();
+  const { connectionId, risks, refetch } = useRisksQuery(props.queryRef);
 
   const onDelete = (riskId: string) => {
     deleteRisk({
@@ -119,9 +125,9 @@ export default function RisksPage() {
                   <ConfirmDialog
                     message={sprintf(
                       __(
-                        'This will permanently delete the risk "%s". This action cannot be undone.',
+                        'This will permanently delete the risk "%s". This action cannot be undone.'
                       ),
-                      risk.name,
+                      risk.name
                     )}
                     onConfirm={() => onDelete(risk.id)}
                   >
