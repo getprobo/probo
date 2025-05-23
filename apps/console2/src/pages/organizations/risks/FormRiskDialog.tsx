@@ -15,22 +15,22 @@ import {
   Textarea,
 } from "@probo/ui";
 import { useMemo, useState, type ReactNode } from "react";
-import { useFetchQuery } from "../../../hooks/useFetchQuery";
-import { ConnectionHandler, graphql } from "relay-runtime";
-import { PeopleSelect } from "../../../components/form/PeopleSelect";
-import { useOrganizationId } from "../../../hooks/useOrganizationId";
+import { useFetchQuery } from "/hooks/useFetchQuery";
+import { graphql } from "relay-runtime";
+import { PeopleSelect } from "/components/form/PeopleSelect";
+import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useToggle } from "@probo/hooks";
 import {
   ControlledField,
   ControlledSelect,
-} from "../../../components/form/ControlledField";
+} from "/components/form/ControlledField";
 import {
   useRiskForm,
   type RiskForm,
   type RiskKey,
-} from "../../../hooks/forms/useRiskForm";
+} from "/hooks/forms/useRiskForm";
 import type { FieldErrors } from "react-hook-form";
-import { useMutationWithToasts } from "../../../hooks/useMutationWithToasts";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import type { FormRiskDialogMutation } from "./__generated__/FormRiskDialogMutation.graphql";
 import type { FormRiskDialogUpdateRiskMutation } from "./__generated__/FormRiskDialogUpdateRiskMutation.graphql";
 import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
@@ -125,7 +125,7 @@ export default function FormRiskDialog({
           ...data,
           organizationId,
         },
-        connections: [connection],
+        connections: [connection!],
       },
       successMessage: __("Risk created successfully."),
       errorMessage: __("Failed to create risk. Please try again."),

@@ -22,7 +22,7 @@ export function groupBy<T>(
 /**
  * Check that a value is empty (null, undefined, empty string, empty array, empty object)
  */
-export function isEmpty(v: unknown) {
+export function isEmpty(v: unknown): boolean {
     if (Array.isArray(v)) {
         return v.find((v) => !isEmpty(v)) === undefined;
     }

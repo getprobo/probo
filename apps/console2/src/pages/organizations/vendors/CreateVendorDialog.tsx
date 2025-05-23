@@ -8,10 +8,10 @@ import {
   Avatar,
   IconPlusLarge,
 } from "@probo/ui";
-import { useVendorSearch } from "../../../hooks/useVendorSearch";
+import { useVendorSearch } from "/hooks/useVendorSearch";
 import { faviconUrl } from "@probo/helpers";
 import type { Vendor } from "@probo/vendors";
-import { useCreateVendorMutation } from "../../../hooks/graph/VendorGraph";
+import { useCreateVendorMutation } from "/hooks/graph/VendorGraph";
 import { type ReactNode, useState } from "react";
 
 type Props = {
