@@ -31,7 +31,7 @@ const getLevel = (score: number): 0 | 1 | 2 => {
     if (score >= 15) {
         return 2;
     }
-    if (score > 4) {
+    if (score > 6) {
         return 1;
     }
     return 0;

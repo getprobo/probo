@@ -22,6 +22,7 @@
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-select": "^2.2.5",
     "@tanstack/react-query": "^5.76.1",
+    "clsx": "^2.1.1",
     "minisearch": "^7.1.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
