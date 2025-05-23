@@ -37,14 +37,14 @@ export function Layout({ header, sidebar, children }: Props) {
                 <header className="absolute z-2 left-0 right-0 px-4 flex items-center border-b border-border-solid h-12 bg-level-1">
                     <Logo className="w-12 h-5" />
                     <svg
-                        className="mx-3"
+                        className="mx-3 text-txt-tertiary"
                         width="8"
                         height="18"
                         viewBox="0 0 8 18"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
                     >
-                        <path d="M1 17L7 1" stroke="#C3C8C2" />
+                        <path d="M1 17L7 1" stroke="currentColor" />
                     </svg>
                     {header}
                 </header>

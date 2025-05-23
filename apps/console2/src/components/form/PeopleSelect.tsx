@@ -72,10 +72,11 @@ function PeopleSelectWithQuery({
             variant="editor"
             placeholder={__("Select an owner")}
             onValueChange={field.onChange}
+            key={people?.length ?? 0}
             {...field}
           >
             {people?.map((p) => (
-              <Option key={p.id} value={p.id}>
+              <Option key={p.id} value={p.id} className="flex gap-2">
                 <Avatar name={p.fullName} />
                 {p.fullName}
               </Option>

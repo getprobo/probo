@@ -58,13 +58,23 @@ export function Tbody({ children }: PropsWithChildren) {
 export function Td({
     children,
     noLink,
-}: PropsWithChildren<{ noLink?: boolean }>) {
+    className,
+}: PropsWithChildren<{ noLink?: boolean; className?: string }>) {
     const { to } = useContext(TrContext);
     if (!to || noLink) {
-        return <td className="first:pl-6 last:pr-6 py-3">{children}</td>;
+        return (
+            <td className={clsx("first:pl-6 last:pr-6 py-3", className)}>
+                {children}
+            </td>
+        );
     }
     return (
-        <td className="first:*:pl-6 *:block last:*:pr-6 py-3">
+        <td
+            className={clsx(
+                "first:*:pl-6 *:block last:*:pr-6 *:py-3",
+                className,
+            )}
+        >
             <Link to={to}>{children}</Link>
         </td>
     );

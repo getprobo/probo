@@ -19,7 +19,15 @@ export function ControlledField({
       control={control}
       name={name}
       render={({ field }) => (
-        <Field {...props} {...field} onValueChange={field.onChange} />
+        <>
+          <Field
+            {...props}
+            {...field}
+            // TODO : Find a better way to handle this case (comparing number and string for select create issues)
+            value={field.value ? field.value.toString() : null}
+            onValueChange={field.onChange}
+          />
+        </>
       )}
     />
   );

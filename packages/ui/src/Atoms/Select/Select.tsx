@@ -13,13 +13,7 @@ import * as ScrollArea from "@radix-ui/react-scroll-area";
 import { input } from "../Input/Input.tsx";
 import { IconChevronGrabberVertical } from "../Icons/IconChevronGrabberVertical.tsx";
 import { tv } from "tailwind-variants";
-import {
-    Children,
-    isValidElement,
-    type ComponentProps,
-    type PropsWithChildren,
-    type ReactNode,
-} from "react";
+import { Children, type ComponentProps, type PropsWithChildren } from "react";
 
 type Props = PropsWithChildren<
     {
@@ -36,10 +30,10 @@ type Props = PropsWithChildren<
 const select = tv({
     slots: {
         trigger:
-            "flex justify-between items-center data-placeholder:text-txt-tertiary whitespace-nowrap cursor-pointer",
+            "flex justify-between items-center data-placeholder:text-txt-tertiary whitespace-nowrap cursor-pointer *:first:contents",
         content:
             "z-100 shadow-mid rounded-[10px] bg-level-1 p-1 animate-in fade-in slide-in-from-top-2 overflow-y-auto overflow-y-auto",
-        option: "flex items-center h-8 text-sm font-medium text-txt-primary hover:bg-tertiary-hover active:bg-tertiary-pressed cursor-pointer px-[10px]",
+        option: "flex gap-2 items-center h-8 text-sm font-medium text-txt-primary hover:bg-tertiary-hover active:bg-tertiary-pressed cursor-pointer px-[10px]",
         icon: "-mr-1",
     },
     variants: {
@@ -79,23 +73,6 @@ const select = tv({
 
 const { trigger, option, content, icon } = select();
 
-/**
- * To display the selected value we need to find the selected option among children
- */
-const findSelectedOption = (
-    children: unknown[],
-    condition: (c: { props: Record<string, unknown> }) => boolean,
-): ReactNode => {
-    const selectedOptions = children.find(
-        // @ts-expect-error We know that the children are ReactElements with props
-        (c) => isValidElement(c) && condition(c),
-    );
-    if (!isValidElement(selectedOptions)) {
-        return null;
-    }
-    return (selectedOptions.props as { children: ReactNode }).children;
-};
-
 export function Select({
     placeholder,
     children,
@@ -103,26 +80,10 @@ export function Select({
     value,
     ...props
 }: Props) {
-    const childrenArr = Children.toArray(children);
-    const valueNode = value
-        ? findSelectedOption(
-              childrenArr,
-              (c) => c.props.value?.toString() === value?.toString(),
-          )
-        : undefined;
-
     return (
         <Root onValueChange={onValueChange} value={value}>
             <Trigger {...props} className={trigger({ ...props })}>
-                <div className="text-ellipsis overflow-hidden">
-                    <Value placeholder={placeholder}>
-                        {valueNode ? (
-                            <span className="flex items-center gap-2 overflow-hidden text-ellipsis w-full">
-                                {valueNode}
-                            </span>
-                        ) : null}
-                    </Value>
-                </div>
+                <Value placeholder={placeholder} />
                 <Icon className={icon()}>
                     <IconChevronGrabberVertical size={16} />
                 </Icon>
@@ -152,10 +113,19 @@ export function Select({
 }
 
 export function Option({ children, ...props }: ComponentProps<typeof Item>) {
+    const hasSingleChildren = Children.count(children) <= 1;
     return (
         <Item {...props} className={option(props)}>
             <ItemText asChild>
-                <span className="flex items-center gap-2">{children}</span>
+                <span
+                    className={
+                        hasSingleChildren
+                            ? "text-ellipsis overflow-hidden"
+                            : "flex gap-2 items-center"
+                    }
+                >
+                    {children}
+                </span>
             </ItemText>
         </Item>
     );
