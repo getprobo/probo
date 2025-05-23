@@ -1,14 +1,27 @@
 import {
   createBrowserRouter,
+  useLoaderData,
   useRouteError,
   type RouteObject,
 } from "react-router";
 import { MainLayout } from "./layouts/MainLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
-import { lazy, Suspense, type FC } from "react";
-import { UnAuthenticatedError } from "./providers/RelayProviders";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  type FC,
+  type LazyExoticComponent,
+} from "react";
+import {
+  relayEnvironment,
+  UnAuthenticatedError,
+} from "./providers/RelayProviders";
 import { RisksPageSkeleton } from "./components/skeletons/RisksPageSkeleton.tsx";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
+import { loadQuery, type PreloadedQuery } from "react-relay";
+import { riskNodeQuery, risksQuery } from "./hooks/graph/RiskGraph.ts";
+import { useCleanup } from "./hooks/useDelayedEffect.ts";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -20,12 +33,11 @@ function ErrorBoundary() {
 }
 
 type Route = {
-  path: string;
-  Component: FC;
+  Component: FC<any> | LazyExoticComponent<FC<any>>;
   children?: Route[];
-  ErrorBoundary?: FC;
   fallback?: FC;
-};
+  queryLoader?: (params: Record<string, string>) => PreloadedQuery<any>;
+} & Omit<RouteObject, "Component" | "children">;
 
 const routes = [
   {
@@ -50,7 +62,7 @@ const routes = [
       {
         path: "organizations/new",
         Component: lazy(
-          () => import("./pages/organizations/NewOrganizationPage")
+          () => import("./pages/organizations/NewOrganizationPage"),
         ),
       },
     ],
@@ -64,20 +76,32 @@ const routes = [
         path: "vendors",
         fallback: PageSkeleton,
         Component: lazy(
-          () => import("./pages/organizations/vendors/VendorsPage")
+          () => import("./pages/organizations/vendors/VendorsPage"),
         ),
       },
       {
         path: "risks",
         fallback: RisksPageSkeleton,
+        queryLoader: ({ organizationId }) =>
+          loadQuery(relayEnvironment, risksQuery, { organizationId }),
         Component: lazy(() => import("./pages/organizations/risks/RisksPage")),
       },
       {
         path: "risks/:riskId",
         fallback: PageSkeleton,
+        queryLoader: ({ riskId }) =>
+          loadQuery(relayEnvironment, riskNodeQuery, { riskId }),
         Component: lazy(
-          () => import("./pages/organizations/risks/RiskDetailPage")
+          () => import("./pages/organizations/risks/RiskDetailPage"),
         ),
+        children: [
+          {
+            path: "",
+            Component: lazy(
+              () => import("./pages/organizations/risks/RiskOverviewTab"),
+            ),
+          },
+        ],
       },
     ],
   },
@@ -86,23 +110,48 @@ const routes = [
 /**
  * Wrap component with a suspense to handle lazy loading & relay loading states
  */
-function routeTransformer(route: Route): RouteObject {
-  if ("fallback" in route && route.fallback) {
-    const fallback = <route.fallback />;
-    return {
-      ...route,
-      children: route.children?.map(routeTransformer),
-      Component: () => (
-        <Suspense fallback={fallback}>
-          <route.Component />
+function routeTransformer({
+  fallback: FallbackComponent,
+  queryLoader,
+  ...route
+}: Route): RouteObject {
+  let result = { ...route };
+  if (FallbackComponent) {
+    result = {
+      ...result,
+      Component: (props) => (
+        <Suspense fallback={<FallbackComponent />}>
+          <route.Component {...props} />
         </Suspense>
       ),
-    } as RouteObject;
+    };
+  }
+  if (queryLoader) {
+    result = {
+      ...result,
+      loader: ({ params }) => {
+        const query = queryLoader(params as Record<string, string>);
+        return {
+          queryRef: query,
+          dispose: () => {
+            console.log("cleaning up query");
+            query.dispose();
+          },
+        };
+      },
+      Component: () => {
+        const { queryRef, dispose } = useLoaderData();
+
+        useCleanup(dispose, 1000);
+
+        return <route.Component queryRef={queryRef} />;
+      },
+    };
   }
   return {
-    ...route,
+    ...result,
     children: route.children?.map(routeTransformer),
-  };
+  } as RouteObject;
 }
 
 export const router = createBrowserRouter(routes.map(routeTransformer));

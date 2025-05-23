@@ -36,7 +36,7 @@ type Props = {
   open?: boolean;
   risk?: RiskKey;
   onSuccess?: () => void;
-  connection: string;
+  connection?: string;
 };
 
 type RiskTemplate = {
