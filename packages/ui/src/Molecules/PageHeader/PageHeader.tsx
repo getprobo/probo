@@ -14,7 +14,7 @@ export function PageHeader({ title, description, children }: Props) {
                     <p className="text-sm text-txt-secondary">{description}</p>
                 )}
             </div>
-            <div>{children}</div>
+            <div className="flex gap-3">{children}</div>
         </div>
     );
 }
