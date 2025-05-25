@@ -3,9 +3,12 @@ import { Card } from "../Card/Card";
 import { Link } from "react-router";
 import clsx from "clsx";
 
-export function Table({ children }: PropsWithChildren) {
+export function Table({
+    children,
+    className,
+}: PropsWithChildren<{ className?: string }>) {
     return (
-        <Card className="relative w-full overflow-auto">
+        <Card className={clsx("relative w-full overflow-auto", className)}>
             <table className="w-full text-left">{children}</table>
         </Card>
     );
@@ -59,17 +62,26 @@ export function Td({
     children,
     noLink,
     className,
-}: PropsWithChildren<{ noLink?: boolean; className?: string }>) {
+    width,
+}: PropsWithChildren<{
+    noLink?: boolean;
+    className?: string;
+    width?: number;
+}>) {
     const { to } = useContext(TrContext);
     if (!to || noLink) {
         return (
-            <td className={clsx("first:pl-6 last:pr-6 py-3", className)}>
+            <td
+                width={width}
+                className={clsx("first:pl-6 last:pr-6 py-3", className)}
+            >
                 {children}
             </td>
         );
     }
     return (
         <td
+            width={width}
             className={clsx(
                 "first:*:pl-6 *:block last:*:pr-6 *:py-3",
                 className,
