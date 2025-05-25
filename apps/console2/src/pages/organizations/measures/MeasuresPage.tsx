@@ -1,0 +1,280 @@
+import type { MeasureGraphListQuery } from "/hooks/graph/__generated__/MeasureGraphListQuery.graphql";
+import {
+  useFragment,
+  usePreloadedQuery,
+  type PreloadedQuery,
+} from "react-relay";
+import { useTranslate } from "@probo/i18n";
+import {
+  ActionDropdown,
+  Button,
+  Card,
+  ConfirmDialog,
+  DropdownItem,
+  FileButton,
+  IconChevronDown,
+  IconChevronUp,
+  IconFolderUpload,
+  IconPencil,
+  IconPlusLarge,
+  IconTrashCan,
+  MeasureBadge,
+  MeasureImplementation,
+  PageHeader,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+} from "@probo/ui";
+import {
+  measuresQuery,
+  useDeleteMeasureMutation,
+} from "/hooks/graph/MeasureGraph";
+import { graphql } from "relay-runtime";
+import type {
+  MeasuresPageFragment$data,
+  MeasuresPageFragment$key,
+} from "./__generated__/MeasuresPageFragment.graphql";
+import { groupBy, objectKeys, sprintf } from "@probo/helpers";
+import { useMemo, useRef, useState, type ChangeEventHandler } from "react";
+import type { NodeOf } from "/types";
+import type { MeasuresPageImportMutation } from "./__generated__/MeasuresPageImportMutation.graphql";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { useToggle } from "@probo/hooks";
+
+type Props = {
+  queryRef: PreloadedQuery<MeasureGraphListQuery>;
+};
+
+const measuresFragment = graphql`
+  fragment MeasuresPageFragment on Organization {
+    measures(first: 100) @connection(key: "MeasuresGraphListQuery__measures") {
+      __id
+      edges {
+        node {
+          id
+          name
+          category
+          state
+        }
+      }
+    }
+  }
+`;
+
+const importMeasuresMutation = graphql`
+  mutation MeasuresPageImportMutation(
+    $input: ImportMeasureInput!
+    $connections: [ID!]!
+  ) {
+    importMeasure(input: $input) {
+      measureEdges @appendEdge(connections: $connections) {
+        node {
+          id
+          name
+          category
+          state
+        }
+      }
+    }
+  }
+`;
+
+export default function MeasuresPage(props: Props) {
+  const { __ } = useTranslate();
+  const organization = usePreloadedQuery(
+    measuresQuery,
+    props.queryRef
+  ).organization;
+  const data = useFragment<MeasuresPageFragment$key>(
+    measuresFragment,
+    organization
+  );
+  const connectionId = data.measures.__id;
+  const measures = data.measures.edges.map((edge) => edge.node);
+  const measuresPerCategory = useMemo(() => {
+    return groupBy(measures, (measure) => measure.category);
+  }, [measures]);
+  const [importMeasures] = useMutationWithToasts<MeasuresPageImportMutation>(
+    importMeasuresMutation,
+    {
+      successMessage: __("Measures imported successfully."),
+      errorMessage: __("Failed to import measures. Please try again."),
+    }
+  );
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  const handleImport: ChangeEventHandler<HTMLInputElement> = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    importMeasures({
+      variables: {
+        input: {
+          organizationId: organization.id,
+          file: null,
+        },
+        connections: [connectionId],
+      },
+      uploadables: {
+        "input.file": file,
+      },
+      onCompleted() {
+        importFileRef.current!.value = "";
+      },
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={__("Measures")}
+        description={__(
+          "Measures are actions taken to reduce the risk. Add them to track their implementation status."
+        )}
+      >
+        <FileButton
+          ref={importFileRef}
+          variant="secondary"
+          icon={IconFolderUpload}
+          onChange={handleImport}
+        >
+          {__("Import")}
+        </FileButton>
+        <Button variant="primary" icon={IconPlusLarge}>
+          {__("New measure")}
+        </Button>
+      </PageHeader>
+      <MeasureImplementation measures={measures} className="my-10" />
+      {objectKeys(measuresPerCategory)
+        .sort((a, b) => a.localeCompare(b))
+        .map((category) => (
+          <Category
+            key={category}
+            category={category}
+            measures={measuresPerCategory[category]}
+          />
+        ))}
+    </div>
+  );
+}
+
+type CategoryProps = {
+  category: string;
+  measures: NodeOf<MeasuresPageFragment$data["measures"]>[];
+};
+
+function Category(props: CategoryProps) {
+  const { __ } = useTranslate();
+  const [limit, setLimit] = useState<number | null>(4);
+  const measures = useMemo(() => {
+    return limit ? props.measures.slice(0, limit) : props.measures;
+  }, [props.measures, limit]);
+  const showMoreButton = limit !== null && props.measures.length > limit;
+  const [isExpanded, toggleExpanded] = useToggle(false);
+  const ExpandComponent = isExpanded ? IconChevronUp : IconChevronDown;
+  const completedMeasures = props.measures.filter(
+    (m) => m.state === "IMPLEMENTED"
+  );
+
+  return (
+    <Card className="py-3 px-5">
+      <div
+        className="flex items-center justify-between cursor-pointer"
+        onClick={toggleExpanded}
+      >
+        <h2 className="text-base font-medium">{props.category}</h2>
+        <div className="flex items-center gap-3 text-sm text-txt-secondary">
+          <span>
+            {__("Completion")}:{" "}
+            <span className="text-txt-primary font-medium">
+              {completedMeasures.length}/{props.measures.length}
+            </span>
+          </span>
+          <span className="text-border-low">|</span>
+          <ExpandComponent size={16} className="text-txt-secondary" />
+        </div>
+      </div>
+      {isExpanded && (
+        <div className="mt-3">
+          <Table className="bg-invert">
+            <Thead>
+              <Tr>
+                <Th>{__("Measure")}</Th>
+                <Th>{__("State")}</Th>
+                <Th></Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {measures.map((measure) => (
+                <MeasureRow key={measure.id} measure={measure} />
+              ))}
+            </Tbody>
+          </Table>
+          {showMoreButton && (
+            <Button
+              variant="tertiary"
+              onClick={() => setLimit(null)}
+              className="mt-3 mx-auto"
+              icon={IconChevronDown}
+            >
+              {sprintf(__("Show %s more"), props.measures.length - limit)}
+            </Button>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+type MeasureRowProps = {
+  measure: NodeOf<MeasuresPageFragment$data["measures"]>;
+};
+
+function MeasureRow(props: MeasureRowProps) {
+  const { __ } = useTranslate();
+  const [deleteMeasure, isDeleting] = useDeleteMeasureMutation();
+
+  const onDelete = () => {
+    deleteMeasure({
+      variables: {
+        input: { measureId: props.measure.id },
+        connections: ["MeasuresListQuery_measures"],
+      },
+    });
+  };
+
+  return (
+    <Tr>
+      <Td>{props.measure.name}</Td>
+      <Td width={120}>
+        <MeasureBadge state={props.measure.state} />
+      </Td>
+      <Td width={50} className="text-end">
+        <ActionDropdown>
+          <DropdownItem icon={IconPencil}>{__("Edit")}</DropdownItem>
+          <ConfirmDialog
+            message={sprintf(
+              __(
+                'This will permanently delete the measure "%s". This action cannot be undone.'
+              ),
+              props.measure.name
+            )}
+            onConfirm={() => onDelete()}
+          >
+            <DropdownItem
+              disabled={isDeleting}
+              variant="danger"
+              icon={IconTrashCan}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ConfirmDialog>
+        </ActionDropdown>
+      </Td>
+    </Tr>
+  );
+}

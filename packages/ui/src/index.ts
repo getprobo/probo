@@ -46,6 +46,9 @@ export { ConfirmDialog } from "./Molecules/Dialog/ConfirmDialog.tsx";
 export { RisksChart } from "./Molecules/Risks/RisksChart";
 export { RiskOverview } from "./Molecules/Risks/RiskOverview";
 export { Combobox, ComboboxItem } from "./Molecules/Combobox/Combobox";
+export { FileButton } from "./Molecules/FileButton/FileButton";
+export { MeasureBadge } from "./Molecules/Badge/MeasureBadge";
+export { MeasureImplementation } from "./Molecules/MeasureImplementation/MeasureImplementation";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";
