@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a35e945926fc7614549d452b1edd92f9>>
+ * @generated SignedSource<<cd6428905d88d31ab94cb3cbcd9fcd2c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,25 +9,22 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED" | "%future added value";
 import { FragmentRefs } from "relay-runtime";
-export type MeasuresPageFragment$data = {
-  readonly measures: {
+export type PoliciesPageListFragment$data = {
+  readonly policies: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly category: string;
         readonly id: string;
-        readonly name: string;
-        readonly state: MeasureState;
+        readonly " $fragmentSpreads": FragmentRefs<"PoliciesPageRowFragment">;
       };
     }>;
   };
-  readonly " $fragmentType": "MeasuresPageFragment";
+  readonly " $fragmentType": "PoliciesPageListFragment";
 };
-export type MeasuresPageFragment$key = {
-  readonly " $data"?: MeasuresPageFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"MeasuresPageFragment">;
+export type PoliciesPageListFragment$key = {
+  readonly " $data"?: PoliciesPageListFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"PoliciesPageListFragment">;
 };
 
 const node: ReaderFragment = {
@@ -38,27 +35,36 @@ const node: ReaderFragment = {
       {
         "count": null,
         "cursor": null,
-        "direction": "forward",
+        "direction": "bidirectional",
         "path": [
-          "measures"
+          "policies"
         ]
       }
     ]
   },
-  "name": "MeasuresPageFragment",
+  "name": "PoliciesPageListFragment",
   "selections": [
     {
-      "alias": "measures",
-      "args": null,
-      "concreteType": "MeasureConnection",
+      "alias": "policies",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "orderBy",
+          "value": {
+            "direction": "DESC",
+            "field": "CREATED_AT"
+          }
+        }
+      ],
+      "concreteType": "PolicyConnection",
       "kind": "LinkedField",
-      "name": "__MeasuresGraphListQuery__measures_connection",
+      "name": "__PoliciesPageFragment_policies_connection",
       "plural": false,
       "selections": [
         {
           "alias": null,
           "args": null,
-          "concreteType": "MeasureEdge",
+          "concreteType": "PolicyEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -66,7 +72,7 @@ const node: ReaderFragment = {
             {
               "alias": null,
               "args": null,
-              "concreteType": "Measure",
+              "concreteType": "Policy",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
@@ -79,25 +85,9 @@ const node: ReaderFragment = {
                   "storageKey": null
                 },
                 {
-                  "alias": null,
                   "args": null,
-                  "kind": "ScalarField",
-                  "name": "name",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "category",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "state",
-                  "storageKey": null
+                  "kind": "FragmentSpread",
+                  "name": "PoliciesPageRowFragment"
                 },
                 {
                   "alias": null,
@@ -140,6 +130,20 @@ const node: ReaderFragment = {
               "kind": "ScalarField",
               "name": "hasNextPage",
               "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "hasPreviousPage",
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "startCursor",
+              "storageKey": null
             }
           ],
           "storageKey": null
@@ -157,13 +161,13 @@ const node: ReaderFragment = {
           ]
         }
       ],
-      "storageKey": null
+      "storageKey": "__PoliciesPageFragment_policies_connection(orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
     }
   ],
   "type": "Organization",
   "abstractKey": null
 };
 
-(node as any).hash = "6a45bee844bf79dc4540e20edf10ad78";
+(node as any).hash = "2f34601ba53a0900494a1bb0d8be1773";
 
 export default node;

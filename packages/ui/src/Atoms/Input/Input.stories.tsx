@@ -16,3 +16,10 @@ export const Disabled: Story = {
         disabled: true,
     },
 };
+
+export const Title: Story = {
+    args: {
+        variant: "title",
+        placeholder: "Policy title",
+    },
+};

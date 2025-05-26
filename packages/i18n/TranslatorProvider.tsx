@@ -56,7 +56,12 @@ export function useTranslate() {
 
     dateFormat: (
       date: Date | string | null | undefined,
-      options?: Intl.DateTimeFormatOptions
+      options: Intl.DateTimeFormatOptions = {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        weekday: "short",
+      }
     ) => {
       if (!date) {
         return "";
