@@ -20,11 +20,12 @@ export function ControlledField({
       name={name}
       render={({ field }) => (
         <>
+          {/* @ts-expect-error field is too dynamic */}
           <Field
             {...props}
             {...field}
             // TODO : Find a better way to handle this case (comparing number and string for select create issues)
-            value={field.value ? field.value.toString() : null}
+            value={field.value ? field.value.toString() : ""}
             onValueChange={field.onChange}
           />
         </>
@@ -48,6 +49,7 @@ export function ControlledSelect({
           {...props}
           {...field}
           onValueChange={field.onChange}
+          value={field.value ?? ""}
         />
       )}
     />

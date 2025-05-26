@@ -1,3 +1,6 @@
+@plugin "@tailwindcss/typography";
+@config "../tailwind.config.js";
+
 @theme {
     --font-sans: "Geist", "sans-serif";
     --color-*: initial;
@@ -31,6 +34,7 @@
     --color-active: #e4f7c7;
     --color-accent: #141e12;
     --color-danger: #ffefef;
+    --color-danger-plain: #ffefef;
     --color-danger-dark: #dc3d43;
     --color-success: #eefadc;
     --color-info: #edf6ff;
@@ -173,7 +177,7 @@
         /* Text colors */
         --color-txt-primary: #eceeec;
         --color-invert: #151715;
-        --color-txt-invert: var(--color-invert);
+        --color-txt-invert: #fcfdfc;
         --color-txt-secondary: #9aa299;
         --color-txt-tertiary: #778175;
         --color-txt-quaternary: #4c514b;
@@ -194,6 +198,7 @@
         --color-active: rgba(239, 254, 226, 0.08);
         --color-accent: #c4f042;
         --color-danger: rgba(254, 58, 61, 0.13);
+        --color-danger-plain: rgba(254, 58, 61, 0.13);
         --color-danger-dark: rgba(255, 89, 95, 0.94);
         --color-success: rgba(184, 253, 106, 0.06);
         --color-info: rgba(22, 119, 254, 0.14);
@@ -234,4 +239,25 @@
         --color-active-pressed: rgba(236, 254, 229, 0.13);
         --color-danger-pressed: rgba(254, 58, 61, 0.5);
     }
+}
+
+*:focus-visible {
+    box-shadow: var(--shadow-focus);
+    outline: none;
+    border-radius: 0.25rem;
+}
+
+::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-level-1);
+    padding: 1px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-txt-tertiary);
+    border-radius: 4px;
 }

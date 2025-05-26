@@ -33,7 +33,6 @@ const select = tv({
             "flex justify-between items-center data-placeholder:text-txt-tertiary whitespace-nowrap cursor-pointer *:first:contents",
         content:
             "z-100 shadow-mid rounded-[10px] bg-level-1 p-1 animate-in fade-in slide-in-from-top-2 overflow-y-auto overflow-y-auto",
-        option: "flex gap-2 items-center h-8 text-sm font-medium text-txt-primary hover:bg-tertiary-hover active:bg-tertiary-pressed cursor-pointer px-[10px]",
         icon: "-mr-1",
     },
     variants: {
@@ -71,8 +70,6 @@ const select = tv({
     },
 });
 
-const { trigger, option, content, icon } = select();
-
 export function Select({
     placeholder,
     children,
@@ -80,9 +77,13 @@ export function Select({
     value,
     ...props
 }: Props) {
+    const { trigger, content, icon } = select({
+        ...props,
+    });
+
     return (
         <Root onValueChange={onValueChange} value={value}>
-            <Trigger {...props} className={trigger({ ...props })}>
+            <Trigger {...props} className={trigger()}>
                 <Value placeholder={placeholder} />
                 <Icon className={icon()}>
                     <IconChevronGrabberVertical size={16} />
@@ -115,7 +116,12 @@ export function Select({
 export function Option({ children, ...props }: ComponentProps<typeof Item>) {
     const hasSingleChildren = Children.count(children) <= 1;
     return (
-        <Item {...props} className={option(props)}>
+        <Item
+            {...props}
+            className={
+                "flex gap-2 items-center h-8 text-sm font-medium text-txt-primary hover:bg-tertiary-hover active:bg-tertiary-pressed cursor-pointer px-[10px]"
+            }
+        >
             <ItemText asChild>
                 <span
                     className={

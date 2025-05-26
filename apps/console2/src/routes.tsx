@@ -13,6 +13,7 @@ import { type PreloadedQuery } from "react-relay";
 import { useCleanup } from "./hooks/useDelayedEffect.ts";
 import { riskRoutes } from "./routes/riskRoutes.ts";
 import { measureRoutes } from "./routes/measureRoutes.ts";
+import { policiesRoutes } from "./routes/policiesRoutes.ts";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -72,6 +73,7 @@ const routes = [
       },
       ...riskRoutes,
       ...measureRoutes,
+      ...policiesRoutes,
     ],
   },
 ] satisfies AppRoute[];
