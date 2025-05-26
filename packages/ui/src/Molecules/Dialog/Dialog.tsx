@@ -54,7 +54,9 @@ export function Dialog({
                     )}
                 >
                     <div className="flex justify-between items-center p-3 border-b border-b-border-low">
-                        <Title className="text-sm font-medium">{title}</Title>
+                        <Title className="text-sm font-medium text-txt-primary">
+                            {title}
+                        </Title>
                         <Close asChild>
                             <Button
                                 tabIndex={-1}

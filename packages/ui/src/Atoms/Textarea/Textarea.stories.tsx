@@ -10,3 +10,8 @@ export default {
 type Story = StoryObj<typeof Textarea>;
 
 export const Default: Story = {};
+export const Autogrow: Story = {
+    args: {
+        autogrow: true,
+    },
+};
