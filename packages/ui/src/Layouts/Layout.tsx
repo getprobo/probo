@@ -67,7 +67,10 @@ export function Layout({ header, sidebar, children }: Props) {
     );
 }
 
-export function Drawer({ children }: PropsWithChildren) {
+export function Drawer({
+    children,
+    className,
+}: PropsWithChildren<{ className?: string }>) {
     const { setDrawer } = useContext(LayoutContext);
     useEffect(() => {
         setDrawer(true);
@@ -76,7 +79,12 @@ export function Drawer({ children }: PropsWithChildren) {
         };
     }, []);
     return createPortal(
-        <aside className="absolute pt-20 top-0 right-0 w-105 px-6 pb-8 border-border-solid border-l h-screen">
+        <aside
+            className={clsx(
+                "absolute pt-20 top-0 right-0 w-105 px-6 pb-8 border-border-solid border-l h-screen",
+                className,
+            )}
+        >
             {children}
         </aside>,
         document.body,

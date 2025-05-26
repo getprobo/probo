@@ -4,9 +4,3 @@
 @import "tw-animate-css";
 @source "../../../packages/ui/src";
 @source "../../../packages/helpers/src";
-
-*:focus-visible {
-  box-shadow: var(--shadow-focus);
-  outline: none;
-  border-radius: 0.25rem;
-}
