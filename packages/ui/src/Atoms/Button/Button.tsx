@@ -19,7 +19,7 @@ export const button = tv({
                 "bg-tertiary text-txt-primary hover:bg-tertiary-hover active:bg-tertiary-pressed focus:shadow-focus",
             quaternary:
                 "bg-highlight text-txt-primary hover:bg-highlight-hover active:bg-highlight-pressed",
-            danger: "bg-danger-plain text-invert hover:bg-danger-hover shadow-base hover:shadow-hover active:bg-danger-pressed focus:shadow-focus border border-border-danger",
+            danger: "bg-danger-plain text-txt-invert hover:bg-danger-hover shadow-base hover:shadow-hover active:bg-danger-pressed focus:shadow-focus border border-border-danger",
         },
         disabled: {
             true: "opacity-60 cursor-default",

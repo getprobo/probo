@@ -7,14 +7,24 @@ type Props = {
     disabled?: boolean;
     icon?: FC<IconProps>;
     onValueChange?: (value: string) => void;
+    variant?: "bordered" | "ghost" | "title";
 } & InputHTMLAttributes<HTMLInputElement>;
 
 export const input = tv({
-    base: "py-[6px] bg-secondary border border-border-mid rounded-[10px] hover:border-border-strong focus:shadow-focus text-sm px-3 w-full bg-secondary disabled:bg-transparent focus:outline-none data-[focus=true]:shadow-focus",
+    base: "w-full disabled:bg-transparent",
     variants: {
         invalid: {
             true: "border-border-danger",
         },
+        variant: {
+            bordered:
+                "py-[6px] bg-secondary border border-border-mid rounded-[10px] hover:border-border-strong text-sm px-3 text-txt-primary",
+            ghost: "text-base text-txt-secondary",
+            title: "text-2xl font-semibold text-txt-primary",
+        },
+    },
+    defaultVariants: {
+        variant: "bordered",
     },
 });
 
@@ -35,6 +45,7 @@ export function Input({
             >
                 <IconComponent size={16} className="text-txt-secondary" />
                 <input
+                    {...props}
                     onFocus={(e) => {
                         setFocus(true);
                         props.onFocus?.(e);
@@ -45,7 +56,6 @@ export function Input({
                     }}
                     aria-invalid={invalid}
                     className="w-full outline-none"
-                    {...props}
                     onChange={(e) => {
                         onValueChange?.(e.currentTarget.value);
                         props.onChange?.(e);
@@ -54,5 +64,15 @@ export function Input({
             </div>
         );
     }
-    return <input aria-invalid={invalid} className={input(props)} {...props} />;
+    return (
+        <input
+            {...props}
+            aria-invalid={invalid}
+            className={input(props)}
+            onChange={(e) => {
+                onValueChange?.(e.currentTarget.value);
+                props.onChange?.(e);
+            }}
+        />
+    );
 }
