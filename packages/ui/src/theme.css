@@ -241,9 +241,12 @@
     }
 }
 
-*:focus-visible {
-    box-shadow: var(--shadow-focus);
+a:focus-visible,
+button:focus-visible {
     outline: none;
+    &:not(:hover) {
+        box-shadow: var(--shadow-focus);
+    }
 }
 
 ::-webkit-scrollbar {
