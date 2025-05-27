@@ -10,24 +10,23 @@ import {
   Label,
   PropertyRow,
   Textarea,
+  useDialogRef,
 } from "@probo/ui";
 import { useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { usePolicyForm } from "../../../hooks/forms/usePolicyForm";
+import { usePolicyForm } from "../../../../hooks/forms/usePolicyForm";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import type { FormPolicyDialogMutation } from "./__generated__/FormPolicyDialogMutation.graphql";
 import { PeopleSelect } from "/components/form/PeopleSelect";
+import type { CreatePolicyDialogMutation } from "./__generated__/CreatePolicyDialogMutation.graphql";
 
 type Props = {
   trigger?: ReactNode;
-  open?: boolean;
-  onSuccess?: () => void;
   connection: string;
 };
 
 const createPolicyMutation = graphql`
-  mutation FormPolicyDialogMutation(
+  mutation CreatePolicyDialogMutation(
     $input: CreatePolicyInput!
     $connections: [ID!]!
   ) {
@@ -44,19 +43,14 @@ const createPolicyMutation = graphql`
 /**
  * Dialog to create or update a policy
  */
-export default function FormPolicyDialog({
-  trigger,
-  onSuccess,
-  open,
-  connection,
-}: Props) {
+export function CreatePolicyDialog({ trigger, connection }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
   const { control, handleSubmit, register, formState, reset } = usePolicyForm();
   const errors = formState.errors ?? {};
   const [createPolicy, isLoading] =
-    useMutationWithToasts<FormPolicyDialogMutation>(createPolicyMutation);
+    useMutationWithToasts<CreatePolicyDialogMutation>(createPolicyMutation);
 
   const onSubmit = handleSubmit((data) => {
     createPolicy({
@@ -70,19 +64,17 @@ export default function FormPolicyDialog({
       successMessage: __("Policy created successfully."),
       errorMessage: __("Failed to create policy. Please try again."),
       onSuccess: () => {
-        setOpen(false);
+        dialogRef.current?.close();
         reset();
-        onSuccess?.();
       },
     });
   });
 
-  const [isOpen, setOpen] = useState(!!open);
+  const dialogRef = useDialogRef();
 
   return (
     <Dialog
-      open={isOpen}
-      onOpenChange={setOpen}
+      ref={dialogRef}
       trigger={trigger}
       title={<Breadcrumb items={[__("Policies"), __("New Policy")]} />}
     >
