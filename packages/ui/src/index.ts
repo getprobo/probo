@@ -40,10 +40,19 @@ export {
 } from "./Molecules/UserDropdown/UserDropdown";
 export { PageHeader } from "./Molecules/PageHeader/PageHeader";
 export { Skeleton } from "./Atoms/Skeleton/Skeleton";
-export { Dialog, DialogContent, DialogFooter } from "./Molecules/Dialog/Dialog";
+export {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogTitle,
+    useDialogRef,
+} from "./Molecules/Dialog/Dialog";
 export { RiskBadge } from "./Molecules/Badge/RiskBadge";
 export { SeverityBadge } from "./Molecules/Badge/SeverityBadge.tsx";
-export { ConfirmDialog } from "./Molecules/Dialog/ConfirmDialog.tsx";
+export {
+    ConfirmDialog,
+    useConfirmDialogRef,
+} from "./Molecules/Dialog/ConfirmDialog.tsx";
 export { RisksChart } from "./Molecules/Risks/RisksChart";
 export { RiskOverview } from "./Molecules/Risks/RiskOverview";
 export { Combobox, ComboboxItem } from "./Molecules/Combobox/Combobox";

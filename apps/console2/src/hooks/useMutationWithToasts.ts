@@ -28,7 +28,8 @@ export function useMutationWithToasts<T extends MutationParameters>(
       const options = { ...baseOptions, ...queryOptions };
       mutate({
         ...options,
-        onCompleted: (_, error) => {
+        onCompleted: (response, error) => {
+          options.onCompleted?.(response, error);
           if (error) {
             toast({
               title: __("Error"),

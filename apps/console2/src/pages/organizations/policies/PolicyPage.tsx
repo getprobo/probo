@@ -1,12 +1,17 @@
 import type { PreloadedQuery } from "react-relay";
 import type { PolicyGraphNodeQuery } from "/hooks/graph/__generated__/PolicyGraphNodeQuery.graphql";
 import {
+  ConnectionHandler,
   graphql,
   loadQuery,
   useFragment,
   usePreloadedQuery,
 } from "react-relay";
-import { policyNodeQuery } from "/hooks/graph/PolicyGraph";
+import {
+  PoliciesConnectionKey,
+  policyNodeQuery,
+  useDeletePolicyMutation,
+} from "/hooks/graph/PolicyGraph";
 import { usePageTitle } from "@probo/hooks";
 import type { PolicyPagePolicyFragment$key } from "./__generated__/PolicyPagePolicyFragment.graphql";
 import { useTranslate } from "@probo/i18n";
@@ -19,10 +24,22 @@ import {
   Drawer,
   Badge,
   Avatar,
+  DropdownItem,
+  ConfirmDialog,
+  ActionDropdown,
+  IconTrashCan,
+  IconPencil,
+  useConfirmDialogRef,
+  IconClock,
 } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Button } from "@probo/ui";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { sprintf } from "@probo/helpers";
+import { useNavigate } from "react-router";
+import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
+import { useRef } from "react";
+import { PolicyVersionHistoryDialog } from "./dialogs/PolicyVersionHistoryDialog";
 
 type Props = {
   queryRef: PreloadedQuery<PolicyGraphNodeQuery>;
@@ -36,7 +53,8 @@ const policyFragment = graphql`
       id
       fullName
     }
-    versions(first: 1) {
+    versions(first: 20) @connection(key: "PolicyPage_versions") {
+      __id
       edges {
         node {
           id
@@ -53,6 +71,7 @@ const policyFragment = graphql`
               }
             }
           }
+          ...PolicyVersionHistoryDialogFragment
         }
       }
     }
@@ -77,6 +96,7 @@ export default function PolicyPage(props: Props) {
   );
   const { __, dateFormat } = useTranslate();
   const organizationId = useOrganizationId();
+  const navigate = useNavigate();
   const lastVersion = policy.versions.edges[0].node;
   const isDraft = lastVersion.status === "DRAFT";
   const [publishPolicyVersion, isPublishing] = useMutationWithToasts(
@@ -86,6 +106,10 @@ export default function PolicyPage(props: Props) {
       errorMessage: __("Failed to publish policy. Please try again."),
     }
   );
+  const [deletePolicy, isDeleting] = useDeletePolicyMutation();
+  const versionConnectionId = policy.versions.__id;
+  const versions = policy.versions.edges.map((edge) => edge.node);
+
   usePageTitle(policy.title);
 
   const handlePublish = () => {
@@ -105,8 +129,46 @@ export default function PolicyPage(props: Props) {
     });
   };
 
+  const handleDelete = () => {
+    return new Promise<void>((resolve) => {
+      const connectionId = ConnectionHandler.getConnectionID(
+        organizationId,
+        PoliciesConnectionKey
+      );
+      deletePolicy({
+        variables: {
+          input: { policyId: policy.id },
+          connections: [connectionId],
+        },
+        onSuccess() {
+          navigate(`/organizations/${organizationId}/policies`);
+        },
+        onError: () => resolve(),
+      });
+    });
+  };
+
+  const updateDialogRef = useRef<{ open: () => void }>(null);
+  const confirmRef = useConfirmDialogRef();
+
   return (
     <>
+      <UpdateVersionDialog
+        ref={updateDialogRef}
+        policy={policy}
+        connectionId={versionConnectionId}
+      />
+
+      <ConfirmDialog
+        ref={confirmRef}
+        message={sprintf(
+          __(
+            'This will permanently delete the policy "%s". This action cannot be undone.'
+          ),
+          policy.title
+        )}
+        onConfirm={handleDelete}
+      />
       <div className="space-y-6">
         <div className="flex justify-between items-center mb-4">
           <Breadcrumb
@@ -130,6 +192,28 @@ export default function PolicyPage(props: Props) {
                 {__("Publish")}
               </Button>
             )}
+            <PolicyVersionHistoryDialog policy={policy}>
+              <Button icon={IconClock} variant="secondary">
+                {__("Version history")}
+              </Button>
+            </PolicyVersionHistoryDialog>
+
+            <ActionDropdown variant="secondary">
+              <DropdownItem
+                onClick={() => updateDialogRef.current?.open()}
+                icon={IconPencil}
+              >
+                {isDraft ? __("Edit draft policy") : __("Create new draft")}
+              </DropdownItem>
+              <DropdownItem
+                variant="danger"
+                icon={IconTrashCan}
+                disabled={isDeleting}
+                onClick={() => confirmRef.current?.open()}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
           </div>
         </div>
         <PageHeader title={policy.title} />
@@ -147,11 +231,11 @@ export default function PolicyPage(props: Props) {
         </PropertyRow>
         <PropertyRow label={__("Status")}>
           <Badge
-            variant={lastVersion.status === "DRAFT" ? "highlight" : "success"}
+            variant={isDraft ? "highlight" : "success"}
             size="md"
             className="gap-2"
           >
-            {lastVersion.status === "DRAFT" ? __("Draft") : __("Published")}
+            {isDraft ? __("Draft") : __("Published")}
           </Badge>
         </PropertyRow>
         <PropertyRow label={__("Version")}>

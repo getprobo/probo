@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<418554f5765131f61a3dfed83db0da76>>
+ * @generated SignedSource<<0471409a1735c49fc0b05b5e63e97853>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,11 +16,11 @@ export type CreatePolicyInput = {
   ownerId: string;
   title: string;
 };
-export type FormPolicyDialogMutation$variables = {
+export type CreatePolicyDialogMutation$variables = {
   connections: ReadonlyArray<string>;
   input: CreatePolicyInput;
 };
-export type FormPolicyDialogMutation$data = {
+export type CreatePolicyDialogMutation$data = {
   readonly createPolicy: {
     readonly policyEdge: {
       readonly node: {
@@ -29,9 +29,9 @@ export type FormPolicyDialogMutation$data = {
     };
   };
 };
-export type FormPolicyDialogMutation = {
-  response: FormPolicyDialogMutation$data;
-  variables: FormPolicyDialogMutation$variables;
+export type CreatePolicyDialogMutation = {
+  response: CreatePolicyDialogMutation$data;
+  variables: CreatePolicyDialogMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -67,7 +67,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "FormPolicyDialogMutation",
+    "name": "CreatePolicyDialogMutation",
     "selections": [
       {
         "alias": null,
@@ -118,7 +118,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "FormPolicyDialogMutation",
+    "name": "CreatePolicyDialogMutation",
     "selections": [
       {
         "alias": null,
@@ -307,16 +307,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5967e987ab20d7823e7456a22aec54f2",
+    "cacheID": "7ca1b2811e06da7ba97064950fb8f632",
     "id": null,
     "metadata": {},
-    "name": "FormPolicyDialogMutation",
+    "name": "CreatePolicyDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation FormPolicyDialogMutation(\n  $input: CreatePolicyInput!\n) {\n  createPolicy(input: $input) {\n    policyEdge {\n      node {\n        ...PoliciesPageRowFragment\n        id\n      }\n    }\n  }\n}\n\nfragment PoliciesPageRowFragment on Policy {\n  id\n  title\n  description\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation CreatePolicyDialogMutation(\n  $input: CreatePolicyInput!\n) {\n  createPolicy(input: $input) {\n    policyEdge {\n      node {\n        ...PoliciesPageRowFragment\n        id\n      }\n    }\n  }\n}\n\nfragment PoliciesPageRowFragment on Policy {\n  id\n  title\n  description\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c2612f85b9170d81cb9fb4908f752069";
+(node as any).hash = "6c749af4def68b742bc5eb80dd120c8a";
 
 export default node;

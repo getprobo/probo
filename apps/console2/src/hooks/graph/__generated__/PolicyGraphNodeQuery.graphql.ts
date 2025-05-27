@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<88a40781a78a282ebde97d4cb73bb996>>
+ * @generated SignedSource<<bfeead50dec41ac2f5fac7c6d70f47fb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -42,9 +42,30 @@ v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
+  "name": "__typename",
+  "storageKey": null
+},
+v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-};
+},
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "fullName",
+  "storageKey": null
+},
+v5 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 20
+  }
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -93,14 +114,8 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "__typename",
-            "storageKey": null
-          },
           (v2/*: any*/),
+          (v3/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
@@ -119,26 +134,14 @@ return {
                 "name": "owner",
                 "plural": false,
                 "selections": [
-                  (v2/*: any*/),
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "fullName",
-                    "storageKey": null
-                  }
+                  (v3/*: any*/),
+                  (v4/*: any*/)
                 ],
                 "storageKey": null
               },
               {
                 "alias": null,
-                "args": [
-                  {
-                    "kind": "Literal",
-                    "name": "first",
-                    "value": 1
-                  }
-                ],
+                "args": (v5/*: any*/),
                 "concreteType": "PolicyVersionConnection",
                 "kind": "LinkedField",
                 "name": "versions",
@@ -160,7 +163,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v2/*: any*/),
+                          (v3/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -226,7 +229,7 @@ return {
                                     "name": "node",
                                     "plural": false,
                                     "selections": [
-                                      (v2/*: any*/),
+                                      (v3/*: any*/),
                                       {
                                         "alias": null,
                                         "args": null,
@@ -242,15 +245,89 @@ return {
                               }
                             ],
                             "storageKey": "signatures(first:100)"
-                          }
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "changelog",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "People",
+                            "kind": "LinkedField",
+                            "name": "publishedBy",
+                            "plural": false,
+                            "selections": [
+                              (v4/*: any*/),
+                              (v3/*: any*/)
+                            ],
+                            "storageKey": null
+                          },
+                          (v2/*: any*/)
                         ],
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "cursor",
                         "storageKey": null
                       }
                     ],
                     "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "PageInfo",
+                    "kind": "LinkedField",
+                    "name": "pageInfo",
+                    "plural": false,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "endCursor",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "hasNextPage",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  },
+                  {
+                    "kind": "ClientExtension",
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "__id",
+                        "storageKey": null
+                      }
+                    ]
                   }
                 ],
-                "storageKey": "versions(first:1)"
+                "storageKey": "versions(first:20)"
+              },
+              {
+                "alias": null,
+                "args": (v5/*: any*/),
+                "filters": null,
+                "handle": "connection",
+                "key": "PolicyPage_versions",
+                "kind": "LinkedHandle",
+                "name": "versions"
               }
             ],
             "type": "Policy",
@@ -262,12 +339,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "061b3441def7dfcf73881e57077e1738",
+    "cacheID": "e3a62b161b9fce47237c98f90a5d6d2e",
     "id": null,
     "metadata": {},
     "name": "PolicyGraphNodeQuery",
     "operationKind": "query",
-    "text": "query PolicyGraphNodeQuery(\n  $policyId: ID!\n) {\n  node(id: $policyId) {\n    __typename\n    ... on Policy {\n      ...PolicyPagePolicyFragment\n    }\n    id\n  }\n}\n\nfragment PolicyPagePolicyFragment on Policy {\n  id\n  title\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query PolicyGraphNodeQuery(\n  $policyId: ID!\n) {\n  node(id: $policyId) {\n    __typename\n    ... on Policy {\n      ...PolicyPagePolicyFragment\n    }\n    id\n  }\n}\n\nfragment PolicyPagePolicyFragment on Policy {\n  id\n  title\n  owner {\n    id\n    fullName\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n        ...PolicyVersionHistoryDialogFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment PolicyVersionHistoryDialogFragment on PolicyVersion {\n  id\n  version\n  status\n  content\n  changelog\n  publishedAt\n  updatedAt\n  publishedBy {\n    fullName\n    id\n  }\n}\n"
   }
 };
 })();
