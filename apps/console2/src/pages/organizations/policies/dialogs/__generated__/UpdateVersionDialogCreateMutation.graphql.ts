@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e90085131e94bcac0f94ecf5b1329712>>
+ * @generated SignedSource<<7b7cbab5e73007ace1e7d07970b633e8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,8 +9,8 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type PolicyStatus = "DRAFT" | "PUBLISHED" | "%future added value";
-export type PolicyVersionSignatureState = "REQUESTED" | "SIGNED" | "%future added value";
+export type PolicyStatus = "DRAFT" | "PUBLISHED";
+export type PolicyVersionSignatureState = "REQUESTED" | "SIGNED";
 export type CreateDraftPolicyVersionInput = {
   policyID: string;
 };

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<769555856fa8bff973c4685249abbb2f>>
+ * @generated SignedSource<<088b04713ff854ffccb30532513bb093>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,8 +9,8 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type PolicyStatus = "DRAFT" | "PUBLISHED" | "%future added value";
-export type PolicyVersionSignatureState = "REQUESTED" | "SIGNED" | "%future added value";
+export type PolicyStatus = "DRAFT" | "PUBLISHED";
+export type PolicyVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
 export type PolicyPagePolicyFragment$data = {
   readonly id: string;
@@ -27,17 +27,22 @@ export type PolicyPagePolicyFragment$data = {
         readonly id: string;
         readonly publishedAt: any | null | undefined;
         readonly signatures: {
+          readonly __id: string;
           readonly edges: ReadonlyArray<{
             readonly node: {
               readonly id: string;
+              readonly signedBy: {
+                readonly id: string;
+              };
               readonly state: PolicyVersionSignatureState;
+              readonly " $fragmentSpreads": FragmentRefs<"PolicySignaturesDialog_signature">;
             };
           }>;
         };
         readonly status: PolicyStatus;
         readonly updatedAt: any;
         readonly version: number;
-        readonly " $fragmentSpreads": FragmentRefs<"PolicyVersionHistoryDialogFragment">;
+        readonly " $fragmentSpreads": FragmentRefs<"PolicySignaturesDialog_version" | "PolicyVersionHistoryDialogFragment">;
       };
     }>;
   };
@@ -55,12 +60,69 @@ var v0 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
+},
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "__typename",
+  "storageKey": null
+},
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "cursor",
+  "storageKey": null
+},
+v3 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "PageInfo",
+  "kind": "LinkedField",
+  "name": "pageInfo",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "endCursor",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "hasNextPage",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+},
+v4 = {
+  "kind": "ClientExtension",
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "__id",
+      "storageKey": null
+    }
+  ]
 };
 return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": {
     "connection": [
+      {
+        "count": null,
+        "cursor": null,
+        "direction": "forward",
+        "path": null
+      },
       {
         "count": null,
         "cursor": null,
@@ -161,17 +223,11 @@ return {
                   "storageKey": null
                 },
                 {
-                  "alias": null,
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "first",
-                      "value": 100
-                    }
-                  ],
+                  "alias": "signatures",
+                  "args": null,
                   "concreteType": "PolicyVersionSignatureConnection",
                   "kind": "LinkedField",
-                  "name": "signatures",
+                  "name": "__PolicyPage_signatures_connection",
                   "plural": false,
                   "selections": [
                     {
@@ -197,15 +253,36 @@ return {
                               "kind": "ScalarField",
                               "name": "state",
                               "storageKey": null
-                            }
+                            },
+                            {
+                              "alias": null,
+                              "args": null,
+                              "concreteType": "People",
+                              "kind": "LinkedField",
+                              "name": "signedBy",
+                              "plural": false,
+                              "selections": [
+                                (v0/*: any*/)
+                              ],
+                              "storageKey": null
+                            },
+                            {
+                              "args": null,
+                              "kind": "FragmentSpread",
+                              "name": "PolicySignaturesDialog_signature"
+                            },
+                            (v1/*: any*/)
                           ],
                           "storageKey": null
-                        }
+                        },
+                        (v2/*: any*/)
                       ],
                       "storageKey": null
-                    }
+                    },
+                    (v3/*: any*/),
+                    (v4/*: any*/)
                   ],
-                  "storageKey": "signatures(first:100)"
+                  "storageKey": null
                 },
                 {
                   "args": null,
@@ -213,62 +290,20 @@ return {
                   "name": "PolicyVersionHistoryDialogFragment"
                 },
                 {
-                  "alias": null,
                   "args": null,
-                  "kind": "ScalarField",
-                  "name": "__typename",
-                  "storageKey": null
-                }
+                  "kind": "FragmentSpread",
+                  "name": "PolicySignaturesDialog_version"
+                },
+                (v1/*: any*/)
               ],
               "storageKey": null
             },
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "cursor",
-              "storageKey": null
-            }
+            (v2/*: any*/)
           ],
           "storageKey": null
         },
-        {
-          "alias": null,
-          "args": null,
-          "concreteType": "PageInfo",
-          "kind": "LinkedField",
-          "name": "pageInfo",
-          "plural": false,
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "endCursor",
-              "storageKey": null
-            },
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "hasNextPage",
-              "storageKey": null
-            }
-          ],
-          "storageKey": null
-        },
-        {
-          "kind": "ClientExtension",
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "__id",
-              "storageKey": null
-            }
-          ]
-        }
+        (v3/*: any*/),
+        (v4/*: any*/)
       ],
       "storageKey": null
     }
@@ -278,6 +313,6 @@ return {
 };
 })();
 
-(node as any).hash = "684db4b721c50638ee5ec1f9f4ebdd16";
+(node as any).hash = "b53b22a05e1abd608ecd688b6a9d5bad";
 
 export default node;

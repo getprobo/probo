@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<746421c9f8fc0c80ed1fd5643b3bbae8>>
+ * @generated SignedSource<<6a9b2c4428ed2255dda81771894c0c6c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED" | "%future added value";
+export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED";
 export type MeasureLinkDialogQuery$variables = {
   organizationId: string;
 };

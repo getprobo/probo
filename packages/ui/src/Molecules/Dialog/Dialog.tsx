@@ -17,7 +17,6 @@ import {
     type ComponentProps,
     type CSSProperties,
     type HTMLAttributes,
-    type ReactElement,
     type ReactNode,
     type RefObject,
 } from "react";
@@ -128,14 +127,16 @@ export function DialogFooter({
     );
 }
 
-export function DialogContent(
-    props: HTMLAttributes<HTMLDivElement> & {
-        padded?: boolean;
-        scrollableChildren?: boolean;
-    },
-) {
+export function DialogContent({
+    padded,
+    scrollableChildren,
+    ...props
+}: HTMLAttributes<HTMLDivElement> & {
+    padded?: boolean;
+    scrollableChildren?: boolean;
+}) {
     let children = props.children;
-    if (props.scrollableChildren) {
+    if (scrollableChildren) {
         children = Children.map(props.children, (c) => {
             if (
                 isValidElement<{
@@ -162,7 +163,7 @@ export function DialogContent(
             className={clsx(
                 "overflow-y-auto",
                 props.className,
-                props.padded && "p-6",
+                padded && "p-6",
             )}
             style={
                 {
