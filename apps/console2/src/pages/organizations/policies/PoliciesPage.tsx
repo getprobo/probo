@@ -33,13 +33,7 @@ import type { PoliciesPageRowFragment$key } from "./__generated__/PoliciesPageRo
 
 const policiesFragment = graphql`
   fragment PoliciesPageListFragment on Organization {
-    policies(
-      first: 100
-      after: null
-      last: null
-      before: null
-      orderBy: { direction: DESC, field: CREATED_AT }
-    ) @connection(key: "PoliciesPageFragment_policies") {
+    policies(first: 100) @connection(key: "PoliciesPageFragment_policies") {
       __id
       edges {
         node {

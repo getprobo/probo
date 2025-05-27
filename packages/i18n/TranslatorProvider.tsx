@@ -50,26 +50,41 @@ export function TranslatorProvider({
 
 export function useTranslate() {
   const { translate, lang } = useContext(TranslatorContext);
+  const dateFormat = (
+    date: Date | string | null | undefined,
+    options: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      weekday: "short",
+    }
+  ) => {
+    if (!date) {
+      return "";
+    }
+    if (typeof date === "string") {
+      return new Intl.DateTimeFormat(lang, options).format(parseDate(date));
+    }
+    return new Intl.DateTimeFormat(lang, options).format(date);
+  };
   return {
     lang,
     __: translate,
 
-    dateFormat: (
+    dateFormat: dateFormat,
+
+    dateTimeFormat: (
       date: Date | string | null | undefined,
       options: Intl.DateTimeFormatOptions = {
-        year: "numeric",
-        month: "short",
+        hour: "2-digit",
+        hour12: false,
+        minute: "2-digit",
         day: "numeric",
-        weekday: "short",
+        month: "short",
+        year: "numeric",
       }
     ) => {
-      if (!date) {
-        return "";
-      }
-      if (typeof date === "string") {
-        return new Intl.DateTimeFormat(lang, options).format(parseDate(date));
-      }
-      return new Intl.DateTimeFormat(lang, options).format(date);
+      return dateFormat(date, options);
     },
   };
 }
