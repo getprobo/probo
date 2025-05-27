@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<758e3ece2d7d1d52975886d41b6ae905>>
+ * @generated SignedSource<<fbc31c6da75cbb26f402b2c88664950a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,24 +9,25 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type PeopleSelectQuery$variables = {
+export type PeopleGraphQuery$variables = {
   organizationId: string;
 };
-export type PeopleSelectQuery$data = {
+export type PeopleGraphQuery$data = {
   readonly organization: {
     readonly peoples?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly fullName: string;
           readonly id: string;
+          readonly primaryEmailAddress: string;
         };
       }>;
     };
   };
 };
-export type PeopleSelectQuery = {
-  response: PeopleSelectQuery$data;
-  variables: PeopleSelectQuery$variables;
+export type PeopleGraphQuery = {
+  response: PeopleGraphQuery$data;
+  variables: PeopleGraphQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -99,6 +100,13 @@ v3 = {
                   "kind": "ScalarField",
                   "name": "fullName",
                   "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "primaryEmailAddress",
+                  "storageKey": null
                 }
               ],
               "storageKey": null
@@ -118,7 +126,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "PeopleSelectQuery",
+    "name": "PeopleGraphQuery",
     "selections": [
       {
         "alias": "organization",
@@ -140,7 +148,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "PeopleSelectQuery",
+    "name": "PeopleGraphQuery",
     "selections": [
       {
         "alias": "organization",
@@ -165,16 +173,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4e58fc42b352af93ba7067921531af3e",
+    "cacheID": "cf76244f6aaa0c573bdeb7bf118ad2a3",
     "id": null,
     "metadata": {},
-    "name": "PeopleSelectQuery",
+    "name": "PeopleGraphQuery",
     "operationKind": "query",
-    "text": "query PeopleSelectQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      peoples(first: 100, orderBy: {direction: ASC, field: CREATED_AT}) {\n        edges {\n          node {\n            id\n            fullName\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query PeopleGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      peoples(first: 100, orderBy: {direction: ASC, field: CREATED_AT}) {\n        edges {\n          node {\n            id\n            fullName\n            primaryEmailAddress\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "77119544e99cf9dd74d8a0f446df108e";
+(node as any).hash = "11220f45320400c451abeaf7479a8e47";
 
 export default node;

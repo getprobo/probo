@@ -31,6 +31,7 @@ import {
   IconPencil,
   useConfirmDialogRef,
   IconClock,
+  IconSignature,
 } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Button } from "@probo/ui";
@@ -40,6 +41,7 @@ import { useNavigate } from "react-router";
 import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
 import { useRef } from "react";
 import { PolicyVersionHistoryDialog } from "./dialogs/PolicyVersionHistoryDialog";
+import { PolicySignaturesDialog } from "./dialogs/PolicySignaturesDialog";
 
 type Props = {
   queryRef: PreloadedQuery<PolicyGraphNodeQuery>;
@@ -63,15 +65,21 @@ const policyFragment = graphql`
           publishedAt
           version
           updatedAt
-          signatures(first: 100) {
+          signatures(first: 100) @connection(key: "PolicyPage_signatures") {
+            __id
             edges {
               node {
                 id
                 state
+                signedBy {
+                  id
+                }
+                ...PolicySignaturesDialog_signature
               }
             }
           }
           ...PolicyVersionHistoryDialogFragment
+          ...PolicySignaturesDialog_version
         }
       }
     }
@@ -108,7 +116,6 @@ export default function PolicyPage(props: Props) {
   );
   const [deletePolicy, isDeleting] = useDeletePolicyMutation();
   const versionConnectionId = policy.versions.__id;
-  const versions = policy.versions.edges.map((edge) => edge.node);
 
   usePageTitle(policy.title);
 
@@ -197,6 +204,11 @@ export default function PolicyPage(props: Props) {
                 {__("Version history")}
               </Button>
             </PolicyVersionHistoryDialog>
+            <PolicySignaturesDialog policy={policy}>
+              <Button icon={IconSignature} variant="secondary">
+                {__("Signatures history")}
+              </Button>
+            </PolicySignaturesDialog>
 
             <ActionDropdown variant="secondary">
               <DropdownItem

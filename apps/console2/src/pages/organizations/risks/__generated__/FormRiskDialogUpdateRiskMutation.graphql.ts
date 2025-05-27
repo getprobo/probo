@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<71792ccd18aa886a5df0ecfa8a23fda9>>
+ * @generated SignedSource<<dc5427f9197a47414ed10738473fdca1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type RiskTreatment = "ACCEPTED" | "AVOIDED" | "MITIGATED" | "TRANSFERRED" | "%future added value";
+export type RiskTreatment = "ACCEPTED" | "AVOIDED" | "MITIGATED" | "TRANSFERRED";
 export type UpdateRiskInput = {
   category?: string | null | undefined;
   description?: string | null | undefined;

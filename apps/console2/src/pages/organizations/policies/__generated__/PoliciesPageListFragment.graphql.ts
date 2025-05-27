@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<cd6428905d88d31ab94cb3cbcd9fcd2c>>
+ * @generated SignedSource<<89063899241b0557e2a6df4ff74ecea1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -35,7 +35,7 @@ const node: ReaderFragment = {
       {
         "count": null,
         "cursor": null,
-        "direction": "bidirectional",
+        "direction": "forward",
         "path": [
           "policies"
         ]
@@ -46,16 +46,7 @@ const node: ReaderFragment = {
   "selections": [
     {
       "alias": "policies",
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "orderBy",
-          "value": {
-            "direction": "DESC",
-            "field": "CREATED_AT"
-          }
-        }
-      ],
+      "args": null,
       "concreteType": "PolicyConnection",
       "kind": "LinkedField",
       "name": "__PoliciesPageFragment_policies_connection",
@@ -130,20 +121,6 @@ const node: ReaderFragment = {
               "kind": "ScalarField",
               "name": "hasNextPage",
               "storageKey": null
-            },
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "hasPreviousPage",
-              "storageKey": null
-            },
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "startCursor",
-              "storageKey": null
             }
           ],
           "storageKey": null
@@ -161,13 +138,13 @@ const node: ReaderFragment = {
           ]
         }
       ],
-      "storageKey": "__PoliciesPageFragment_policies_connection(orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+      "storageKey": null
     }
   ],
   "type": "Organization",
   "abstractKey": null
 };
 
-(node as any).hash = "2f34601ba53a0900494a1bb0d8be1773";
+(node as any).hash = "1c1fa3340a1fe9de3995ffcb374c9124";
 
 export default node;

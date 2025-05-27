@@ -49,6 +49,7 @@ export {
 } from "./Molecules/Dialog/Dialog";
 export { RiskBadge } from "./Molecules/Badge/RiskBadge";
 export { SeverityBadge } from "./Molecules/Badge/SeverityBadge.tsx";
+export { PolicyVersionBadge } from "./Molecules/Badge/PolicyVersionBadge.tsx";
 export {
     ConfirmDialog,
     useConfirmDialogRef,

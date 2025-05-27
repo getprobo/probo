@@ -206,7 +206,7 @@
         --color-dialog: #151715;
 
         /* Borders */
-        --color-border-solid: #2b2f2a;
+        --color-border-solid: rgba(239, 254, 226, 0.08);
         --color-border-low: rgba(239, 254, 226, 0.08);
         --color-border-mid: rgba(233, 254, 223, 0.1);
         --color-border-strong: rgba(241, 255, 237, 0.25);

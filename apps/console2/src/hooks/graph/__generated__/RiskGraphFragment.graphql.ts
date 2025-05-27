@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<352ca1fa13e246dd48eb0cd346a251ef>>
+ * @generated SignedSource<<d65dc38bcf11079a304f8a5cc4070389>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type RiskTreatment = "ACCEPTED" | "AVOIDED" | "MITIGATED" | "TRANSFERRED" | "%future added value";
+export type RiskTreatment = "ACCEPTED" | "AVOIDED" | "MITIGATED" | "TRANSFERRED";
 import { FragmentRefs } from "relay-runtime";
 export type RiskGraphFragment$data = {
   readonly id: string;
