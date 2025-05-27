@@ -13,6 +13,7 @@ import {
   PropertyRow,
   IconPlusLarge,
   Textarea,
+  useDialogRef,
 } from "@probo/ui";
 import { useMemo, useState, type ReactNode } from "react";
 import { useFetchQuery } from "/hooks/useFetchQuery";
@@ -37,10 +38,9 @@ import { getRiskImpacts, getRiskLikelihoods } from "@probo/helpers";
 
 type Props = {
   trigger?: ReactNode;
-  open?: boolean;
   risk?: RiskKey;
-  onSuccess?: () => void;
   connection?: string;
+  ref?: ReturnType<typeof useDialogRef>;
 };
 
 type RiskTemplate = {
@@ -80,12 +80,12 @@ const updateRiskMutation = graphql`
 export default function FormRiskDialog({
   trigger,
   risk,
-  onSuccess,
-  open,
   connection,
+  ref: refProps,
 }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const ref = refProps ?? useDialogRef();
 
   const { control, handleSubmit, setValue, register, watch, formState, reset } =
     useRiskForm(risk);
@@ -113,8 +113,7 @@ export default function FormRiskDialog({
         successMessage: __("Risk updated successfully."),
         errorMessage: __("Failed to update risk. Please try again."),
         onSuccess: () => {
-          setOpen(false);
-          onSuccess?.();
+          ref?.current?.close();
         },
       });
       return;
@@ -130,20 +129,17 @@ export default function FormRiskDialog({
       successMessage: __("Risk created successfully."),
       errorMessage: __("Failed to create risk. Please try again."),
       onSuccess: () => {
-        setOpen(false);
+        ref?.current?.close();
         reset();
-        onSuccess?.();
       },
     });
   });
 
   const [showNote, toggleNote] = useToggle(false);
-  const [isOpen, setOpen] = useState(!!open);
 
   return (
     <Dialog
-      open={isOpen}
-      onOpenChange={setOpen}
+      ref={ref}
       trigger={trigger}
       title={
         <Breadcrumb

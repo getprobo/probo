@@ -20,7 +20,6 @@ export function ControlledField({
       name={name}
       render={({ field }) => (
         <>
-          {/* @ts-expect-error field is too dynamic */}
           <Field
             {...props}
             {...field}

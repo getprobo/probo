@@ -8,7 +8,7 @@ type Props = {
 
 export function Avatar({ name, src, size = "m" }: Props) {
     const className = clsx(
-        "bg-txt-success text-txt-invert rounded-full font-semibold flex items-center justify-center",
+        "bg-txt-success text-txt-invert rounded-full font-semibold flex items-center justify-center flex-none",
         size === "s" && "size-5 text-xss",
         size === "m" && "size-6 text-xxs",
         size === "l" && "size-8 text-sm",

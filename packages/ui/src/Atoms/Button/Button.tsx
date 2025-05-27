@@ -62,6 +62,7 @@ export const Button = (props: Props) => {
         iconAfter: IconAfterComponent,
         children,
         onClick,
+        variant,
         ...componentProps
     } = props;
     return (
@@ -69,7 +70,7 @@ export const Button = (props: Props) => {
         <Component
             {...componentProps}
             onClick={onClick}
-            className={button({ ...props, empty: !children })}
+            className={button({ ...props, variant, empty: !children })}
         >
             {IconComponent && <IconComponent size={16} className="flex-none" />}
             {children}
