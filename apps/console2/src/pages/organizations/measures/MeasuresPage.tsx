@@ -27,6 +27,7 @@ import {
   Th,
   Thead,
   Tr,
+  useConfirmDialogRef,
 } from "@probo/ui";
 import {
   measuresQuery,
@@ -156,6 +157,7 @@ export default function MeasuresPage(props: Props) {
             key={category}
             category={category}
             measures={measuresPerCategory[category]}
+            connectionId={connectionId}
           />
         ))}
     </div>
@@ -165,6 +167,7 @@ export default function MeasuresPage(props: Props) {
 type CategoryProps = {
   category: string;
   measures: NodeOf<MeasuresPageFragment$data["measures"]>[];
+  connectionId: string;
 };
 
 function Category(props: CategoryProps) {
@@ -210,7 +213,11 @@ function Category(props: CategoryProps) {
             </Thead>
             <Tbody>
               {measures.map((measure) => (
-                <MeasureRow key={measure.id} measure={measure} />
+                <MeasureRow
+                  key={measure.id}
+                  measure={measure}
+                  connectionId={props.connectionId}
+                />
               ))}
             </Tbody>
           </Table>
@@ -232,6 +239,7 @@ function Category(props: CategoryProps) {
 
 type MeasureRowProps = {
   measure: NodeOf<MeasuresPageFragment$data["measures"]>;
+  connectionId: string;
 };
 
 function MeasureRow(props: MeasureRowProps) {
@@ -239,42 +247,50 @@ function MeasureRow(props: MeasureRowProps) {
   const [deleteMeasure, isDeleting] = useDeleteMeasureMutation();
 
   const onDelete = () => {
-    deleteMeasure({
-      variables: {
-        input: { measureId: props.measure.id },
-        connections: ["MeasuresListQuery_measures"],
-      },
+    return new Promise<void>((resolve) => {
+      deleteMeasure({
+        variables: {
+          input: { measureId: props.measure.id },
+          connections: [props.connectionId],
+        },
+        onCompleted: () => resolve(),
+      });
     });
   };
 
+  const confirmRef = useConfirmDialogRef();
+
   return (
-    <Tr>
-      <Td>{props.measure.name}</Td>
-      <Td width={120}>
-        <MeasureBadge state={props.measure.state} />
-      </Td>
-      <Td width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem icon={IconPencil}>{__("Edit")}</DropdownItem>
-          <ConfirmDialog
-            message={sprintf(
-              __(
-                'This will permanently delete the measure "%s". This action cannot be undone.'
-              ),
-              props.measure.name
-            )}
-            onConfirm={() => onDelete()}
-          >
+    <>
+      <ConfirmDialog
+        message={sprintf(
+          __(
+            'This will permanently delete the measure "%s". This action cannot be undone.'
+          ),
+          props.measure.name
+        )}
+        onConfirm={onDelete}
+        ref={confirmRef}
+      />
+      <Tr>
+        <Td>{props.measure.name}</Td>
+        <Td width={120}>
+          <MeasureBadge state={props.measure.state} />
+        </Td>
+        <Td width={50} className="text-end">
+          <ActionDropdown>
+            <DropdownItem icon={IconPencil}>{__("Edit")}</DropdownItem>
             <DropdownItem
+              onClick={() => confirmRef.current?.open()}
               disabled={isDeleting}
               variant="danger"
               icon={IconTrashCan}
             >
               {__("Delete")}
             </DropdownItem>
-          </ConfirmDialog>
-        </ActionDropdown>
-      </Td>
-    </Tr>
+          </ActionDropdown>
+        </Td>
+      </Tr>
+    </>
   );
 }

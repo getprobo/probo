@@ -13,6 +13,7 @@ import {
   PropertyRow,
   TabLink,
   Tabs,
+  useConfirmDialogRef,
 } from "@probo/ui";
 import { Outlet, useNavigate, useParams } from "react-router";
 import { useTranslate } from "@probo/i18n";
@@ -54,16 +55,21 @@ export default function RiskDetailPage(props: Props) {
       organizationId,
       RisksConnectionKey
     );
-    deleteRisk({
-      variables: {
-        input: { riskId },
-        connections: [connectionId],
-      },
-      onSuccess() {
-        navigate(`/organizations/${organizationId}/risks`);
-      },
+    return new Promise<void>((resolve) => {
+      deleteRisk({
+        variables: {
+          input: { riskId },
+          connections: [connectionId],
+        },
+        onSuccess() {
+          navigate(`/organizations/${organizationId}/risks`);
+          resolve();
+        },
+      });
     });
   };
+
+  const confirmRef = useConfirmDialogRef();
 
   return (
     <div className="space-y-6">
@@ -90,22 +96,27 @@ export default function RiskDetailPage(props: Props) {
             risk={{ id: riskId, ...risk }}
           />
           <ActionDropdown variant="secondary">
-            <ConfirmDialog
-              message={sprintf(
-                __(
-                  'This will permanently delete the risk "%s". This action cannot be undone.'
-                ),
-                risk.name
-              )}
-              onConfirm={() => onDelete(riskId)}
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={() => confirmRef.current?.open()}
             >
-              <DropdownItem variant="danger" icon={IconTrashCan}>
-                {__("Delete")}
-              </DropdownItem>
-            </ConfirmDialog>
+              {__("Delete")}
+            </DropdownItem>
           </ActionDropdown>
         </div>
       </div>
+
+      <ConfirmDialog
+        ref={confirmRef}
+        message={sprintf(
+          __(
+            'This will permanently delete the risk "%s". This action cannot be undone.'
+          ),
+          risk.name
+        )}
+        onConfirm={() => onDelete(riskId)}
+      />
 
       <PageHeader title={risk.name} />
 

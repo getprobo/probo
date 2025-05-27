@@ -9,9 +9,6 @@ import {
   Td,
   Avatar,
   Badge,
-  ActionDropdown,
-  DropdownItem,
-  IconPencil,
   ConfirmDialog,
   IconTrashCan,
   Button,
@@ -31,7 +28,7 @@ import {
 import type { PoliciesPageListFragment$key } from "./__generated__/PoliciesPageListFragment.graphql";
 import { usePageTitle } from "@probo/hooks";
 import { sprintf } from "@probo/helpers";
-import FormPolicyDialog from "./FormPolicyDialog";
+import { CreatePolicyDialog } from "./dialogs/CreatePolicyDialog";
 import type { PoliciesPageRowFragment$key } from "./__generated__/PoliciesPageRowFragment.graphql";
 
 const policiesFragment = graphql`
@@ -80,7 +77,7 @@ export default function PoliciesPage(props: Props) {
         title={__("Policies")}
         description={__("Manage your organization’s policies")}
       >
-        <FormPolicyDialog
+        <CreatePolicyDialog
           connection={connectionId}
           trigger={<Button icon={IconPlusLarge}>{__("New policy")}</Button>}
         />
@@ -160,45 +157,47 @@ function PolicyRow({
   const signedCount = signatures.filter(
     (signature) => signature.state === "SIGNED"
   ).length;
-  const [deletePolicy, isDeleting] = useDeletePolicyMutation();
+  const [deletePolicy] = useDeletePolicyMutation();
 
   const handleDelete = () => {
-    deletePolicy({
-      variables: {
-        input: { policyId: policy.id },
-        connections: [connectionId],
-      },
+    return new Promise<void>((resolve) => {
+      deletePolicy({
+        variables: {
+          input: { policyId: policy.id },
+          connections: [connectionId],
+        },
+        onCompleted: () => resolve(),
+      });
     });
   };
 
   return (
-    <Tr to={`/organizations/${organizationId}/policies/${policy.id}`}>
-      <Td>{policy.title}</Td>
-      <Td>
-        <Badge variant={isDraft ? "neutral" : "success"}>
-          {isDraft ? __("Draft") : __("Published")}
-        </Badge>
-      </Td>
-      <Td>
-        <div className="flex gap-2 items-center">
-          <Avatar name={policy.owner.fullName} />
-          {policy.owner.fullName}
-        </div>
-      </Td>
-      <Td>
-        {dateFormat(policy.updatedAt, {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          weekday: "short",
-        })}
-      </Td>
-      <Td>
-        {signedCount}/{signatures.length}
-      </Td>
-      <Td noLink width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem icon={IconPencil}>{__("Edit")}</DropdownItem>
+    <>
+      <Tr to={`/organizations/${organizationId}/policies/${policy.id}`}>
+        <Td>{policy.title}</Td>
+        <Td>
+          <Badge variant={isDraft ? "neutral" : "success"}>
+            {isDraft ? __("Draft") : __("Published")}
+          </Badge>
+        </Td>
+        <Td>
+          <div className="flex gap-2 items-center">
+            <Avatar name={policy.owner.fullName} />
+            {policy.owner.fullName}
+          </div>
+        </Td>
+        <Td>
+          {dateFormat(policy.updatedAt, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+            weekday: "short",
+          })}
+        </Td>
+        <Td>
+          {signedCount}/{signatures.length}
+        </Td>
+        <Td noLink width={50} className="text-end">
           <ConfirmDialog
             message={sprintf(
               __(
@@ -208,16 +207,10 @@ function PolicyRow({
             )}
             onConfirm={handleDelete}
           >
-            <DropdownItem
-              disabled={isDeleting}
-              variant="danger"
-              icon={IconTrashCan}
-            >
-              {__("Delete")}
-            </DropdownItem>
+            <Button icon={IconTrashCan} variant="danger" />
           </ConfirmDialog>
-        </ActionDropdown>
-      </Td>
-    </Tr>
+        </Td>
+      </Tr>
+    </>
   );
 }

@@ -19,7 +19,13 @@ export const Default: Story = {
         return (
             <ConfirmDialog
                 message="Are you sure you want to delete this risk?"
-                onConfirm={() => {}}
+                onConfirm={() => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve();
+                        }, 1000);
+                    });
+                }}
             >
                 <Button variant="danger">Delete this</Button>
             </ConfirmDialog>
