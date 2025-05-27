@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c59210c06978720ee4b52c41f0337ecf>>
+ * @generated SignedSource<<769555856fa8bff973c4685249abbb2f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,6 +20,7 @@ export type PolicyPagePolicyFragment$data = {
   };
   readonly title: string;
   readonly versions: {
+    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly content: string;
@@ -36,6 +37,7 @@ export type PolicyPagePolicyFragment$data = {
         readonly status: PolicyStatus;
         readonly updatedAt: any;
         readonly version: number;
+        readonly " $fragmentSpreads": FragmentRefs<"PolicyVersionHistoryDialogFragment">;
       };
     }>;
   };
@@ -57,7 +59,18 @@ var v0 = {
 return {
   "argumentDefinitions": [],
   "kind": "Fragment",
-  "metadata": null,
+  "metadata": {
+    "connection": [
+      {
+        "count": null,
+        "cursor": null,
+        "direction": "forward",
+        "path": [
+          "versions"
+        ]
+      }
+    ]
+  },
   "name": "PolicyPagePolicyFragment",
   "selections": [
     (v0/*: any*/),
@@ -88,17 +101,11 @@ return {
       "storageKey": null
     },
     {
-      "alias": null,
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "first",
-          "value": 1
-        }
-      ],
+      "alias": "versions",
+      "args": null,
       "concreteType": "PolicyVersionConnection",
       "kind": "LinkedField",
-      "name": "versions",
+      "name": "__PolicyPage_versions_connection",
       "plural": false,
       "selections": [
         {
@@ -199,15 +206,71 @@ return {
                     }
                   ],
                   "storageKey": "signatures(first:100)"
+                },
+                {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "PolicyVersionHistoryDialogFragment"
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "__typename",
+                  "storageKey": null
                 }
               ],
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "cursor",
               "storageKey": null
             }
           ],
           "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "PageInfo",
+          "kind": "LinkedField",
+          "name": "pageInfo",
+          "plural": false,
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "endCursor",
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "hasNextPage",
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        },
+        {
+          "kind": "ClientExtension",
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "__id",
+              "storageKey": null
+            }
+          ]
         }
       ],
-      "storageKey": "versions(first:1)"
+      "storageKey": null
     }
   ],
   "type": "Policy",
@@ -215,6 +278,6 @@ return {
 };
 })();
 
-(node as any).hash = "6b70d6d05d6e1081afae758389d070b2";
+(node as any).hash = "684db4b721c50638ee5ec1f9f4ebdd16";
 
 export default node;

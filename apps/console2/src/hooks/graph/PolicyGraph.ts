@@ -12,6 +12,8 @@ export const policiesQuery = graphql`
   }
 `;
 
+export const PoliciesConnectionKey = "PoliciesPageFragment_policies";
+
 const deletePolicyMutation = graphql`
   mutation PolicyGraphDeleteMutation(
     $input: DeletePolicyInput!
