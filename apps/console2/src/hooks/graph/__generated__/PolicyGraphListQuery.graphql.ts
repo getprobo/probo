@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<26cd4feab2589e8b641b339c977905a3>>
+ * @generated SignedSource<<b9027c9c44291af1bebb38760fd96fc8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -53,20 +53,11 @@ v3 = {
   "name": "__typename",
   "storageKey": null
 },
-v4 = {
-  "kind": "Literal",
-  "name": "first",
-  "value": 100
-},
-v5 = [
-  (v4/*: any*/),
+v4 = [
   {
     "kind": "Literal",
-    "name": "orderBy",
-    "value": {
-      "direction": "DESC",
-      "field": "CREATED_AT"
-    }
+    "name": "first",
+    "value": 100
   }
 ];
 return {
@@ -118,7 +109,7 @@ return {
             "selections": [
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v4/*: any*/),
                 "concreteType": "PolicyConnection",
                 "kind": "LinkedField",
                 "name": "policies",
@@ -221,9 +212,7 @@ return {
                                       },
                                       {
                                         "alias": null,
-                                        "args": [
-                                          (v4/*: any*/)
-                                        ],
+                                        "args": (v4/*: any*/),
                                         "concreteType": "PolicyVersionSignatureConnection",
                                         "kind": "LinkedField",
                                         "name": "signatures",
@@ -306,20 +295,6 @@ return {
                         "kind": "ScalarField",
                         "name": "hasNextPage",
                         "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "hasPreviousPage",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "startCursor",
-                        "storageKey": null
                       }
                     ],
                     "storageKey": null
@@ -337,14 +312,12 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "policies(first:100,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+                "storageKey": "policies(first:100)"
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
-                "filters": [
-                  "orderBy"
-                ],
+                "args": (v4/*: any*/),
+                "filters": null,
                 "handle": "connection",
                 "key": "PoliciesPageFragment_policies",
                 "kind": "LinkedHandle",
@@ -360,12 +333,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "838223ae76604de3893662f5a496c1d3",
+    "cacheID": "b0b3546b418ff2cfd5dd7678d3b0be14",
     "id": null,
     "metadata": {},
     "name": "PolicyGraphListQuery",
     "operationKind": "query",
-    "text": "query PolicyGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...PoliciesPageListFragment\n  }\n}\n\nfragment PoliciesPageListFragment on Organization {\n  policies(first: 100, orderBy: {direction: DESC, field: CREATED_AT}) {\n    edges {\n      node {\n        id\n        ...PoliciesPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment PoliciesPageRowFragment on Policy {\n  id\n  title\n  description\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query PolicyGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...PoliciesPageListFragment\n  }\n}\n\nfragment PoliciesPageListFragment on Organization {\n  policies(first: 100) {\n    edges {\n      node {\n        id\n        ...PoliciesPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment PoliciesPageRowFragment on Policy {\n  id\n  title\n  description\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

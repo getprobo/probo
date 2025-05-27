@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<391c4db090caa19c60582c18d426764a>>
+ * @generated SignedSource<<043e8cc5beda1ac8949a7c02adcff4bf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED" | "%future added value";
+export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED";
 export type CreateRiskMeasureMappingInput = {
   measureId: string;
   riskId: string;
