@@ -12,6 +12,7 @@ export { IconCrossLargeX } from "./IconCrossLargeX.tsx";
 export { IconUpload } from "./IconUpload.tsx";
 export { IconListStack } from "./IconListStack.tsx";
 export { IconCircleCheck1 } from "./IconCircleCheck1.tsx";
+export { IconClock } from "./IconClock.tsx";
 export { IconImport2 } from "./IconImport2.tsx";
 export { IconChevronTriangleDownSmall } from "./IconChevronTriangleDownSmall.tsx";
 export { IconCheckmark1 } from "./IconCheckmark1.tsx";

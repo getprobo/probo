@@ -15,6 +15,7 @@ import {
   DropdownItem,
   IconTrashCan,
   ConfirmDialog,
+  useConfirmDialogRef,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
@@ -134,66 +135,77 @@ function VendorRow({
   const [deleteVendor] = useDeleteVendorMutation();
 
   const onDelete = (vendorId: string) => {
-    deleteVendor({
-      variables: {
-        input: {
-          vendorId,
+    return new Promise<void>((resolve) => {
+      deleteVendor({
+        variables: {
+          input: {
+            vendorId,
+          },
+          connections: [
+            ConnectionHandler.getConnectionID(
+              organizationId,
+              "VendorsPage_vendors"
+            ),
+          ],
         },
-        connections: [
-          ConnectionHandler.getConnectionID(
-            organizationId,
-            "VendorsPage_vendors"
-          ),
-        ],
-      },
+        onCompleted: () => resolve(),
+      });
     });
   };
 
+  const confirmRef = useConfirmDialogRef();
+
   return (
-    <Tr to={`/organizations/${organizationId}/vendors/${vendor.id}`}>
-      <Td>
-        <div className="flex gap-2 items-center">
-          <Avatar name={vendor.name} src={faviconUrl(vendor.websiteUrl)} />
-          <div>{vendor.name}</div>
-        </div>
-      </Td>
-      <Td>
-        {latestAssessment?.assessedAt
-          ? dateFormat(latestAssessment.assessedAt, {
-              day: "2-digit",
-              weekday: "short",
-              month: "short",
-            })
-          : __("Not assessed")}
-      </Td>
-      <Td>
-        <RiskBadge level={latestAssessment?.dataSensitivity ?? "NONE"} />
-      </Td>
-      <Td>
-        <RiskBadge level={latestAssessment?.businessImpact ?? "NONE"} />
-      </Td>
-      <Td>
-        <Badge variant={isExpired ? "danger" : "warning"}>
-          {isExpired ? __("Late") : __("In progress")}
-        </Badge>
-      </Td>
-      <Td noLink>
-        <ActionDropdown>
-          <ConfirmDialog
-            message={sprintf(
-              __(
-                'This will permanently delete the vendor "%s". This action cannot be undone.'
-              ),
-              vendor.name
-            )}
-            onConfirm={() => onDelete(vendor.id)}
-          >
-            <DropdownItem variant="danger" icon={IconTrashCan}>
+    <>
+      <ConfirmDialog
+        ref={confirmRef}
+        message={sprintf(
+          __(
+            'This will permanently delete the vendor "%s". This action cannot be undone.'
+          ),
+          vendor.name
+        )}
+        onConfirm={() => onDelete(vendor.id)}
+      />
+      <Tr to={`/organizations/${organizationId}/vendors/${vendor.id}`}>
+        <Td>
+          <div className="flex gap-2 items-center">
+            <Avatar name={vendor.name} src={faviconUrl(vendor.websiteUrl)} />
+            <div>{vendor.name}</div>
+          </div>
+        </Td>
+        <Td>
+          {latestAssessment?.assessedAt
+            ? dateFormat(latestAssessment.assessedAt, {
+                day: "2-digit",
+                weekday: "short",
+                month: "short",
+              })
+            : __("Not assessed")}
+        </Td>
+        <Td>
+          <RiskBadge level={latestAssessment?.dataSensitivity ?? "NONE"} />
+        </Td>
+        <Td>
+          <RiskBadge level={latestAssessment?.businessImpact ?? "NONE"} />
+        </Td>
+        <Td>
+          <Badge variant={isExpired ? "danger" : "warning"}>
+            {isExpired ? __("Late") : __("In progress")}
+          </Badge>
+        </Td>
+        <Td noLink>
+          <ActionDropdown>
+            <DropdownItem
+              onClick={() => confirmRef.current?.open()}
+              variant="danger"
+              icon={IconTrashCan}
+            >
               {__("Delete")}
             </DropdownItem>
-          </ConfirmDialog>
-        </ActionDropdown>
-      </Td>
-    </Tr>
+          </ActionDropdown>
+        </Td>
+      </Tr>
+    </>
   );
 }
