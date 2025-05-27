@@ -7,13 +7,17 @@ import {
 import { MainLayout } from "./layouts/MainLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import { lazy, Suspense, type FC, type LazyExoticComponent } from "react";
-import { UnAuthenticatedError } from "./providers/RelayProviders";
+import {
+  relayEnvironment,
+  UnAuthenticatedError,
+} from "./providers/RelayProviders";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
-import { type PreloadedQuery } from "react-relay";
+import { loadQuery, type PreloadedQuery } from "react-relay";
 import { useCleanup } from "./hooks/useDelayedEffect.ts";
 import { riskRoutes } from "./routes/riskRoutes.ts";
 import { measureRoutes } from "./routes/measureRoutes.ts";
 import { policiesRoutes } from "./routes/policiesRoutes.ts";
+import { organizationViewQuery } from "./hooks/graph/OrganizationGraph.ts";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -64,6 +68,15 @@ const routes = [
     Component: MainLayout,
     ErrorBoundary: ErrorBoundary,
     children: [
+      {
+        path: "settings",
+        fallback: PageSkeleton,
+        queryLoader: ({ organizationId }) =>
+          loadQuery(relayEnvironment, organizationViewQuery, {
+            organizationId,
+          }),
+        Component: lazy(() => import("./pages/organizations/SettingsPage")),
+      },
       {
         path: "vendors",
         fallback: PageSkeleton,
