@@ -6,20 +6,21 @@ import type {
 } from "react";
 import { Link } from "react-router";
 import { tv, type VariantProps } from "tailwind-variants";
+import { Slot } from "../Slot";
 
 export const button = tv({
     base: "flex items-center justify-center gap-[6px] px-3 py-2 rounded-full cursor-pointer text-sm font-medium h-8 focus:outline-none",
     variants: {
         variant: {
             primary:
-                "bg-primary text-invert hover:bg-primary-hover shadow-base hover:shadow-hover active:bg-primary-pressed focus:shadow-focus",
+                "bg-primary text-invert hover:bg-primary-hover shadow-base hover:shadow-hover active:bg-primary-pressed",
             secondary:
-                "bg-secondary text-txt-primary hover:bg-secondary-hover shadow-base hover:shadow-hover active:bg-secondary-pressed focus:shadow-focus border border-border-low",
+                "bg-secondary text-txt-primary hover:bg-secondary-hover shadow-base hover:shadow-hover active:bg-secondary-pressed border border-border-low",
             tertiary:
-                "bg-tertiary text-txt-primary hover:bg-tertiary-hover active:bg-tertiary-pressed focus:shadow-focus",
+                "bg-tertiary text-txt-primary hover:bg-tertiary-hover active:bg-tertiary-pressed",
             quaternary:
                 "bg-highlight text-txt-primary hover:bg-highlight-hover active:bg-highlight-pressed",
-            danger: "bg-danger-plain text-txt-invert hover:bg-danger-hover shadow-base hover:shadow-hover active:bg-danger-pressed focus:shadow-focus border border-border-danger",
+            danger: "bg-danger-plain text-txt-invert hover:bg-danger-hover shadow-base hover:shadow-hover active:bg-danger-pressed border border-border-danger",
         },
         disabled: {
             true: "opacity-60 cursor-default",
@@ -48,6 +49,7 @@ type Props = PropsWithChildren<
             | "quaternary"
             | "danger";
         to?: string;
+        asChild?: boolean;
     } & VariantProps<typeof button>
 > &
     (
@@ -56,15 +58,27 @@ type Props = PropsWithChildren<
     );
 
 export const Button = (props: Props) => {
-    const Component = props.to ? Link : "button";
     const {
         icon: IconComponent,
         iconAfter: IconAfterComponent,
         children,
         onClick,
         variant,
+        asChild,
         ...componentProps
     } = props;
+    if (asChild) {
+        return (
+            <Slot
+                {...componentProps}
+                className={button({ ...props, variant, empty: !children })}
+            >
+                {children}
+            </Slot>
+        );
+    }
+
+    const Component = props.to ? Link : "button";
     return (
         // @ts-expect-error Component is too dynamic
         <Component

@@ -168,7 +168,18 @@ function PolicyRow({
   return (
     <>
       <Tr to={`/organizations/${organizationId}/policies/${policy.id}`}>
-        <Td>{policy.title}</Td>
+        <Td>
+          <div className="flex gap-4 items-center">
+            <img
+              src="/policy.png"
+              alt=""
+              width={28}
+              height={36}
+              className="border-4 border-highlight rounded box-content"
+            />
+            {policy.title}
+          </div>
+        </Td>
         <Td>
           <Badge variant={isDraft ? "neutral" : "success"}>
             {isDraft ? __("Draft") : __("Published")}
