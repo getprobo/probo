@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ddd22d66836f5fd323ddf25475dd6d72>>
+ * @generated SignedSource<<2de1bbc55eb7b45a9546c8ec306ad979>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,8 +9,8 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type BusinessImpact = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM" | "%future added value";
-export type DataSensitivity = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM" | "NONE" | "%future added value";
+export type BusinessImpact = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM";
+export type DataSensitivity = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM" | "NONE";
 export type VendorsPageQuery$variables = {
   organizationId: string;
 };

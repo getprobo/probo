@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5a6e0e680ef636cf776a56f490733aee>>
+ * @generated SignedSource<<c0e424b8b0ec7becf9ac2930c6e81b56>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED" | "%future added value";
+export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED";
 export type ImportMeasureInput = {
   file: any;
   organizationId: string;
