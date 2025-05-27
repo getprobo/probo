@@ -1,27 +1,8 @@
 import { Avatar, Option, Select } from "@probo/ui";
 import { Suspense } from "react";
-import { useLazyLoadQuery } from "react-relay";
-import { graphql } from "relay-runtime";
-import type { PeopleSelectQuery as PeopleSelectQueryType } from "./__generated__/PeopleSelectQuery.graphql";
 import { useTranslate } from "@probo/i18n";
-import { Controller, type Control } from "react-hook-form";
-
-const peopleQuery = graphql`
-  query PeopleSelectQuery($organizationId: ID!) {
-    organization: node(id: $organizationId) {
-      ... on Organization {
-        peoples(first: 100, orderBy: { direction: ASC, field: CREATED_AT }) {
-          edges {
-            node {
-              id
-              fullName
-            }
-          }
-        }
-      }
-    }
-  }
-`;
+import { type Control, Controller } from "react-hook-form";
+import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 
 export function PeopleSelect({
   organization,
@@ -55,11 +36,7 @@ function PeopleSelectWithQuery({
   control: Control;
 }) {
   const { __ } = useTranslate();
-  const data = useLazyLoadQuery<PeopleSelectQueryType>(peopleQuery, {
-    organizationId: organization,
-  });
-
-  const people = data.organization?.peoples?.edges.map((edge) => edge.node);
+  const people = usePeople(organization);
 
   return (
     <>

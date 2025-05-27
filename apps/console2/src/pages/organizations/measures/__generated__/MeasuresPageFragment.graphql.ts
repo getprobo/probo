@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a35e945926fc7614549d452b1edd92f9>>
+ * @generated SignedSource<<d474691920e943cf5df04fa93c746b28>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED" | "%future added value";
+export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED";
 import { FragmentRefs } from "relay-runtime";
 export type MeasuresPageFragment$data = {
   readonly measures: {

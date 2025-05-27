@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<76980bd62a1a415efbb27298d27874da>>
+ * @generated SignedSource<<3d1854151a950f0b4b85faf16c995c61>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,8 +9,8 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type PolicyStatus = "DRAFT" | "PUBLISHED" | "%future added value";
-export type PolicyVersionSignatureState = "REQUESTED" | "SIGNED" | "%future added value";
+export type PolicyStatus = "DRAFT" | "PUBLISHED";
+export type PolicyVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
 export type PoliciesPageRowFragment$data = {
   readonly description: string;
