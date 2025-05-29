@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState, useTransition } from "react";
+import { Suspense, useEffect, useState, useTransition, useRef } from "react";
 import {
   graphql,
   PreloadedQuery,
@@ -192,6 +192,7 @@ function ListVendorContent({
   queryRef: PreloadedQuery<ListVendorViewQuery>;
 }) {
   const { toast } = useToast();
+  const inputRef = useRef<HTMLInputElement>(null);
   const data = usePreloadedQuery<ListVendorViewQuery>(
     listVendorViewQuery,
     queryRef,
@@ -199,7 +200,6 @@ function ListVendorContent({
   const [, setSearchParams] = useSearchParams();
   const [, startTransition] = useTransition();
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAddVendorDropdown, setShowAddVendorDropdown] = useState(false);
   const [filteredVendors, setFilteredVendors] = useState<Vendors>([]);
   const [vendorsData, setVendorsData] = useState<Vendors>([]);
   const [isLoadingVendors, setIsLoadingVendors] = useState(false);
@@ -332,24 +332,38 @@ function ListVendorContent({
   };
 
   return (
-    <PageTemplate
-      title="Vendors"
-      actions={
-        <Button
-          className="flex items-center gap-2"
-          onClick={() => setShowAddVendorDropdown(!showAddVendorDropdown)}
+    <PageTemplate title="Vendors">
+      <div className="mb-6 p-4 border rounded-xl bg-white relative">
+        <div className="flex items-center gap-2 mb-4">
+          <Store className="h-5 w-5" />
+          <h3 className="font-medium">Add a vendor</h3>
+        </div>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (searchTerm.trim()) {
+              createVendor({
+                variables: {
+                  connections: [vendorsConnection.vendors.__id],
+                  input: {
+                    organizationId: data.organization.id,
+                    name: searchTerm.trim(),
+                    description: "",
+                  },
+                },
+                onCompleted() {
+                  setSearchTerm("");
+                  setFilteredVendors([]);
+                  toast({
+                    title: "Vendor created",
+                    description: "The new vendor has been created successfully",
+                  });
+                  inputRef.current?.focus();
+                },
+              });
+            }
+          }}
         >
-          <Plus className="h-4 w-4" />
-          Add vendor
-        </Button>
-      }
-    >
-      {showAddVendorDropdown && (
-        <div className="mb-6 p-4 border rounded-xl bg-white relative">
-          <div className="flex items-center gap-2 mb-4">
-            <Store className="h-5 w-5" />
-            <h3 className="font-medium">Add a vendor</h3>
-          </div>
           <div className="flex gap-2 relative">
             <Input
               type="text"
@@ -358,6 +372,7 @@ function ListVendorContent({
               style={{ borderRadius: "0.3rem" }}
               onChange={handleSearchChange}
               disabled={isLoadingVendors}
+              ref={inputRef}
             />
             {isLoadingVendors && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/50">
@@ -401,12 +416,12 @@ function ListVendorContent({
                         onCompleted() {
                           setSearchTerm("");
                           setFilteredVendors([]);
-                          setShowAddVendorDropdown(false);
                           toast({
                             title: "Vendor added",
                             description:
                               "The vendor has been added successfully",
                           });
+                          inputRef.current?.focus();
                         },
                         onError: (error) => {
                           toast({
@@ -436,26 +451,28 @@ function ListVendorContent({
                 <button
                   className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-2 border-t"
                   onClick={(e) => {
-                    createVendor({
-                      variables: {
-                        connections: [vendorsConnection.vendors.__id],
-                        input: {
-                          organizationId: data.organization.id,
-                          name: searchTerm.trim(),
-                          description: "",
+                    e.preventDefault();
+                    if (searchTerm.trim()) {
+                      createVendor({
+                        variables: {
+                          connections: [vendorsConnection.vendors.__id],
+                          input: {
+                            organizationId: data.organization.id,
+                            name: searchTerm.trim(),
+                            description: "",
+                          },
                         },
-                      },
-                      onCompleted() {
-                        setSearchTerm("");
-                        setFilteredVendors([]);
-                        setShowAddVendorDropdown(false);
-                        toast({
-                          title: "Vendor created",
-                          description:
-                            "The new vendor has been created successfully",
-                        });
-                      },
-                    });
+                        onCompleted() {
+                          setSearchTerm("");
+                          setFilteredVendors([]);
+                          toast({
+                            title: "Vendor created",
+                            description: "The new vendor has been created successfully",
+                          });
+                          inputRef.current?.focus();
+                        },
+                      });
+                    }
                   }}
                 >
                   <div className="flex items-center gap-2">
@@ -467,8 +484,8 @@ function ListVendorContent({
               </div>
             )}
           </div>
-        </div>
-      )}
+        </form>
+      </div>
 
       <div className="rounded-xl border overflow-hidden">
         <table className="w-full bg-white">
