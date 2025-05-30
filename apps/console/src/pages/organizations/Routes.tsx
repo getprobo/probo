@@ -31,6 +31,9 @@ import { ListTaskPage } from "./tasks/ListTaskPage";
 import { AssetsListPage } from "./assets/AssetsListPage";
 import { NewAssetPage } from "./assets/NewAssetPage";
 import { AssetPage } from "./assets/AssetPage";
+import { DataListPage } from "./data/DataListPage";
+import { NewDatumPage } from "./data/NewDatumPage";
+import { DatumPage } from "./data/DatumPage";
 
 export function OrganizationsRoutes() {
   return (
@@ -70,6 +73,9 @@ export function OrganizationsRoutes() {
         <Route path="assets" element={<AssetsListPage />} />
         <Route path="assets/new" element={<NewAssetPage />} />
         <Route path="assets/:assetId" element={<AssetPage />} />
+        <Route path="data" element={<DataListPage />} />
+        <Route path="data/new" element={<NewDatumPage />} />
+        <Route path="data/:datumId" element={<DatumPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

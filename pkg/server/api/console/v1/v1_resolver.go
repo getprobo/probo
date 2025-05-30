@@ -147,6 +147,60 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 }
 
 // Owner is the resolver for the owner field.
+func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.People, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	data, err := svc.Data.Get(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get datum: %w", err)
+	}
+
+	people, err := svc.Peoples.Get(ctx, data.OwnerID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get owner: %w", err)
+	}
+
+	return types.NewPeople(people), nil
+}
+
+// Vendors is the resolver for the vendors field.
+func (r *datumResolver) Vendors(ctx context.Context, obj *types.Datum, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
+		Field:     coredata.VendorOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := svc.Data.ListVendors(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list data vendors: %w", err))
+	}
+
+	return types.NewVendorConnection(page), nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*types.Organization, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	org, err := svc.Organizations.Get(ctx, obj.Organization.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get organization: %w", err)
+	}
+
+	return types.NewOrganization(org), nil
+}
+
+// Owner is the resolver for the owner field.
 func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*types.People, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
@@ -1687,6 +1741,71 @@ func (r *mutationResolver) RemoveAssetVendor(ctx context.Context, input types.Re
 	panic(fmt.Errorf("not implemented: RemoveAssetVendor - removeAssetVendor"))
 }
 
+// CreateDatum is the resolver for the createDatum field.
+func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDatumInput) (*types.CreateDatumPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.OrganizationID.TenantID())
+
+	data, err := svc.Data.Create(ctx, probo.CreateDatumRequest{
+		OrganizationID:  input.OrganizationID,
+		Name:            input.Name,
+		DataSensitivity: input.DataSensitivity,
+		OwnerID:         input.OwnerID,
+		VendorIDs:       input.VendorIds,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot create datum: %w", err)
+	}
+
+	return &types.CreateDatumPayload{
+		DatumEdge: types.NewDatumEdge(data, coredata.DatumOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateDatum is the resolver for the updateDatum field.
+func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDatumInput) (*types.UpdateDatumPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.ID.TenantID())
+
+	datum, err := svc.Data.Update(ctx, probo.UpdateDatumRequest{
+		ID:              input.ID,
+		Name:            input.Name,
+		DataSensitivity: input.DataSensitivity,
+		OwnerID:         input.OwnerID,
+		VendorIDs:       input.VendorIds,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot update datum: %w", err)
+	}
+
+	return &types.UpdateDatumPayload{
+		Datum: types.NewDatum(datum),
+	}, nil
+}
+
+// DeleteDatum is the resolver for the deleteDatum field.
+func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDatumInput) (*types.DeleteDatumPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.DatumID.TenantID())
+
+	if err := svc.Data.Delete(ctx, input.DatumID); err != nil {
+		return nil, fmt.Errorf("cannot delete datum: %w", err)
+	}
+
+	return &types.DeleteDatumPayload{
+		DeletedDatumID: input.DatumID,
+	}, nil
+}
+
+// AddDatumVendor is the resolver for the addDatumVendor field.
+func (r *mutationResolver) AddDatumVendor(ctx context.Context, input types.AddDatumVendorInput) (*types.AddDatumVendorPayload, error) {
+	panic(fmt.Errorf("not implemented: AddDatumVendor - addDatumVendor"))
+}
+
+// RemoveDatumVendor is the resolver for the removeDatumVendor field.
+func (r *mutationResolver) RemoveDatumVendor(ctx context.Context, input types.RemoveDatumVendorInput) (*types.RemoveDatumVendorPayload, error) {
+	panic(fmt.Errorf("not implemented: RemoveDatumVendor - removeDatumVendor"))
+}
+
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
@@ -1942,6 +2061,31 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 	return types.NewAssetConnection(page), nil
 }
 
+// Assets is the resolver for the assets field.
+func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrder) (*types.DatumConnection, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DatumOrderField]{
+		Field:     coredata.DatumOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DatumOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := svc.Data.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization data: %w", err))
+	}
+
+	return types.NewDataConnection(page), nil
+}
+
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
 	svc := GetTenantService(ctx, r.proboSvc, id.TenantID())
@@ -2039,6 +2183,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			panic(fmt.Errorf("cannot get asset: %w", err))
 		}
 		return types.NewAsset(asset), nil
+	case coredata.DatumEntityType:
+		datum, err := svc.Data.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("cannot get data: %w", err))
+		}
+		return types.NewDatum(datum), nil
 	default:
 	}
 
@@ -2452,6 +2602,9 @@ func (r *Resolver) Asset() schema.AssetResolver { return &assetResolver{r} }
 // Control returns schema.ControlResolver implementation.
 func (r *Resolver) Control() schema.ControlResolver { return &controlResolver{r} }
 
+// Datum returns schema.DatumResolver implementation.
+func (r *Resolver) Datum() schema.DatumResolver { return &datumResolver{r} }
+
 // Document returns schema.DocumentResolver implementation.
 func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver{r} }
 
@@ -2510,6 +2663,7 @@ func (r *Resolver) Viewer() schema.ViewerResolver { return &viewerResolver{r} }
 
 type assetResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }
+type datumResolver struct{ *Resolver }
 type documentResolver struct{ *Resolver }
 type documentVersionResolver struct{ *Resolver }
 type documentVersionSignatureResolver struct{ *Resolver }

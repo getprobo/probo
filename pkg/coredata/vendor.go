@@ -479,3 +479,93 @@ WHERE %s
 
 	return nil
 }
+
+func (vs *Vendors) LoadByDatumID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	datumID gid.GID,
+	cursor *page.Cursor[VendorOrderField],
+) error {
+	q := `
+WITH vend AS (
+	SELECT
+		v.id,
+		v.tenant_id,
+		v.organization_id,
+		v.name,
+		v.description,
+		v.category,
+		v.headquarter_address,
+		v.legal_name,
+		v.website_url,
+		v.privacy_policy_url,
+		v.service_level_agreement_url,
+		v.data_processing_agreement_url,
+		v.business_associate_agreement_url,
+		v.subprocessors_list_url,
+		v.certifications,
+		v.business_owner_id,
+		v.security_owner_id,
+		v.status_page_url,
+		v.terms_of_service_url,
+		v.security_page_url,
+		v.trust_page_url,
+		v.created_at,
+		v.updated_at
+	FROM
+		vendors v
+	INNER JOIN
+		data_vendors dv ON v.id = dv.vendor_id
+	WHERE
+		dv.datum_id = @datum_id
+)
+SELECT
+	id,
+	tenant_id,
+	organization_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	business_owner_id,
+	security_owner_id,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	created_at,
+	updated_at
+FROM
+	vend
+WHERE %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"datum_id": datumID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query vendors: %w", err)
+	}
+
+	vendors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Vendor])
+	if err != nil {
+		return fmt.Errorf("cannot collect vendors: %w", err)
+	}
+
+	*vs = vendors
+
+	return nil
+}

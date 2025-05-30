@@ -44,6 +44,7 @@ type Config struct {
 type ResolverRoot interface {
 	Asset() AssetResolver
 	Control() ControlResolver
+	Datum() DatumResolver
 	Document() DocumentResolver
 	DocumentVersion() DocumentVersionResolver
 	DocumentVersionSignature() DocumentVersionSignatureResolver
@@ -68,6 +69,10 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	AddAssetVendorPayload struct {
 		Asset func(childComplexity int) int
+	}
+
+	AddDatumVendorPayload struct {
+		Datum func(childComplexity int) int
 	}
 
 	AssessVendorPayload struct {
@@ -160,6 +165,10 @@ type ComplexityRoot struct {
 		MeasureEdge func(childComplexity int) int
 	}
 
+	CreateDatumPayload struct {
+		DatumEdge func(childComplexity int) int
+	}
+
 	CreateDocumentPayload struct {
 		DocumentEdge        func(childComplexity int) int
 		DocumentVersionEdge func(childComplexity int) int
@@ -215,6 +224,27 @@ type ComplexityRoot struct {
 		VendorRiskAssessmentEdge func(childComplexity int) int
 	}
 
+	Datum struct {
+		CreatedAt       func(childComplexity int) int
+		DataSensitivity func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Name            func(childComplexity int) int
+		Organization    func(childComplexity int) int
+		Owner           func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+		Vendors         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
+	}
+
+	DatumConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	DatumEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	DeleteAssetPayload struct {
 		DeletedAssetID func(childComplexity int) int
 	}
@@ -227,6 +257,10 @@ type ComplexityRoot struct {
 	DeleteControlMeasureMappingPayload struct {
 		DeletedControlID func(childComplexity int) int
 		DeletedMeasureID func(childComplexity int) int
+	}
+
+	DeleteDatumPayload struct {
+		DeletedDatumID func(childComplexity int) int
 	}
 
 	DeleteDocumentPayload struct {
@@ -441,12 +475,14 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		AddAssetVendor               func(childComplexity int, input types.AddAssetVendorInput) int
+		AddDatumVendor               func(childComplexity int, input types.AddDatumVendorInput) int
 		AssessVendor                 func(childComplexity int, input types.AssessVendorInput) int
 		AssignTask                   func(childComplexity int, input types.AssignTaskInput) int
 		ConfirmEmail                 func(childComplexity int, input types.ConfirmEmailInput) int
 		CreateAsset                  func(childComplexity int, input types.CreateAssetInput) int
 		CreateControlDocumentMapping func(childComplexity int, input types.CreateControlDocumentMappingInput) int
 		CreateControlMeasureMapping  func(childComplexity int, input types.CreateControlMeasureMappingInput) int
+		CreateDatum                  func(childComplexity int, input types.CreateDatumInput) int
 		CreateDocument               func(childComplexity int, input types.CreateDocumentInput) int
 		CreateDraftDocumentVersion   func(childComplexity int, input types.CreateDraftDocumentVersionInput) int
 		CreateFramework              func(childComplexity int, input types.CreateFrameworkInput) int
@@ -462,6 +498,7 @@ type ComplexityRoot struct {
 		DeleteAsset                  func(childComplexity int, input types.DeleteAssetInput) int
 		DeleteControlDocumentMapping func(childComplexity int, input types.DeleteControlDocumentMappingInput) int
 		DeleteControlMeasureMapping  func(childComplexity int, input types.DeleteControlMeasureMappingInput) int
+		DeleteDatum                  func(childComplexity int, input types.DeleteDatumInput) int
 		DeleteDocument               func(childComplexity int, input types.DeleteDocumentInput) int
 		DeleteEvidence               func(childComplexity int, input types.DeleteEvidenceInput) int
 		DeleteFramework              func(childComplexity int, input types.DeleteFrameworkInput) int
@@ -481,12 +518,14 @@ type ComplexityRoot struct {
 		InviteUser                   func(childComplexity int, input types.InviteUserInput) int
 		PublishDocumentVersion       func(childComplexity int, input types.PublishDocumentVersionInput) int
 		RemoveAssetVendor            func(childComplexity int, input types.RemoveAssetVendorInput) int
+		RemoveDatumVendor            func(childComplexity int, input types.RemoveDatumVendorInput) int
 		RemoveUser                   func(childComplexity int, input types.RemoveUserInput) int
 		RequestEvidence              func(childComplexity int, input types.RequestEvidenceInput) int
 		RequestSignature             func(childComplexity int, input types.RequestSignatureInput) int
 		SendSigningNotifications     func(childComplexity int, input types.SendSigningNotificationsInput) int
 		UnassignTask                 func(childComplexity int, input types.UnassignTaskInput) int
 		UpdateAsset                  func(childComplexity int, input types.UpdateAssetInput) int
+		UpdateDatum                  func(childComplexity int, input types.UpdateDatumInput) int
 		UpdateDocument               func(childComplexity int, input types.UpdateDocumentInput) int
 		UpdateDocumentVersion        func(childComplexity int, input types.UpdateDocumentVersionInput) int
 		UpdateFramework              func(childComplexity int, input types.UpdateFrameworkInput) int
@@ -505,6 +544,7 @@ type ComplexityRoot struct {
 		Assets     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrder) int
 		Connectors func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
 		CreatedAt  func(childComplexity int) int
+		Data       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrder) int
 		Documents  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) int
 		Frameworks func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
 		ID         func(childComplexity int) int
@@ -571,6 +611,10 @@ type ComplexityRoot struct {
 
 	RemoveAssetVendorPayload struct {
 		Asset func(childComplexity int) int
+	}
+
+	RemoveDatumVendorPayload struct {
+		Datum func(childComplexity int) int
 	}
 
 	RemoveUserPayload struct {
@@ -656,6 +700,10 @@ type ComplexityRoot struct {
 
 	UpdateAssetPayload struct {
 		Asset func(childComplexity int) int
+	}
+
+	UpdateDatumPayload struct {
+		Datum func(childComplexity int) int
 	}
 
 	UpdateDocumentPayload struct {
@@ -827,6 +875,11 @@ type ControlResolver interface {
 	Measures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error)
 	Documents(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.DocumentConnection, error)
 }
+type DatumResolver interface {
+	Owner(ctx context.Context, obj *types.Datum) (*types.People, error)
+	Vendors(ctx context.Context, obj *types.Datum, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
+	Organization(ctx context.Context, obj *types.Datum) (*types.Organization, error)
+}
 type DocumentResolver interface {
 	Owner(ctx context.Context, obj *types.Document) (*types.People, error)
 	Organization(ctx context.Context, obj *types.Document) (*types.Organization, error)
@@ -922,6 +975,11 @@ type MutationResolver interface {
 	DeleteAsset(ctx context.Context, input types.DeleteAssetInput) (*types.DeleteAssetPayload, error)
 	AddAssetVendor(ctx context.Context, input types.AddAssetVendorInput) (*types.AddAssetVendorPayload, error)
 	RemoveAssetVendor(ctx context.Context, input types.RemoveAssetVendorInput) (*types.RemoveAssetVendorPayload, error)
+	CreateDatum(ctx context.Context, input types.CreateDatumInput) (*types.CreateDatumPayload, error)
+	UpdateDatum(ctx context.Context, input types.UpdateDatumInput) (*types.UpdateDatumPayload, error)
+	DeleteDatum(ctx context.Context, input types.DeleteDatumInput) (*types.DeleteDatumPayload, error)
+	AddDatumVendor(ctx context.Context, input types.AddDatumVendorInput) (*types.AddDatumVendorPayload, error)
+	RemoveDatumVendor(ctx context.Context, input types.RemoveDatumVendorInput) (*types.RemoveDatumVendorPayload, error)
 }
 type OrganizationResolver interface {
 	LogoURL(ctx context.Context, obj *types.Organization) (*string, error)
@@ -935,6 +993,7 @@ type OrganizationResolver interface {
 	Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy) (*types.RiskConnection, error)
 	Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error)
 	Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrder) (*types.AssetConnection, error)
+	Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrder) (*types.DatumConnection, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
@@ -1002,6 +1061,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.AddAssetVendorPayload.Asset(childComplexity), true
+
+	case "AddDatumVendorPayload.datum":
+		if e.complexity.AddDatumVendorPayload.Datum == nil {
+			break
+		}
+
+		return e.complexity.AddDatumVendorPayload.Datum(childComplexity), true
 
 	case "AssessVendorPayload.vendor":
 		if e.complexity.AssessVendorPayload.Vendor == nil {
@@ -1333,6 +1399,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateControlMeasureMappingPayload.MeasureEdge(childComplexity), true
 
+	case "CreateDatumPayload.datumEdge":
+		if e.complexity.CreateDatumPayload.DatumEdge == nil {
+			break
+		}
+
+		return e.complexity.CreateDatumPayload.DatumEdge(childComplexity), true
+
 	case "CreateDocumentPayload.documentEdge":
 		if e.complexity.CreateDocumentPayload.DocumentEdge == nil {
 			break
@@ -1445,6 +1518,95 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateVendorRiskAssessmentPayload.VendorRiskAssessmentEdge(childComplexity), true
 
+	case "Datum.createdAt":
+		if e.complexity.Datum.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Datum.CreatedAt(childComplexity), true
+
+	case "Datum.dataSensitivity":
+		if e.complexity.Datum.DataSensitivity == nil {
+			break
+		}
+
+		return e.complexity.Datum.DataSensitivity(childComplexity), true
+
+	case "Datum.id":
+		if e.complexity.Datum.ID == nil {
+			break
+		}
+
+		return e.complexity.Datum.ID(childComplexity), true
+
+	case "Datum.name":
+		if e.complexity.Datum.Name == nil {
+			break
+		}
+
+		return e.complexity.Datum.Name(childComplexity), true
+
+	case "Datum.organization":
+		if e.complexity.Datum.Organization == nil {
+			break
+		}
+
+		return e.complexity.Datum.Organization(childComplexity), true
+
+	case "Datum.owner":
+		if e.complexity.Datum.Owner == nil {
+			break
+		}
+
+		return e.complexity.Datum.Owner(childComplexity), true
+
+	case "Datum.updatedAt":
+		if e.complexity.Datum.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Datum.UpdatedAt(childComplexity), true
+
+	case "Datum.vendors":
+		if e.complexity.Datum.Vendors == nil {
+			break
+		}
+
+		args, err := ec.field_Datum_vendors_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Datum.Vendors(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.VendorOrderBy)), true
+
+	case "DatumConnection.edges":
+		if e.complexity.DatumConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.DatumConnection.Edges(childComplexity), true
+
+	case "DatumConnection.pageInfo":
+		if e.complexity.DatumConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.DatumConnection.PageInfo(childComplexity), true
+
+	case "DatumEdge.cursor":
+		if e.complexity.DatumEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.DatumEdge.Cursor(childComplexity), true
+
+	case "DatumEdge.node":
+		if e.complexity.DatumEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.DatumEdge.Node(childComplexity), true
+
 	case "DeleteAssetPayload.deletedAssetId":
 		if e.complexity.DeleteAssetPayload.DeletedAssetID == nil {
 			break
@@ -1479,6 +1641,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteControlMeasureMappingPayload.DeletedMeasureID(childComplexity), true
+
+	case "DeleteDatumPayload.deletedDatumId":
+		if e.complexity.DeleteDatumPayload.DeletedDatumID == nil {
+			break
+		}
+
+		return e.complexity.DeleteDatumPayload.DeletedDatumID(childComplexity), true
 
 	case "DeleteDocumentPayload.deletedDocumentId":
 		if e.complexity.DeleteDocumentPayload.DeletedDocumentID == nil {
@@ -2267,6 +2436,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.AddAssetVendor(childComplexity, args["input"].(types.AddAssetVendorInput)), true
 
+	case "Mutation.addDatumVendor":
+		if e.complexity.Mutation.AddDatumVendor == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addDatumVendor_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddDatumVendor(childComplexity, args["input"].(types.AddDatumVendorInput)), true
+
 	case "Mutation.assessVendor":
 		if e.complexity.Mutation.AssessVendor == nil {
 			break
@@ -2338,6 +2519,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateControlMeasureMapping(childComplexity, args["input"].(types.CreateControlMeasureMappingInput)), true
+
+	case "Mutation.createDatum":
+		if e.complexity.Mutation.CreateDatum == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createDatum_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateDatum(childComplexity, args["input"].(types.CreateDatumInput)), true
 
 	case "Mutation.createDocument":
 		if e.complexity.Mutation.CreateDocument == nil {
@@ -2518,6 +2711,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteControlMeasureMapping(childComplexity, args["input"].(types.DeleteControlMeasureMappingInput)), true
+
+	case "Mutation.deleteDatum":
+		if e.complexity.Mutation.DeleteDatum == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteDatum_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteDatum(childComplexity, args["input"].(types.DeleteDatumInput)), true
 
 	case "Mutation.deleteDocument":
 		if e.complexity.Mutation.DeleteDocument == nil {
@@ -2747,6 +2952,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.RemoveAssetVendor(childComplexity, args["input"].(types.RemoveAssetVendorInput)), true
 
+	case "Mutation.removeDatumVendor":
+		if e.complexity.Mutation.RemoveDatumVendor == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeDatumVendor_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveDatumVendor(childComplexity, args["input"].(types.RemoveDatumVendorInput)), true
+
 	case "Mutation.removeUser":
 		if e.complexity.Mutation.RemoveUser == nil {
 			break
@@ -2818,6 +3035,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateAsset(childComplexity, args["input"].(types.UpdateAssetInput)), true
+
+	case "Mutation.updateDatum":
+		if e.complexity.Mutation.UpdateDatum == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateDatum_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateDatum(childComplexity, args["input"].(types.UpdateDatumInput)), true
 
 	case "Mutation.updateDocument":
 		if e.complexity.Mutation.UpdateDocument == nil {
@@ -2993,6 +3222,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.CreatedAt(childComplexity), true
+
+	case "Organization.data":
+		if e.complexity.Organization.Data == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_data_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.Data(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DatumOrder)), true
 
 	case "Organization.documents":
 		if e.complexity.Organization.Documents == nil {
@@ -3311,6 +3552,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.RemoveAssetVendorPayload.Asset(childComplexity), true
+
+	case "RemoveDatumVendorPayload.datum":
+		if e.complexity.RemoveDatumVendorPayload.Datum == nil {
+			break
+		}
+
+		return e.complexity.RemoveDatumVendorPayload.Datum(childComplexity), true
 
 	case "RemoveUserPayload.success":
 		if e.complexity.RemoveUserPayload.Success == nil {
@@ -3653,6 +3901,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UpdateAssetPayload.Asset(childComplexity), true
+
+	case "UpdateDatumPayload.datum":
+		if e.complexity.UpdateDatumPayload.Datum == nil {
+			break
+		}
+
+		return e.complexity.UpdateDatumPayload.Datum(childComplexity), true
 
 	case "UpdateDocumentPayload.document":
 		if e.complexity.UpdateDocumentPayload.Document == nil {
@@ -4243,6 +4498,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAddAssetVendorInput,
+		ec.unmarshalInputAddDatumVendorInput,
 		ec.unmarshalInputAssessVendorInput,
 		ec.unmarshalInputAssetOrder,
 		ec.unmarshalInputAssignTaskInput,
@@ -4252,6 +4508,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateAssetInput,
 		ec.unmarshalInputCreateControlDocumentMappingInput,
 		ec.unmarshalInputCreateControlMeasureMappingInput,
+		ec.unmarshalInputCreateDatumInput,
 		ec.unmarshalInputCreateDocumentInput,
 		ec.unmarshalInputCreateDraftDocumentVersionInput,
 		ec.unmarshalInputCreateEvidenceInput,
@@ -4265,9 +4522,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateTaskInput,
 		ec.unmarshalInputCreateVendorInput,
 		ec.unmarshalInputCreateVendorRiskAssessmentInput,
+		ec.unmarshalInputDatumOrder,
 		ec.unmarshalInputDeleteAssetInput,
 		ec.unmarshalInputDeleteControlDocumentMappingInput,
 		ec.unmarshalInputDeleteControlMeasureMappingInput,
+		ec.unmarshalInputDeleteDatumInput,
 		ec.unmarshalInputDeleteDocumentInput,
 		ec.unmarshalInputDeleteEvidenceInput,
 		ec.unmarshalInputDeleteFrameworkInput,
@@ -4296,6 +4555,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPeopleOrder,
 		ec.unmarshalInputPublishDocumentVersionInput,
 		ec.unmarshalInputRemoveAssetVendorInput,
+		ec.unmarshalInputRemoveDatumVendorInput,
 		ec.unmarshalInputRemoveUserInput,
 		ec.unmarshalInputRequestEvidenceInput,
 		ec.unmarshalInputRequestSignatureInput,
@@ -4304,6 +4564,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputTaskOrder,
 		ec.unmarshalInputUnassignTaskInput,
 		ec.unmarshalInputUpdateAssetInput,
+		ec.unmarshalInputUpdateDatumInput,
 		ec.unmarshalInputUpdateDocumentInput,
 		ec.unmarshalInputUpdateDocumentVersionInput,
 		ec.unmarshalInputUpdateFrameworkInput,
@@ -4779,6 +5040,12 @@ enum AssetOrderField @goModel(model: "github.com/getprobo/probo/pkg/coredata.Ass
   CRITICITY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AssetOrderFieldCriticity")
 }
 
+enum DatumOrderField @goModel(model: "github.com/getprobo/probo/pkg/coredata.DatumOrderField") {
+  CREATED_AT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DatumOrderFieldCreatedAt")
+  NAME @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DatumOrderFieldName")
+  DATA_SENSITIVITY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DatumOrderFieldDataSensitivity")
+}
+
 # Order Input Types
 input UserOrder
   @goModel(
@@ -4975,6 +5242,14 @@ type Organization implements Node {
     before: CursorKey
     orderBy: AssetOrder
   ): AssetConnection! @goField(forceResolver: true)
+
+  data(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: DatumOrder
+  ): DatumConnection! @goField(forceResolver: true)
 
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -5442,6 +5717,16 @@ type DocumentVersionEdge {
   node: DocumentVersion!
 }
 
+type DatumConnection {
+  edges: [DatumEdge!]!
+  pageInfo: PageInfo!
+}
+
+type DatumEdge {
+  cursor: CursorKey!
+  node: Datum!
+}
+
 # Root Types
 type Query {
   node(id: ID!): Node!
@@ -5576,6 +5861,12 @@ type Mutation {
   deleteAsset(input: DeleteAssetInput!): DeleteAssetPayload!
   addAssetVendor(input: AddAssetVendorInput!): AddAssetVendorPayload!
   removeAssetVendor(input: RemoveAssetVendorInput!): RemoveAssetVendorPayload!
+
+  createDatum(input: CreateDatumInput!): CreateDatumPayload!
+  updateDatum(input: UpdateDatumInput!): UpdateDatumPayload!
+  deleteDatum(input: DeleteDatumInput!): DeleteDatumPayload!
+  addDatumVendor(input: AddDatumVendorInput!): AddDatumVendorPayload!
+  removeDatumVendor(input: RemoveDatumVendorInput!): RemoveDatumVendorPayload!
 }
 
 # Input Types
@@ -6373,6 +6664,78 @@ type AddAssetVendorPayload {
 type RemoveAssetVendorPayload {
   asset: Asset!
 }
+
+type Datum implements Node {
+  id: ID!
+  name: String!
+  dataSensitivity: DataSensitivity!
+  owner: People! @goField(forceResolver: true)
+  vendors(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: VendorOrder
+  ): VendorConnection! @goField(forceResolver: true)
+  organization: Organization! @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+input DatumOrder {
+  direction: OrderDirection!
+  field: DatumOrderField!
+}
+
+input CreateDatumInput {
+  organizationId: ID!
+  name: String!
+  dataSensitivity: DataSensitivity!
+  ownerId: ID!
+  vendorIds: [ID!]
+}
+
+input UpdateDatumInput {
+  id: ID!
+  name: String
+  dataSensitivity: DataSensitivity
+  ownerId: ID
+  vendorIds: [ID!]
+}
+
+input DeleteDatumInput {
+  datumId: ID!
+}
+
+input AddDatumVendorInput {
+  datumId: ID!
+  vendorId: ID!
+}
+
+input RemoveDatumVendorInput {
+  datumId: ID!
+  vendorId: ID!
+}
+
+type CreateDatumPayload {
+  datumEdge: DatumEdge!
+}
+
+type UpdateDatumPayload {
+  datum: Datum!
+}
+
+type DeleteDatumPayload {
+  deletedDatumId: ID!
+}
+
+type AddDatumVendorPayload {
+  datum: Datum!
+}
+
+type RemoveDatumVendorPayload {
+  datum: Datum!
+}
 `, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -6663,6 +7026,101 @@ func (ec *executionContext) field_Control_measures_argsOrderBy(
 	}
 
 	var zeroVal *types.MeasureOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Datum_vendors_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Datum_vendors_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Datum_vendors_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Datum_vendors_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Datum_vendors_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Datum_vendors_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+func (ec *executionContext) field_Datum_vendors_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Datum_vendors_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Datum_vendors_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Datum_vendors_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Datum_vendors_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.VendorOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalOVendorOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVendorOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.VendorOrderBy
 	return zeroVal, nil
 }
 
@@ -7467,6 +7925,29 @@ func (ec *executionContext) field_Mutation_addAssetVendor_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_addDatumVendor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_addDatumVendor_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_addDatumVendor_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.AddDatumVendorInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNAddDatumVendorInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAddDatumVendorInput(ctx, tmp)
+	}
+
+	var zeroVal types.AddDatumVendorInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_assessVendor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -7602,6 +8083,29 @@ func (ec *executionContext) field_Mutation_createControlMeasureMapping_argsInput
 	}
 
 	var zeroVal types.CreateControlMeasureMappingInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_createDatum_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_createDatum_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_createDatum_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.CreateDatumInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNCreateDatumInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDatumInput(ctx, tmp)
+	}
+
+	var zeroVal types.CreateDatumInput
 	return zeroVal, nil
 }
 
@@ -7947,6 +8451,29 @@ func (ec *executionContext) field_Mutation_deleteControlMeasureMapping_argsInput
 	}
 
 	var zeroVal types.DeleteControlMeasureMappingInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteDatum_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteDatum_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteDatum_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.DeleteDatumInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNDeleteDatumInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDatumInput(ctx, tmp)
+	}
+
+	var zeroVal types.DeleteDatumInput
 	return zeroVal, nil
 }
 
@@ -8387,6 +8914,29 @@ func (ec *executionContext) field_Mutation_removeAssetVendor_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_removeDatumVendor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_removeDatumVendor_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_removeDatumVendor_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.RemoveDatumVendorInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNRemoveDatumVendorInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveDatumVendorInput(ctx, tmp)
+	}
+
+	var zeroVal types.RemoveDatumVendorInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_removeUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -8522,6 +9072,29 @@ func (ec *executionContext) field_Mutation_updateAsset_argsInput(
 	}
 
 	var zeroVal types.UpdateAssetInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateDatum_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_updateDatum_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateDatum_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.UpdateDatumInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateDatumInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDatumInput(ctx, tmp)
+	}
+
+	var zeroVal types.UpdateDatumInput
 	return zeroVal, nil
 }
 
@@ -8988,6 +9561,101 @@ func (ec *executionContext) field_Organization_connectors_argsOrderBy(
 	}
 
 	var zeroVal *types.ConnectorOrder
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_data_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Organization_data_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Organization_data_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Organization_data_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Organization_data_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Organization_data_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+func (ec *executionContext) field_Organization_data_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_data_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_data_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_data_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_data_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.DatumOrder, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalODatumOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatumOrder(ctx, tmp)
+	}
+
+	var zeroVal *types.DatumOrder
 	return zeroVal, nil
 }
 
@@ -10653,6 +11321,68 @@ func (ec *executionContext) fieldContext_AddAssetVendorPayload_asset(_ context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _AddDatumVendorPayload_datum(ctx context.Context, field graphql.CollectedField, obj *types.AddDatumVendorPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AddDatumVendorPayload_datum(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Datum, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Datum)
+	fc.Result = res
+	return ec.marshalNDatum2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatum(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AddDatumVendorPayload_datum(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AddDatumVendorPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Datum_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Datum_name(ctx, field)
+			case "dataSensitivity":
+				return ec.fieldContext_Datum_dataSensitivity(ctx, field)
+			case "owner":
+				return ec.fieldContext_Datum_owner(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Datum_vendors(ctx, field)
+			case "organization":
+				return ec.fieldContext_Datum_organization(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Datum_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Datum_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Datum", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _AssessVendorPayload_vendor(ctx context.Context, field graphql.CollectedField, obj *types.AssessVendorPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AssessVendorPayload_vendor(ctx, field)
 	if err != nil {
@@ -11203,6 +11933,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_tasks(ctx, field)
 			case "assets":
 				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -12962,6 +13694,56 @@ func (ec *executionContext) fieldContext_CreateControlMeasureMappingPayload_meas
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateDatumPayload_datumEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDatumPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateDatumPayload_datumEdge(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DatumEdge, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DatumEdge)
+	fc.Result = res
+	return ec.marshalNDatumEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatumEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateDatumPayload_datumEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateDatumPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_DatumEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_DatumEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DatumEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateDocumentPayload_documentEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDocumentPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreateDocumentPayload_documentEdge(ctx, field)
 	if err != nil {
@@ -13762,6 +14544,641 @@ func (ec *executionContext) fieldContext_CreateVendorRiskAssessmentPayload_vendo
 	return fc, nil
 }
 
+func (ec *executionContext) _Datum_id(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Datum_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Datum_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Datum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Datum_name(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Datum_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Datum_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Datum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Datum_dataSensitivity(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Datum_dataSensitivity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DataSensitivity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.DataSensitivity)
+	fc.Result = res
+	return ec.marshalNDataSensitivity2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataSensitivity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Datum_dataSensitivity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Datum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DataSensitivity does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Datum_owner(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Datum_owner(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Datum().Owner(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.People)
+	fc.Result = res
+	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Datum_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Datum",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_People_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_People_fullName(ctx, field)
+			case "primaryEmailAddress":
+				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_People_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_People_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_People_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_People_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Datum_vendors(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Datum_vendors(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Datum().Vendors(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.VendorOrderBy))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.VendorConnection)
+	fc.Result = res
+	return ec.marshalNVendorConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVendorConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Datum_vendors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Datum",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_VendorConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_VendorConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VendorConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Datum_vendors_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Datum_organization(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Datum_organization(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Datum().Organization(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Organization)
+	fc.Result = res
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Datum",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "users":
+				return ec.fieldContext_Organization_users(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Datum_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Datum_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Datum_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Datum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Datum_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Datum_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Datum_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Datum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatumConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DatumConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatumConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.DatumEdge)
+	fc.Result = res
+	return ec.marshalNDatumEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatumEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatumConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatumConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_DatumEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_DatumEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DatumEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatumConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.DatumConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatumConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatumConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatumConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatumEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.DatumEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatumEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(page.CursorKey)
+	fc.Result = res
+	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatumEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatumEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DatumEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.DatumEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DatumEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Datum)
+	fc.Result = res
+	return ec.marshalNDatum2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatum(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DatumEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DatumEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Datum_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Datum_name(ctx, field)
+			case "dataSensitivity":
+				return ec.fieldContext_Datum_dataSensitivity(ctx, field)
+			case "owner":
+				return ec.fieldContext_Datum_owner(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Datum_vendors(ctx, field)
+			case "organization":
+				return ec.fieldContext_Datum_organization(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Datum_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Datum_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Datum", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeleteAssetPayload_deletedAssetId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteAssetPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeleteAssetPayload_deletedAssetId(ctx, field)
 	if err != nil {
@@ -13972,6 +15389,50 @@ func (ec *executionContext) _DeleteControlMeasureMappingPayload_deletedMeasureId
 func (ec *executionContext) fieldContext_DeleteControlMeasureMappingPayload_deletedMeasureId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteControlMeasureMappingPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteDatumPayload_deletedDatumId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteDatumPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteDatumPayload_deletedDatumId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedDatumID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteDatumPayload_deletedDatumId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteDatumPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -14946,6 +16407,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_tasks(ctx, field)
 			case "assets":
 				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -17885,6 +19348,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_tasks(ctx, field)
 			case "assets":
 				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -22716,6 +24181,301 @@ func (ec *executionContext) fieldContext_Mutation_removeAssetVendor(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createDatum(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createDatum(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateDatum(rctx, fc.Args["input"].(types.CreateDatumInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.CreateDatumPayload)
+	fc.Result = res
+	return ec.marshalNCreateDatumPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDatumPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createDatum(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "datumEdge":
+				return ec.fieldContext_CreateDatumPayload_datumEdge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateDatumPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createDatum_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateDatum(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateDatum(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateDatum(rctx, fc.Args["input"].(types.UpdateDatumInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.UpdateDatumPayload)
+	fc.Result = res
+	return ec.marshalNUpdateDatumPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDatumPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateDatum(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "datum":
+				return ec.fieldContext_UpdateDatumPayload_datum(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateDatumPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateDatum_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteDatum(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteDatum(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteDatum(rctx, fc.Args["input"].(types.DeleteDatumInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DeleteDatumPayload)
+	fc.Result = res
+	return ec.marshalNDeleteDatumPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDatumPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteDatum(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedDatumId":
+				return ec.fieldContext_DeleteDatumPayload_deletedDatumId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteDatumPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteDatum_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_addDatumVendor(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_addDatumVendor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddDatumVendor(rctx, fc.Args["input"].(types.AddDatumVendorInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.AddDatumVendorPayload)
+	fc.Result = res
+	return ec.marshalNAddDatumVendorPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAddDatumVendorPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_addDatumVendor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "datum":
+				return ec.fieldContext_AddDatumVendorPayload_datum(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AddDatumVendorPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addDatumVendor_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removeDatumVendor(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_removeDatumVendor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemoveDatumVendor(rctx, fc.Args["input"].(types.RemoveDatumVendorInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.RemoveDatumVendorPayload)
+	fc.Result = res
+	return ec.marshalNRemoveDatumVendorPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveDatumVendorPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_removeDatumVendor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "datum":
+				return ec.fieldContext_RemoveDatumVendorPayload_datum(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RemoveDatumVendorPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeDatumVendor_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Organization_id(ctx, field)
 	if err != nil {
@@ -23455,6 +25215,67 @@ func (ec *executionContext) fieldContext_Organization_assets(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_data(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_data(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Organization().Data(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DatumOrder))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DatumConnection)
+	fc.Result = res
+	return ec.marshalNDatumConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatumConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_DatumConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_DatumConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DatumConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_data_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Organization_createdAt(ctx, field)
 	if err != nil {
@@ -23756,6 +25577,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_tasks(ctx, field)
 			case "assets":
 				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -25024,6 +26847,68 @@ func (ec *executionContext) fieldContext_RemoveAssetVendorPayload_asset(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _RemoveDatumVendorPayload_datum(ctx context.Context, field graphql.CollectedField, obj *types.RemoveDatumVendorPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RemoveDatumVendorPayload_datum(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Datum, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Datum)
+	fc.Result = res
+	return ec.marshalNDatum2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatum(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_RemoveDatumVendorPayload_datum(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "RemoveDatumVendorPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Datum_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Datum_name(ctx, field)
+			case "dataSensitivity":
+				return ec.fieldContext_Datum_dataSensitivity(ctx, field)
+			case "owner":
+				return ec.fieldContext_Datum_owner(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Datum_vendors(ctx, field)
+			case "organization":
+				return ec.fieldContext_Datum_organization(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Datum_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Datum_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Datum", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _RemoveUserPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.RemoveUserPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_RemoveUserPayload_success(ctx, field)
 	if err != nil {
@@ -25824,6 +27709,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_tasks(ctx, field)
 			case "assets":
 				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -26815,6 +28702,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_tasks(ctx, field)
 			case "assets":
 				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -27392,6 +29281,68 @@ func (ec *executionContext) fieldContext_UpdateAssetPayload_asset(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateDatumPayload_datum(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDatumPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateDatumPayload_datum(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Datum, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Datum)
+	fc.Result = res
+	return ec.marshalNDatum2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatum(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateDatumPayload_datum(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateDatumPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Datum_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Datum_name(ctx, field)
+			case "dataSensitivity":
+				return ec.fieldContext_Datum_dataSensitivity(ctx, field)
+			case "owner":
+				return ec.fieldContext_Datum_owner(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Datum_vendors(ctx, field)
+			case "organization":
+				return ec.fieldContext_Datum_organization(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Datum_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Datum_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Datum", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateDocumentPayload_document(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDocumentPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UpdateDocumentPayload_document(ctx, field)
 	if err != nil {
@@ -27721,6 +29672,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_tasks(ctx, field)
 			case "assets":
 				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -28932,6 +30885,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_tasks(ctx, field)
 			case "assets":
 				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -33583,6 +35538,40 @@ func (ec *executionContext) unmarshalInputAddAssetVendorInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAddDatumVendorInput(ctx context.Context, obj any) (types.AddDatumVendorInput, error) {
+	var it types.AddDatumVendorInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"datumId", "vendorId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "datumId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("datumId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DatumID = data
+		case "vendorId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vendorId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VendorID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAssessVendorInput(ctx context.Context, obj any) (types.AssessVendorInput, error) {
 	var it types.AssessVendorInput
 	asMap := map[string]any{}
@@ -33922,6 +35911,61 @@ func (ec *executionContext) unmarshalInputCreateControlMeasureMappingInput(ctx c
 				return it, err
 			}
 			it.MeasureID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateDatumInput(ctx context.Context, obj any) (types.CreateDatumInput, error) {
+	var it types.CreateDatumInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "name", "dataSensitivity", "ownerId", "vendorIds"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "dataSensitivity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSensitivity"))
+			data, err := ec.unmarshalNDataSensitivity2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataSensitivity(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataSensitivity = data
+		case "ownerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "vendorIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vendorIds"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VendorIds = data
 		}
 	}
 
@@ -34706,6 +36750,40 @@ func (ec *executionContext) unmarshalInputCreateVendorRiskAssessmentInput(ctx co
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDatumOrder(ctx context.Context, obj any) (types.DatumOrder, error) {
+	var it types.DatumOrder
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNDatumOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDatumOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteAssetInput(ctx context.Context, obj any) (types.DeleteAssetInput, error) {
 	var it types.DeleteAssetInput
 	asMap := map[string]any{}
@@ -34795,6 +36873,33 @@ func (ec *executionContext) unmarshalInputDeleteControlMeasureMappingInput(ctx c
 				return it, err
 			}
 			it.MeasureID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteDatumInput(ctx context.Context, obj any) (types.DeleteDatumInput, error) {
+	var it types.DeleteDatumInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"datumId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "datumId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("datumId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DatumID = data
 		}
 	}
 
@@ -35683,6 +37788,40 @@ func (ec *executionContext) unmarshalInputRemoveAssetVendorInput(ctx context.Con
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputRemoveDatumVendorInput(ctx context.Context, obj any) (types.RemoveDatumVendorInput, error) {
+	var it types.RemoveDatumVendorInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"datumId", "vendorId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "datumId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("datumId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DatumID = data
+		case "vendorId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vendorId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VendorID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputRemoveUserInput(ctx context.Context, obj any) (types.RemoveUserInput, error) {
 	var it types.RemoveUserInput
 	asMap := map[string]any{}
@@ -35984,6 +38123,61 @@ func (ec *executionContext) unmarshalInputUpdateAssetInput(ctx context.Context, 
 				return it, err
 			}
 			it.DataTypesStored = data
+		case "vendorIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vendorIds"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VendorIds = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateDatumInput(ctx context.Context, obj any) (types.UpdateDatumInput, error) {
+	var it types.UpdateDatumInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "name", "dataSensitivity", "ownerId", "vendorIds"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "dataSensitivity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSensitivity"))
+			data, err := ec.unmarshalODataSensitivity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataSensitivity(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataSensitivity = data
+		case "ownerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
 		case "vendorIds":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vendorIds"))
 			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
@@ -36976,6 +39170,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Document(ctx, sel, obj)
+	case types.Datum:
+		return ec._Datum(ctx, sel, &obj)
+	case *types.Datum:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Datum(ctx, sel, obj)
 	case types.Control:
 		return ec._Control(ctx, sel, &obj)
 	case *types.Control:
@@ -37019,6 +39220,45 @@ func (ec *executionContext) _AddAssetVendorPayload(ctx context.Context, sel ast.
 			out.Values[i] = graphql.MarshalString("AddAssetVendorPayload")
 		case "asset":
 			out.Values[i] = ec._AddAssetVendorPayload_asset(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var addDatumVendorPayloadImplementors = []string{"AddDatumVendorPayload"}
+
+func (ec *executionContext) _AddDatumVendorPayload(ctx context.Context, sel ast.SelectionSet, obj *types.AddDatumVendorPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, addDatumVendorPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AddDatumVendorPayload")
+		case "datum":
+			out.Values[i] = ec._AddDatumVendorPayload_datum(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -37997,6 +40237,45 @@ func (ec *executionContext) _CreateControlMeasureMappingPayload(ctx context.Cont
 	return out
 }
 
+var createDatumPayloadImplementors = []string{"CreateDatumPayload"}
+
+func (ec *executionContext) _CreateDatumPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateDatumPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createDatumPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateDatumPayload")
+		case "datumEdge":
+			out.Values[i] = ec._CreateDatumPayload_datumEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var createDocumentPayloadImplementors = []string{"CreateDocumentPayload"}
 
 func (ec *executionContext) _CreateDocumentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateDocumentPayload) graphql.Marshaler {
@@ -38519,6 +40798,261 @@ func (ec *executionContext) _CreateVendorRiskAssessmentPayload(ctx context.Conte
 	return out
 }
 
+var datumImplementors = []string{"Datum", "Node"}
+
+func (ec *executionContext) _Datum(ctx context.Context, sel ast.SelectionSet, obj *types.Datum) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, datumImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Datum")
+		case "id":
+			out.Values[i] = ec._Datum_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._Datum_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "dataSensitivity":
+			out.Values[i] = ec._Datum_dataSensitivity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "owner":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Datum_owner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "vendors":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Datum_vendors(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Datum_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdAt":
+			out.Values[i] = ec._Datum_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Datum_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var datumConnectionImplementors = []string{"DatumConnection"}
+
+func (ec *executionContext) _DatumConnection(ctx context.Context, sel ast.SelectionSet, obj *types.DatumConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, datumConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DatumConnection")
+		case "edges":
+			out.Values[i] = ec._DatumConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._DatumConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var datumEdgeImplementors = []string{"DatumEdge"}
+
+func (ec *executionContext) _DatumEdge(ctx context.Context, sel ast.SelectionSet, obj *types.DatumEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, datumEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DatumEdge")
+		case "cursor":
+			out.Values[i] = ec._DatumEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._DatumEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deleteAssetPayloadImplementors = []string{"DeleteAssetPayload"}
 
 func (ec *executionContext) _DeleteAssetPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteAssetPayload) graphql.Marshaler {
@@ -38620,6 +41154,45 @@ func (ec *executionContext) _DeleteControlMeasureMappingPayload(ctx context.Cont
 			}
 		case "deletedMeasureId":
 			out.Values[i] = ec._DeleteControlMeasureMappingPayload_deletedMeasureId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteDatumPayloadImplementors = []string{"DeleteDatumPayload"}
+
+func (ec *executionContext) _DeleteDatumPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteDatumPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteDatumPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteDatumPayload")
+		case "deletedDatumId":
+			out.Values[i] = ec._DeleteDatumPayload_deletedDatumId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -41361,6 +43934,41 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createDatum":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createDatum(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateDatum":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateDatum(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteDatum":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteDatum(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "addDatumVendor":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addDatumVendor(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "removeDatumVendor":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removeDatumVendor(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -41772,6 +44380,42 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._Organization_assets(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "data":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_data(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -42281,6 +44925,45 @@ func (ec *executionContext) _RemoveAssetVendorPayload(ctx context.Context, sel a
 			out.Values[i] = graphql.MarshalString("RemoveAssetVendorPayload")
 		case "asset":
 			out.Values[i] = ec._RemoveAssetVendorPayload_asset(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var removeDatumVendorPayloadImplementors = []string{"RemoveDatumVendorPayload"}
+
+func (ec *executionContext) _RemoveDatumVendorPayload(ctx context.Context, sel ast.SelectionSet, obj *types.RemoveDatumVendorPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, removeDatumVendorPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("RemoveDatumVendorPayload")
+		case "datum":
+			out.Values[i] = ec._RemoveDatumVendorPayload_datum(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -43220,6 +45903,45 @@ func (ec *executionContext) _UpdateAssetPayload(ctx context.Context, sel ast.Sel
 			out.Values[i] = graphql.MarshalString("UpdateAssetPayload")
 		case "asset":
 			out.Values[i] = ec._UpdateAssetPayload_asset(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateDatumPayloadImplementors = []string{"UpdateDatumPayload"}
+
+func (ec *executionContext) _UpdateDatumPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateDatumPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateDatumPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateDatumPayload")
+		case "datum":
+			out.Values[i] = ec._UpdateDatumPayload_datum(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -45137,6 +47859,25 @@ func (ec *executionContext) marshalNAddAssetVendorPayload2ᚖgithubᚗcomᚋgetp
 	return ec._AddAssetVendorPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNAddDatumVendorInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAddDatumVendorInput(ctx context.Context, v any) (types.AddDatumVendorInput, error) {
+	res, err := ec.unmarshalInputAddDatumVendorInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAddDatumVendorPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAddDatumVendorPayload(ctx context.Context, sel ast.SelectionSet, v types.AddDatumVendorPayload) graphql.Marshaler {
+	return ec._AddDatumVendorPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAddDatumVendorPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAddDatumVendorPayload(ctx context.Context, sel ast.SelectionSet, v *types.AddDatumVendorPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AddDatumVendorPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNAssessVendorInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAssessVendorInput(ctx context.Context, v any) (types.AssessVendorInput, error) {
 	res, err := ec.unmarshalInputAssessVendorInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -45645,6 +48386,25 @@ func (ec *executionContext) marshalNCreateControlMeasureMappingPayload2ᚖgithub
 	return ec._CreateControlMeasureMappingPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCreateDatumInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDatumInput(ctx context.Context, v any) (types.CreateDatumInput, error) {
+	res, err := ec.unmarshalInputCreateDatumInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateDatumPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDatumPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateDatumPayload) graphql.Marshaler {
+	return ec._CreateDatumPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateDatumPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDatumPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateDatumPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateDatumPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentInput(ctx context.Context, v any) (types.CreateDocumentInput, error) {
 	res, err := ec.unmarshalInputCreateDocumentInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -45969,6 +48729,114 @@ func (ec *executionContext) marshalNDatetime2timeᚐTime(ctx context.Context, se
 	return res
 }
 
+func (ec *executionContext) marshalNDatum2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatum(ctx context.Context, sel ast.SelectionSet, v *types.Datum) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Datum(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDatumConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatumConnection(ctx context.Context, sel ast.SelectionSet, v types.DatumConnection) graphql.Marshaler {
+	return ec._DatumConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDatumConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatumConnection(ctx context.Context, sel ast.SelectionSet, v *types.DatumConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DatumConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDatumEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatumEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DatumEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDatumEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatumEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDatumEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatumEdge(ctx context.Context, sel ast.SelectionSet, v *types.DatumEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DatumEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDatumOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDatumOrderField(ctx context.Context, v any) (coredata.DatumOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNDatumOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDatumOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDatumOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDatumOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.DatumOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNDatumOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDatumOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNDatumOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDatumOrderField = map[string]coredata.DatumOrderField{
+		"CREATED_AT":       coredata.DatumOrderFieldCreatedAt,
+		"NAME":             coredata.DatumOrderFieldName,
+		"DATA_SENSITIVITY": coredata.DatumOrderFieldDataSensitivity,
+	}
+	marshalNDatumOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDatumOrderField = map[coredata.DatumOrderField]string{
+		coredata.DatumOrderFieldCreatedAt:       "CREATED_AT",
+		coredata.DatumOrderFieldName:            "NAME",
+		coredata.DatumOrderFieldDataSensitivity: "DATA_SENSITIVITY",
+	}
+)
+
 func (ec *executionContext) unmarshalNDeleteAssetInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteAssetInput(ctx context.Context, v any) (types.DeleteAssetInput, error) {
 	res, err := ec.unmarshalInputDeleteAssetInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -46024,6 +48892,25 @@ func (ec *executionContext) marshalNDeleteControlMeasureMappingPayload2ᚖgithub
 		return graphql.Null
 	}
 	return ec._DeleteControlMeasureMappingPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteDatumInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDatumInput(ctx context.Context, v any) (types.DeleteDatumInput, error) {
+	res, err := ec.unmarshalInputDeleteDatumInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteDatumPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDatumPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteDatumPayload) graphql.Marshaler {
+	return ec._DeleteDatumPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteDatumPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDatumPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteDatumPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteDatumPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentInput(ctx context.Context, v any) (types.DeleteDocumentInput, error) {
@@ -47510,6 +50397,25 @@ func (ec *executionContext) marshalNRemoveAssetVendorPayload2ᚖgithubᚗcomᚋg
 	return ec._RemoveAssetVendorPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNRemoveDatumVendorInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveDatumVendorInput(ctx context.Context, v any) (types.RemoveDatumVendorInput, error) {
+	res, err := ec.unmarshalInputRemoveDatumVendorInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRemoveDatumVendorPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveDatumVendorPayload(ctx context.Context, sel ast.SelectionSet, v types.RemoveDatumVendorPayload) graphql.Marshaler {
+	return ec._RemoveDatumVendorPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNRemoveDatumVendorPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveDatumVendorPayload(ctx context.Context, sel ast.SelectionSet, v *types.RemoveDatumVendorPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._RemoveDatumVendorPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNRemoveUserInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveUserInput(ctx context.Context, v any) (types.RemoveUserInput, error) {
 	res, err := ec.unmarshalInputRemoveUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -47939,6 +50845,25 @@ func (ec *executionContext) marshalNUpdateAssetPayload2ᚖgithubᚗcomᚋgetprob
 		return graphql.Null
 	}
 	return ec._UpdateAssetPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateDatumInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDatumInput(ctx context.Context, v any) (types.UpdateDatumInput, error) {
+	res, err := ec.unmarshalInputUpdateDatumInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateDatumPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDatumPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateDatumPayload) graphql.Marshaler {
+	return ec._UpdateDatumPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateDatumPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDatumPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateDatumPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateDatumPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentInput(ctx context.Context, v any) (types.UpdateDocumentInput, error) {
@@ -49071,6 +51996,42 @@ func (ec *executionContext) marshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋprobo
 	return res
 }
 
+func (ec *executionContext) unmarshalODataSensitivity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataSensitivity(ctx context.Context, v any) (*coredata.DataSensitivity, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalODataSensitivity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataSensitivity[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODataSensitivity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataSensitivity(ctx context.Context, sel ast.SelectionSet, v *coredata.DataSensitivity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalODataSensitivity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataSensitivity[*v])
+	return res
+}
+
+var (
+	unmarshalODataSensitivity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataSensitivity = map[string]coredata.DataSensitivity{
+		"NONE":     coredata.DataSensitivityNone,
+		"LOW":      coredata.DataSensitivityLow,
+		"MEDIUM":   coredata.DataSensitivityMedium,
+		"HIGH":     coredata.DataSensitivityHigh,
+		"CRITICAL": coredata.DataSensitivityCritical,
+	}
+	marshalODataSensitivity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataSensitivity = map[coredata.DataSensitivity]string{
+		coredata.DataSensitivityNone:     "NONE",
+		coredata.DataSensitivityLow:      "LOW",
+		coredata.DataSensitivityMedium:   "MEDIUM",
+		coredata.DataSensitivityHigh:     "HIGH",
+		coredata.DataSensitivityCritical: "CRITICAL",
+	}
+)
+
 func (ec *executionContext) unmarshalODatetime2ᚖtimeᚐTime(ctx context.Context, v any) (*time.Time, error) {
 	if v == nil {
 		return nil, nil
@@ -49087,6 +52048,14 @@ func (ec *executionContext) marshalODatetime2ᚖtimeᚐTime(ctx context.Context,
 	_ = ctx
 	res := graphql.MarshalTime(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalODatumOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDatumOrder(ctx context.Context, v any) (*types.DatumOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDatumOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalODocumentOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx context.Context, v any) (*types.DocumentOrderBy, error) {

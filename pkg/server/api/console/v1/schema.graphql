@@ -360,6 +360,12 @@ enum AssetOrderField @goModel(model: "github.com/getprobo/probo/pkg/coredata.Ass
   CRITICITY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AssetOrderFieldCriticity")
 }
 
+enum DatumOrderField @goModel(model: "github.com/getprobo/probo/pkg/coredata.DatumOrderField") {
+  CREATED_AT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DatumOrderFieldCreatedAt")
+  NAME @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DatumOrderFieldName")
+  DATA_SENSITIVITY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DatumOrderFieldDataSensitivity")
+}
+
 # Order Input Types
 input UserOrder
   @goModel(
@@ -556,6 +562,14 @@ type Organization implements Node {
     before: CursorKey
     orderBy: AssetOrder
   ): AssetConnection! @goField(forceResolver: true)
+
+  data(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: DatumOrder
+  ): DatumConnection! @goField(forceResolver: true)
 
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -1023,6 +1037,16 @@ type DocumentVersionEdge {
   node: DocumentVersion!
 }
 
+type DatumConnection {
+  edges: [DatumEdge!]!
+  pageInfo: PageInfo!
+}
+
+type DatumEdge {
+  cursor: CursorKey!
+  node: Datum!
+}
+
 # Root Types
 type Query {
   node(id: ID!): Node!
@@ -1157,6 +1181,12 @@ type Mutation {
   deleteAsset(input: DeleteAssetInput!): DeleteAssetPayload!
   addAssetVendor(input: AddAssetVendorInput!): AddAssetVendorPayload!
   removeAssetVendor(input: RemoveAssetVendorInput!): RemoveAssetVendorPayload!
+
+  createDatum(input: CreateDatumInput!): CreateDatumPayload!
+  updateDatum(input: UpdateDatumInput!): UpdateDatumPayload!
+  deleteDatum(input: DeleteDatumInput!): DeleteDatumPayload!
+  addDatumVendor(input: AddDatumVendorInput!): AddDatumVendorPayload!
+  removeDatumVendor(input: RemoveDatumVendorInput!): RemoveDatumVendorPayload!
 }
 
 # Input Types
@@ -1953,4 +1983,76 @@ type AddAssetVendorPayload {
 
 type RemoveAssetVendorPayload {
   asset: Asset!
+}
+
+type Datum implements Node {
+  id: ID!
+  name: String!
+  dataSensitivity: DataSensitivity!
+  owner: People! @goField(forceResolver: true)
+  vendors(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: VendorOrder
+  ): VendorConnection! @goField(forceResolver: true)
+  organization: Organization! @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+input DatumOrder {
+  direction: OrderDirection!
+  field: DatumOrderField!
+}
+
+input CreateDatumInput {
+  organizationId: ID!
+  name: String!
+  dataSensitivity: DataSensitivity!
+  ownerId: ID!
+  vendorIds: [ID!]
+}
+
+input UpdateDatumInput {
+  id: ID!
+  name: String
+  dataSensitivity: DataSensitivity
+  ownerId: ID
+  vendorIds: [ID!]
+}
+
+input DeleteDatumInput {
+  datumId: ID!
+}
+
+input AddDatumVendorInput {
+  datumId: ID!
+  vendorId: ID!
+}
+
+input RemoveDatumVendorInput {
+  datumId: ID!
+  vendorId: ID!
+}
+
+type CreateDatumPayload {
+  datumEdge: DatumEdge!
+}
+
+type UpdateDatumPayload {
+  datum: Datum!
+}
+
+type DeleteDatumPayload {
+  deletedDatumId: ID!
+}
+
+type AddDatumVendorPayload {
+  datum: Datum!
+}
+
+type RemoveDatumVendorPayload {
+  datum: Datum!
 }

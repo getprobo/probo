@@ -25,7 +25,8 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { BookOpen, FileText, Settings, Users, Box } from "lucide-react";
+
+import { BookOpen, FileText, Settings, Users, Box, Database } from "lucide-react";
 
 interface NavItem {
   title: string;
@@ -186,6 +187,13 @@ function getNavItems(organizationId?: string): NavItem[] {
         ? `/organizations/${organizationId}/assets`
         : undefined,
       icon: Box,
+    },
+    {
+      title: "Data",
+      url: organizationId
+        ? `/organizations/${organizationId}/data`
+        : undefined,
+      icon: Database,
     },
     {
       title: "Settings",

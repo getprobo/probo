@@ -14,25 +14,27 @@
 
 package coredata
 
+type DatumOrderField string
+
 const (
-	OrganizationEntityType uint16 = iota
-	FrameworkEntityType
-	MeasureEntityType
-	TaskEntityType
-	EvidenceEntityType
-	ConnectorEntityType
-	VendorRiskAssessmentEntityType
-	VendorEntityType
-	PeopleEntityType
-	VendorComplianceReportEntityType
-	DocumentEntityType
-	UserEntityType
-	SessionEntityType
-	EmailEntityType
-	ControlEntityType
-	RiskEntityType
-	DocumentVersionEntityType
-	DocumentVersionSignatureEntityType
-	AssetEntityType
-	DatumEntityType
+	DatumOrderFieldCreatedAt       DatumOrderField = "CREATED_AT"
+	DatumOrderFieldName            DatumOrderField = "NAME"
+	DatumOrderFieldDataSensitivity DatumOrderField = "DATA_SENSITIVITY"
 )
+
+func (p DatumOrderField) Column() string {
+	return string(p)
+}
+
+func (p DatumOrderField) String() string {
+	return string(p)
+}
+
+func (p DatumOrderField) MarshalText() ([]byte, error) {
+	return []byte(p.String()), nil
+}
+
+func (p *DatumOrderField) UnmarshalText(text []byte) error {
+	*p = DatumOrderField(text)
+	return nil
+}
