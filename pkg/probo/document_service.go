@@ -25,6 +25,7 @@ type (
 		Content        string
 		OwnerID        gid.GID
 		CreatedBy      gid.GID
+		DocumentType   coredata.DocumentType
 	}
 
 	UpdateDocumentVersionRequest struct {
@@ -131,10 +132,11 @@ func (s *DocumentService) Create(
 	people := &coredata.People{}
 
 	document := &coredata.Document{
-		ID:        documentID,
-		Title:     req.Title,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:           documentID,
+		Title:        req.Title,
+		DocumentType: req.DocumentType,
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 
 	documentVersion := &coredata.DocumentVersion{
@@ -631,4 +633,48 @@ func (s *DocumentService) ListForRiskID(
 	}
 
 	return page.NewPage(documents, cursor), nil
+}
+
+func (s *DocumentService) Update(
+	ctx context.Context,
+	documentID gid.GID,
+	newOwnerID *gid.GID,
+	documentType *coredata.DocumentType,
+) (*coredata.Document, error) {
+	document := &coredata.Document{}
+	people := &coredata.People{}
+	now := time.Now()
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document %q: %w", documentID, err)
+			}
+
+			if newOwnerID != nil {
+				if err := people.LoadByID(ctx, tx, s.svc.scope, *newOwnerID); err != nil {
+					return fmt.Errorf("cannot load new owner %q: %w", *newOwnerID, err)
+				}
+				document.OwnerID = *newOwnerID
+			}
+
+			if documentType != nil {
+				document.DocumentType = *documentType
+			}
+			document.UpdatedAt = now
+
+			if err := document.Update(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update document: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return document, nil
 }

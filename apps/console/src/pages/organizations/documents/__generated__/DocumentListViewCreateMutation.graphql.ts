@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<095491df1cce828cc3ec9ba9f2ad4183>>
+ * @generated SignedSource<<83ccc4aaa1b2380bfc185c4a6dd8806a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,8 +9,10 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type DocumentType = "ISMS" | "OTHER" | "POLICY";
 export type CreateDocumentInput = {
   content: string;
+  documentType: DocumentType;
   organizationId: string;
   ownerId: string;
   title: string;

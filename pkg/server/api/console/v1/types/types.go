@@ -73,15 +73,15 @@ type ConnectorOrder struct {
 }
 
 type Control struct {
-	ID          gid.GID            `json:"id"`
-	ReferenceID string             `json:"referenceId"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Framework   *Framework         `json:"framework"`
-	Measures    *MeasureConnection `json:"measures"`
-	Documents    *DocumentConnection  `json:"documents"`
-	CreatedAt   time.Time          `json:"createdAt"`
-	UpdatedAt   time.Time          `json:"updatedAt"`
+	ID          gid.GID             `json:"id"`
+	ReferenceID string              `json:"referenceId"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Framework   *Framework          `json:"framework"`
+	Measures    *MeasureConnection  `json:"measures"`
+	Documents   *DocumentConnection `json:"documents"`
+	CreatedAt   time.Time           `json:"createdAt"`
+	UpdatedAt   time.Time           `json:"updatedAt"`
 }
 
 func (Control) IsNode()             {}
@@ -97,6 +97,16 @@ type ControlEdge struct {
 	Node   *Control       `json:"node"`
 }
 
+type CreateControlDocumentMappingInput struct {
+	ControlID  gid.GID `json:"controlId"`
+	DocumentID gid.GID `json:"documentId"`
+}
+
+type CreateControlDocumentMappingPayload struct {
+	ControlEdge  *ControlEdge  `json:"controlEdge"`
+	DocumentEdge *DocumentEdge `json:"documentEdge"`
+}
+
 type CreateControlMeasureMappingInput struct {
 	ControlID gid.GID `json:"controlId"`
 	MeasureID gid.GID `json:"measureId"`
@@ -107,14 +117,17 @@ type CreateControlMeasureMappingPayload struct {
 	MeasureEdge *MeasureEdge `json:"measureEdge"`
 }
 
-type CreateControlDocumentMappingInput struct {
-	ControlID gid.GID `json:"controlId"`
-	DocumentID  gid.GID `json:"documentId"`
+type CreateDocumentInput struct {
+	OrganizationID gid.GID               `json:"organizationId"`
+	Title          string                `json:"title"`
+	Content        string                `json:"content"`
+	OwnerID        gid.GID               `json:"ownerId"`
+	DocumentType   coredata.DocumentType `json:"documentType"`
 }
 
-type CreateControlDocumentMappingPayload struct {
-	ControlEdge *ControlEdge `json:"controlEdge"`
-	DocumentEdge  *DocumentEdge  `json:"documentEdge"`
+type CreateDocumentPayload struct {
+	DocumentEdge        *DocumentEdge        `json:"documentEdge"`
+	DocumentVersionEdge *DocumentVersionEdge `json:"documentVersionEdge"`
 }
 
 type CreateDraftDocumentVersionInput struct {
@@ -182,16 +195,14 @@ type CreatePeoplePayload struct {
 	PeopleEdge *PeopleEdge `json:"peopleEdge"`
 }
 
-type CreateDocumentInput struct {
-	OrganizationID gid.GID `json:"organizationId"`
-	Title          string  `json:"title"`
-	Content        string  `json:"content"`
-	OwnerID        gid.GID `json:"ownerId"`
+type CreateRiskDocumentMappingInput struct {
+	RiskID     gid.GID `json:"riskId"`
+	DocumentID gid.GID `json:"documentId"`
 }
 
-type CreateDocumentPayload struct {
-	DocumentEdge        *DocumentEdge        `json:"documentEdge"`
-	DocumentVersionEdge *DocumentVersionEdge `json:"documentVersionEdge"`
+type CreateRiskDocumentMappingPayload struct {
+	RiskEdge     *RiskEdge     `json:"riskEdge"`
+	DocumentEdge *DocumentEdge `json:"documentEdge"`
 }
 
 type CreateRiskInput struct {
@@ -220,16 +231,6 @@ type CreateRiskMeasureMappingPayload struct {
 
 type CreateRiskPayload struct {
 	RiskEdge *RiskEdge `json:"riskEdge"`
-}
-
-type CreateRiskDocumentMappingInput struct {
-	RiskID   gid.GID `json:"riskId"`
-	DocumentID gid.GID `json:"documentId"`
-}
-
-type CreateRiskDocumentMappingPayload struct {
-	RiskEdge   *RiskEdge   `json:"riskEdge"`
-	DocumentEdge *DocumentEdge `json:"documentEdge"`
 }
 
 type CreateTaskInput struct {
@@ -284,6 +285,16 @@ type CreateVendorRiskAssessmentPayload struct {
 	VendorRiskAssessmentEdge *VendorRiskAssessmentEdge `json:"vendorRiskAssessmentEdge"`
 }
 
+type DeleteControlDocumentMappingInput struct {
+	ControlID  gid.GID `json:"controlId"`
+	DocumentID gid.GID `json:"documentId"`
+}
+
+type DeleteControlDocumentMappingPayload struct {
+	DeletedControlID  gid.GID `json:"deletedControlId"`
+	DeletedDocumentID gid.GID `json:"deletedDocumentId"`
+}
+
 type DeleteControlMeasureMappingInput struct {
 	ControlID gid.GID `json:"controlId"`
 	MeasureID gid.GID `json:"measureId"`
@@ -294,14 +305,12 @@ type DeleteControlMeasureMappingPayload struct {
 	DeletedMeasureID gid.GID `json:"deletedMeasureId"`
 }
 
-type DeleteControlDocumentMappingInput struct {
-	ControlID gid.GID `json:"controlId"`
-	DocumentID  gid.GID `json:"documentId"`
+type DeleteDocumentInput struct {
+	DocumentID gid.GID `json:"documentId"`
 }
 
-type DeleteControlDocumentMappingPayload struct {
-	DeletedControlID gid.GID `json:"deletedControlId"`
-	DeletedDocumentID  gid.GID `json:"deletedDocumentId"`
+type DeleteDocumentPayload struct {
+	DeletedDocumentID gid.GID `json:"deletedDocumentId"`
 }
 
 type DeleteEvidenceInput struct {
@@ -344,11 +353,13 @@ type DeletePeoplePayload struct {
 	DeletedPeopleID gid.GID `json:"deletedPeopleId"`
 }
 
-type DeleteDocumentInput struct {
+type DeleteRiskDocumentMappingInput struct {
+	RiskID     gid.GID `json:"riskId"`
 	DocumentID gid.GID `json:"documentId"`
 }
 
-type DeleteDocumentPayload struct {
+type DeleteRiskDocumentMappingPayload struct {
+	DeletedRiskID     gid.GID `json:"deletedRiskId"`
 	DeletedDocumentID gid.GID `json:"deletedDocumentId"`
 }
 
@@ -368,16 +379,6 @@ type DeleteRiskMeasureMappingPayload struct {
 
 type DeleteRiskPayload struct {
 	DeletedRiskID gid.GID `json:"deletedRiskId"`
-}
-
-type DeleteRiskDocumentMappingInput struct {
-	RiskID   gid.GID `json:"riskId"`
-	DocumentID gid.GID `json:"documentId"`
-}
-
-type DeleteRiskDocumentMappingPayload struct {
-	DeletedRiskID   gid.GID `json:"deletedRiskId"`
-	DeletedDocumentID gid.GID `json:"deletedDocumentId"`
 }
 
 type DeleteTaskInput struct {
@@ -402,6 +403,94 @@ type DeleteVendorInput struct {
 
 type DeleteVendorPayload struct {
 	DeletedVendorID gid.GID `json:"deletedVendorId"`
+}
+
+type Document struct {
+	ID                      gid.GID                    `json:"id"`
+	Title                   string                     `json:"title"`
+	Description             string                     `json:"description"`
+	DocumentType            coredata.DocumentType      `json:"documentType"`
+	CurrentPublishedVersion *int                       `json:"currentPublishedVersion,omitempty"`
+	Owner                   *People                    `json:"owner"`
+	Organization            *Organization              `json:"organization"`
+	Versions                *DocumentVersionConnection `json:"versions"`
+	Controls                *ControlConnection         `json:"controls"`
+	CreatedAt               time.Time                  `json:"createdAt"`
+	UpdatedAt               time.Time                  `json:"updatedAt"`
+}
+
+func (Document) IsNode()             {}
+func (this Document) GetID() gid.GID { return this.ID }
+
+type DocumentConnection struct {
+	Edges    []*DocumentEdge `json:"edges"`
+	PageInfo *PageInfo       `json:"pageInfo"`
+}
+
+type DocumentEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Document      `json:"node"`
+}
+
+type DocumentVersion struct {
+	ID          gid.GID                             `json:"id"`
+	Document    *Document                           `json:"document"`
+	Status      coredata.DocumentStatus             `json:"status"`
+	Version     int                                 `json:"version"`
+	Content     string                              `json:"content"`
+	Changelog   string                              `json:"changelog"`
+	Signatures  *DocumentVersionSignatureConnection `json:"signatures"`
+	PublishedBy *People                             `json:"publishedBy,omitempty"`
+	PublishedAt *time.Time                          `json:"publishedAt,omitempty"`
+	CreatedAt   time.Time                           `json:"createdAt"`
+	UpdatedAt   time.Time                           `json:"updatedAt"`
+}
+
+func (DocumentVersion) IsNode()             {}
+func (this DocumentVersion) GetID() gid.GID { return this.ID }
+
+type DocumentVersionConnection struct {
+	Edges    []*DocumentVersionEdge `json:"edges"`
+	PageInfo *PageInfo              `json:"pageInfo"`
+}
+
+type DocumentVersionEdge struct {
+	Cursor page.CursorKey   `json:"cursor"`
+	Node   *DocumentVersion `json:"node"`
+}
+
+type DocumentVersionFilter struct {
+	Status *coredata.DocumentStatus `json:"status,omitempty"`
+}
+
+type DocumentVersionSignature struct {
+	ID              gid.GID                                `json:"id"`
+	DocumentVersion *DocumentVersion                       `json:"documentVersion"`
+	State           coredata.DocumentVersionSignatureState `json:"state"`
+	SignedBy        *People                                `json:"signedBy"`
+	SignedAt        *time.Time                             `json:"signedAt,omitempty"`
+	RequestedAt     time.Time                              `json:"requestedAt"`
+	RequestedBy     *People                                `json:"requestedBy"`
+	CreatedAt       time.Time                              `json:"createdAt"`
+	UpdatedAt       time.Time                              `json:"updatedAt"`
+}
+
+func (DocumentVersionSignature) IsNode()             {}
+func (this DocumentVersionSignature) GetID() gid.GID { return this.ID }
+
+type DocumentVersionSignatureConnection struct {
+	Edges    []*DocumentVersionSignatureEdge `json:"edges"`
+	PageInfo *PageInfo                       `json:"pageInfo"`
+}
+
+type DocumentVersionSignatureEdge struct {
+	Cursor page.CursorKey            `json:"cursor"`
+	Node   *DocumentVersionSignature `json:"node"`
+}
+
+type DocumentVersionSignatureOrder struct {
+	Field     coredata.DocumentVersionSignatureOrderField `json:"field"`
+	Direction page.OrderDirection                         `json:"direction"`
 }
 
 type Evidence struct {
@@ -542,7 +631,7 @@ type Organization struct {
 	Frameworks *FrameworkConnection `json:"frameworks"`
 	Vendors    *VendorConnection    `json:"vendors"`
 	Peoples    *PeopleConnection    `json:"peoples"`
-	Documents   *DocumentConnection    `json:"documents"`
+	Documents  *DocumentConnection  `json:"documents"`
 	Measures   *MeasureConnection   `json:"measures"`
 	Risks      *RiskConnection      `json:"risks"`
 	Tasks      *TaskConnection      `json:"tasks"`
@@ -601,93 +690,6 @@ type PeopleEdge struct {
 	Node   *People        `json:"node"`
 }
 
-type Document struct {
-	ID                      gid.GID                  `json:"id"`
-	Title                   string                   `json:"title"`
-	Description             string                   `json:"description"`
-	CurrentPublishedVersion *int                     `json:"currentPublishedVersion,omitempty"`
-	Owner                   *People                  `json:"owner"`
-	Organization            *Organization            `json:"organization"`
-	Versions                *DocumentVersionConnection `json:"versions"`
-	Controls                *ControlConnection       `json:"controls"`
-	CreatedAt               time.Time                `json:"createdAt"`
-	UpdatedAt               time.Time                `json:"updatedAt"`
-}
-
-func (Document) IsNode()             {}
-func (this Document) GetID() gid.GID { return this.ID }
-
-type DocumentConnection struct {
-	Edges    []*DocumentEdge `json:"edges"`
-	PageInfo *PageInfo     `json:"pageInfo"`
-}
-
-type DocumentEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *Document        `json:"node"`
-}
-
-type DocumentVersion struct {
-	ID          gid.GID                           `json:"id"`
-	Document      *Document                           `json:"document"`
-	Status      coredata.DocumentStatus             `json:"status"`
-	Version     int                               `json:"version"`
-	Content     string                            `json:"content"`
-	Changelog   string                            `json:"changelog"`
-	Signatures  *DocumentVersionSignatureConnection `json:"signatures"`
-	PublishedBy *People                           `json:"publishedBy,omitempty"`
-	PublishedAt *time.Time                        `json:"publishedAt,omitempty"`
-	CreatedAt   time.Time                         `json:"createdAt"`
-	UpdatedAt   time.Time                         `json:"updatedAt"`
-}
-
-func (DocumentVersion) IsNode()             {}
-func (this DocumentVersion) GetID() gid.GID { return this.ID }
-
-type DocumentVersionConnection struct {
-	Edges    []*DocumentVersionEdge `json:"edges"`
-	PageInfo *PageInfo            `json:"pageInfo"`
-}
-
-type DocumentVersionEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *DocumentVersion `json:"node"`
-}
-
-type DocumentVersionFilter struct {
-	Status *coredata.DocumentStatus `json:"status,omitempty"`
-}
-
-type DocumentVersionSignature struct {
-	ID            gid.GID                              `json:"id"`
-	DocumentVersion *DocumentVersion                       `json:"documentVersion"`
-	State         coredata.DocumentVersionSignatureState `json:"state"`
-	SignedBy      *People                              `json:"signedBy"`
-	SignedAt      *time.Time                           `json:"signedAt,omitempty"`
-	RequestedAt   time.Time                            `json:"requestedAt"`
-	RequestedBy   *People                              `json:"requestedBy"`
-	CreatedAt     time.Time                            `json:"createdAt"`
-	UpdatedAt     time.Time                            `json:"updatedAt"`
-}
-
-func (DocumentVersionSignature) IsNode()             {}
-func (this DocumentVersionSignature) GetID() gid.GID { return this.ID }
-
-type DocumentVersionSignatureConnection struct {
-	Edges    []*DocumentVersionSignatureEdge `json:"edges"`
-	PageInfo *PageInfo                     `json:"pageInfo"`
-}
-
-type DocumentVersionSignatureEdge struct {
-	Cursor page.CursorKey          `json:"cursor"`
-	Node   *DocumentVersionSignature `json:"node"`
-}
-
-type DocumentVersionSignatureOrder struct {
-	Field     coredata.DocumentVersionSignatureOrderField `json:"field"`
-	Direction page.OrderDirection                       `json:"direction"`
-}
-
 type PublishDocumentVersionInput struct {
 	DocumentID gid.GID `json:"documentId"`
 }
@@ -722,7 +724,7 @@ type RequestEvidencePayload struct {
 
 type RequestSignatureInput struct {
 	DocumentVersionID gid.GID `json:"documentVersionId"`
-	SignatoryID     gid.GID `json:"signatoryId"`
+	SignatoryID       gid.GID `json:"signatoryId"`
 }
 
 type RequestSignaturePayload struct {
@@ -745,7 +747,7 @@ type Risk struct {
 	Owner              *People                `json:"owner,omitempty"`
 	Organization       *Organization          `json:"organization"`
 	Measures           *MeasureConnection     `json:"measures"`
-	Documents           *DocumentConnection      `json:"documents"`
+	Documents          *DocumentConnection    `json:"documents"`
 	Controls           *ControlConnection     `json:"controls"`
 	CreatedAt          time.Time              `json:"createdAt"`
 	UpdatedAt          time.Time              `json:"updatedAt"`
@@ -812,6 +814,28 @@ type UnassignTaskPayload struct {
 	Task *Task `json:"task"`
 }
 
+type UpdateDocumentInput struct {
+	ID           gid.GID                `json:"id"`
+	Title        *string                `json:"title,omitempty"`
+	Content      *string                `json:"content,omitempty"`
+	OwnerID      *gid.GID               `json:"ownerId,omitempty"`
+	CreatedBy    *gid.GID               `json:"createdBy,omitempty"`
+	DocumentType *coredata.DocumentType `json:"documentType,omitempty"`
+}
+
+type UpdateDocumentPayload struct {
+	Document *Document `json:"document"`
+}
+
+type UpdateDocumentVersionInput struct {
+	DocumentVersionID gid.GID `json:"documentVersionId"`
+	Content           string  `json:"content"`
+}
+
+type UpdateDocumentVersionPayload struct {
+	DocumentVersion *DocumentVersion `json:"documentVersion"`
+}
+
 type UpdateFrameworkInput struct {
 	ID          gid.GID `json:"id"`
 	Name        *string `json:"name,omitempty"`
@@ -857,27 +881,6 @@ type UpdatePeopleInput struct {
 
 type UpdatePeoplePayload struct {
 	People *People `json:"people"`
-}
-
-type UpdateDocumentInput struct {
-	ID        gid.GID  `json:"id"`
-	Title     *string  `json:"title,omitempty"`
-	Content   *string  `json:"content,omitempty"`
-	OwnerID   *gid.GID `json:"ownerId,omitempty"`
-	CreatedBy *gid.GID `json:"createdBy,omitempty"`
-}
-
-type UpdateDocumentPayload struct {
-	Document *Document `json:"document"`
-}
-
-type UpdateDocumentVersionInput struct {
-	DocumentVersionID gid.GID `json:"documentVersionId"`
-	Content         string  `json:"content"`
-}
-
-type UpdateDocumentVersionPayload struct {
-	DocumentVersion *DocumentVersion `json:"documentVersion"`
 }
 
 type UpdateRiskInput struct {

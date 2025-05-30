@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   X,
   FileSignature,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +24,9 @@ import { PageTemplate } from "@/components/PageTemplate";
 import type { ShowDocumentViewQuery } from "./__generated__/ShowDocumentViewQuery.graphql";
 import { ShowDocumentViewPublishMutation } from "./__generated__/ShowDocumentViewPublishMutation.graphql";
 import { ShowDocumentViewCreateDraftMutation } from "./__generated__/ShowDocumentViewCreateDraftMutation.graphql";
+import { ShowDocumentViewUpdateDocumentMutation } from "./__generated__/ShowDocumentViewUpdateDocumentMutation.graphql";
+import { ShowDocumentViewUpdateDocumentTypeMutation } from "./__generated__/ShowDocumentViewUpdateDocumentTypeMutation.graphql";
+import type { DocumentType } from "./__generated__/DocumentListViewCreateMutation.graphql";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ShowDocumentViewSkeleton } from "./ShowDocumentPage";
@@ -47,12 +51,15 @@ import rehypeRaw from "rehype-raw";
 import { createRoot } from "react-dom/client";
 import { documentVersionsFragment } from "./SignaturesModal";
 import type { SignaturesModal_documentVersions$key } from "./__generated__/SignaturesModal_documentVersions.graphql";
+import PeopleSelector from "@/components/PeopleSelector";
+import { Label } from "@/components/ui/label";
 
 const documentViewQuery = graphql`
   query ShowDocumentViewQuery($documentId: ID!, $organizationId: ID!) {
     organization: node(id: $organizationId) {
       ... on Organization {
         name
+        ...PeopleSelector_organization
       }
     }
 
@@ -64,6 +71,7 @@ const documentViewQuery = graphql`
         createdAt
         updatedAt
         currentPublishedVersion
+        documentType
         owner {
           id
           fullName
@@ -130,6 +138,22 @@ const createDraftDocumentVersionMutation = graphql`
   }
 `;
 
+const updateDocumentMutation = graphql`
+  mutation ShowDocumentViewUpdateDocumentMutation($input: UpdateDocumentInput!) {
+    updateDocument(input: $input) {
+      document {
+        id
+        documentType
+        owner {
+          id
+          fullName
+          primaryEmailAddress
+        }
+      }
+    }
+  }
+`;
+
 function ShowDocumentContent({
   queryRef,
 }: {
@@ -150,6 +174,8 @@ function ShowDocumentContent({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isVersionHistoryOpen, setIsVersionHistoryOpen] = useState(false);
   const [isSignaturesModalOpen, setIsSignaturesModalOpen] = useState(false);
+  const [isEditingOwner, setIsEditingOwner] = useState(false);
+  const [isEditingType, setIsEditingType] = useState(false);
   const printContentRef = useRef<HTMLDivElement>(null);
 
   const [publishDraft, isPublishInFlight] =
@@ -158,11 +184,95 @@ function ShowDocumentContent({
     useMutation<ShowDocumentViewCreateDraftMutation>(
       createDraftDocumentVersionMutation,
     );
+  const [updateDocument, isUpdatingDocument] =
+    useMutation<ShowDocumentViewUpdateDocumentMutation>(updateDocumentMutation);
 
   const latestVersionEdge = documentValue.latestVersion?.edges[0];
   const latestVersionNode = latestVersionEdge?.node;
 
   const isDraft = latestVersionNode?.status === "DRAFT";
+
+  // Handle owner update
+  const handleOwnerUpdate = useCallback((newOwnerId: string) => {
+    if (!documentValue.id) return;
+
+    updateDocument({
+      variables: {
+        input: {
+          id: documentValue.id,
+          title: documentValue.title,
+          content: documentValue.latestVersion?.edges[0]?.node?.content || '',
+          ownerId: newOwnerId,
+        },
+      },
+      onCompleted: (_, errors) => {
+        if (errors) {
+          toast({
+            title: "Error updating owner",
+            description: errors[0]?.message || "An unknown error occurred",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        toast({
+          title: "Success",
+          description: "Document owner updated successfully",
+        });
+        setIsEditingOwner(false);
+
+        // Reload the query to refresh the data
+        loadQuery({ documentId: documentValue.id, organizationId: organizationId! });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error updating owner",
+          description: error.message || "An unknown error occurred",
+          variant: "destructive",
+        });
+      },
+    });
+  }, [documentValue.id, updateDocument, toast, loadQuery, organizationId]);
+
+  // Handle document type update
+  const handleTypeUpdate = useCallback((newType: DocumentType) => {
+    if (!documentValue.id) return;
+
+    updateDocument({
+      variables: {
+        input: {
+          id: documentValue.id,
+          documentType: newType,
+        },
+      },
+      onCompleted: (_, errors) => {
+        if (errors) {
+          toast({
+            title: "Error updating document type",
+            description: errors[0]?.message || "An unknown error occurred",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        toast({
+          title: "Success",
+          description: "Document type updated successfully",
+        });
+        setIsEditingType(false);
+
+        // Reload the query to refresh the data
+        loadQuery({ documentId: documentValue.id, organizationId: organizationId! });
+      },
+      onError: (error) => {
+        toast({
+          title: "Error updating document type",
+          description: error.message || "An unknown error occurred",
+          variant: "destructive",
+        });
+      },
+    });
+  }, [documentValue.id, updateDocument, toast, loadQuery, organizationId]);
 
   useEffect(() => {
     // No need to update selectedVersion state since we're using the VersionHistoryModal component
@@ -560,7 +670,77 @@ function ShowDocumentContent({
                   <span className="font-medium">Published Date:</span> {latestVersionNode.status === "PUBLISHED" ? formatDate(latestVersionNode.publishedAt || "") : "Not yet published"}
                 </div>
                 <div>
-                  <span className="font-medium">Owner:</span> {documentValue.owner?.fullName || "Unknown"}
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Owner:</span>
+                    {isEditingOwner ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-[350px]">
+                          <PeopleSelector
+                            organizationRef={data.organization}
+                            selectedPersonId={documentValue.owner?.id || ""}
+                            onSelect={handleOwnerUpdate}
+                            placeholder="Select document owner"
+                            required={true}
+                          />
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditingOwner(false)}
+                          disabled={isUpdatingDocument}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>{documentValue.owner?.fullName || "Unknown"}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditingOwner(true)}
+                        >
+                          Change
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">Document Type:</span>
+                    {isEditingType ? (
+                      <div className="flex items-center gap-2">
+                        <select
+                          className="h-9 w-[200px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors"
+                          value={ documentValue.documentType }
+                          onChange={(e) => handleTypeUpdate(e.target.value as DocumentType)}
+                        >
+                          <option value="POLICY">Policy</option>
+                          <option value="ISMS">ISMS</option>
+                          <option value="OTHER">Other</option>
+                        </select>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditingType(false)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span>{ documentValue.documentType === "ISMS" ? "ISMS" : documentValue.documentType === "POLICY" ? "Policy" : "Other" }</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsEditingType(true)}
+                        >
+                          Change
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <span className="font-medium">Last Modified:</span> {formatDate(latestVersionNode.updatedAt)}

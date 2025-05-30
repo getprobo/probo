@@ -87,6 +87,205 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 	return types.NewDocumentConnection(page), nil
 }
 
+// Owner is the resolver for the owner field.
+func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*types.People, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	document, err := svc.Documents.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document: %w", err))
+	}
+
+	// Get the owner
+	owner, err := svc.Peoples.Get(ctx, document.OwnerID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get owner: %w", err))
+	}
+
+	return types.NewPeople(owner), nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *documentResolver) Organization(ctx context.Context, obj *types.Document) (*types.Organization, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	document, err := svc.Documents.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document: %w", err))
+	}
+
+	organization, err := svc.Organizations.Get(ctx, document.OrganizationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// Versions is the resolver for the versions field.
+func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
+		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := svc.Documents.ListVersions(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list document versions: %w", err))
+	}
+
+	return types.NewDocumentVersionConnection(page), nil
+}
+
+// Controls is the resolver for the controls field.
+func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
+		Field:     coredata.ControlOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := svc.Controls.ListForDocumentID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list document controls: %w", err))
+	}
+
+	return types.NewControlConnection(page), nil
+}
+
+// Document is the resolver for the document field.
+func (r *documentVersionResolver) Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	documentVersion, err := svc.Documents.GetVersion(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document version: %w", err))
+	}
+
+	document, err := svc.Documents.Get(ctx, documentVersion.DocumentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document: %w", err))
+	}
+
+	return types.NewDocument(document), nil
+}
+
+// Signatures is the resolver for the signatures field.
+func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) (*types.DocumentVersionSignatureConnection, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
+		Field:     coredata.DocumentVersionSignatureOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := svc.Documents.ListSignatures(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list document version signatures: %w", err))
+	}
+
+	return types.NewDocumentVersionSignatureConnection(page), nil
+}
+
+// PublishedBy is the resolver for the publishedBy field.
+func (r *documentVersionResolver) PublishedBy(ctx context.Context, obj *types.DocumentVersion) (*types.People, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	documentVersion, err := svc.Documents.GetVersion(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document version: %w", err))
+	}
+
+	if documentVersion.PublishedBy == nil {
+		return nil, nil
+	}
+
+	people, err := svc.Peoples.Get(ctx, *documentVersion.PublishedBy)
+	if err != nil {
+		panic(fmt.Errorf("cannot get people: %w", err))
+	}
+
+	return types.NewPeople(people), nil
+}
+
+// DocumentVersion is the resolver for the documentVersion field.
+func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	documentVersionSignature, err := svc.Documents.GetVersionSignature(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document version signature: %w", err))
+	}
+
+	documentVersion, err := svc.Documents.GetVersion(ctx, documentVersionSignature.DocumentVersionID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document version: %w", err))
+	}
+
+	return types.NewDocumentVersion(documentVersion), nil
+}
+
+// SignedBy is the resolver for the signedBy field.
+func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	documentVersionSignature, err := svc.Documents.GetVersionSignature(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document version signature: %w", err))
+	}
+
+	people, err := svc.Peoples.Get(ctx, documentVersionSignature.SignedBy)
+	if err != nil {
+		panic(fmt.Errorf("cannot get people: %w", err))
+	}
+
+	return types.NewPeople(people), nil
+}
+
+// RequestedBy is the resolver for the requestedBy field.
+func (r *documentVersionSignatureResolver) RequestedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
+	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
+
+	documentVersionSignature, err := svc.Documents.GetVersionSignature(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get document version signature: %w", err))
+	}
+
+	people, err := svc.Peoples.Get(ctx, documentVersionSignature.RequestedBy)
+	if err != nil {
+		panic(fmt.Errorf("cannot get people: %w", err))
+	}
+
+	return types.NewPeople(people), nil
+}
+
 // FileURL is the resolver for the fileUrl field.
 func (r *evidenceResolver) FileURL(ctx context.Context, obj *types.Evidence) (*string, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
@@ -1153,6 +1352,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 		ctx,
 		probo.CreateDocumentRequest{
 			OrganizationID: input.OrganizationID,
+			DocumentType:   input.DocumentType,
 			Title:          input.Title,
 			OwnerID:        input.OwnerID,
 			Content:        input.Content,
@@ -1166,6 +1366,26 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 	return &types.CreateDocumentPayload{
 		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldTitle),
 		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateDocument is the resolver for the updateDocument field.
+func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.UpdateDocumentInput) (*types.UpdateDocumentPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.ID.TenantID())
+
+	document, err := svc.Documents.Update(
+		ctx,
+		input.ID,
+		input.OwnerID,
+		input.DocumentType,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot update document: %w", err)
+	}
+
+	return &types.UpdateDocumentPayload{
+		Document: types.NewDocument(document),
 	}, nil
 }
 
@@ -1565,205 +1785,6 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 	}
 
 	return types.NewTaskConnection(page), nil
-}
-
-// Owner is the resolver for the owner field.
-func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*types.People, error) {
-	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
-
-	document, err := svc.Documents.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get document: %w", err))
-	}
-
-	// Get the owner
-	owner, err := svc.Peoples.Get(ctx, document.OwnerID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get owner: %w", err))
-	}
-
-	return types.NewPeople(owner), nil
-}
-
-// Organization is the resolver for the organization field.
-func (r *documentResolver) Organization(ctx context.Context, obj *types.Document) (*types.Organization, error) {
-	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
-
-	document, err := svc.Documents.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get document: %w", err))
-	}
-
-	organization, err := svc.Organizations.Get(ctx, document.OrganizationID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get organization: %w", err))
-	}
-
-	return types.NewOrganization(organization), nil
-}
-
-// Versions is the resolver for the versions field.
-func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error) {
-	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
-		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := svc.Documents.ListVersions(ctx, obj.ID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list document versions: %w", err))
-	}
-
-	return types.NewDocumentVersionConnection(page), nil
-}
-
-// Controls is the resolver for the controls field.
-func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error) {
-	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
-		Field:     coredata.ControlOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ControlOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := svc.Controls.ListForDocumentID(ctx, obj.ID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list document controls: %w", err))
-	}
-
-	return types.NewControlConnection(page), nil
-}
-
-// Document is the resolver for the document field.
-func (r *documentVersionResolver) Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error) {
-	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
-
-	documentVersion, err := svc.Documents.GetVersion(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get document version: %w", err))
-	}
-
-	document, err := svc.Documents.Get(ctx, documentVersion.DocumentID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get document: %w", err))
-	}
-
-	return types.NewDocument(document), nil
-}
-
-// Signatures is the resolver for the signatures field.
-func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) (*types.DocumentVersionSignatureConnection, error) {
-	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
-		Field:     coredata.DocumentVersionSignatureOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := svc.Documents.ListSignatures(ctx, obj.ID, cursor)
-	if err != nil {
-		panic(fmt.Errorf("cannot list document version signatures: %w", err))
-	}
-
-	return types.NewDocumentVersionSignatureConnection(page), nil
-}
-
-// PublishedBy is the resolver for the publishedBy field.
-func (r *documentVersionResolver) PublishedBy(ctx context.Context, obj *types.DocumentVersion) (*types.People, error) {
-	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
-
-	documentVersion, err := svc.Documents.GetVersion(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get document version: %w", err))
-	}
-
-	if documentVersion.PublishedBy == nil {
-		return nil, nil
-	}
-
-	people, err := svc.Peoples.Get(ctx, *documentVersion.PublishedBy)
-	if err != nil {
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
-	return types.NewPeople(people), nil
-}
-
-// DocumentVersion is the resolver for the documentVersion field.
-func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error) {
-	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
-
-	documentVersionSignature, err := svc.Documents.GetVersionSignature(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get document version signature: %w", err))
-	}
-
-	documentVersion, err := svc.Documents.GetVersion(ctx, documentVersionSignature.DocumentVersionID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get document version: %w", err))
-	}
-
-	return types.NewDocumentVersion(documentVersion), nil
-}
-
-// SignedBy is the resolver for the signedBy field.
-func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
-	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
-
-	documentVersionSignature, err := svc.Documents.GetVersionSignature(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get document version signature: %w", err))
-	}
-
-	people, err := svc.Peoples.Get(ctx, documentVersionSignature.SignedBy)
-	if err != nil {
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
-	return types.NewPeople(people), nil
-}
-
-// RequestedBy is the resolver for the requestedBy field.
-func (r *documentVersionSignatureResolver) RequestedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
-	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
-
-	documentVersionSignature, err := svc.Documents.GetVersionSignature(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get document version signature: %w", err))
-	}
-
-	people, err := svc.Peoples.Get(ctx, documentVersionSignature.RequestedBy)
-	if err != nil {
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
-	return types.NewPeople(people), nil
 }
 
 // Node is the resolver for the node field.
@@ -2268,6 +2289,19 @@ func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, f
 // Control returns schema.ControlResolver implementation.
 func (r *Resolver) Control() schema.ControlResolver { return &controlResolver{r} }
 
+// Document returns schema.DocumentResolver implementation.
+func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver{r} }
+
+// DocumentVersion returns schema.DocumentVersionResolver implementation.
+func (r *Resolver) DocumentVersion() schema.DocumentVersionResolver {
+	return &documentVersionResolver{r}
+}
+
+// DocumentVersionSignature returns schema.DocumentVersionSignatureResolver implementation.
+func (r *Resolver) DocumentVersionSignature() schema.DocumentVersionSignatureResolver {
+	return &documentVersionSignatureResolver{r}
+}
+
 // Evidence returns schema.EvidenceResolver implementation.
 func (r *Resolver) Evidence() schema.EvidenceResolver { return &evidenceResolver{r} }
 
@@ -2282,19 +2316,6 @@ func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver
 
 // Organization returns schema.OrganizationResolver implementation.
 func (r *Resolver) Organization() schema.OrganizationResolver { return &organizationResolver{r} }
-
-// Document returns schema.DocumentResolver implementation.
-func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver{r} }
-
-// DocumentVersion returns schema.DocumentVersionResolver implementation.
-func (r *Resolver) DocumentVersion() schema.DocumentVersionResolver {
-	return &documentVersionResolver{r}
-}
-
-// DocumentVersionSignature returns schema.DocumentVersionSignatureResolver implementation.
-func (r *Resolver) DocumentVersionSignature() schema.DocumentVersionSignatureResolver {
-	return &documentVersionSignatureResolver{r}
-}
 
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
@@ -2325,14 +2346,14 @@ func (r *Resolver) VendorRiskAssessment() schema.VendorRiskAssessmentResolver {
 func (r *Resolver) Viewer() schema.ViewerResolver { return &viewerResolver{r} }
 
 type controlResolver struct{ *Resolver }
+type documentResolver struct{ *Resolver }
+type documentVersionResolver struct{ *Resolver }
+type documentVersionSignatureResolver struct{ *Resolver }
 type evidenceResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
-type documentResolver struct{ *Resolver }
-type documentVersionResolver struct{ *Resolver }
-type documentVersionSignatureResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4ae1fa075cd3c3fd2ae9d63e3ec0ae02>>
+ * @generated SignedSource<<2a0020cb72b5e7296b156bfd4d10cd35>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type DocumentStatus = "DRAFT" | "PUBLISHED";
+export type DocumentType = "ISMS" | "OTHER" | "POLICY";
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 export type DocumentListViewQuery$variables = {
   organizationId: string;
@@ -23,6 +24,7 @@ export type DocumentListViewQuery$data = {
           readonly createdAt: string;
           readonly currentPublishedVersion: number | null | undefined;
           readonly description: string;
+          readonly documentType: DocumentType;
           readonly id: string;
           readonly owner: {
             readonly fullName: string;
@@ -193,6 +195,13 @@ v11 = [
             "args": null,
             "kind": "ScalarField",
             "name": "description",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "documentType",
             "storageKey": null
           },
           {
@@ -519,7 +528,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "6b91a4a77bedb9f66abeaeec8c1c5535",
+    "cacheID": "fae30dd5b946e2e95ddc19c2956cdf3f",
     "id": null,
     "metadata": {
       "connection": [
@@ -536,11 +545,11 @@ return {
     },
     "name": "DocumentListViewQuery",
     "operationKind": "query",
-    "text": "query DocumentListViewQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    user {\n      id\n    }\n    id\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...PeopleSelector_organization\n      documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n        edges {\n          node {\n            id\n            title\n            description\n            currentPublishedVersion\n            createdAt\n            updatedAt\n            owner {\n              id\n              fullName\n            }\n            versions(first: 1) {\n              edges {\n                node {\n                  id\n                  status\n                  updatedAt\n                  signatures(first: 100) {\n                    edges {\n                      node {\n                        id\n                        state\n                      }\n                    }\n                  }\n                }\n              }\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment PeopleSelector_organization on Organization {\n  id\n  peoples(first: 100, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query DocumentListViewQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    user {\n      id\n    }\n    id\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...PeopleSelector_organization\n      documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n        edges {\n          node {\n            id\n            title\n            description\n            documentType\n            currentPublishedVersion\n            createdAt\n            updatedAt\n            owner {\n              id\n              fullName\n            }\n            versions(first: 1) {\n              edges {\n                node {\n                  id\n                  status\n                  updatedAt\n                  signatures(first: 100) {\n                    edges {\n                      node {\n                        id\n                        state\n                      }\n                    }\n                  }\n                }\n              }\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment PeopleSelector_organization on Organization {\n  id\n  peoples(first: 100, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "df33668bcdfe69a122a8846bb1d66df1";
+(node as any).hash = "4ed6ed2633b4c113bc88e19ac1db96b5";
 
 export default node;

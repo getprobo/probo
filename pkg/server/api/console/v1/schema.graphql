@@ -337,6 +337,12 @@ enum VendorCategory @goModel(model: "github.com/getprobo/probo/pkg/coredata.Vend
   VERSION_CONTROL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryVersionControl")
 }
 
+enum DocumentType @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentType") {
+  OTHER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeOther")
+  ISMS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeISMS")
+  POLICY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypePolicy")
+}
+
 # Order Input Types
 input UserOrder
   @goModel(
@@ -752,6 +758,7 @@ type Document implements Node {
   id: ID!
   title: String!
   description: String!
+  documentType: DocumentType!
   currentPublishedVersion: Int
   owner: People! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
@@ -1096,6 +1103,7 @@ type Mutation {
 
   # Document mutations
   createDocument(input: CreateDocumentInput!): CreateDocumentPayload!
+  updateDocument(input: UpdateDocumentInput!): UpdateDocumentPayload!
   deleteDocument(input: DeleteDocumentInput!): DeleteDocumentPayload!
   publishDocumentVersion(
     input: PublishDocumentVersionInput!
@@ -1396,6 +1404,7 @@ input CreateDocumentInput {
   title: String!
   content: String!
   ownerId: ID!
+  documentType: DocumentType!
 }
 
 input UpdateDocumentInput {
@@ -1404,6 +1413,7 @@ input UpdateDocumentInput {
   content: String
   ownerId: ID
   createdBy: ID
+  documentType: DocumentType
 }
 
 input DeleteDocumentInput {

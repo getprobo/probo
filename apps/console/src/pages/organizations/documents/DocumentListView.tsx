@@ -45,6 +45,13 @@ import {
 import PeopleSelector from "@/components/PeopleSelector";
 import type { PeopleSelector_organization$key } from "@/components/__generated__/PeopleSelector_organization.graphql";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const documentListViewQuery = graphql`
   query DocumentListViewQuery($organizationId: ID!) {
@@ -64,6 +71,7 @@ const documentListViewQuery = graphql`
               id
               title
               description
+              documentType
               currentPublishedVersion
               createdAt
               updatedAt
@@ -230,6 +238,17 @@ function DocumentTableRow({
         </div>
       </td>
       <td className="py-4 px-6">
+        <Badge
+          className={`font-medium border-0 py-0 px-[6px] h-5 text-xs rounded-md bg-secondary-bg text-tertiary`}
+        >
+          {document.documentType === "POLICY"
+            ? "Policy"
+            : document.documentType === "ISMS"
+            ? "ISMS"
+            : "Other"}
+        </Badge>
+      </td>
+      <td className="py-4 px-6">
         <span className="text-sm text-primary">
           {document.owner?.fullName || "Unassigned"}
         </span>
@@ -306,6 +325,7 @@ function CreateDocumentModal({
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [ownerId, setOwnerId] = useState<string | null>(null);
+  const [documentType, setDocumentType] = useState<"OTHER" | "ISMS" | "POLICY">("POLICY");
 
   const [createDocument, isCreating] =
     useMutation<DocumentListViewCreateMutation>(createDocumentMutation);
@@ -341,6 +361,7 @@ function CreateDocumentModal({
       title,
       content,
       ownerId,
+      documentType,
     };
 
     createDocument({
@@ -443,7 +464,9 @@ function CreateDocumentModal({
               ></h1>
             </div>
             <Textarea
-              placeholder="This Privacy Document outlines how NovaSoft collects, uses, and protects personal information provided by users of its services. By accessing or using our platform, you agree to the collection and use of information in accordance with this document..."
+              placeholder="
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur euismod ligula pretium elit rhoncus, ut tincidunt ligula luctus. Sed pulvinar porta blandit. Praesent odio ligula, tristique a rutrum non, imperdiet ut urna. Aenean at metus vitae diam lacinia auctor. Nullam fermentum volutpat magna. Curabitur tincidunt mauris sit amet velit lacinia..."
               className="min-h-[300px] border-none resize-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -454,11 +477,25 @@ function CreateDocumentModal({
 
             <div className="flex flex-col gap-4">
               <div className="flex justify-between items-center py-2 border-t border-[rgba(2,42,2,0.08)]">
-                <span className="text-sm font-medium text-tertiary">
-                  Status
-                </span>
+                <span className="text-sm font-medium text-tertiary">Status</span>
                 <div className="bg-[rgba(0,39,0,0.05)] py-1.5 px-2 rounded-lg">
                   <span className="text-sm font-medium">Draft</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center py-2 border-t border-[rgba(2,42,2,0.08)]">
+                <span className="text-sm font-medium text-tertiary">Document Type</span>
+                <div className="relative">
+                  <Select value={documentType} onValueChange={(value: "OTHER" | "ISMS" | "POLICY") => setDocumentType(value)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="POLICY">Policy</SelectItem>
+                      <SelectItem value="ISMS">ISMS</SelectItem>
+                      <SelectItem value="OTHER">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -601,6 +638,12 @@ function DocumentListViewContent({
               <th className="py-3 px-6 text-xs font-medium text-tertiary border-b border-low-b">
                 <div className="flex items-center gap-1">
                   Document
+                  <ChevronDown className="h-3 w-3 text-quaternary" />
+                </div>
+              </th>
+              <th className="py-3 px-6 text-xs font-medium text-tertiary border-b border-low-b">
+                <div className="flex items-center gap-1">
+                  Type
                   <ChevronDown className="h-3 w-3 text-quaternary" />
                 </div>
               </th>

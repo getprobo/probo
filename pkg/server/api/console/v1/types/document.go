@@ -46,6 +46,7 @@ func NewDocument(document *coredata.Document) *Document {
 	return &Document{
 		ID:                      document.ID,
 		Title:                   document.Title,
+		DocumentType:            document.DocumentType,
 		CurrentPublishedVersion: document.CurrentPublishedVersion,
 		CreatedAt:               document.CreatedAt,
 		UpdatedAt:               document.UpdatedAt,

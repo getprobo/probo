@@ -28,13 +28,14 @@ import (
 
 type (
 	Document struct {
-		ID                      gid.GID   `db:"id"`
-		OrganizationID          gid.GID   `db:"organization_id"`
-		OwnerID                 gid.GID   `db:"owner_id"`
-		Title                   string    `db:"title"`
-		CurrentPublishedVersion *int      `db:"current_published_version"`
-		CreatedAt               time.Time `db:"created_at"`
-		UpdatedAt               time.Time `db:"updated_at"`
+		ID                      gid.GID      `db:"id"`
+		OrganizationID          gid.GID      `db:"organization_id"`
+		OwnerID                 gid.GID      `db:"owner_id"`
+		Title                   string       `db:"title"`
+		DocumentType            DocumentType `db:"document_type"`
+		CurrentPublishedVersion *int         `db:"current_published_version"`
+		CreatedAt               time.Time    `db:"created_at"`
+		UpdatedAt               time.Time    `db:"updated_at"`
 	}
 
 	Documents []*Document
@@ -63,6 +64,7 @@ SELECT
     organization_id,
     owner_id,
     title,
+    document_type,
     current_published_version,
     created_at,
     updated_at
@@ -107,6 +109,7 @@ SELECT
     organization_id,
     owner_id,
     title,
+    document_type,
     current_published_version,
     created_at,
     updated_at
@@ -152,6 +155,7 @@ INSERT INTO
 		organization_id,
 		owner_id,
 		title,
+		document_type,
 		current_published_version,
 		created_at,
 		updated_at
@@ -162,6 +166,7 @@ VALUES (
     @organization_id,
     @owner_id,
     @title,
+    @document_type,
     @current_published_version,
     @created_at,
     @updated_at
@@ -174,6 +179,7 @@ VALUES (
 		"organization_id":           p.OrganizationID,
 		"owner_id":                  p.OwnerID,
 		"title":                     p.Title,
+		"document_type":             p.DocumentType,
 		"current_published_version": p.CurrentPublishedVersion,
 		"created_at":                p.CreatedAt,
 		"updated_at":                p.UpdatedAt,
@@ -212,6 +218,7 @@ SET
 	title = @title,
 	current_published_version = @current_published_version,
 	owner_id = @owner_id,
+	document_type = @document_type,
 	updated_at = @updated_at
 WHERE %s
     AND id = @document_id
@@ -224,6 +231,7 @@ WHERE %s
 		"title":                     p.Title,
 		"current_published_version": p.CurrentPublishedVersion,
 		"owner_id":                  p.OwnerID,
+		"document_type":             p.DocumentType,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -250,6 +258,7 @@ WITH plcs AS (
 		p.organization_id,
 		p.owner_id,
 		p.title,
+		p.document_type,
 		p.current_published_version,
 		p.created_at,
 		p.updated_at
@@ -265,6 +274,7 @@ SELECT
 	organization_id,
 	owner_id,
 	title,
+	document_type,
 	current_published_version,
 	created_at,
 	updated_at
@@ -309,6 +319,7 @@ WITH plcs AS (
 		p.organization_id,
 		p.owner_id,
 		p.title,
+		p.document_type,
 		p.current_published_version,
 		p.created_at,
 		p.updated_at
@@ -324,6 +335,7 @@ SELECT
 	organization_id,
 	owner_id,
 	title,
+	document_type,
 	current_published_version,
 	created_at,
 	updated_at

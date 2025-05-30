@@ -43,14 +43,14 @@ type Config struct {
 
 type ResolverRoot interface {
 	Control() ControlResolver
+	Document() DocumentResolver
+	DocumentVersion() DocumentVersionResolver
+	DocumentVersionSignature() DocumentVersionSignatureResolver
 	Evidence() EvidenceResolver
 	Framework() FrameworkResolver
 	Measure() MeasureResolver
 	Mutation() MutationResolver
 	Organization() OrganizationResolver
-	Document() DocumentResolver
-	DocumentVersion() DocumentVersionResolver
-	DocumentVersionSignature() DocumentVersionSignatureResolver
 	Query() QueryResolver
 	Risk() RiskResolver
 	Task() TaskResolver
@@ -98,11 +98,11 @@ type ComplexityRoot struct {
 	Control struct {
 		CreatedAt   func(childComplexity int) int
 		Description func(childComplexity int) int
+		Documents   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) int
 		Framework   func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Measures    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) int
 		Name        func(childComplexity int) int
-		Documents    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) int
 		ReferenceID func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 	}
@@ -117,14 +117,19 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	CreateControlDocumentMappingPayload struct {
+		ControlEdge  func(childComplexity int) int
+		DocumentEdge func(childComplexity int) int
+	}
+
 	CreateControlMeasureMappingPayload struct {
 		ControlEdge func(childComplexity int) int
 		MeasureEdge func(childComplexity int) int
 	}
 
-	CreateControlDocumentMappingPayload struct {
-		ControlEdge func(childComplexity int) int
-		DocumentEdge  func(childComplexity int) int
+	CreateDocumentPayload struct {
+		DocumentEdge        func(childComplexity int) int
+		DocumentVersionEdge func(childComplexity int) int
 	}
 
 	CreateDraftDocumentVersionPayload struct {
@@ -151,9 +156,9 @@ type ComplexityRoot struct {
 		PeopleEdge func(childComplexity int) int
 	}
 
-	CreateDocumentPayload struct {
-		DocumentEdge        func(childComplexity int) int
-		DocumentVersionEdge func(childComplexity int) int
+	CreateRiskDocumentMappingPayload struct {
+		DocumentEdge func(childComplexity int) int
+		RiskEdge     func(childComplexity int) int
 	}
 
 	CreateRiskMeasureMappingPayload struct {
@@ -163,11 +168,6 @@ type ComplexityRoot struct {
 
 	CreateRiskPayload struct {
 		RiskEdge func(childComplexity int) int
-	}
-
-	CreateRiskDocumentMappingPayload struct {
-		DocumentEdge func(childComplexity int) int
-		RiskEdge   func(childComplexity int) int
 	}
 
 	CreateTaskPayload struct {
@@ -182,14 +182,18 @@ type ComplexityRoot struct {
 		VendorRiskAssessmentEdge func(childComplexity int) int
 	}
 
+	DeleteControlDocumentMappingPayload struct {
+		DeletedControlID  func(childComplexity int) int
+		DeletedDocumentID func(childComplexity int) int
+	}
+
 	DeleteControlMeasureMappingPayload struct {
 		DeletedControlID func(childComplexity int) int
 		DeletedMeasureID func(childComplexity int) int
 	}
 
-	DeleteControlDocumentMappingPayload struct {
-		DeletedControlID func(childComplexity int) int
-		DeletedDocumentID  func(childComplexity int) int
+	DeleteDocumentPayload struct {
+		DeletedDocumentID func(childComplexity int) int
 	}
 
 	DeleteEvidencePayload struct {
@@ -212,8 +216,9 @@ type ComplexityRoot struct {
 		DeletedPeopleID func(childComplexity int) int
 	}
 
-	DeleteDocumentPayload struct {
+	DeleteRiskDocumentMappingPayload struct {
 		DeletedDocumentID func(childComplexity int) int
+		DeletedRiskID     func(childComplexity int) int
 	}
 
 	DeleteRiskMeasureMappingPayload struct {
@@ -223,11 +228,6 @@ type ComplexityRoot struct {
 
 	DeleteRiskPayload struct {
 		DeletedRiskID func(childComplexity int) int
-	}
-
-	DeleteRiskDocumentMappingPayload struct {
-		DeletedDocumentID func(childComplexity int) int
-		DeletedRiskID   func(childComplexity int) int
 	}
 
 	DeleteTaskPayload struct {
@@ -240,6 +240,76 @@ type ComplexityRoot struct {
 
 	DeleteVendorPayload struct {
 		DeletedVendorID func(childComplexity int) int
+	}
+
+	Document struct {
+		Controls                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) int
+		CreatedAt               func(childComplexity int) int
+		CurrentPublishedVersion func(childComplexity int) int
+		Description             func(childComplexity int) int
+		DocumentType            func(childComplexity int) int
+		ID                      func(childComplexity int) int
+		Organization            func(childComplexity int) int
+		Owner                   func(childComplexity int) int
+		Title                   func(childComplexity int) int
+		UpdatedAt               func(childComplexity int) int
+		Versions                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) int
+	}
+
+	DocumentConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	DocumentEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	DocumentVersion struct {
+		Changelog   func(childComplexity int) int
+		Content     func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		Document    func(childComplexity int) int
+		ID          func(childComplexity int) int
+		PublishedAt func(childComplexity int) int
+		PublishedBy func(childComplexity int) int
+		Signatures  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) int
+		Status      func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
+		Version     func(childComplexity int) int
+	}
+
+	DocumentVersionConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	DocumentVersionEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	DocumentVersionSignature struct {
+		CreatedAt       func(childComplexity int) int
+		DocumentVersion func(childComplexity int) int
+		ID              func(childComplexity int) int
+		RequestedAt     func(childComplexity int) int
+		RequestedBy     func(childComplexity int) int
+		SignedAt        func(childComplexity int) int
+		SignedBy        func(childComplexity int) int
+		State           func(childComplexity int) int
+		UpdatedAt       func(childComplexity int) int
+	}
+
+	DocumentVersionSignatureConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	DocumentVersionSignatureEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Evidence struct {
@@ -336,31 +406,31 @@ type ComplexityRoot struct {
 		AssessVendor                 func(childComplexity int, input types.AssessVendorInput) int
 		AssignTask                   func(childComplexity int, input types.AssignTaskInput) int
 		ConfirmEmail                 func(childComplexity int, input types.ConfirmEmailInput) int
+		CreateControlDocumentMapping func(childComplexity int, input types.CreateControlDocumentMappingInput) int
 		CreateControlMeasureMapping  func(childComplexity int, input types.CreateControlMeasureMappingInput) int
-		CreateControlDocumentMapping   func(childComplexity int, input types.CreateControlDocumentMappingInput) int
-		CreateDraftDocumentVersion     func(childComplexity int, input types.CreateDraftDocumentVersionInput) int
+		CreateDocument               func(childComplexity int, input types.CreateDocumentInput) int
+		CreateDraftDocumentVersion   func(childComplexity int, input types.CreateDraftDocumentVersionInput) int
 		CreateFramework              func(childComplexity int, input types.CreateFrameworkInput) int
 		CreateMeasure                func(childComplexity int, input types.CreateMeasureInput) int
 		CreateOrganization           func(childComplexity int, input types.CreateOrganizationInput) int
 		CreatePeople                 func(childComplexity int, input types.CreatePeopleInput) int
-		CreateDocument                 func(childComplexity int, input types.CreateDocumentInput) int
 		CreateRisk                   func(childComplexity int, input types.CreateRiskInput) int
+		CreateRiskDocumentMapping    func(childComplexity int, input types.CreateRiskDocumentMappingInput) int
 		CreateRiskMeasureMapping     func(childComplexity int, input types.CreateRiskMeasureMappingInput) int
-		CreateRiskDocumentMapping      func(childComplexity int, input types.CreateRiskDocumentMappingInput) int
 		CreateTask                   func(childComplexity int, input types.CreateTaskInput) int
 		CreateVendor                 func(childComplexity int, input types.CreateVendorInput) int
 		CreateVendorRiskAssessment   func(childComplexity int, input types.CreateVendorRiskAssessmentInput) int
+		DeleteControlDocumentMapping func(childComplexity int, input types.DeleteControlDocumentMappingInput) int
 		DeleteControlMeasureMapping  func(childComplexity int, input types.DeleteControlMeasureMappingInput) int
-		DeleteControlDocumentMapping   func(childComplexity int, input types.DeleteControlDocumentMappingInput) int
+		DeleteDocument               func(childComplexity int, input types.DeleteDocumentInput) int
 		DeleteEvidence               func(childComplexity int, input types.DeleteEvidenceInput) int
 		DeleteFramework              func(childComplexity int, input types.DeleteFrameworkInput) int
 		DeleteMeasure                func(childComplexity int, input types.DeleteMeasureInput) int
 		DeleteOrganization           func(childComplexity int, input types.DeleteOrganizationInput) int
 		DeletePeople                 func(childComplexity int, input types.DeletePeopleInput) int
-		DeleteDocument                 func(childComplexity int, input types.DeleteDocumentInput) int
 		DeleteRisk                   func(childComplexity int, input types.DeleteRiskInput) int
+		DeleteRiskDocumentMapping    func(childComplexity int, input types.DeleteRiskDocumentMappingInput) int
 		DeleteRiskMeasureMapping     func(childComplexity int, input types.DeleteRiskMeasureMappingInput) int
-		DeleteRiskDocumentMapping      func(childComplexity int, input types.DeleteRiskDocumentMappingInput) int
 		DeleteTask                   func(childComplexity int, input types.DeleteTaskInput) int
 		DeleteVendor                 func(childComplexity int, input types.DeleteVendorInput) int
 		DeleteVendorComplianceReport func(childComplexity int, input types.DeleteVendorComplianceReportInput) int
@@ -369,17 +439,18 @@ type ComplexityRoot struct {
 		ImportFramework              func(childComplexity int, input types.ImportFrameworkInput) int
 		ImportMeasure                func(childComplexity int, input types.ImportMeasureInput) int
 		InviteUser                   func(childComplexity int, input types.InviteUserInput) int
-		PublishDocumentVersion         func(childComplexity int, input types.PublishDocumentVersionInput) int
+		PublishDocumentVersion       func(childComplexity int, input types.PublishDocumentVersionInput) int
 		RemoveUser                   func(childComplexity int, input types.RemoveUserInput) int
 		RequestEvidence              func(childComplexity int, input types.RequestEvidenceInput) int
 		RequestSignature             func(childComplexity int, input types.RequestSignatureInput) int
 		SendSigningNotifications     func(childComplexity int, input types.SendSigningNotificationsInput) int
 		UnassignTask                 func(childComplexity int, input types.UnassignTaskInput) int
+		UpdateDocument               func(childComplexity int, input types.UpdateDocumentInput) int
+		UpdateDocumentVersion        func(childComplexity int, input types.UpdateDocumentVersionInput) int
 		UpdateFramework              func(childComplexity int, input types.UpdateFrameworkInput) int
 		UpdateMeasure                func(childComplexity int, input types.UpdateMeasureInput) int
 		UpdateOrganization           func(childComplexity int, input types.UpdateOrganizationInput) int
 		UpdatePeople                 func(childComplexity int, input types.UpdatePeopleInput) int
-		UpdateDocumentVersion          func(childComplexity int, input types.UpdateDocumentVersionInput) int
 		UpdateRisk                   func(childComplexity int, input types.UpdateRiskInput) int
 		UpdateTask                   func(childComplexity int, input types.UpdateTaskInput) int
 		UpdateVendor                 func(childComplexity int, input types.UpdateVendorInput) int
@@ -391,13 +462,13 @@ type ComplexityRoot struct {
 	Organization struct {
 		Connectors func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
 		CreatedAt  func(childComplexity int) int
+		Documents  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) int
 		Frameworks func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
 		ID         func(childComplexity int) int
 		LogoURL    func(childComplexity int) int
 		Measures   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) int
 		Name       func(childComplexity int) int
 		Peoples    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy) int
-		Documents   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) int
 		Risks      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy) int
 		Tasks      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
 		UpdatedAt  func(childComplexity int) int
@@ -445,75 +516,6 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	Document struct {
-		Controls                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) int
-		CreatedAt               func(childComplexity int) int
-		CurrentPublishedVersion func(childComplexity int) int
-		Description             func(childComplexity int) int
-		ID                      func(childComplexity int) int
-		Organization            func(childComplexity int) int
-		Owner                   func(childComplexity int) int
-		Title                   func(childComplexity int) int
-		UpdatedAt               func(childComplexity int) int
-		Versions                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) int
-	}
-
-	DocumentConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
-	}
-
-	DocumentEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
-	DocumentVersion struct {
-		Changelog   func(childComplexity int) int
-		Content     func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Document      func(childComplexity int) int
-		PublishedAt func(childComplexity int) int
-		PublishedBy func(childComplexity int) int
-		Signatures  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) int
-		Status      func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
-		Version     func(childComplexity int) int
-	}
-
-	DocumentVersionConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
-	}
-
-	DocumentVersionEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
-	DocumentVersionSignature struct {
-		CreatedAt     func(childComplexity int) int
-		ID            func(childComplexity int) int
-		DocumentVersion func(childComplexity int) int
-		RequestedAt   func(childComplexity int) int
-		RequestedBy   func(childComplexity int) int
-		SignedAt      func(childComplexity int) int
-		SignedBy      func(childComplexity int) int
-		State         func(childComplexity int) int
-		UpdatedAt     func(childComplexity int) int
-	}
-
-	DocumentVersionSignatureConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
-	}
-
-	DocumentVersionSignatureEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
 	PublishDocumentVersionPayload struct {
 		Document        func(childComplexity int) int
 		DocumentVersion func(childComplexity int) int
@@ -541,6 +543,7 @@ type ComplexityRoot struct {
 		Controls           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) int
 		CreatedAt          func(childComplexity int) int
 		Description        func(childComplexity int) int
+		Documents          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) int
 		ID                 func(childComplexity int) int
 		InherentImpact     func(childComplexity int) int
 		InherentLikelihood func(childComplexity int) int
@@ -550,7 +553,6 @@ type ComplexityRoot struct {
 		Note               func(childComplexity int) int
 		Organization       func(childComplexity int) int
 		Owner              func(childComplexity int) int
-		Documents           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) int
 		ResidualImpact     func(childComplexity int) int
 		ResidualLikelihood func(childComplexity int) int
 		ResidualRiskScore  func(childComplexity int) int
@@ -605,6 +607,14 @@ type ComplexityRoot struct {
 		Task func(childComplexity int) int
 	}
 
+	UpdateDocumentPayload struct {
+		Document func(childComplexity int) int
+	}
+
+	UpdateDocumentVersionPayload struct {
+		DocumentVersion func(childComplexity int) int
+	}
+
 	UpdateFrameworkPayload struct {
 		Framework func(childComplexity int) int
 	}
@@ -619,14 +629,6 @@ type ComplexityRoot struct {
 
 	UpdatePeoplePayload struct {
 		People func(childComplexity int) int
-	}
-
-	UpdateDocumentPayload struct {
-		Document func(childComplexity int) int
-	}
-
-	UpdateDocumentVersionPayload struct {
-		DocumentVersion func(childComplexity int) int
 	}
 
 	UpdateRiskPayload struct {
@@ -766,6 +768,25 @@ type ControlResolver interface {
 	Measures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error)
 	Documents(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.DocumentConnection, error)
 }
+type DocumentResolver interface {
+	Owner(ctx context.Context, obj *types.Document) (*types.People, error)
+	Organization(ctx context.Context, obj *types.Document) (*types.Organization, error)
+	Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error)
+	Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error)
+}
+type DocumentVersionResolver interface {
+	Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error)
+
+	Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) (*types.DocumentVersionSignatureConnection, error)
+	PublishedBy(ctx context.Context, obj *types.DocumentVersion) (*types.People, error)
+}
+type DocumentVersionSignatureResolver interface {
+	DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error)
+
+	SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error)
+
+	RequestedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error)
+}
 type EvidenceResolver interface {
 	FileURL(ctx context.Context, obj *types.Evidence) (*string, error)
 
@@ -827,6 +848,7 @@ type MutationResolver interface {
 	UploadVendorComplianceReport(ctx context.Context, input types.UploadVendorComplianceReportInput) (*types.UploadVendorComplianceReportPayload, error)
 	DeleteVendorComplianceReport(ctx context.Context, input types.DeleteVendorComplianceReportInput) (*types.DeleteVendorComplianceReportPayload, error)
 	CreateDocument(ctx context.Context, input types.CreateDocumentInput) (*types.CreateDocumentPayload, error)
+	UpdateDocument(ctx context.Context, input types.UpdateDocumentInput) (*types.UpdateDocumentPayload, error)
 	DeleteDocument(ctx context.Context, input types.DeleteDocumentInput) (*types.DeleteDocumentPayload, error)
 	PublishDocumentVersion(ctx context.Context, input types.PublishDocumentVersionInput) (*types.PublishDocumentVersionPayload, error)
 	CreateDraftDocumentVersion(ctx context.Context, input types.CreateDraftDocumentVersionInput) (*types.CreateDraftDocumentVersionPayload, error)
@@ -848,25 +870,6 @@ type OrganizationResolver interface {
 	Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error)
 	Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy) (*types.RiskConnection, error)
 	Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error)
-}
-type DocumentResolver interface {
-	Owner(ctx context.Context, obj *types.Document) (*types.People, error)
-	Organization(ctx context.Context, obj *types.Document) (*types.Organization, error)
-	Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error)
-	Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error)
-}
-type DocumentVersionResolver interface {
-	Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error)
-
-	Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) (*types.DocumentVersionSignatureConnection, error)
-	PublishedBy(ctx context.Context, obj *types.DocumentVersion) (*types.People, error)
-}
-type DocumentVersionSignatureResolver interface {
-	DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error)
-
-	SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error)
-
-	RequestedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
@@ -1026,6 +1029,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Control.Description(childComplexity), true
 
+	case "Control.documents":
+		if e.complexity.Control.Documents == nil {
+			break
+		}
+
+		args, err := ec.field_Control_documents_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Control.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy)), true
+
 	case "Control.framework":
 		if e.complexity.Control.Framework == nil {
 			break
@@ -1058,18 +1073,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Control.Name(childComplexity), true
-
-	case "Control.documents":
-		if e.complexity.Control.Documents == nil {
-			break
-		}
-
-		args, err := ec.field_Control_documents_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Control.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy)), true
 
 	case "Control.referenceId":
 		if e.complexity.Control.ReferenceID == nil {
@@ -1113,6 +1116,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ControlEdge.Node(childComplexity), true
 
+	case "CreateControlDocumentMappingPayload.controlEdge":
+		if e.complexity.CreateControlDocumentMappingPayload.ControlEdge == nil {
+			break
+		}
+
+		return e.complexity.CreateControlDocumentMappingPayload.ControlEdge(childComplexity), true
+
+	case "CreateControlDocumentMappingPayload.documentEdge":
+		if e.complexity.CreateControlDocumentMappingPayload.DocumentEdge == nil {
+			break
+		}
+
+		return e.complexity.CreateControlDocumentMappingPayload.DocumentEdge(childComplexity), true
+
 	case "CreateControlMeasureMappingPayload.controlEdge":
 		if e.complexity.CreateControlMeasureMappingPayload.ControlEdge == nil {
 			break
@@ -1127,19 +1144,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateControlMeasureMappingPayload.MeasureEdge(childComplexity), true
 
-	case "CreateControlDocumentMappingPayload.controlEdge":
-		if e.complexity.CreateControlDocumentMappingPayload.ControlEdge == nil {
+	case "CreateDocumentPayload.documentEdge":
+		if e.complexity.CreateDocumentPayload.DocumentEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateControlDocumentMappingPayload.ControlEdge(childComplexity), true
+		return e.complexity.CreateDocumentPayload.DocumentEdge(childComplexity), true
 
-	case "CreateControlDocumentMappingPayload.documentEdge":
-		if e.complexity.CreateControlDocumentMappingPayload.DocumentEdge == nil {
+	case "CreateDocumentPayload.documentVersionEdge":
+		if e.complexity.CreateDocumentPayload.DocumentVersionEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateControlDocumentMappingPayload.DocumentEdge(childComplexity), true
+		return e.complexity.CreateDocumentPayload.DocumentVersionEdge(childComplexity), true
 
 	case "CreateDraftDocumentVersionPayload.documentVersionEdge":
 		if e.complexity.CreateDraftDocumentVersionPayload.DocumentVersionEdge == nil {
@@ -1183,19 +1200,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreatePeoplePayload.PeopleEdge(childComplexity), true
 
-	case "CreateDocumentPayload.documentEdge":
-		if e.complexity.CreateDocumentPayload.DocumentEdge == nil {
+	case "CreateRiskDocumentMappingPayload.documentEdge":
+		if e.complexity.CreateRiskDocumentMappingPayload.DocumentEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateDocumentPayload.DocumentEdge(childComplexity), true
+		return e.complexity.CreateRiskDocumentMappingPayload.DocumentEdge(childComplexity), true
 
-	case "CreateDocumentPayload.documentVersionEdge":
-		if e.complexity.CreateDocumentPayload.DocumentVersionEdge == nil {
+	case "CreateRiskDocumentMappingPayload.riskEdge":
+		if e.complexity.CreateRiskDocumentMappingPayload.RiskEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateDocumentPayload.DocumentVersionEdge(childComplexity), true
+		return e.complexity.CreateRiskDocumentMappingPayload.RiskEdge(childComplexity), true
 
 	case "CreateRiskMeasureMappingPayload.measureEdge":
 		if e.complexity.CreateRiskMeasureMappingPayload.MeasureEdge == nil {
@@ -1218,20 +1235,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateRiskPayload.RiskEdge(childComplexity), true
 
-	case "CreateRiskDocumentMappingPayload.documentEdge":
-		if e.complexity.CreateRiskDocumentMappingPayload.DocumentEdge == nil {
-			break
-		}
-
-		return e.complexity.CreateRiskDocumentMappingPayload.DocumentEdge(childComplexity), true
-
-	case "CreateRiskDocumentMappingPayload.riskEdge":
-		if e.complexity.CreateRiskDocumentMappingPayload.RiskEdge == nil {
-			break
-		}
-
-		return e.complexity.CreateRiskDocumentMappingPayload.RiskEdge(childComplexity), true
-
 	case "CreateTaskPayload.taskEdge":
 		if e.complexity.CreateTaskPayload.TaskEdge == nil {
 			break
@@ -1253,6 +1256,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateVendorRiskAssessmentPayload.VendorRiskAssessmentEdge(childComplexity), true
 
+	case "DeleteControlDocumentMappingPayload.deletedControlId":
+		if e.complexity.DeleteControlDocumentMappingPayload.DeletedControlID == nil {
+			break
+		}
+
+		return e.complexity.DeleteControlDocumentMappingPayload.DeletedControlID(childComplexity), true
+
+	case "DeleteControlDocumentMappingPayload.deletedDocumentId":
+		if e.complexity.DeleteControlDocumentMappingPayload.DeletedDocumentID == nil {
+			break
+		}
+
+		return e.complexity.DeleteControlDocumentMappingPayload.DeletedDocumentID(childComplexity), true
+
 	case "DeleteControlMeasureMappingPayload.deletedControlId":
 		if e.complexity.DeleteControlMeasureMappingPayload.DeletedControlID == nil {
 			break
@@ -1267,19 +1284,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeleteControlMeasureMappingPayload.DeletedMeasureID(childComplexity), true
 
-	case "DeleteControlDocumentMappingPayload.deletedControlId":
-		if e.complexity.DeleteControlDocumentMappingPayload.DeletedControlID == nil {
+	case "DeleteDocumentPayload.deletedDocumentId":
+		if e.complexity.DeleteDocumentPayload.DeletedDocumentID == nil {
 			break
 		}
 
-		return e.complexity.DeleteControlDocumentMappingPayload.DeletedControlID(childComplexity), true
-
-	case "DeleteControlDocumentMappingPayload.deletedDocumentId":
-		if e.complexity.DeleteControlDocumentMappingPayload.DeletedDocumentID == nil {
-			break
-		}
-
-		return e.complexity.DeleteControlDocumentMappingPayload.DeletedDocumentID(childComplexity), true
+		return e.complexity.DeleteDocumentPayload.DeletedDocumentID(childComplexity), true
 
 	case "DeleteEvidencePayload.deletedEvidenceId":
 		if e.complexity.DeleteEvidencePayload.DeletedEvidenceID == nil {
@@ -1316,12 +1326,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeletePeoplePayload.DeletedPeopleID(childComplexity), true
 
-	case "DeleteDocumentPayload.deletedDocumentId":
-		if e.complexity.DeleteDocumentPayload.DeletedDocumentID == nil {
+	case "DeleteRiskDocumentMappingPayload.deletedDocumentId":
+		if e.complexity.DeleteRiskDocumentMappingPayload.DeletedDocumentID == nil {
 			break
 		}
 
-		return e.complexity.DeleteDocumentPayload.DeletedDocumentID(childComplexity), true
+		return e.complexity.DeleteRiskDocumentMappingPayload.DeletedDocumentID(childComplexity), true
+
+	case "DeleteRiskDocumentMappingPayload.deletedRiskId":
+		if e.complexity.DeleteRiskDocumentMappingPayload.DeletedRiskID == nil {
+			break
+		}
+
+		return e.complexity.DeleteRiskDocumentMappingPayload.DeletedRiskID(childComplexity), true
 
 	case "DeleteRiskMeasureMappingPayload.deletedMeasureId":
 		if e.complexity.DeleteRiskMeasureMappingPayload.DeletedMeasureID == nil {
@@ -1344,20 +1361,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeleteRiskPayload.DeletedRiskID(childComplexity), true
 
-	case "DeleteRiskDocumentMappingPayload.deletedDocumentId":
-		if e.complexity.DeleteRiskDocumentMappingPayload.DeletedDocumentID == nil {
-			break
-		}
-
-		return e.complexity.DeleteRiskDocumentMappingPayload.DeletedDocumentID(childComplexity), true
-
-	case "DeleteRiskDocumentMappingPayload.deletedRiskId":
-		if e.complexity.DeleteRiskDocumentMappingPayload.DeletedRiskID == nil {
-			break
-		}
-
-		return e.complexity.DeleteRiskDocumentMappingPayload.DeletedRiskID(childComplexity), true
-
 	case "DeleteTaskPayload.deletedTaskId":
 		if e.complexity.DeleteTaskPayload.DeletedTaskID == nil {
 			break
@@ -1378,6 +1381,322 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteVendorPayload.DeletedVendorID(childComplexity), true
+
+	case "Document.controls":
+		if e.complexity.Document.Controls == nil {
+			break
+		}
+
+		args, err := ec.field_Document_controls_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Document.Controls(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ControlOrderBy)), true
+
+	case "Document.createdAt":
+		if e.complexity.Document.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Document.CreatedAt(childComplexity), true
+
+	case "Document.currentPublishedVersion":
+		if e.complexity.Document.CurrentPublishedVersion == nil {
+			break
+		}
+
+		return e.complexity.Document.CurrentPublishedVersion(childComplexity), true
+
+	case "Document.description":
+		if e.complexity.Document.Description == nil {
+			break
+		}
+
+		return e.complexity.Document.Description(childComplexity), true
+
+	case "Document.documentType":
+		if e.complexity.Document.DocumentType == nil {
+			break
+		}
+
+		return e.complexity.Document.DocumentType(childComplexity), true
+
+	case "Document.id":
+		if e.complexity.Document.ID == nil {
+			break
+		}
+
+		return e.complexity.Document.ID(childComplexity), true
+
+	case "Document.organization":
+		if e.complexity.Document.Organization == nil {
+			break
+		}
+
+		return e.complexity.Document.Organization(childComplexity), true
+
+	case "Document.owner":
+		if e.complexity.Document.Owner == nil {
+			break
+		}
+
+		return e.complexity.Document.Owner(childComplexity), true
+
+	case "Document.title":
+		if e.complexity.Document.Title == nil {
+			break
+		}
+
+		return e.complexity.Document.Title(childComplexity), true
+
+	case "Document.updatedAt":
+		if e.complexity.Document.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Document.UpdatedAt(childComplexity), true
+
+	case "Document.versions":
+		if e.complexity.Document.Versions == nil {
+			break
+		}
+
+		args, err := ec.field_Document_versions_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Document.Versions(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentVersionOrderBy), args["filter"].(*types.DocumentVersionFilter)), true
+
+	case "DocumentConnection.edges":
+		if e.complexity.DocumentConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.DocumentConnection.Edges(childComplexity), true
+
+	case "DocumentConnection.pageInfo":
+		if e.complexity.DocumentConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.DocumentConnection.PageInfo(childComplexity), true
+
+	case "DocumentEdge.cursor":
+		if e.complexity.DocumentEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.DocumentEdge.Cursor(childComplexity), true
+
+	case "DocumentEdge.node":
+		if e.complexity.DocumentEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.DocumentEdge.Node(childComplexity), true
+
+	case "DocumentVersion.changelog":
+		if e.complexity.DocumentVersion.Changelog == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.Changelog(childComplexity), true
+
+	case "DocumentVersion.content":
+		if e.complexity.DocumentVersion.Content == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.Content(childComplexity), true
+
+	case "DocumentVersion.createdAt":
+		if e.complexity.DocumentVersion.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.CreatedAt(childComplexity), true
+
+	case "DocumentVersion.document":
+		if e.complexity.DocumentVersion.Document == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.Document(childComplexity), true
+
+	case "DocumentVersion.id":
+		if e.complexity.DocumentVersion.ID == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.ID(childComplexity), true
+
+	case "DocumentVersion.publishedAt":
+		if e.complexity.DocumentVersion.PublishedAt == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.PublishedAt(childComplexity), true
+
+	case "DocumentVersion.publishedBy":
+		if e.complexity.DocumentVersion.PublishedBy == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.PublishedBy(childComplexity), true
+
+	case "DocumentVersion.signatures":
+		if e.complexity.DocumentVersion.Signatures == nil {
+			break
+		}
+
+		args, err := ec.field_DocumentVersion_signatures_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.DocumentVersion.Signatures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentVersionSignatureOrder)), true
+
+	case "DocumentVersion.status":
+		if e.complexity.DocumentVersion.Status == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.Status(childComplexity), true
+
+	case "DocumentVersion.updatedAt":
+		if e.complexity.DocumentVersion.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.UpdatedAt(childComplexity), true
+
+	case "DocumentVersion.version":
+		if e.complexity.DocumentVersion.Version == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.Version(childComplexity), true
+
+	case "DocumentVersionConnection.edges":
+		if e.complexity.DocumentVersionConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionConnection.Edges(childComplexity), true
+
+	case "DocumentVersionConnection.pageInfo":
+		if e.complexity.DocumentVersionConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionConnection.PageInfo(childComplexity), true
+
+	case "DocumentVersionEdge.cursor":
+		if e.complexity.DocumentVersionEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionEdge.Cursor(childComplexity), true
+
+	case "DocumentVersionEdge.node":
+		if e.complexity.DocumentVersionEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionEdge.Node(childComplexity), true
+
+	case "DocumentVersionSignature.createdAt":
+		if e.complexity.DocumentVersionSignature.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignature.CreatedAt(childComplexity), true
+
+	case "DocumentVersionSignature.documentVersion":
+		if e.complexity.DocumentVersionSignature.DocumentVersion == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignature.DocumentVersion(childComplexity), true
+
+	case "DocumentVersionSignature.id":
+		if e.complexity.DocumentVersionSignature.ID == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignature.ID(childComplexity), true
+
+	case "DocumentVersionSignature.requestedAt":
+		if e.complexity.DocumentVersionSignature.RequestedAt == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignature.RequestedAt(childComplexity), true
+
+	case "DocumentVersionSignature.requestedBy":
+		if e.complexity.DocumentVersionSignature.RequestedBy == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignature.RequestedBy(childComplexity), true
+
+	case "DocumentVersionSignature.signedAt":
+		if e.complexity.DocumentVersionSignature.SignedAt == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignature.SignedAt(childComplexity), true
+
+	case "DocumentVersionSignature.signedBy":
+		if e.complexity.DocumentVersionSignature.SignedBy == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignature.SignedBy(childComplexity), true
+
+	case "DocumentVersionSignature.state":
+		if e.complexity.DocumentVersionSignature.State == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignature.State(childComplexity), true
+
+	case "DocumentVersionSignature.updatedAt":
+		if e.complexity.DocumentVersionSignature.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignature.UpdatedAt(childComplexity), true
+
+	case "DocumentVersionSignatureConnection.edges":
+		if e.complexity.DocumentVersionSignatureConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignatureConnection.Edges(childComplexity), true
+
+	case "DocumentVersionSignatureConnection.pageInfo":
+		if e.complexity.DocumentVersionSignatureConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignatureConnection.PageInfo(childComplexity), true
+
+	case "DocumentVersionSignatureEdge.cursor":
+		if e.complexity.DocumentVersionSignatureEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignatureEdge.Cursor(childComplexity), true
+
+	case "DocumentVersionSignatureEdge.node":
+		if e.complexity.DocumentVersionSignatureEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersionSignatureEdge.Node(childComplexity), true
 
 	case "Evidence.createdAt":
 		if e.complexity.Evidence.CreatedAt == nil {
@@ -1776,6 +2095,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.ConfirmEmail(childComplexity, args["input"].(types.ConfirmEmailInput)), true
 
+	case "Mutation.createControlDocumentMapping":
+		if e.complexity.Mutation.CreateControlDocumentMapping == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createControlDocumentMapping_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateControlDocumentMapping(childComplexity, args["input"].(types.CreateControlDocumentMappingInput)), true
+
 	case "Mutation.createControlMeasureMapping":
 		if e.complexity.Mutation.CreateControlMeasureMapping == nil {
 			break
@@ -1788,17 +2119,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreateControlMeasureMapping(childComplexity, args["input"].(types.CreateControlMeasureMappingInput)), true
 
-	case "Mutation.createControlDocumentMapping":
-		if e.complexity.Mutation.CreateControlDocumentMapping == nil {
+	case "Mutation.createDocument":
+		if e.complexity.Mutation.CreateDocument == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createControlDocumentMapping_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_createDocument_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateControlDocumentMapping(childComplexity, args["input"].(types.CreateControlDocumentMappingInput)), true
+		return e.complexity.Mutation.CreateDocument(childComplexity, args["input"].(types.CreateDocumentInput)), true
 
 	case "Mutation.createDraftDocumentVersion":
 		if e.complexity.Mutation.CreateDraftDocumentVersion == nil {
@@ -1860,18 +2191,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreatePeople(childComplexity, args["input"].(types.CreatePeopleInput)), true
 
-	case "Mutation.createDocument":
-		if e.complexity.Mutation.CreateDocument == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createDocument_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateDocument(childComplexity, args["input"].(types.CreateDocumentInput)), true
-
 	case "Mutation.createRisk":
 		if e.complexity.Mutation.CreateRisk == nil {
 			break
@@ -1884,18 +2203,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreateRisk(childComplexity, args["input"].(types.CreateRiskInput)), true
 
-	case "Mutation.createRiskMeasureMapping":
-		if e.complexity.Mutation.CreateRiskMeasureMapping == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createRiskMeasureMapping_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateRiskMeasureMapping(childComplexity, args["input"].(types.CreateRiskMeasureMappingInput)), true
-
 	case "Mutation.createRiskDocumentMapping":
 		if e.complexity.Mutation.CreateRiskDocumentMapping == nil {
 			break
@@ -1907,6 +2214,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.CreateRiskDocumentMapping(childComplexity, args["input"].(types.CreateRiskDocumentMappingInput)), true
+
+	case "Mutation.createRiskMeasureMapping":
+		if e.complexity.Mutation.CreateRiskMeasureMapping == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createRiskMeasureMapping_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateRiskMeasureMapping(childComplexity, args["input"].(types.CreateRiskMeasureMappingInput)), true
 
 	case "Mutation.createTask":
 		if e.complexity.Mutation.CreateTask == nil {
@@ -1944,6 +2263,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreateVendorRiskAssessment(childComplexity, args["input"].(types.CreateVendorRiskAssessmentInput)), true
 
+	case "Mutation.deleteControlDocumentMapping":
+		if e.complexity.Mutation.DeleteControlDocumentMapping == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteControlDocumentMapping_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteControlDocumentMapping(childComplexity, args["input"].(types.DeleteControlDocumentMappingInput)), true
+
 	case "Mutation.deleteControlMeasureMapping":
 		if e.complexity.Mutation.DeleteControlMeasureMapping == nil {
 			break
@@ -1956,17 +2287,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.DeleteControlMeasureMapping(childComplexity, args["input"].(types.DeleteControlMeasureMappingInput)), true
 
-	case "Mutation.deleteControlDocumentMapping":
-		if e.complexity.Mutation.DeleteControlDocumentMapping == nil {
+	case "Mutation.deleteDocument":
+		if e.complexity.Mutation.DeleteDocument == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteControlDocumentMapping_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_deleteDocument_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteControlDocumentMapping(childComplexity, args["input"].(types.DeleteControlDocumentMappingInput)), true
+		return e.complexity.Mutation.DeleteDocument(childComplexity, args["input"].(types.DeleteDocumentInput)), true
 
 	case "Mutation.deleteEvidence":
 		if e.complexity.Mutation.DeleteEvidence == nil {
@@ -2028,18 +2359,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.DeletePeople(childComplexity, args["input"].(types.DeletePeopleInput)), true
 
-	case "Mutation.deleteDocument":
-		if e.complexity.Mutation.DeleteDocument == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteDocument_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteDocument(childComplexity, args["input"].(types.DeleteDocumentInput)), true
-
 	case "Mutation.deleteRisk":
 		if e.complexity.Mutation.DeleteRisk == nil {
 			break
@@ -2052,18 +2371,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.DeleteRisk(childComplexity, args["input"].(types.DeleteRiskInput)), true
 
-	case "Mutation.deleteRiskMeasureMapping":
-		if e.complexity.Mutation.DeleteRiskMeasureMapping == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteRiskMeasureMapping_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteRiskMeasureMapping(childComplexity, args["input"].(types.DeleteRiskMeasureMappingInput)), true
-
 	case "Mutation.deleteRiskDocumentMapping":
 		if e.complexity.Mutation.DeleteRiskDocumentMapping == nil {
 			break
@@ -2075,6 +2382,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteRiskDocumentMapping(childComplexity, args["input"].(types.DeleteRiskDocumentMappingInput)), true
+
+	case "Mutation.deleteRiskMeasureMapping":
+		if e.complexity.Mutation.DeleteRiskMeasureMapping == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteRiskMeasureMapping_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteRiskMeasureMapping(childComplexity, args["input"].(types.DeleteRiskMeasureMappingInput)), true
 
 	case "Mutation.deleteTask":
 		if e.complexity.Mutation.DeleteTask == nil {
@@ -2244,6 +2563,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.UnassignTask(childComplexity, args["input"].(types.UnassignTaskInput)), true
 
+	case "Mutation.updateDocument":
+		if e.complexity.Mutation.UpdateDocument == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateDocument_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateDocument(childComplexity, args["input"].(types.UpdateDocumentInput)), true
+
+	case "Mutation.updateDocumentVersion":
+		if e.complexity.Mutation.UpdateDocumentVersion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateDocumentVersion_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateDocumentVersion(childComplexity, args["input"].(types.UpdateDocumentVersionInput)), true
+
 	case "Mutation.updateFramework":
 		if e.complexity.Mutation.UpdateFramework == nil {
 			break
@@ -2291,18 +2634,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdatePeople(childComplexity, args["input"].(types.UpdatePeopleInput)), true
-
-	case "Mutation.updateDocumentVersion":
-		if e.complexity.Mutation.UpdateDocumentVersion == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_updateDocumentVersion_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UpdateDocumentVersion(childComplexity, args["input"].(types.UpdateDocumentVersionInput)), true
 
 	case "Mutation.updateRisk":
 		if e.complexity.Mutation.UpdateRisk == nil {
@@ -2395,6 +2726,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Organization.CreatedAt(childComplexity), true
 
+	case "Organization.documents":
+		if e.complexity.Organization.Documents == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_documents_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy)), true
+
 	case "Organization.frameworks":
 		if e.complexity.Organization.Frameworks == nil {
 			break
@@ -2451,18 +2794,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Peoples(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.PeopleOrderBy)), true
-
-	case "Organization.documents":
-		if e.complexity.Organization.Documents == nil {
-			break
-		}
-
-		args, err := ec.field_Organization_documents_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Organization.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy)), true
 
 	case "Organization.risks":
 		if e.complexity.Organization.Risks == nil {
@@ -2673,315 +3004,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.PeopleEdge.Node(childComplexity), true
 
-	case "Document.controls":
-		if e.complexity.Document.Controls == nil {
-			break
-		}
-
-		args, err := ec.field_Document_controls_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Document.Controls(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ControlOrderBy)), true
-
-	case "Document.createdAt":
-		if e.complexity.Document.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.Document.CreatedAt(childComplexity), true
-
-	case "Document.currentPublishedVersion":
-		if e.complexity.Document.CurrentPublishedVersion == nil {
-			break
-		}
-
-		return e.complexity.Document.CurrentPublishedVersion(childComplexity), true
-
-	case "Document.description":
-		if e.complexity.Document.Description == nil {
-			break
-		}
-
-		return e.complexity.Document.Description(childComplexity), true
-
-	case "Document.id":
-		if e.complexity.Document.ID == nil {
-			break
-		}
-
-		return e.complexity.Document.ID(childComplexity), true
-
-	case "Document.organization":
-		if e.complexity.Document.Organization == nil {
-			break
-		}
-
-		return e.complexity.Document.Organization(childComplexity), true
-
-	case "Document.owner":
-		if e.complexity.Document.Owner == nil {
-			break
-		}
-
-		return e.complexity.Document.Owner(childComplexity), true
-
-	case "Document.title":
-		if e.complexity.Document.Title == nil {
-			break
-		}
-
-		return e.complexity.Document.Title(childComplexity), true
-
-	case "Document.updatedAt":
-		if e.complexity.Document.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.Document.UpdatedAt(childComplexity), true
-
-	case "Document.versions":
-		if e.complexity.Document.Versions == nil {
-			break
-		}
-
-		args, err := ec.field_Document_versions_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Document.Versions(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentVersionOrderBy), args["filter"].(*types.DocumentVersionFilter)), true
-
-	case "DocumentConnection.edges":
-		if e.complexity.DocumentConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.DocumentConnection.Edges(childComplexity), true
-
-	case "DocumentConnection.pageInfo":
-		if e.complexity.DocumentConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.DocumentConnection.PageInfo(childComplexity), true
-
-	case "DocumentEdge.cursor":
-		if e.complexity.DocumentEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.DocumentEdge.Cursor(childComplexity), true
-
-	case "DocumentEdge.node":
-		if e.complexity.DocumentEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.DocumentEdge.Node(childComplexity), true
-
-	case "DocumentVersion.changelog":
-		if e.complexity.DocumentVersion.Changelog == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersion.Changelog(childComplexity), true
-
-	case "DocumentVersion.content":
-		if e.complexity.DocumentVersion.Content == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersion.Content(childComplexity), true
-
-	case "DocumentVersion.createdAt":
-		if e.complexity.DocumentVersion.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersion.CreatedAt(childComplexity), true
-
-	case "DocumentVersion.id":
-		if e.complexity.DocumentVersion.ID == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersion.ID(childComplexity), true
-
-	case "DocumentVersion.document":
-		if e.complexity.DocumentVersion.Document == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersion.Document(childComplexity), true
-
-	case "DocumentVersion.publishedAt":
-		if e.complexity.DocumentVersion.PublishedAt == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersion.PublishedAt(childComplexity), true
-
-	case "DocumentVersion.publishedBy":
-		if e.complexity.DocumentVersion.PublishedBy == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersion.PublishedBy(childComplexity), true
-
-	case "DocumentVersion.signatures":
-		if e.complexity.DocumentVersion.Signatures == nil {
-			break
-		}
-
-		args, err := ec.field_DocumentVersion_signatures_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.DocumentVersion.Signatures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentVersionSignatureOrder)), true
-
-	case "DocumentVersion.status":
-		if e.complexity.DocumentVersion.Status == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersion.Status(childComplexity), true
-
-	case "DocumentVersion.updatedAt":
-		if e.complexity.DocumentVersion.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersion.UpdatedAt(childComplexity), true
-
-	case "DocumentVersion.version":
-		if e.complexity.DocumentVersion.Version == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersion.Version(childComplexity), true
-
-	case "DocumentVersionConnection.edges":
-		if e.complexity.DocumentVersionConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionConnection.Edges(childComplexity), true
-
-	case "DocumentVersionConnection.pageInfo":
-		if e.complexity.DocumentVersionConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionConnection.PageInfo(childComplexity), true
-
-	case "DocumentVersionEdge.cursor":
-		if e.complexity.DocumentVersionEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionEdge.Cursor(childComplexity), true
-
-	case "DocumentVersionEdge.node":
-		if e.complexity.DocumentVersionEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionEdge.Node(childComplexity), true
-
-	case "DocumentVersionSignature.createdAt":
-		if e.complexity.DocumentVersionSignature.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignature.CreatedAt(childComplexity), true
-
-	case "DocumentVersionSignature.id":
-		if e.complexity.DocumentVersionSignature.ID == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignature.ID(childComplexity), true
-
-	case "DocumentVersionSignature.documentVersion":
-		if e.complexity.DocumentVersionSignature.DocumentVersion == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignature.DocumentVersion(childComplexity), true
-
-	case "DocumentVersionSignature.requestedAt":
-		if e.complexity.DocumentVersionSignature.RequestedAt == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignature.RequestedAt(childComplexity), true
-
-	case "DocumentVersionSignature.requestedBy":
-		if e.complexity.DocumentVersionSignature.RequestedBy == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignature.RequestedBy(childComplexity), true
-
-	case "DocumentVersionSignature.signedAt":
-		if e.complexity.DocumentVersionSignature.SignedAt == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignature.SignedAt(childComplexity), true
-
-	case "DocumentVersionSignature.signedBy":
-		if e.complexity.DocumentVersionSignature.SignedBy == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignature.SignedBy(childComplexity), true
-
-	case "DocumentVersionSignature.state":
-		if e.complexity.DocumentVersionSignature.State == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignature.State(childComplexity), true
-
-	case "DocumentVersionSignature.updatedAt":
-		if e.complexity.DocumentVersionSignature.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignature.UpdatedAt(childComplexity), true
-
-	case "DocumentVersionSignatureConnection.edges":
-		if e.complexity.DocumentVersionSignatureConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignatureConnection.Edges(childComplexity), true
-
-	case "DocumentVersionSignatureConnection.pageInfo":
-		if e.complexity.DocumentVersionSignatureConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignatureConnection.PageInfo(childComplexity), true
-
-	case "DocumentVersionSignatureEdge.cursor":
-		if e.complexity.DocumentVersionSignatureEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignatureEdge.Cursor(childComplexity), true
-
-	case "DocumentVersionSignatureEdge.node":
-		if e.complexity.DocumentVersionSignatureEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignatureEdge.Node(childComplexity), true
-
 	case "PublishDocumentVersionPayload.document":
 		if e.complexity.PublishDocumentVersionPayload.Document == nil {
 			break
@@ -3069,6 +3091,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Risk.Description(childComplexity), true
 
+	case "Risk.documents":
+		if e.complexity.Risk.Documents == nil {
+			break
+		}
+
+		args, err := ec.field_Risk_documents_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Risk.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy)), true
+
 	case "Risk.id":
 		if e.complexity.Risk.ID == nil {
 			break
@@ -3136,18 +3170,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Risk.Owner(childComplexity), true
-
-	case "Risk.documents":
-		if e.complexity.Risk.Documents == nil {
-			break
-		}
-
-		args, err := ec.field_Risk_documents_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Risk.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy)), true
 
 	case "Risk.residualImpact":
 		if e.complexity.Risk.ResidualImpact == nil {
@@ -3350,6 +3372,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UnassignTaskPayload.Task(childComplexity), true
 
+	case "UpdateDocumentPayload.document":
+		if e.complexity.UpdateDocumentPayload.Document == nil {
+			break
+		}
+
+		return e.complexity.UpdateDocumentPayload.Document(childComplexity), true
+
+	case "UpdateDocumentVersionPayload.documentVersion":
+		if e.complexity.UpdateDocumentVersionPayload.DocumentVersion == nil {
+			break
+		}
+
+		return e.complexity.UpdateDocumentVersionPayload.DocumentVersion(childComplexity), true
+
 	case "UpdateFrameworkPayload.framework":
 		if e.complexity.UpdateFrameworkPayload.Framework == nil {
 			break
@@ -3377,20 +3413,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UpdatePeoplePayload.People(childComplexity), true
-
-	case "UpdateDocumentPayload.document":
-		if e.complexity.UpdateDocumentPayload.Document == nil {
-			break
-		}
-
-		return e.complexity.UpdateDocumentPayload.Document(childComplexity), true
-
-	case "UpdateDocumentVersionPayload.documentVersion":
-		if e.complexity.UpdateDocumentVersionPayload.DocumentVersion == nil {
-			break
-		}
-
-		return e.complexity.UpdateDocumentVersionPayload.DocumentVersion(childComplexity), true
 
 	case "UpdateRiskPayload.risk":
 		if e.complexity.UpdateRiskPayload.Risk == nil {
@@ -3943,35 +3965,39 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputConfirmEmailInput,
 		ec.unmarshalInputConnectorOrder,
 		ec.unmarshalInputControlOrder,
-		ec.unmarshalInputCreateControlMeasureMappingInput,
 		ec.unmarshalInputCreateControlDocumentMappingInput,
+		ec.unmarshalInputCreateControlMeasureMappingInput,
+		ec.unmarshalInputCreateDocumentInput,
 		ec.unmarshalInputCreateDraftDocumentVersionInput,
 		ec.unmarshalInputCreateEvidenceInput,
 		ec.unmarshalInputCreateFrameworkInput,
 		ec.unmarshalInputCreateMeasureInput,
 		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreatePeopleInput,
-		ec.unmarshalInputCreateDocumentInput,
+		ec.unmarshalInputCreateRiskDocumentMappingInput,
 		ec.unmarshalInputCreateRiskInput,
 		ec.unmarshalInputCreateRiskMeasureMappingInput,
-		ec.unmarshalInputCreateRiskDocumentMappingInput,
 		ec.unmarshalInputCreateTaskInput,
 		ec.unmarshalInputCreateVendorInput,
 		ec.unmarshalInputCreateVendorRiskAssessmentInput,
-		ec.unmarshalInputDeleteControlMeasureMappingInput,
 		ec.unmarshalInputDeleteControlDocumentMappingInput,
+		ec.unmarshalInputDeleteControlMeasureMappingInput,
+		ec.unmarshalInputDeleteDocumentInput,
 		ec.unmarshalInputDeleteEvidenceInput,
 		ec.unmarshalInputDeleteFrameworkInput,
 		ec.unmarshalInputDeleteMeasureInput,
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeletePeopleInput,
-		ec.unmarshalInputDeleteDocumentInput,
+		ec.unmarshalInputDeleteRiskDocumentMappingInput,
 		ec.unmarshalInputDeleteRiskInput,
 		ec.unmarshalInputDeleteRiskMeasureMappingInput,
-		ec.unmarshalInputDeleteRiskDocumentMappingInput,
 		ec.unmarshalInputDeleteTaskInput,
 		ec.unmarshalInputDeleteVendorComplianceReportInput,
 		ec.unmarshalInputDeleteVendorInput,
+		ec.unmarshalInputDocumentOrder,
+		ec.unmarshalInputDocumentVersionFilter,
+		ec.unmarshalInputDocumentVersionOrder,
+		ec.unmarshalInputDocumentVersionSignatureOrder,
 		ec.unmarshalInputEvidenceOrder,
 		ec.unmarshalInputExportAuditInput,
 		ec.unmarshalInputFrameworkOrder,
@@ -3982,10 +4008,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputMeasureOrder,
 		ec.unmarshalInputOrganizationOrder,
 		ec.unmarshalInputPeopleOrder,
-		ec.unmarshalInputDocumentOrder,
-		ec.unmarshalInputDocumentVersionFilter,
-		ec.unmarshalInputDocumentVersionOrder,
-		ec.unmarshalInputDocumentVersionSignatureOrder,
 		ec.unmarshalInputPublishDocumentVersionInput,
 		ec.unmarshalInputRemoveUserInput,
 		ec.unmarshalInputRequestEvidenceInput,
@@ -3994,12 +4016,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSendSigningNotificationsInput,
 		ec.unmarshalInputTaskOrder,
 		ec.unmarshalInputUnassignTaskInput,
+		ec.unmarshalInputUpdateDocumentInput,
+		ec.unmarshalInputUpdateDocumentVersionInput,
 		ec.unmarshalInputUpdateFrameworkInput,
 		ec.unmarshalInputUpdateMeasureInput,
 		ec.unmarshalInputUpdateOrganizationInput,
 		ec.unmarshalInputUpdatePeopleInput,
-		ec.unmarshalInputUpdateDocumentInput,
-		ec.unmarshalInputUpdateDocumentVersionInput,
 		ec.unmarshalInputUpdateRiskInput,
 		ec.unmarshalInputUpdateTaskInput,
 		ec.unmarshalInputUpdateVendorInput,
@@ -4446,6 +4468,12 @@ enum VendorCategory @goModel(model: "github.com/getprobo/probo/pkg/coredata.Vend
   VERSION_CONTROL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryVersionControl")
 }
 
+enum DocumentType @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentType") {
+  OTHER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeOther")
+  ISMS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeISMS")
+  POLICY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypePolicy")
+}
+
 # Order Input Types
 input UserOrder
   @goModel(
@@ -4861,6 +4889,7 @@ type Document implements Node {
   id: ID!
   title: String!
   description: String!
+  documentType: DocumentType!
   currentPublishedVersion: Int
   owner: People! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
@@ -5205,6 +5234,7 @@ type Mutation {
 
   # Document mutations
   createDocument(input: CreateDocumentInput!): CreateDocumentPayload!
+  updateDocument(input: UpdateDocumentInput!): UpdateDocumentPayload!
   deleteDocument(input: DeleteDocumentInput!): DeleteDocumentPayload!
   publishDocumentVersion(
     input: PublishDocumentVersionInput!
@@ -5505,6 +5535,7 @@ input CreateDocumentInput {
   title: String!
   content: String!
   ownerId: ID!
+  documentType: DocumentType!
 }
 
 input UpdateDocumentInput {
@@ -5513,6 +5544,7 @@ input UpdateDocumentInput {
   content: String
   ownerId: ID
   createdBy: ID
+  documentType: DocumentType
 }
 
 input DeleteDocumentInput {
@@ -5939,6 +5971,101 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Control_documents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Control_documents_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Control_documents_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Control_documents_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Control_documents_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Control_documents_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+func (ec *executionContext) field_Control_documents_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Control_documents_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Control_documents_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Control_documents_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Control_documents_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.DocumentOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalODocumentOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.DocumentOrderBy
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Control_measures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -6034,37 +6161,37 @@ func (ec *executionContext) field_Control_measures_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_documents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_DocumentVersion_signatures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Control_documents_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_DocumentVersion_signatures_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Control_documents_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_DocumentVersion_signatures_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Control_documents_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_DocumentVersion_signatures_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Control_documents_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_DocumentVersion_signatures_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Control_documents_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_DocumentVersion_signatures_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Control_documents_argsFirst(
+func (ec *executionContext) field_DocumentVersion_signatures_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -6077,7 +6204,7 @@ func (ec *executionContext) field_Control_documents_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_documents_argsAfter(
+func (ec *executionContext) field_DocumentVersion_signatures_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -6090,7 +6217,7 @@ func (ec *executionContext) field_Control_documents_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_documents_argsLast(
+func (ec *executionContext) field_DocumentVersion_signatures_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -6103,7 +6230,7 @@ func (ec *executionContext) field_Control_documents_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_documents_argsBefore(
+func (ec *executionContext) field_DocumentVersion_signatures_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -6116,16 +6243,224 @@ func (ec *executionContext) field_Control_documents_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_documents_argsOrderBy(
+func (ec *executionContext) field_DocumentVersion_signatures_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (*types.DocumentOrderBy, error) {
+) (*types.DocumentVersionSignatureOrder, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalODocumentOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx, tmp)
+		return ec.unmarshalODocumentVersionSignatureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureOrder(ctx, tmp)
 	}
 
-	var zeroVal *types.DocumentOrderBy
+	var zeroVal *types.DocumentVersionSignatureOrder
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_controls_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Document_controls_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Document_controls_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Document_controls_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Document_controls_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Document_controls_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+func (ec *executionContext) field_Document_controls_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_controls_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_controls_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_controls_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_controls_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.ControlOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalOControlOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.ControlOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_versions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Document_versions_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Document_versions_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Document_versions_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Document_versions_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Document_versions_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	arg5, err := ec.field_Document_versions_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
+	return args, nil
+}
+func (ec *executionContext) field_Document_versions_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_versions_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_versions_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_versions_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_versions_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.DocumentVersionOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalODocumentVersionOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.DocumentVersionOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Document_versions_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.DocumentVersionFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalODocumentVersionFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.DocumentVersionFilter
 	return zeroVal, nil
 }
 
@@ -6673,6 +7008,29 @@ func (ec *executionContext) field_Mutation_confirmEmail_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_createControlDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_createControlDocumentMapping_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_createControlDocumentMapping_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.CreateControlDocumentMappingInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNCreateControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingInput(ctx, tmp)
+	}
+
+	var zeroVal types.CreateControlDocumentMappingInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_createControlMeasureMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -6696,26 +7054,26 @@ func (ec *executionContext) field_Mutation_createControlMeasureMapping_argsInput
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createControlDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_createDocument_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_createControlDocumentMapping_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createDocument_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createControlDocumentMapping_argsInput(
+func (ec *executionContext) field_Mutation_createDocument_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.CreateControlDocumentMappingInput, error) {
+) (types.CreateDocumentInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreateControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingInput(ctx, tmp)
+		return ec.unmarshalNCreateDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentInput(ctx, tmp)
 	}
 
-	var zeroVal types.CreateControlDocumentMappingInput
+	var zeroVal types.CreateDocumentInput
 	return zeroVal, nil
 }
 
@@ -6834,26 +7192,26 @@ func (ec *executionContext) field_Mutation_createPeople_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createDocument_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_createRiskDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_createDocument_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createRiskDocumentMapping_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createDocument_argsInput(
+func (ec *executionContext) field_Mutation_createRiskDocumentMapping_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.CreateDocumentInput, error) {
+) (types.CreateRiskDocumentMappingInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreateDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentInput(ctx, tmp)
+		return ec.unmarshalNCreateRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingInput(ctx, tmp)
 	}
 
-	var zeroVal types.CreateDocumentInput
+	var zeroVal types.CreateRiskDocumentMappingInput
 	return zeroVal, nil
 }
 
@@ -6877,29 +7235,6 @@ func (ec *executionContext) field_Mutation_createRiskMeasureMapping_argsInput(
 	}
 
 	var zeroVal types.CreateRiskMeasureMappingInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_createRiskDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Mutation_createRiskDocumentMapping_argsInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_createRiskDocumentMapping_argsInput(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (types.CreateRiskDocumentMappingInput, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreateRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingInput(ctx, tmp)
-	}
-
-	var zeroVal types.CreateRiskDocumentMappingInput
 	return zeroVal, nil
 }
 
@@ -6995,6 +7330,29 @@ func (ec *executionContext) field_Mutation_createVendor_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteControlDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteControlDocumentMapping_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteControlDocumentMapping_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.DeleteControlDocumentMappingInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNDeleteControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingInput(ctx, tmp)
+	}
+
+	var zeroVal types.DeleteControlDocumentMappingInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteControlMeasureMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -7018,26 +7376,26 @@ func (ec *executionContext) field_Mutation_deleteControlMeasureMapping_argsInput
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteControlDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_deleteDocument_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_deleteControlDocumentMapping_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_deleteDocument_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deleteControlDocumentMapping_argsInput(
+func (ec *executionContext) field_Mutation_deleteDocument_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.DeleteControlDocumentMappingInput, error) {
+) (types.DeleteDocumentInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNDeleteControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingInput(ctx, tmp)
+		return ec.unmarshalNDeleteDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentInput(ctx, tmp)
 	}
 
-	var zeroVal types.DeleteControlDocumentMappingInput
+	var zeroVal types.DeleteDocumentInput
 	return zeroVal, nil
 }
 
@@ -7156,26 +7514,26 @@ func (ec *executionContext) field_Mutation_deletePeople_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteDocument_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_deleteRiskDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_deleteDocument_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_deleteRiskDocumentMapping_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deleteDocument_argsInput(
+func (ec *executionContext) field_Mutation_deleteRiskDocumentMapping_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.DeleteDocumentInput, error) {
+) (types.DeleteRiskDocumentMappingInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNDeleteDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentInput(ctx, tmp)
+		return ec.unmarshalNDeleteRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingInput(ctx, tmp)
 	}
 
-	var zeroVal types.DeleteDocumentInput
+	var zeroVal types.DeleteRiskDocumentMappingInput
 	return zeroVal, nil
 }
 
@@ -7199,29 +7557,6 @@ func (ec *executionContext) field_Mutation_deleteRiskMeasureMapping_argsInput(
 	}
 
 	var zeroVal types.DeleteRiskMeasureMappingInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_deleteRiskDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Mutation_deleteRiskDocumentMapping_argsInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_deleteRiskDocumentMapping_argsInput(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (types.DeleteRiskDocumentMappingInput, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNDeleteRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingInput(ctx, tmp)
-	}
-
-	var zeroVal types.DeleteRiskDocumentMappingInput
 	return zeroVal, nil
 }
 
@@ -7570,6 +7905,52 @@ func (ec *executionContext) field_Mutation_unassignTask_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_updateDocumentVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_updateDocumentVersion_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateDocumentVersion_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.UpdateDocumentVersionInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionInput(ctx, tmp)
+	}
+
+	var zeroVal types.UpdateDocumentVersionInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateDocument_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_updateDocument_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateDocument_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.UpdateDocumentInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentInput(ctx, tmp)
+	}
+
+	var zeroVal types.UpdateDocumentInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_updateFramework_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -7659,29 +8040,6 @@ func (ec *executionContext) field_Mutation_updatePeople_argsInput(
 	}
 
 	var zeroVal types.UpdatePeopleInput
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Mutation_updateDocumentVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Mutation_updateDocumentVersion_argsInput(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["input"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_Mutation_updateDocumentVersion_argsInput(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (types.UpdateDocumentVersionInput, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNUpdateDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionInput(ctx, tmp)
-	}
-
-	var zeroVal types.UpdateDocumentVersionInput
 	return zeroVal, nil
 }
 
@@ -7915,6 +8273,101 @@ func (ec *executionContext) field_Organization_connectors_argsOrderBy(
 	}
 
 	var zeroVal *types.ConnectorOrder
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_documents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Organization_documents_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Organization_documents_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Organization_documents_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Organization_documents_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Organization_documents_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+func (ec *executionContext) field_Organization_documents_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_documents_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_documents_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_documents_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_documents_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.DocumentOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalODocumentOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.DocumentOrderBy
 	return zeroVal, nil
 }
 
@@ -8200,101 +8653,6 @@ func (ec *executionContext) field_Organization_peoples_argsOrderBy(
 	}
 
 	var zeroVal *types.PeopleOrderBy
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_documents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Organization_documents_argsFirst(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg0
-	arg1, err := ec.field_Organization_documents_argsAfter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := ec.field_Organization_documents_argsLast(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg2
-	arg3, err := ec.field_Organization_documents_argsBefore(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg3
-	arg4, err := ec.field_Organization_documents_argsOrderBy(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["orderBy"] = arg4
-	return args, nil
-}
-func (ec *executionContext) field_Organization_documents_argsFirst(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-	if tmp, ok := rawArgs["first"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_documents_argsAfter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_documents_argsLast(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-	if tmp, ok := rawArgs["last"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_documents_argsBefore(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_documents_argsOrderBy(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*types.DocumentOrderBy, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
-	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalODocumentOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx, tmp)
-	}
-
-	var zeroVal *types.DocumentOrderBy
 	return zeroVal, nil
 }
 
@@ -8678,309 +9036,6 @@ func (ec *executionContext) field_Organization_vendors_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_DocumentVersion_signatures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_DocumentVersion_signatures_argsFirst(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg0
-	arg1, err := ec.field_DocumentVersion_signatures_argsAfter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := ec.field_DocumentVersion_signatures_argsLast(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg2
-	arg3, err := ec.field_DocumentVersion_signatures_argsBefore(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg3
-	arg4, err := ec.field_DocumentVersion_signatures_argsOrderBy(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["orderBy"] = arg4
-	return args, nil
-}
-func (ec *executionContext) field_DocumentVersion_signatures_argsFirst(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-	if tmp, ok := rawArgs["first"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_DocumentVersion_signatures_argsAfter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_DocumentVersion_signatures_argsLast(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-	if tmp, ok := rawArgs["last"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_DocumentVersion_signatures_argsBefore(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_DocumentVersion_signatures_argsOrderBy(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*types.DocumentVersionSignatureOrder, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
-	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalODocumentVersionSignatureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureOrder(ctx, tmp)
-	}
-
-	var zeroVal *types.DocumentVersionSignatureOrder
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Document_controls_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Document_controls_argsFirst(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg0
-	arg1, err := ec.field_Document_controls_argsAfter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := ec.field_Document_controls_argsLast(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg2
-	arg3, err := ec.field_Document_controls_argsBefore(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg3
-	arg4, err := ec.field_Document_controls_argsOrderBy(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["orderBy"] = arg4
-	return args, nil
-}
-func (ec *executionContext) field_Document_controls_argsFirst(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-	if tmp, ok := rawArgs["first"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Document_controls_argsAfter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Document_controls_argsLast(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-	if tmp, ok := rawArgs["last"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Document_controls_argsBefore(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Document_controls_argsOrderBy(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*types.ControlOrderBy, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
-	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOControlOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlOrderBy(ctx, tmp)
-	}
-
-	var zeroVal *types.ControlOrderBy
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Document_versions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Document_versions_argsFirst(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg0
-	arg1, err := ec.field_Document_versions_argsAfter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := ec.field_Document_versions_argsLast(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg2
-	arg3, err := ec.field_Document_versions_argsBefore(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg3
-	arg4, err := ec.field_Document_versions_argsOrderBy(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["orderBy"] = arg4
-	arg5, err := ec.field_Document_versions_argsFilter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["filter"] = arg5
-	return args, nil
-}
-func (ec *executionContext) field_Document_versions_argsFirst(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-	if tmp, ok := rawArgs["first"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Document_versions_argsAfter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Document_versions_argsLast(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-	if tmp, ok := rawArgs["last"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Document_versions_argsBefore(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Document_versions_argsOrderBy(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*types.DocumentVersionOrderBy, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
-	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalODocumentVersionOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionOrderBy(ctx, tmp)
-	}
-
-	var zeroVal *types.DocumentVersionOrderBy
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Document_versions_argsFilter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*types.DocumentVersionFilter, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
-	if tmp, ok := rawArgs["filter"]; ok {
-		return ec.unmarshalODocumentVersionFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionFilter(ctx, tmp)
-	}
-
-	var zeroVal *types.DocumentVersionFilter
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -9122,101 +9177,6 @@ func (ec *executionContext) field_Risk_controls_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Risk_measures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Risk_measures_argsFirst(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg0
-	arg1, err := ec.field_Risk_measures_argsAfter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := ec.field_Risk_measures_argsLast(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg2
-	arg3, err := ec.field_Risk_measures_argsBefore(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg3
-	arg4, err := ec.field_Risk_measures_argsOrderBy(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["orderBy"] = arg4
-	return args, nil
-}
-func (ec *executionContext) field_Risk_measures_argsFirst(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-	if tmp, ok := rawArgs["first"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Risk_measures_argsAfter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Risk_measures_argsLast(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-	if tmp, ok := rawArgs["last"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Risk_measures_argsBefore(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Risk_measures_argsOrderBy(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*types.MeasureOrderBy, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
-	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOMeasureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureOrderBy(ctx, tmp)
-	}
-
-	var zeroVal *types.MeasureOrderBy
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Risk_documents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -9309,6 +9269,101 @@ func (ec *executionContext) field_Risk_documents_argsOrderBy(
 	}
 
 	var zeroVal *types.DocumentOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Risk_measures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Risk_measures_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Risk_measures_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Risk_measures_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Risk_measures_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Risk_measures_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+func (ec *executionContext) field_Risk_measures_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Risk_measures_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Risk_measures_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Risk_measures_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Risk_measures_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.MeasureOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalOMeasureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasureOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.MeasureOrderBy
 	return zeroVal, nil
 }
 
@@ -11103,6 +11158,106 @@ func (ec *executionContext) fieldContext_ControlEdge_node(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateControlDocumentMappingPayload_controlEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateControlDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateControlDocumentMappingPayload_controlEdge(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ControlEdge, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.ControlEdge)
+	fc.Result = res
+	return ec.marshalNControlEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateControlDocumentMappingPayload_controlEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateControlDocumentMappingPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ControlEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ControlEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ControlEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateControlDocumentMappingPayload_documentEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateControlDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateControlDocumentMappingPayload_documentEdge(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DocumentEdge, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DocumentEdge)
+	fc.Result = res
+	return ec.marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateControlDocumentMappingPayload_documentEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateControlDocumentMappingPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_DocumentEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_DocumentEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateControlMeasureMappingPayload_controlEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateControlMeasureMappingPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreateControlMeasureMappingPayload_controlEdge(ctx, field)
 	if err != nil {
@@ -11203,58 +11358,8 @@ func (ec *executionContext) fieldContext_CreateControlMeasureMappingPayload_meas
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateControlDocumentMappingPayload_controlEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateControlDocumentMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateControlDocumentMappingPayload_controlEdge(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ControlEdge, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.ControlEdge)
-	fc.Result = res
-	return ec.marshalNControlEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlEdge(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CreateControlDocumentMappingPayload_controlEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateControlDocumentMappingPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_ControlEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_ControlEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ControlEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CreateControlDocumentMappingPayload_documentEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateControlDocumentMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateControlDocumentMappingPayload_documentEdge(ctx, field)
+func (ec *executionContext) _CreateDocumentPayload_documentEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDocumentPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateDocumentPayload_documentEdge(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11284,9 +11389,9 @@ func (ec *executionContext) _CreateControlDocumentMappingPayload_documentEdge(ct
 	return ec.marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateControlDocumentMappingPayload_documentEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateDocumentPayload_documentEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateControlDocumentMappingPayload",
+		Object:     "CreateDocumentPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -11298,6 +11403,56 @@ func (ec *executionContext) fieldContext_CreateControlDocumentMappingPayload_doc
 				return ec.fieldContext_DocumentEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DocumentEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateDocumentPayload_documentVersionEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDocumentPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateDocumentPayload_documentVersionEdge(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DocumentVersionEdge, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DocumentVersionEdge)
+	fc.Result = res
+	return ec.marshalNDocumentVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateDocumentPayload_documentVersionEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateDocumentPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_DocumentVersionEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_DocumentVersionEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -11603,8 +11758,58 @@ func (ec *executionContext) fieldContext_CreatePeoplePayload_peopleEdge(_ contex
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateDocumentPayload_documentEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDocumentPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateDocumentPayload_documentEdge(ctx, field)
+func (ec *executionContext) _CreateRiskDocumentMappingPayload_riskEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateRiskDocumentMappingPayload_riskEdge(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RiskEdge, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.RiskEdge)
+	fc.Result = res
+	return ec.marshalNRiskEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRiskEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateRiskDocumentMappingPayload_riskEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateRiskDocumentMappingPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_RiskEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_RiskEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RiskEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CreateRiskDocumentMappingPayload_documentEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateRiskDocumentMappingPayload_documentEdge(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11634,9 +11839,9 @@ func (ec *executionContext) _CreateDocumentPayload_documentEdge(ctx context.Cont
 	return ec.marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateDocumentPayload_documentEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateRiskDocumentMappingPayload_documentEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateDocumentPayload",
+		Object:     "CreateRiskDocumentMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -11648,56 +11853,6 @@ func (ec *executionContext) fieldContext_CreateDocumentPayload_documentEdge(_ co
 				return ec.fieldContext_DocumentEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type DocumentEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CreateDocumentPayload_documentVersionEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDocumentPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateDocumentPayload_documentVersionEdge(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DocumentVersionEdge, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.DocumentVersionEdge)
-	fc.Result = res
-	return ec.marshalNDocumentVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdge(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CreateDocumentPayload_documentVersionEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateDocumentPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_DocumentVersionEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_DocumentVersionEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -11853,106 +12008,6 @@ func (ec *executionContext) fieldContext_CreateRiskPayload_riskEdge(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateRiskDocumentMappingPayload_riskEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskDocumentMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateRiskDocumentMappingPayload_riskEdge(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.RiskEdge, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.RiskEdge)
-	fc.Result = res
-	return ec.marshalNRiskEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRiskEdge(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CreateRiskDocumentMappingPayload_riskEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateRiskDocumentMappingPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_RiskEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_RiskEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type RiskEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CreateRiskDocumentMappingPayload_documentEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskDocumentMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateRiskDocumentMappingPayload_documentEdge(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DocumentEdge, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.DocumentEdge)
-	fc.Result = res
-	return ec.marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CreateRiskDocumentMappingPayload_documentEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CreateRiskDocumentMappingPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_DocumentEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_DocumentEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DocumentEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _CreateTaskPayload_taskEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateTaskPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreateTaskPayload_taskEdge(ctx, field)
 	if err != nil {
@@ -12103,6 +12158,94 @@ func (ec *executionContext) fieldContext_CreateVendorRiskAssessmentPayload_vendo
 	return fc, nil
 }
 
+func (ec *executionContext) _DeleteControlDocumentMappingPayload_deletedControlId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteControlDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteControlDocumentMappingPayload_deletedControlId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedControlID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteControlDocumentMappingPayload_deletedControlId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteControlDocumentMappingPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteControlDocumentMappingPayload_deletedDocumentId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteControlDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteControlDocumentMappingPayload_deletedDocumentId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedDocumentID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteControlDocumentMappingPayload_deletedDocumentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteControlDocumentMappingPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeleteControlMeasureMappingPayload_deletedControlId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteControlMeasureMappingPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeleteControlMeasureMappingPayload_deletedControlId(ctx, field)
 	if err != nil {
@@ -12191,52 +12334,8 @@ func (ec *executionContext) fieldContext_DeleteControlMeasureMappingPayload_dele
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteControlDocumentMappingPayload_deletedControlId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteControlDocumentMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteControlDocumentMappingPayload_deletedControlId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DeletedControlID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gid.GID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DeleteControlDocumentMappingPayload_deletedControlId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeleteControlDocumentMappingPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeleteControlDocumentMappingPayload_deletedDocumentId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteControlDocumentMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteControlDocumentMappingPayload_deletedDocumentId(ctx, field)
+func (ec *executionContext) _DeleteDocumentPayload_deletedDocumentId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteDocumentPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteDocumentPayload_deletedDocumentId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12266,9 +12365,9 @@ func (ec *executionContext) _DeleteControlDocumentMappingPayload_deletedDocument
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteControlDocumentMappingPayload_deletedDocumentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteDocumentPayload_deletedDocumentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeleteControlDocumentMappingPayload",
+		Object:     "DeleteDocumentPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12499,8 +12598,52 @@ func (ec *executionContext) fieldContext_DeletePeoplePayload_deletedPeopleId(_ c
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteDocumentPayload_deletedDocumentId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteDocumentPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteDocumentPayload_deletedDocumentId(ctx, field)
+func (ec *executionContext) _DeleteRiskDocumentMappingPayload_deletedRiskId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteRiskDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteRiskDocumentMappingPayload_deletedRiskId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedRiskID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteRiskDocumentMappingPayload_deletedRiskId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteRiskDocumentMappingPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteRiskDocumentMappingPayload_deletedDocumentId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteRiskDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteRiskDocumentMappingPayload_deletedDocumentId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12530,9 +12673,9 @@ func (ec *executionContext) _DeleteDocumentPayload_deletedDocumentId(ctx context
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteDocumentPayload_deletedDocumentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteRiskDocumentMappingPayload_deletedDocumentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeleteDocumentPayload",
+		Object:     "DeleteRiskDocumentMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12675,94 +12818,6 @@ func (ec *executionContext) fieldContext_DeleteRiskPayload_deletedRiskId(_ conte
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteRiskDocumentMappingPayload_deletedRiskId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteRiskDocumentMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteRiskDocumentMappingPayload_deletedRiskId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DeletedRiskID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gid.GID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DeleteRiskDocumentMappingPayload_deletedRiskId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeleteRiskDocumentMappingPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DeleteRiskDocumentMappingPayload_deletedDocumentId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteRiskDocumentMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteRiskDocumentMappingPayload_deletedDocumentId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DeletedDocumentID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gid.GID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DeleteRiskDocumentMappingPayload_deletedDocumentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DeleteRiskDocumentMappingPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _DeleteTaskPayload_deletedTaskId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteTaskPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeleteTaskPayload_deletedTaskId(ctx, field)
 	if err != nil {
@@ -12890,6 +12945,2219 @@ func (ec *executionContext) fieldContext_DeleteVendorPayload_deletedVendorId(_ c
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_id(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_title(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_description(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_documentType(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_documentType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DocumentType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.DocumentType)
+	fc.Result = res
+	return ec.marshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_documentType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DocumentType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_currentPublishedVersion(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_currentPublishedVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CurrentPublishedVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_currentPublishedVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_owner(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_owner(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Document().Owner(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.People)
+	fc.Result = res
+	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_People_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_People_fullName(ctx, field)
+			case "primaryEmailAddress":
+				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_People_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_People_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_People_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_People_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_organization(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_organization(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Document().Organization(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Organization)
+	fc.Result = res
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "users":
+				return ec.fieldContext_Organization_users(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_versions(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_versions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Document().Versions(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentVersionOrderBy), fc.Args["filter"].(*types.DocumentVersionFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DocumentVersionConnection)
+	fc.Result = res
+	return ec.marshalNDocumentVersionConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_versions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_DocumentVersionConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_DocumentVersionConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Document_versions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_controls(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_controls(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Document().Controls(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ControlOrderBy))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.ControlConnection)
+	fc.Result = res
+	return ec.marshalNControlConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_controls(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_ControlConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ControlConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ControlConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Document_controls_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Document_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DocumentConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.DocumentEdge)
+	fc.Result = res
+	return ec.marshalNDocumentEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_DocumentEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_DocumentEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.DocumentConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.DocumentEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(page.CursorKey)
+	fc.Result = res
+	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.DocumentEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Document)
+	fc.Result = res
+	return ec.marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Document_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Document_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Document_description(ctx, field)
+			case "documentType":
+				return ec.fieldContext_Document_documentType(ctx, field)
+			case "currentPublishedVersion":
+				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
+			case "owner":
+				return ec.fieldContext_Document_owner(ctx, field)
+			case "organization":
+				return ec.fieldContext_Document_organization(ctx, field)
+			case "versions":
+				return ec.fieldContext_Document_versions(ctx, field)
+			case "controls":
+				return ec.fieldContext_Document_controls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Document_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Document_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_id(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_document(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_document(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.DocumentVersion().Document(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Document)
+	fc.Result = res
+	return ec.marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_document(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Document_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Document_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Document_description(ctx, field)
+			case "documentType":
+				return ec.fieldContext_Document_documentType(ctx, field)
+			case "currentPublishedVersion":
+				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
+			case "owner":
+				return ec.fieldContext_Document_owner(ctx, field)
+			case "organization":
+				return ec.fieldContext_Document_organization(ctx, field)
+			case "versions":
+				return ec.fieldContext_Document_versions(ctx, field)
+			case "controls":
+				return ec.fieldContext_Document_controls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Document_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Document_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_status(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.DocumentStatus)
+	fc.Result = res
+	return ec.marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DocumentStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_version(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_version(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Version, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_content(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_content(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Content, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_changelog(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_changelog(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Changelog, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_changelog(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_signatures(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_signatures(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.DocumentVersion().Signatures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentVersionSignatureOrder))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DocumentVersionSignatureConnection)
+	fc.Result = res
+	return ec.marshalNDocumentVersionSignatureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_signatures(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_DocumentVersionSignatureConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_DocumentVersionSignatureConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignatureConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_DocumentVersion_signatures_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_publishedBy(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.DocumentVersion().PublishedBy(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*types.People)
+	fc.Result = res
+	return ec.marshalOPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_publishedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_People_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_People_fullName(ctx, field)
+			case "primaryEmailAddress":
+				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_People_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_People_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_People_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_People_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_publishedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PublishedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_publishedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.DocumentVersionEdge)
+	fc.Result = res
+	return ec.marshalNDocumentVersionEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_DocumentVersionEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_DocumentVersionEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(page.CursorKey)
+	fc.Result = res
+	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DocumentVersion)
+	fc.Result = res
+	return ec.marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DocumentVersion_id(ctx, field)
+			case "document":
+				return ec.fieldContext_DocumentVersion_document(ctx, field)
+			case "status":
+				return ec.fieldContext_DocumentVersion_status(ctx, field)
+			case "version":
+				return ec.fieldContext_DocumentVersion_version(ctx, field)
+			case "content":
+				return ec.fieldContext_DocumentVersion_content(ctx, field)
+			case "changelog":
+				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
+			case "signatures":
+				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
+			case "publishedBy":
+				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignature_id(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignature_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignature_documentVersion(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_documentVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.DocumentVersionSignature().DocumentVersion(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DocumentVersion)
+	fc.Result = res
+	return ec.marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignature_documentVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignature",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DocumentVersion_id(ctx, field)
+			case "document":
+				return ec.fieldContext_DocumentVersion_document(ctx, field)
+			case "status":
+				return ec.fieldContext_DocumentVersion_status(ctx, field)
+			case "version":
+				return ec.fieldContext_DocumentVersion_version(ctx, field)
+			case "content":
+				return ec.fieldContext_DocumentVersion_content(ctx, field)
+			case "changelog":
+				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
+			case "signatures":
+				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
+			case "publishedBy":
+				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignature_state(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_state(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.State, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.DocumentVersionSignatureState)
+	fc.Result = res
+	return ec.marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignature_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DocumentVersionSignatureState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignature_signedBy(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_signedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.DocumentVersionSignature().SignedBy(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.People)
+	fc.Result = res
+	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignature_signedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignature",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_People_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_People_fullName(ctx, field)
+			case "primaryEmailAddress":
+				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_People_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_People_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_People_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_People_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignature_signedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_signedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SignedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignature_signedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignature_requestedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_requestedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RequestedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignature_requestedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignature_requestedBy(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_requestedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.DocumentVersionSignature().RequestedBy(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.People)
+	fc.Result = res
+	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignature_requestedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignature",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_People_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_People_fullName(ctx, field)
+			case "primaryEmailAddress":
+				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_People_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_People_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_People_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_People_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignature_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignature_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignature_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignature_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignature",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignatureConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignatureConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.DocumentVersionSignatureEdge)
+	fc.Result = res
+	return ec.marshalNDocumentVersionSignatureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignatureConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignatureConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_DocumentVersionSignatureEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_DocumentVersionSignatureEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignatureEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignatureConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignatureConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignatureConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignatureConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignatureEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignatureEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(page.CursorKey)
+	fc.Result = res
+	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignatureEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignatureEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersionSignatureEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignatureEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DocumentVersionSignature)
+	fc.Result = res
+	return ec.marshalNDocumentVersionSignature2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignature(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersionSignatureEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersionSignatureEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DocumentVersionSignature_id(ctx, field)
+			case "documentVersion":
+				return ec.fieldContext_DocumentVersionSignature_documentVersion(ctx, field)
+			case "state":
+				return ec.fieldContext_DocumentVersionSignature_state(ctx, field)
+			case "signedBy":
+				return ec.fieldContext_DocumentVersionSignature_signedBy(ctx, field)
+			case "signedAt":
+				return ec.fieldContext_DocumentVersionSignature_signedAt(ctx, field)
+			case "requestedAt":
+				return ec.fieldContext_DocumentVersionSignature_requestedAt(ctx, field)
+			case "requestedBy":
+				return ec.fieldContext_DocumentVersionSignature_requestedBy(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_DocumentVersionSignature_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_DocumentVersionSignature_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignature", field.Name)
 		},
 	}
 	return fc, nil
@@ -17909,6 +20177,65 @@ func (ec *executionContext) fieldContext_Mutation_createDocument(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateDocument(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateDocument(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateDocument(rctx, fc.Args["input"].(types.UpdateDocumentInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.UpdateDocumentPayload)
+	fc.Result = res
+	return ec.marshalNUpdateDocumentPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateDocument(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "document":
+				return ec.fieldContext_UpdateDocumentPayload_document(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateDocumentPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateDocument_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_deleteDocument(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_deleteDocument(ctx, field)
 	if err != nil {
@@ -20245,2171 +22572,6 @@ func (ec *executionContext) fieldContext_PeopleEdge_node(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Document_id(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Document_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gid.GID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Document_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Document",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Document_title(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Document_title(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Title, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Document_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Document",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Document_description(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Document_description(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Document_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Document",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Document_currentPublishedVersion(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Document_currentPublishedVersion(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CurrentPublishedVersion, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Document_currentPublishedVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Document",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Document_owner(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Document_owner(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Document().Owner(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.People)
-	fc.Result = res
-	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Document_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Document",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_People_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_People_fullName(ctx, field)
-			case "primaryEmailAddress":
-				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_People_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_People_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_People_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_People_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_People_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_People_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Document_organization(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Document_organization(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Document().Organization(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.Organization)
-	fc.Result = res
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Document_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Document",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Organization_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Organization_name(ctx, field)
-			case "logoUrl":
-				return ec.fieldContext_Organization_logoUrl(ctx, field)
-			case "users":
-				return ec.fieldContext_Organization_users(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
-			case "frameworks":
-				return ec.fieldContext_Organization_frameworks(ctx, field)
-			case "vendors":
-				return ec.fieldContext_Organization_vendors(ctx, field)
-			case "peoples":
-				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "documents":
-				return ec.fieldContext_Organization_documents(ctx, field)
-			case "measures":
-				return ec.fieldContext_Organization_measures(ctx, field)
-			case "risks":
-				return ec.fieldContext_Organization_risks(ctx, field)
-			case "tasks":
-				return ec.fieldContext_Organization_tasks(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Organization_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Organization_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Document_versions(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Document_versions(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Document().Versions(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentVersionOrderBy), fc.Args["filter"].(*types.DocumentVersionFilter))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.DocumentVersionConnection)
-	fc.Result = res
-	return ec.marshalNDocumentVersionConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionConnection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Document_versions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Document",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_DocumentVersionConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_DocumentVersionConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Document_versions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Document_controls(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Document_controls(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Document().Controls(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ControlOrderBy))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.ControlConnection)
-	fc.Result = res
-	return ec.marshalNControlConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlConnection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Document_controls(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Document",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_ControlConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_ControlConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ControlConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Document_controls_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Document_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Document_createdAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Document_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Document",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Document_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Document_updatedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Document_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Document",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DocumentConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentConnection_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*types.DocumentEdge)
-	fc.Result = res
-	return ec.marshalNDocumentEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdgeᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_DocumentEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_DocumentEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DocumentEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.DocumentConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentConnection_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.PageInfo)
-	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.DocumentEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentEdge_cursor(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(page.CursorKey)
-	fc.Result = res
-	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CursorKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.DocumentEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentEdge_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.Document)
-	fc.Result = res
-	return ec.marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Document_id(ctx, field)
-			case "title":
-				return ec.fieldContext_Document_title(ctx, field)
-			case "description":
-				return ec.fieldContext_Document_description(ctx, field)
-			case "currentPublishedVersion":
-				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
-			case "owner":
-				return ec.fieldContext_Document_owner(ctx, field)
-			case "organization":
-				return ec.fieldContext_Document_organization(ctx, field)
-			case "versions":
-				return ec.fieldContext_Document_versions(ctx, field)
-			case "controls":
-				return ec.fieldContext_Document_controls(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Document_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Document_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersion_id(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gid.GID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersion_document(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_document(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.DocumentVersion().Document(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.Document)
-	fc.Result = res
-	return ec.marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_document(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Document_id(ctx, field)
-			case "title":
-				return ec.fieldContext_Document_title(ctx, field)
-			case "description":
-				return ec.fieldContext_Document_description(ctx, field)
-			case "currentPublishedVersion":
-				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
-			case "owner":
-				return ec.fieldContext_Document_owner(ctx, field)
-			case "organization":
-				return ec.fieldContext_Document_organization(ctx, field)
-			case "versions":
-				return ec.fieldContext_Document_versions(ctx, field)
-			case "controls":
-				return ec.fieldContext_Document_controls(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Document_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Document_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersion_status(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_status(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(coredata.DocumentStatus)
-	fc.Result = res
-	return ec.marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DocumentStatus does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersion_version(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_version(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Version, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersion_content(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_content(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Content, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersion_changelog(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_changelog(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Changelog, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_changelog(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersion_signatures(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_signatures(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.DocumentVersion().Signatures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentVersionSignatureOrder))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.DocumentVersionSignatureConnection)
-	fc.Result = res
-	return ec.marshalNDocumentVersionSignatureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureConnection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_signatures(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_DocumentVersionSignatureConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_DocumentVersionSignatureConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignatureConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_DocumentVersion_signatures_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersion_publishedBy(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.DocumentVersion().PublishedBy(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*types.People)
-	fc.Result = res
-	return ec.marshalOPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_publishedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_People_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_People_fullName(ctx, field)
-			case "primaryEmailAddress":
-				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_People_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_People_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_People_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_People_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_People_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_People_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersion_publishedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PublishedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*time.Time)
-	fc.Result = res
-	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_publishedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersion_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_createdAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersion_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionConnection_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*types.DocumentVersionEdge)
-	fc.Result = res
-	return ec.marshalNDocumentVersionEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdgeᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_DocumentVersionEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_DocumentVersionEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionConnection_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.PageInfo)
-	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionEdge_cursor(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(page.CursorKey)
-	fc.Result = res
-	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CursorKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionEdge_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.DocumentVersion)
-	fc.Result = res
-	return ec.marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_DocumentVersion_id(ctx, field)
-			case "document":
-				return ec.fieldContext_DocumentVersion_document(ctx, field)
-			case "status":
-				return ec.fieldContext_DocumentVersion_status(ctx, field)
-			case "version":
-				return ec.fieldContext_DocumentVersion_version(ctx, field)
-			case "content":
-				return ec.fieldContext_DocumentVersion_content(ctx, field)
-			case "changelog":
-				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
-			case "signatures":
-				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
-			case "publishedBy":
-				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
-			case "publishedAt":
-				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignature_id(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignature_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gid.GID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignature_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignature",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignature_documentVersion(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignature_documentVersion(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.DocumentVersionSignature().DocumentVersion(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.DocumentVersion)
-	fc.Result = res
-	return ec.marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignature_documentVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignature",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_DocumentVersion_id(ctx, field)
-			case "document":
-				return ec.fieldContext_DocumentVersion_document(ctx, field)
-			case "status":
-				return ec.fieldContext_DocumentVersion_status(ctx, field)
-			case "version":
-				return ec.fieldContext_DocumentVersion_version(ctx, field)
-			case "content":
-				return ec.fieldContext_DocumentVersion_content(ctx, field)
-			case "changelog":
-				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
-			case "signatures":
-				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
-			case "publishedBy":
-				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
-			case "publishedAt":
-				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignature_state(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignature_state(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.State, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(coredata.DocumentVersionSignatureState)
-	fc.Result = res
-	return ec.marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignature_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignature",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type DocumentVersionSignatureState does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignature_signedBy(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignature_signedBy(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.DocumentVersionSignature().SignedBy(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.People)
-	fc.Result = res
-	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignature_signedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignature",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_People_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_People_fullName(ctx, field)
-			case "primaryEmailAddress":
-				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_People_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_People_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_People_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_People_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_People_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_People_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignature_signedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignature_signedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SignedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*time.Time)
-	fc.Result = res
-	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignature_signedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignature",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignature_requestedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignature_requestedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.RequestedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignature_requestedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignature",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignature_requestedBy(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignature_requestedBy(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.DocumentVersionSignature().RequestedBy(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.People)
-	fc.Result = res
-	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignature_requestedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignature",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_People_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_People_fullName(ctx, field)
-			case "primaryEmailAddress":
-				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_People_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_People_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_People_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_People_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_People_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_People_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignature_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignature_createdAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignature_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignature",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignature_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignature_updatedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignature_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignature",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignatureConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignatureConnection_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*types.DocumentVersionSignatureEdge)
-	fc.Result = res
-	return ec.marshalNDocumentVersionSignatureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdgeᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignatureConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignatureConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_DocumentVersionSignatureEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_DocumentVersionSignatureEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignatureEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignatureConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignatureConnection_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.PageInfo)
-	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignatureConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignatureConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignatureEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignatureEdge_cursor(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(page.CursorKey)
-	fc.Result = res
-	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignatureEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignatureEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CursorKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _DocumentVersionSignatureEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignatureEdge_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.DocumentVersionSignature)
-	fc.Result = res
-	return ec.marshalNDocumentVersionSignature2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignature(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignatureEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignatureEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_DocumentVersionSignature_id(ctx, field)
-			case "documentVersion":
-				return ec.fieldContext_DocumentVersionSignature_documentVersion(ctx, field)
-			case "state":
-				return ec.fieldContext_DocumentVersionSignature_state(ctx, field)
-			case "signedBy":
-				return ec.fieldContext_DocumentVersionSignature_signedBy(ctx, field)
-			case "signedAt":
-				return ec.fieldContext_DocumentVersionSignature_signedAt(ctx, field)
-			case "requestedAt":
-				return ec.fieldContext_DocumentVersionSignature_requestedAt(ctx, field)
-			case "requestedBy":
-				return ec.fieldContext_DocumentVersionSignature_requestedBy(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_DocumentVersionSignature_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_DocumentVersionSignature_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignature", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _PublishDocumentVersionPayload_documentVersion(ctx context.Context, field graphql.CollectedField, obj *types.PublishDocumentVersionPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PublishDocumentVersionPayload_documentVersion(ctx, field)
 	if err != nil {
@@ -22523,6 +22685,8 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_document(
 				return ec.fieldContext_Document_title(ctx, field)
 			case "description":
 				return ec.fieldContext_Document_description(ctx, field)
+			case "documentType":
+				return ec.fieldContext_Document_documentType(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "owner":
@@ -25078,6 +25242,142 @@ func (ec *executionContext) fieldContext_UnassignTaskPayload_task(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateDocumentPayload_document(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDocumentPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateDocumentPayload_document(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Document, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Document)
+	fc.Result = res
+	return ec.marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateDocumentPayload_document(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateDocumentPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Document_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Document_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Document_description(ctx, field)
+			case "documentType":
+				return ec.fieldContext_Document_documentType(ctx, field)
+			case "currentPublishedVersion":
+				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
+			case "owner":
+				return ec.fieldContext_Document_owner(ctx, field)
+			case "organization":
+				return ec.fieldContext_Document_organization(ctx, field)
+			case "versions":
+				return ec.fieldContext_Document_versions(ctx, field)
+			case "controls":
+				return ec.fieldContext_Document_controls(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Document_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Document_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateDocumentVersionPayload_documentVersion(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDocumentVersionPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateDocumentVersionPayload_documentVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DocumentVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DocumentVersion)
+	fc.Result = res
+	return ec.marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateDocumentVersionPayload_documentVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateDocumentVersionPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_DocumentVersion_id(ctx, field)
+			case "document":
+				return ec.fieldContext_DocumentVersion_document(ctx, field)
+			case "status":
+				return ec.fieldContext_DocumentVersion_status(ctx, field)
+			case "version":
+				return ec.fieldContext_DocumentVersion_version(ctx, field)
+			case "content":
+				return ec.fieldContext_DocumentVersion_content(ctx, field)
+			case "changelog":
+				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
+			case "signatures":
+				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
+			case "publishedBy":
+				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
+			case "publishedAt":
+				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateFrameworkPayload_framework(ctx context.Context, field graphql.CollectedField, obj *types.UpdateFrameworkPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UpdateFrameworkPayload_framework(ctx, field)
 	if err != nil {
@@ -25341,140 +25641,6 @@ func (ec *executionContext) fieldContext_UpdatePeoplePayload_people(_ context.Co
 				return ec.fieldContext_People_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateDocumentPayload_document(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDocumentPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateDocumentPayload_document(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Document, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.Document)
-	fc.Result = res
-	return ec.marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateDocumentPayload_document(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateDocumentPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Document_id(ctx, field)
-			case "title":
-				return ec.fieldContext_Document_title(ctx, field)
-			case "description":
-				return ec.fieldContext_Document_description(ctx, field)
-			case "currentPublishedVersion":
-				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
-			case "owner":
-				return ec.fieldContext_Document_owner(ctx, field)
-			case "organization":
-				return ec.fieldContext_Document_organization(ctx, field)
-			case "versions":
-				return ec.fieldContext_Document_versions(ctx, field)
-			case "controls":
-				return ec.fieldContext_Document_controls(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Document_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Document_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _UpdateDocumentVersionPayload_documentVersion(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDocumentVersionPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdateDocumentVersionPayload_documentVersion(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DocumentVersion, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.DocumentVersion)
-	fc.Result = res
-	return ec.marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_UpdateDocumentVersionPayload_documentVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "UpdateDocumentVersionPayload",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_DocumentVersion_id(ctx, field)
-			case "document":
-				return ec.fieldContext_DocumentVersion_document(ctx, field)
-			case "status":
-				return ec.fieldContext_DocumentVersion_status(ctx, field)
-			case "version":
-				return ec.fieldContext_DocumentVersion_version(ctx, field)
-			case "content":
-				return ec.fieldContext_DocumentVersion_content(ctx, field)
-			case "changelog":
-				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
-			case "signatures":
-				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
-			case "publishedBy":
-				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
-			case "publishedAt":
-				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
 		},
 	}
 	return fc, nil
@@ -31392,6 +31558,40 @@ func (ec *executionContext) unmarshalInputControlOrder(ctx context.Context, obj 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateControlDocumentMappingInput(ctx context.Context, obj any) (types.CreateControlDocumentMappingInput, error) {
+	var it types.CreateControlDocumentMappingInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"controlId", "documentId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "controlId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controlId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ControlID = data
+		case "documentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateControlMeasureMappingInput(ctx context.Context, obj any) (types.CreateControlMeasureMappingInput, error) {
 	var it types.CreateControlMeasureMappingInput
 	asMap := map[string]any{}
@@ -31426,34 +31626,55 @@ func (ec *executionContext) unmarshalInputCreateControlMeasureMappingInput(ctx c
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateControlDocumentMappingInput(ctx context.Context, obj any) (types.CreateControlDocumentMappingInput, error) {
-	var it types.CreateControlDocumentMappingInput
+func (ec *executionContext) unmarshalInputCreateDocumentInput(ctx context.Context, obj any) (types.CreateDocumentInput, error) {
+	var it types.CreateDocumentInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"controlId", "documentId"}
+	fieldsInOrder := [...]string{"organizationId", "title", "content", "ownerId", "documentType"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "controlId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controlId"))
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ControlID = data
-		case "documentId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
+			it.OrganizationID = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "content":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Content = data
+		case "ownerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.DocumentID = data
+			it.OwnerID = data
+		case "documentType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentType"))
+			data, err := ec.unmarshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentType = data
 		}
 	}
 
@@ -31741,48 +31962,34 @@ func (ec *executionContext) unmarshalInputCreatePeopleInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateDocumentInput(ctx context.Context, obj any) (types.CreateDocumentInput, error) {
-	var it types.CreateDocumentInput
+func (ec *executionContext) unmarshalInputCreateRiskDocumentMappingInput(ctx context.Context, obj any) (types.CreateRiskDocumentMappingInput, error) {
+	var it types.CreateRiskDocumentMappingInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "title", "content", "ownerId"}
+	fieldsInOrder := [...]string{"riskId", "documentId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "organizationId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+		case "riskId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("riskId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.OrganizationID = data
-		case "title":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Title = data
-		case "content":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Content = data
-		case "ownerId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
+			it.RiskID = data
+		case "documentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.OwnerID = data
+			it.DocumentID = data
 		}
 	}
 
@@ -31914,40 +32121,6 @@ func (ec *executionContext) unmarshalInputCreateRiskMeasureMappingInput(ctx cont
 				return it, err
 			}
 			it.MeasureID = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCreateRiskDocumentMappingInput(ctx context.Context, obj any) (types.CreateRiskDocumentMappingInput, error) {
-	var it types.CreateRiskDocumentMappingInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"riskId", "documentId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "riskId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("riskId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RiskID = data
-		case "documentId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DocumentID = data
 		}
 	}
 
@@ -32231,6 +32404,40 @@ func (ec *executionContext) unmarshalInputCreateVendorRiskAssessmentInput(ctx co
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteControlDocumentMappingInput(ctx context.Context, obj any) (types.DeleteControlDocumentMappingInput, error) {
+	var it types.DeleteControlDocumentMappingInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"controlId", "documentId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "controlId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controlId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ControlID = data
+		case "documentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteControlMeasureMappingInput(ctx context.Context, obj any) (types.DeleteControlMeasureMappingInput, error) {
 	var it types.DeleteControlMeasureMappingInput
 	asMap := map[string]any{}
@@ -32265,27 +32472,20 @@ func (ec *executionContext) unmarshalInputDeleteControlMeasureMappingInput(ctx c
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeleteControlDocumentMappingInput(ctx context.Context, obj any) (types.DeleteControlDocumentMappingInput, error) {
-	var it types.DeleteControlDocumentMappingInput
+func (ec *executionContext) unmarshalInputDeleteDocumentInput(ctx context.Context, obj any) (types.DeleteDocumentInput, error) {
+	var it types.DeleteDocumentInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"controlId", "documentId"}
+	fieldsInOrder := [...]string{"documentId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "controlId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("controlId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ControlID = data
 		case "documentId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
@@ -32434,20 +32634,27 @@ func (ec *executionContext) unmarshalInputDeletePeopleInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeleteDocumentInput(ctx context.Context, obj any) (types.DeleteDocumentInput, error) {
-	var it types.DeleteDocumentInput
+func (ec *executionContext) unmarshalInputDeleteRiskDocumentMappingInput(ctx context.Context, obj any) (types.DeleteRiskDocumentMappingInput, error) {
+	var it types.DeleteRiskDocumentMappingInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"documentId"}
+	fieldsInOrder := [...]string{"riskId", "documentId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "riskId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("riskId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RiskID = data
 		case "documentId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
@@ -32516,40 +32723,6 @@ func (ec *executionContext) unmarshalInputDeleteRiskMeasureMappingInput(ctx cont
 				return it, err
 			}
 			it.MeasureID = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputDeleteRiskDocumentMappingInput(ctx context.Context, obj any) (types.DeleteRiskDocumentMappingInput, error) {
-	var it types.DeleteRiskDocumentMappingInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"riskId", "documentId"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "riskId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("riskId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.RiskID = data
-		case "documentId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DocumentID = data
 		}
 	}
 
@@ -32631,6 +32804,135 @@ func (ec *executionContext) unmarshalInputDeleteVendorInput(ctx context.Context,
 				return it, err
 			}
 			it.VendorID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDocumentOrder(ctx context.Context, obj any) (types.DocumentOrderBy, error) {
+	var it types.DocumentOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDocumentVersionFilter(ctx context.Context, obj any) (types.DocumentVersionFilter, error) {
+	var it types.DocumentVersionFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDocumentVersionOrder(ctx context.Context, obj any) (types.DocumentVersionOrderBy, error) {
+	var it types.DocumentVersionOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDocumentVersionSignatureOrder(ctx context.Context, obj any) (types.DocumentVersionSignatureOrder, error) {
+	var it types.DocumentVersionSignatureOrder
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"field", "direction"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
 		}
 	}
 
@@ -32991,135 +33293,6 @@ func (ec *executionContext) unmarshalInputPeopleOrder(ctx context.Context, obj a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDocumentOrder(ctx context.Context, obj any) (types.DocumentOrderBy, error) {
-	var it types.DocumentOrderBy
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"direction", "field"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "direction":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		case "field":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputDocumentVersionFilter(ctx context.Context, obj any) (types.DocumentVersionFilter, error) {
-	var it types.DocumentVersionFilter
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"status"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "status":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Status = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputDocumentVersionOrder(ctx context.Context, obj any) (types.DocumentVersionOrderBy, error) {
-	var it types.DocumentVersionOrderBy
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"direction", "field"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "direction":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		case "field":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputDocumentVersionSignatureOrder(ctx context.Context, obj any) (types.DocumentVersionSignatureOrder, error) {
-	var it types.DocumentVersionSignatureOrder
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"field", "direction"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "field":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
-		case "direction":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputPublishDocumentVersionInput(ctx context.Context, obj any) (types.PublishDocumentVersionInput, error) {
 	var it types.PublishDocumentVersionInput
 	asMap := map[string]any{}
@@ -33385,6 +33558,102 @@ func (ec *executionContext) unmarshalInputUnassignTaskInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Context, obj any) (types.UpdateDocumentInput, error) {
+	var it types.UpdateDocumentInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "title", "content", "ownerId", "createdBy", "documentType"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "content":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Content = data
+		case "ownerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "createdBy":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdBy"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatedBy = data
+		case "documentType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentType"))
+			data, err := ec.unmarshalODocumentType2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentType = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateDocumentVersionInput(ctx context.Context, obj any) (types.UpdateDocumentVersionInput, error) {
+	var it types.UpdateDocumentVersionInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"documentVersionId", "content"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "documentVersionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentVersionId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentVersionID = data
+		case "content":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Content = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateFrameworkInput(ctx context.Context, obj any) (types.UpdateFrameworkInput, error) {
 	var it types.UpdateFrameworkInput
 	asMap := map[string]any{}
@@ -33592,95 +33861,6 @@ func (ec *executionContext) unmarshalInputUpdatePeopleInput(ctx context.Context,
 				return it, err
 			}
 			it.ContractEndDate = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Context, obj any) (types.UpdateDocumentInput, error) {
-	var it types.UpdateDocumentInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"id", "title", "content", "ownerId", "createdBy"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "id":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ID = data
-		case "title":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Title = data
-		case "content":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Content = data
-		case "ownerId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.OwnerID = data
-		case "createdBy":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdBy"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.CreatedBy = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputUpdateDocumentVersionInput(ctx context.Context, obj any) (types.UpdateDocumentVersionInput, error) {
-	var it types.UpdateDocumentVersionInput
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"documentVersionId", "content"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "documentVersionId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentVersionId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DocumentVersionID = data
-		case "content":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Content = data
 		}
 	}
 
@@ -34301,27 +34481,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Risk(ctx, sel, obj)
-	case types.DocumentVersionSignature:
-		return ec._DocumentVersionSignature(ctx, sel, &obj)
-	case *types.DocumentVersionSignature:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._DocumentVersionSignature(ctx, sel, obj)
-	case types.DocumentVersion:
-		return ec._DocumentVersion(ctx, sel, &obj)
-	case *types.DocumentVersion:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._DocumentVersion(ctx, sel, obj)
-	case types.Document:
-		return ec._Document(ctx, sel, &obj)
-	case *types.Document:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Document(ctx, sel, obj)
 	case types.People:
 		return ec._People(ctx, sel, &obj)
 	case *types.People:
@@ -34357,6 +34516,27 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Evidence(ctx, sel, obj)
+	case types.DocumentVersionSignature:
+		return ec._DocumentVersionSignature(ctx, sel, &obj)
+	case *types.DocumentVersionSignature:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._DocumentVersionSignature(ctx, sel, obj)
+	case types.DocumentVersion:
+		return ec._DocumentVersion(ctx, sel, &obj)
+	case *types.DocumentVersion:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._DocumentVersion(ctx, sel, obj)
+	case types.Document:
+		return ec._Document(ctx, sel, &obj)
+	case *types.Document:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Document(ctx, sel, obj)
 	case types.Control:
 		return ec._Control(ctx, sel, &obj)
 	case *types.Control:
@@ -34904,6 +35084,50 @@ func (ec *executionContext) _ControlEdge(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var createControlDocumentMappingPayloadImplementors = []string{"CreateControlDocumentMappingPayload"}
+
+func (ec *executionContext) _CreateControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateControlDocumentMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createControlDocumentMappingPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateControlDocumentMappingPayload")
+		case "controlEdge":
+			out.Values[i] = ec._CreateControlDocumentMappingPayload_controlEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "documentEdge":
+			out.Values[i] = ec._CreateControlDocumentMappingPayload_documentEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var createControlMeasureMappingPayloadImplementors = []string{"CreateControlMeasureMappingPayload"}
 
 func (ec *executionContext) _CreateControlMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateControlMeasureMappingPayload) graphql.Marshaler {
@@ -34948,24 +35172,24 @@ func (ec *executionContext) _CreateControlMeasureMappingPayload(ctx context.Cont
 	return out
 }
 
-var createControlDocumentMappingPayloadImplementors = []string{"CreateControlDocumentMappingPayload"}
+var createDocumentPayloadImplementors = []string{"CreateDocumentPayload"}
 
-func (ec *executionContext) _CreateControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateControlDocumentMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createControlDocumentMappingPayloadImplementors)
+func (ec *executionContext) _CreateDocumentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateDocumentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createDocumentPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateControlDocumentMappingPayload")
-		case "controlEdge":
-			out.Values[i] = ec._CreateControlDocumentMappingPayload_controlEdge(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("CreateDocumentPayload")
+		case "documentEdge":
+			out.Values[i] = ec._CreateDocumentPayload_documentEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "documentEdge":
-			out.Values[i] = ec._CreateControlDocumentMappingPayload_documentEdge(ctx, field, obj)
+		case "documentVersionEdge":
+			out.Values[i] = ec._CreateDocumentPayload_documentVersionEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -35226,24 +35450,24 @@ func (ec *executionContext) _CreatePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var createDocumentPayloadImplementors = []string{"CreateDocumentPayload"}
+var createRiskDocumentMappingPayloadImplementors = []string{"CreateRiskDocumentMappingPayload"}
 
-func (ec *executionContext) _CreateDocumentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateDocumentPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createDocumentPayloadImplementors)
+func (ec *executionContext) _CreateRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateRiskDocumentMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createRiskDocumentMappingPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateDocumentPayload")
-		case "documentEdge":
-			out.Values[i] = ec._CreateDocumentPayload_documentEdge(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("CreateRiskDocumentMappingPayload")
+		case "riskEdge":
+			out.Values[i] = ec._CreateRiskDocumentMappingPayload_riskEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "documentVersionEdge":
-			out.Values[i] = ec._CreateDocumentPayload_documentVersionEdge(ctx, field, obj)
+		case "documentEdge":
+			out.Values[i] = ec._CreateRiskDocumentMappingPayload_documentEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -35327,50 +35551,6 @@ func (ec *executionContext) _CreateRiskPayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("CreateRiskPayload")
 		case "riskEdge":
 			out.Values[i] = ec._CreateRiskPayload_riskEdge(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var createRiskDocumentMappingPayloadImplementors = []string{"CreateRiskDocumentMappingPayload"}
-
-func (ec *executionContext) _CreateRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateRiskDocumentMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createRiskDocumentMappingPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateRiskDocumentMappingPayload")
-		case "riskEdge":
-			out.Values[i] = ec._CreateRiskDocumentMappingPayload_riskEdge(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "documentEdge":
-			out.Values[i] = ec._CreateRiskDocumentMappingPayload_documentEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -35514,6 +35694,50 @@ func (ec *executionContext) _CreateVendorRiskAssessmentPayload(ctx context.Conte
 	return out
 }
 
+var deleteControlDocumentMappingPayloadImplementors = []string{"DeleteControlDocumentMappingPayload"}
+
+func (ec *executionContext) _DeleteControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteControlDocumentMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteControlDocumentMappingPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteControlDocumentMappingPayload")
+		case "deletedControlId":
+			out.Values[i] = ec._DeleteControlDocumentMappingPayload_deletedControlId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deletedDocumentId":
+			out.Values[i] = ec._DeleteControlDocumentMappingPayload_deletedDocumentId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deleteControlMeasureMappingPayloadImplementors = []string{"DeleteControlMeasureMappingPayload"}
 
 func (ec *executionContext) _DeleteControlMeasureMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteControlMeasureMappingPayload) graphql.Marshaler {
@@ -35558,24 +35782,19 @@ func (ec *executionContext) _DeleteControlMeasureMappingPayload(ctx context.Cont
 	return out
 }
 
-var deleteControlDocumentMappingPayloadImplementors = []string{"DeleteControlDocumentMappingPayload"}
+var deleteDocumentPayloadImplementors = []string{"DeleteDocumentPayload"}
 
-func (ec *executionContext) _DeleteControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteControlDocumentMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteControlDocumentMappingPayloadImplementors)
+func (ec *executionContext) _DeleteDocumentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteDocumentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteDocumentPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteControlDocumentMappingPayload")
-		case "deletedControlId":
-			out.Values[i] = ec._DeleteControlDocumentMappingPayload_deletedControlId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
+			out.Values[i] = graphql.MarshalString("DeleteDocumentPayload")
 		case "deletedDocumentId":
-			out.Values[i] = ec._DeleteControlDocumentMappingPayload_deletedDocumentId(ctx, field, obj)
+			out.Values[i] = ec._DeleteDocumentPayload_deletedDocumentId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -35797,19 +36016,24 @@ func (ec *executionContext) _DeletePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var deleteDocumentPayloadImplementors = []string{"DeleteDocumentPayload"}
+var deleteRiskDocumentMappingPayloadImplementors = []string{"DeleteRiskDocumentMappingPayload"}
 
-func (ec *executionContext) _DeleteDocumentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteDocumentPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteDocumentPayloadImplementors)
+func (ec *executionContext) _DeleteRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteRiskDocumentMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteRiskDocumentMappingPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteDocumentPayload")
+			out.Values[i] = graphql.MarshalString("DeleteRiskDocumentMappingPayload")
+		case "deletedRiskId":
+			out.Values[i] = ec._DeleteRiskDocumentMappingPayload_deletedRiskId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "deletedDocumentId":
-			out.Values[i] = ec._DeleteDocumentPayload_deletedDocumentId(ctx, field, obj)
+			out.Values[i] = ec._DeleteRiskDocumentMappingPayload_deletedDocumentId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -35893,50 +36117,6 @@ func (ec *executionContext) _DeleteRiskPayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("DeleteRiskPayload")
 		case "deletedRiskId":
 			out.Values[i] = ec._DeleteRiskPayload_deletedRiskId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var deleteRiskDocumentMappingPayloadImplementors = []string{"DeleteRiskDocumentMappingPayload"}
-
-func (ec *executionContext) _DeleteRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteRiskDocumentMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteRiskDocumentMappingPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteRiskDocumentMappingPayload")
-		case "deletedRiskId":
-			out.Values[i] = ec._DeleteRiskDocumentMappingPayload_deletedRiskId(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "deletedDocumentId":
-			out.Values[i] = ec._DeleteRiskDocumentMappingPayload_deletedDocumentId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -36054,6 +36234,825 @@ func (ec *executionContext) _DeleteVendorPayload(ctx context.Context, sel ast.Se
 			out.Values[i] = graphql.MarshalString("DeleteVendorPayload")
 		case "deletedVendorId":
 			out.Values[i] = ec._DeleteVendorPayload_deletedVendorId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var documentImplementors = []string{"Document", "Node"}
+
+func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet, obj *types.Document) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Document")
+		case "id":
+			out.Values[i] = ec._Document_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "title":
+			out.Values[i] = ec._Document_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._Document_description(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "documentType":
+			out.Values[i] = ec._Document_documentType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "currentPublishedVersion":
+			out.Values[i] = ec._Document_currentPublishedVersion(ctx, field, obj)
+		case "owner":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Document_owner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Document_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "versions":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Document_versions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "controls":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Document_controls(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdAt":
+			out.Values[i] = ec._Document_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Document_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var documentConnectionImplementors = []string{"DocumentConnection"}
+
+func (ec *executionContext) _DocumentConnection(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentConnection")
+		case "edges":
+			out.Values[i] = ec._DocumentConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._DocumentConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var documentEdgeImplementors = []string{"DocumentEdge"}
+
+func (ec *executionContext) _DocumentEdge(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentEdge")
+		case "cursor":
+			out.Values[i] = ec._DocumentEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._DocumentEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var documentVersionImplementors = []string{"DocumentVersion", "Node"}
+
+func (ec *executionContext) _DocumentVersion(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersion) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentVersion")
+		case "id":
+			out.Values[i] = ec._DocumentVersion_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "document":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentVersion_document(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "status":
+			out.Values[i] = ec._DocumentVersion_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "version":
+			out.Values[i] = ec._DocumentVersion_version(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "content":
+			out.Values[i] = ec._DocumentVersion_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "changelog":
+			out.Values[i] = ec._DocumentVersion_changelog(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "signatures":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentVersion_signatures(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "publishedBy":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentVersion_publishedBy(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "publishedAt":
+			out.Values[i] = ec._DocumentVersion_publishedAt(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._DocumentVersion_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._DocumentVersion_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var documentVersionConnectionImplementors = []string{"DocumentVersionConnection"}
+
+func (ec *executionContext) _DocumentVersionConnection(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentVersionConnection")
+		case "edges":
+			out.Values[i] = ec._DocumentVersionConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._DocumentVersionConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var documentVersionEdgeImplementors = []string{"DocumentVersionEdge"}
+
+func (ec *executionContext) _DocumentVersionEdge(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentVersionEdge")
+		case "cursor":
+			out.Values[i] = ec._DocumentVersionEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._DocumentVersionEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var documentVersionSignatureImplementors = []string{"DocumentVersionSignature", "Node"}
+
+func (ec *executionContext) _DocumentVersionSignature(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionSignature) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionSignatureImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentVersionSignature")
+		case "id":
+			out.Values[i] = ec._DocumentVersionSignature_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "documentVersion":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentVersionSignature_documentVersion(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "state":
+			out.Values[i] = ec._DocumentVersionSignature_state(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "signedBy":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentVersionSignature_signedBy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "signedAt":
+			out.Values[i] = ec._DocumentVersionSignature_signedAt(ctx, field, obj)
+		case "requestedAt":
+			out.Values[i] = ec._DocumentVersionSignature_requestedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "requestedBy":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._DocumentVersionSignature_requestedBy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdAt":
+			out.Values[i] = ec._DocumentVersionSignature_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._DocumentVersionSignature_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var documentVersionSignatureConnectionImplementors = []string{"DocumentVersionSignatureConnection"}
+
+func (ec *executionContext) _DocumentVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionSignatureConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionSignatureConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentVersionSignatureConnection")
+		case "edges":
+			out.Values[i] = ec._DocumentVersionSignatureConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._DocumentVersionSignatureConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var documentVersionSignatureEdgeImplementors = []string{"DocumentVersionSignatureEdge"}
+
+func (ec *executionContext) _DocumentVersionSignatureEdge(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionSignatureEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionSignatureEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DocumentVersionSignatureEdge")
+		case "cursor":
+			out.Values[i] = ec._DocumentVersionSignatureEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._DocumentVersionSignatureEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -37393,6 +38392,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateDocument":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateDocument(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "deleteDocument":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteDocument(ctx, field)
@@ -38163,820 +39169,6 @@ func (ec *executionContext) _PeopleEdge(ctx context.Context, sel ast.SelectionSe
 			}
 		case "node":
 			out.Values[i] = ec._PeopleEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var documentImplementors = []string{"Document", "Node"}
-
-func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet, obj *types.Document) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, documentImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Document")
-		case "id":
-			out.Values[i] = ec._Document_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "title":
-			out.Values[i] = ec._Document_title(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "description":
-			out.Values[i] = ec._Document_description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "currentPublishedVersion":
-			out.Values[i] = ec._Document_currentPublishedVersion(ctx, field, obj)
-		case "owner":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Document_owner(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "organization":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Document_organization(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "versions":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Document_versions(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "controls":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Document_controls(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "createdAt":
-			out.Values[i] = ec._Document_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._Document_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var documentConnectionImplementors = []string{"DocumentConnection"}
-
-func (ec *executionContext) _DocumentConnection(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, documentConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DocumentConnection")
-		case "edges":
-			out.Values[i] = ec._DocumentConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "pageInfo":
-			out.Values[i] = ec._DocumentConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var documentEdgeImplementors = []string{"DocumentEdge"}
-
-func (ec *executionContext) _DocumentEdge(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, documentEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DocumentEdge")
-		case "cursor":
-			out.Values[i] = ec._DocumentEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._DocumentEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var documentVersionImplementors = []string{"DocumentVersion", "Node"}
-
-func (ec *executionContext) _DocumentVersion(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersion) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DocumentVersion")
-		case "id":
-			out.Values[i] = ec._DocumentVersion_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "document":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._DocumentVersion_document(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "status":
-			out.Values[i] = ec._DocumentVersion_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "version":
-			out.Values[i] = ec._DocumentVersion_version(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "content":
-			out.Values[i] = ec._DocumentVersion_content(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "changelog":
-			out.Values[i] = ec._DocumentVersion_changelog(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "signatures":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._DocumentVersion_signatures(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "publishedBy":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._DocumentVersion_publishedBy(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "publishedAt":
-			out.Values[i] = ec._DocumentVersion_publishedAt(ctx, field, obj)
-		case "createdAt":
-			out.Values[i] = ec._DocumentVersion_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._DocumentVersion_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var documentVersionConnectionImplementors = []string{"DocumentVersionConnection"}
-
-func (ec *executionContext) _DocumentVersionConnection(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DocumentVersionConnection")
-		case "edges":
-			out.Values[i] = ec._DocumentVersionConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "pageInfo":
-			out.Values[i] = ec._DocumentVersionConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var documentVersionEdgeImplementors = []string{"DocumentVersionEdge"}
-
-func (ec *executionContext) _DocumentVersionEdge(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DocumentVersionEdge")
-		case "cursor":
-			out.Values[i] = ec._DocumentVersionEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._DocumentVersionEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var documentVersionSignatureImplementors = []string{"DocumentVersionSignature", "Node"}
-
-func (ec *executionContext) _DocumentVersionSignature(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionSignature) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionSignatureImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DocumentVersionSignature")
-		case "id":
-			out.Values[i] = ec._DocumentVersionSignature_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "documentVersion":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._DocumentVersionSignature_documentVersion(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "state":
-			out.Values[i] = ec._DocumentVersionSignature_state(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "signedBy":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._DocumentVersionSignature_signedBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "signedAt":
-			out.Values[i] = ec._DocumentVersionSignature_signedAt(ctx, field, obj)
-		case "requestedAt":
-			out.Values[i] = ec._DocumentVersionSignature_requestedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "requestedBy":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._DocumentVersionSignature_requestedBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "createdAt":
-			out.Values[i] = ec._DocumentVersionSignature_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "updatedAt":
-			out.Values[i] = ec._DocumentVersionSignature_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var documentVersionSignatureConnectionImplementors = []string{"DocumentVersionSignatureConnection"}
-
-func (ec *executionContext) _DocumentVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionSignatureConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionSignatureConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DocumentVersionSignatureConnection")
-		case "edges":
-			out.Values[i] = ec._DocumentVersionSignatureConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "pageInfo":
-			out.Values[i] = ec._DocumentVersionSignatureConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var documentVersionSignatureEdgeImplementors = []string{"DocumentVersionSignatureEdge"}
-
-func (ec *executionContext) _DocumentVersionSignatureEdge(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionSignatureEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionSignatureEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("DocumentVersionSignatureEdge")
-		case "cursor":
-			out.Values[i] = ec._DocumentVersionSignatureEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._DocumentVersionSignatureEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -40041,6 +40233,84 @@ func (ec *executionContext) _UnassignTaskPayload(ctx context.Context, sel ast.Se
 	return out
 }
 
+var updateDocumentPayloadImplementors = []string{"UpdateDocumentPayload"}
+
+func (ec *executionContext) _UpdateDocumentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateDocumentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateDocumentPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateDocumentPayload")
+		case "document":
+			out.Values[i] = ec._UpdateDocumentPayload_document(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateDocumentVersionPayloadImplementors = []string{"UpdateDocumentVersionPayload"}
+
+func (ec *executionContext) _UpdateDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateDocumentVersionPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateDocumentVersionPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateDocumentVersionPayload")
+		case "documentVersion":
+			out.Values[i] = ec._UpdateDocumentVersionPayload_documentVersion(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var updateFrameworkPayloadImplementors = []string{"UpdateFrameworkPayload"}
 
 func (ec *executionContext) _UpdateFrameworkPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateFrameworkPayload) graphql.Marshaler {
@@ -40171,84 +40441,6 @@ func (ec *executionContext) _UpdatePeoplePayload(ctx context.Context, sel ast.Se
 			out.Values[i] = graphql.MarshalString("UpdatePeoplePayload")
 		case "people":
 			out.Values[i] = ec._UpdatePeoplePayload_people(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var updateDocumentPayloadImplementors = []string{"UpdateDocumentPayload"}
-
-func (ec *executionContext) _UpdateDocumentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateDocumentPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateDocumentPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateDocumentPayload")
-		case "document":
-			out.Values[i] = ec._UpdateDocumentPayload_document(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var updateDocumentVersionPayloadImplementors = []string{"UpdateDocumentVersionPayload"}
-
-func (ec *executionContext) _UpdateDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateDocumentVersionPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateDocumentVersionPayloadImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdateDocumentVersionPayload")
-		case "documentVersion":
-			out.Values[i] = ec._UpdateDocumentVersionPayload_documentVersion(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -42228,6 +42420,25 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNCreateControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingInput(ctx context.Context, v any) (types.CreateControlDocumentMappingInput, error) {
+	res, err := ec.unmarshalInputCreateControlDocumentMappingInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateControlDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateControlDocumentMappingPayload) graphql.Marshaler {
+	return ec._CreateControlDocumentMappingPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateControlDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateControlDocumentMappingPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateControlDocumentMappingPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateControlMeasureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlMeasureMappingInput(ctx context.Context, v any) (types.CreateControlMeasureMappingInput, error) {
 	res, err := ec.unmarshalInputCreateControlMeasureMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -42247,23 +42458,23 @@ func (ec *executionContext) marshalNCreateControlMeasureMappingPayload2ᚖgithub
 	return ec._CreateControlMeasureMappingPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreateControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingInput(ctx context.Context, v any) (types.CreateControlDocumentMappingInput, error) {
-	res, err := ec.unmarshalInputCreateControlDocumentMappingInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentInput(ctx context.Context, v any) (types.CreateDocumentInput, error) {
+	res, err := ec.unmarshalInputCreateDocumentInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCreateControlDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateControlDocumentMappingPayload) graphql.Marshaler {
-	return ec._CreateControlDocumentMappingPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNCreateDocumentPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateDocumentPayload) graphql.Marshaler {
+	return ec._CreateDocumentPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCreateControlDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateControlDocumentMappingPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNCreateDocumentPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateDocumentPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._CreateControlDocumentMappingPayload(ctx, sel, v)
+	return ec._CreateDocumentPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateDraftDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDraftDocumentVersionInput(ctx context.Context, v any) (types.CreateDraftDocumentVersionInput, error) {
@@ -42361,23 +42572,23 @@ func (ec *executionContext) marshalNCreatePeoplePayload2ᚖgithubᚗcomᚋgetpro
 	return ec._CreatePeoplePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreateDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentInput(ctx context.Context, v any) (types.CreateDocumentInput, error) {
-	res, err := ec.unmarshalInputCreateDocumentInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingInput(ctx context.Context, v any) (types.CreateRiskDocumentMappingInput, error) {
+	res, err := ec.unmarshalInputCreateRiskDocumentMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCreateDocumentPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateDocumentPayload) graphql.Marshaler {
-	return ec._CreateDocumentPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNCreateRiskDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateRiskDocumentMappingPayload) graphql.Marshaler {
+	return ec._CreateRiskDocumentMappingPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCreateDocumentPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateDocumentPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNCreateRiskDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateRiskDocumentMappingPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._CreateDocumentPayload(ctx, sel, v)
+	return ec._CreateRiskDocumentMappingPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateRiskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskInput(ctx context.Context, v any) (types.CreateRiskInput, error) {
@@ -42416,25 +42627,6 @@ func (ec *executionContext) marshalNCreateRiskPayload2ᚖgithubᚗcomᚋgetprobo
 		return graphql.Null
 	}
 	return ec._CreateRiskPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNCreateRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingInput(ctx context.Context, v any) (types.CreateRiskDocumentMappingInput, error) {
-	res, err := ec.unmarshalInputCreateRiskDocumentMappingInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNCreateRiskDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateRiskDocumentMappingPayload) graphql.Marshaler {
-	return ec._CreateRiskDocumentMappingPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCreateRiskDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateRiskDocumentMappingPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CreateRiskDocumentMappingPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateTaskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateTaskInput(ctx context.Context, v any) (types.CreateTaskInput, error) {
@@ -42560,6 +42752,25 @@ func (ec *executionContext) marshalNDatetime2timeᚐTime(ctx context.Context, se
 	return res
 }
 
+func (ec *executionContext) unmarshalNDeleteControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingInput(ctx context.Context, v any) (types.DeleteControlDocumentMappingInput, error) {
+	res, err := ec.unmarshalInputDeleteControlDocumentMappingInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteControlDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteControlDocumentMappingPayload) graphql.Marshaler {
+	return ec._DeleteControlDocumentMappingPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteControlDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteControlDocumentMappingPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteControlDocumentMappingPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNDeleteControlMeasureMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlMeasureMappingInput(ctx context.Context, v any) (types.DeleteControlMeasureMappingInput, error) {
 	res, err := ec.unmarshalInputDeleteControlMeasureMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -42579,23 +42790,23 @@ func (ec *executionContext) marshalNDeleteControlMeasureMappingPayload2ᚖgithub
 	return ec._DeleteControlMeasureMappingPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDeleteControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingInput(ctx context.Context, v any) (types.DeleteControlDocumentMappingInput, error) {
-	res, err := ec.unmarshalInputDeleteControlDocumentMappingInput(ctx, v)
+func (ec *executionContext) unmarshalNDeleteDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentInput(ctx context.Context, v any) (types.DeleteDocumentInput, error) {
+	res, err := ec.unmarshalInputDeleteDocumentInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeleteControlDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteControlDocumentMappingPayload) graphql.Marshaler {
-	return ec._DeleteControlDocumentMappingPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNDeleteDocumentPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteDocumentPayload) graphql.Marshaler {
+	return ec._DeleteDocumentPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDeleteControlDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteControlDocumentMappingPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNDeleteDocumentPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteDocumentPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._DeleteControlDocumentMappingPayload(ctx, sel, v)
+	return ec._DeleteDocumentPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteEvidenceInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteEvidenceInput(ctx context.Context, v any) (types.DeleteEvidenceInput, error) {
@@ -42693,23 +42904,23 @@ func (ec *executionContext) marshalNDeletePeoplePayload2ᚖgithubᚗcomᚋgetpro
 	return ec._DeletePeoplePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDeleteDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentInput(ctx context.Context, v any) (types.DeleteDocumentInput, error) {
-	res, err := ec.unmarshalInputDeleteDocumentInput(ctx, v)
+func (ec *executionContext) unmarshalNDeleteRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingInput(ctx context.Context, v any) (types.DeleteRiskDocumentMappingInput, error) {
+	res, err := ec.unmarshalInputDeleteRiskDocumentMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeleteDocumentPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteDocumentPayload) graphql.Marshaler {
-	return ec._DeleteDocumentPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNDeleteRiskDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteRiskDocumentMappingPayload) graphql.Marshaler {
+	return ec._DeleteRiskDocumentMappingPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDeleteDocumentPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteDocumentPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNDeleteRiskDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteRiskDocumentMappingPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._DeleteDocumentPayload(ctx, sel, v)
+	return ec._DeleteRiskDocumentMappingPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteRiskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskInput(ctx context.Context, v any) (types.DeleteRiskInput, error) {
@@ -42748,25 +42959,6 @@ func (ec *executionContext) marshalNDeleteRiskPayload2ᚖgithubᚗcomᚋgetprobo
 		return graphql.Null
 	}
 	return ec._DeleteRiskPayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNDeleteRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingInput(ctx context.Context, v any) (types.DeleteRiskDocumentMappingInput, error) {
-	res, err := ec.unmarshalInputDeleteRiskDocumentMappingInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDeleteRiskDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteRiskDocumentMappingPayload) graphql.Marshaler {
-	return ec._DeleteRiskDocumentMappingPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDeleteRiskDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteRiskDocumentMappingPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DeleteRiskDocumentMappingPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteTaskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTaskInput(ctx context.Context, v any) (types.DeleteTaskInput, error) {
@@ -42825,6 +43017,418 @@ func (ec *executionContext) marshalNDeleteVendorPayload2ᚖgithubᚗcomᚋgetpro
 	}
 	return ec._DeleteVendorPayload(ctx, sel, v)
 }
+
+func (ec *executionContext) marshalNDocument2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx context.Context, sel ast.SelectionSet, v types.Document) graphql.Marshaler {
+	return ec._Document(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx context.Context, sel ast.SelectionSet, v *types.Document) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Document(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentConnection) graphql.Marshaler {
+	return ec._DocumentConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDocumentConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v *types.DocumentConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx context.Context, sel ast.SelectionSet, v *types.DocumentEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField(ctx context.Context, v any) (coredata.DocumentOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField = map[string]coredata.DocumentOrderField{
+		"TITLE":      coredata.DocumentOrderFieldTitle,
+		"CREATED_AT": coredata.DocumentOrderFieldCreatedAt,
+	}
+	marshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField = map[coredata.DocumentOrderField]string{
+		coredata.DocumentOrderFieldTitle:     "TITLE",
+		coredata.DocumentOrderFieldCreatedAt: "CREATED_AT",
+	}
+)
+
+func (ec *executionContext) unmarshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, v any) (coredata.DocumentStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[string]coredata.DocumentStatus{
+		"DRAFT":     coredata.DocumentStatusDraft,
+		"PUBLISHED": coredata.DocumentStatusPublished,
+	}
+	marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[coredata.DocumentStatus]string{
+		coredata.DocumentStatusDraft:     "DRAFT",
+		coredata.DocumentStatusPublished: "PUBLISHED",
+	}
+)
+
+func (ec *executionContext) unmarshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx context.Context, v any) (coredata.DocumentType, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentType) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType = map[string]coredata.DocumentType{
+		"OTHER":  coredata.DocumentTypeOther,
+		"ISMS":   coredata.DocumentTypeISMS,
+		"POLICY": coredata.DocumentTypePolicy,
+	}
+	marshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType = map[coredata.DocumentType]string{
+		coredata.DocumentTypeOther:  "OTHER",
+		coredata.DocumentTypeISMS:   "ISMS",
+		coredata.DocumentTypePolicy: "POLICY",
+	}
+)
+
+func (ec *executionContext) marshalNDocumentVersion2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx context.Context, sel ast.SelectionSet, v types.DocumentVersion) graphql.Marshaler {
+	return ec._DocumentVersion(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersion) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentVersion(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentVersionConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentVersionConnection) graphql.Marshaler {
+	return ec._DocumentVersionConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDocumentVersionConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionConnection(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentVersionConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentVersionEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentVersionEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDocumentVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDocumentVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdge(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentVersionEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField(ctx context.Context, v any) (coredata.DocumentVersionOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentVersionOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField = map[string]coredata.DocumentVersionOrderField{
+		"VERSION":    coredata.DocumentVersionOrderFieldVersion,
+		"CREATED_AT": coredata.DocumentVersionOrderFieldCreatedAt,
+	}
+	marshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField = map[coredata.DocumentVersionOrderField]string{
+		coredata.DocumentVersionOrderFieldVersion:   "VERSION",
+		coredata.DocumentVersionOrderFieldCreatedAt: "CREATED_AT",
+	}
+)
+
+func (ec *executionContext) marshalNDocumentVersionSignature2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignature(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionSignature) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentVersionSignature(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentVersionSignatureConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentVersionSignatureConnection) graphql.Marshaler {
+	return ec._DocumentVersionSignatureConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDocumentVersionSignatureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionSignatureConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentVersionSignatureConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDocumentVersionSignatureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentVersionSignatureEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDocumentVersionSignatureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDocumentVersionSignatureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdge(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionSignatureEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DocumentVersionSignatureEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField(ctx context.Context, v any) (coredata.DocumentVersionSignatureOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentVersionSignatureOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField = map[string]coredata.DocumentVersionSignatureOrderField{
+		"CREATED_AT": coredata.DocumentVersionSignatureOrderFieldCreatedAt,
+		"SIGNED_AT":  coredata.DocumentVersionSignatureOrderFieldSignedAt,
+	}
+	marshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField = map[coredata.DocumentVersionSignatureOrderField]string{
+		coredata.DocumentVersionSignatureOrderFieldCreatedAt: "CREATED_AT",
+		coredata.DocumentVersionSignatureOrderFieldSignedAt:  "SIGNED_AT",
+	}
+)
+
+func (ec *executionContext) unmarshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState(ctx context.Context, v any) (coredata.DocumentVersionSignatureState, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentVersionSignatureState) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState = map[string]coredata.DocumentVersionSignatureState{
+		"REQUESTED": coredata.DocumentVersionSignatureStateRequested,
+		"SIGNED":    coredata.DocumentVersionSignatureStateSigned,
+	}
+	marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState = map[coredata.DocumentVersionSignatureState]string{
+		coredata.DocumentVersionSignatureStateRequested: "REQUESTED",
+		coredata.DocumentVersionSignatureStateSigned:    "SIGNED",
+	}
+)
 
 func (ec *executionContext) marshalNEvidence2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐEvidence(ctx context.Context, sel ast.SelectionSet, v *types.Evidence) graphql.Marshaler {
 	if v == nil {
@@ -43632,388 +44236,6 @@ var (
 	}
 )
 
-func (ec *executionContext) marshalNDocument2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx context.Context, sel ast.SelectionSet, v types.Document) graphql.Marshaler {
-	return ec._Document(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx context.Context, sel ast.SelectionSet, v *types.Document) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Document(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNDocumentConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentConnection) graphql.Marshaler {
-	return ec._DocumentConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDocumentConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v *types.DocumentConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DocumentConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNDocumentEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx context.Context, sel ast.SelectionSet, v *types.DocumentEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DocumentEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField(ctx context.Context, v any) (coredata.DocumentOrderField, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentOrderField) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField = map[string]coredata.DocumentOrderField{
-		"TITLE":      coredata.DocumentOrderFieldTitle,
-		"CREATED_AT": coredata.DocumentOrderFieldCreatedAt,
-	}
-	marshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField = map[coredata.DocumentOrderField]string{
-		coredata.DocumentOrderFieldTitle:     "TITLE",
-		coredata.DocumentOrderFieldCreatedAt: "CREATED_AT",
-	}
-)
-
-func (ec *executionContext) unmarshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, v any) (coredata.DocumentStatus, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentStatus) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[string]coredata.DocumentStatus{
-		"DRAFT":     coredata.DocumentStatusDraft,
-		"PUBLISHED": coredata.DocumentStatusPublished,
-	}
-	marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[coredata.DocumentStatus]string{
-		coredata.DocumentStatusDraft:     "DRAFT",
-		coredata.DocumentStatusPublished: "PUBLISHED",
-	}
-)
-
-func (ec *executionContext) marshalNDocumentVersion2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx context.Context, sel ast.SelectionSet, v types.DocumentVersion) graphql.Marshaler {
-	return ec._DocumentVersion(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersion) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DocumentVersion(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNDocumentVersionConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentVersionConnection) graphql.Marshaler {
-	return ec._DocumentVersionConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDocumentVersionConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionConnection(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DocumentVersionConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNDocumentVersionEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentVersionEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDocumentVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNDocumentVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdge(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DocumentVersionEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField(ctx context.Context, v any) (coredata.DocumentVersionOrderField, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentVersionOrderField) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField = map[string]coredata.DocumentVersionOrderField{
-		"VERSION":    coredata.DocumentVersionOrderFieldVersion,
-		"CREATED_AT": coredata.DocumentVersionOrderFieldCreatedAt,
-	}
-	marshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField = map[coredata.DocumentVersionOrderField]string{
-		coredata.DocumentVersionOrderFieldVersion:   "VERSION",
-		coredata.DocumentVersionOrderFieldCreatedAt: "CREATED_AT",
-	}
-)
-
-func (ec *executionContext) marshalNDocumentVersionSignature2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignature(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionSignature) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DocumentVersionSignature(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNDocumentVersionSignatureConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentVersionSignatureConnection) graphql.Marshaler {
-	return ec._DocumentVersionSignatureConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNDocumentVersionSignatureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionSignatureConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DocumentVersionSignatureConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNDocumentVersionSignatureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentVersionSignatureEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNDocumentVersionSignatureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNDocumentVersionSignatureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdge(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionSignatureEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._DocumentVersionSignatureEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField(ctx context.Context, v any) (coredata.DocumentVersionSignatureOrderField, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentVersionSignatureOrderField) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField = map[string]coredata.DocumentVersionSignatureOrderField{
-		"CREATED_AT": coredata.DocumentVersionSignatureOrderFieldCreatedAt,
-		"SIGNED_AT":  coredata.DocumentVersionSignatureOrderFieldSignedAt,
-	}
-	marshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField = map[coredata.DocumentVersionSignatureOrderField]string{
-		coredata.DocumentVersionSignatureOrderFieldCreatedAt: "CREATED_AT",
-		coredata.DocumentVersionSignatureOrderFieldSignedAt:  "SIGNED_AT",
-	}
-)
-
-func (ec *executionContext) unmarshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState(ctx context.Context, v any) (coredata.DocumentVersionSignatureState, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentVersionSignatureState) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState = map[string]coredata.DocumentVersionSignatureState{
-		"REQUESTED": coredata.DocumentVersionSignatureStateRequested,
-		"SIGNED":    coredata.DocumentVersionSignatureStateSigned,
-	}
-	marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState = map[coredata.DocumentVersionSignatureState]string{
-		coredata.DocumentVersionSignatureStateRequested: "REQUESTED",
-		coredata.DocumentVersionSignatureStateSigned:    "SIGNED",
-	}
-)
-
 func (ec *executionContext) unmarshalNPublishDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishDocumentVersionInput(ctx context.Context, v any) (types.PublishDocumentVersionInput, error) {
 	res, err := ec.unmarshalInputPublishDocumentVersionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -44445,6 +44667,44 @@ func (ec *executionContext) marshalNUnassignTaskPayload2ᚖgithubᚗcomᚋgetpro
 	return ec._UnassignTaskPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNUpdateDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentInput(ctx context.Context, v any) (types.UpdateDocumentInput, error) {
+	res, err := ec.unmarshalInputUpdateDocumentInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateDocumentPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateDocumentPayload) graphql.Marshaler {
+	return ec._UpdateDocumentPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateDocumentPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateDocumentPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateDocumentPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionInput(ctx context.Context, v any) (types.UpdateDocumentVersionInput, error) {
+	res, err := ec.unmarshalInputUpdateDocumentVersionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateDocumentVersionPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateDocumentVersionPayload) graphql.Marshaler {
+	return ec._UpdateDocumentVersionPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateDocumentVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateDocumentVersionPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateDocumentVersionPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNUpdateFrameworkInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateFrameworkInput(ctx context.Context, v any) (types.UpdateFrameworkInput, error) {
 	res, err := ec.unmarshalInputUpdateFrameworkInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -44519,25 +44779,6 @@ func (ec *executionContext) marshalNUpdatePeoplePayload2ᚖgithubᚗcomᚋgetpro
 		return graphql.Null
 	}
 	return ec._UpdatePeoplePayload(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNUpdateDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionInput(ctx context.Context, v any) (types.UpdateDocumentVersionInput, error) {
-	res, err := ec.unmarshalInputUpdateDocumentVersionInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNUpdateDocumentVersionPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateDocumentVersionPayload) graphql.Marshaler {
-	return ec._UpdateDocumentVersionPayload(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUpdateDocumentVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateDocumentVersionPayload) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._UpdateDocumentVersionPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateRiskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRiskInput(ctx context.Context, v any) (types.UpdateRiskInput, error) {
@@ -45504,6 +45745,100 @@ func (ec *executionContext) marshalODatetime2ᚖtimeᚐTime(ctx context.Context,
 	return res
 }
 
+func (ec *executionContext) unmarshalODocumentOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx context.Context, v any) (*types.DocumentOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDocumentOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, v any) (*coredata.DocumentStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, sel ast.SelectionSet, v *coredata.DocumentStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[*v])
+	return res
+}
+
+var (
+	unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[string]coredata.DocumentStatus{
+		"DRAFT":     coredata.DocumentStatusDraft,
+		"PUBLISHED": coredata.DocumentStatusPublished,
+	}
+	marshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[coredata.DocumentStatus]string{
+		coredata.DocumentStatusDraft:     "DRAFT",
+		coredata.DocumentStatusPublished: "PUBLISHED",
+	}
+)
+
+func (ec *executionContext) unmarshalODocumentType2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx context.Context, v any) (*coredata.DocumentType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalODocumentType2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODocumentType2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx context.Context, sel ast.SelectionSet, v *coredata.DocumentType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalODocumentType2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType[*v])
+	return res
+}
+
+var (
+	unmarshalODocumentType2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType = map[string]coredata.DocumentType{
+		"OTHER":  coredata.DocumentTypeOther,
+		"ISMS":   coredata.DocumentTypeISMS,
+		"POLICY": coredata.DocumentTypePolicy,
+	}
+	marshalODocumentType2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType = map[coredata.DocumentType]string{
+		coredata.DocumentTypeOther:  "OTHER",
+		coredata.DocumentTypeISMS:   "ISMS",
+		coredata.DocumentTypePolicy: "POLICY",
+	}
+)
+
+func (ec *executionContext) unmarshalODocumentVersionFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionFilter(ctx context.Context, v any) (*types.DocumentVersionFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDocumentVersionFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalODocumentVersionOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionOrderBy(ctx context.Context, v any) (*types.DocumentVersionOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDocumentVersionOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalODocumentVersionSignatureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureOrder(ctx context.Context, v any) (*types.DocumentVersionSignatureOrder, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDocumentVersionSignatureOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalODuration2ᚖtimeᚐDuration(ctx context.Context, v any) (*time.Duration, error) {
 	if v == nil {
 		return nil, nil
@@ -45675,68 +46010,6 @@ func (ec *executionContext) unmarshalOPeopleOrder2ᚖgithubᚗcomᚋgetproboᚋp
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputPeopleOrder(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalODocumentOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx context.Context, v any) (*types.DocumentOrderBy, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputDocumentOrder(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, v any) (*coredata.DocumentStatus, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[tmp]
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, sel ast.SelectionSet, v *coredata.DocumentStatus) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	_ = sel
-	_ = ctx
-	res := graphql.MarshalString(marshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[*v])
-	return res
-}
-
-var (
-	unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[string]coredata.DocumentStatus{
-		"DRAFT":     coredata.DocumentStatusDraft,
-		"PUBLISHED": coredata.DocumentStatusPublished,
-	}
-	marshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[coredata.DocumentStatus]string{
-		coredata.DocumentStatusDraft:     "DRAFT",
-		coredata.DocumentStatusPublished: "PUBLISHED",
-	}
-)
-
-func (ec *executionContext) unmarshalODocumentVersionFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionFilter(ctx context.Context, v any) (*types.DocumentVersionFilter, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputDocumentVersionFilter(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalODocumentVersionOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionOrderBy(ctx context.Context, v any) (*types.DocumentVersionOrderBy, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputDocumentVersionOrder(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalODocumentVersionSignatureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureOrder(ctx context.Context, v any) (*types.DocumentVersionSignatureOrder, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputDocumentVersionSignatureOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
