@@ -91,13 +91,13 @@ enum PeopleKind
     )
 }
 
-enum PolicyStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.PolicyStatus") {
+enum DocumentStatus
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentStatus") {
   DRAFT
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.PolicyStatusDraft")
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentStatusDraft")
   PUBLISHED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyStatusPublished"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentStatusPublished"
     )
 }
 
@@ -184,15 +184,15 @@ enum TaskOrderField
   CREATED_AT
 }
 
-enum PolicyOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.PolicyOrderField") {
+enum DocumentOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentOrderField") {
   TITLE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyOrderFieldTitle"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentOrderFieldTitle"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentOrderFieldCreatedAt"
     )
 }
 
@@ -298,17 +298,17 @@ enum BusinessImpact
     )
 }
 
-enum PolicyVersionOrderField
+enum DocumentVersionOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.PolicyVersionOrderField"
+    model: "github.com/getprobo/probo/pkg/coredata.DocumentVersionOrderField"
   ) {
   VERSION
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionOrderFieldVersion"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionOrderFieldVersion"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionOrderFieldCreatedAt"
     )
 }
 
@@ -394,12 +394,12 @@ input TaskOrder
   field: TaskOrderField!
 }
 
-input PolicyOrder
+input DocumentOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.PolicyOrderBy"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.DocumentOrderBy"
   ) {
   direction: OrderDirection!
-  field: PolicyOrderField!
+  field: DocumentOrderField!
 }
 
 input RiskOrder
@@ -436,16 +436,16 @@ input ConnectorOrder {
   direction: OrderDirection!
 }
 
-input PolicyVersionOrder
+input DocumentVersionOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.PolicyVersionOrderBy"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.DocumentVersionOrderBy"
   ) {
   direction: OrderDirection!
-  field: PolicyVersionOrderField!
+  field: DocumentVersionOrderField!
 }
 
-input PolicyVersionFilter {
-  status: PolicyStatus
+input DocumentVersionFilter {
+  status: DocumentStatus
 }
 
 # Core Types
@@ -494,13 +494,13 @@ type Organization implements Node {
     orderBy: PeopleOrder
   ): PeopleConnection! @goField(forceResolver: true)
 
-  policies(
+  documents(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: PolicyOrder
-  ): PolicyConnection! @goField(forceResolver: true)
+    orderBy: DocumentOrder
+  ): DocumentConnection! @goField(forceResolver: true)
 
   measures(
     first: Int
@@ -652,13 +652,13 @@ type Control implements Node {
     orderBy: MeasureOrder
   ): MeasureConnection! @goField(forceResolver: true)
 
-  policies(
+  documents(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: PolicyOrder
-  ): PolicyConnection! @goField(forceResolver: true)
+    orderBy: DocumentOrder
+  ): DocumentConnection! @goField(forceResolver: true)
 
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -748,7 +748,7 @@ type Evidence implements Node {
   updatedAt: Datetime!
 }
 
-type Policy implements Node {
+type Document implements Node {
   id: ID!
   title: String!
   description: String!
@@ -761,9 +761,9 @@ type Policy implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: PolicyVersionOrder
-    filter: PolicyVersionFilter
-  ): PolicyVersionConnection! @goField(forceResolver: true)
+    orderBy: DocumentVersionOrder
+    filter: DocumentVersionFilter
+  ): DocumentVersionConnection! @goField(forceResolver: true)
 
   controls(
     first: Int
@@ -802,13 +802,13 @@ type Risk implements Node {
     orderBy: MeasureOrder
   ): MeasureConnection! @goField(forceResolver: true)
 
-  policies(
+  documents(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: PolicyOrder
-  ): PolicyConnection! @goField(forceResolver: true)
+    orderBy: DocumentOrder
+  ): DocumentConnection! @goField(forceResolver: true)
 
   controls(
     first: Int
@@ -931,14 +931,14 @@ type EvidenceEdge {
   node: Evidence!
 }
 
-type PolicyConnection {
-  edges: [PolicyEdge!]!
+type DocumentConnection {
+  edges: [DocumentEdge!]!
   pageInfo: PageInfo!
 }
 
-type PolicyEdge {
+type DocumentEdge {
   cursor: CursorKey!
-  node: Policy!
+  node: Document!
 }
 
 type RiskConnection {
@@ -981,14 +981,14 @@ type VendorRiskAssessmentEdge {
   node: VendorRiskAssessment!
 }
 
-type PolicyVersionConnection {
-  edges: [PolicyVersionEdge!]!
+type DocumentVersionConnection {
+  edges: [DocumentVersionEdge!]!
   pageInfo: PageInfo!
 }
 
-type PolicyVersionEdge {
+type DocumentVersionEdge {
   cursor: CursorKey!
-  node: PolicyVersion!
+  node: DocumentVersion!
 }
 
 # Root Types
@@ -1040,15 +1040,15 @@ type Mutation {
   createControlMeasureMapping(
     input: CreateControlMeasureMappingInput!
   ): CreateControlMeasureMappingPayload!
-  createControlPolicyMapping(
-    input: CreateControlPolicyMappingInput!
-  ): CreateControlPolicyMappingPayload!
+  createControlDocumentMapping(
+    input: CreateControlDocumentMappingInput!
+  ): CreateControlDocumentMappingPayload!
   deleteControlMeasureMapping(
     input: DeleteControlMeasureMappingInput!
   ): DeleteControlMeasureMappingPayload!
-  deleteControlPolicyMapping(
-    input: DeleteControlPolicyMappingInput!
-  ): DeleteControlPolicyMappingPayload!
+  deleteControlDocumentMapping(
+    input: DeleteControlDocumentMappingInput!
+  ): DeleteControlDocumentMappingPayload!
 
   # Task mutations
   createTask(input: CreateTaskInput!): CreateTaskPayload!
@@ -1068,12 +1068,12 @@ type Mutation {
     input: DeleteRiskMeasureMappingInput!
   ): DeleteRiskMeasureMappingPayload!
 
-  createRiskPolicyMapping(
-    input: CreateRiskPolicyMappingInput!
-  ): CreateRiskPolicyMappingPayload!
-  deleteRiskPolicyMapping(
-    input: DeleteRiskPolicyMappingInput!
-  ): DeleteRiskPolicyMappingPayload!
+  createRiskDocumentMapping(
+    input: CreateRiskDocumentMappingInput!
+  ): CreateRiskDocumentMappingPayload!
+  deleteRiskDocumentMapping(
+    input: DeleteRiskDocumentMappingInput!
+  ): DeleteRiskDocumentMappingPayload!
 
   # Evidence mutations
   requestEvidence(input: RequestEvidenceInput!): RequestEvidencePayload!
@@ -1094,18 +1094,18 @@ type Mutation {
     input: DeleteVendorComplianceReportInput!
   ): DeleteVendorComplianceReportPayload!
 
-  # Policy mutations
-  createPolicy(input: CreatePolicyInput!): CreatePolicyPayload!
-  deletePolicy(input: DeletePolicyInput!): DeletePolicyPayload!
-  publishPolicyVersion(
-    input: PublishPolicyVersionInput!
-  ): PublishPolicyVersionPayload!
-  createDraftPolicyVersion(
-    input: CreateDraftPolicyVersionInput!
-  ): CreateDraftPolicyVersionPayload!
-  updatePolicyVersion(
-    input: UpdatePolicyVersionInput!
-  ): UpdatePolicyVersionPayload!
+  # Document mutations
+  createDocument(input: CreateDocumentInput!): CreateDocumentPayload!
+  deleteDocument(input: DeleteDocumentInput!): DeleteDocumentPayload!
+  publishDocumentVersion(
+    input: PublishDocumentVersionInput!
+  ): PublishDocumentVersionPayload!
+  createDraftDocumentVersion(
+    input: CreateDraftDocumentVersionInput!
+  ): CreateDraftDocumentVersionPayload!
+  updateDocumentVersion(
+    input: UpdateDocumentVersionInput!
+  ): UpdateDocumentVersionPayload!
   requestSignature(input: RequestSignatureInput!): RequestSignaturePayload!
   sendSigningNotifications(
     input: SendSigningNotificationsInput!
@@ -1285,9 +1285,9 @@ input CreateControlMeasureMappingInput {
   measureId: ID!
 }
 
-input CreateControlPolicyMappingInput {
+input CreateControlDocumentMappingInput {
   controlId: ID!
-  policyId: ID!
+  documentId: ID!
 }
 
 input DeleteControlMeasureMappingInput {
@@ -1295,9 +1295,9 @@ input DeleteControlMeasureMappingInput {
   measureId: ID!
 }
 
-input DeleteControlPolicyMappingInput {
+input DeleteControlDocumentMappingInput {
   controlId: ID!
-  policyId: ID!
+  documentId: ID!
 }
 
 input CreateRiskInput {
@@ -1342,14 +1342,14 @@ input DeleteRiskMeasureMappingInput {
   measureId: ID!
 }
 
-input CreateRiskPolicyMappingInput {
+input CreateRiskDocumentMappingInput {
   riskId: ID!
-  policyId: ID!
+  documentId: ID!
 }
 
-input DeleteRiskPolicyMappingInput {
+input DeleteRiskDocumentMappingInput {
   riskId: ID!
-  policyId: ID!
+  documentId: ID!
 }
 
 input RequestEvidenceInput {
@@ -1391,14 +1391,14 @@ input DeleteVendorComplianceReportInput {
   reportId: ID!
 }
 
-input CreatePolicyInput {
+input CreateDocumentInput {
   organizationId: ID!
   title: String!
   content: String!
   ownerId: ID!
 }
 
-input UpdatePolicyInput {
+input UpdateDocumentInput {
   id: ID!
   title: String
   content: String
@@ -1406,8 +1406,8 @@ input UpdatePolicyInput {
   createdBy: ID
 }
 
-input DeletePolicyInput {
-  policyId: ID!
+input DeleteDocumentInput {
+  documentId: ID!
 }
 
 input ConfirmEmailInput {
@@ -1515,9 +1515,9 @@ type CreateControlMeasureMappingPayload {
   measureEdge: MeasureEdge!
 }
 
-type CreateControlPolicyMappingPayload {
+type CreateControlDocumentMappingPayload {
   controlEdge: ControlEdge!
-  policyEdge: PolicyEdge!
+  documentEdge: DocumentEdge!
 }
 
 type DeleteControlMeasureMappingPayload {
@@ -1525,9 +1525,9 @@ type DeleteControlMeasureMappingPayload {
   deletedMeasureId: ID!
 }
 
-type DeleteControlPolicyMappingPayload {
+type DeleteControlDocumentMappingPayload {
   deletedControlId: ID!
-  deletedPolicyId: ID!
+  deletedDocumentId: ID!
 }
 
 type CreateRiskPayload {
@@ -1552,14 +1552,14 @@ type DeleteRiskMeasureMappingPayload {
   deletedRiskId: ID!
 }
 
-type CreateRiskPolicyMappingPayload {
+type CreateRiskDocumentMappingPayload {
   riskEdge: RiskEdge!
-  policyEdge: PolicyEdge!
+  documentEdge: DocumentEdge!
 }
 
-type DeleteRiskPolicyMappingPayload {
+type DeleteRiskDocumentMappingPayload {
   deletedRiskId: ID!
-  deletedPolicyId: ID!
+  deletedDocumentId: ID!
 }
 
 type RequestEvidencePayload {
@@ -1586,17 +1586,17 @@ type DeleteVendorComplianceReportPayload {
   deletedVendorComplianceReportId: ID!
 }
 
-type CreatePolicyPayload {
-  policyEdge: PolicyEdge!
-  policyVersionEdge: PolicyVersionEdge!
+type CreateDocumentPayload {
+  documentEdge: DocumentEdge!
+  documentVersionEdge: DocumentVersionEdge!
 }
 
-type UpdatePolicyPayload {
-  policy: Policy!
+type UpdateDocumentPayload {
+  document: Document!
 }
 
-type DeletePolicyPayload {
-  deletedPolicyId: ID!
+type DeleteDocumentPayload {
+  deletedDocumentId: ID!
 }
 
 type ConfirmEmailPayload {
@@ -1668,10 +1668,10 @@ type DeleteMeasurePayload {
   deletedMeasureId: ID!
 }
 
-type PolicyVersion implements Node {
+type DocumentVersion implements Node {
   id: ID!
-  policy: Policy! @goField(forceResolver: true)
-  status: PolicyStatus!
+  document: Document! @goField(forceResolver: true)
+  status: DocumentStatus!
   version: Int!
   content: String!
   changelog: String!
@@ -1681,8 +1681,8 @@ type PolicyVersion implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: PolicyVersionSignatureOrder
-  ): PolicyVersionSignatureConnection! @goField(forceResolver: true)
+    orderBy: DocumentVersionSignatureOrder
+  ): DocumentVersionSignatureConnection! @goField(forceResolver: true)
 
   publishedBy: People @goField(forceResolver: true)
   publishedAt: Datetime
@@ -1690,53 +1690,53 @@ type PolicyVersion implements Node {
   updatedAt: Datetime!
 }
 
-type PolicyVersionSignatureConnection {
-  edges: [PolicyVersionSignatureEdge!]!
+type DocumentVersionSignatureConnection {
+  edges: [DocumentVersionSignatureEdge!]!
   pageInfo: PageInfo!
 }
 
-type PolicyVersionSignatureEdge {
+type DocumentVersionSignatureEdge {
   cursor: CursorKey!
-  node: PolicyVersionSignature!
+  node: DocumentVersionSignature!
 }
 
-input PolicyVersionSignatureOrder {
-  field: PolicyVersionSignatureOrderField!
+input DocumentVersionSignatureOrder {
+  field: DocumentVersionSignatureOrderField!
   direction: OrderDirection!
 }
 
-enum PolicyVersionSignatureState
+enum DocumentVersionSignatureState
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureState"
+    model: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureState"
   ) {
   REQUESTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureStateRequested"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureStateRequested"
     )
   SIGNED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureStateSigned"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureStateSigned"
     )
 }
 
-enum PolicyVersionSignatureOrderField
+enum DocumentVersionSignatureOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureOrderField"
+    model: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureOrderFieldCreatedAt"
     )
   SIGNED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureOrderFieldSignedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureOrderFieldSignedAt"
     )
 }
 
-type PolicyVersionSignature implements Node {
+type DocumentVersionSignature implements Node {
   id: ID!
-  policyVersion: PolicyVersion! @goField(forceResolver: true)
-  state: PolicyVersionSignatureState!
+  documentVersion: DocumentVersion! @goField(forceResolver: true)
+  state: DocumentVersionSignatureState!
   signedBy: People! @goField(forceResolver: true)
   signedAt: Datetime
   requestedAt: Datetime!
@@ -1746,38 +1746,38 @@ type PolicyVersionSignature implements Node {
 }
 
 input RequestSignatureInput {
-  policyVersionId: ID!
+  documentVersionId: ID!
   signatoryId: ID!
 }
 
 type RequestSignaturePayload {
-  policyVersionSignatureEdge: PolicyVersionSignatureEdge!
+  documentVersionSignatureEdge: DocumentVersionSignatureEdge!
 }
 
-input PublishPolicyVersionInput {
-  policyId: ID!
+input PublishDocumentVersionInput {
+  documentId: ID!
 }
 
-type PublishPolicyVersionPayload {
-  policyVersion: PolicyVersion!
-  policy: Policy!
+type PublishDocumentVersionPayload {
+  documentVersion: DocumentVersion!
+  document: Document!
 }
 
-type CreateDraftPolicyVersionPayload {
-  policyVersionEdge: PolicyVersionEdge!
+type CreateDraftDocumentVersionPayload {
+  documentVersionEdge: DocumentVersionEdge!
 }
 
-input CreateDraftPolicyVersionInput {
-  policyID: ID!
+input CreateDraftDocumentVersionInput {
+  documentID: ID!
 }
 
-input UpdatePolicyVersionInput {
-  policyVersionId: ID!
+input UpdateDocumentVersionInput {
+  documentVersionId: ID!
   content: String!
 }
 
-type UpdatePolicyVersionPayload {
-  policyVersion: PolicyVersion!
+type UpdateDocumentVersionPayload {
+  documentVersion: DocumentVersion!
 }
 
 input SendSigningNotificationsInput {

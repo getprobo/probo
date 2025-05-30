@@ -1,0 +1,284 @@
+.document-editor-container {
+  border-radius: 0.5rem;
+  position: relative;
+  line-height: 1.5;
+  font-weight: 400;
+  margin-top: 0.5rem;
+  border: 1px solid var(--solid-b);
+  display: block;
+  width: 100%;
+}
+
+.document-editor {
+  background: var(--bg-invert-bg);
+  position: relative;
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.document-editor-inner {
+  background: #fff;
+  position: relative;
+  border-radius: 0 0 0.5rem 0.5rem;
+  flex: 1;
+  min-height: 250px;
+}
+
+.document-editor-input {
+  min-height: 250px;
+  max-height: 500px;
+  resize: none;
+  font-size: 15px;
+  position: relative;
+  tab-size: 1;
+  outline: 0;
+  padding: 15px 10px;
+  overflow-y: auto;
+  width: 100%;
+  display: block;
+  color: #000;
+}
+
+.document-editor-placeholder {
+  color: #999;
+  overflow: hidden;
+  position: absolute;
+  text-overflow: ellipsis;
+  top: 15px;
+  left: 10px;
+  font-size: 15px;
+  user-select: none;
+  display: inline-block;
+  pointer-events: none;
+}
+
+.document-editor-paragraph {
+  margin: 0 0 15px 0;
+  position: relative;
+}
+
+.document-editor .toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 8px;
+  border-bottom: 1px solid hsl(var(--solid-b));
+  background-color: hsl(var(--invert-bg));
+  border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.document-editor .toolbar button {
+  border: 0;
+  display: flex;
+  background: none;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  vertical-align: middle;
+  align-items: center;
+  justify-content: center;
+}
+
+.document-editor .toolbar button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.document-editor .toolbar button.active {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.document-editor .toolbar .divider {
+  width: 1px;
+  background-color: hsl(var(--solid-b));
+  margin: 0 8px;
+  height: 24px;
+}
+
+/* Typography */
+.editor-heading-h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+}
+
+.editor-heading-h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 10px 0;
+}
+
+.editor-heading-h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 8px 0;
+}
+
+.editor-heading-h4 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 8px 0;
+}
+
+.editor-heading-h5 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 8px 0;
+}
+
+.editor-quote {
+  margin: 0;
+  margin-left: 20px;
+  padding-left: 16px;
+  border-left: 4px solid hsl(var(--solid-b));
+  color: hsl(var(--tertiary));
+}
+
+.editor-list-ol {
+  padding: 0;
+  margin: 0 0 0 16px;
+  list-style-type: decimal;
+  display: block;
+  counter-reset: li;
+}
+
+.editor-list-ul {
+  padding: 0;
+  margin: 0 0 0 16px;
+  list-style-type: disc;
+  display: block;
+}
+
+.editor-listitem {
+  margin: 8px 0 0 0;
+  display: list-item;
+  position: relative;
+  padding-left: 8px;
+}
+
+/* Ensure list items display consistently across browsers */
+li.editor-listitem::marker {
+  font-weight: normal;
+  color: inherit;
+}
+
+/* Specifically for ordered lists */
+ol.editor-list-ol > .editor-listitem {
+  list-style-type: decimal;
+  list-style-position: outside;
+}
+
+/* For nested ordered lists */
+ol.editor-list-ol ol.editor-list-ol > .editor-listitem {
+  list-style-type: lower-alpha;
+}
+
+.editor-listitem--checked,
+.editor-listitem--unchecked {
+  position: relative;
+  margin-left: 0;
+  padding-left: 24px;
+  list-style-type: none;
+}
+
+.editor-listitem--checked:before,
+.editor-listitem--unchecked:before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  left: 0;
+  top: 2px;
+  background-size: 16px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.editor-listitem--checked:before {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>');
+}
+
+.editor-listitem--unchecked:before {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>');
+}
+
+.editor-nested-listitem {
+  list-style-type: none;
+}
+
+/* Text formatting */
+.editor-text-bold {
+  font-weight: bold;
+}
+
+.editor-text-italic {
+  font-style: italic;
+}
+
+.editor-text-underline {
+  text-decoration: underline;
+}
+
+.editor-text-strikethrough {
+  text-decoration: line-through;
+}
+
+.editor-text-underlineStrikethrough {
+  text-decoration: underline line-through;
+}
+
+.editor-text-code {
+  background-color: hsl(var(--invert-bg));
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.editor-link {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+.editor-code {
+  background-color: hsl(var(--invert-bg));
+  font-family: monospace;
+  display: block;
+  padding: 8px 16px;
+  line-height: 1.6;
+  font-size: 13px;
+  border-radius: 0.5rem;
+  margin: 8px 0;
+}
+
+/* Code highlight */
+.editor-tokenComment {
+  color: slategray;
+}
+
+.editor-tokenPunctuation {
+  color: #999;
+}
+
+.editor-tokenProperty {
+  color: #905;
+}
+
+.editor-tokenSelector {
+  color: #690;
+}
+
+.editor-tokenOperator {
+  color: #9a6e3a;
+}
+
+.editor-tokenAttr {
+  color: #07a;
+}
+
+.editor-tokenVariable {
+  color: #e90;
+}
+
+.editor-tokenFunction {
+  color: #dd4a68;
+}

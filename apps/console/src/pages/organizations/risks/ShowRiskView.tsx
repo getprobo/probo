@@ -60,11 +60,11 @@ import {
 import { ShowRiskViewCreateRiskMeasureMappingMutation } from "./__generated__/ShowRiskViewCreateRiskMeasureMappingMutation.graphql";
 import { ShowRiskViewDeleteRiskMeasureMappingMutation } from "./__generated__/ShowRiskViewDeleteRiskMeasureMappingMutation.graphql";
 import {
-  ShowRiskViewOrganizationPoliciesQuery,
-  ShowRiskViewOrganizationPoliciesQuery$data,
-} from "./__generated__/ShowRiskViewOrganizationPoliciesQuery.graphql";
-import { ShowRiskViewCreateRiskPolicyMappingMutation } from "./__generated__/ShowRiskViewCreateRiskPolicyMappingMutation.graphql";
-import { ShowRiskViewDeleteRiskPolicyMappingMutation } from "./__generated__/ShowRiskViewDeleteRiskPolicyMappingMutation.graphql";
+  ShowRiskViewOrganizationDocumentsQuery,
+  ShowRiskViewOrganizationDocumentsQuery$data,
+} from "./__generated__/ShowRiskViewOrganizationDocumentsQuery.graphql";
+import { ShowRiskViewCreateRiskDocumentMappingMutation } from "./__generated__/ShowRiskViewCreateRiskDocumentMappingMutation.graphql";
+import { ShowRiskViewDeleteRiskDocumentMappingMutation } from "./__generated__/ShowRiskViewDeleteRiskDocumentMappingMutation.graphql";
 
 const showRiskViewQuery = graphql`
   query ShowRiskViewQuery($riskId: ID!) {
@@ -97,7 +97,7 @@ const showRiskViewQuery = graphql`
             }
           }
         }
-        policies(first: 100) @connection(key: "Risk__policies") {
+        documents(first: 100) @connection(key: "Risk__documents") {
           edges {
             node {
               id
@@ -144,13 +144,13 @@ const organizationMeasuresQuery = graphql`
   }
 `;
 
-// Add query to fetch all policies for the organization
-const organizationPoliciesQuery = graphql`
-  query ShowRiskViewOrganizationPoliciesQuery($organizationId: ID!) {
+// Add query to fetch all documents for the organization
+const organizationDocumentsQuery = graphql`
+  query ShowRiskViewOrganizationDocumentsQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       id
       ... on Organization {
-        policies(first: 100) @connection(key: "Organization__policies") {
+        documents(first: 100) @connection(key: "Organization__documents") {
           edges {
             node {
               id
@@ -189,12 +189,12 @@ const deleteRiskMeasureMappingMutation = graphql`
   }
 `;
 
-// Add mutation to create risk-policy mapping
-const createRiskPolicyMappingMutation = graphql`
-  mutation ShowRiskViewCreateRiskPolicyMappingMutation(
-    $input: CreateRiskPolicyMappingInput!
+// Add mutation to create risk-document mapping
+const createRiskDocumentMappingMutation = graphql`
+  mutation ShowRiskViewCreateRiskDocumentMappingMutation(
+    $input: CreateRiskDocumentMappingInput!
   ) {
-    createRiskPolicyMapping(input: $input) {
+    createRiskDocumentMapping(input: $input) {
       riskEdge {
         node {
           id
@@ -204,13 +204,13 @@ const createRiskPolicyMappingMutation = graphql`
   }
 `;
 
-// Add mutation to delete risk-policy mapping
-const deleteRiskPolicyMappingMutation = graphql`
-  mutation ShowRiskViewDeleteRiskPolicyMappingMutation(
-    $input: DeleteRiskPolicyMappingInput!
+// Add mutation to delete risk-document mapping
+const deleteRiskDocumentMappingMutation = graphql`
+  mutation ShowRiskViewDeleteRiskDocumentMappingMutation(
+    $input: DeleteRiskDocumentMappingInput!
   ) {
-    deleteRiskPolicyMapping(input: $input) {
-      deletedPolicyId
+    deleteRiskDocumentMapping(input: $input) {
+      deletedDocumentId
     }
   }
 `;
@@ -377,8 +377,8 @@ function ShowRiskViewContent({
     risk.residualImpact!
   );
 
-  // Fix typing for policies
-  const policies = risk.policies?.edges?.map((edge) => edge.node) || [];
+  // Fix typing for documents
+  const documents = risk.documents?.edges?.map((edge) => edge.node) || [];
 
   // Fix typing for controls
   const controls = risk.controls?.edges?.map((edge) => edge.node) || [];
@@ -397,16 +397,16 @@ function ShowRiskViewContent({
     Record<string, boolean>
   >({});
 
-  // Add state for policy mapping dialog
-  const [isPolicyDialogOpen, setIsPolicyDialogOpen] = useState(false);
-  const [organizationPoliciesData, setOrganizationPoliciesData] =
-    useState<ShowRiskViewOrganizationPoliciesQuery$data | null>(null);
-  const [policySearchQuery, setPolicySearchQuery] = useState("");
-  const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
-  const [linkingPolicies, setLinkingPolicies] = useState<
+  // Add state for document mapping dialog
+  const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
+  const [organizationDocumentsData, setOrganizationDocumentsData] =
+    useState<ShowRiskViewOrganizationDocumentsQuery$data | null>(null);
+  const [documentSearchQuery, setDocumentSearchQuery] = useState("");
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+  const [linkingDocuments, setLinkingDocuments] = useState<
     Record<string, boolean>
   >({});
-  const [unlinkingPolicies, setUnlinkingPolicies] = useState<
+  const [unlinkingDocuments, setUnlinkingDocuments] = useState<
     Record<string, boolean>
   >({});
 
@@ -420,14 +420,14 @@ function ShowRiskViewContent({
       deleteRiskMeasureMappingMutation
     );
 
-  // Setup policy mutation hooks
-  const [createRiskPolicyMapping] =
-    useMutation<ShowRiskViewCreateRiskPolicyMappingMutation>(
-      createRiskPolicyMappingMutation
+  // Setup document mutation hooks
+  const [createRiskDocumentMapping] =
+    useMutation<ShowRiskViewCreateRiskDocumentMappingMutation>(
+      createRiskDocumentMappingMutation
     );
-  const [deleteRiskPolicyMapping] =
-    useMutation<ShowRiskViewDeleteRiskPolicyMappingMutation>(
-      deleteRiskPolicyMappingMutation
+  const [deleteRiskDocumentMapping] =
+    useMutation<ShowRiskViewDeleteRiskDocumentMappingMutation>(
+      deleteRiskDocumentMappingMutation
     );
 
   // Clear filters when dialog closes
@@ -440,14 +440,14 @@ function ShowRiskViewContent({
     }
   }, [isMeasureDialogOpen]);
 
-  // Clear filters when policy dialog closes
+  // Clear filters when document dialog closes
   useEffect(() => {
-    if (!isPolicyDialogOpen) {
-      setPolicySearchQuery("");
-      setLinkingPolicies({});
-      setUnlinkingPolicies({});
+    if (!isDocumentDialogOpen) {
+      setDocumentSearchQuery("");
+      setLinkingDocuments({});
+      setUnlinkingDocuments({});
     }
-  }, [isPolicyDialogOpen]);
+  }, [isDocumentDialogOpen]);
 
   // Load measures data when needed
   const loadMeasuresData = useCallback(() => {
@@ -479,30 +479,30 @@ function ShowRiskViewContent({
     });
   }, [risk.id, environment, organizationId, toast]);
 
-  // Load policies data when needed
-  const loadPoliciesData = useCallback(() => {
+  // Load documents data when needed
+  const loadDocumentsData = useCallback(() => {
     if (!organizationId || !risk.id) return;
 
-    setIsLoadingPolicies(true);
+    setIsLoadingDocuments(true);
 
-    // Fetch all policies for the organization
-    fetchQuery<ShowRiskViewOrganizationPoliciesQuery>(
+    // Fetch all documents for the organization
+    fetchQuery<ShowRiskViewOrganizationDocumentsQuery>(
       environment,
-      organizationPoliciesQuery,
+      organizationDocumentsQuery,
       {
         organizationId,
       }
     ).subscribe({
       next: (data) => {
-        setOrganizationPoliciesData(data);
-        setIsLoadingPolicies(false);
+        setOrganizationDocumentsData(data);
+        setIsLoadingDocuments(false);
       },
       error: (error: Error) => {
-        console.error("Error fetching organization policies:", error);
-        setIsLoadingPolicies(false);
+        console.error("Error fetching organization documents:", error);
+        setIsLoadingDocuments(false);
         toast({
           title: "Error",
-          description: "Failed to load policies.",
+          description: "Failed to load documents.",
           variant: "destructive",
         });
       },
@@ -554,25 +554,25 @@ function ShowRiskViewContent({
     });
   }, [getMeasures, measureSearchQuery, categoryFilter]);
 
-  // Helper functions for policies
-  const getPolicies = useCallback(() => {
-    if (!organizationPoliciesData?.organization?.policies?.edges) return [];
-    return organizationPoliciesData.organization.policies.edges.map(
+  // Helper functions for documents
+  const getDocuments = useCallback(() => {
+    if (!organizationDocumentsData?.organization?.documents?.edges) return [];
+    return organizationDocumentsData.organization.documents.edges.map(
       (edge) => edge.node
     );
-  }, [organizationPoliciesData]);
+  }, [organizationDocumentsData]);
 
-  const filteredPolicies = useCallback(() => {
-    const policies = getPolicies();
-    if (!policySearchQuery) return policies;
+  const filteredDocuments = useCallback(() => {
+    const documents = getDocuments();
+    if (!documentSearchQuery) return documents;
 
-    return policies.filter((policy) => {
+    return documents.filter((document) => {
       return (
-        !policySearchQuery ||
-        policy.title.toLowerCase().includes(policySearchQuery.toLowerCase())
+        !documentSearchQuery ||
+        document.title.toLowerCase().includes(documentSearchQuery.toLowerCase())
       );
     });
-  }, [getPolicies, policySearchQuery]);
+  }, [getDocuments, documentSearchQuery]);
 
   // Handle linking a measure to this risk
   const handleLinkMeasure = useCallback(
@@ -718,38 +718,38 @@ function ShowRiskViewContent({
     [risk.id, deleteRiskMeasureMapping, toast, environment, loadQuery]
   );
 
-  // Handle linking a policy to this risk
-  const handleLinkPolicy = useCallback(
+  // Handle linking a document to this risk
+  const handleLinkDocument = useCallback(
     (
-      policy: NonNullable<
+      document: NonNullable<
         NonNullable<
-          ShowRiskViewOrganizationPoliciesQuery$data["organization"]
-        >["policies"]
+          ShowRiskViewOrganizationDocumentsQuery$data["organization"]
+        >["documents"]
       >["edges"][0]["node"]
     ) => {
       if (!risk.id) return;
 
-      // Track this specific policy as linking
-      setLinkingPolicies((prev) => ({ ...prev, [policy.id]: true }));
+      // Track this specific document as linking
+      setLinkingDocuments((prev) => ({ ...prev, [document.id]: true }));
 
-      createRiskPolicyMapping({
+      createRiskDocumentMapping({
         variables: {
           input: {
             riskId: risk.id,
-            policyId: policy.id,
+            documentId: document.id,
           },
         },
         onCompleted: (_, errors) => {
-          setLinkingPolicies((prev) => ({
+          setLinkingDocuments((prev) => ({
             ...prev,
-            [policy.id]: false,
+            [document.id]: false,
           }));
 
           if (errors && errors.length > 0) {
-            console.error("Error linking policy:", errors);
+            console.error("Error linking document:", errors);
             toast({
               title: "Error",
-              description: "Failed to link policy. Please try again.",
+              description: "Failed to link document. Please try again.",
               variant: "destructive",
             });
             return;
@@ -770,58 +770,58 @@ function ShowRiskViewContent({
 
           toast({
             title: "Success",
-            description: `Linked policy "${policy.title}" to this risk.`,
+            description: `Linked document "${document.title}" to this risk.`,
           });
         },
         onError: (error) => {
-          setLinkingPolicies((prev) => ({
+          setLinkingDocuments((prev) => ({
             ...prev,
-            [policy.id]: false,
+            [document.id]: false,
           }));
-          console.error("Error linking policy:", error);
+          console.error("Error linking document:", error);
           toast({
             title: "Error",
-            description: "Failed to link policy. Please try again.",
+            description: "Failed to link document. Please try again.",
             variant: "destructive",
           });
         },
       });
     },
-    [risk.id, createRiskPolicyMapping, toast, environment, loadQuery]
+    [risk.id, createRiskDocumentMapping, toast, environment, loadQuery]
   );
 
-  // Handle unlinking a policy from this risk
-  const handleUnlinkPolicy = useCallback(
+  // Handle unlinking a document from this risk
+  const handleUnlinkDocument = useCallback(
     (
-      policy: NonNullable<
+      document: NonNullable<
         NonNullable<
-          ShowRiskViewOrganizationPoliciesQuery$data["organization"]
-        >["policies"]
+          ShowRiskViewOrganizationDocumentsQuery$data["organization"]
+        >["documents"]
       >["edges"][0]["node"]
     ) => {
       if (!risk.id) return;
 
-      // Track this specific policy as unlinking
-      setUnlinkingPolicies((prev) => ({ ...prev, [policy.id]: true }));
+      // Track this specific document as unlinking
+      setUnlinkingDocuments((prev) => ({ ...prev, [document.id]: true }));
 
-      deleteRiskPolicyMapping({
+      deleteRiskDocumentMapping({
         variables: {
           input: {
             riskId: risk.id,
-            policyId: policy.id,
+            documentId: document.id,
           },
         },
         onCompleted: (_, errors) => {
-          setUnlinkingPolicies((prev) => ({
+          setUnlinkingDocuments((prev) => ({
             ...prev,
-            [policy.id]: false,
+            [document.id]: false,
           }));
 
           if (errors && errors.length > 0) {
-            console.error("Error unlinking policy:", errors);
+            console.error("Error unlinking document:", errors);
             toast({
               title: "Error",
-              description: "Failed to unlink policy. Please try again.",
+              description: "Failed to unlink document. Please try again.",
               variant: "destructive",
             });
             return;
@@ -842,24 +842,24 @@ function ShowRiskViewContent({
 
           toast({
             title: "Success",
-            description: `Unlinked policy "${policy.title}" from this risk.`,
+            description: `Unlinked document "${document.title}" from this risk.`,
           });
         },
         onError: (error) => {
-          setUnlinkingPolicies((prev) => ({
+          setUnlinkingDocuments((prev) => ({
             ...prev,
-            [policy.id]: false,
+            [document.id]: false,
           }));
-          console.error("Error unlinking policy:", error);
+          console.error("Error unlinking document:", error);
           toast({
             title: "Error",
-            description: "Failed to unlink policy. Please try again.",
+            description: "Failed to unlink document. Please try again.",
             variant: "destructive",
           });
         },
       });
     },
-    [risk.id, deleteRiskPolicyMapping, toast, environment, loadQuery]
+    [risk.id, deleteRiskDocumentMapping, toast, environment, loadQuery]
   );
 
   return (
@@ -1073,7 +1073,7 @@ function ShowRiskViewContent({
         <Tabs defaultValue="measures" className="w-full">
           <TabsList>
             <TabsTrigger value="measures">Measures</TabsTrigger>
-            <TabsTrigger value="policies">Policies</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="controls">Controls</TabsTrigger>
           </TabsList>
 
@@ -1133,48 +1133,48 @@ function ShowRiskViewContent({
             )}
           </TabsContent>
 
-          <TabsContent value="policies" className="space-y-4">
+          <TabsContent value="documents" className="space-y-4">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Risk Policies</h2>
+              <h2 className="text-xl font-semibold">Risk Documents</h2>
               <div className="flex space-x-2">
                 <Button
                   onClick={() => {
-                    setIsPolicyDialogOpen(true);
-                    loadPoliciesData();
+                    setIsDocumentDialogOpen(true);
+                    loadDocumentsData();
                   }}
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  Link Policy
+                  Link Document
                 </Button>
               </div>
             </div>
-            {policies.length > 0 ? (
+            {documents.length > 0 ? (
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-full">Policy</TableHead>
+                      <TableHead className="w-full">Document</TableHead>
                       <TableHead className="w-20">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {policies.map((policy) => (
-                      <TableRow key={policy.id}>
+                    {documents.map((document) => (
+                      <TableRow key={document.id}>
                         <TableCell>
                           <Link
-                            to={`/organizations/${organizationId}/policies/${policy.id}`}
+                            to={`/organizations/${organizationId}/documents/${document.id}`}
                             className="font-medium text-blue-600 hover:underline"
                           >
-                            {policy.title}
+                            {document.title}
                           </Link>
                         </TableCell>
                         <TableCell>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleUnlinkPolicy(policy)}
-                            disabled={unlinkingPolicies[policy.id] || false}
-                            title="Unlink policy"
+                            onClick={() => handleUnlinkDocument(document)}
+                            disabled={unlinkingDocuments[document.id] || false}
+                            title="Unlink document"
                           >
                             <Trash2 className="h-4 w-4 text-danger" />
                           </Button>
@@ -1186,7 +1186,7 @@ function ShowRiskViewContent({
               </div>
             ) : (
               <div className="text-center py-10 text-secondary">
-                <p>No policies associated with this risk.</p>
+                <p>No documents associated with this risk.</p>
               </div>
             )}
           </TabsContent>
@@ -1351,15 +1351,15 @@ function ShowRiskViewContent({
           </DialogContent>
         </Dialog>
 
-        {/* Dialog for linking policies */}
-        <Dialog open={isPolicyDialogOpen} onOpenChange={setIsPolicyDialogOpen}>
+        {/* Dialog for linking documents */}
+        <Dialog open={isDocumentDialogOpen} onOpenChange={setIsDocumentDialogOpen}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <DialogTitle>Manage Risk Policies</DialogTitle>
+                  <DialogTitle>Manage Risk Documents</DialogTitle>
                   <DialogDescription>
-                    Link or unlink policies to manage this risk.
+                    Link or unlink documents to manage this risk.
                   </DialogDescription>
                 </div>
               </div>
@@ -1371,45 +1371,45 @@ function ShowRiskViewContent({
                   <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-tertiary" />
                     <Input
-                      placeholder="Search policies..."
+                      placeholder="Search documents..."
                       className="pl-8"
-                      value={policySearchQuery}
-                      onChange={(e) => setPolicySearchQuery(e.target.value)}
+                      value={documentSearchQuery}
+                      onChange={(e) => setDocumentSearchQuery(e.target.value)}
                     />
                   </div>
                 </div>
               </div>
 
               <div className="border rounded-md max-h-96 overflow-y-auto">
-                {isLoadingPolicies ? (
-                  <div className="p-4 text-center">Loading policies...</div>
-                ) : filteredPolicies().length === 0 ? (
-                  <div className="p-4 text-center">No policies found.</div>
+                {isLoadingDocuments ? (
+                  <div className="p-4 text-center">Loading documents...</div>
+                ) : filteredDocuments().length === 0 ? (
+                  <div className="p-4 text-center">No documents found.</div>
                 ) : (
                   <div className="divide-y">
-                    {filteredPolicies().map((policy) => {
+                    {filteredDocuments().map((document) => {
                       // For each render, recalculate linked status directly against the current risk data
-                      const isLinked = policies.some(
-                        (riskPolicy) => riskPolicy.id === policy.id
+                      const isLinked = documents.some(
+                        (riskDocument) => riskDocument.id === document.id
                       );
-                      const isLinking = linkingPolicies[policy.id] || false;
-                      const isUnlinking = unlinkingPolicies[policy.id] || false;
+                      const isLinking = linkingDocuments[document.id] || false;
+                      const isUnlinking = unlinkingDocuments[document.id] || false;
 
                       return (
                         <div
-                          key={policy.id}
+                          key={document.id}
                           className="relative p-4 hover:bg-blue-50 transition-colors duration-150"
                         >
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                              <h3 className="font-medium">{policy.title}</h3>
+                              <h3 className="font-medium">{document.title}</h3>
                             </div>
                             {isLinked ? (
                               <Button
                                 size="sm"
                                 variant="outline"
                                 disabled={isUnlinking}
-                                onClick={() => handleUnlinkPolicy(policy)}
+                                onClick={() => handleUnlinkDocument(document)}
                                 className="text-red-600 border-red-200 hover:bg-red-50"
                               >
                                 {isUnlinking ? "Unlinking..." : "Unlink"}
@@ -1418,7 +1418,7 @@ function ShowRiskViewContent({
                               <Button
                                 size="sm"
                                 disabled={isLinking}
-                                onClick={() => handleLinkPolicy(policy)}
+                                onClick={() => handleLinkDocument(document)}
                               >
                                 {isLinking ? "Linking..." : "Link"}
                               </Button>
@@ -1435,7 +1435,7 @@ function ShowRiskViewContent({
             <DialogFooter>
               <Button
                 variant="outline"
-                onClick={() => setIsPolicyDialogOpen(false)}
+                onClick={() => setIsDocumentDialogOpen(false)}
               >
                 Close
               </Button>

@@ -35,13 +35,13 @@ import {
 } from "./__generated__/ControlOrganizationMeasuresQuery.graphql";
 import { ControlFragment_Control$key } from "./__generated__/ControlFragment_Control.graphql";
 import {
-  ControlLinkedPoliciesQuery$data,
-  ControlLinkedPoliciesQuery,
-} from "./__generated__/ControlLinkedPoliciesQuery.graphql";
+  ControlLinkedDocumentsQuery$data,
+  ControlLinkedDocumentsQuery,
+} from "./__generated__/ControlLinkedDocumentsQuery.graphql";
 import {
-  ControlOrganizationPoliciesQuery$data,
-  ControlOrganizationPoliciesQuery,
-} from "./__generated__/ControlOrganizationPoliciesQuery.graphql";
+  ControlOrganizationDocumentsQuery$data,
+  ControlOrganizationDocumentsQuery,
+} from "./__generated__/ControlOrganizationDocumentsQuery.graphql";
 
 const controlFragment = graphql`
   fragment ControlFragment_Control on Control {
@@ -96,13 +96,13 @@ const organizationMeasuresQuery = graphql`
   }
 `;
 
-// Query to fetch linked policies
-const linkedPoliciesQuery = graphql`
-  query ControlLinkedPoliciesQuery($controlId: ID!) {
+// Query to fetch linked documents
+const linkedDocumentsQuery = graphql`
+  query ControlLinkedDocumentsQuery($controlId: ID!) {
     control: node(id: $controlId) {
       id
       ... on Control {
-        policies(first: 100) @connection(key: "Control__policies") {
+        documents(first: 100) @connection(key: "Control__documents") {
           edges {
             node {
               id
@@ -123,13 +123,13 @@ const linkedPoliciesQuery = graphql`
   }
 `;
 
-// Query to fetch all policies for the organization
-const organizationPoliciesQuery = graphql`
-  query ControlOrganizationPoliciesQuery($organizationId: ID!) {
+// Query to fetch all documents for the organization
+const organizationDocumentsQuery = graphql`
+  query ControlOrganizationDocumentsQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       id
       ... on Organization {
-        policies(first: 100) @connection(key: "Organization__policies") {
+        documents(first: 100) @connection(key: "Organization__documents") {
           edges {
             node {
               id
@@ -176,12 +176,12 @@ const deleteMeasureMappingMutation = graphql`
   }
 `;
 
-// Mutation to create a mapping between a control and a policy
-const createPolicyMappingMutation = graphql`
-  mutation ControlCreatePolicyMappingMutation(
-    $input: CreateControlPolicyMappingInput!
+// Mutation to create a mapping between a control and a document
+const createDocumentMappingMutation = graphql`
+  mutation ControlCreateDocumentMappingMutation(
+    $input: CreateControlDocumentMappingInput!
   ) {
-    createControlPolicyMapping(input: $input) {
+    createControlDocumentMapping(input: $input) {
       controlEdge {
         node {
           id
@@ -191,13 +191,13 @@ const createPolicyMappingMutation = graphql`
   }
 `;
 
-// Mutation to delete a mapping between a control and a policy
-const deletePolicyMappingMutation = graphql`
-  mutation ControlDeletePolicyMappingMutation(
-    $input: DeleteControlPolicyMappingInput!
+// Mutation to delete a mapping between a control and a document
+const deleteDocumentMappingMutation = graphql`
+  mutation ControlDeleteDocumentMappingMutation(
+    $input: DeleteControlDocumentMappingInput!
   ) {
-    deleteControlPolicyMapping(input: $input) {
-      deletedPolicyId
+    deleteControlDocumentMapping(input: $input) {
+      deletedDocumentId
     }
   }
 `;
@@ -228,17 +228,17 @@ export function Control({
   const [isUnlinkingMeasure, setIsUnlinkingMeasure] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
-  // Policy state
-  const [isPolicyMappingDialogOpen, setIsPolicyMappingDialogOpen] =
+  // Document state
+  const [isDocumentMappingDialogOpen, setIsDocumentMappingDialogOpen] =
     useState(false);
-  const [linkedPoliciesData, setLinkedPoliciesData] =
-    useState<ControlLinkedPoliciesQuery$data | null>(null);
-  const [organizationPoliciesData, setOrganizationPoliciesData] =
-    useState<ControlOrganizationPoliciesQuery$data | null>(null);
-  const [policySearchQuery, setPolicySearchQuery] = useState("");
-  const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
-  const [isLinkingPolicy, setIsLinkingPolicy] = useState(false);
-  const [isUnlinkingPolicy, setIsUnlinkingPolicy] = useState(false);
+  const [linkedDocumentsData, setLinkedDocumentsData] =
+    useState<ControlLinkedDocumentsQuery$data | null>(null);
+  const [organizationDocumentsData, setOrganizationDocumentsData] =
+    useState<ControlOrganizationDocumentsQuery$data | null>(null);
+  const [documentSearchQuery, setDocumentSearchQuery] = useState("");
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+  const [isLinkingDocument, setIsLinkingDocument] = useState(false);
+  const [isUnlinkingDocument, setIsUnlinkingDocument] = useState(false);
 
   // Create mutation hooks
   const [commitCreateMeasureMapping] = useMutation(
@@ -247,8 +247,8 @@ export function Control({
   const [commitDeleteMeasureMapping] = useMutation(
     deleteMeasureMappingMutation
   );
-  const [commitCreatePolicyMapping] = useMutation(createPolicyMappingMutation);
-  const [commitDeletePolicyMapping] = useMutation(deletePolicyMappingMutation);
+  const [commitCreateDocumentMapping] = useMutation(createDocumentMappingMutation);
+  const [commitDeleteDocumentMapping] = useMutation(deleteDocumentMappingMutation);
 
   // Load initial linked measures data
   useEffect(() => {
@@ -508,242 +508,242 @@ export function Control({
     setIsMeasureMappingDialogOpen(true);
   }, [loadMeasuresData]);
 
-  // Load initial linked policies data
+  // Load initial linked documents data
   useEffect(() => {
     if (control.id) {
-      setIsLoadingPolicies(true);
-      fetchQuery<ControlLinkedPoliciesQuery>(environment, linkedPoliciesQuery, {
+      setIsLoadingDocuments(true);
+      fetchQuery<ControlLinkedDocumentsQuery>(environment, linkedDocumentsQuery, {
         controlId: control.id,
       }).subscribe({
         next: (data) => {
-          setLinkedPoliciesData(data);
-          setIsLoadingPolicies(false);
+          setLinkedDocumentsData(data);
+          setIsLoadingDocuments(false);
         },
         error: (error: Error) => {
-          console.error("Error loading initial policies:", error);
-          setIsLoadingPolicies(false);
+          console.error("Error loading initial documents:", error);
+          setIsLoadingDocuments(false);
         },
       });
     }
   }, [control.id, environment]);
 
-  // Load policies data
-  const loadPoliciesData = useCallback(() => {
+  // Load documents data
+  const loadDocumentsData = useCallback(() => {
     if (!organizationId || !control.id) return;
 
-    setIsLoadingPolicies(true);
+    setIsLoadingDocuments(true);
 
-    // Fetch all policies for the organization
-    fetchQuery<ControlOrganizationPoliciesQuery>(
+    // Fetch all documents for the organization
+    fetchQuery<ControlOrganizationDocumentsQuery>(
       environment,
-      organizationPoliciesQuery,
+      organizationDocumentsQuery,
       {
         organizationId,
       }
     ).subscribe({
       next: (data) => {
-        setOrganizationPoliciesData(data);
+        setOrganizationDocumentsData(data);
       },
       complete: () => {
-        // Fetch linked policies for this control
-        fetchQuery<ControlLinkedPoliciesQuery>(
+        // Fetch linked documents for this control
+        fetchQuery<ControlLinkedDocumentsQuery>(
           environment,
-          linkedPoliciesQuery,
+          linkedDocumentsQuery,
           {
             controlId: control.id,
           }
         ).subscribe({
           next: (data) => {
-            setLinkedPoliciesData(data);
-            setIsLoadingPolicies(false);
+            setLinkedDocumentsData(data);
+            setIsLoadingDocuments(false);
           },
           error: (error: Error) => {
-            console.error("Error fetching linked policies:", error);
-            setIsLoadingPolicies(false);
+            console.error("Error fetching linked documents:", error);
+            setIsLoadingDocuments(false);
             toast({
               title: "Error",
-              description: "Failed to load linked policies.",
+              description: "Failed to load linked documents.",
               variant: "destructive",
             });
           },
         });
       },
       error: (error: Error) => {
-        console.error("Error fetching organization policies:", error);
-        setIsLoadingPolicies(false);
+        console.error("Error fetching organization documents:", error);
+        setIsLoadingDocuments(false);
         toast({
           title: "Error",
-          description: "Failed to load policies.",
+          description: "Failed to load documents.",
           variant: "destructive",
         });
       },
     });
   }, [control.id, environment, organizationId, toast]);
 
-  // Policy helper functions
-  const getPolicies = useCallback(() => {
-    if (!organizationPoliciesData?.organization?.policies?.edges) return [];
-    return organizationPoliciesData.organization.policies.edges.map(
+  // Document helper functions
+  const getDocuments = useCallback(() => {
+    if (!organizationDocumentsData?.organization?.documents?.edges) return [];
+    return organizationDocumentsData.organization.documents.edges.map(
       (edge) => edge.node
     );
-  }, [organizationPoliciesData]);
+  }, [organizationDocumentsData]);
 
-  const getLinkedPolicies = useCallback(() => {
-    if (!linkedPoliciesData?.control?.policies?.edges) return [];
-    return linkedPoliciesData.control.policies.edges.map((edge) => edge.node);
-  }, [linkedPoliciesData]);
+  const getLinkedDocuments = useCallback(() => {
+    if (!linkedDocumentsData?.control?.documents?.edges) return [];
+    return linkedDocumentsData.control.documents.edges.map((edge) => edge.node);
+  }, [linkedDocumentsData]);
 
-  const isPolicyLinked = useCallback(
-    (policyId: string) => {
-      const linkedPolicies = getLinkedPolicies();
-      return linkedPolicies.some((policy) => policy.id === policyId);
+  const isDocumentLinked = useCallback(
+    (documentId: string) => {
+      const linkedDocuments = getLinkedDocuments();
+      return linkedDocuments.some((document) => document.id === documentId);
     },
-    [getLinkedPolicies]
+    [getLinkedDocuments]
   );
 
-  const filteredPolicies = useCallback(() => {
-    const policies = getPolicies();
-    if (!policySearchQuery) return policies;
+  const filteredDocuments = useCallback(() => {
+    const documents = getDocuments();
+    if (!documentSearchQuery) return documents;
 
-    return policies.filter((policy) => {
+    return documents.filter((document) => {
       return (
-        !policySearchQuery ||
-        policy.title?.toLowerCase().includes(policySearchQuery.toLowerCase()) ||
-        (policy.description &&
-          policy.description
+        !documentSearchQuery ||
+        document.title?.toLowerCase().includes(documentSearchQuery.toLowerCase()) ||
+        (document.description &&
+          document.description
             .toLowerCase()
-            .includes(policySearchQuery.toLowerCase()))
+            .includes(documentSearchQuery.toLowerCase()))
       );
     });
-  }, [getPolicies, policySearchQuery]);
+  }, [getDocuments, documentSearchQuery]);
 
-  // Policy link/unlink handlers
-  const handleLinkPolicy = useCallback(
-    (policyId: string) => {
+  // Document link/unlink handlers
+  const handleLinkDocument = useCallback(
+    (documentId: string) => {
       if (!control.id) return;
 
-      setIsLinkingPolicy(true);
+      setIsLinkingDocument(true);
 
-      commitCreatePolicyMapping({
+      commitCreateDocumentMapping({
         variables: {
           input: {
             controlId: control.id,
-            policyId: policyId,
+            documentId: documentId,
           },
         },
         onCompleted: (_, errors) => {
-          setIsLinkingPolicy(false);
+          setIsLinkingDocument(false);
 
           if (errors) {
-            console.error("Error linking policy:", errors);
+            console.error("Error linking document:", errors);
             toast({
               title: "Error",
-              description: "Failed to link policy. Please try again.",
+              description: "Failed to link document. Please try again.",
               variant: "destructive",
             });
             return;
           }
 
-          // Refresh linked policies data
-          fetchQuery<ControlLinkedPoliciesQuery>(
+          // Refresh linked documents data
+          fetchQuery<ControlLinkedDocumentsQuery>(
             environment,
-            linkedPoliciesQuery,
+            linkedDocumentsQuery,
             {
               controlId: control.id,
             }
           ).subscribe({
             next: (data) => {
-              setLinkedPoliciesData(data);
+              setLinkedDocumentsData(data);
             },
             error: (error: Error) => {
-              console.error("Error refreshing linked policies:", error);
+              console.error("Error refreshing linked documents:", error);
             },
           });
 
           toast({
             title: "Success",
-            description: "Policy successfully linked to control.",
+            description: "Document successfully linked to control.",
           });
         },
         onError: (error) => {
-          setIsLinkingPolicy(false);
-          console.error("Error linking policy:", error);
+          setIsLinkingDocument(false);
+          console.error("Error linking document:", error);
           toast({
             title: "Error",
-            description: "Failed to link policy. Please try again.",
+            description: "Failed to link document. Please try again.",
             variant: "destructive",
           });
         },
       });
     },
-    [commitCreatePolicyMapping, control.id, environment, toast]
+    [commitCreateDocumentMapping, control.id, environment, toast]
   );
 
-  const handleUnlinkPolicy = useCallback(
-    (policyId: string) => {
+  const handleUnlinkDocument = useCallback(
+    (documentId: string) => {
       if (!control.id) return;
 
-      setIsUnlinkingPolicy(true);
+      setIsUnlinkingDocument(true);
 
-      commitDeletePolicyMapping({
+      commitDeleteDocumentMapping({
         variables: {
           input: {
             controlId: control.id,
-            policyId: policyId,
+            documentId: documentId,
           },
         },
         onCompleted: (_, errors) => {
-          setIsUnlinkingPolicy(false);
+          setIsUnlinkingDocument(false);
 
           if (errors) {
-            console.error("Error unlinking policy:", errors);
+            console.error("Error unlinking document:", errors);
             toast({
               title: "Error",
-              description: "Failed to unlink policy. Please try again.",
+              description: "Failed to unlink document. Please try again.",
               variant: "destructive",
             });
             return;
           }
 
-          // Refresh linked policies data
-          fetchQuery<ControlLinkedPoliciesQuery>(
+          // Refresh linked documents data
+          fetchQuery<ControlLinkedDocumentsQuery>(
             environment,
-            linkedPoliciesQuery,
+            linkedDocumentsQuery,
             {
               controlId: control.id,
             }
           ).subscribe({
             next: (data) => {
-              setLinkedPoliciesData(data);
+              setLinkedDocumentsData(data);
             },
             error: (error: Error) => {
-              console.error("Error refreshing linked policies:", error);
+              console.error("Error refreshing linked documents:", error);
             },
           });
 
           toast({
             title: "Success",
-            description: "Policy successfully unlinked from control.",
+            description: "Document successfully unlinked from control.",
           });
         },
         onError: (error) => {
-          setIsUnlinkingPolicy(false);
-          console.error("Error unlinking policy:", error);
+          setIsUnlinkingDocument(false);
+          console.error("Error unlinking document:", error);
           toast({
             title: "Error",
-            description: "Failed to unlink policy. Please try again.",
+            description: "Failed to unlink document. Please try again.",
             variant: "destructive",
           });
         },
       });
     },
-    [commitDeletePolicyMapping, control.id, environment, toast]
+    [commitDeleteDocumentMapping, control.id, environment, toast]
   );
 
-  const handleOpenPolicyMappingDialog = useCallback(() => {
-    loadPoliciesData();
-    setIsPolicyMappingDialogOpen(true);
-  }, [loadPoliciesData]);
+  const handleOpenDocumentMappingDialog = useCallback(() => {
+    loadDocumentsData();
+    setIsDocumentMappingDialogOpen(true);
+  }, [loadDocumentsData]);
 
   const formatState = (state: string | undefined): string => {
     if (!state) return "Unknown";
@@ -1045,19 +1045,19 @@ export function Control({
           </div>
         </div>
 
-        {/* Policies Section */}
+        {/* Documents Section */}
         <div className="mt-8">
-          {/* Policy Mapping Dialog */}
+          {/* Document Mapping Dialog */}
           <Dialog
-            open={isPolicyMappingDialogOpen}
-            onOpenChange={setIsPolicyMappingDialogOpen}
+            open={isDocumentMappingDialogOpen}
+            onOpenChange={setIsDocumentMappingDialogOpen}
           >
             <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
               <DialogHeader>
-                <DialogTitle>Link Policies to Control</DialogTitle>
+                <DialogTitle>Link Documents to Control</DialogTitle>
                 <DialogDescription>
-                  Search and select policies to link to this control. This helps
-                  track which policies address this control.
+                  Search and select documents to link to this control. This helps
+                  track which documents address this control.
                 </DialogDescription>
               </DialogHeader>
 
@@ -1066,9 +1066,9 @@ export function Control({
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-tertiary" />
                     <Input
-                      placeholder="Search policies by name or content..."
-                      value={policySearchQuery}
-                      onChange={(e) => setPolicySearchQuery(e.target.value)}
+                      placeholder="Search documents by name or content..."
+                      value={documentSearchQuery}
+                      onChange={(e) => setDocumentSearchQuery(e.target.value)}
                       className="w-full pl-10"
                     />
                   </div>
@@ -1076,16 +1076,16 @@ export function Control({
               </div>
 
               <div className="flex-1 overflow-hidden">
-                {isLoadingPolicies ? (
+                {isLoadingDocuments ? (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="w-8 h-8 animate-spin text-info" />
-                    <span className="ml-2">Loading policies...</span>
+                    <span className="ml-2">Loading documents...</span>
                   </div>
                 ) : (
                   <div className="max-h-[50vh] overflow-y-auto pr-2">
-                    {filteredPolicies().length === 0 ? (
+                    {filteredDocuments().length === 0 ? (
                       <div className="text-center py-8 text-secondary">
-                        No policies found. Try adjusting your search.
+                        No documents found. Try adjusting your search.
                       </div>
                     ) : (
                       <table className="w-full bg-level-1">
@@ -1101,27 +1101,27 @@ export function Control({
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredPolicies().map((policy) => {
-                            const isLinked = isPolicyLinked(policy.id);
+                          {filteredDocuments().map((document) => {
+                            const isLinked = isDocumentLinked(document.id);
                             return (
                               <tr
-                                key={policy.id}
+                                key={document.id}
                                 className="border-b hover:bg-invert-bg"
                               >
                                 <td className="py-3 px-4">
                                   <div className="font-medium">
-                                    {policy.title}
+                                    {document.title}
                                   </div>
-                                  {policy.description && (
+                                  {document.description && (
                                     <div className="text-xs text-secondary line-clamp-1 mt-0.5">
-                                      {policy.description}
+                                      {document.description}
                                     </div>
                                   )}
                                 </td>
                                 <td className="py-3 px-4">
-                                  {policy.updatedAt
+                                  {document.updatedAt
                                     ? new Date(
-                                        policy.updatedAt
+                                        document.updatedAt
                                       ).toLocaleDateString()
                                     : "Not set"}
                                 </td>
@@ -1131,12 +1131,12 @@ export function Control({
                                       variant="outline"
                                       size="sm"
                                       onClick={() =>
-                                        handleUnlinkPolicy(policy.id)
+                                        handleUnlinkDocument(document.id)
                                       }
-                                      disabled={isUnlinkingPolicy}
+                                      disabled={isUnlinkingDocument}
                                       className="text-xs h-7 text-danger border-danger-b hover:bg-h-danger-bg"
                                     >
-                                      {isUnlinkingPolicy ? (
+                                      {isUnlinkingDocument ? (
                                         <Loader2 className="w-4 h-4 animate-spin" />
                                       ) : (
                                         <X className="w-4 h-4" />
@@ -1148,12 +1148,12 @@ export function Control({
                                       variant="secondary"
                                       size="sm"
                                       onClick={() =>
-                                        handleLinkPolicy(policy.id)
+                                        handleLinkDocument(document.id)
                                       }
-                                      disabled={isLinkingPolicy}
+                                      disabled={isLinkingDocument}
                                       className="text-xs h-7  text-info border-info-b hover:bg-h-info-bg"
                                     >
-                                      {isLinkingPolicy ? (
+                                      {isLinkingDocument ? (
                                         <Loader2 className="w-4 h-4 animate-spin" />
                                       ) : (
                                         <LinkIcon className="w-4 h-4" />
@@ -1173,35 +1173,35 @@ export function Control({
               </div>
 
               <DialogFooter className="mt-4">
-                <Button onClick={() => setIsPolicyMappingDialogOpen(false)}>
+                <Button onClick={() => setIsDocumentMappingDialogOpen(false)}>
                   Close
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
 
-          {/* Linked Policies List */}
+          {/* Linked Documents List */}
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-medium text-secondary">Policies</h3>
+              <h3 className="text-xl font-medium text-secondary">Documents</h3>
               <Button
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-1"
-                onClick={handleOpenPolicyMappingDialog}
+                onClick={handleOpenDocumentMappingDialog}
               >
                 <LinkIcon className="w-4 h-4" />
-                <span>Link Policies</span>
+                <span>Link Documents</span>
               </Button>
             </div>
 
-            {isLoadingPolicies ? (
+            {isLoadingDocuments ? (
               <div className="flex items-center justify-center h-24">
                 <Loader2 className="w-6 h-6 animate-spin text-info" />
-                <span className="ml-2">Loading policies...</span>
+                <span className="ml-2">Loading documents...</span>
               </div>
-            ) : linkedPoliciesData?.control?.policies?.edges &&
-              linkedPoliciesData.control.policies.edges.length > 0 ? (
+            ) : linkedDocumentsData?.control?.documents?.edges &&
+              linkedDocumentsData.control.documents.edges.length > 0 ? (
               <div className="overflow-x-auto border rounded-md">
                 <table className="w-full">
                   <thead>
@@ -1214,22 +1214,22 @@ export function Control({
                     </tr>
                   </thead>
                   <tbody>
-                    {getLinkedPolicies().map((policy) => (
+                    {getLinkedDocuments().map((document) => (
                       <tr
-                        key={policy.id}
+                        key={document.id}
                         className="border-b hover:bg-invert-bg"
                       >
                         <td className="py-3 px-4">
-                          <div className="font-medium">{policy.title}</div>
-                          {policy.description && (
+                          <div className="font-medium">{document.title}</div>
+                          {document.description && (
                             <div className="text-xs text-secondary line-clamp-1 mt-0.5">
-                              {policy.description}
+                              {document.description}
                             </div>
                           )}
                         </td>
                         <td className="py-3 px-4">
-                          {policy.updatedAt
-                            ? new Date(policy.updatedAt).toLocaleDateString()
+                          {document.updatedAt
+                            ? new Date(document.updatedAt).toLocaleDateString()
                             : "Not set"}
                         </td>
                         <td className="py-3 px-4 text-right whitespace-nowrap">
@@ -1241,7 +1241,7 @@ export function Control({
                               className="text-xs h-7"
                             >
                               <Link
-                                to={`/organizations/${organizationId}/policies/${policy.id}`}
+                                to={`/organizations/${organizationId}/documents/${document.id}`}
                               >
                                 View
                               </Link>
@@ -1249,8 +1249,8 @@ export function Control({
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleUnlinkPolicy(policy.id)}
-                              disabled={isUnlinkingPolicy}
+                              onClick={() => handleUnlinkDocument(document.id)}
+                              disabled={isUnlinkingDocument}
                               className="text-xs h-7 text-danger border-danger-b hover:bg-h-danger-bg"
                             >
                               Unlink
@@ -1264,8 +1264,8 @@ export function Control({
               </div>
             ) : (
               <div className="text-center py-8 text-secondary border rounded-md">
-                No policies linked to this control yet. Click &quot;Link
-                Policies&quot; to connect some.
+                No documents linked to this control yet. Click &quot;Link
+                Documents&quot; to connect some.
               </div>
             )}
           </div>

@@ -9,13 +9,13 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type ControlLinkedPoliciesQuery$variables = {
+export type ControlLinkedDocumentsQuery$variables = {
   controlId: string;
 };
-export type ControlLinkedPoliciesQuery$data = {
+export type ControlLinkedDocumentsQuery$data = {
   readonly control: {
     readonly id: string;
-    readonly policies?: {
+    readonly documents?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly createdAt: string;
@@ -33,9 +33,9 @@ export type ControlLinkedPoliciesQuery$data = {
     };
   };
 };
-export type ControlLinkedPoliciesQuery = {
-  response: ControlLinkedPoliciesQuery$data;
-  variables: ControlLinkedPoliciesQuery$variables;
+export type ControlLinkedDocumentsQuery = {
+  response: ControlLinkedDocumentsQuery$data;
+  variables: ControlLinkedDocumentsQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -71,7 +71,7 @@ v4 = [
   {
     "alias": null,
     "args": null,
-    "concreteType": "PolicyEdge",
+    "concreteType": "DocumentEdge",
     "kind": "LinkedField",
     "name": "edges",
     "plural": true,
@@ -79,7 +79,7 @@ v4 = [
       {
         "alias": null,
         "args": null,
-        "concreteType": "Policy",
+        "concreteType": "Document",
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
@@ -191,7 +191,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "ControlLinkedPoliciesQuery",
+    "name": "ControlLinkedDocumentsQuery",
     "selections": [
       {
         "alias": "control",
@@ -206,11 +206,11 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
-                "alias": "policies",
+                "alias": "documents",
                 "args": null,
-                "concreteType": "PolicyConnection",
+                "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
-                "name": "__Control__policies_connection",
+                "name": "__Control__documents_connection",
                 "plural": false,
                 "selections": (v4/*: any*/),
                 "storageKey": null
@@ -230,7 +230,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "ControlLinkedPoliciesQuery",
+    "name": "ControlLinkedDocumentsQuery",
     "selections": [
       {
         "alias": "control",
@@ -248,21 +248,21 @@ return {
               {
                 "alias": null,
                 "args": (v5/*: any*/),
-                "concreteType": "PolicyConnection",
+                "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
-                "name": "policies",
+                "name": "documents",
                 "plural": false,
                 "selections": (v4/*: any*/),
-                "storageKey": "policies(first:100)"
+                "storageKey": "documents(first:100)"
               },
               {
                 "alias": null,
                 "args": (v5/*: any*/),
                 "filters": null,
                 "handle": "connection",
-                "key": "Control__policies",
+                "key": "Control__documents",
                 "kind": "LinkedHandle",
-                "name": "policies"
+                "name": "documents"
               }
             ],
             "type": "Control",
@@ -284,14 +284,14 @@ return {
           "direction": "forward",
           "path": [
             "control",
-            "policies"
+            "documents"
           ]
         }
       ]
     },
-    "name": "ControlLinkedPoliciesQuery",
+    "name": "ControlLinkedDocumentsQuery",
     "operationKind": "query",
-    "text": "query ControlLinkedPoliciesQuery(\n  $controlId: ID!\n) {\n  control: node(id: $controlId) {\n    __typename\n    id\n    ... on Control {\n      policies(first: 100) {\n        edges {\n          node {\n            id\n            title\n            description\n            currentPublishedVersion\n            createdAt\n            updatedAt\n            owner {\n              id\n              fullName\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query ControlLinkedDocumentsQuery(\n  $controlId: ID!\n) {\n  control: node(id: $controlId) {\n    __typename\n    id\n    ... on Control {\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            title\n            description\n            currentPublishedVersion\n            createdAt\n            updatedAt\n            owner {\n              id\n              fullName\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

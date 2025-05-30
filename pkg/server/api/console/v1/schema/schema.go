@@ -48,9 +48,9 @@ type ResolverRoot interface {
 	Measure() MeasureResolver
 	Mutation() MutationResolver
 	Organization() OrganizationResolver
-	Policy() PolicyResolver
-	PolicyVersion() PolicyVersionResolver
-	PolicyVersionSignature() PolicyVersionSignatureResolver
+	Document() DocumentResolver
+	DocumentVersion() DocumentVersionResolver
+	DocumentVersionSignature() DocumentVersionSignatureResolver
 	Query() QueryResolver
 	Risk() RiskResolver
 	Task() TaskResolver
@@ -102,7 +102,7 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		Measures    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) int
 		Name        func(childComplexity int) int
-		Policies    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) int
+		Documents    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) int
 		ReferenceID func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 	}
@@ -122,13 +122,13 @@ type ComplexityRoot struct {
 		MeasureEdge func(childComplexity int) int
 	}
 
-	CreateControlPolicyMappingPayload struct {
+	CreateControlDocumentMappingPayload struct {
 		ControlEdge func(childComplexity int) int
-		PolicyEdge  func(childComplexity int) int
+		DocumentEdge  func(childComplexity int) int
 	}
 
-	CreateDraftPolicyVersionPayload struct {
-		PolicyVersionEdge func(childComplexity int) int
+	CreateDraftDocumentVersionPayload struct {
+		DocumentVersionEdge func(childComplexity int) int
 	}
 
 	CreateEvidencePayload struct {
@@ -151,9 +151,9 @@ type ComplexityRoot struct {
 		PeopleEdge func(childComplexity int) int
 	}
 
-	CreatePolicyPayload struct {
-		PolicyEdge        func(childComplexity int) int
-		PolicyVersionEdge func(childComplexity int) int
+	CreateDocumentPayload struct {
+		DocumentEdge        func(childComplexity int) int
+		DocumentVersionEdge func(childComplexity int) int
 	}
 
 	CreateRiskMeasureMappingPayload struct {
@@ -165,8 +165,8 @@ type ComplexityRoot struct {
 		RiskEdge func(childComplexity int) int
 	}
 
-	CreateRiskPolicyMappingPayload struct {
-		PolicyEdge func(childComplexity int) int
+	CreateRiskDocumentMappingPayload struct {
+		DocumentEdge func(childComplexity int) int
 		RiskEdge   func(childComplexity int) int
 	}
 
@@ -187,9 +187,9 @@ type ComplexityRoot struct {
 		DeletedMeasureID func(childComplexity int) int
 	}
 
-	DeleteControlPolicyMappingPayload struct {
+	DeleteControlDocumentMappingPayload struct {
 		DeletedControlID func(childComplexity int) int
-		DeletedPolicyID  func(childComplexity int) int
+		DeletedDocumentID  func(childComplexity int) int
 	}
 
 	DeleteEvidencePayload struct {
@@ -212,8 +212,8 @@ type ComplexityRoot struct {
 		DeletedPeopleID func(childComplexity int) int
 	}
 
-	DeletePolicyPayload struct {
-		DeletedPolicyID func(childComplexity int) int
+	DeleteDocumentPayload struct {
+		DeletedDocumentID func(childComplexity int) int
 	}
 
 	DeleteRiskMeasureMappingPayload struct {
@@ -225,8 +225,8 @@ type ComplexityRoot struct {
 		DeletedRiskID func(childComplexity int) int
 	}
 
-	DeleteRiskPolicyMappingPayload struct {
-		DeletedPolicyID func(childComplexity int) int
+	DeleteRiskDocumentMappingPayload struct {
+		DeletedDocumentID func(childComplexity int) int
 		DeletedRiskID   func(childComplexity int) int
 	}
 
@@ -337,30 +337,30 @@ type ComplexityRoot struct {
 		AssignTask                   func(childComplexity int, input types.AssignTaskInput) int
 		ConfirmEmail                 func(childComplexity int, input types.ConfirmEmailInput) int
 		CreateControlMeasureMapping  func(childComplexity int, input types.CreateControlMeasureMappingInput) int
-		CreateControlPolicyMapping   func(childComplexity int, input types.CreateControlPolicyMappingInput) int
-		CreateDraftPolicyVersion     func(childComplexity int, input types.CreateDraftPolicyVersionInput) int
+		CreateControlDocumentMapping   func(childComplexity int, input types.CreateControlDocumentMappingInput) int
+		CreateDraftDocumentVersion     func(childComplexity int, input types.CreateDraftDocumentVersionInput) int
 		CreateFramework              func(childComplexity int, input types.CreateFrameworkInput) int
 		CreateMeasure                func(childComplexity int, input types.CreateMeasureInput) int
 		CreateOrganization           func(childComplexity int, input types.CreateOrganizationInput) int
 		CreatePeople                 func(childComplexity int, input types.CreatePeopleInput) int
-		CreatePolicy                 func(childComplexity int, input types.CreatePolicyInput) int
+		CreateDocument                 func(childComplexity int, input types.CreateDocumentInput) int
 		CreateRisk                   func(childComplexity int, input types.CreateRiskInput) int
 		CreateRiskMeasureMapping     func(childComplexity int, input types.CreateRiskMeasureMappingInput) int
-		CreateRiskPolicyMapping      func(childComplexity int, input types.CreateRiskPolicyMappingInput) int
+		CreateRiskDocumentMapping      func(childComplexity int, input types.CreateRiskDocumentMappingInput) int
 		CreateTask                   func(childComplexity int, input types.CreateTaskInput) int
 		CreateVendor                 func(childComplexity int, input types.CreateVendorInput) int
 		CreateVendorRiskAssessment   func(childComplexity int, input types.CreateVendorRiskAssessmentInput) int
 		DeleteControlMeasureMapping  func(childComplexity int, input types.DeleteControlMeasureMappingInput) int
-		DeleteControlPolicyMapping   func(childComplexity int, input types.DeleteControlPolicyMappingInput) int
+		DeleteControlDocumentMapping   func(childComplexity int, input types.DeleteControlDocumentMappingInput) int
 		DeleteEvidence               func(childComplexity int, input types.DeleteEvidenceInput) int
 		DeleteFramework              func(childComplexity int, input types.DeleteFrameworkInput) int
 		DeleteMeasure                func(childComplexity int, input types.DeleteMeasureInput) int
 		DeleteOrganization           func(childComplexity int, input types.DeleteOrganizationInput) int
 		DeletePeople                 func(childComplexity int, input types.DeletePeopleInput) int
-		DeletePolicy                 func(childComplexity int, input types.DeletePolicyInput) int
+		DeleteDocument                 func(childComplexity int, input types.DeleteDocumentInput) int
 		DeleteRisk                   func(childComplexity int, input types.DeleteRiskInput) int
 		DeleteRiskMeasureMapping     func(childComplexity int, input types.DeleteRiskMeasureMappingInput) int
-		DeleteRiskPolicyMapping      func(childComplexity int, input types.DeleteRiskPolicyMappingInput) int
+		DeleteRiskDocumentMapping      func(childComplexity int, input types.DeleteRiskDocumentMappingInput) int
 		DeleteTask                   func(childComplexity int, input types.DeleteTaskInput) int
 		DeleteVendor                 func(childComplexity int, input types.DeleteVendorInput) int
 		DeleteVendorComplianceReport func(childComplexity int, input types.DeleteVendorComplianceReportInput) int
@@ -369,7 +369,7 @@ type ComplexityRoot struct {
 		ImportFramework              func(childComplexity int, input types.ImportFrameworkInput) int
 		ImportMeasure                func(childComplexity int, input types.ImportMeasureInput) int
 		InviteUser                   func(childComplexity int, input types.InviteUserInput) int
-		PublishPolicyVersion         func(childComplexity int, input types.PublishPolicyVersionInput) int
+		PublishDocumentVersion         func(childComplexity int, input types.PublishDocumentVersionInput) int
 		RemoveUser                   func(childComplexity int, input types.RemoveUserInput) int
 		RequestEvidence              func(childComplexity int, input types.RequestEvidenceInput) int
 		RequestSignature             func(childComplexity int, input types.RequestSignatureInput) int
@@ -379,7 +379,7 @@ type ComplexityRoot struct {
 		UpdateMeasure                func(childComplexity int, input types.UpdateMeasureInput) int
 		UpdateOrganization           func(childComplexity int, input types.UpdateOrganizationInput) int
 		UpdatePeople                 func(childComplexity int, input types.UpdatePeopleInput) int
-		UpdatePolicyVersion          func(childComplexity int, input types.UpdatePolicyVersionInput) int
+		UpdateDocumentVersion          func(childComplexity int, input types.UpdateDocumentVersionInput) int
 		UpdateRisk                   func(childComplexity int, input types.UpdateRiskInput) int
 		UpdateTask                   func(childComplexity int, input types.UpdateTaskInput) int
 		UpdateVendor                 func(childComplexity int, input types.UpdateVendorInput) int
@@ -397,7 +397,7 @@ type ComplexityRoot struct {
 		Measures   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) int
 		Name       func(childComplexity int) int
 		Peoples    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy) int
-		Policies   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) int
+		Documents   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) int
 		Risks      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy) int
 		Tasks      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
 		UpdatedAt  func(childComplexity int) int
@@ -445,7 +445,7 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
-	Policy struct {
+	Document struct {
 		Controls                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) int
 		CreatedAt               func(childComplexity int) int
 		CurrentPublishedVersion func(childComplexity int) int
@@ -455,47 +455,47 @@ type ComplexityRoot struct {
 		Owner                   func(childComplexity int) int
 		Title                   func(childComplexity int) int
 		UpdatedAt               func(childComplexity int) int
-		Versions                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyVersionOrderBy, filter *types.PolicyVersionFilter) int
+		Versions                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) int
 	}
 
-	PolicyConnection struct {
+	DocumentConnection struct {
 		Edges    func(childComplexity int) int
 		PageInfo func(childComplexity int) int
 	}
 
-	PolicyEdge struct {
+	DocumentEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
 
-	PolicyVersion struct {
+	DocumentVersion struct {
 		Changelog   func(childComplexity int) int
 		Content     func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
 		ID          func(childComplexity int) int
-		Policy      func(childComplexity int) int
+		Document      func(childComplexity int) int
 		PublishedAt func(childComplexity int) int
 		PublishedBy func(childComplexity int) int
-		Signatures  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyVersionSignatureOrder) int
+		Signatures  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) int
 		Status      func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 		Version     func(childComplexity int) int
 	}
 
-	PolicyVersionConnection struct {
+	DocumentVersionConnection struct {
 		Edges    func(childComplexity int) int
 		PageInfo func(childComplexity int) int
 	}
 
-	PolicyVersionEdge struct {
+	DocumentVersionEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
 
-	PolicyVersionSignature struct {
+	DocumentVersionSignature struct {
 		CreatedAt     func(childComplexity int) int
 		ID            func(childComplexity int) int
-		PolicyVersion func(childComplexity int) int
+		DocumentVersion func(childComplexity int) int
 		RequestedAt   func(childComplexity int) int
 		RequestedBy   func(childComplexity int) int
 		SignedAt      func(childComplexity int) int
@@ -504,19 +504,19 @@ type ComplexityRoot struct {
 		UpdatedAt     func(childComplexity int) int
 	}
 
-	PolicyVersionSignatureConnection struct {
+	DocumentVersionSignatureConnection struct {
 		Edges    func(childComplexity int) int
 		PageInfo func(childComplexity int) int
 	}
 
-	PolicyVersionSignatureEdge struct {
+	DocumentVersionSignatureEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
 	}
 
-	PublishPolicyVersionPayload struct {
-		Policy        func(childComplexity int) int
-		PolicyVersion func(childComplexity int) int
+	PublishDocumentVersionPayload struct {
+		Document        func(childComplexity int) int
+		DocumentVersion func(childComplexity int) int
 	}
 
 	Query struct {
@@ -533,7 +533,7 @@ type ComplexityRoot struct {
 	}
 
 	RequestSignaturePayload struct {
-		PolicyVersionSignatureEdge func(childComplexity int) int
+		DocumentVersionSignatureEdge func(childComplexity int) int
 	}
 
 	Risk struct {
@@ -550,7 +550,7 @@ type ComplexityRoot struct {
 		Note               func(childComplexity int) int
 		Organization       func(childComplexity int) int
 		Owner              func(childComplexity int) int
-		Policies           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) int
+		Documents           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) int
 		ResidualImpact     func(childComplexity int) int
 		ResidualLikelihood func(childComplexity int) int
 		ResidualRiskScore  func(childComplexity int) int
@@ -621,12 +621,12 @@ type ComplexityRoot struct {
 		People func(childComplexity int) int
 	}
 
-	UpdatePolicyPayload struct {
-		Policy func(childComplexity int) int
+	UpdateDocumentPayload struct {
+		Document func(childComplexity int) int
 	}
 
-	UpdatePolicyVersionPayload struct {
-		PolicyVersion func(childComplexity int) int
+	UpdateDocumentVersionPayload struct {
+		DocumentVersion func(childComplexity int) int
 	}
 
 	UpdateRiskPayload struct {
@@ -764,7 +764,7 @@ type ComplexityRoot struct {
 type ControlResolver interface {
 	Framework(ctx context.Context, obj *types.Control) (*types.Framework, error)
 	Measures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error)
-	Policies(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) (*types.PolicyConnection, error)
+	Documents(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.DocumentConnection, error)
 }
 type EvidenceResolver interface {
 	FileURL(ctx context.Context, obj *types.Evidence) (*string, error)
@@ -804,9 +804,9 @@ type MutationResolver interface {
 	ImportMeasure(ctx context.Context, input types.ImportMeasureInput) (*types.ImportMeasurePayload, error)
 	DeleteMeasure(ctx context.Context, input types.DeleteMeasureInput) (*types.DeleteMeasurePayload, error)
 	CreateControlMeasureMapping(ctx context.Context, input types.CreateControlMeasureMappingInput) (*types.CreateControlMeasureMappingPayload, error)
-	CreateControlPolicyMapping(ctx context.Context, input types.CreateControlPolicyMappingInput) (*types.CreateControlPolicyMappingPayload, error)
+	CreateControlDocumentMapping(ctx context.Context, input types.CreateControlDocumentMappingInput) (*types.CreateControlDocumentMappingPayload, error)
 	DeleteControlMeasureMapping(ctx context.Context, input types.DeleteControlMeasureMappingInput) (*types.DeleteControlMeasureMappingPayload, error)
-	DeleteControlPolicyMapping(ctx context.Context, input types.DeleteControlPolicyMappingInput) (*types.DeleteControlPolicyMappingPayload, error)
+	DeleteControlDocumentMapping(ctx context.Context, input types.DeleteControlDocumentMappingInput) (*types.DeleteControlDocumentMappingPayload, error)
 	CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error)
 	UpdateTask(ctx context.Context, input types.UpdateTaskInput) (*types.UpdateTaskPayload, error)
 	DeleteTask(ctx context.Context, input types.DeleteTaskInput) (*types.DeleteTaskPayload, error)
@@ -817,8 +817,8 @@ type MutationResolver interface {
 	DeleteRisk(ctx context.Context, input types.DeleteRiskInput) (*types.DeleteRiskPayload, error)
 	CreateRiskMeasureMapping(ctx context.Context, input types.CreateRiskMeasureMappingInput) (*types.CreateRiskMeasureMappingPayload, error)
 	DeleteRiskMeasureMapping(ctx context.Context, input types.DeleteRiskMeasureMappingInput) (*types.DeleteRiskMeasureMappingPayload, error)
-	CreateRiskPolicyMapping(ctx context.Context, input types.CreateRiskPolicyMappingInput) (*types.CreateRiskPolicyMappingPayload, error)
-	DeleteRiskPolicyMapping(ctx context.Context, input types.DeleteRiskPolicyMappingInput) (*types.DeleteRiskPolicyMappingPayload, error)
+	CreateRiskDocumentMapping(ctx context.Context, input types.CreateRiskDocumentMappingInput) (*types.CreateRiskDocumentMappingPayload, error)
+	DeleteRiskDocumentMapping(ctx context.Context, input types.DeleteRiskDocumentMappingInput) (*types.DeleteRiskDocumentMappingPayload, error)
 	RequestEvidence(ctx context.Context, input types.RequestEvidenceInput) (*types.RequestEvidencePayload, error)
 	FulfillEvidence(ctx context.Context, input types.FulfillEvidenceInput) (*types.FulfillEvidencePayload, error)
 	DeleteEvidence(ctx context.Context, input types.DeleteEvidenceInput) (*types.DeleteEvidencePayload, error)
@@ -826,11 +826,11 @@ type MutationResolver interface {
 	UploadMeasureEvidence(ctx context.Context, input types.UploadMeasureEvidenceInput) (*types.UploadMeasureEvidencePayload, error)
 	UploadVendorComplianceReport(ctx context.Context, input types.UploadVendorComplianceReportInput) (*types.UploadVendorComplianceReportPayload, error)
 	DeleteVendorComplianceReport(ctx context.Context, input types.DeleteVendorComplianceReportInput) (*types.DeleteVendorComplianceReportPayload, error)
-	CreatePolicy(ctx context.Context, input types.CreatePolicyInput) (*types.CreatePolicyPayload, error)
-	DeletePolicy(ctx context.Context, input types.DeletePolicyInput) (*types.DeletePolicyPayload, error)
-	PublishPolicyVersion(ctx context.Context, input types.PublishPolicyVersionInput) (*types.PublishPolicyVersionPayload, error)
-	CreateDraftPolicyVersion(ctx context.Context, input types.CreateDraftPolicyVersionInput) (*types.CreateDraftPolicyVersionPayload, error)
-	UpdatePolicyVersion(ctx context.Context, input types.UpdatePolicyVersionInput) (*types.UpdatePolicyVersionPayload, error)
+	CreateDocument(ctx context.Context, input types.CreateDocumentInput) (*types.CreateDocumentPayload, error)
+	DeleteDocument(ctx context.Context, input types.DeleteDocumentInput) (*types.DeleteDocumentPayload, error)
+	PublishDocumentVersion(ctx context.Context, input types.PublishDocumentVersionInput) (*types.PublishDocumentVersionPayload, error)
+	CreateDraftDocumentVersion(ctx context.Context, input types.CreateDraftDocumentVersionInput) (*types.CreateDraftDocumentVersionPayload, error)
+	UpdateDocumentVersion(ctx context.Context, input types.UpdateDocumentVersionInput) (*types.UpdateDocumentVersionPayload, error)
 	RequestSignature(ctx context.Context, input types.RequestSignatureInput) (*types.RequestSignaturePayload, error)
 	SendSigningNotifications(ctx context.Context, input types.SendSigningNotificationsInput) (*types.SendSigningNotificationsPayload, error)
 	CreateVendorRiskAssessment(ctx context.Context, input types.CreateVendorRiskAssessmentInput) (*types.CreateVendorRiskAssessmentPayload, error)
@@ -844,29 +844,29 @@ type OrganizationResolver interface {
 	Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error)
 	Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
 	Peoples(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy) (*types.PeopleConnection, error)
-	Policies(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) (*types.PolicyConnection, error)
+	Documents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.DocumentConnection, error)
 	Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error)
 	Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy) (*types.RiskConnection, error)
 	Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error)
 }
-type PolicyResolver interface {
-	Owner(ctx context.Context, obj *types.Policy) (*types.People, error)
-	Organization(ctx context.Context, obj *types.Policy) (*types.Organization, error)
-	Versions(ctx context.Context, obj *types.Policy, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyVersionOrderBy, filter *types.PolicyVersionFilter) (*types.PolicyVersionConnection, error)
-	Controls(ctx context.Context, obj *types.Policy, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error)
+type DocumentResolver interface {
+	Owner(ctx context.Context, obj *types.Document) (*types.People, error)
+	Organization(ctx context.Context, obj *types.Document) (*types.Organization, error)
+	Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error)
+	Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error)
 }
-type PolicyVersionResolver interface {
-	Policy(ctx context.Context, obj *types.PolicyVersion) (*types.Policy, error)
+type DocumentVersionResolver interface {
+	Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error)
 
-	Signatures(ctx context.Context, obj *types.PolicyVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyVersionSignatureOrder) (*types.PolicyVersionSignatureConnection, error)
-	PublishedBy(ctx context.Context, obj *types.PolicyVersion) (*types.People, error)
+	Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) (*types.DocumentVersionSignatureConnection, error)
+	PublishedBy(ctx context.Context, obj *types.DocumentVersion) (*types.People, error)
 }
-type PolicyVersionSignatureResolver interface {
-	PolicyVersion(ctx context.Context, obj *types.PolicyVersionSignature) (*types.PolicyVersion, error)
+type DocumentVersionSignatureResolver interface {
+	DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error)
 
-	SignedBy(ctx context.Context, obj *types.PolicyVersionSignature) (*types.People, error)
+	SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error)
 
-	RequestedBy(ctx context.Context, obj *types.PolicyVersionSignature) (*types.People, error)
+	RequestedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error)
 }
 type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
@@ -876,7 +876,7 @@ type RiskResolver interface {
 	Owner(ctx context.Context, obj *types.Risk) (*types.People, error)
 	Organization(ctx context.Context, obj *types.Risk) (*types.Organization, error)
 	Measures(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy) (*types.MeasureConnection, error)
-	Policies(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) (*types.PolicyConnection, error)
+	Documents(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.DocumentConnection, error)
 	Controls(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error)
 }
 type TaskResolver interface {
@@ -1059,17 +1059,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Control.Name(childComplexity), true
 
-	case "Control.policies":
-		if e.complexity.Control.Policies == nil {
+	case "Control.documents":
+		if e.complexity.Control.Documents == nil {
 			break
 		}
 
-		args, err := ec.field_Control_policies_args(ctx, rawArgs)
+		args, err := ec.field_Control_documents_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Control.Policies(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.PolicyOrderBy)), true
+		return e.complexity.Control.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy)), true
 
 	case "Control.referenceId":
 		if e.complexity.Control.ReferenceID == nil {
@@ -1127,26 +1127,26 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateControlMeasureMappingPayload.MeasureEdge(childComplexity), true
 
-	case "CreateControlPolicyMappingPayload.controlEdge":
-		if e.complexity.CreateControlPolicyMappingPayload.ControlEdge == nil {
+	case "CreateControlDocumentMappingPayload.controlEdge":
+		if e.complexity.CreateControlDocumentMappingPayload.ControlEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateControlPolicyMappingPayload.ControlEdge(childComplexity), true
+		return e.complexity.CreateControlDocumentMappingPayload.ControlEdge(childComplexity), true
 
-	case "CreateControlPolicyMappingPayload.policyEdge":
-		if e.complexity.CreateControlPolicyMappingPayload.PolicyEdge == nil {
+	case "CreateControlDocumentMappingPayload.documentEdge":
+		if e.complexity.CreateControlDocumentMappingPayload.DocumentEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateControlPolicyMappingPayload.PolicyEdge(childComplexity), true
+		return e.complexity.CreateControlDocumentMappingPayload.DocumentEdge(childComplexity), true
 
-	case "CreateDraftPolicyVersionPayload.policyVersionEdge":
-		if e.complexity.CreateDraftPolicyVersionPayload.PolicyVersionEdge == nil {
+	case "CreateDraftDocumentVersionPayload.documentVersionEdge":
+		if e.complexity.CreateDraftDocumentVersionPayload.DocumentVersionEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateDraftPolicyVersionPayload.PolicyVersionEdge(childComplexity), true
+		return e.complexity.CreateDraftDocumentVersionPayload.DocumentVersionEdge(childComplexity), true
 
 	case "CreateEvidencePayload.evidenceEdge":
 		if e.complexity.CreateEvidencePayload.EvidenceEdge == nil {
@@ -1183,19 +1183,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreatePeoplePayload.PeopleEdge(childComplexity), true
 
-	case "CreatePolicyPayload.policyEdge":
-		if e.complexity.CreatePolicyPayload.PolicyEdge == nil {
+	case "CreateDocumentPayload.documentEdge":
+		if e.complexity.CreateDocumentPayload.DocumentEdge == nil {
 			break
 		}
 
-		return e.complexity.CreatePolicyPayload.PolicyEdge(childComplexity), true
+		return e.complexity.CreateDocumentPayload.DocumentEdge(childComplexity), true
 
-	case "CreatePolicyPayload.policyVersionEdge":
-		if e.complexity.CreatePolicyPayload.PolicyVersionEdge == nil {
+	case "CreateDocumentPayload.documentVersionEdge":
+		if e.complexity.CreateDocumentPayload.DocumentVersionEdge == nil {
 			break
 		}
 
-		return e.complexity.CreatePolicyPayload.PolicyVersionEdge(childComplexity), true
+		return e.complexity.CreateDocumentPayload.DocumentVersionEdge(childComplexity), true
 
 	case "CreateRiskMeasureMappingPayload.measureEdge":
 		if e.complexity.CreateRiskMeasureMappingPayload.MeasureEdge == nil {
@@ -1218,19 +1218,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateRiskPayload.RiskEdge(childComplexity), true
 
-	case "CreateRiskPolicyMappingPayload.policyEdge":
-		if e.complexity.CreateRiskPolicyMappingPayload.PolicyEdge == nil {
+	case "CreateRiskDocumentMappingPayload.documentEdge":
+		if e.complexity.CreateRiskDocumentMappingPayload.DocumentEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateRiskPolicyMappingPayload.PolicyEdge(childComplexity), true
+		return e.complexity.CreateRiskDocumentMappingPayload.DocumentEdge(childComplexity), true
 
-	case "CreateRiskPolicyMappingPayload.riskEdge":
-		if e.complexity.CreateRiskPolicyMappingPayload.RiskEdge == nil {
+	case "CreateRiskDocumentMappingPayload.riskEdge":
+		if e.complexity.CreateRiskDocumentMappingPayload.RiskEdge == nil {
 			break
 		}
 
-		return e.complexity.CreateRiskPolicyMappingPayload.RiskEdge(childComplexity), true
+		return e.complexity.CreateRiskDocumentMappingPayload.RiskEdge(childComplexity), true
 
 	case "CreateTaskPayload.taskEdge":
 		if e.complexity.CreateTaskPayload.TaskEdge == nil {
@@ -1267,19 +1267,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeleteControlMeasureMappingPayload.DeletedMeasureID(childComplexity), true
 
-	case "DeleteControlPolicyMappingPayload.deletedControlId":
-		if e.complexity.DeleteControlPolicyMappingPayload.DeletedControlID == nil {
+	case "DeleteControlDocumentMappingPayload.deletedControlId":
+		if e.complexity.DeleteControlDocumentMappingPayload.DeletedControlID == nil {
 			break
 		}
 
-		return e.complexity.DeleteControlPolicyMappingPayload.DeletedControlID(childComplexity), true
+		return e.complexity.DeleteControlDocumentMappingPayload.DeletedControlID(childComplexity), true
 
-	case "DeleteControlPolicyMappingPayload.deletedPolicyId":
-		if e.complexity.DeleteControlPolicyMappingPayload.DeletedPolicyID == nil {
+	case "DeleteControlDocumentMappingPayload.deletedDocumentId":
+		if e.complexity.DeleteControlDocumentMappingPayload.DeletedDocumentID == nil {
 			break
 		}
 
-		return e.complexity.DeleteControlPolicyMappingPayload.DeletedPolicyID(childComplexity), true
+		return e.complexity.DeleteControlDocumentMappingPayload.DeletedDocumentID(childComplexity), true
 
 	case "DeleteEvidencePayload.deletedEvidenceId":
 		if e.complexity.DeleteEvidencePayload.DeletedEvidenceID == nil {
@@ -1316,12 +1316,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeletePeoplePayload.DeletedPeopleID(childComplexity), true
 
-	case "DeletePolicyPayload.deletedPolicyId":
-		if e.complexity.DeletePolicyPayload.DeletedPolicyID == nil {
+	case "DeleteDocumentPayload.deletedDocumentId":
+		if e.complexity.DeleteDocumentPayload.DeletedDocumentID == nil {
 			break
 		}
 
-		return e.complexity.DeletePolicyPayload.DeletedPolicyID(childComplexity), true
+		return e.complexity.DeleteDocumentPayload.DeletedDocumentID(childComplexity), true
 
 	case "DeleteRiskMeasureMappingPayload.deletedMeasureId":
 		if e.complexity.DeleteRiskMeasureMappingPayload.DeletedMeasureID == nil {
@@ -1344,19 +1344,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeleteRiskPayload.DeletedRiskID(childComplexity), true
 
-	case "DeleteRiskPolicyMappingPayload.deletedPolicyId":
-		if e.complexity.DeleteRiskPolicyMappingPayload.DeletedPolicyID == nil {
+	case "DeleteRiskDocumentMappingPayload.deletedDocumentId":
+		if e.complexity.DeleteRiskDocumentMappingPayload.DeletedDocumentID == nil {
 			break
 		}
 
-		return e.complexity.DeleteRiskPolicyMappingPayload.DeletedPolicyID(childComplexity), true
+		return e.complexity.DeleteRiskDocumentMappingPayload.DeletedDocumentID(childComplexity), true
 
-	case "DeleteRiskPolicyMappingPayload.deletedRiskId":
-		if e.complexity.DeleteRiskPolicyMappingPayload.DeletedRiskID == nil {
+	case "DeleteRiskDocumentMappingPayload.deletedRiskId":
+		if e.complexity.DeleteRiskDocumentMappingPayload.DeletedRiskID == nil {
 			break
 		}
 
-		return e.complexity.DeleteRiskPolicyMappingPayload.DeletedRiskID(childComplexity), true
+		return e.complexity.DeleteRiskDocumentMappingPayload.DeletedRiskID(childComplexity), true
 
 	case "DeleteTaskPayload.deletedTaskId":
 		if e.complexity.DeleteTaskPayload.DeletedTaskID == nil {
@@ -1788,29 +1788,29 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreateControlMeasureMapping(childComplexity, args["input"].(types.CreateControlMeasureMappingInput)), true
 
-	case "Mutation.createControlPolicyMapping":
-		if e.complexity.Mutation.CreateControlPolicyMapping == nil {
+	case "Mutation.createControlDocumentMapping":
+		if e.complexity.Mutation.CreateControlDocumentMapping == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createControlPolicyMapping_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_createControlDocumentMapping_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateControlPolicyMapping(childComplexity, args["input"].(types.CreateControlPolicyMappingInput)), true
+		return e.complexity.Mutation.CreateControlDocumentMapping(childComplexity, args["input"].(types.CreateControlDocumentMappingInput)), true
 
-	case "Mutation.createDraftPolicyVersion":
-		if e.complexity.Mutation.CreateDraftPolicyVersion == nil {
+	case "Mutation.createDraftDocumentVersion":
+		if e.complexity.Mutation.CreateDraftDocumentVersion == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createDraftPolicyVersion_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_createDraftDocumentVersion_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateDraftPolicyVersion(childComplexity, args["input"].(types.CreateDraftPolicyVersionInput)), true
+		return e.complexity.Mutation.CreateDraftDocumentVersion(childComplexity, args["input"].(types.CreateDraftDocumentVersionInput)), true
 
 	case "Mutation.createFramework":
 		if e.complexity.Mutation.CreateFramework == nil {
@@ -1860,17 +1860,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreatePeople(childComplexity, args["input"].(types.CreatePeopleInput)), true
 
-	case "Mutation.createPolicy":
-		if e.complexity.Mutation.CreatePolicy == nil {
+	case "Mutation.createDocument":
+		if e.complexity.Mutation.CreateDocument == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createPolicy_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_createDocument_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreatePolicy(childComplexity, args["input"].(types.CreatePolicyInput)), true
+		return e.complexity.Mutation.CreateDocument(childComplexity, args["input"].(types.CreateDocumentInput)), true
 
 	case "Mutation.createRisk":
 		if e.complexity.Mutation.CreateRisk == nil {
@@ -1896,17 +1896,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreateRiskMeasureMapping(childComplexity, args["input"].(types.CreateRiskMeasureMappingInput)), true
 
-	case "Mutation.createRiskPolicyMapping":
-		if e.complexity.Mutation.CreateRiskPolicyMapping == nil {
+	case "Mutation.createRiskDocumentMapping":
+		if e.complexity.Mutation.CreateRiskDocumentMapping == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_createRiskPolicyMapping_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_createRiskDocumentMapping_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateRiskPolicyMapping(childComplexity, args["input"].(types.CreateRiskPolicyMappingInput)), true
+		return e.complexity.Mutation.CreateRiskDocumentMapping(childComplexity, args["input"].(types.CreateRiskDocumentMappingInput)), true
 
 	case "Mutation.createTask":
 		if e.complexity.Mutation.CreateTask == nil {
@@ -1956,17 +1956,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.DeleteControlMeasureMapping(childComplexity, args["input"].(types.DeleteControlMeasureMappingInput)), true
 
-	case "Mutation.deleteControlPolicyMapping":
-		if e.complexity.Mutation.DeleteControlPolicyMapping == nil {
+	case "Mutation.deleteControlDocumentMapping":
+		if e.complexity.Mutation.DeleteControlDocumentMapping == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteControlPolicyMapping_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_deleteControlDocumentMapping_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteControlPolicyMapping(childComplexity, args["input"].(types.DeleteControlPolicyMappingInput)), true
+		return e.complexity.Mutation.DeleteControlDocumentMapping(childComplexity, args["input"].(types.DeleteControlDocumentMappingInput)), true
 
 	case "Mutation.deleteEvidence":
 		if e.complexity.Mutation.DeleteEvidence == nil {
@@ -2028,17 +2028,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.DeletePeople(childComplexity, args["input"].(types.DeletePeopleInput)), true
 
-	case "Mutation.deletePolicy":
-		if e.complexity.Mutation.DeletePolicy == nil {
+	case "Mutation.deleteDocument":
+		if e.complexity.Mutation.DeleteDocument == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deletePolicy_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_deleteDocument_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeletePolicy(childComplexity, args["input"].(types.DeletePolicyInput)), true
+		return e.complexity.Mutation.DeleteDocument(childComplexity, args["input"].(types.DeleteDocumentInput)), true
 
 	case "Mutation.deleteRisk":
 		if e.complexity.Mutation.DeleteRisk == nil {
@@ -2064,17 +2064,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.DeleteRiskMeasureMapping(childComplexity, args["input"].(types.DeleteRiskMeasureMappingInput)), true
 
-	case "Mutation.deleteRiskPolicyMapping":
-		if e.complexity.Mutation.DeleteRiskPolicyMapping == nil {
+	case "Mutation.deleteRiskDocumentMapping":
+		if e.complexity.Mutation.DeleteRiskDocumentMapping == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_deleteRiskPolicyMapping_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_deleteRiskDocumentMapping_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeleteRiskPolicyMapping(childComplexity, args["input"].(types.DeleteRiskPolicyMappingInput)), true
+		return e.complexity.Mutation.DeleteRiskDocumentMapping(childComplexity, args["input"].(types.DeleteRiskDocumentMappingInput)), true
 
 	case "Mutation.deleteTask":
 		if e.complexity.Mutation.DeleteTask == nil {
@@ -2172,17 +2172,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.InviteUser(childComplexity, args["input"].(types.InviteUserInput)), true
 
-	case "Mutation.publishPolicyVersion":
-		if e.complexity.Mutation.PublishPolicyVersion == nil {
+	case "Mutation.publishDocumentVersion":
+		if e.complexity.Mutation.PublishDocumentVersion == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_publishPolicyVersion_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_publishDocumentVersion_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.PublishPolicyVersion(childComplexity, args["input"].(types.PublishPolicyVersionInput)), true
+		return e.complexity.Mutation.PublishDocumentVersion(childComplexity, args["input"].(types.PublishDocumentVersionInput)), true
 
 	case "Mutation.removeUser":
 		if e.complexity.Mutation.RemoveUser == nil {
@@ -2292,17 +2292,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.UpdatePeople(childComplexity, args["input"].(types.UpdatePeopleInput)), true
 
-	case "Mutation.updatePolicyVersion":
-		if e.complexity.Mutation.UpdatePolicyVersion == nil {
+	case "Mutation.updateDocumentVersion":
+		if e.complexity.Mutation.UpdateDocumentVersion == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updatePolicyVersion_args(ctx, rawArgs)
+		args, err := ec.field_Mutation_updateDocumentVersion_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdatePolicyVersion(childComplexity, args["input"].(types.UpdatePolicyVersionInput)), true
+		return e.complexity.Mutation.UpdateDocumentVersion(childComplexity, args["input"].(types.UpdateDocumentVersionInput)), true
 
 	case "Mutation.updateRisk":
 		if e.complexity.Mutation.UpdateRisk == nil {
@@ -2452,17 +2452,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Organization.Peoples(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.PeopleOrderBy)), true
 
-	case "Organization.policies":
-		if e.complexity.Organization.Policies == nil {
+	case "Organization.documents":
+		if e.complexity.Organization.Documents == nil {
 			break
 		}
 
-		args, err := ec.field_Organization_policies_args(ctx, rawArgs)
+		args, err := ec.field_Organization_documents_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Organization.Policies(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.PolicyOrderBy)), true
+		return e.complexity.Organization.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy)), true
 
 	case "Organization.risks":
 		if e.complexity.Organization.Risks == nil {
@@ -2673,328 +2673,328 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.PeopleEdge.Node(childComplexity), true
 
-	case "Policy.controls":
-		if e.complexity.Policy.Controls == nil {
+	case "Document.controls":
+		if e.complexity.Document.Controls == nil {
 			break
 		}
 
-		args, err := ec.field_Policy_controls_args(ctx, rawArgs)
+		args, err := ec.field_Document_controls_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Policy.Controls(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ControlOrderBy)), true
+		return e.complexity.Document.Controls(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ControlOrderBy)), true
 
-	case "Policy.createdAt":
-		if e.complexity.Policy.CreatedAt == nil {
+	case "Document.createdAt":
+		if e.complexity.Document.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.Policy.CreatedAt(childComplexity), true
+		return e.complexity.Document.CreatedAt(childComplexity), true
 
-	case "Policy.currentPublishedVersion":
-		if e.complexity.Policy.CurrentPublishedVersion == nil {
+	case "Document.currentPublishedVersion":
+		if e.complexity.Document.CurrentPublishedVersion == nil {
 			break
 		}
 
-		return e.complexity.Policy.CurrentPublishedVersion(childComplexity), true
+		return e.complexity.Document.CurrentPublishedVersion(childComplexity), true
 
-	case "Policy.description":
-		if e.complexity.Policy.Description == nil {
+	case "Document.description":
+		if e.complexity.Document.Description == nil {
 			break
 		}
 
-		return e.complexity.Policy.Description(childComplexity), true
+		return e.complexity.Document.Description(childComplexity), true
 
-	case "Policy.id":
-		if e.complexity.Policy.ID == nil {
+	case "Document.id":
+		if e.complexity.Document.ID == nil {
 			break
 		}
 
-		return e.complexity.Policy.ID(childComplexity), true
+		return e.complexity.Document.ID(childComplexity), true
 
-	case "Policy.organization":
-		if e.complexity.Policy.Organization == nil {
+	case "Document.organization":
+		if e.complexity.Document.Organization == nil {
 			break
 		}
 
-		return e.complexity.Policy.Organization(childComplexity), true
+		return e.complexity.Document.Organization(childComplexity), true
 
-	case "Policy.owner":
-		if e.complexity.Policy.Owner == nil {
+	case "Document.owner":
+		if e.complexity.Document.Owner == nil {
 			break
 		}
 
-		return e.complexity.Policy.Owner(childComplexity), true
+		return e.complexity.Document.Owner(childComplexity), true
 
-	case "Policy.title":
-		if e.complexity.Policy.Title == nil {
+	case "Document.title":
+		if e.complexity.Document.Title == nil {
 			break
 		}
 
-		return e.complexity.Policy.Title(childComplexity), true
+		return e.complexity.Document.Title(childComplexity), true
 
-	case "Policy.updatedAt":
-		if e.complexity.Policy.UpdatedAt == nil {
+	case "Document.updatedAt":
+		if e.complexity.Document.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.Policy.UpdatedAt(childComplexity), true
+		return e.complexity.Document.UpdatedAt(childComplexity), true
 
-	case "Policy.versions":
-		if e.complexity.Policy.Versions == nil {
+	case "Document.versions":
+		if e.complexity.Document.Versions == nil {
 			break
 		}
 
-		args, err := ec.field_Policy_versions_args(ctx, rawArgs)
+		args, err := ec.field_Document_versions_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Policy.Versions(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.PolicyVersionOrderBy), args["filter"].(*types.PolicyVersionFilter)), true
+		return e.complexity.Document.Versions(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentVersionOrderBy), args["filter"].(*types.DocumentVersionFilter)), true
 
-	case "PolicyConnection.edges":
-		if e.complexity.PolicyConnection.Edges == nil {
+	case "DocumentConnection.edges":
+		if e.complexity.DocumentConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.PolicyConnection.Edges(childComplexity), true
+		return e.complexity.DocumentConnection.Edges(childComplexity), true
 
-	case "PolicyConnection.pageInfo":
-		if e.complexity.PolicyConnection.PageInfo == nil {
+	case "DocumentConnection.pageInfo":
+		if e.complexity.DocumentConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.PolicyConnection.PageInfo(childComplexity), true
+		return e.complexity.DocumentConnection.PageInfo(childComplexity), true
 
-	case "PolicyEdge.cursor":
-		if e.complexity.PolicyEdge.Cursor == nil {
+	case "DocumentEdge.cursor":
+		if e.complexity.DocumentEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.PolicyEdge.Cursor(childComplexity), true
+		return e.complexity.DocumentEdge.Cursor(childComplexity), true
 
-	case "PolicyEdge.node":
-		if e.complexity.PolicyEdge.Node == nil {
+	case "DocumentEdge.node":
+		if e.complexity.DocumentEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.PolicyEdge.Node(childComplexity), true
+		return e.complexity.DocumentEdge.Node(childComplexity), true
 
-	case "PolicyVersion.changelog":
-		if e.complexity.PolicyVersion.Changelog == nil {
+	case "DocumentVersion.changelog":
+		if e.complexity.DocumentVersion.Changelog == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersion.Changelog(childComplexity), true
+		return e.complexity.DocumentVersion.Changelog(childComplexity), true
 
-	case "PolicyVersion.content":
-		if e.complexity.PolicyVersion.Content == nil {
+	case "DocumentVersion.content":
+		if e.complexity.DocumentVersion.Content == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersion.Content(childComplexity), true
+		return e.complexity.DocumentVersion.Content(childComplexity), true
 
-	case "PolicyVersion.createdAt":
-		if e.complexity.PolicyVersion.CreatedAt == nil {
+	case "DocumentVersion.createdAt":
+		if e.complexity.DocumentVersion.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersion.CreatedAt(childComplexity), true
+		return e.complexity.DocumentVersion.CreatedAt(childComplexity), true
 
-	case "PolicyVersion.id":
-		if e.complexity.PolicyVersion.ID == nil {
+	case "DocumentVersion.id":
+		if e.complexity.DocumentVersion.ID == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersion.ID(childComplexity), true
+		return e.complexity.DocumentVersion.ID(childComplexity), true
 
-	case "PolicyVersion.policy":
-		if e.complexity.PolicyVersion.Policy == nil {
+	case "DocumentVersion.document":
+		if e.complexity.DocumentVersion.Document == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersion.Policy(childComplexity), true
+		return e.complexity.DocumentVersion.Document(childComplexity), true
 
-	case "PolicyVersion.publishedAt":
-		if e.complexity.PolicyVersion.PublishedAt == nil {
+	case "DocumentVersion.publishedAt":
+		if e.complexity.DocumentVersion.PublishedAt == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersion.PublishedAt(childComplexity), true
+		return e.complexity.DocumentVersion.PublishedAt(childComplexity), true
 
-	case "PolicyVersion.publishedBy":
-		if e.complexity.PolicyVersion.PublishedBy == nil {
+	case "DocumentVersion.publishedBy":
+		if e.complexity.DocumentVersion.PublishedBy == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersion.PublishedBy(childComplexity), true
+		return e.complexity.DocumentVersion.PublishedBy(childComplexity), true
 
-	case "PolicyVersion.signatures":
-		if e.complexity.PolicyVersion.Signatures == nil {
+	case "DocumentVersion.signatures":
+		if e.complexity.DocumentVersion.Signatures == nil {
 			break
 		}
 
-		args, err := ec.field_PolicyVersion_signatures_args(ctx, rawArgs)
+		args, err := ec.field_DocumentVersion_signatures_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.PolicyVersion.Signatures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.PolicyVersionSignatureOrder)), true
+		return e.complexity.DocumentVersion.Signatures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentVersionSignatureOrder)), true
 
-	case "PolicyVersion.status":
-		if e.complexity.PolicyVersion.Status == nil {
+	case "DocumentVersion.status":
+		if e.complexity.DocumentVersion.Status == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersion.Status(childComplexity), true
+		return e.complexity.DocumentVersion.Status(childComplexity), true
 
-	case "PolicyVersion.updatedAt":
-		if e.complexity.PolicyVersion.UpdatedAt == nil {
+	case "DocumentVersion.updatedAt":
+		if e.complexity.DocumentVersion.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersion.UpdatedAt(childComplexity), true
+		return e.complexity.DocumentVersion.UpdatedAt(childComplexity), true
 
-	case "PolicyVersion.version":
-		if e.complexity.PolicyVersion.Version == nil {
+	case "DocumentVersion.version":
+		if e.complexity.DocumentVersion.Version == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersion.Version(childComplexity), true
+		return e.complexity.DocumentVersion.Version(childComplexity), true
 
-	case "PolicyVersionConnection.edges":
-		if e.complexity.PolicyVersionConnection.Edges == nil {
+	case "DocumentVersionConnection.edges":
+		if e.complexity.DocumentVersionConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionConnection.Edges(childComplexity), true
+		return e.complexity.DocumentVersionConnection.Edges(childComplexity), true
 
-	case "PolicyVersionConnection.pageInfo":
-		if e.complexity.PolicyVersionConnection.PageInfo == nil {
+	case "DocumentVersionConnection.pageInfo":
+		if e.complexity.DocumentVersionConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionConnection.PageInfo(childComplexity), true
+		return e.complexity.DocumentVersionConnection.PageInfo(childComplexity), true
 
-	case "PolicyVersionEdge.cursor":
-		if e.complexity.PolicyVersionEdge.Cursor == nil {
+	case "DocumentVersionEdge.cursor":
+		if e.complexity.DocumentVersionEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionEdge.Cursor(childComplexity), true
+		return e.complexity.DocumentVersionEdge.Cursor(childComplexity), true
 
-	case "PolicyVersionEdge.node":
-		if e.complexity.PolicyVersionEdge.Node == nil {
+	case "DocumentVersionEdge.node":
+		if e.complexity.DocumentVersionEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionEdge.Node(childComplexity), true
+		return e.complexity.DocumentVersionEdge.Node(childComplexity), true
 
-	case "PolicyVersionSignature.createdAt":
-		if e.complexity.PolicyVersionSignature.CreatedAt == nil {
+	case "DocumentVersionSignature.createdAt":
+		if e.complexity.DocumentVersionSignature.CreatedAt == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignature.CreatedAt(childComplexity), true
+		return e.complexity.DocumentVersionSignature.CreatedAt(childComplexity), true
 
-	case "PolicyVersionSignature.id":
-		if e.complexity.PolicyVersionSignature.ID == nil {
+	case "DocumentVersionSignature.id":
+		if e.complexity.DocumentVersionSignature.ID == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignature.ID(childComplexity), true
+		return e.complexity.DocumentVersionSignature.ID(childComplexity), true
 
-	case "PolicyVersionSignature.policyVersion":
-		if e.complexity.PolicyVersionSignature.PolicyVersion == nil {
+	case "DocumentVersionSignature.documentVersion":
+		if e.complexity.DocumentVersionSignature.DocumentVersion == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignature.PolicyVersion(childComplexity), true
+		return e.complexity.DocumentVersionSignature.DocumentVersion(childComplexity), true
 
-	case "PolicyVersionSignature.requestedAt":
-		if e.complexity.PolicyVersionSignature.RequestedAt == nil {
+	case "DocumentVersionSignature.requestedAt":
+		if e.complexity.DocumentVersionSignature.RequestedAt == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignature.RequestedAt(childComplexity), true
+		return e.complexity.DocumentVersionSignature.RequestedAt(childComplexity), true
 
-	case "PolicyVersionSignature.requestedBy":
-		if e.complexity.PolicyVersionSignature.RequestedBy == nil {
+	case "DocumentVersionSignature.requestedBy":
+		if e.complexity.DocumentVersionSignature.RequestedBy == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignature.RequestedBy(childComplexity), true
+		return e.complexity.DocumentVersionSignature.RequestedBy(childComplexity), true
 
-	case "PolicyVersionSignature.signedAt":
-		if e.complexity.PolicyVersionSignature.SignedAt == nil {
+	case "DocumentVersionSignature.signedAt":
+		if e.complexity.DocumentVersionSignature.SignedAt == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignature.SignedAt(childComplexity), true
+		return e.complexity.DocumentVersionSignature.SignedAt(childComplexity), true
 
-	case "PolicyVersionSignature.signedBy":
-		if e.complexity.PolicyVersionSignature.SignedBy == nil {
+	case "DocumentVersionSignature.signedBy":
+		if e.complexity.DocumentVersionSignature.SignedBy == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignature.SignedBy(childComplexity), true
+		return e.complexity.DocumentVersionSignature.SignedBy(childComplexity), true
 
-	case "PolicyVersionSignature.state":
-		if e.complexity.PolicyVersionSignature.State == nil {
+	case "DocumentVersionSignature.state":
+		if e.complexity.DocumentVersionSignature.State == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignature.State(childComplexity), true
+		return e.complexity.DocumentVersionSignature.State(childComplexity), true
 
-	case "PolicyVersionSignature.updatedAt":
-		if e.complexity.PolicyVersionSignature.UpdatedAt == nil {
+	case "DocumentVersionSignature.updatedAt":
+		if e.complexity.DocumentVersionSignature.UpdatedAt == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignature.UpdatedAt(childComplexity), true
+		return e.complexity.DocumentVersionSignature.UpdatedAt(childComplexity), true
 
-	case "PolicyVersionSignatureConnection.edges":
-		if e.complexity.PolicyVersionSignatureConnection.Edges == nil {
+	case "DocumentVersionSignatureConnection.edges":
+		if e.complexity.DocumentVersionSignatureConnection.Edges == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignatureConnection.Edges(childComplexity), true
+		return e.complexity.DocumentVersionSignatureConnection.Edges(childComplexity), true
 
-	case "PolicyVersionSignatureConnection.pageInfo":
-		if e.complexity.PolicyVersionSignatureConnection.PageInfo == nil {
+	case "DocumentVersionSignatureConnection.pageInfo":
+		if e.complexity.DocumentVersionSignatureConnection.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignatureConnection.PageInfo(childComplexity), true
+		return e.complexity.DocumentVersionSignatureConnection.PageInfo(childComplexity), true
 
-	case "PolicyVersionSignatureEdge.cursor":
-		if e.complexity.PolicyVersionSignatureEdge.Cursor == nil {
+	case "DocumentVersionSignatureEdge.cursor":
+		if e.complexity.DocumentVersionSignatureEdge.Cursor == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignatureEdge.Cursor(childComplexity), true
+		return e.complexity.DocumentVersionSignatureEdge.Cursor(childComplexity), true
 
-	case "PolicyVersionSignatureEdge.node":
-		if e.complexity.PolicyVersionSignatureEdge.Node == nil {
+	case "DocumentVersionSignatureEdge.node":
+		if e.complexity.DocumentVersionSignatureEdge.Node == nil {
 			break
 		}
 
-		return e.complexity.PolicyVersionSignatureEdge.Node(childComplexity), true
+		return e.complexity.DocumentVersionSignatureEdge.Node(childComplexity), true
 
-	case "PublishPolicyVersionPayload.policy":
-		if e.complexity.PublishPolicyVersionPayload.Policy == nil {
+	case "PublishDocumentVersionPayload.document":
+		if e.complexity.PublishDocumentVersionPayload.Document == nil {
 			break
 		}
 
-		return e.complexity.PublishPolicyVersionPayload.Policy(childComplexity), true
+		return e.complexity.PublishDocumentVersionPayload.Document(childComplexity), true
 
-	case "PublishPolicyVersionPayload.policyVersion":
-		if e.complexity.PublishPolicyVersionPayload.PolicyVersion == nil {
+	case "PublishDocumentVersionPayload.documentVersion":
+		if e.complexity.PublishDocumentVersionPayload.DocumentVersion == nil {
 			break
 		}
 
-		return e.complexity.PublishPolicyVersionPayload.PolicyVersion(childComplexity), true
+		return e.complexity.PublishDocumentVersionPayload.DocumentVersion(childComplexity), true
 
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
@@ -3029,12 +3029,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.RequestEvidencePayload.EvidenceEdge(childComplexity), true
 
-	case "RequestSignaturePayload.policyVersionSignatureEdge":
-		if e.complexity.RequestSignaturePayload.PolicyVersionSignatureEdge == nil {
+	case "RequestSignaturePayload.documentVersionSignatureEdge":
+		if e.complexity.RequestSignaturePayload.DocumentVersionSignatureEdge == nil {
 			break
 		}
 
-		return e.complexity.RequestSignaturePayload.PolicyVersionSignatureEdge(childComplexity), true
+		return e.complexity.RequestSignaturePayload.DocumentVersionSignatureEdge(childComplexity), true
 
 	case "Risk.category":
 		if e.complexity.Risk.Category == nil {
@@ -3137,17 +3137,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Risk.Owner(childComplexity), true
 
-	case "Risk.policies":
-		if e.complexity.Risk.Policies == nil {
+	case "Risk.documents":
+		if e.complexity.Risk.Documents == nil {
 			break
 		}
 
-		args, err := ec.field_Risk_policies_args(ctx, rawArgs)
+		args, err := ec.field_Risk_documents_args(ctx, rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Risk.Policies(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.PolicyOrderBy)), true
+		return e.complexity.Risk.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy)), true
 
 	case "Risk.residualImpact":
 		if e.complexity.Risk.ResidualImpact == nil {
@@ -3378,19 +3378,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdatePeoplePayload.People(childComplexity), true
 
-	case "UpdatePolicyPayload.policy":
-		if e.complexity.UpdatePolicyPayload.Policy == nil {
+	case "UpdateDocumentPayload.document":
+		if e.complexity.UpdateDocumentPayload.Document == nil {
 			break
 		}
 
-		return e.complexity.UpdatePolicyPayload.Policy(childComplexity), true
+		return e.complexity.UpdateDocumentPayload.Document(childComplexity), true
 
-	case "UpdatePolicyVersionPayload.policyVersion":
-		if e.complexity.UpdatePolicyVersionPayload.PolicyVersion == nil {
+	case "UpdateDocumentVersionPayload.documentVersion":
+		if e.complexity.UpdateDocumentVersionPayload.DocumentVersion == nil {
 			break
 		}
 
-		return e.complexity.UpdatePolicyVersionPayload.PolicyVersion(childComplexity), true
+		return e.complexity.UpdateDocumentVersionPayload.DocumentVersion(childComplexity), true
 
 	case "UpdateRiskPayload.risk":
 		if e.complexity.UpdateRiskPayload.Risk == nil {
@@ -3944,31 +3944,31 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputConnectorOrder,
 		ec.unmarshalInputControlOrder,
 		ec.unmarshalInputCreateControlMeasureMappingInput,
-		ec.unmarshalInputCreateControlPolicyMappingInput,
-		ec.unmarshalInputCreateDraftPolicyVersionInput,
+		ec.unmarshalInputCreateControlDocumentMappingInput,
+		ec.unmarshalInputCreateDraftDocumentVersionInput,
 		ec.unmarshalInputCreateEvidenceInput,
 		ec.unmarshalInputCreateFrameworkInput,
 		ec.unmarshalInputCreateMeasureInput,
 		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreatePeopleInput,
-		ec.unmarshalInputCreatePolicyInput,
+		ec.unmarshalInputCreateDocumentInput,
 		ec.unmarshalInputCreateRiskInput,
 		ec.unmarshalInputCreateRiskMeasureMappingInput,
-		ec.unmarshalInputCreateRiskPolicyMappingInput,
+		ec.unmarshalInputCreateRiskDocumentMappingInput,
 		ec.unmarshalInputCreateTaskInput,
 		ec.unmarshalInputCreateVendorInput,
 		ec.unmarshalInputCreateVendorRiskAssessmentInput,
 		ec.unmarshalInputDeleteControlMeasureMappingInput,
-		ec.unmarshalInputDeleteControlPolicyMappingInput,
+		ec.unmarshalInputDeleteControlDocumentMappingInput,
 		ec.unmarshalInputDeleteEvidenceInput,
 		ec.unmarshalInputDeleteFrameworkInput,
 		ec.unmarshalInputDeleteMeasureInput,
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeletePeopleInput,
-		ec.unmarshalInputDeletePolicyInput,
+		ec.unmarshalInputDeleteDocumentInput,
 		ec.unmarshalInputDeleteRiskInput,
 		ec.unmarshalInputDeleteRiskMeasureMappingInput,
-		ec.unmarshalInputDeleteRiskPolicyMappingInput,
+		ec.unmarshalInputDeleteRiskDocumentMappingInput,
 		ec.unmarshalInputDeleteTaskInput,
 		ec.unmarshalInputDeleteVendorComplianceReportInput,
 		ec.unmarshalInputDeleteVendorInput,
@@ -3982,11 +3982,11 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputMeasureOrder,
 		ec.unmarshalInputOrganizationOrder,
 		ec.unmarshalInputPeopleOrder,
-		ec.unmarshalInputPolicyOrder,
-		ec.unmarshalInputPolicyVersionFilter,
-		ec.unmarshalInputPolicyVersionOrder,
-		ec.unmarshalInputPolicyVersionSignatureOrder,
-		ec.unmarshalInputPublishPolicyVersionInput,
+		ec.unmarshalInputDocumentOrder,
+		ec.unmarshalInputDocumentVersionFilter,
+		ec.unmarshalInputDocumentVersionOrder,
+		ec.unmarshalInputDocumentVersionSignatureOrder,
+		ec.unmarshalInputPublishDocumentVersionInput,
 		ec.unmarshalInputRemoveUserInput,
 		ec.unmarshalInputRequestEvidenceInput,
 		ec.unmarshalInputRequestSignatureInput,
@@ -3998,8 +3998,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateMeasureInput,
 		ec.unmarshalInputUpdateOrganizationInput,
 		ec.unmarshalInputUpdatePeopleInput,
-		ec.unmarshalInputUpdatePolicyInput,
-		ec.unmarshalInputUpdatePolicyVersionInput,
+		ec.unmarshalInputUpdateDocumentInput,
+		ec.unmarshalInputUpdateDocumentVersionInput,
 		ec.unmarshalInputUpdateRiskInput,
 		ec.unmarshalInputUpdateTaskInput,
 		ec.unmarshalInputUpdateVendorInput,
@@ -4200,13 +4200,13 @@ enum PeopleKind
     )
 }
 
-enum PolicyStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.PolicyStatus") {
+enum DocumentStatus
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentStatus") {
   DRAFT
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.PolicyStatusDraft")
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentStatusDraft")
   PUBLISHED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyStatusPublished"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentStatusPublished"
     )
 }
 
@@ -4293,15 +4293,15 @@ enum TaskOrderField
   CREATED_AT
 }
 
-enum PolicyOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.PolicyOrderField") {
+enum DocumentOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentOrderField") {
   TITLE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyOrderFieldTitle"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentOrderFieldTitle"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentOrderFieldCreatedAt"
     )
 }
 
@@ -4407,17 +4407,17 @@ enum BusinessImpact
     )
 }
 
-enum PolicyVersionOrderField
+enum DocumentVersionOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.PolicyVersionOrderField"
+    model: "github.com/getprobo/probo/pkg/coredata.DocumentVersionOrderField"
   ) {
   VERSION
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionOrderFieldVersion"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionOrderFieldVersion"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionOrderFieldCreatedAt"
     )
 }
 
@@ -4503,12 +4503,12 @@ input TaskOrder
   field: TaskOrderField!
 }
 
-input PolicyOrder
+input DocumentOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.PolicyOrderBy"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.DocumentOrderBy"
   ) {
   direction: OrderDirection!
-  field: PolicyOrderField!
+  field: DocumentOrderField!
 }
 
 input RiskOrder
@@ -4545,16 +4545,16 @@ input ConnectorOrder {
   direction: OrderDirection!
 }
 
-input PolicyVersionOrder
+input DocumentVersionOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.PolicyVersionOrderBy"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.DocumentVersionOrderBy"
   ) {
   direction: OrderDirection!
-  field: PolicyVersionOrderField!
+  field: DocumentVersionOrderField!
 }
 
-input PolicyVersionFilter {
-  status: PolicyStatus
+input DocumentVersionFilter {
+  status: DocumentStatus
 }
 
 # Core Types
@@ -4603,13 +4603,13 @@ type Organization implements Node {
     orderBy: PeopleOrder
   ): PeopleConnection! @goField(forceResolver: true)
 
-  policies(
+  documents(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: PolicyOrder
-  ): PolicyConnection! @goField(forceResolver: true)
+    orderBy: DocumentOrder
+  ): DocumentConnection! @goField(forceResolver: true)
 
   measures(
     first: Int
@@ -4761,13 +4761,13 @@ type Control implements Node {
     orderBy: MeasureOrder
   ): MeasureConnection! @goField(forceResolver: true)
 
-  policies(
+  documents(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: PolicyOrder
-  ): PolicyConnection! @goField(forceResolver: true)
+    orderBy: DocumentOrder
+  ): DocumentConnection! @goField(forceResolver: true)
 
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -4857,7 +4857,7 @@ type Evidence implements Node {
   updatedAt: Datetime!
 }
 
-type Policy implements Node {
+type Document implements Node {
   id: ID!
   title: String!
   description: String!
@@ -4870,9 +4870,9 @@ type Policy implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: PolicyVersionOrder
-    filter: PolicyVersionFilter
-  ): PolicyVersionConnection! @goField(forceResolver: true)
+    orderBy: DocumentVersionOrder
+    filter: DocumentVersionFilter
+  ): DocumentVersionConnection! @goField(forceResolver: true)
 
   controls(
     first: Int
@@ -4911,13 +4911,13 @@ type Risk implements Node {
     orderBy: MeasureOrder
   ): MeasureConnection! @goField(forceResolver: true)
 
-  policies(
+  documents(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: PolicyOrder
-  ): PolicyConnection! @goField(forceResolver: true)
+    orderBy: DocumentOrder
+  ): DocumentConnection! @goField(forceResolver: true)
 
   controls(
     first: Int
@@ -5040,14 +5040,14 @@ type EvidenceEdge {
   node: Evidence!
 }
 
-type PolicyConnection {
-  edges: [PolicyEdge!]!
+type DocumentConnection {
+  edges: [DocumentEdge!]!
   pageInfo: PageInfo!
 }
 
-type PolicyEdge {
+type DocumentEdge {
   cursor: CursorKey!
-  node: Policy!
+  node: Document!
 }
 
 type RiskConnection {
@@ -5090,14 +5090,14 @@ type VendorRiskAssessmentEdge {
   node: VendorRiskAssessment!
 }
 
-type PolicyVersionConnection {
-  edges: [PolicyVersionEdge!]!
+type DocumentVersionConnection {
+  edges: [DocumentVersionEdge!]!
   pageInfo: PageInfo!
 }
 
-type PolicyVersionEdge {
+type DocumentVersionEdge {
   cursor: CursorKey!
-  node: PolicyVersion!
+  node: DocumentVersion!
 }
 
 # Root Types
@@ -5149,15 +5149,15 @@ type Mutation {
   createControlMeasureMapping(
     input: CreateControlMeasureMappingInput!
   ): CreateControlMeasureMappingPayload!
-  createControlPolicyMapping(
-    input: CreateControlPolicyMappingInput!
-  ): CreateControlPolicyMappingPayload!
+  createControlDocumentMapping(
+    input: CreateControlDocumentMappingInput!
+  ): CreateControlDocumentMappingPayload!
   deleteControlMeasureMapping(
     input: DeleteControlMeasureMappingInput!
   ): DeleteControlMeasureMappingPayload!
-  deleteControlPolicyMapping(
-    input: DeleteControlPolicyMappingInput!
-  ): DeleteControlPolicyMappingPayload!
+  deleteControlDocumentMapping(
+    input: DeleteControlDocumentMappingInput!
+  ): DeleteControlDocumentMappingPayload!
 
   # Task mutations
   createTask(input: CreateTaskInput!): CreateTaskPayload!
@@ -5177,12 +5177,12 @@ type Mutation {
     input: DeleteRiskMeasureMappingInput!
   ): DeleteRiskMeasureMappingPayload!
 
-  createRiskPolicyMapping(
-    input: CreateRiskPolicyMappingInput!
-  ): CreateRiskPolicyMappingPayload!
-  deleteRiskPolicyMapping(
-    input: DeleteRiskPolicyMappingInput!
-  ): DeleteRiskPolicyMappingPayload!
+  createRiskDocumentMapping(
+    input: CreateRiskDocumentMappingInput!
+  ): CreateRiskDocumentMappingPayload!
+  deleteRiskDocumentMapping(
+    input: DeleteRiskDocumentMappingInput!
+  ): DeleteRiskDocumentMappingPayload!
 
   # Evidence mutations
   requestEvidence(input: RequestEvidenceInput!): RequestEvidencePayload!
@@ -5203,18 +5203,18 @@ type Mutation {
     input: DeleteVendorComplianceReportInput!
   ): DeleteVendorComplianceReportPayload!
 
-  # Policy mutations
-  createPolicy(input: CreatePolicyInput!): CreatePolicyPayload!
-  deletePolicy(input: DeletePolicyInput!): DeletePolicyPayload!
-  publishPolicyVersion(
-    input: PublishPolicyVersionInput!
-  ): PublishPolicyVersionPayload!
-  createDraftPolicyVersion(
-    input: CreateDraftPolicyVersionInput!
-  ): CreateDraftPolicyVersionPayload!
-  updatePolicyVersion(
-    input: UpdatePolicyVersionInput!
-  ): UpdatePolicyVersionPayload!
+  # Document mutations
+  createDocument(input: CreateDocumentInput!): CreateDocumentPayload!
+  deleteDocument(input: DeleteDocumentInput!): DeleteDocumentPayload!
+  publishDocumentVersion(
+    input: PublishDocumentVersionInput!
+  ): PublishDocumentVersionPayload!
+  createDraftDocumentVersion(
+    input: CreateDraftDocumentVersionInput!
+  ): CreateDraftDocumentVersionPayload!
+  updateDocumentVersion(
+    input: UpdateDocumentVersionInput!
+  ): UpdateDocumentVersionPayload!
   requestSignature(input: RequestSignatureInput!): RequestSignaturePayload!
   sendSigningNotifications(
     input: SendSigningNotificationsInput!
@@ -5394,9 +5394,9 @@ input CreateControlMeasureMappingInput {
   measureId: ID!
 }
 
-input CreateControlPolicyMappingInput {
+input CreateControlDocumentMappingInput {
   controlId: ID!
-  policyId: ID!
+  documentId: ID!
 }
 
 input DeleteControlMeasureMappingInput {
@@ -5404,9 +5404,9 @@ input DeleteControlMeasureMappingInput {
   measureId: ID!
 }
 
-input DeleteControlPolicyMappingInput {
+input DeleteControlDocumentMappingInput {
   controlId: ID!
-  policyId: ID!
+  documentId: ID!
 }
 
 input CreateRiskInput {
@@ -5451,14 +5451,14 @@ input DeleteRiskMeasureMappingInput {
   measureId: ID!
 }
 
-input CreateRiskPolicyMappingInput {
+input CreateRiskDocumentMappingInput {
   riskId: ID!
-  policyId: ID!
+  documentId: ID!
 }
 
-input DeleteRiskPolicyMappingInput {
+input DeleteRiskDocumentMappingInput {
   riskId: ID!
-  policyId: ID!
+  documentId: ID!
 }
 
 input RequestEvidenceInput {
@@ -5500,14 +5500,14 @@ input DeleteVendorComplianceReportInput {
   reportId: ID!
 }
 
-input CreatePolicyInput {
+input CreateDocumentInput {
   organizationId: ID!
   title: String!
   content: String!
   ownerId: ID!
 }
 
-input UpdatePolicyInput {
+input UpdateDocumentInput {
   id: ID!
   title: String
   content: String
@@ -5515,8 +5515,8 @@ input UpdatePolicyInput {
   createdBy: ID
 }
 
-input DeletePolicyInput {
-  policyId: ID!
+input DeleteDocumentInput {
+  documentId: ID!
 }
 
 input ConfirmEmailInput {
@@ -5624,9 +5624,9 @@ type CreateControlMeasureMappingPayload {
   measureEdge: MeasureEdge!
 }
 
-type CreateControlPolicyMappingPayload {
+type CreateControlDocumentMappingPayload {
   controlEdge: ControlEdge!
-  policyEdge: PolicyEdge!
+  documentEdge: DocumentEdge!
 }
 
 type DeleteControlMeasureMappingPayload {
@@ -5634,9 +5634,9 @@ type DeleteControlMeasureMappingPayload {
   deletedMeasureId: ID!
 }
 
-type DeleteControlPolicyMappingPayload {
+type DeleteControlDocumentMappingPayload {
   deletedControlId: ID!
-  deletedPolicyId: ID!
+  deletedDocumentId: ID!
 }
 
 type CreateRiskPayload {
@@ -5661,14 +5661,14 @@ type DeleteRiskMeasureMappingPayload {
   deletedRiskId: ID!
 }
 
-type CreateRiskPolicyMappingPayload {
+type CreateRiskDocumentMappingPayload {
   riskEdge: RiskEdge!
-  policyEdge: PolicyEdge!
+  documentEdge: DocumentEdge!
 }
 
-type DeleteRiskPolicyMappingPayload {
+type DeleteRiskDocumentMappingPayload {
   deletedRiskId: ID!
-  deletedPolicyId: ID!
+  deletedDocumentId: ID!
 }
 
 type RequestEvidencePayload {
@@ -5695,17 +5695,17 @@ type DeleteVendorComplianceReportPayload {
   deletedVendorComplianceReportId: ID!
 }
 
-type CreatePolicyPayload {
-  policyEdge: PolicyEdge!
-  policyVersionEdge: PolicyVersionEdge!
+type CreateDocumentPayload {
+  documentEdge: DocumentEdge!
+  documentVersionEdge: DocumentVersionEdge!
 }
 
-type UpdatePolicyPayload {
-  policy: Policy!
+type UpdateDocumentPayload {
+  document: Document!
 }
 
-type DeletePolicyPayload {
-  deletedPolicyId: ID!
+type DeleteDocumentPayload {
+  deletedDocumentId: ID!
 }
 
 type ConfirmEmailPayload {
@@ -5777,10 +5777,10 @@ type DeleteMeasurePayload {
   deletedMeasureId: ID!
 }
 
-type PolicyVersion implements Node {
+type DocumentVersion implements Node {
   id: ID!
-  policy: Policy! @goField(forceResolver: true)
-  status: PolicyStatus!
+  document: Document! @goField(forceResolver: true)
+  status: DocumentStatus!
   version: Int!
   content: String!
   changelog: String!
@@ -5790,8 +5790,8 @@ type PolicyVersion implements Node {
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: PolicyVersionSignatureOrder
-  ): PolicyVersionSignatureConnection! @goField(forceResolver: true)
+    orderBy: DocumentVersionSignatureOrder
+  ): DocumentVersionSignatureConnection! @goField(forceResolver: true)
 
   publishedBy: People @goField(forceResolver: true)
   publishedAt: Datetime
@@ -5799,53 +5799,53 @@ type PolicyVersion implements Node {
   updatedAt: Datetime!
 }
 
-type PolicyVersionSignatureConnection {
-  edges: [PolicyVersionSignatureEdge!]!
+type DocumentVersionSignatureConnection {
+  edges: [DocumentVersionSignatureEdge!]!
   pageInfo: PageInfo!
 }
 
-type PolicyVersionSignatureEdge {
+type DocumentVersionSignatureEdge {
   cursor: CursorKey!
-  node: PolicyVersionSignature!
+  node: DocumentVersionSignature!
 }
 
-input PolicyVersionSignatureOrder {
-  field: PolicyVersionSignatureOrderField!
+input DocumentVersionSignatureOrder {
+  field: DocumentVersionSignatureOrderField!
   direction: OrderDirection!
 }
 
-enum PolicyVersionSignatureState
+enum DocumentVersionSignatureState
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureState"
+    model: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureState"
   ) {
   REQUESTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureStateRequested"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureStateRequested"
     )
   SIGNED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureStateSigned"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureStateSigned"
     )
 }
 
-enum PolicyVersionSignatureOrderField
+enum DocumentVersionSignatureOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureOrderField"
+    model: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureOrderFieldCreatedAt"
     )
   SIGNED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PolicyVersionSignatureOrderFieldSignedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureOrderFieldSignedAt"
     )
 }
 
-type PolicyVersionSignature implements Node {
+type DocumentVersionSignature implements Node {
   id: ID!
-  policyVersion: PolicyVersion! @goField(forceResolver: true)
-  state: PolicyVersionSignatureState!
+  documentVersion: DocumentVersion! @goField(forceResolver: true)
+  state: DocumentVersionSignatureState!
   signedBy: People! @goField(forceResolver: true)
   signedAt: Datetime
   requestedAt: Datetime!
@@ -5855,38 +5855,38 @@ type PolicyVersionSignature implements Node {
 }
 
 input RequestSignatureInput {
-  policyVersionId: ID!
+  documentVersionId: ID!
   signatoryId: ID!
 }
 
 type RequestSignaturePayload {
-  policyVersionSignatureEdge: PolicyVersionSignatureEdge!
+  documentVersionSignatureEdge: DocumentVersionSignatureEdge!
 }
 
-input PublishPolicyVersionInput {
-  policyId: ID!
+input PublishDocumentVersionInput {
+  documentId: ID!
 }
 
-type PublishPolicyVersionPayload {
-  policyVersion: PolicyVersion!
-  policy: Policy!
+type PublishDocumentVersionPayload {
+  documentVersion: DocumentVersion!
+  document: Document!
 }
 
-type CreateDraftPolicyVersionPayload {
-  policyVersionEdge: PolicyVersionEdge!
+type CreateDraftDocumentVersionPayload {
+  documentVersionEdge: DocumentVersionEdge!
 }
 
-input CreateDraftPolicyVersionInput {
-  policyID: ID!
+input CreateDraftDocumentVersionInput {
+  documentID: ID!
 }
 
-input UpdatePolicyVersionInput {
-  policyVersionId: ID!
+input UpdateDocumentVersionInput {
+  documentVersionId: ID!
   content: String!
 }
 
-type UpdatePolicyVersionPayload {
-  policyVersion: PolicyVersion!
+type UpdateDocumentVersionPayload {
+  documentVersion: DocumentVersion!
 }
 
 input SendSigningNotificationsInput {
@@ -6034,37 +6034,37 @@ func (ec *executionContext) field_Control_measures_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_policies_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Control_documents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Control_policies_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_Control_documents_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Control_policies_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_Control_documents_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Control_policies_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_Control_documents_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Control_policies_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_Control_documents_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Control_policies_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_Control_documents_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Control_policies_argsFirst(
+func (ec *executionContext) field_Control_documents_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -6077,7 +6077,7 @@ func (ec *executionContext) field_Control_policies_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_policies_argsAfter(
+func (ec *executionContext) field_Control_documents_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -6090,7 +6090,7 @@ func (ec *executionContext) field_Control_policies_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_policies_argsLast(
+func (ec *executionContext) field_Control_documents_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -6103,7 +6103,7 @@ func (ec *executionContext) field_Control_policies_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_policies_argsBefore(
+func (ec *executionContext) field_Control_documents_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -6116,16 +6116,16 @@ func (ec *executionContext) field_Control_policies_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Control_policies_argsOrderBy(
+func (ec *executionContext) field_Control_documents_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (*types.PolicyOrderBy, error) {
+) (*types.DocumentOrderBy, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOPolicyOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyOrderBy(ctx, tmp)
+		return ec.unmarshalODocumentOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx, tmp)
 	}
 
-	var zeroVal *types.PolicyOrderBy
+	var zeroVal *types.DocumentOrderBy
 	return zeroVal, nil
 }
 
@@ -6696,49 +6696,49 @@ func (ec *executionContext) field_Mutation_createControlMeasureMapping_argsInput
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createControlPolicyMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_createControlDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_createControlPolicyMapping_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createControlDocumentMapping_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createControlPolicyMapping_argsInput(
+func (ec *executionContext) field_Mutation_createControlDocumentMapping_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.CreateControlPolicyMappingInput, error) {
+) (types.CreateControlDocumentMappingInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreateControlPolicyMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlPolicyMappingInput(ctx, tmp)
+		return ec.unmarshalNCreateControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingInput(ctx, tmp)
 	}
 
-	var zeroVal types.CreateControlPolicyMappingInput
+	var zeroVal types.CreateControlDocumentMappingInput
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createDraftPolicyVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_createDraftDocumentVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_createDraftPolicyVersion_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createDraftDocumentVersion_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createDraftPolicyVersion_argsInput(
+func (ec *executionContext) field_Mutation_createDraftDocumentVersion_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.CreateDraftPolicyVersionInput, error) {
+) (types.CreateDraftDocumentVersionInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreateDraftPolicyVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDraftPolicyVersionInput(ctx, tmp)
+		return ec.unmarshalNCreateDraftDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDraftDocumentVersionInput(ctx, tmp)
 	}
 
-	var zeroVal types.CreateDraftPolicyVersionInput
+	var zeroVal types.CreateDraftDocumentVersionInput
 	return zeroVal, nil
 }
 
@@ -6834,26 +6834,26 @@ func (ec *executionContext) field_Mutation_createPeople_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createPolicy_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_createDocument_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_createPolicy_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createDocument_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createPolicy_argsInput(
+func (ec *executionContext) field_Mutation_createDocument_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.CreatePolicyInput, error) {
+) (types.CreateDocumentInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreatePolicyInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreatePolicyInput(ctx, tmp)
+		return ec.unmarshalNCreateDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentInput(ctx, tmp)
 	}
 
-	var zeroVal types.CreatePolicyInput
+	var zeroVal types.CreateDocumentInput
 	return zeroVal, nil
 }
 
@@ -6880,26 +6880,26 @@ func (ec *executionContext) field_Mutation_createRiskMeasureMapping_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_createRiskPolicyMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_createRiskDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_createRiskPolicyMapping_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_createRiskDocumentMapping_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_createRiskPolicyMapping_argsInput(
+func (ec *executionContext) field_Mutation_createRiskDocumentMapping_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.CreateRiskPolicyMappingInput, error) {
+) (types.CreateRiskDocumentMappingInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNCreateRiskPolicyMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskPolicyMappingInput(ctx, tmp)
+		return ec.unmarshalNCreateRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingInput(ctx, tmp)
 	}
 
-	var zeroVal types.CreateRiskPolicyMappingInput
+	var zeroVal types.CreateRiskDocumentMappingInput
 	return zeroVal, nil
 }
 
@@ -7018,26 +7018,26 @@ func (ec *executionContext) field_Mutation_deleteControlMeasureMapping_argsInput
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteControlPolicyMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_deleteControlDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_deleteControlPolicyMapping_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_deleteControlDocumentMapping_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deleteControlPolicyMapping_argsInput(
+func (ec *executionContext) field_Mutation_deleteControlDocumentMapping_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.DeleteControlPolicyMappingInput, error) {
+) (types.DeleteControlDocumentMappingInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNDeleteControlPolicyMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlPolicyMappingInput(ctx, tmp)
+		return ec.unmarshalNDeleteControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingInput(ctx, tmp)
 	}
 
-	var zeroVal types.DeleteControlPolicyMappingInput
+	var zeroVal types.DeleteControlDocumentMappingInput
 	return zeroVal, nil
 }
 
@@ -7156,26 +7156,26 @@ func (ec *executionContext) field_Mutation_deletePeople_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deletePolicy_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_deleteDocument_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_deletePolicy_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_deleteDocument_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deletePolicy_argsInput(
+func (ec *executionContext) field_Mutation_deleteDocument_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.DeletePolicyInput, error) {
+) (types.DeleteDocumentInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNDeletePolicyInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeletePolicyInput(ctx, tmp)
+		return ec.unmarshalNDeleteDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentInput(ctx, tmp)
 	}
 
-	var zeroVal types.DeletePolicyInput
+	var zeroVal types.DeleteDocumentInput
 	return zeroVal, nil
 }
 
@@ -7202,26 +7202,26 @@ func (ec *executionContext) field_Mutation_deleteRiskMeasureMapping_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteRiskPolicyMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_deleteRiskDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_deleteRiskPolicyMapping_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_deleteRiskDocumentMapping_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_deleteRiskPolicyMapping_argsInput(
+func (ec *executionContext) field_Mutation_deleteRiskDocumentMapping_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.DeleteRiskPolicyMappingInput, error) {
+) (types.DeleteRiskDocumentMappingInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNDeleteRiskPolicyMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskPolicyMappingInput(ctx, tmp)
+		return ec.unmarshalNDeleteRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingInput(ctx, tmp)
 	}
 
-	var zeroVal types.DeleteRiskPolicyMappingInput
+	var zeroVal types.DeleteRiskDocumentMappingInput
 	return zeroVal, nil
 }
 
@@ -7432,26 +7432,26 @@ func (ec *executionContext) field_Mutation_inviteUser_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_publishPolicyVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_publishDocumentVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_publishPolicyVersion_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_publishDocumentVersion_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_publishPolicyVersion_argsInput(
+func (ec *executionContext) field_Mutation_publishDocumentVersion_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.PublishPolicyVersionInput, error) {
+) (types.PublishDocumentVersionInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNPublishPolicyVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishPolicyVersionInput(ctx, tmp)
+		return ec.unmarshalNPublishDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishDocumentVersionInput(ctx, tmp)
 	}
 
-	var zeroVal types.PublishPolicyVersionInput
+	var zeroVal types.PublishDocumentVersionInput
 	return zeroVal, nil
 }
 
@@ -7662,26 +7662,26 @@ func (ec *executionContext) field_Mutation_updatePeople_argsInput(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Mutation_updatePolicyVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Mutation_updateDocumentVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Mutation_updatePolicyVersion_argsInput(ctx, rawArgs)
+	arg0, err := ec.field_Mutation_updateDocumentVersion_argsInput(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["input"] = arg0
 	return args, nil
 }
-func (ec *executionContext) field_Mutation_updatePolicyVersion_argsInput(
+func (ec *executionContext) field_Mutation_updateDocumentVersion_argsInput(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (types.UpdatePolicyVersionInput, error) {
+) (types.UpdateDocumentVersionInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNUpdatePolicyVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdatePolicyVersionInput(ctx, tmp)
+		return ec.unmarshalNUpdateDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionInput(ctx, tmp)
 	}
 
-	var zeroVal types.UpdatePolicyVersionInput
+	var zeroVal types.UpdateDocumentVersionInput
 	return zeroVal, nil
 }
 
@@ -8203,37 +8203,37 @@ func (ec *executionContext) field_Organization_peoples_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_policies_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Organization_documents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Organization_policies_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_Organization_documents_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Organization_policies_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_Organization_documents_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Organization_policies_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_Organization_documents_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Organization_policies_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_Organization_documents_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Organization_policies_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_Organization_documents_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Organization_policies_argsFirst(
+func (ec *executionContext) field_Organization_documents_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -8246,7 +8246,7 @@ func (ec *executionContext) field_Organization_policies_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_policies_argsAfter(
+func (ec *executionContext) field_Organization_documents_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -8259,7 +8259,7 @@ func (ec *executionContext) field_Organization_policies_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_policies_argsLast(
+func (ec *executionContext) field_Organization_documents_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -8272,7 +8272,7 @@ func (ec *executionContext) field_Organization_policies_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_policies_argsBefore(
+func (ec *executionContext) field_Organization_documents_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -8285,16 +8285,16 @@ func (ec *executionContext) field_Organization_policies_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_policies_argsOrderBy(
+func (ec *executionContext) field_Organization_documents_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (*types.PolicyOrderBy, error) {
+) (*types.DocumentOrderBy, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOPolicyOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyOrderBy(ctx, tmp)
+		return ec.unmarshalODocumentOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx, tmp)
 	}
 
-	var zeroVal *types.PolicyOrderBy
+	var zeroVal *types.DocumentOrderBy
 	return zeroVal, nil
 }
 
@@ -8678,37 +8678,37 @@ func (ec *executionContext) field_Organization_vendors_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_PolicyVersion_signatures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_DocumentVersion_signatures_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_PolicyVersion_signatures_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_DocumentVersion_signatures_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_PolicyVersion_signatures_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_DocumentVersion_signatures_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_PolicyVersion_signatures_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_DocumentVersion_signatures_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_PolicyVersion_signatures_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_DocumentVersion_signatures_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_PolicyVersion_signatures_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_DocumentVersion_signatures_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_PolicyVersion_signatures_argsFirst(
+func (ec *executionContext) field_DocumentVersion_signatures_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -8721,7 +8721,7 @@ func (ec *executionContext) field_PolicyVersion_signatures_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_PolicyVersion_signatures_argsAfter(
+func (ec *executionContext) field_DocumentVersion_signatures_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -8734,7 +8734,7 @@ func (ec *executionContext) field_PolicyVersion_signatures_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_PolicyVersion_signatures_argsLast(
+func (ec *executionContext) field_DocumentVersion_signatures_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -8747,7 +8747,7 @@ func (ec *executionContext) field_PolicyVersion_signatures_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_PolicyVersion_signatures_argsBefore(
+func (ec *executionContext) field_DocumentVersion_signatures_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -8760,50 +8760,50 @@ func (ec *executionContext) field_PolicyVersion_signatures_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_PolicyVersion_signatures_argsOrderBy(
+func (ec *executionContext) field_DocumentVersion_signatures_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (*types.PolicyVersionSignatureOrder, error) {
+) (*types.DocumentVersionSignatureOrder, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOPolicyVersionSignatureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignatureOrder(ctx, tmp)
+		return ec.unmarshalODocumentVersionSignatureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureOrder(ctx, tmp)
 	}
 
-	var zeroVal *types.PolicyVersionSignatureOrder
+	var zeroVal *types.DocumentVersionSignatureOrder
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Policy_controls_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Document_controls_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Policy_controls_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_Document_controls_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Policy_controls_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_Document_controls_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Policy_controls_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_Document_controls_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Policy_controls_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_Document_controls_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Policy_controls_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_Document_controls_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Policy_controls_argsFirst(
+func (ec *executionContext) field_Document_controls_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -8816,7 +8816,7 @@ func (ec *executionContext) field_Policy_controls_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Policy_controls_argsAfter(
+func (ec *executionContext) field_Document_controls_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -8829,7 +8829,7 @@ func (ec *executionContext) field_Policy_controls_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Policy_controls_argsLast(
+func (ec *executionContext) field_Document_controls_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -8842,7 +8842,7 @@ func (ec *executionContext) field_Policy_controls_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Policy_controls_argsBefore(
+func (ec *executionContext) field_Document_controls_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -8855,7 +8855,7 @@ func (ec *executionContext) field_Policy_controls_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Policy_controls_argsOrderBy(
+func (ec *executionContext) field_Document_controls_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*types.ControlOrderBy, error) {
@@ -8868,42 +8868,42 @@ func (ec *executionContext) field_Policy_controls_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Policy_versions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Document_versions_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Policy_versions_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_Document_versions_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Policy_versions_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_Document_versions_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Policy_versions_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_Document_versions_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Policy_versions_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_Document_versions_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Policy_versions_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_Document_versions_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
-	arg5, err := ec.field_Policy_versions_argsFilter(ctx, rawArgs)
+	arg5, err := ec.field_Document_versions_argsFilter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["filter"] = arg5
 	return args, nil
 }
-func (ec *executionContext) field_Policy_versions_argsFirst(
+func (ec *executionContext) field_Document_versions_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -8916,7 +8916,7 @@ func (ec *executionContext) field_Policy_versions_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Policy_versions_argsAfter(
+func (ec *executionContext) field_Document_versions_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -8929,7 +8929,7 @@ func (ec *executionContext) field_Policy_versions_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Policy_versions_argsLast(
+func (ec *executionContext) field_Document_versions_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -8942,7 +8942,7 @@ func (ec *executionContext) field_Policy_versions_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Policy_versions_argsBefore(
+func (ec *executionContext) field_Document_versions_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -8955,29 +8955,29 @@ func (ec *executionContext) field_Policy_versions_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Policy_versions_argsOrderBy(
+func (ec *executionContext) field_Document_versions_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (*types.PolicyVersionOrderBy, error) {
+) (*types.DocumentVersionOrderBy, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOPolicyVersionOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionOrderBy(ctx, tmp)
+		return ec.unmarshalODocumentVersionOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionOrderBy(ctx, tmp)
 	}
 
-	var zeroVal *types.PolicyVersionOrderBy
+	var zeroVal *types.DocumentVersionOrderBy
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Policy_versions_argsFilter(
+func (ec *executionContext) field_Document_versions_argsFilter(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (*types.PolicyVersionFilter, error) {
+) (*types.DocumentVersionFilter, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
 	if tmp, ok := rawArgs["filter"]; ok {
-		return ec.unmarshalOPolicyVersionFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionFilter(ctx, tmp)
+		return ec.unmarshalODocumentVersionFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionFilter(ctx, tmp)
 	}
 
-	var zeroVal *types.PolicyVersionFilter
+	var zeroVal *types.DocumentVersionFilter
 	return zeroVal, nil
 }
 
@@ -9217,37 +9217,37 @@ func (ec *executionContext) field_Risk_measures_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Risk_policies_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_Risk_documents_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_Risk_policies_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_Risk_documents_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_Risk_policies_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_Risk_documents_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_Risk_policies_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_Risk_documents_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_Risk_policies_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_Risk_documents_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_Risk_policies_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_Risk_documents_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_Risk_policies_argsFirst(
+func (ec *executionContext) field_Risk_documents_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -9260,7 +9260,7 @@ func (ec *executionContext) field_Risk_policies_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Risk_policies_argsAfter(
+func (ec *executionContext) field_Risk_documents_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -9273,7 +9273,7 @@ func (ec *executionContext) field_Risk_policies_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Risk_policies_argsLast(
+func (ec *executionContext) field_Risk_documents_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -9286,7 +9286,7 @@ func (ec *executionContext) field_Risk_policies_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Risk_policies_argsBefore(
+func (ec *executionContext) field_Risk_documents_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -9299,16 +9299,16 @@ func (ec *executionContext) field_Risk_policies_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Risk_policies_argsOrderBy(
+func (ec *executionContext) field_Risk_documents_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
-) (*types.PolicyOrderBy, error) {
+) (*types.DocumentOrderBy, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
 	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOPolicyOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyOrderBy(ctx, tmp)
+		return ec.unmarshalODocumentOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx, tmp)
 	}
 
-	var zeroVal *types.PolicyOrderBy
+	var zeroVal *types.DocumentOrderBy
 	return zeroVal, nil
 }
 
@@ -10742,8 +10742,8 @@ func (ec *executionContext) fieldContext_Control_measures(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Control_policies(ctx context.Context, field graphql.CollectedField, obj *types.Control) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Control_policies(ctx, field)
+func (ec *executionContext) _Control_documents(ctx context.Context, field graphql.CollectedField, obj *types.Control) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Control_documents(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10756,7 +10756,7 @@ func (ec *executionContext) _Control_policies(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Control().Policies(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.PolicyOrderBy))
+		return ec.resolvers.Control().Documents(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentOrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10768,12 +10768,12 @@ func (ec *executionContext) _Control_policies(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyConnection)
+	res := resTmp.(*types.DocumentConnection)
 	fc.Result = res
-	return ec.marshalNPolicyConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyConnection(ctx, field.Selections, res)
+	return ec.marshalNDocumentConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Control_policies(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Control_documents(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Control",
 		Field:      field,
@@ -10782,11 +10782,11 @@ func (ec *executionContext) fieldContext_Control_policies(ctx context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_PolicyConnection_edges(ctx, field)
+				return ec.fieldContext_DocumentConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_PolicyConnection_pageInfo(ctx, field)
+				return ec.fieldContext_DocumentConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -10796,7 +10796,7 @@ func (ec *executionContext) fieldContext_Control_policies(ctx context.Context, f
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Control_policies_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Control_documents_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -11090,8 +11090,8 @@ func (ec *executionContext) fieldContext_ControlEdge_node(_ context.Context, fie
 				return ec.fieldContext_Control_framework(ctx, field)
 			case "measures":
 				return ec.fieldContext_Control_measures(ctx, field)
-			case "policies":
-				return ec.fieldContext_Control_policies(ctx, field)
+			case "documents":
+				return ec.fieldContext_Control_documents(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Control_createdAt(ctx, field)
 			case "updatedAt":
@@ -11203,8 +11203,8 @@ func (ec *executionContext) fieldContext_CreateControlMeasureMappingPayload_meas
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateControlPolicyMappingPayload_controlEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateControlPolicyMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateControlPolicyMappingPayload_controlEdge(ctx, field)
+func (ec *executionContext) _CreateControlDocumentMappingPayload_controlEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateControlDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateControlDocumentMappingPayload_controlEdge(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11234,9 +11234,9 @@ func (ec *executionContext) _CreateControlPolicyMappingPayload_controlEdge(ctx c
 	return ec.marshalNControlEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateControlPolicyMappingPayload_controlEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateControlDocumentMappingPayload_controlEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateControlPolicyMappingPayload",
+		Object:     "CreateControlDocumentMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -11253,8 +11253,8 @@ func (ec *executionContext) fieldContext_CreateControlPolicyMappingPayload_contr
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateControlPolicyMappingPayload_policyEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateControlPolicyMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateControlPolicyMappingPayload_policyEdge(ctx, field)
+func (ec *executionContext) _CreateControlDocumentMappingPayload_documentEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateControlDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateControlDocumentMappingPayload_documentEdge(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11267,7 +11267,7 @@ func (ec *executionContext) _CreateControlPolicyMappingPayload_policyEdge(ctx co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PolicyEdge, nil
+		return obj.DocumentEdge, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11279,32 +11279,32 @@ func (ec *executionContext) _CreateControlPolicyMappingPayload_policyEdge(ctx co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyEdge)
+	res := resTmp.(*types.DocumentEdge)
 	fc.Result = res
-	return ec.marshalNPolicyEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyEdge(ctx, field.Selections, res)
+	return ec.marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateControlPolicyMappingPayload_policyEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateControlDocumentMappingPayload_documentEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateControlPolicyMappingPayload",
+		Object:     "CreateControlDocumentMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_PolicyEdge_cursor(ctx, field)
+				return ec.fieldContext_DocumentEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_PolicyEdge_node(ctx, field)
+				return ec.fieldContext_DocumentEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentEdge", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateDraftPolicyVersionPayload_policyVersionEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDraftPolicyVersionPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateDraftPolicyVersionPayload_policyVersionEdge(ctx, field)
+func (ec *executionContext) _CreateDraftDocumentVersionPayload_documentVersionEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDraftDocumentVersionPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateDraftDocumentVersionPayload_documentVersionEdge(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11317,7 +11317,7 @@ func (ec *executionContext) _CreateDraftPolicyVersionPayload_policyVersionEdge(c
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PolicyVersionEdge, nil
+		return obj.DocumentVersionEdge, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11329,25 +11329,25 @@ func (ec *executionContext) _CreateDraftPolicyVersionPayload_policyVersionEdge(c
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyVersionEdge)
+	res := resTmp.(*types.DocumentVersionEdge)
 	fc.Result = res
-	return ec.marshalNPolicyVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionEdge(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateDraftPolicyVersionPayload_policyVersionEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateDraftDocumentVersionPayload_documentVersionEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateDraftPolicyVersionPayload",
+		Object:     "CreateDraftDocumentVersionPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_PolicyVersionEdge_cursor(ctx, field)
+				return ec.fieldContext_DocumentVersionEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_PolicyVersionEdge_node(ctx, field)
+				return ec.fieldContext_DocumentVersionEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersionEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -11603,8 +11603,8 @@ func (ec *executionContext) fieldContext_CreatePeoplePayload_peopleEdge(_ contex
 	return fc, nil
 }
 
-func (ec *executionContext) _CreatePolicyPayload_policyEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreatePolicyPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreatePolicyPayload_policyEdge(ctx, field)
+func (ec *executionContext) _CreateDocumentPayload_documentEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDocumentPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateDocumentPayload_documentEdge(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11617,7 +11617,7 @@ func (ec *executionContext) _CreatePolicyPayload_policyEdge(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PolicyEdge, nil
+		return obj.DocumentEdge, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11629,32 +11629,32 @@ func (ec *executionContext) _CreatePolicyPayload_policyEdge(ctx context.Context,
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyEdge)
+	res := resTmp.(*types.DocumentEdge)
 	fc.Result = res
-	return ec.marshalNPolicyEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyEdge(ctx, field.Selections, res)
+	return ec.marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreatePolicyPayload_policyEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateDocumentPayload_documentEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreatePolicyPayload",
+		Object:     "CreateDocumentPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_PolicyEdge_cursor(ctx, field)
+				return ec.fieldContext_DocumentEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_PolicyEdge_node(ctx, field)
+				return ec.fieldContext_DocumentEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentEdge", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _CreatePolicyPayload_policyVersionEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreatePolicyPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreatePolicyPayload_policyVersionEdge(ctx, field)
+func (ec *executionContext) _CreateDocumentPayload_documentVersionEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDocumentPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateDocumentPayload_documentVersionEdge(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11667,7 +11667,7 @@ func (ec *executionContext) _CreatePolicyPayload_policyVersionEdge(ctx context.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PolicyVersionEdge, nil
+		return obj.DocumentVersionEdge, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11679,25 +11679,25 @@ func (ec *executionContext) _CreatePolicyPayload_policyVersionEdge(ctx context.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyVersionEdge)
+	res := resTmp.(*types.DocumentVersionEdge)
 	fc.Result = res
-	return ec.marshalNPolicyVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionEdge(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreatePolicyPayload_policyVersionEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateDocumentPayload_documentVersionEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreatePolicyPayload",
+		Object:     "CreateDocumentPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_PolicyVersionEdge_cursor(ctx, field)
+				return ec.fieldContext_DocumentVersionEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_PolicyVersionEdge_node(ctx, field)
+				return ec.fieldContext_DocumentVersionEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersionEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -11853,8 +11853,8 @@ func (ec *executionContext) fieldContext_CreateRiskPayload_riskEdge(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateRiskPolicyMappingPayload_riskEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskPolicyMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateRiskPolicyMappingPayload_riskEdge(ctx, field)
+func (ec *executionContext) _CreateRiskDocumentMappingPayload_riskEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateRiskDocumentMappingPayload_riskEdge(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11884,9 +11884,9 @@ func (ec *executionContext) _CreateRiskPolicyMappingPayload_riskEdge(ctx context
 	return ec.marshalNRiskEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRiskEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateRiskPolicyMappingPayload_riskEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateRiskDocumentMappingPayload_riskEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateRiskPolicyMappingPayload",
+		Object:     "CreateRiskDocumentMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -11903,8 +11903,8 @@ func (ec *executionContext) fieldContext_CreateRiskPolicyMappingPayload_riskEdge
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateRiskPolicyMappingPayload_policyEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskPolicyMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateRiskPolicyMappingPayload_policyEdge(ctx, field)
+func (ec *executionContext) _CreateRiskDocumentMappingPayload_documentEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateRiskDocumentMappingPayload_documentEdge(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11917,7 +11917,7 @@ func (ec *executionContext) _CreateRiskPolicyMappingPayload_policyEdge(ctx conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PolicyEdge, nil
+		return obj.DocumentEdge, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11929,25 +11929,25 @@ func (ec *executionContext) _CreateRiskPolicyMappingPayload_policyEdge(ctx conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyEdge)
+	res := resTmp.(*types.DocumentEdge)
 	fc.Result = res
-	return ec.marshalNPolicyEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyEdge(ctx, field.Selections, res)
+	return ec.marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateRiskPolicyMappingPayload_policyEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateRiskDocumentMappingPayload_documentEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "CreateRiskPolicyMappingPayload",
+		Object:     "CreateRiskDocumentMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_PolicyEdge_cursor(ctx, field)
+				return ec.fieldContext_DocumentEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_PolicyEdge_node(ctx, field)
+				return ec.fieldContext_DocumentEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -12191,8 +12191,8 @@ func (ec *executionContext) fieldContext_DeleteControlMeasureMappingPayload_dele
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteControlPolicyMappingPayload_deletedControlId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteControlPolicyMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteControlPolicyMappingPayload_deletedControlId(ctx, field)
+func (ec *executionContext) _DeleteControlDocumentMappingPayload_deletedControlId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteControlDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteControlDocumentMappingPayload_deletedControlId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12222,9 +12222,9 @@ func (ec *executionContext) _DeleteControlPolicyMappingPayload_deletedControlId(
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteControlPolicyMappingPayload_deletedControlId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteControlDocumentMappingPayload_deletedControlId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeleteControlPolicyMappingPayload",
+		Object:     "DeleteControlDocumentMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12235,8 +12235,8 @@ func (ec *executionContext) fieldContext_DeleteControlPolicyMappingPayload_delet
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteControlPolicyMappingPayload_deletedPolicyId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteControlPolicyMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteControlPolicyMappingPayload_deletedPolicyId(ctx, field)
+func (ec *executionContext) _DeleteControlDocumentMappingPayload_deletedDocumentId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteControlDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteControlDocumentMappingPayload_deletedDocumentId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12249,7 +12249,7 @@ func (ec *executionContext) _DeleteControlPolicyMappingPayload_deletedPolicyId(c
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DeletedPolicyID, nil
+		return obj.DeletedDocumentID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12266,9 +12266,9 @@ func (ec *executionContext) _DeleteControlPolicyMappingPayload_deletedPolicyId(c
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteControlPolicyMappingPayload_deletedPolicyId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteControlDocumentMappingPayload_deletedDocumentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeleteControlPolicyMappingPayload",
+		Object:     "DeleteControlDocumentMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12499,8 +12499,8 @@ func (ec *executionContext) fieldContext_DeletePeoplePayload_deletedPeopleId(_ c
 	return fc, nil
 }
 
-func (ec *executionContext) _DeletePolicyPayload_deletedPolicyId(ctx context.Context, field graphql.CollectedField, obj *types.DeletePolicyPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeletePolicyPayload_deletedPolicyId(ctx, field)
+func (ec *executionContext) _DeleteDocumentPayload_deletedDocumentId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteDocumentPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteDocumentPayload_deletedDocumentId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12513,7 +12513,7 @@ func (ec *executionContext) _DeletePolicyPayload_deletedPolicyId(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DeletedPolicyID, nil
+		return obj.DeletedDocumentID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12530,9 +12530,9 @@ func (ec *executionContext) _DeletePolicyPayload_deletedPolicyId(ctx context.Con
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeletePolicyPayload_deletedPolicyId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteDocumentPayload_deletedDocumentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeletePolicyPayload",
+		Object:     "DeleteDocumentPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12675,8 +12675,8 @@ func (ec *executionContext) fieldContext_DeleteRiskPayload_deletedRiskId(_ conte
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteRiskPolicyMappingPayload_deletedRiskId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteRiskPolicyMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteRiskPolicyMappingPayload_deletedRiskId(ctx, field)
+func (ec *executionContext) _DeleteRiskDocumentMappingPayload_deletedRiskId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteRiskDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteRiskDocumentMappingPayload_deletedRiskId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12706,9 +12706,9 @@ func (ec *executionContext) _DeleteRiskPolicyMappingPayload_deletedRiskId(ctx co
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteRiskPolicyMappingPayload_deletedRiskId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteRiskDocumentMappingPayload_deletedRiskId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeleteRiskPolicyMappingPayload",
+		Object:     "DeleteRiskDocumentMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12719,8 +12719,8 @@ func (ec *executionContext) fieldContext_DeleteRiskPolicyMappingPayload_deletedR
 	return fc, nil
 }
 
-func (ec *executionContext) _DeleteRiskPolicyMappingPayload_deletedPolicyId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteRiskPolicyMappingPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DeleteRiskPolicyMappingPayload_deletedPolicyId(ctx, field)
+func (ec *executionContext) _DeleteRiskDocumentMappingPayload_deletedDocumentId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteRiskDocumentMappingPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteRiskDocumentMappingPayload_deletedDocumentId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12733,7 +12733,7 @@ func (ec *executionContext) _DeleteRiskPolicyMappingPayload_deletedPolicyId(ctx 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DeletedPolicyID, nil
+		return obj.DeletedDocumentID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12750,9 +12750,9 @@ func (ec *executionContext) _DeleteRiskPolicyMappingPayload_deletedPolicyId(ctx 
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_DeleteRiskPolicyMappingPayload_deletedPolicyId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DeleteRiskDocumentMappingPayload_deletedDocumentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "DeleteRiskPolicyMappingPayload",
+		Object:     "DeleteRiskDocumentMappingPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -13957,8 +13957,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_vendors(ctx, field)
 			case "peoples":
 				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "policies":
-				return ec.fieldContext_Organization_policies(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -16536,8 +16536,8 @@ func (ec *executionContext) fieldContext_Mutation_createControlMeasureMapping(ct
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createControlPolicyMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createControlPolicyMapping(ctx, field)
+func (ec *executionContext) _Mutation_createControlDocumentMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createControlDocumentMapping(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -16550,7 +16550,7 @@ func (ec *executionContext) _Mutation_createControlPolicyMapping(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateControlPolicyMapping(rctx, fc.Args["input"].(types.CreateControlPolicyMappingInput))
+		return ec.resolvers.Mutation().CreateControlDocumentMapping(rctx, fc.Args["input"].(types.CreateControlDocumentMappingInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16562,12 +16562,12 @@ func (ec *executionContext) _Mutation_createControlPolicyMapping(ctx context.Con
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.CreateControlPolicyMappingPayload)
+	res := resTmp.(*types.CreateControlDocumentMappingPayload)
 	fc.Result = res
-	return ec.marshalNCreateControlPolicyMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlPolicyMappingPayload(ctx, field.Selections, res)
+	return ec.marshalNCreateControlDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createControlPolicyMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createControlDocumentMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -16576,11 +16576,11 @@ func (ec *executionContext) fieldContext_Mutation_createControlPolicyMapping(ctx
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "controlEdge":
-				return ec.fieldContext_CreateControlPolicyMappingPayload_controlEdge(ctx, field)
-			case "policyEdge":
-				return ec.fieldContext_CreateControlPolicyMappingPayload_policyEdge(ctx, field)
+				return ec.fieldContext_CreateControlDocumentMappingPayload_controlEdge(ctx, field)
+			case "documentEdge":
+				return ec.fieldContext_CreateControlDocumentMappingPayload_documentEdge(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CreateControlPolicyMappingPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CreateControlDocumentMappingPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -16590,7 +16590,7 @@ func (ec *executionContext) fieldContext_Mutation_createControlPolicyMapping(ctx
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createControlPolicyMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createControlDocumentMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -16658,8 +16658,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteControlMeasureMapping(ct
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteControlPolicyMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteControlPolicyMapping(ctx, field)
+func (ec *executionContext) _Mutation_deleteControlDocumentMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteControlDocumentMapping(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -16672,7 +16672,7 @@ func (ec *executionContext) _Mutation_deleteControlPolicyMapping(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteControlPolicyMapping(rctx, fc.Args["input"].(types.DeleteControlPolicyMappingInput))
+		return ec.resolvers.Mutation().DeleteControlDocumentMapping(rctx, fc.Args["input"].(types.DeleteControlDocumentMappingInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16684,12 +16684,12 @@ func (ec *executionContext) _Mutation_deleteControlPolicyMapping(ctx context.Con
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.DeleteControlPolicyMappingPayload)
+	res := resTmp.(*types.DeleteControlDocumentMappingPayload)
 	fc.Result = res
-	return ec.marshalNDeleteControlPolicyMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlPolicyMappingPayload(ctx, field.Selections, res)
+	return ec.marshalNDeleteControlDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteControlPolicyMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteControlDocumentMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -16698,11 +16698,11 @@ func (ec *executionContext) fieldContext_Mutation_deleteControlPolicyMapping(ctx
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "deletedControlId":
-				return ec.fieldContext_DeleteControlPolicyMappingPayload_deletedControlId(ctx, field)
-			case "deletedPolicyId":
-				return ec.fieldContext_DeleteControlPolicyMappingPayload_deletedPolicyId(ctx, field)
+				return ec.fieldContext_DeleteControlDocumentMappingPayload_deletedControlId(ctx, field)
+			case "deletedDocumentId":
+				return ec.fieldContext_DeleteControlDocumentMappingPayload_deletedDocumentId(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DeleteControlPolicyMappingPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DeleteControlDocumentMappingPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -16712,7 +16712,7 @@ func (ec *executionContext) fieldContext_Mutation_deleteControlPolicyMapping(ctx
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteControlPolicyMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteControlDocumentMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -17313,8 +17313,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteRiskMeasureMapping(ctx c
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createRiskPolicyMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createRiskPolicyMapping(ctx, field)
+func (ec *executionContext) _Mutation_createRiskDocumentMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createRiskDocumentMapping(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -17327,7 +17327,7 @@ func (ec *executionContext) _Mutation_createRiskPolicyMapping(ctx context.Contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateRiskPolicyMapping(rctx, fc.Args["input"].(types.CreateRiskPolicyMappingInput))
+		return ec.resolvers.Mutation().CreateRiskDocumentMapping(rctx, fc.Args["input"].(types.CreateRiskDocumentMappingInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17339,12 +17339,12 @@ func (ec *executionContext) _Mutation_createRiskPolicyMapping(ctx context.Contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.CreateRiskPolicyMappingPayload)
+	res := resTmp.(*types.CreateRiskDocumentMappingPayload)
 	fc.Result = res
-	return ec.marshalNCreateRiskPolicyMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskPolicyMappingPayload(ctx, field.Selections, res)
+	return ec.marshalNCreateRiskDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createRiskPolicyMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createRiskDocumentMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -17353,11 +17353,11 @@ func (ec *executionContext) fieldContext_Mutation_createRiskPolicyMapping(ctx co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "riskEdge":
-				return ec.fieldContext_CreateRiskPolicyMappingPayload_riskEdge(ctx, field)
-			case "policyEdge":
-				return ec.fieldContext_CreateRiskPolicyMappingPayload_policyEdge(ctx, field)
+				return ec.fieldContext_CreateRiskDocumentMappingPayload_riskEdge(ctx, field)
+			case "documentEdge":
+				return ec.fieldContext_CreateRiskDocumentMappingPayload_documentEdge(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CreateRiskPolicyMappingPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CreateRiskDocumentMappingPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -17367,15 +17367,15 @@ func (ec *executionContext) fieldContext_Mutation_createRiskPolicyMapping(ctx co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createRiskPolicyMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createRiskDocumentMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteRiskPolicyMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteRiskPolicyMapping(ctx, field)
+func (ec *executionContext) _Mutation_deleteRiskDocumentMapping(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteRiskDocumentMapping(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -17388,7 +17388,7 @@ func (ec *executionContext) _Mutation_deleteRiskPolicyMapping(ctx context.Contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteRiskPolicyMapping(rctx, fc.Args["input"].(types.DeleteRiskPolicyMappingInput))
+		return ec.resolvers.Mutation().DeleteRiskDocumentMapping(rctx, fc.Args["input"].(types.DeleteRiskDocumentMappingInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17400,12 +17400,12 @@ func (ec *executionContext) _Mutation_deleteRiskPolicyMapping(ctx context.Contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.DeleteRiskPolicyMappingPayload)
+	res := resTmp.(*types.DeleteRiskDocumentMappingPayload)
 	fc.Result = res
-	return ec.marshalNDeleteRiskPolicyMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskPolicyMappingPayload(ctx, field.Selections, res)
+	return ec.marshalNDeleteRiskDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteRiskPolicyMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteRiskDocumentMapping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -17414,11 +17414,11 @@ func (ec *executionContext) fieldContext_Mutation_deleteRiskPolicyMapping(ctx co
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "deletedRiskId":
-				return ec.fieldContext_DeleteRiskPolicyMappingPayload_deletedRiskId(ctx, field)
-			case "deletedPolicyId":
-				return ec.fieldContext_DeleteRiskPolicyMappingPayload_deletedPolicyId(ctx, field)
+				return ec.fieldContext_DeleteRiskDocumentMappingPayload_deletedRiskId(ctx, field)
+			case "deletedDocumentId":
+				return ec.fieldContext_DeleteRiskDocumentMappingPayload_deletedDocumentId(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DeleteRiskPolicyMappingPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DeleteRiskDocumentMappingPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -17428,7 +17428,7 @@ func (ec *executionContext) fieldContext_Mutation_deleteRiskPolicyMapping(ctx co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteRiskPolicyMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteRiskDocumentMapping_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -17848,8 +17848,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteVendorComplianceReport(c
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createPolicy(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createPolicy(ctx, field)
+func (ec *executionContext) _Mutation_createDocument(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createDocument(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -17862,7 +17862,7 @@ func (ec *executionContext) _Mutation_createPolicy(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreatePolicy(rctx, fc.Args["input"].(types.CreatePolicyInput))
+		return ec.resolvers.Mutation().CreateDocument(rctx, fc.Args["input"].(types.CreateDocumentInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17874,12 +17874,12 @@ func (ec *executionContext) _Mutation_createPolicy(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.CreatePolicyPayload)
+	res := resTmp.(*types.CreateDocumentPayload)
 	fc.Result = res
-	return ec.marshalNCreatePolicyPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreatePolicyPayload(ctx, field.Selections, res)
+	return ec.marshalNCreateDocumentPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createPolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createDocument(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -17887,12 +17887,12 @@ func (ec *executionContext) fieldContext_Mutation_createPolicy(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "policyEdge":
-				return ec.fieldContext_CreatePolicyPayload_policyEdge(ctx, field)
-			case "policyVersionEdge":
-				return ec.fieldContext_CreatePolicyPayload_policyVersionEdge(ctx, field)
+			case "documentEdge":
+				return ec.fieldContext_CreateDocumentPayload_documentEdge(ctx, field)
+			case "documentVersionEdge":
+				return ec.fieldContext_CreateDocumentPayload_documentVersionEdge(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CreatePolicyPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CreateDocumentPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -17902,15 +17902,15 @@ func (ec *executionContext) fieldContext_Mutation_createPolicy(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createPolicy_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createDocument_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deletePolicy(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deletePolicy(ctx, field)
+func (ec *executionContext) _Mutation_deleteDocument(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteDocument(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -17923,7 +17923,7 @@ func (ec *executionContext) _Mutation_deletePolicy(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeletePolicy(rctx, fc.Args["input"].(types.DeletePolicyInput))
+		return ec.resolvers.Mutation().DeleteDocument(rctx, fc.Args["input"].(types.DeleteDocumentInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17935,12 +17935,12 @@ func (ec *executionContext) _Mutation_deletePolicy(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.DeletePolicyPayload)
+	res := resTmp.(*types.DeleteDocumentPayload)
 	fc.Result = res
-	return ec.marshalNDeletePolicyPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeletePolicyPayload(ctx, field.Selections, res)
+	return ec.marshalNDeleteDocumentPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deletePolicy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteDocument(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -17948,10 +17948,10 @@ func (ec *executionContext) fieldContext_Mutation_deletePolicy(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "deletedPolicyId":
-				return ec.fieldContext_DeletePolicyPayload_deletedPolicyId(ctx, field)
+			case "deletedDocumentId":
+				return ec.fieldContext_DeleteDocumentPayload_deletedDocumentId(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type DeletePolicyPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DeleteDocumentPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -17961,15 +17961,15 @@ func (ec *executionContext) fieldContext_Mutation_deletePolicy(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deletePolicy_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteDocument_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_publishPolicyVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_publishPolicyVersion(ctx, field)
+func (ec *executionContext) _Mutation_publishDocumentVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_publishDocumentVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -17982,7 +17982,7 @@ func (ec *executionContext) _Mutation_publishPolicyVersion(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().PublishPolicyVersion(rctx, fc.Args["input"].(types.PublishPolicyVersionInput))
+		return ec.resolvers.Mutation().PublishDocumentVersion(rctx, fc.Args["input"].(types.PublishDocumentVersionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -17994,12 +17994,12 @@ func (ec *executionContext) _Mutation_publishPolicyVersion(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PublishPolicyVersionPayload)
+	res := resTmp.(*types.PublishDocumentVersionPayload)
 	fc.Result = res
-	return ec.marshalNPublishPolicyVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishPolicyVersionPayload(ctx, field.Selections, res)
+	return ec.marshalNPublishDocumentVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishDocumentVersionPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_publishPolicyVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_publishDocumentVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -18007,12 +18007,12 @@ func (ec *executionContext) fieldContext_Mutation_publishPolicyVersion(ctx conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "policyVersion":
-				return ec.fieldContext_PublishPolicyVersionPayload_policyVersion(ctx, field)
-			case "policy":
-				return ec.fieldContext_PublishPolicyVersionPayload_policy(ctx, field)
+			case "documentVersion":
+				return ec.fieldContext_PublishDocumentVersionPayload_documentVersion(ctx, field)
+			case "document":
+				return ec.fieldContext_PublishDocumentVersionPayload_document(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PublishPolicyVersionPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type PublishDocumentVersionPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -18022,15 +18022,15 @@ func (ec *executionContext) fieldContext_Mutation_publishPolicyVersion(ctx conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_publishPolicyVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_publishDocumentVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createDraftPolicyVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createDraftPolicyVersion(ctx, field)
+func (ec *executionContext) _Mutation_createDraftDocumentVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createDraftDocumentVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18043,7 +18043,7 @@ func (ec *executionContext) _Mutation_createDraftPolicyVersion(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateDraftPolicyVersion(rctx, fc.Args["input"].(types.CreateDraftPolicyVersionInput))
+		return ec.resolvers.Mutation().CreateDraftDocumentVersion(rctx, fc.Args["input"].(types.CreateDraftDocumentVersionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18055,12 +18055,12 @@ func (ec *executionContext) _Mutation_createDraftPolicyVersion(ctx context.Conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.CreateDraftPolicyVersionPayload)
+	res := resTmp.(*types.CreateDraftDocumentVersionPayload)
 	fc.Result = res
-	return ec.marshalNCreateDraftPolicyVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDraftPolicyVersionPayload(ctx, field.Selections, res)
+	return ec.marshalNCreateDraftDocumentVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDraftDocumentVersionPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createDraftPolicyVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createDraftDocumentVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -18068,10 +18068,10 @@ func (ec *executionContext) fieldContext_Mutation_createDraftPolicyVersion(ctx c
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "policyVersionEdge":
-				return ec.fieldContext_CreateDraftPolicyVersionPayload_policyVersionEdge(ctx, field)
+			case "documentVersionEdge":
+				return ec.fieldContext_CreateDraftDocumentVersionPayload_documentVersionEdge(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CreateDraftPolicyVersionPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CreateDraftDocumentVersionPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -18081,15 +18081,15 @@ func (ec *executionContext) fieldContext_Mutation_createDraftPolicyVersion(ctx c
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createDraftPolicyVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createDraftDocumentVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updatePolicyVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updatePolicyVersion(ctx, field)
+func (ec *executionContext) _Mutation_updateDocumentVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateDocumentVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18102,7 +18102,7 @@ func (ec *executionContext) _Mutation_updatePolicyVersion(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdatePolicyVersion(rctx, fc.Args["input"].(types.UpdatePolicyVersionInput))
+		return ec.resolvers.Mutation().UpdateDocumentVersion(rctx, fc.Args["input"].(types.UpdateDocumentVersionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18114,12 +18114,12 @@ func (ec *executionContext) _Mutation_updatePolicyVersion(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.UpdatePolicyVersionPayload)
+	res := resTmp.(*types.UpdateDocumentVersionPayload)
 	fc.Result = res
-	return ec.marshalNUpdatePolicyVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdatePolicyVersionPayload(ctx, field.Selections, res)
+	return ec.marshalNUpdateDocumentVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionPayload(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updatePolicyVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateDocumentVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -18127,10 +18127,10 @@ func (ec *executionContext) fieldContext_Mutation_updatePolicyVersion(ctx contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "policyVersion":
-				return ec.fieldContext_UpdatePolicyVersionPayload_policyVersion(ctx, field)
+			case "documentVersion":
+				return ec.fieldContext_UpdateDocumentVersionPayload_documentVersion(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type UpdatePolicyVersionPayload", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type UpdateDocumentVersionPayload", field.Name)
 		},
 	}
 	defer func() {
@@ -18140,7 +18140,7 @@ func (ec *executionContext) fieldContext_Mutation_updatePolicyVersion(ctx contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updatePolicyVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateDocumentVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -18186,8 +18186,8 @@ func (ec *executionContext) fieldContext_Mutation_requestSignature(ctx context.C
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "policyVersionSignatureEdge":
-				return ec.fieldContext_RequestSignaturePayload_policyVersionSignatureEdge(ctx, field)
+			case "documentVersionSignatureEdge":
+				return ec.fieldContext_RequestSignaturePayload_documentVersionSignatureEdge(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RequestSignaturePayload", field.Name)
 		},
@@ -18876,8 +18876,8 @@ func (ec *executionContext) fieldContext_Organization_peoples(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Organization_policies(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Organization_policies(ctx, field)
+func (ec *executionContext) _Organization_documents(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_documents(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18890,7 +18890,7 @@ func (ec *executionContext) _Organization_policies(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organization().Policies(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.PolicyOrderBy))
+		return ec.resolvers.Organization().Documents(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentOrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18902,12 +18902,12 @@ func (ec *executionContext) _Organization_policies(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyConnection)
+	res := resTmp.(*types.DocumentConnection)
 	fc.Result = res
-	return ec.marshalNPolicyConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyConnection(ctx, field.Selections, res)
+	return ec.marshalNDocumentConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Organization_policies(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Organization_documents(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Organization",
 		Field:      field,
@@ -18916,11 +18916,11 @@ func (ec *executionContext) fieldContext_Organization_policies(ctx context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_PolicyConnection_edges(ctx, field)
+				return ec.fieldContext_DocumentConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_PolicyConnection_pageInfo(ctx, field)
+				return ec.fieldContext_DocumentConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -18930,7 +18930,7 @@ func (ec *executionContext) fieldContext_Organization_policies(ctx context.Conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Organization_policies_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Organization_documents_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -19411,8 +19411,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_vendors(ctx, field)
 			case "peoples":
 				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "policies":
-				return ec.fieldContext_Organization_policies(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -20245,8 +20245,8 @@ func (ec *executionContext) fieldContext_PeopleEdge_node(_ context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Policy_id(ctx context.Context, field graphql.CollectedField, obj *types.Policy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Policy_id(ctx, field)
+func (ec *executionContext) _Document_id(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20276,9 +20276,9 @@ func (ec *executionContext) _Policy_id(ctx context.Context, field graphql.Collec
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Policy_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Policy",
+		Object:     "Document",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -20289,8 +20289,8 @@ func (ec *executionContext) fieldContext_Policy_id(_ context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _Policy_title(ctx context.Context, field graphql.CollectedField, obj *types.Policy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Policy_title(ctx, field)
+func (ec *executionContext) _Document_title(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_title(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20320,9 +20320,9 @@ func (ec *executionContext) _Policy_title(ctx context.Context, field graphql.Col
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Policy_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Policy",
+		Object:     "Document",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -20333,8 +20333,8 @@ func (ec *executionContext) fieldContext_Policy_title(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Policy_description(ctx context.Context, field graphql.CollectedField, obj *types.Policy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Policy_description(ctx, field)
+func (ec *executionContext) _Document_description(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_description(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20364,9 +20364,9 @@ func (ec *executionContext) _Policy_description(ctx context.Context, field graph
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Policy_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Policy",
+		Object:     "Document",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -20377,8 +20377,8 @@ func (ec *executionContext) fieldContext_Policy_description(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Policy_currentPublishedVersion(ctx context.Context, field graphql.CollectedField, obj *types.Policy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Policy_currentPublishedVersion(ctx, field)
+func (ec *executionContext) _Document_currentPublishedVersion(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20405,9 +20405,9 @@ func (ec *executionContext) _Policy_currentPublishedVersion(ctx context.Context,
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Policy_currentPublishedVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_currentPublishedVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Policy",
+		Object:     "Document",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -20418,8 +20418,8 @@ func (ec *executionContext) fieldContext_Policy_currentPublishedVersion(_ contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Policy_owner(ctx context.Context, field graphql.CollectedField, obj *types.Policy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Policy_owner(ctx, field)
+func (ec *executionContext) _Document_owner(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_owner(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20432,7 +20432,7 @@ func (ec *executionContext) _Policy_owner(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Policy().Owner(rctx, obj)
+		return ec.resolvers.Document().Owner(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -20449,9 +20449,9 @@ func (ec *executionContext) _Policy_owner(ctx context.Context, field graphql.Col
 	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Policy_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Policy",
+		Object:     "Document",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -20484,8 +20484,8 @@ func (ec *executionContext) fieldContext_Policy_owner(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Policy_organization(ctx context.Context, field graphql.CollectedField, obj *types.Policy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Policy_organization(ctx, field)
+func (ec *executionContext) _Document_organization(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_organization(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20498,7 +20498,7 @@ func (ec *executionContext) _Policy_organization(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Policy().Organization(rctx, obj)
+		return ec.resolvers.Document().Organization(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -20515,9 +20515,9 @@ func (ec *executionContext) _Policy_organization(ctx context.Context, field grap
 	return ec.marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Policy_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Policy",
+		Object:     "Document",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -20539,8 +20539,8 @@ func (ec *executionContext) fieldContext_Policy_organization(_ context.Context, 
 				return ec.fieldContext_Organization_vendors(ctx, field)
 			case "peoples":
 				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "policies":
-				return ec.fieldContext_Organization_policies(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -20558,8 +20558,8 @@ func (ec *executionContext) fieldContext_Policy_organization(_ context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Policy_versions(ctx context.Context, field graphql.CollectedField, obj *types.Policy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Policy_versions(ctx, field)
+func (ec *executionContext) _Document_versions(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_versions(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20572,7 +20572,7 @@ func (ec *executionContext) _Policy_versions(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Policy().Versions(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.PolicyVersionOrderBy), fc.Args["filter"].(*types.PolicyVersionFilter))
+		return ec.resolvers.Document().Versions(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentVersionOrderBy), fc.Args["filter"].(*types.DocumentVersionFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -20584,25 +20584,25 @@ func (ec *executionContext) _Policy_versions(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyVersionConnection)
+	res := resTmp.(*types.DocumentVersionConnection)
 	fc.Result = res
-	return ec.marshalNPolicyVersionConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionConnection(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersionConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Policy_versions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_versions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Policy",
+		Object:     "Document",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_PolicyVersionConnection_edges(ctx, field)
+				return ec.fieldContext_DocumentVersionConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_PolicyVersionConnection_pageInfo(ctx, field)
+				return ec.fieldContext_DocumentVersionConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersionConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -20612,15 +20612,15 @@ func (ec *executionContext) fieldContext_Policy_versions(ctx context.Context, fi
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Policy_versions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Document_versions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Policy_controls(ctx context.Context, field graphql.CollectedField, obj *types.Policy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Policy_controls(ctx, field)
+func (ec *executionContext) _Document_controls(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_controls(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20633,7 +20633,7 @@ func (ec *executionContext) _Policy_controls(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Policy().Controls(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ControlOrderBy))
+		return ec.resolvers.Document().Controls(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ControlOrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -20650,9 +20650,9 @@ func (ec *executionContext) _Policy_controls(ctx context.Context, field graphql.
 	return ec.marshalNControlConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Policy_controls(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_controls(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Policy",
+		Object:     "Document",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -20673,15 +20673,15 @@ func (ec *executionContext) fieldContext_Policy_controls(ctx context.Context, fi
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Policy_controls_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Document_controls_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Policy_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Policy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Policy_createdAt(ctx, field)
+func (ec *executionContext) _Document_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20711,9 +20711,9 @@ func (ec *executionContext) _Policy_createdAt(ctx context.Context, field graphql
 	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Policy_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Policy",
+		Object:     "Document",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -20724,8 +20724,8 @@ func (ec *executionContext) fieldContext_Policy_createdAt(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Policy_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Policy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Policy_updatedAt(ctx, field)
+func (ec *executionContext) _Document_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20755,9 +20755,9 @@ func (ec *executionContext) _Policy_updatedAt(ctx context.Context, field graphql
 	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Policy_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Policy",
+		Object:     "Document",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -20768,8 +20768,8 @@ func (ec *executionContext) fieldContext_Policy_updatedAt(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.PolicyConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyConnection_edges(ctx, field)
+func (ec *executionContext) _DocumentConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DocumentConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentConnection_edges(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20794,32 +20794,32 @@ func (ec *executionContext) _PolicyConnection_edges(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*types.PolicyEdge)
+	res := resTmp.([]*types.DocumentEdge)
 	fc.Result = res
-	return ec.marshalNPolicyEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNDocumentEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyConnection",
+		Object:     "DocumentConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_PolicyEdge_cursor(ctx, field)
+				return ec.fieldContext_DocumentEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_PolicyEdge_node(ctx, field)
+				return ec.fieldContext_DocumentEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentEdge", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.PolicyConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyConnection_pageInfo(ctx, field)
+func (ec *executionContext) _DocumentConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.DocumentConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentConnection_pageInfo(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20849,9 +20849,9 @@ func (ec *executionContext) _PolicyConnection_pageInfo(ctx context.Context, fiel
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyConnection",
+		Object:     "DocumentConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -20872,8 +20872,8 @@ func (ec *executionContext) fieldContext_PolicyConnection_pageInfo(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.PolicyEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyEdge_cursor(ctx, field)
+func (ec *executionContext) _DocumentEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.DocumentEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentEdge_cursor(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20903,9 +20903,9 @@ func (ec *executionContext) _PolicyEdge_cursor(ctx context.Context, field graphq
 	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyEdge",
+		Object:     "DocumentEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -20916,8 +20916,8 @@ func (ec *executionContext) fieldContext_PolicyEdge_cursor(_ context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.PolicyEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyEdge_node(ctx, field)
+func (ec *executionContext) _DocumentEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.DocumentEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentEdge_node(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -20942,48 +20942,48 @@ func (ec *executionContext) _PolicyEdge_node(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.Policy)
+	res := resTmp.(*types.Document)
 	fc.Result = res
-	return ec.marshalNPolicy2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicy(ctx, field.Selections, res)
+	return ec.marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyEdge",
+		Object:     "DocumentEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Policy_id(ctx, field)
+				return ec.fieldContext_Document_id(ctx, field)
 			case "title":
-				return ec.fieldContext_Policy_title(ctx, field)
+				return ec.fieldContext_Document_title(ctx, field)
 			case "description":
-				return ec.fieldContext_Policy_description(ctx, field)
+				return ec.fieldContext_Document_description(ctx, field)
 			case "currentPublishedVersion":
-				return ec.fieldContext_Policy_currentPublishedVersion(ctx, field)
+				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "owner":
-				return ec.fieldContext_Policy_owner(ctx, field)
+				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
-				return ec.fieldContext_Policy_organization(ctx, field)
+				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
-				return ec.fieldContext_Policy_versions(ctx, field)
+				return ec.fieldContext_Document_versions(ctx, field)
 			case "controls":
-				return ec.fieldContext_Policy_controls(ctx, field)
+				return ec.fieldContext_Document_controls(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Policy_createdAt(ctx, field)
+				return ec.fieldContext_Document_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Policy_updatedAt(ctx, field)
+				return ec.fieldContext_Document_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Policy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersion_id(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersion_id(ctx, field)
+func (ec *executionContext) _DocumentVersion_id(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21013,9 +21013,9 @@ func (ec *executionContext) _PolicyVersion_id(ctx context.Context, field graphql
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersion_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersion",
+		Object:     "DocumentVersion",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -21026,8 +21026,8 @@ func (ec *executionContext) fieldContext_PolicyVersion_id(_ context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersion_policy(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersion_policy(ctx, field)
+func (ec *executionContext) _DocumentVersion_document(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_document(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21040,7 +21040,7 @@ func (ec *executionContext) _PolicyVersion_policy(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.PolicyVersion().Policy(rctx, obj)
+		return ec.resolvers.DocumentVersion().Document(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21052,48 +21052,48 @@ func (ec *executionContext) _PolicyVersion_policy(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.Policy)
+	res := resTmp.(*types.Document)
 	fc.Result = res
-	return ec.marshalNPolicy2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicy(ctx, field.Selections, res)
+	return ec.marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersion_policy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_document(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersion",
+		Object:     "DocumentVersion",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Policy_id(ctx, field)
+				return ec.fieldContext_Document_id(ctx, field)
 			case "title":
-				return ec.fieldContext_Policy_title(ctx, field)
+				return ec.fieldContext_Document_title(ctx, field)
 			case "description":
-				return ec.fieldContext_Policy_description(ctx, field)
+				return ec.fieldContext_Document_description(ctx, field)
 			case "currentPublishedVersion":
-				return ec.fieldContext_Policy_currentPublishedVersion(ctx, field)
+				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "owner":
-				return ec.fieldContext_Policy_owner(ctx, field)
+				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
-				return ec.fieldContext_Policy_organization(ctx, field)
+				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
-				return ec.fieldContext_Policy_versions(ctx, field)
+				return ec.fieldContext_Document_versions(ctx, field)
 			case "controls":
-				return ec.fieldContext_Policy_controls(ctx, field)
+				return ec.fieldContext_Document_controls(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Policy_createdAt(ctx, field)
+				return ec.fieldContext_Document_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Policy_updatedAt(ctx, field)
+				return ec.fieldContext_Document_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Policy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersion_status(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersion_status(ctx, field)
+func (ec *executionContext) _DocumentVersion_status(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_status(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21118,26 +21118,26 @@ func (ec *executionContext) _PolicyVersion_status(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(coredata.PolicyStatus)
+	res := resTmp.(coredata.DocumentStatus)
 	fc.Result = res
-	return ec.marshalNPolicyStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus(ctx, field.Selections, res)
+	return ec.marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersion_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersion",
+		Object:     "DocumentVersion",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PolicyStatus does not have child fields")
+			return nil, errors.New("field of type DocumentStatus does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersion_version(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersion_version(ctx, field)
+func (ec *executionContext) _DocumentVersion_version(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_version(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21167,9 +21167,9 @@ func (ec *executionContext) _PolicyVersion_version(ctx context.Context, field gr
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersion_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_version(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersion",
+		Object:     "DocumentVersion",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -21180,8 +21180,8 @@ func (ec *executionContext) fieldContext_PolicyVersion_version(_ context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersion_content(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersion_content(ctx, field)
+func (ec *executionContext) _DocumentVersion_content(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_content(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21211,9 +21211,9 @@ func (ec *executionContext) _PolicyVersion_content(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersion_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_content(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersion",
+		Object:     "DocumentVersion",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -21224,8 +21224,8 @@ func (ec *executionContext) fieldContext_PolicyVersion_content(_ context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersion_changelog(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersion_changelog(ctx, field)
+func (ec *executionContext) _DocumentVersion_changelog(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_changelog(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21255,9 +21255,9 @@ func (ec *executionContext) _PolicyVersion_changelog(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersion_changelog(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_changelog(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersion",
+		Object:     "DocumentVersion",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -21268,8 +21268,8 @@ func (ec *executionContext) fieldContext_PolicyVersion_changelog(_ context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersion_signatures(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersion_signatures(ctx, field)
+func (ec *executionContext) _DocumentVersion_signatures(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_signatures(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21282,7 +21282,7 @@ func (ec *executionContext) _PolicyVersion_signatures(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.PolicyVersion().Signatures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.PolicyVersionSignatureOrder))
+		return ec.resolvers.DocumentVersion().Signatures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentVersionSignatureOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21294,25 +21294,25 @@ func (ec *executionContext) _PolicyVersion_signatures(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyVersionSignatureConnection)
+	res := resTmp.(*types.DocumentVersionSignatureConnection)
 	fc.Result = res
-	return ec.marshalNPolicyVersionSignatureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignatureConnection(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersionSignatureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersion_signatures(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_signatures(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersion",
+		Object:     "DocumentVersion",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_PolicyVersionSignatureConnection_edges(ctx, field)
+				return ec.fieldContext_DocumentVersionSignatureConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_PolicyVersionSignatureConnection_pageInfo(ctx, field)
+				return ec.fieldContext_DocumentVersionSignatureConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersionSignatureConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignatureConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -21322,15 +21322,15 @@ func (ec *executionContext) fieldContext_PolicyVersion_signatures(ctx context.Co
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_PolicyVersion_signatures_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_DocumentVersion_signatures_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersion_publishedBy(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersion_publishedBy(ctx, field)
+func (ec *executionContext) _DocumentVersion_publishedBy(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21343,7 +21343,7 @@ func (ec *executionContext) _PolicyVersion_publishedBy(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.PolicyVersion().PublishedBy(rctx, obj)
+		return ec.resolvers.DocumentVersion().PublishedBy(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21357,9 +21357,9 @@ func (ec *executionContext) _PolicyVersion_publishedBy(ctx context.Context, fiel
 	return ec.marshalOPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersion_publishedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_publishedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersion",
+		Object:     "DocumentVersion",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -21392,8 +21392,8 @@ func (ec *executionContext) fieldContext_PolicyVersion_publishedBy(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersion_publishedAt(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersion_publishedAt(ctx, field)
+func (ec *executionContext) _DocumentVersion_publishedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21420,9 +21420,9 @@ func (ec *executionContext) _PolicyVersion_publishedAt(ctx context.Context, fiel
 	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersion_publishedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_publishedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersion",
+		Object:     "DocumentVersion",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -21433,8 +21433,8 @@ func (ec *executionContext) fieldContext_PolicyVersion_publishedAt(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersion_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersion_createdAt(ctx, field)
+func (ec *executionContext) _DocumentVersion_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21464,9 +21464,9 @@ func (ec *executionContext) _PolicyVersion_createdAt(ctx context.Context, field 
 	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersion_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersion",
+		Object:     "DocumentVersion",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -21477,8 +21477,8 @@ func (ec *executionContext) fieldContext_PolicyVersion_createdAt(_ context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersion_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersion_updatedAt(ctx, field)
+func (ec *executionContext) _DocumentVersion_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21508,9 +21508,9 @@ func (ec *executionContext) _PolicyVersion_updatedAt(ctx context.Context, field 
 	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersion_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersion_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersion",
+		Object:     "DocumentVersion",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -21521,8 +21521,8 @@ func (ec *executionContext) fieldContext_PolicyVersion_updatedAt(_ context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionConnection_edges(ctx, field)
+func (ec *executionContext) _DocumentVersionConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionConnection_edges(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21547,32 +21547,32 @@ func (ec *executionContext) _PolicyVersionConnection_edges(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*types.PolicyVersionEdge)
+	res := resTmp.([]*types.DocumentVersionEdge)
 	fc.Result = res
-	return ec.marshalNPolicyVersionEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersionEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionConnection",
+		Object:     "DocumentVersionConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_PolicyVersionEdge_cursor(ctx, field)
+				return ec.fieldContext_DocumentVersionEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_PolicyVersionEdge_node(ctx, field)
+				return ec.fieldContext_DocumentVersionEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersionEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionEdge", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionConnection_pageInfo(ctx, field)
+func (ec *executionContext) _DocumentVersionConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionConnection_pageInfo(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21602,9 +21602,9 @@ func (ec *executionContext) _PolicyVersionConnection_pageInfo(ctx context.Contex
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionConnection",
+		Object:     "DocumentVersionConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -21625,8 +21625,8 @@ func (ec *executionContext) fieldContext_PolicyVersionConnection_pageInfo(_ cont
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionEdge_cursor(ctx, field)
+func (ec *executionContext) _DocumentVersionEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionEdge_cursor(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21656,9 +21656,9 @@ func (ec *executionContext) _PolicyVersionEdge_cursor(ctx context.Context, field
 	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionEdge",
+		Object:     "DocumentVersionEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -21669,8 +21669,8 @@ func (ec *executionContext) fieldContext_PolicyVersionEdge_cursor(_ context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionEdge_node(ctx, field)
+func (ec *executionContext) _DocumentVersionEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionEdge_node(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21695,50 +21695,50 @@ func (ec *executionContext) _PolicyVersionEdge_node(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyVersion)
+	res := resTmp.(*types.DocumentVersion)
 	fc.Result = res
-	return ec.marshalNPolicyVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersion(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionEdge",
+		Object:     "DocumentVersionEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_PolicyVersion_id(ctx, field)
-			case "policy":
-				return ec.fieldContext_PolicyVersion_policy(ctx, field)
+				return ec.fieldContext_DocumentVersion_id(ctx, field)
+			case "document":
+				return ec.fieldContext_DocumentVersion_document(ctx, field)
 			case "status":
-				return ec.fieldContext_PolicyVersion_status(ctx, field)
+				return ec.fieldContext_DocumentVersion_status(ctx, field)
 			case "version":
-				return ec.fieldContext_PolicyVersion_version(ctx, field)
+				return ec.fieldContext_DocumentVersion_version(ctx, field)
 			case "content":
-				return ec.fieldContext_PolicyVersion_content(ctx, field)
+				return ec.fieldContext_DocumentVersion_content(ctx, field)
 			case "changelog":
-				return ec.fieldContext_PolicyVersion_changelog(ctx, field)
+				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
 			case "signatures":
-				return ec.fieldContext_PolicyVersion_signatures(ctx, field)
+				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
 			case "publishedBy":
-				return ec.fieldContext_PolicyVersion_publishedBy(ctx, field)
+				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
 			case "publishedAt":
-				return ec.fieldContext_PolicyVersion_publishedAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_PolicyVersion_createdAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_PolicyVersion_updatedAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersion", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignature_id(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignature_id(ctx, field)
+func (ec *executionContext) _DocumentVersionSignature_id(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21768,9 +21768,9 @@ func (ec *executionContext) _PolicyVersionSignature_id(ctx context.Context, fiel
 	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignature_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignature_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignature",
+		Object:     "DocumentVersionSignature",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -21781,8 +21781,8 @@ func (ec *executionContext) fieldContext_PolicyVersionSignature_id(_ context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignature_policyVersion(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignature_policyVersion(ctx, field)
+func (ec *executionContext) _DocumentVersionSignature_documentVersion(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_documentVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21795,7 +21795,7 @@ func (ec *executionContext) _PolicyVersionSignature_policyVersion(ctx context.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.PolicyVersionSignature().PolicyVersion(rctx, obj)
+		return ec.resolvers.DocumentVersionSignature().DocumentVersion(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21807,50 +21807,50 @@ func (ec *executionContext) _PolicyVersionSignature_policyVersion(ctx context.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyVersion)
+	res := resTmp.(*types.DocumentVersion)
 	fc.Result = res
-	return ec.marshalNPolicyVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersion(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignature_policyVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignature_documentVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignature",
+		Object:     "DocumentVersionSignature",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_PolicyVersion_id(ctx, field)
-			case "policy":
-				return ec.fieldContext_PolicyVersion_policy(ctx, field)
+				return ec.fieldContext_DocumentVersion_id(ctx, field)
+			case "document":
+				return ec.fieldContext_DocumentVersion_document(ctx, field)
 			case "status":
-				return ec.fieldContext_PolicyVersion_status(ctx, field)
+				return ec.fieldContext_DocumentVersion_status(ctx, field)
 			case "version":
-				return ec.fieldContext_PolicyVersion_version(ctx, field)
+				return ec.fieldContext_DocumentVersion_version(ctx, field)
 			case "content":
-				return ec.fieldContext_PolicyVersion_content(ctx, field)
+				return ec.fieldContext_DocumentVersion_content(ctx, field)
 			case "changelog":
-				return ec.fieldContext_PolicyVersion_changelog(ctx, field)
+				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
 			case "signatures":
-				return ec.fieldContext_PolicyVersion_signatures(ctx, field)
+				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
 			case "publishedBy":
-				return ec.fieldContext_PolicyVersion_publishedBy(ctx, field)
+				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
 			case "publishedAt":
-				return ec.fieldContext_PolicyVersion_publishedAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_PolicyVersion_createdAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_PolicyVersion_updatedAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersion", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignature_state(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignature_state(ctx, field)
+func (ec *executionContext) _DocumentVersionSignature_state(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_state(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21875,26 +21875,26 @@ func (ec *executionContext) _PolicyVersionSignature_state(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(coredata.PolicyVersionSignatureState)
+	res := resTmp.(coredata.DocumentVersionSignatureState)
 	fc.Result = res
-	return ec.marshalNPolicyVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureState(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignature_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignature_state(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignature",
+		Object:     "DocumentVersionSignature",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type PolicyVersionSignatureState does not have child fields")
+			return nil, errors.New("field of type DocumentVersionSignatureState does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignature_signedBy(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignature_signedBy(ctx, field)
+func (ec *executionContext) _DocumentVersionSignature_signedBy(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_signedBy(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21907,7 +21907,7 @@ func (ec *executionContext) _PolicyVersionSignature_signedBy(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.PolicyVersionSignature().SignedBy(rctx, obj)
+		return ec.resolvers.DocumentVersionSignature().SignedBy(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -21924,9 +21924,9 @@ func (ec *executionContext) _PolicyVersionSignature_signedBy(ctx context.Context
 	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignature_signedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignature_signedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignature",
+		Object:     "DocumentVersionSignature",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -21959,8 +21959,8 @@ func (ec *executionContext) fieldContext_PolicyVersionSignature_signedBy(_ conte
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignature_signedAt(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignature_signedAt(ctx, field)
+func (ec *executionContext) _DocumentVersionSignature_signedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_signedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -21987,9 +21987,9 @@ func (ec *executionContext) _PolicyVersionSignature_signedAt(ctx context.Context
 	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignature_signedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignature_signedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignature",
+		Object:     "DocumentVersionSignature",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -22000,8 +22000,8 @@ func (ec *executionContext) fieldContext_PolicyVersionSignature_signedAt(_ conte
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignature_requestedAt(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignature_requestedAt(ctx, field)
+func (ec *executionContext) _DocumentVersionSignature_requestedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_requestedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22031,9 +22031,9 @@ func (ec *executionContext) _PolicyVersionSignature_requestedAt(ctx context.Cont
 	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignature_requestedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignature_requestedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignature",
+		Object:     "DocumentVersionSignature",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -22044,8 +22044,8 @@ func (ec *executionContext) fieldContext_PolicyVersionSignature_requestedAt(_ co
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignature_requestedBy(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignature_requestedBy(ctx, field)
+func (ec *executionContext) _DocumentVersionSignature_requestedBy(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_requestedBy(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22058,7 +22058,7 @@ func (ec *executionContext) _PolicyVersionSignature_requestedBy(ctx context.Cont
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.PolicyVersionSignature().RequestedBy(rctx, obj)
+		return ec.resolvers.DocumentVersionSignature().RequestedBy(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -22075,9 +22075,9 @@ func (ec *executionContext) _PolicyVersionSignature_requestedBy(ctx context.Cont
 	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignature_requestedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignature_requestedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignature",
+		Object:     "DocumentVersionSignature",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -22110,8 +22110,8 @@ func (ec *executionContext) fieldContext_PolicyVersionSignature_requestedBy(_ co
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignature_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignature_createdAt(ctx, field)
+func (ec *executionContext) _DocumentVersionSignature_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22141,9 +22141,9 @@ func (ec *executionContext) _PolicyVersionSignature_createdAt(ctx context.Contex
 	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignature_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignature_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignature",
+		Object:     "DocumentVersionSignature",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -22154,8 +22154,8 @@ func (ec *executionContext) fieldContext_PolicyVersionSignature_createdAt(_ cont
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignature_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignature_updatedAt(ctx, field)
+func (ec *executionContext) _DocumentVersionSignature_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignature_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22185,9 +22185,9 @@ func (ec *executionContext) _PolicyVersionSignature_updatedAt(ctx context.Contex
 	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignature_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignature_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignature",
+		Object:     "DocumentVersionSignature",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -22198,8 +22198,8 @@ func (ec *executionContext) fieldContext_PolicyVersionSignature_updatedAt(_ cont
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignatureConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignatureConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignatureConnection_edges(ctx, field)
+func (ec *executionContext) _DocumentVersionSignatureConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignatureConnection_edges(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22224,32 +22224,32 @@ func (ec *executionContext) _PolicyVersionSignatureConnection_edges(ctx context.
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*types.PolicyVersionSignatureEdge)
+	res := resTmp.([]*types.DocumentVersionSignatureEdge)
 	fc.Result = res
-	return ec.marshalNPolicyVersionSignatureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignatureEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersionSignatureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdgeᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignatureConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignatureConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignatureConnection",
+		Object:     "DocumentVersionSignatureConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_PolicyVersionSignatureEdge_cursor(ctx, field)
+				return ec.fieldContext_DocumentVersionSignatureEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_PolicyVersionSignatureEdge_node(ctx, field)
+				return ec.fieldContext_DocumentVersionSignatureEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersionSignatureEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignatureEdge", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignatureConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignatureConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignatureConnection_pageInfo(ctx, field)
+func (ec *executionContext) _DocumentVersionSignatureConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignatureConnection_pageInfo(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22279,9 +22279,9 @@ func (ec *executionContext) _PolicyVersionSignatureConnection_pageInfo(ctx conte
 	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignatureConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignatureConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignatureConnection",
+		Object:     "DocumentVersionSignatureConnection",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -22302,8 +22302,8 @@ func (ec *executionContext) fieldContext_PolicyVersionSignatureConnection_pageIn
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignatureEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignatureEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignatureEdge_cursor(ctx, field)
+func (ec *executionContext) _DocumentVersionSignatureEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignatureEdge_cursor(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22333,9 +22333,9 @@ func (ec *executionContext) _PolicyVersionSignatureEdge_cursor(ctx context.Conte
 	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignatureEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignatureEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignatureEdge",
+		Object:     "DocumentVersionSignatureEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -22346,8 +22346,8 @@ func (ec *executionContext) fieldContext_PolicyVersionSignatureEdge_cursor(_ con
 	return fc, nil
 }
 
-func (ec *executionContext) _PolicyVersionSignatureEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.PolicyVersionSignatureEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PolicyVersionSignatureEdge_node(ctx, field)
+func (ec *executionContext) _DocumentVersionSignatureEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignatureEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersionSignatureEdge_node(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22372,46 +22372,46 @@ func (ec *executionContext) _PolicyVersionSignatureEdge_node(ctx context.Context
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyVersionSignature)
+	res := resTmp.(*types.DocumentVersionSignature)
 	fc.Result = res
-	return ec.marshalNPolicyVersionSignature2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignature(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersionSignature2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignature(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PolicyVersionSignatureEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_DocumentVersionSignatureEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PolicyVersionSignatureEdge",
+		Object:     "DocumentVersionSignatureEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_PolicyVersionSignature_id(ctx, field)
-			case "policyVersion":
-				return ec.fieldContext_PolicyVersionSignature_policyVersion(ctx, field)
+				return ec.fieldContext_DocumentVersionSignature_id(ctx, field)
+			case "documentVersion":
+				return ec.fieldContext_DocumentVersionSignature_documentVersion(ctx, field)
 			case "state":
-				return ec.fieldContext_PolicyVersionSignature_state(ctx, field)
+				return ec.fieldContext_DocumentVersionSignature_state(ctx, field)
 			case "signedBy":
-				return ec.fieldContext_PolicyVersionSignature_signedBy(ctx, field)
+				return ec.fieldContext_DocumentVersionSignature_signedBy(ctx, field)
 			case "signedAt":
-				return ec.fieldContext_PolicyVersionSignature_signedAt(ctx, field)
+				return ec.fieldContext_DocumentVersionSignature_signedAt(ctx, field)
 			case "requestedAt":
-				return ec.fieldContext_PolicyVersionSignature_requestedAt(ctx, field)
+				return ec.fieldContext_DocumentVersionSignature_requestedAt(ctx, field)
 			case "requestedBy":
-				return ec.fieldContext_PolicyVersionSignature_requestedBy(ctx, field)
+				return ec.fieldContext_DocumentVersionSignature_requestedBy(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_PolicyVersionSignature_createdAt(ctx, field)
+				return ec.fieldContext_DocumentVersionSignature_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_PolicyVersionSignature_updatedAt(ctx, field)
+				return ec.fieldContext_DocumentVersionSignature_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersionSignature", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignature", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PublishPolicyVersionPayload_policyVersion(ctx context.Context, field graphql.CollectedField, obj *types.PublishPolicyVersionPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PublishPolicyVersionPayload_policyVersion(ctx, field)
+func (ec *executionContext) _PublishDocumentVersionPayload_documentVersion(ctx context.Context, field graphql.CollectedField, obj *types.PublishDocumentVersionPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PublishDocumentVersionPayload_documentVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22424,7 +22424,7 @@ func (ec *executionContext) _PublishPolicyVersionPayload_policyVersion(ctx conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PolicyVersion, nil
+		return obj.DocumentVersion, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -22436,50 +22436,50 @@ func (ec *executionContext) _PublishPolicyVersionPayload_policyVersion(ctx conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyVersion)
+	res := resTmp.(*types.DocumentVersion)
 	fc.Result = res
-	return ec.marshalNPolicyVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersion(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PublishPolicyVersionPayload_policyVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_documentVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PublishPolicyVersionPayload",
+		Object:     "PublishDocumentVersionPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_PolicyVersion_id(ctx, field)
-			case "policy":
-				return ec.fieldContext_PolicyVersion_policy(ctx, field)
+				return ec.fieldContext_DocumentVersion_id(ctx, field)
+			case "document":
+				return ec.fieldContext_DocumentVersion_document(ctx, field)
 			case "status":
-				return ec.fieldContext_PolicyVersion_status(ctx, field)
+				return ec.fieldContext_DocumentVersion_status(ctx, field)
 			case "version":
-				return ec.fieldContext_PolicyVersion_version(ctx, field)
+				return ec.fieldContext_DocumentVersion_version(ctx, field)
 			case "content":
-				return ec.fieldContext_PolicyVersion_content(ctx, field)
+				return ec.fieldContext_DocumentVersion_content(ctx, field)
 			case "changelog":
-				return ec.fieldContext_PolicyVersion_changelog(ctx, field)
+				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
 			case "signatures":
-				return ec.fieldContext_PolicyVersion_signatures(ctx, field)
+				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
 			case "publishedBy":
-				return ec.fieldContext_PolicyVersion_publishedBy(ctx, field)
+				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
 			case "publishedAt":
-				return ec.fieldContext_PolicyVersion_publishedAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_PolicyVersion_createdAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_PolicyVersion_updatedAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersion", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _PublishPolicyVersionPayload_policy(ctx context.Context, field graphql.CollectedField, obj *types.PublishPolicyVersionPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PublishPolicyVersionPayload_policy(ctx, field)
+func (ec *executionContext) _PublishDocumentVersionPayload_document(ctx context.Context, field graphql.CollectedField, obj *types.PublishDocumentVersionPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PublishDocumentVersionPayload_document(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22492,7 +22492,7 @@ func (ec *executionContext) _PublishPolicyVersionPayload_policy(ctx context.Cont
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Policy, nil
+		return obj.Document, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -22504,41 +22504,41 @@ func (ec *executionContext) _PublishPolicyVersionPayload_policy(ctx context.Cont
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.Policy)
+	res := resTmp.(*types.Document)
 	fc.Result = res
-	return ec.marshalNPolicy2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicy(ctx, field.Selections, res)
+	return ec.marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PublishPolicyVersionPayload_policy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_document(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "PublishPolicyVersionPayload",
+		Object:     "PublishDocumentVersionPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Policy_id(ctx, field)
+				return ec.fieldContext_Document_id(ctx, field)
 			case "title":
-				return ec.fieldContext_Policy_title(ctx, field)
+				return ec.fieldContext_Document_title(ctx, field)
 			case "description":
-				return ec.fieldContext_Policy_description(ctx, field)
+				return ec.fieldContext_Document_description(ctx, field)
 			case "currentPublishedVersion":
-				return ec.fieldContext_Policy_currentPublishedVersion(ctx, field)
+				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "owner":
-				return ec.fieldContext_Policy_owner(ctx, field)
+				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
-				return ec.fieldContext_Policy_organization(ctx, field)
+				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
-				return ec.fieldContext_Policy_versions(ctx, field)
+				return ec.fieldContext_Document_versions(ctx, field)
 			case "controls":
-				return ec.fieldContext_Policy_controls(ctx, field)
+				return ec.fieldContext_Document_controls(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Policy_createdAt(ctx, field)
+				return ec.fieldContext_Document_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Policy_updatedAt(ctx, field)
+				return ec.fieldContext_Document_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Policy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
 		},
 	}
 	return fc, nil
@@ -22876,8 +22876,8 @@ func (ec *executionContext) fieldContext_RequestEvidencePayload_evidenceEdge(_ c
 	return fc, nil
 }
 
-func (ec *executionContext) _RequestSignaturePayload_policyVersionSignatureEdge(ctx context.Context, field graphql.CollectedField, obj *types.RequestSignaturePayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_RequestSignaturePayload_policyVersionSignatureEdge(ctx, field)
+func (ec *executionContext) _RequestSignaturePayload_documentVersionSignatureEdge(ctx context.Context, field graphql.CollectedField, obj *types.RequestSignaturePayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RequestSignaturePayload_documentVersionSignatureEdge(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22890,7 +22890,7 @@ func (ec *executionContext) _RequestSignaturePayload_policyVersionSignatureEdge(
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PolicyVersionSignatureEdge, nil
+		return obj.DocumentVersionSignatureEdge, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -22902,12 +22902,12 @@ func (ec *executionContext) _RequestSignaturePayload_policyVersionSignatureEdge(
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyVersionSignatureEdge)
+	res := resTmp.(*types.DocumentVersionSignatureEdge)
 	fc.Result = res
-	return ec.marshalNPolicyVersionSignatureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignatureEdge(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersionSignatureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdge(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_RequestSignaturePayload_policyVersionSignatureEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RequestSignaturePayload_documentVersionSignatureEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RequestSignaturePayload",
 		Field:      field,
@@ -22916,11 +22916,11 @@ func (ec *executionContext) fieldContext_RequestSignaturePayload_policyVersionSi
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "cursor":
-				return ec.fieldContext_PolicyVersionSignatureEdge_cursor(ctx, field)
+				return ec.fieldContext_DocumentVersionSignatureEdge_cursor(ctx, field)
 			case "node":
-				return ec.fieldContext_PolicyVersionSignatureEdge_node(ctx, field)
+				return ec.fieldContext_DocumentVersionSignatureEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersionSignatureEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersionSignatureEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -23572,8 +23572,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_vendors(ctx, field)
 			case "peoples":
 				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "policies":
-				return ec.fieldContext_Organization_policies(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -23652,8 +23652,8 @@ func (ec *executionContext) fieldContext_Risk_measures(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Risk_policies(ctx context.Context, field graphql.CollectedField, obj *types.Risk) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Risk_policies(ctx, field)
+func (ec *executionContext) _Risk_documents(ctx context.Context, field graphql.CollectedField, obj *types.Risk) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Risk_documents(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -23666,7 +23666,7 @@ func (ec *executionContext) _Risk_policies(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Risk().Policies(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.PolicyOrderBy))
+		return ec.resolvers.Risk().Documents(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentOrderBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -23678,12 +23678,12 @@ func (ec *executionContext) _Risk_policies(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyConnection)
+	res := resTmp.(*types.DocumentConnection)
 	fc.Result = res
-	return ec.marshalNPolicyConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyConnection(ctx, field.Selections, res)
+	return ec.marshalNDocumentConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Risk_policies(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Risk_documents(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Risk",
 		Field:      field,
@@ -23692,11 +23692,11 @@ func (ec *executionContext) fieldContext_Risk_policies(ctx context.Context, fiel
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_PolicyConnection_edges(ctx, field)
+				return ec.fieldContext_DocumentConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_PolicyConnection_pageInfo(ctx, field)
+				return ec.fieldContext_DocumentConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -23706,7 +23706,7 @@ func (ec *executionContext) fieldContext_Risk_policies(ctx context.Context, fiel
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Risk_policies_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Risk_documents_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -24079,8 +24079,8 @@ func (ec *executionContext) fieldContext_RiskEdge_node(_ context.Context, field 
 				return ec.fieldContext_Risk_organization(ctx, field)
 			case "measures":
 				return ec.fieldContext_Risk_measures(ctx, field)
-			case "policies":
-				return ec.fieldContext_Risk_policies(ctx, field)
+			case "documents":
+				return ec.fieldContext_Risk_documents(ctx, field)
 			case "controls":
 				return ec.fieldContext_Risk_controls(ctx, field)
 			case "createdAt":
@@ -24561,8 +24561,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_vendors(ctx, field)
 			case "peoples":
 				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "policies":
-				return ec.fieldContext_Organization_policies(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -25261,8 +25261,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_vendors(ctx, field)
 			case "peoples":
 				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "policies":
-				return ec.fieldContext_Organization_policies(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -25346,8 +25346,8 @@ func (ec *executionContext) fieldContext_UpdatePeoplePayload_people(_ context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _UpdatePolicyPayload_policy(ctx context.Context, field graphql.CollectedField, obj *types.UpdatePolicyPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdatePolicyPayload_policy(ctx, field)
+func (ec *executionContext) _UpdateDocumentPayload_document(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDocumentPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateDocumentPayload_document(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -25360,7 +25360,7 @@ func (ec *executionContext) _UpdatePolicyPayload_policy(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Policy, nil
+		return obj.Document, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -25372,48 +25372,48 @@ func (ec *executionContext) _UpdatePolicyPayload_policy(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.Policy)
+	res := resTmp.(*types.Document)
 	fc.Result = res
-	return ec.marshalNPolicy2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicy(ctx, field.Selections, res)
+	return ec.marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdatePolicyPayload_policy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdateDocumentPayload_document(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "UpdatePolicyPayload",
+		Object:     "UpdateDocumentPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Policy_id(ctx, field)
+				return ec.fieldContext_Document_id(ctx, field)
 			case "title":
-				return ec.fieldContext_Policy_title(ctx, field)
+				return ec.fieldContext_Document_title(ctx, field)
 			case "description":
-				return ec.fieldContext_Policy_description(ctx, field)
+				return ec.fieldContext_Document_description(ctx, field)
 			case "currentPublishedVersion":
-				return ec.fieldContext_Policy_currentPublishedVersion(ctx, field)
+				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "owner":
-				return ec.fieldContext_Policy_owner(ctx, field)
+				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
-				return ec.fieldContext_Policy_organization(ctx, field)
+				return ec.fieldContext_Document_organization(ctx, field)
 			case "versions":
-				return ec.fieldContext_Policy_versions(ctx, field)
+				return ec.fieldContext_Document_versions(ctx, field)
 			case "controls":
-				return ec.fieldContext_Policy_controls(ctx, field)
+				return ec.fieldContext_Document_controls(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Policy_createdAt(ctx, field)
+				return ec.fieldContext_Document_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Policy_updatedAt(ctx, field)
+				return ec.fieldContext_Document_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Policy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Document", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _UpdatePolicyVersionPayload_policyVersion(ctx context.Context, field graphql.CollectedField, obj *types.UpdatePolicyVersionPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UpdatePolicyVersionPayload_policyVersion(ctx, field)
+func (ec *executionContext) _UpdateDocumentVersionPayload_documentVersion(ctx context.Context, field graphql.CollectedField, obj *types.UpdateDocumentVersionPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateDocumentVersionPayload_documentVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -25426,7 +25426,7 @@ func (ec *executionContext) _UpdatePolicyVersionPayload_policyVersion(ctx contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PolicyVersion, nil
+		return obj.DocumentVersion, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -25438,43 +25438,43 @@ func (ec *executionContext) _UpdatePolicyVersionPayload_policyVersion(ctx contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.PolicyVersion)
+	res := resTmp.(*types.DocumentVersion)
 	fc.Result = res
-	return ec.marshalNPolicyVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersion(ctx, field.Selections, res)
+	return ec.marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UpdatePolicyVersionPayload_policyVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UpdateDocumentVersionPayload_documentVersion(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "UpdatePolicyVersionPayload",
+		Object:     "UpdateDocumentVersionPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_PolicyVersion_id(ctx, field)
-			case "policy":
-				return ec.fieldContext_PolicyVersion_policy(ctx, field)
+				return ec.fieldContext_DocumentVersion_id(ctx, field)
+			case "document":
+				return ec.fieldContext_DocumentVersion_document(ctx, field)
 			case "status":
-				return ec.fieldContext_PolicyVersion_status(ctx, field)
+				return ec.fieldContext_DocumentVersion_status(ctx, field)
 			case "version":
-				return ec.fieldContext_PolicyVersion_version(ctx, field)
+				return ec.fieldContext_DocumentVersion_version(ctx, field)
 			case "content":
-				return ec.fieldContext_PolicyVersion_content(ctx, field)
+				return ec.fieldContext_DocumentVersion_content(ctx, field)
 			case "changelog":
-				return ec.fieldContext_PolicyVersion_changelog(ctx, field)
+				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
 			case "signatures":
-				return ec.fieldContext_PolicyVersion_signatures(ctx, field)
+				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
 			case "publishedBy":
-				return ec.fieldContext_PolicyVersion_publishedBy(ctx, field)
+				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
 			case "publishedAt":
-				return ec.fieldContext_PolicyVersion_publishedAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_PolicyVersion_createdAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_PolicyVersion_updatedAt(ctx, field)
+				return ec.fieldContext_DocumentVersion_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PolicyVersion", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type DocumentVersion", field.Name)
 		},
 	}
 	return fc, nil
@@ -25549,8 +25549,8 @@ func (ec *executionContext) fieldContext_UpdateRiskPayload_risk(_ context.Contex
 				return ec.fieldContext_Risk_organization(ctx, field)
 			case "measures":
 				return ec.fieldContext_Risk_measures(ctx, field)
-			case "policies":
-				return ec.fieldContext_Risk_policies(ctx, field)
+			case "documents":
+				return ec.fieldContext_Risk_documents(ctx, field)
 			case "controls":
 				return ec.fieldContext_Risk_controls(ctx, field)
 			case "createdAt":
@@ -26604,8 +26604,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_vendors(ctx, field)
 			case "peoples":
 				return ec.fieldContext_Organization_peoples(ctx, field)
-			case "policies":
-				return ec.fieldContext_Organization_policies(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
 			case "measures":
 				return ec.fieldContext_Organization_measures(ctx, field)
 			case "risks":
@@ -31426,14 +31426,14 @@ func (ec *executionContext) unmarshalInputCreateControlMeasureMappingInput(ctx c
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateControlPolicyMappingInput(ctx context.Context, obj any) (types.CreateControlPolicyMappingInput, error) {
-	var it types.CreateControlPolicyMappingInput
+func (ec *executionContext) unmarshalInputCreateControlDocumentMappingInput(ctx context.Context, obj any) (types.CreateControlDocumentMappingInput, error) {
+	var it types.CreateControlDocumentMappingInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"controlId", "policyId"}
+	fieldsInOrder := [...]string{"controlId", "documentId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -31447,40 +31447,40 @@ func (ec *executionContext) unmarshalInputCreateControlPolicyMappingInput(ctx co
 				return it, err
 			}
 			it.ControlID = data
-		case "policyId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policyId"))
+		case "documentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.PolicyID = data
+			it.DocumentID = data
 		}
 	}
 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateDraftPolicyVersionInput(ctx context.Context, obj any) (types.CreateDraftPolicyVersionInput, error) {
-	var it types.CreateDraftPolicyVersionInput
+func (ec *executionContext) unmarshalInputCreateDraftDocumentVersionInput(ctx context.Context, obj any) (types.CreateDraftDocumentVersionInput, error) {
+	var it types.CreateDraftDocumentVersionInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"policyID"}
+	fieldsInOrder := [...]string{"documentID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "policyID":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policyID"))
+		case "documentID":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentID"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.PolicyID = data
+			it.DocumentID = data
 		}
 	}
 
@@ -31741,8 +31741,8 @@ func (ec *executionContext) unmarshalInputCreatePeopleInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreatePolicyInput(ctx context.Context, obj any) (types.CreatePolicyInput, error) {
-	var it types.CreatePolicyInput
+func (ec *executionContext) unmarshalInputCreateDocumentInput(ctx context.Context, obj any) (types.CreateDocumentInput, error) {
+	var it types.CreateDocumentInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -31920,14 +31920,14 @@ func (ec *executionContext) unmarshalInputCreateRiskMeasureMappingInput(ctx cont
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateRiskPolicyMappingInput(ctx context.Context, obj any) (types.CreateRiskPolicyMappingInput, error) {
-	var it types.CreateRiskPolicyMappingInput
+func (ec *executionContext) unmarshalInputCreateRiskDocumentMappingInput(ctx context.Context, obj any) (types.CreateRiskDocumentMappingInput, error) {
+	var it types.CreateRiskDocumentMappingInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"riskId", "policyId"}
+	fieldsInOrder := [...]string{"riskId", "documentId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -31941,13 +31941,13 @@ func (ec *executionContext) unmarshalInputCreateRiskPolicyMappingInput(ctx conte
 				return it, err
 			}
 			it.RiskID = data
-		case "policyId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policyId"))
+		case "documentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.PolicyID = data
+			it.DocumentID = data
 		}
 	}
 
@@ -32265,14 +32265,14 @@ func (ec *executionContext) unmarshalInputDeleteControlMeasureMappingInput(ctx c
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeleteControlPolicyMappingInput(ctx context.Context, obj any) (types.DeleteControlPolicyMappingInput, error) {
-	var it types.DeleteControlPolicyMappingInput
+func (ec *executionContext) unmarshalInputDeleteControlDocumentMappingInput(ctx context.Context, obj any) (types.DeleteControlDocumentMappingInput, error) {
+	var it types.DeleteControlDocumentMappingInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"controlId", "policyId"}
+	fieldsInOrder := [...]string{"controlId", "documentId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -32286,13 +32286,13 @@ func (ec *executionContext) unmarshalInputDeleteControlPolicyMappingInput(ctx co
 				return it, err
 			}
 			it.ControlID = data
-		case "policyId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policyId"))
+		case "documentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.PolicyID = data
+			it.DocumentID = data
 		}
 	}
 
@@ -32434,27 +32434,27 @@ func (ec *executionContext) unmarshalInputDeletePeopleInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeletePolicyInput(ctx context.Context, obj any) (types.DeletePolicyInput, error) {
-	var it types.DeletePolicyInput
+func (ec *executionContext) unmarshalInputDeleteDocumentInput(ctx context.Context, obj any) (types.DeleteDocumentInput, error) {
+	var it types.DeleteDocumentInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"policyId"}
+	fieldsInOrder := [...]string{"documentId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "policyId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policyId"))
+		case "documentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.PolicyID = data
+			it.DocumentID = data
 		}
 	}
 
@@ -32522,14 +32522,14 @@ func (ec *executionContext) unmarshalInputDeleteRiskMeasureMappingInput(ctx cont
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputDeleteRiskPolicyMappingInput(ctx context.Context, obj any) (types.DeleteRiskPolicyMappingInput, error) {
-	var it types.DeleteRiskPolicyMappingInput
+func (ec *executionContext) unmarshalInputDeleteRiskDocumentMappingInput(ctx context.Context, obj any) (types.DeleteRiskDocumentMappingInput, error) {
+	var it types.DeleteRiskDocumentMappingInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"riskId", "policyId"}
+	fieldsInOrder := [...]string{"riskId", "documentId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -32543,13 +32543,13 @@ func (ec *executionContext) unmarshalInputDeleteRiskPolicyMappingInput(ctx conte
 				return it, err
 			}
 			it.RiskID = data
-		case "policyId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policyId"))
+		case "documentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.PolicyID = data
+			it.DocumentID = data
 		}
 	}
 
@@ -32991,8 +32991,8 @@ func (ec *executionContext) unmarshalInputPeopleOrder(ctx context.Context, obj a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPolicyOrder(ctx context.Context, obj any) (types.PolicyOrderBy, error) {
-	var it types.PolicyOrderBy
+func (ec *executionContext) unmarshalInputDocumentOrder(ctx context.Context, obj any) (types.DocumentOrderBy, error) {
+	var it types.DocumentOrderBy
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -33014,7 +33014,7 @@ func (ec *executionContext) unmarshalInputPolicyOrder(ctx context.Context, obj a
 			it.Direction = data
 		case "field":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNPolicyOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyOrderField(ctx, v)
+			data, err := ec.unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33025,8 +33025,8 @@ func (ec *executionContext) unmarshalInputPolicyOrder(ctx context.Context, obj a
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPolicyVersionFilter(ctx context.Context, obj any) (types.PolicyVersionFilter, error) {
-	var it types.PolicyVersionFilter
+func (ec *executionContext) unmarshalInputDocumentVersionFilter(ctx context.Context, obj any) (types.DocumentVersionFilter, error) {
+	var it types.DocumentVersionFilter
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -33041,7 +33041,7 @@ func (ec *executionContext) unmarshalInputPolicyVersionFilter(ctx context.Contex
 		switch k {
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOPolicyStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus(ctx, v)
+			data, err := ec.unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33052,8 +33052,8 @@ func (ec *executionContext) unmarshalInputPolicyVersionFilter(ctx context.Contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPolicyVersionOrder(ctx context.Context, obj any) (types.PolicyVersionOrderBy, error) {
-	var it types.PolicyVersionOrderBy
+func (ec *executionContext) unmarshalInputDocumentVersionOrder(ctx context.Context, obj any) (types.DocumentVersionOrderBy, error) {
+	var it types.DocumentVersionOrderBy
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -33075,7 +33075,7 @@ func (ec *executionContext) unmarshalInputPolicyVersionOrder(ctx context.Context
 			it.Direction = data
 		case "field":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNPolicyVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionOrderField(ctx, v)
+			data, err := ec.unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33086,8 +33086,8 @@ func (ec *executionContext) unmarshalInputPolicyVersionOrder(ctx context.Context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPolicyVersionSignatureOrder(ctx context.Context, obj any) (types.PolicyVersionSignatureOrder, error) {
-	var it types.PolicyVersionSignatureOrder
+func (ec *executionContext) unmarshalInputDocumentVersionSignatureOrder(ctx context.Context, obj any) (types.DocumentVersionSignatureOrder, error) {
+	var it types.DocumentVersionSignatureOrder
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -33102,7 +33102,7 @@ func (ec *executionContext) unmarshalInputPolicyVersionSignatureOrder(ctx contex
 		switch k {
 		case "field":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNPolicyVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureOrderField(ctx, v)
+			data, err := ec.unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -33120,27 +33120,27 @@ func (ec *executionContext) unmarshalInputPolicyVersionSignatureOrder(ctx contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPublishPolicyVersionInput(ctx context.Context, obj any) (types.PublishPolicyVersionInput, error) {
-	var it types.PublishPolicyVersionInput
+func (ec *executionContext) unmarshalInputPublishDocumentVersionInput(ctx context.Context, obj any) (types.PublishDocumentVersionInput, error) {
+	var it types.PublishDocumentVersionInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"policyId"}
+	fieldsInOrder := [...]string{"documentId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "policyId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policyId"))
+		case "documentId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.PolicyID = data
+			it.DocumentID = data
 		}
 	}
 
@@ -33236,20 +33236,20 @@ func (ec *executionContext) unmarshalInputRequestSignatureInput(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"policyVersionId", "signatoryId"}
+	fieldsInOrder := [...]string{"documentVersionId", "signatoryId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "policyVersionId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policyVersionId"))
+		case "documentVersionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentVersionId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.PolicyVersionID = data
+			it.DocumentVersionID = data
 		case "signatoryId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("signatoryId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
@@ -33598,8 +33598,8 @@ func (ec *executionContext) unmarshalInputUpdatePeopleInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdatePolicyInput(ctx context.Context, obj any) (types.UpdatePolicyInput, error) {
-	var it types.UpdatePolicyInput
+func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Context, obj any) (types.UpdateDocumentInput, error) {
+	var it types.UpdateDocumentInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
@@ -33653,27 +33653,27 @@ func (ec *executionContext) unmarshalInputUpdatePolicyInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdatePolicyVersionInput(ctx context.Context, obj any) (types.UpdatePolicyVersionInput, error) {
-	var it types.UpdatePolicyVersionInput
+func (ec *executionContext) unmarshalInputUpdateDocumentVersionInput(ctx context.Context, obj any) (types.UpdateDocumentVersionInput, error) {
+	var it types.UpdateDocumentVersionInput
 	asMap := map[string]any{}
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"policyVersionId", "content"}
+	fieldsInOrder := [...]string{"documentVersionId", "content"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "policyVersionId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("policyVersionId"))
+		case "documentVersionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentVersionId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.PolicyVersionID = data
+			it.DocumentVersionID = data
 		case "content":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -34301,27 +34301,27 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Risk(ctx, sel, obj)
-	case types.PolicyVersionSignature:
-		return ec._PolicyVersionSignature(ctx, sel, &obj)
-	case *types.PolicyVersionSignature:
+	case types.DocumentVersionSignature:
+		return ec._DocumentVersionSignature(ctx, sel, &obj)
+	case *types.DocumentVersionSignature:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._PolicyVersionSignature(ctx, sel, obj)
-	case types.PolicyVersion:
-		return ec._PolicyVersion(ctx, sel, &obj)
-	case *types.PolicyVersion:
+		return ec._DocumentVersionSignature(ctx, sel, obj)
+	case types.DocumentVersion:
+		return ec._DocumentVersion(ctx, sel, &obj)
+	case *types.DocumentVersion:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._PolicyVersion(ctx, sel, obj)
-	case types.Policy:
-		return ec._Policy(ctx, sel, &obj)
-	case *types.Policy:
+		return ec._DocumentVersion(ctx, sel, obj)
+	case types.Document:
+		return ec._Document(ctx, sel, &obj)
+	case *types.Document:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._Policy(ctx, sel, obj)
+		return ec._Document(ctx, sel, obj)
 	case types.People:
 		return ec._People(ctx, sel, &obj)
 	case *types.People:
@@ -34747,7 +34747,7 @@ func (ec *executionContext) _Control(ctx context.Context, sel ast.SelectionSet, 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "policies":
+		case "documents":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -34756,7 +34756,7 @@ func (ec *executionContext) _Control(ctx context.Context, sel ast.SelectionSet, 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Control_policies(ctx, field, obj)
+				res = ec._Control_documents(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -34948,24 +34948,24 @@ func (ec *executionContext) _CreateControlMeasureMappingPayload(ctx context.Cont
 	return out
 }
 
-var createControlPolicyMappingPayloadImplementors = []string{"CreateControlPolicyMappingPayload"}
+var createControlDocumentMappingPayloadImplementors = []string{"CreateControlDocumentMappingPayload"}
 
-func (ec *executionContext) _CreateControlPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateControlPolicyMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createControlPolicyMappingPayloadImplementors)
+func (ec *executionContext) _CreateControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateControlDocumentMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createControlDocumentMappingPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateControlPolicyMappingPayload")
+			out.Values[i] = graphql.MarshalString("CreateControlDocumentMappingPayload")
 		case "controlEdge":
-			out.Values[i] = ec._CreateControlPolicyMappingPayload_controlEdge(ctx, field, obj)
+			out.Values[i] = ec._CreateControlDocumentMappingPayload_controlEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "policyEdge":
-			out.Values[i] = ec._CreateControlPolicyMappingPayload_policyEdge(ctx, field, obj)
+		case "documentEdge":
+			out.Values[i] = ec._CreateControlDocumentMappingPayload_documentEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -34992,19 +34992,19 @@ func (ec *executionContext) _CreateControlPolicyMappingPayload(ctx context.Conte
 	return out
 }
 
-var createDraftPolicyVersionPayloadImplementors = []string{"CreateDraftPolicyVersionPayload"}
+var createDraftDocumentVersionPayloadImplementors = []string{"CreateDraftDocumentVersionPayload"}
 
-func (ec *executionContext) _CreateDraftPolicyVersionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateDraftPolicyVersionPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createDraftPolicyVersionPayloadImplementors)
+func (ec *executionContext) _CreateDraftDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateDraftDocumentVersionPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createDraftDocumentVersionPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateDraftPolicyVersionPayload")
-		case "policyVersionEdge":
-			out.Values[i] = ec._CreateDraftPolicyVersionPayload_policyVersionEdge(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("CreateDraftDocumentVersionPayload")
+		case "documentVersionEdge":
+			out.Values[i] = ec._CreateDraftDocumentVersionPayload_documentVersionEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -35226,24 +35226,24 @@ func (ec *executionContext) _CreatePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var createPolicyPayloadImplementors = []string{"CreatePolicyPayload"}
+var createDocumentPayloadImplementors = []string{"CreateDocumentPayload"}
 
-func (ec *executionContext) _CreatePolicyPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreatePolicyPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createPolicyPayloadImplementors)
+func (ec *executionContext) _CreateDocumentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateDocumentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createDocumentPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreatePolicyPayload")
-		case "policyEdge":
-			out.Values[i] = ec._CreatePolicyPayload_policyEdge(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("CreateDocumentPayload")
+		case "documentEdge":
+			out.Values[i] = ec._CreateDocumentPayload_documentEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "policyVersionEdge":
-			out.Values[i] = ec._CreatePolicyPayload_policyVersionEdge(ctx, field, obj)
+		case "documentVersionEdge":
+			out.Values[i] = ec._CreateDocumentPayload_documentVersionEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -35353,24 +35353,24 @@ func (ec *executionContext) _CreateRiskPayload(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var createRiskPolicyMappingPayloadImplementors = []string{"CreateRiskPolicyMappingPayload"}
+var createRiskDocumentMappingPayloadImplementors = []string{"CreateRiskDocumentMappingPayload"}
 
-func (ec *executionContext) _CreateRiskPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateRiskPolicyMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, createRiskPolicyMappingPayloadImplementors)
+func (ec *executionContext) _CreateRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateRiskDocumentMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createRiskDocumentMappingPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("CreateRiskPolicyMappingPayload")
+			out.Values[i] = graphql.MarshalString("CreateRiskDocumentMappingPayload")
 		case "riskEdge":
-			out.Values[i] = ec._CreateRiskPolicyMappingPayload_riskEdge(ctx, field, obj)
+			out.Values[i] = ec._CreateRiskDocumentMappingPayload_riskEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "policyEdge":
-			out.Values[i] = ec._CreateRiskPolicyMappingPayload_policyEdge(ctx, field, obj)
+		case "documentEdge":
+			out.Values[i] = ec._CreateRiskDocumentMappingPayload_documentEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -35558,24 +35558,24 @@ func (ec *executionContext) _DeleteControlMeasureMappingPayload(ctx context.Cont
 	return out
 }
 
-var deleteControlPolicyMappingPayloadImplementors = []string{"DeleteControlPolicyMappingPayload"}
+var deleteControlDocumentMappingPayloadImplementors = []string{"DeleteControlDocumentMappingPayload"}
 
-func (ec *executionContext) _DeleteControlPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteControlPolicyMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteControlPolicyMappingPayloadImplementors)
+func (ec *executionContext) _DeleteControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteControlDocumentMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteControlDocumentMappingPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteControlPolicyMappingPayload")
+			out.Values[i] = graphql.MarshalString("DeleteControlDocumentMappingPayload")
 		case "deletedControlId":
-			out.Values[i] = ec._DeleteControlPolicyMappingPayload_deletedControlId(ctx, field, obj)
+			out.Values[i] = ec._DeleteControlDocumentMappingPayload_deletedControlId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deletedPolicyId":
-			out.Values[i] = ec._DeleteControlPolicyMappingPayload_deletedPolicyId(ctx, field, obj)
+		case "deletedDocumentId":
+			out.Values[i] = ec._DeleteControlDocumentMappingPayload_deletedDocumentId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -35797,19 +35797,19 @@ func (ec *executionContext) _DeletePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var deletePolicyPayloadImplementors = []string{"DeletePolicyPayload"}
+var deleteDocumentPayloadImplementors = []string{"DeleteDocumentPayload"}
 
-func (ec *executionContext) _DeletePolicyPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeletePolicyPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deletePolicyPayloadImplementors)
+func (ec *executionContext) _DeleteDocumentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteDocumentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteDocumentPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeletePolicyPayload")
-		case "deletedPolicyId":
-			out.Values[i] = ec._DeletePolicyPayload_deletedPolicyId(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("DeleteDocumentPayload")
+		case "deletedDocumentId":
+			out.Values[i] = ec._DeleteDocumentPayload_deletedDocumentId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -35919,24 +35919,24 @@ func (ec *executionContext) _DeleteRiskPayload(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var deleteRiskPolicyMappingPayloadImplementors = []string{"DeleteRiskPolicyMappingPayload"}
+var deleteRiskDocumentMappingPayloadImplementors = []string{"DeleteRiskDocumentMappingPayload"}
 
-func (ec *executionContext) _DeleteRiskPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteRiskPolicyMappingPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, deleteRiskPolicyMappingPayloadImplementors)
+func (ec *executionContext) _DeleteRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteRiskDocumentMappingPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteRiskDocumentMappingPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("DeleteRiskPolicyMappingPayload")
+			out.Values[i] = graphql.MarshalString("DeleteRiskDocumentMappingPayload")
 		case "deletedRiskId":
-			out.Values[i] = ec._DeleteRiskPolicyMappingPayload_deletedRiskId(ctx, field, obj)
+			out.Values[i] = ec._DeleteRiskDocumentMappingPayload_deletedRiskId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deletedPolicyId":
-			out.Values[i] = ec._DeleteRiskPolicyMappingPayload_deletedPolicyId(ctx, field, obj)
+		case "deletedDocumentId":
+			out.Values[i] = ec._DeleteRiskDocumentMappingPayload_deletedDocumentId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -37232,9 +37232,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createControlPolicyMapping":
+		case "createControlDocumentMapping":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createControlPolicyMapping(ctx, field)
+				return ec._Mutation_createControlDocumentMapping(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -37246,9 +37246,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteControlPolicyMapping":
+		case "deleteControlDocumentMapping":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteControlPolicyMapping(ctx, field)
+				return ec._Mutation_deleteControlDocumentMapping(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -37323,16 +37323,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createRiskPolicyMapping":
+		case "createRiskDocumentMapping":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createRiskPolicyMapping(ctx, field)
+				return ec._Mutation_createRiskDocumentMapping(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteRiskPolicyMapping":
+		case "deleteRiskDocumentMapping":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteRiskPolicyMapping(ctx, field)
+				return ec._Mutation_deleteRiskDocumentMapping(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -37386,37 +37386,37 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createPolicy":
+		case "createDocument":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createPolicy(ctx, field)
+				return ec._Mutation_createDocument(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deletePolicy":
+		case "deleteDocument":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deletePolicy(ctx, field)
+				return ec._Mutation_deleteDocument(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "publishPolicyVersion":
+		case "publishDocumentVersion":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_publishPolicyVersion(ctx, field)
+				return ec._Mutation_publishDocumentVersion(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createDraftPolicyVersion":
+		case "createDraftDocumentVersion":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createDraftPolicyVersion(ctx, field)
+				return ec._Mutation_createDraftDocumentVersion(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updatePolicyVersion":
+		case "updateDocumentVersion":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updatePolicyVersion(ctx, field)
+				return ec._Mutation_updateDocumentVersion(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -37713,7 +37713,7 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "policies":
+		case "documents":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -37722,7 +37722,7 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Organization_policies(ctx, field, obj)
+				res = ec._Organization_documents(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -38189,34 +38189,34 @@ func (ec *executionContext) _PeopleEdge(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
-var policyImplementors = []string{"Policy", "Node"}
+var documentImplementors = []string{"Document", "Node"}
 
-func (ec *executionContext) _Policy(ctx context.Context, sel ast.SelectionSet, obj *types.Policy) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, policyImplementors)
+func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet, obj *types.Document) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Policy")
+			out.Values[i] = graphql.MarshalString("Document")
 		case "id":
-			out.Values[i] = ec._Policy_id(ctx, field, obj)
+			out.Values[i] = ec._Document_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "title":
-			out.Values[i] = ec._Policy_title(ctx, field, obj)
+			out.Values[i] = ec._Document_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "description":
-			out.Values[i] = ec._Policy_description(ctx, field, obj)
+			out.Values[i] = ec._Document_description(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "currentPublishedVersion":
-			out.Values[i] = ec._Policy_currentPublishedVersion(ctx, field, obj)
+			out.Values[i] = ec._Document_currentPublishedVersion(ctx, field, obj)
 		case "owner":
 			field := field
 
@@ -38226,7 +38226,7 @@ func (ec *executionContext) _Policy(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Policy_owner(ctx, field, obj)
+				res = ec._Document_owner(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -38262,7 +38262,7 @@ func (ec *executionContext) _Policy(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Policy_organization(ctx, field, obj)
+				res = ec._Document_organization(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -38298,7 +38298,7 @@ func (ec *executionContext) _Policy(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Policy_versions(ctx, field, obj)
+				res = ec._Document_versions(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -38334,7 +38334,7 @@ func (ec *executionContext) _Policy(ctx context.Context, sel ast.SelectionSet, o
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Policy_controls(ctx, field, obj)
+				res = ec._Document_controls(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -38362,12 +38362,12 @@ func (ec *executionContext) _Policy(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "createdAt":
-			out.Values[i] = ec._Policy_createdAt(ctx, field, obj)
+			out.Values[i] = ec._Document_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
-			out.Values[i] = ec._Policy_updatedAt(ctx, field, obj)
+			out.Values[i] = ec._Document_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -38394,24 +38394,24 @@ func (ec *executionContext) _Policy(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
-var policyConnectionImplementors = []string{"PolicyConnection"}
+var documentConnectionImplementors = []string{"DocumentConnection"}
 
-func (ec *executionContext) _PolicyConnection(ctx context.Context, sel ast.SelectionSet, obj *types.PolicyConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, policyConnectionImplementors)
+func (ec *executionContext) _DocumentConnection(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PolicyConnection")
+			out.Values[i] = graphql.MarshalString("DocumentConnection")
 		case "edges":
-			out.Values[i] = ec._PolicyConnection_edges(ctx, field, obj)
+			out.Values[i] = ec._DocumentConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "pageInfo":
-			out.Values[i] = ec._PolicyConnection_pageInfo(ctx, field, obj)
+			out.Values[i] = ec._DocumentConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -38438,24 +38438,24 @@ func (ec *executionContext) _PolicyConnection(ctx context.Context, sel ast.Selec
 	return out
 }
 
-var policyEdgeImplementors = []string{"PolicyEdge"}
+var documentEdgeImplementors = []string{"DocumentEdge"}
 
-func (ec *executionContext) _PolicyEdge(ctx context.Context, sel ast.SelectionSet, obj *types.PolicyEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, policyEdgeImplementors)
+func (ec *executionContext) _DocumentEdge(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PolicyEdge")
+			out.Values[i] = graphql.MarshalString("DocumentEdge")
 		case "cursor":
-			out.Values[i] = ec._PolicyEdge_cursor(ctx, field, obj)
+			out.Values[i] = ec._DocumentEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "node":
-			out.Values[i] = ec._PolicyEdge_node(ctx, field, obj)
+			out.Values[i] = ec._DocumentEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -38482,23 +38482,23 @@ func (ec *executionContext) _PolicyEdge(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
-var policyVersionImplementors = []string{"PolicyVersion", "Node"}
+var documentVersionImplementors = []string{"DocumentVersion", "Node"}
 
-func (ec *executionContext) _PolicyVersion(ctx context.Context, sel ast.SelectionSet, obj *types.PolicyVersion) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, policyVersionImplementors)
+func (ec *executionContext) _DocumentVersion(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersion) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PolicyVersion")
+			out.Values[i] = graphql.MarshalString("DocumentVersion")
 		case "id":
-			out.Values[i] = ec._PolicyVersion_id(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersion_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "policy":
+		case "document":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -38507,7 +38507,7 @@ func (ec *executionContext) _PolicyVersion(ctx context.Context, sel ast.Selectio
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._PolicyVersion_policy(ctx, field, obj)
+				res = ec._DocumentVersion_document(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -38535,22 +38535,22 @@ func (ec *executionContext) _PolicyVersion(ctx context.Context, sel ast.Selectio
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "status":
-			out.Values[i] = ec._PolicyVersion_status(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersion_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "version":
-			out.Values[i] = ec._PolicyVersion_version(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersion_version(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "content":
-			out.Values[i] = ec._PolicyVersion_content(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersion_content(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "changelog":
-			out.Values[i] = ec._PolicyVersion_changelog(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersion_changelog(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -38563,7 +38563,7 @@ func (ec *executionContext) _PolicyVersion(ctx context.Context, sel ast.Selectio
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._PolicyVersion_signatures(ctx, field, obj)
+				res = ec._DocumentVersion_signatures(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -38599,7 +38599,7 @@ func (ec *executionContext) _PolicyVersion(ctx context.Context, sel ast.Selectio
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._PolicyVersion_publishedBy(ctx, field, obj)
+				res = ec._DocumentVersion_publishedBy(ctx, field, obj)
 				return res
 			}
 
@@ -38624,14 +38624,14 @@ func (ec *executionContext) _PolicyVersion(ctx context.Context, sel ast.Selectio
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "publishedAt":
-			out.Values[i] = ec._PolicyVersion_publishedAt(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersion_publishedAt(ctx, field, obj)
 		case "createdAt":
-			out.Values[i] = ec._PolicyVersion_createdAt(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersion_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
-			out.Values[i] = ec._PolicyVersion_updatedAt(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersion_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -38658,24 +38658,24 @@ func (ec *executionContext) _PolicyVersion(ctx context.Context, sel ast.Selectio
 	return out
 }
 
-var policyVersionConnectionImplementors = []string{"PolicyVersionConnection"}
+var documentVersionConnectionImplementors = []string{"DocumentVersionConnection"}
 
-func (ec *executionContext) _PolicyVersionConnection(ctx context.Context, sel ast.SelectionSet, obj *types.PolicyVersionConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, policyVersionConnectionImplementors)
+func (ec *executionContext) _DocumentVersionConnection(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PolicyVersionConnection")
+			out.Values[i] = graphql.MarshalString("DocumentVersionConnection")
 		case "edges":
-			out.Values[i] = ec._PolicyVersionConnection_edges(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "pageInfo":
-			out.Values[i] = ec._PolicyVersionConnection_pageInfo(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -38702,24 +38702,24 @@ func (ec *executionContext) _PolicyVersionConnection(ctx context.Context, sel as
 	return out
 }
 
-var policyVersionEdgeImplementors = []string{"PolicyVersionEdge"}
+var documentVersionEdgeImplementors = []string{"DocumentVersionEdge"}
 
-func (ec *executionContext) _PolicyVersionEdge(ctx context.Context, sel ast.SelectionSet, obj *types.PolicyVersionEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, policyVersionEdgeImplementors)
+func (ec *executionContext) _DocumentVersionEdge(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PolicyVersionEdge")
+			out.Values[i] = graphql.MarshalString("DocumentVersionEdge")
 		case "cursor":
-			out.Values[i] = ec._PolicyVersionEdge_cursor(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "node":
-			out.Values[i] = ec._PolicyVersionEdge_node(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -38746,23 +38746,23 @@ func (ec *executionContext) _PolicyVersionEdge(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var policyVersionSignatureImplementors = []string{"PolicyVersionSignature", "Node"}
+var documentVersionSignatureImplementors = []string{"DocumentVersionSignature", "Node"}
 
-func (ec *executionContext) _PolicyVersionSignature(ctx context.Context, sel ast.SelectionSet, obj *types.PolicyVersionSignature) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, policyVersionSignatureImplementors)
+func (ec *executionContext) _DocumentVersionSignature(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionSignature) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionSignatureImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PolicyVersionSignature")
+			out.Values[i] = graphql.MarshalString("DocumentVersionSignature")
 		case "id":
-			out.Values[i] = ec._PolicyVersionSignature_id(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionSignature_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "policyVersion":
+		case "documentVersion":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -38771,7 +38771,7 @@ func (ec *executionContext) _PolicyVersionSignature(ctx context.Context, sel ast
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._PolicyVersionSignature_policyVersion(ctx, field, obj)
+				res = ec._DocumentVersionSignature_documentVersion(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -38799,7 +38799,7 @@ func (ec *executionContext) _PolicyVersionSignature(ctx context.Context, sel ast
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "state":
-			out.Values[i] = ec._PolicyVersionSignature_state(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionSignature_state(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -38812,7 +38812,7 @@ func (ec *executionContext) _PolicyVersionSignature(ctx context.Context, sel ast
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._PolicyVersionSignature_signedBy(ctx, field, obj)
+				res = ec._DocumentVersionSignature_signedBy(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -38840,9 +38840,9 @@ func (ec *executionContext) _PolicyVersionSignature(ctx context.Context, sel ast
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "signedAt":
-			out.Values[i] = ec._PolicyVersionSignature_signedAt(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionSignature_signedAt(ctx, field, obj)
 		case "requestedAt":
-			out.Values[i] = ec._PolicyVersionSignature_requestedAt(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionSignature_requestedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -38855,7 +38855,7 @@ func (ec *executionContext) _PolicyVersionSignature(ctx context.Context, sel ast
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._PolicyVersionSignature_requestedBy(ctx, field, obj)
+				res = ec._DocumentVersionSignature_requestedBy(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -38883,12 +38883,12 @@ func (ec *executionContext) _PolicyVersionSignature(ctx context.Context, sel ast
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "createdAt":
-			out.Values[i] = ec._PolicyVersionSignature_createdAt(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionSignature_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "updatedAt":
-			out.Values[i] = ec._PolicyVersionSignature_updatedAt(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionSignature_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -38915,24 +38915,24 @@ func (ec *executionContext) _PolicyVersionSignature(ctx context.Context, sel ast
 	return out
 }
 
-var policyVersionSignatureConnectionImplementors = []string{"PolicyVersionSignatureConnection"}
+var documentVersionSignatureConnectionImplementors = []string{"DocumentVersionSignatureConnection"}
 
-func (ec *executionContext) _PolicyVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, obj *types.PolicyVersionSignatureConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, policyVersionSignatureConnectionImplementors)
+func (ec *executionContext) _DocumentVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionSignatureConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionSignatureConnectionImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PolicyVersionSignatureConnection")
+			out.Values[i] = graphql.MarshalString("DocumentVersionSignatureConnection")
 		case "edges":
-			out.Values[i] = ec._PolicyVersionSignatureConnection_edges(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionSignatureConnection_edges(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "pageInfo":
-			out.Values[i] = ec._PolicyVersionSignatureConnection_pageInfo(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionSignatureConnection_pageInfo(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -38959,24 +38959,24 @@ func (ec *executionContext) _PolicyVersionSignatureConnection(ctx context.Contex
 	return out
 }
 
-var policyVersionSignatureEdgeImplementors = []string{"PolicyVersionSignatureEdge"}
+var documentVersionSignatureEdgeImplementors = []string{"DocumentVersionSignatureEdge"}
 
-func (ec *executionContext) _PolicyVersionSignatureEdge(ctx context.Context, sel ast.SelectionSet, obj *types.PolicyVersionSignatureEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, policyVersionSignatureEdgeImplementors)
+func (ec *executionContext) _DocumentVersionSignatureEdge(ctx context.Context, sel ast.SelectionSet, obj *types.DocumentVersionSignatureEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, documentVersionSignatureEdgeImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PolicyVersionSignatureEdge")
+			out.Values[i] = graphql.MarshalString("DocumentVersionSignatureEdge")
 		case "cursor":
-			out.Values[i] = ec._PolicyVersionSignatureEdge_cursor(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionSignatureEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		case "node":
-			out.Values[i] = ec._PolicyVersionSignatureEdge_node(ctx, field, obj)
+			out.Values[i] = ec._DocumentVersionSignatureEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -39003,24 +39003,24 @@ func (ec *executionContext) _PolicyVersionSignatureEdge(ctx context.Context, sel
 	return out
 }
 
-var publishPolicyVersionPayloadImplementors = []string{"PublishPolicyVersionPayload"}
+var publishDocumentVersionPayloadImplementors = []string{"PublishDocumentVersionPayload"}
 
-func (ec *executionContext) _PublishPolicyVersionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.PublishPolicyVersionPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, publishPolicyVersionPayloadImplementors)
+func (ec *executionContext) _PublishDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.PublishDocumentVersionPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, publishDocumentVersionPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("PublishPolicyVersionPayload")
-		case "policyVersion":
-			out.Values[i] = ec._PublishPolicyVersionPayload_policyVersion(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("PublishDocumentVersionPayload")
+		case "documentVersion":
+			out.Values[i] = ec._PublishDocumentVersionPayload_documentVersion(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "policy":
-			out.Values[i] = ec._PublishPolicyVersionPayload_policy(ctx, field, obj)
+		case "document":
+			out.Values[i] = ec._PublishDocumentVersionPayload_document(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -39230,8 +39230,8 @@ func (ec *executionContext) _RequestSignaturePayload(ctx context.Context, sel as
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("RequestSignaturePayload")
-		case "policyVersionSignatureEdge":
-			out.Values[i] = ec._RequestSignaturePayload_policyVersionSignatureEdge(ctx, field, obj)
+		case "documentVersionSignatureEdge":
+			out.Values[i] = ec._RequestSignaturePayload_documentVersionSignatureEdge(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -39434,7 +39434,7 @@ func (ec *executionContext) _Risk(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "policies":
+		case "documents":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -39443,7 +39443,7 @@ func (ec *executionContext) _Risk(ctx context.Context, sel ast.SelectionSet, obj
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Risk_policies(ctx, field, obj)
+				res = ec._Risk_documents(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -40197,19 +40197,19 @@ func (ec *executionContext) _UpdatePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var updatePolicyPayloadImplementors = []string{"UpdatePolicyPayload"}
+var updateDocumentPayloadImplementors = []string{"UpdateDocumentPayload"}
 
-func (ec *executionContext) _UpdatePolicyPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdatePolicyPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updatePolicyPayloadImplementors)
+func (ec *executionContext) _UpdateDocumentPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateDocumentPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateDocumentPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdatePolicyPayload")
-		case "policy":
-			out.Values[i] = ec._UpdatePolicyPayload_policy(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("UpdateDocumentPayload")
+		case "document":
+			out.Values[i] = ec._UpdateDocumentPayload_document(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -40236,19 +40236,19 @@ func (ec *executionContext) _UpdatePolicyPayload(ctx context.Context, sel ast.Se
 	return out
 }
 
-var updatePolicyVersionPayloadImplementors = []string{"UpdatePolicyVersionPayload"}
+var updateDocumentVersionPayloadImplementors = []string{"UpdateDocumentVersionPayload"}
 
-func (ec *executionContext) _UpdatePolicyVersionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdatePolicyVersionPayload) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updatePolicyVersionPayloadImplementors)
+func (ec *executionContext) _UpdateDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateDocumentVersionPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateDocumentVersionPayloadImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("UpdatePolicyVersionPayload")
-		case "policyVersion":
-			out.Values[i] = ec._UpdatePolicyVersionPayload_policyVersion(ctx, field, obj)
+			out.Values[i] = graphql.MarshalString("UpdateDocumentVersionPayload")
+		case "documentVersion":
+			out.Values[i] = ec._UpdateDocumentVersionPayload_documentVersion(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -42247,42 +42247,42 @@ func (ec *executionContext) marshalNCreateControlMeasureMappingPayload2ᚖgithub
 	return ec._CreateControlMeasureMappingPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreateControlPolicyMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlPolicyMappingInput(ctx context.Context, v any) (types.CreateControlPolicyMappingInput, error) {
-	res, err := ec.unmarshalInputCreateControlPolicyMappingInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingInput(ctx context.Context, v any) (types.CreateControlDocumentMappingInput, error) {
+	res, err := ec.unmarshalInputCreateControlDocumentMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCreateControlPolicyMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateControlPolicyMappingPayload) graphql.Marshaler {
-	return ec._CreateControlPolicyMappingPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNCreateControlDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateControlDocumentMappingPayload) graphql.Marshaler {
+	return ec._CreateControlDocumentMappingPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCreateControlPolicyMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateControlPolicyMappingPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNCreateControlDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateControlDocumentMappingPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._CreateControlPolicyMappingPayload(ctx, sel, v)
+	return ec._CreateControlDocumentMappingPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreateDraftPolicyVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDraftPolicyVersionInput(ctx context.Context, v any) (types.CreateDraftPolicyVersionInput, error) {
-	res, err := ec.unmarshalInputCreateDraftPolicyVersionInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateDraftDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDraftDocumentVersionInput(ctx context.Context, v any) (types.CreateDraftDocumentVersionInput, error) {
+	res, err := ec.unmarshalInputCreateDraftDocumentVersionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCreateDraftPolicyVersionPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDraftPolicyVersionPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateDraftPolicyVersionPayload) graphql.Marshaler {
-	return ec._CreateDraftPolicyVersionPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNCreateDraftDocumentVersionPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDraftDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateDraftDocumentVersionPayload) graphql.Marshaler {
+	return ec._CreateDraftDocumentVersionPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCreateDraftPolicyVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDraftPolicyVersionPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateDraftPolicyVersionPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNCreateDraftDocumentVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDraftDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateDraftDocumentVersionPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._CreateDraftPolicyVersionPayload(ctx, sel, v)
+	return ec._CreateDraftDocumentVersionPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateFrameworkInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateFrameworkInput(ctx context.Context, v any) (types.CreateFrameworkInput, error) {
@@ -42361,23 +42361,23 @@ func (ec *executionContext) marshalNCreatePeoplePayload2ᚖgithubᚗcomᚋgetpro
 	return ec._CreatePeoplePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreatePolicyInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreatePolicyInput(ctx context.Context, v any) (types.CreatePolicyInput, error) {
-	res, err := ec.unmarshalInputCreatePolicyInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentInput(ctx context.Context, v any) (types.CreateDocumentInput, error) {
+	res, err := ec.unmarshalInputCreateDocumentInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCreatePolicyPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreatePolicyPayload(ctx context.Context, sel ast.SelectionSet, v types.CreatePolicyPayload) graphql.Marshaler {
-	return ec._CreatePolicyPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNCreateDocumentPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateDocumentPayload) graphql.Marshaler {
+	return ec._CreateDocumentPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCreatePolicyPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreatePolicyPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreatePolicyPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNCreateDocumentPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDocumentPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateDocumentPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._CreatePolicyPayload(ctx, sel, v)
+	return ec._CreateDocumentPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateRiskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskInput(ctx context.Context, v any) (types.CreateRiskInput, error) {
@@ -42418,23 +42418,23 @@ func (ec *executionContext) marshalNCreateRiskPayload2ᚖgithubᚗcomᚋgetprobo
 	return ec._CreateRiskPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCreateRiskPolicyMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskPolicyMappingInput(ctx context.Context, v any) (types.CreateRiskPolicyMappingInput, error) {
-	res, err := ec.unmarshalInputCreateRiskPolicyMappingInput(ctx, v)
+func (ec *executionContext) unmarshalNCreateRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingInput(ctx context.Context, v any) (types.CreateRiskDocumentMappingInput, error) {
+	res, err := ec.unmarshalInputCreateRiskDocumentMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCreateRiskPolicyMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateRiskPolicyMappingPayload) graphql.Marshaler {
-	return ec._CreateRiskPolicyMappingPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNCreateRiskDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateRiskDocumentMappingPayload) graphql.Marshaler {
+	return ec._CreateRiskDocumentMappingPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCreateRiskPolicyMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateRiskPolicyMappingPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNCreateRiskDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateRiskDocumentMappingPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._CreateRiskPolicyMappingPayload(ctx, sel, v)
+	return ec._CreateRiskDocumentMappingPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNCreateTaskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateTaskInput(ctx context.Context, v any) (types.CreateTaskInput, error) {
@@ -42579,23 +42579,23 @@ func (ec *executionContext) marshalNDeleteControlMeasureMappingPayload2ᚖgithub
 	return ec._DeleteControlMeasureMappingPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDeleteControlPolicyMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlPolicyMappingInput(ctx context.Context, v any) (types.DeleteControlPolicyMappingInput, error) {
-	res, err := ec.unmarshalInputDeleteControlPolicyMappingInput(ctx, v)
+func (ec *executionContext) unmarshalNDeleteControlDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingInput(ctx context.Context, v any) (types.DeleteControlDocumentMappingInput, error) {
+	res, err := ec.unmarshalInputDeleteControlDocumentMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeleteControlPolicyMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteControlPolicyMappingPayload) graphql.Marshaler {
-	return ec._DeleteControlPolicyMappingPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNDeleteControlDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteControlDocumentMappingPayload) graphql.Marshaler {
+	return ec._DeleteControlDocumentMappingPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDeleteControlPolicyMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteControlPolicyMappingPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNDeleteControlDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteControlDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteControlDocumentMappingPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._DeleteControlPolicyMappingPayload(ctx, sel, v)
+	return ec._DeleteControlDocumentMappingPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteEvidenceInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteEvidenceInput(ctx context.Context, v any) (types.DeleteEvidenceInput, error) {
@@ -42693,23 +42693,23 @@ func (ec *executionContext) marshalNDeletePeoplePayload2ᚖgithubᚗcomᚋgetpro
 	return ec._DeletePeoplePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDeletePolicyInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeletePolicyInput(ctx context.Context, v any) (types.DeletePolicyInput, error) {
-	res, err := ec.unmarshalInputDeletePolicyInput(ctx, v)
+func (ec *executionContext) unmarshalNDeleteDocumentInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentInput(ctx context.Context, v any) (types.DeleteDocumentInput, error) {
+	res, err := ec.unmarshalInputDeleteDocumentInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeletePolicyPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeletePolicyPayload(ctx context.Context, sel ast.SelectionSet, v types.DeletePolicyPayload) graphql.Marshaler {
-	return ec._DeletePolicyPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNDeleteDocumentPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteDocumentPayload) graphql.Marshaler {
+	return ec._DeleteDocumentPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDeletePolicyPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeletePolicyPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeletePolicyPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNDeleteDocumentPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDocumentPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteDocumentPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._DeletePolicyPayload(ctx, sel, v)
+	return ec._DeleteDocumentPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteRiskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskInput(ctx context.Context, v any) (types.DeleteRiskInput, error) {
@@ -42750,23 +42750,23 @@ func (ec *executionContext) marshalNDeleteRiskPayload2ᚖgithubᚗcomᚋgetprobo
 	return ec._DeleteRiskPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDeleteRiskPolicyMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskPolicyMappingInput(ctx context.Context, v any) (types.DeleteRiskPolicyMappingInput, error) {
-	res, err := ec.unmarshalInputDeleteRiskPolicyMappingInput(ctx, v)
+func (ec *executionContext) unmarshalNDeleteRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingInput(ctx context.Context, v any) (types.DeleteRiskDocumentMappingInput, error) {
+	res, err := ec.unmarshalInputDeleteRiskDocumentMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDeleteRiskPolicyMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteRiskPolicyMappingPayload) graphql.Marshaler {
-	return ec._DeleteRiskPolicyMappingPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNDeleteRiskDocumentMappingPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteRiskDocumentMappingPayload) graphql.Marshaler {
+	return ec._DeleteRiskDocumentMappingPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDeleteRiskPolicyMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskPolicyMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteRiskPolicyMappingPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNDeleteRiskDocumentMappingPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteRiskDocumentMappingPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._DeleteRiskPolicyMappingPayload(ctx, sel, v)
+	return ec._DeleteRiskDocumentMappingPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteTaskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTaskInput(ctx context.Context, v any) (types.DeleteTaskInput, error) {
@@ -43632,35 +43632,35 @@ var (
 	}
 )
 
-func (ec *executionContext) marshalNPolicy2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicy(ctx context.Context, sel ast.SelectionSet, v types.Policy) graphql.Marshaler {
-	return ec._Policy(ctx, sel, &v)
+func (ec *executionContext) marshalNDocument2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx context.Context, sel ast.SelectionSet, v types.Document) graphql.Marshaler {
+	return ec._Document(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPolicy2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicy(ctx context.Context, sel ast.SelectionSet, v *types.Policy) graphql.Marshaler {
+func (ec *executionContext) marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocument(ctx context.Context, sel ast.SelectionSet, v *types.Document) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Policy(ctx, sel, v)
+	return ec._Document(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPolicyConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyConnection(ctx context.Context, sel ast.SelectionSet, v types.PolicyConnection) graphql.Marshaler {
-	return ec._PolicyConnection(ctx, sel, &v)
+func (ec *executionContext) marshalNDocumentConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentConnection) graphql.Marshaler {
+	return ec._DocumentConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPolicyConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyConnection(ctx context.Context, sel ast.SelectionSet, v *types.PolicyConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v *types.DocumentConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._PolicyConnection(ctx, sel, v)
+	return ec._DocumentConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPolicyEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.PolicyEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -43684,7 +43684,7 @@ func (ec *executionContext) marshalNPolicyEdge2ᚕᚖgithubᚗcomᚋgetproboᚋp
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPolicyEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -43704,25 +43704,25 @@ func (ec *executionContext) marshalNPolicyEdge2ᚕᚖgithubᚗcomᚋgetproboᚋp
 	return ret
 }
 
-func (ec *executionContext) marshalNPolicyEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyEdge(ctx context.Context, sel ast.SelectionSet, v *types.PolicyEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentEdge(ctx context.Context, sel ast.SelectionSet, v *types.DocumentEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._PolicyEdge(ctx, sel, v)
+	return ec._DocumentEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPolicyOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyOrderField(ctx context.Context, v any) (coredata.PolicyOrderField, error) {
+func (ec *executionContext) unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField(ctx context.Context, v any) (coredata.DocumentOrderField, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNPolicyOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyOrderField[tmp]
+	res := unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPolicyOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.PolicyOrderField) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentOrderField) graphql.Marshaler {
 	_ = sel
-	res := graphql.MarshalString(marshalNPolicyOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyOrderField[v])
+	res := graphql.MarshalString(marshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -43732,25 +43732,25 @@ func (ec *executionContext) marshalNPolicyOrderField2githubᚗcomᚋgetproboᚋp
 }
 
 var (
-	unmarshalNPolicyOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyOrderField = map[string]coredata.PolicyOrderField{
-		"TITLE":      coredata.PolicyOrderFieldTitle,
-		"CREATED_AT": coredata.PolicyOrderFieldCreatedAt,
+	unmarshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField = map[string]coredata.DocumentOrderField{
+		"TITLE":      coredata.DocumentOrderFieldTitle,
+		"CREATED_AT": coredata.DocumentOrderFieldCreatedAt,
 	}
-	marshalNPolicyOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyOrderField = map[coredata.PolicyOrderField]string{
-		coredata.PolicyOrderFieldTitle:     "TITLE",
-		coredata.PolicyOrderFieldCreatedAt: "CREATED_AT",
+	marshalNDocumentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentOrderField = map[coredata.DocumentOrderField]string{
+		coredata.DocumentOrderFieldTitle:     "TITLE",
+		coredata.DocumentOrderFieldCreatedAt: "CREATED_AT",
 	}
 )
 
-func (ec *executionContext) unmarshalNPolicyStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus(ctx context.Context, v any) (coredata.PolicyStatus, error) {
+func (ec *executionContext) unmarshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, v any) (coredata.DocumentStatus, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNPolicyStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus[tmp]
+	res := unmarshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPolicyStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus(ctx context.Context, sel ast.SelectionSet, v coredata.PolicyStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentStatus) graphql.Marshaler {
 	_ = sel
-	res := graphql.MarshalString(marshalNPolicyStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus[v])
+	res := graphql.MarshalString(marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -43760,45 +43760,45 @@ func (ec *executionContext) marshalNPolicyStatus2githubᚗcomᚋgetproboᚋprobo
 }
 
 var (
-	unmarshalNPolicyStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus = map[string]coredata.PolicyStatus{
-		"DRAFT":     coredata.PolicyStatusDraft,
-		"PUBLISHED": coredata.PolicyStatusPublished,
+	unmarshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[string]coredata.DocumentStatus{
+		"DRAFT":     coredata.DocumentStatusDraft,
+		"PUBLISHED": coredata.DocumentStatusPublished,
 	}
-	marshalNPolicyStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus = map[coredata.PolicyStatus]string{
-		coredata.PolicyStatusDraft:     "DRAFT",
-		coredata.PolicyStatusPublished: "PUBLISHED",
+	marshalNDocumentStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[coredata.DocumentStatus]string{
+		coredata.DocumentStatusDraft:     "DRAFT",
+		coredata.DocumentStatusPublished: "PUBLISHED",
 	}
 )
 
-func (ec *executionContext) marshalNPolicyVersion2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersion(ctx context.Context, sel ast.SelectionSet, v types.PolicyVersion) graphql.Marshaler {
-	return ec._PolicyVersion(ctx, sel, &v)
+func (ec *executionContext) marshalNDocumentVersion2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx context.Context, sel ast.SelectionSet, v types.DocumentVersion) graphql.Marshaler {
+	return ec._DocumentVersion(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPolicyVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersion(ctx context.Context, sel ast.SelectionSet, v *types.PolicyVersion) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentVersion2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersion(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersion) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._PolicyVersion(ctx, sel, v)
+	return ec._DocumentVersion(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPolicyVersionConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionConnection(ctx context.Context, sel ast.SelectionSet, v types.PolicyVersionConnection) graphql.Marshaler {
-	return ec._PolicyVersionConnection(ctx, sel, &v)
+func (ec *executionContext) marshalNDocumentVersionConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentVersionConnection) graphql.Marshaler {
+	return ec._DocumentVersionConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPolicyVersionConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionConnection(ctx context.Context, sel ast.SelectionSet, v *types.PolicyVersionConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentVersionConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionConnection(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._PolicyVersionConnection(ctx, sel, v)
+	return ec._DocumentVersionConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPolicyVersionEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.PolicyVersionEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentVersionEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentVersionEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -43822,7 +43822,7 @@ func (ec *executionContext) marshalNPolicyVersionEdge2ᚕᚖgithubᚗcomᚋgetpr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPolicyVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNDocumentVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -43842,25 +43842,25 @@ func (ec *executionContext) marshalNPolicyVersionEdge2ᚕᚖgithubᚗcomᚋgetpr
 	return ret
 }
 
-func (ec *executionContext) marshalNPolicyVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionEdge(ctx context.Context, sel ast.SelectionSet, v *types.PolicyVersionEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentVersionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionEdge(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._PolicyVersionEdge(ctx, sel, v)
+	return ec._DocumentVersionEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPolicyVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionOrderField(ctx context.Context, v any) (coredata.PolicyVersionOrderField, error) {
+func (ec *executionContext) unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField(ctx context.Context, v any) (coredata.DocumentVersionOrderField, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNPolicyVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionOrderField[tmp]
+	res := unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPolicyVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.PolicyVersionOrderField) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentVersionOrderField) graphql.Marshaler {
 	_ = sel
-	res := graphql.MarshalString(marshalNPolicyVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionOrderField[v])
+	res := graphql.MarshalString(marshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -43870,41 +43870,41 @@ func (ec *executionContext) marshalNPolicyVersionOrderField2githubᚗcomᚋgetpr
 }
 
 var (
-	unmarshalNPolicyVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionOrderField = map[string]coredata.PolicyVersionOrderField{
-		"VERSION":    coredata.PolicyVersionOrderFieldVersion,
-		"CREATED_AT": coredata.PolicyVersionOrderFieldCreatedAt,
+	unmarshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField = map[string]coredata.DocumentVersionOrderField{
+		"VERSION":    coredata.DocumentVersionOrderFieldVersion,
+		"CREATED_AT": coredata.DocumentVersionOrderFieldCreatedAt,
 	}
-	marshalNPolicyVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionOrderField = map[coredata.PolicyVersionOrderField]string{
-		coredata.PolicyVersionOrderFieldVersion:   "VERSION",
-		coredata.PolicyVersionOrderFieldCreatedAt: "CREATED_AT",
+	marshalNDocumentVersionOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionOrderField = map[coredata.DocumentVersionOrderField]string{
+		coredata.DocumentVersionOrderFieldVersion:   "VERSION",
+		coredata.DocumentVersionOrderFieldCreatedAt: "CREATED_AT",
 	}
 )
 
-func (ec *executionContext) marshalNPolicyVersionSignature2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignature(ctx context.Context, sel ast.SelectionSet, v *types.PolicyVersionSignature) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentVersionSignature2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignature(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionSignature) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._PolicyVersionSignature(ctx, sel, v)
+	return ec._DocumentVersionSignature(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPolicyVersionSignatureConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, v types.PolicyVersionSignatureConnection) graphql.Marshaler {
-	return ec._PolicyVersionSignatureConnection(ctx, sel, &v)
+func (ec *executionContext) marshalNDocumentVersionSignatureConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentVersionSignatureConnection) graphql.Marshaler {
+	return ec._DocumentVersionSignatureConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPolicyVersionSignatureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, v *types.PolicyVersionSignatureConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentVersionSignatureConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureConnection(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionSignatureConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._PolicyVersionSignatureConnection(ctx, sel, v)
+	return ec._DocumentVersionSignatureConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPolicyVersionSignatureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignatureEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.PolicyVersionSignatureEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentVersionSignatureEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentVersionSignatureEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -43928,7 +43928,7 @@ func (ec *executionContext) marshalNPolicyVersionSignatureEdge2ᚕᚖgithubᚗco
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPolicyVersionSignatureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignatureEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNDocumentVersionSignatureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -43948,25 +43948,25 @@ func (ec *executionContext) marshalNPolicyVersionSignatureEdge2ᚕᚖgithubᚗco
 	return ret
 }
 
-func (ec *executionContext) marshalNPolicyVersionSignatureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignatureEdge(ctx context.Context, sel ast.SelectionSet, v *types.PolicyVersionSignatureEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentVersionSignatureEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureEdge(ctx context.Context, sel ast.SelectionSet, v *types.DocumentVersionSignatureEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._PolicyVersionSignatureEdge(ctx, sel, v)
+	return ec._DocumentVersionSignatureEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPolicyVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureOrderField(ctx context.Context, v any) (coredata.PolicyVersionSignatureOrderField, error) {
+func (ec *executionContext) unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField(ctx context.Context, v any) (coredata.DocumentVersionSignatureOrderField, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNPolicyVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureOrderField[tmp]
+	res := unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPolicyVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.PolicyVersionSignatureOrderField) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentVersionSignatureOrderField) graphql.Marshaler {
 	_ = sel
-	res := graphql.MarshalString(marshalNPolicyVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureOrderField[v])
+	res := graphql.MarshalString(marshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -43976,25 +43976,25 @@ func (ec *executionContext) marshalNPolicyVersionSignatureOrderField2githubᚗco
 }
 
 var (
-	unmarshalNPolicyVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureOrderField = map[string]coredata.PolicyVersionSignatureOrderField{
-		"CREATED_AT": coredata.PolicyVersionSignatureOrderFieldCreatedAt,
-		"SIGNED_AT":  coredata.PolicyVersionSignatureOrderFieldSignedAt,
+	unmarshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField = map[string]coredata.DocumentVersionSignatureOrderField{
+		"CREATED_AT": coredata.DocumentVersionSignatureOrderFieldCreatedAt,
+		"SIGNED_AT":  coredata.DocumentVersionSignatureOrderFieldSignedAt,
 	}
-	marshalNPolicyVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureOrderField = map[coredata.PolicyVersionSignatureOrderField]string{
-		coredata.PolicyVersionSignatureOrderFieldCreatedAt: "CREATED_AT",
-		coredata.PolicyVersionSignatureOrderFieldSignedAt:  "SIGNED_AT",
+	marshalNDocumentVersionSignatureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureOrderField = map[coredata.DocumentVersionSignatureOrderField]string{
+		coredata.DocumentVersionSignatureOrderFieldCreatedAt: "CREATED_AT",
+		coredata.DocumentVersionSignatureOrderFieldSignedAt:  "SIGNED_AT",
 	}
 )
 
-func (ec *executionContext) unmarshalNPolicyVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureState(ctx context.Context, v any) (coredata.PolicyVersionSignatureState, error) {
+func (ec *executionContext) unmarshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState(ctx context.Context, v any) (coredata.DocumentVersionSignatureState, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNPolicyVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureState[tmp]
+	res := unmarshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPolicyVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureState(ctx context.Context, sel ast.SelectionSet, v coredata.PolicyVersionSignatureState) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentVersionSignatureState) graphql.Marshaler {
 	_ = sel
-	res := graphql.MarshalString(marshalNPolicyVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureState[v])
+	res := graphql.MarshalString(marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -44004,33 +44004,33 @@ func (ec *executionContext) marshalNPolicyVersionSignatureState2githubᚗcomᚋg
 }
 
 var (
-	unmarshalNPolicyVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureState = map[string]coredata.PolicyVersionSignatureState{
-		"REQUESTED": coredata.PolicyVersionSignatureStateRequested,
-		"SIGNED":    coredata.PolicyVersionSignatureStateSigned,
+	unmarshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState = map[string]coredata.DocumentVersionSignatureState{
+		"REQUESTED": coredata.DocumentVersionSignatureStateRequested,
+		"SIGNED":    coredata.DocumentVersionSignatureStateSigned,
 	}
-	marshalNPolicyVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyVersionSignatureState = map[coredata.PolicyVersionSignatureState]string{
-		coredata.PolicyVersionSignatureStateRequested: "REQUESTED",
-		coredata.PolicyVersionSignatureStateSigned:    "SIGNED",
+	marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState = map[coredata.DocumentVersionSignatureState]string{
+		coredata.DocumentVersionSignatureStateRequested: "REQUESTED",
+		coredata.DocumentVersionSignatureStateSigned:    "SIGNED",
 	}
 )
 
-func (ec *executionContext) unmarshalNPublishPolicyVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishPolicyVersionInput(ctx context.Context, v any) (types.PublishPolicyVersionInput, error) {
-	res, err := ec.unmarshalInputPublishPolicyVersionInput(ctx, v)
+func (ec *executionContext) unmarshalNPublishDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishDocumentVersionInput(ctx context.Context, v any) (types.PublishDocumentVersionInput, error) {
+	res, err := ec.unmarshalInputPublishDocumentVersionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPublishPolicyVersionPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishPolicyVersionPayload(ctx context.Context, sel ast.SelectionSet, v types.PublishPolicyVersionPayload) graphql.Marshaler {
-	return ec._PublishPolicyVersionPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNPublishDocumentVersionPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v types.PublishDocumentVersionPayload) graphql.Marshaler {
+	return ec._PublishDocumentVersionPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPublishPolicyVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishPolicyVersionPayload(ctx context.Context, sel ast.SelectionSet, v *types.PublishPolicyVersionPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNPublishDocumentVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v *types.PublishDocumentVersionPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._PublishPolicyVersionPayload(ctx, sel, v)
+	return ec._PublishDocumentVersionPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNRemoveUserInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐRemoveUserInput(ctx context.Context, v any) (types.RemoveUserInput, error) {
@@ -44521,23 +44521,23 @@ func (ec *executionContext) marshalNUpdatePeoplePayload2ᚖgithubᚗcomᚋgetpro
 	return ec._UpdatePeoplePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNUpdatePolicyVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdatePolicyVersionInput(ctx context.Context, v any) (types.UpdatePolicyVersionInput, error) {
-	res, err := ec.unmarshalInputUpdatePolicyVersionInput(ctx, v)
+func (ec *executionContext) unmarshalNUpdateDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionInput(ctx context.Context, v any) (types.UpdateDocumentVersionInput, error) {
+	res, err := ec.unmarshalInputUpdateDocumentVersionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUpdatePolicyVersionPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdatePolicyVersionPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdatePolicyVersionPayload) graphql.Marshaler {
-	return ec._UpdatePolicyVersionPayload(ctx, sel, &v)
+func (ec *executionContext) marshalNUpdateDocumentVersionPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateDocumentVersionPayload) graphql.Marshaler {
+	return ec._UpdateDocumentVersionPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUpdatePolicyVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdatePolicyVersionPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdatePolicyVersionPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNUpdateDocumentVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateDocumentVersionPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._UpdatePolicyVersionPayload(ctx, sel, v)
+	return ec._UpdateDocumentVersionPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateRiskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRiskInput(ctx context.Context, v any) (types.UpdateRiskInput, error) {
@@ -45678,65 +45678,65 @@ func (ec *executionContext) unmarshalOPeopleOrder2ᚖgithubᚗcomᚋgetproboᚋp
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOPolicyOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyOrderBy(ctx context.Context, v any) (*types.PolicyOrderBy, error) {
+func (ec *executionContext) unmarshalODocumentOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentOrderBy(ctx context.Context, v any) (*types.DocumentOrderBy, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputPolicyOrder(ctx, v)
+	res, err := ec.unmarshalInputDocumentOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOPolicyStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus(ctx context.Context, v any) (*coredata.PolicyStatus, error) {
+func (ec *executionContext) unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, v any) (*coredata.DocumentStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalOPolicyStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus[tmp]
+	res := unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[tmp]
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPolicyStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus(ctx context.Context, sel ast.SelectionSet, v *coredata.PolicyStatus) graphql.Marshaler {
+func (ec *executionContext) marshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus(ctx context.Context, sel ast.SelectionSet, v *coredata.DocumentStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	_ = sel
 	_ = ctx
-	res := graphql.MarshalString(marshalOPolicyStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus[*v])
+	res := graphql.MarshalString(marshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus[*v])
 	return res
 }
 
 var (
-	unmarshalOPolicyStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus = map[string]coredata.PolicyStatus{
-		"DRAFT":     coredata.PolicyStatusDraft,
-		"PUBLISHED": coredata.PolicyStatusPublished,
+	unmarshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[string]coredata.DocumentStatus{
+		"DRAFT":     coredata.DocumentStatusDraft,
+		"PUBLISHED": coredata.DocumentStatusPublished,
 	}
-	marshalOPolicyStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐPolicyStatus = map[coredata.PolicyStatus]string{
-		coredata.PolicyStatusDraft:     "DRAFT",
-		coredata.PolicyStatusPublished: "PUBLISHED",
+	marshalODocumentStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentStatus = map[coredata.DocumentStatus]string{
+		coredata.DocumentStatusDraft:     "DRAFT",
+		coredata.DocumentStatusPublished: "PUBLISHED",
 	}
 )
 
-func (ec *executionContext) unmarshalOPolicyVersionFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionFilter(ctx context.Context, v any) (*types.PolicyVersionFilter, error) {
+func (ec *executionContext) unmarshalODocumentVersionFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionFilter(ctx context.Context, v any) (*types.DocumentVersionFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputPolicyVersionFilter(ctx, v)
+	res, err := ec.unmarshalInputDocumentVersionFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOPolicyVersionOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionOrderBy(ctx context.Context, v any) (*types.PolicyVersionOrderBy, error) {
+func (ec *executionContext) unmarshalODocumentVersionOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionOrderBy(ctx context.Context, v any) (*types.DocumentVersionOrderBy, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputPolicyVersionOrder(ctx, v)
+	res, err := ec.unmarshalInputDocumentVersionOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOPolicyVersionSignatureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPolicyVersionSignatureOrder(ctx context.Context, v any) (*types.PolicyVersionSignatureOrder, error) {
+func (ec *executionContext) unmarshalODocumentVersionSignatureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureOrder(ctx context.Context, v any) (*types.DocumentVersionSignatureOrder, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputPolicyVersionSignatureOrder(ctx, v)
+	res, err := ec.unmarshalInputDocumentVersionSignatureOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

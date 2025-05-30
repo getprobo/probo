@@ -13,7 +13,7 @@ import { NavLink, Outlet, Route, Routes, To, useParams } from "react-router";
 
 import { OrganizationBreadcrumbBreadcrumbFrameworkOverviewQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbFrameworkOverviewQuery.graphql";
 import { OrganizationBreadcrumbBreadcrumbPeopleOverviewQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbPeopleOverviewQuery.graphql";
-import { OrganizationBreadcrumbBreadcrumbPolicyOverviewQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbPolicyOverviewQuery.graphql";
+import { OrganizationBreadcrumbBreadcrumbDocumentOverviewQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbDocumentOverviewQuery.graphql";
 import { OrganizationBreadcrumbBreadcrumbVendorOverviewQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbVendorOverviewQuery.graphql";
 import { OrganizationBreadcrumbOrganizationQuery } from "./__generated__/OrganizationBreadcrumbOrganizationQuery.graphql";
 import { OrganizationBreadcrumbBreadcrumbMeasureViewQuery } from "./__generated__/OrganizationBreadcrumbBreadcrumbMeasureViewQuery.graphql";
@@ -264,14 +264,14 @@ function BreadcrumbPeopleOverview() {
   );
 }
 
-function BreadcrumbPolicyList() {
+function BreadcrumbDocumentList() {
   const { organizationId } = useParams();
   return (
     <>
       <BreadcrumbSeparator />
       <BreadcrumbItem>
-        <BreadcrumbNavLink to={`/organizations/${organizationId}/policies`}>
-          Policies
+        <BreadcrumbNavLink to={`/organizations/${organizationId}/documents`}>
+          Documents
         </BreadcrumbNavLink>
       </BreadcrumbItem>
       <Outlet />
@@ -279,23 +279,23 @@ function BreadcrumbPolicyList() {
   );
 }
 
-function BreadcrumbPolicyOverview() {
-  const { organizationId, policyId } = useParams();
+function BreadcrumbDocumentOverview() {
+  const { organizationId, documentId } = useParams();
   const data =
-    useLazyLoadQuery<OrganizationBreadcrumbBreadcrumbPolicyOverviewQuery>(
+    useLazyLoadQuery<OrganizationBreadcrumbBreadcrumbDocumentOverviewQuery>(
       graphql`
-        query OrganizationBreadcrumbBreadcrumbPolicyOverviewQuery(
-          $policyId: ID!
+        query OrganizationBreadcrumbBreadcrumbDocumentOverviewQuery(
+          $documentId: ID!
         ) {
-          policy: node(id: $policyId) {
+          document: node(id: $documentId) {
             id
-            ... on Policy {
+            ... on Document {
               title
             }
           }
         }
       `,
-      { policyId: policyId! },
+      { documentId: documentId! },
       { fetchPolicy: "store-or-network" },
     );
 
@@ -304,9 +304,9 @@ function BreadcrumbPolicyOverview() {
       <BreadcrumbSeparator />
       <BreadcrumbItem>
         <BreadcrumbNavLink
-          to={`/organizations/${organizationId}/policies/${policyId}`}
+          to={`/organizations/${organizationId}/documents/${documentId}`}
         >
-          {data.policy?.title}
+          {data.document?.title}
         </BreadcrumbNavLink>
       </BreadcrumbItem>
       <Outlet />
@@ -531,12 +531,12 @@ export function BreadCrumb() {
             }
           />
         </Route>
-        <Route path="policies" element={<BreadcrumbPolicyList />}>
+        <Route path="documents" element={<BreadcrumbDocumentList />}>
           <Route
-            path=":policyId"
+            path=":documentId"
             element={
               <Suspense>
-                <BreadcrumbPolicyOverview />
+                <BreadcrumbDocumentOverview />
               </Suspense>
             }
           >

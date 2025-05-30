@@ -54,7 +54,7 @@ type (
 		Organizations           *OrganizationService
 		Vendors                 *VendorService
 		Peoples                 *PeopleService
-		Policies                *PolicyService
+		Documents               *DocumentService
 		Controls                *ControlService
 		Risks                   *RiskService
 		VendorComplianceReports *VendorComplianceReportService
@@ -118,7 +118,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 	tenantService.Peoples = &PeopleService{svc: tenantService}
 	tenantService.Vendors = &VendorService{svc: tenantService}
-	tenantService.Policies = &PolicyService{svc: tenantService}
+	tenantService.Documents = &DocumentService{svc: tenantService}
 	tenantService.Organizations = &OrganizationService{
 		svc: tenantService,
 		fileValidator: filevalidation.NewValidator(

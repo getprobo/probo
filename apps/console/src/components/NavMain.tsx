@@ -174,9 +174,9 @@ function getNavItems(organizationId?: string): NavItem[] {
       icon: Store,
     },
     {
-      title: "Policies",
+      title: "Documents",
       url: organizationId
-        ? `/organizations/${organizationId}/policies`
+        ? `/organizations/${organizationId}/documents`
         : undefined,
       icon: FileText,
     },

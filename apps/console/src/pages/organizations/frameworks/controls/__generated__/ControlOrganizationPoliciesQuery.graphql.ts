@@ -9,13 +9,13 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type ControlOrganizationPoliciesQuery$variables = {
+export type ControlOrganizationDocumentsQuery$variables = {
   organizationId: string;
 };
-export type ControlOrganizationPoliciesQuery$data = {
+export type ControlOrganizationDocumentsQuery$data = {
   readonly organization: {
     readonly id: string;
-    readonly policies?: {
+    readonly documents?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly createdAt: string;
@@ -33,9 +33,9 @@ export type ControlOrganizationPoliciesQuery$data = {
     };
   };
 };
-export type ControlOrganizationPoliciesQuery = {
-  response: ControlOrganizationPoliciesQuery$data;
-  variables: ControlOrganizationPoliciesQuery$variables;
+export type ControlOrganizationDocumentsQuery = {
+  response: ControlOrganizationDocumentsQuery$data;
+  variables: ControlOrganizationDocumentsQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -71,7 +71,7 @@ v4 = [
   {
     "alias": null,
     "args": null,
-    "concreteType": "PolicyEdge",
+    "concreteType": "DocumentEdge",
     "kind": "LinkedField",
     "name": "edges",
     "plural": true,
@@ -79,7 +79,7 @@ v4 = [
       {
         "alias": null,
         "args": null,
-        "concreteType": "Policy",
+        "concreteType": "Document",
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
@@ -191,7 +191,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "ControlOrganizationPoliciesQuery",
+    "name": "ControlOrganizationDocumentsQuery",
     "selections": [
       {
         "alias": "organization",
@@ -206,11 +206,11 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
-                "alias": "policies",
+                "alias": "documents",
                 "args": null,
-                "concreteType": "PolicyConnection",
+                "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
-                "name": "__Organization__policies_connection",
+                "name": "__Organization__documents_connection",
                 "plural": false,
                 "selections": (v4/*: any*/),
                 "storageKey": null
@@ -230,7 +230,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "ControlOrganizationPoliciesQuery",
+    "name": "ControlOrganizationDocumentsQuery",
     "selections": [
       {
         "alias": "organization",
@@ -248,21 +248,21 @@ return {
               {
                 "alias": null,
                 "args": (v5/*: any*/),
-                "concreteType": "PolicyConnection",
+                "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
-                "name": "policies",
+                "name": "documents",
                 "plural": false,
                 "selections": (v4/*: any*/),
-                "storageKey": "policies(first:100)"
+                "storageKey": "documents(first:100)"
               },
               {
                 "alias": null,
                 "args": (v5/*: any*/),
                 "filters": null,
                 "handle": "connection",
-                "key": "Organization__policies",
+                "key": "Organization__documents",
                 "kind": "LinkedHandle",
-                "name": "policies"
+                "name": "documents"
               }
             ],
             "type": "Organization",
@@ -284,14 +284,14 @@ return {
           "direction": "forward",
           "path": [
             "organization",
-            "policies"
+            "documents"
           ]
         }
       ]
     },
-    "name": "ControlOrganizationPoliciesQuery",
+    "name": "ControlOrganizationDocumentsQuery",
     "operationKind": "query",
-    "text": "query ControlOrganizationPoliciesQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      policies(first: 100) {\n        edges {\n          node {\n            id\n            title\n            description\n            currentPublishedVersion\n            createdAt\n            updatedAt\n            owner {\n              id\n              fullName\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query ControlOrganizationDocumentsQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            title\n            description\n            currentPublishedVersion\n            createdAt\n            updatedAt\n            owner {\n              id\n              fullName\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

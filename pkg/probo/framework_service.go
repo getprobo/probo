@@ -327,36 +327,36 @@ func (s FrameworkService) ExportAudit(
 					return fmt.Errorf("cannot load measures: %w", err)
 				}
 
-				policies := coredata.Policies{}
+				documents := coredata.Documents{}
 
 				cursor2 := page.NewCursor(
 					0,
 					nil,
 					page.Head,
-					page.OrderBy[coredata.PolicyOrderField]{
-						Field:     coredata.PolicyOrderFieldCreatedAt,
+					page.OrderBy[coredata.DocumentOrderField]{
+						Field:     coredata.DocumentOrderFieldCreatedAt,
 						Direction: page.OrderDirectionAsc,
 					},
 				)
 
-				if err := policies.LoadByControlID(ctx, conn, s.svc.scope, control.ID, cursor2); err != nil {
-					return fmt.Errorf("cannot load policies: %w", err)
+				if err := documents.LoadByControlID(ctx, conn, s.svc.scope, control.ID, cursor2); err != nil {
+					return fmt.Errorf("cannot load documents: %w", err)
 				}
 
-				for _, policy := range policies {
-					policyDir := filepath.Join(controlDir, policy.Title)
-					if err := os.MkdirAll(policyDir, 0755); err != nil {
-						return fmt.Errorf("cannot create policy directory: %w", err)
+				for _, document := range documents {
+					documentDir := filepath.Join(controlDir, document.Title)
+					if err := os.MkdirAll(documentDir, 0755); err != nil {
+						return fmt.Errorf("cannot create document directory: %w", err)
 					}
 
-					version := coredata.PolicyVersion{}
-					if err := version.LoadLatestVersion(ctx, conn, s.svc.scope, policy.ID); err != nil {
-						return fmt.Errorf("cannot load policy version: %w", err)
+					version := coredata.DocumentVersion{}
+					if err := version.LoadLatestVersion(ctx, conn, s.svc.scope, document.ID); err != nil {
+						return fmt.Errorf("cannot load document version: %w", err)
 					}
 
-					policyFile := filepath.Join(policyDir, "policy.md")
-					if err := os.WriteFile(policyFile, []byte(version.Content), 0644); err != nil {
-						return fmt.Errorf("cannot write policy file: %w", err)
+					documentFile := filepath.Join(documentDir, "document.md")
+					if err := os.WriteFile(documentFile, []byte(version.Content), 0644); err != nil {
+						return fmt.Errorf("cannot write document file: %w", err)
 					}
 				}
 

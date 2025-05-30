@@ -62,16 +62,16 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 	return types.NewMeasureConnection(page), nil
 }
 
-// Policies is the resolver for the policies field.
-func (r *controlResolver) Policies(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) (*types.PolicyConnection, error) {
+// Documents is the resolver for the documents field.
+func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.DocumentConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.PolicyOrderField]{
-		Field:     coredata.PolicyOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.PolicyOrderField]{
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -79,12 +79,12 @@ func (r *controlResolver) Policies(ctx context.Context, obj *types.Control, firs
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Policies.ListForControlID(ctx, obj.ID, cursor)
+	page, err := svc.Documents.ListForControlID(ctx, obj.ID, cursor)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list policies: %w", err)
+		return nil, fmt.Errorf("cannot list documents: %w", err)
 	}
 
-	return types.NewPolicyConnection(page), nil
+	return types.NewDocumentConnection(page), nil
 }
 
 // FileURL is the resolver for the fileUrl field.
@@ -730,18 +730,18 @@ func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, inpu
 	}, nil
 }
 
-// CreateControlPolicyMapping is the resolver for the createControlPolicyMapping field.
-func (r *mutationResolver) CreateControlPolicyMapping(ctx context.Context, input types.CreateControlPolicyMappingInput) (*types.CreateControlPolicyMappingPayload, error) {
-	svc := GetTenantService(ctx, r.proboSvc, input.PolicyID.TenantID())
+// CreateControlDocumentMapping is the resolver for the createControlDocumentMapping field.
+func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, input types.CreateControlDocumentMappingInput) (*types.CreateControlDocumentMappingPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.DocumentID.TenantID())
 
-	control, policy, err := svc.Controls.CreatePolicyMapping(ctx, input.ControlID, input.PolicyID)
+	control, document, err := svc.Controls.CreateDocumentMapping(ctx, input.ControlID, input.DocumentID)
 	if err != nil {
-		panic(fmt.Errorf("cannot create control policy mapping: %w", err))
+		panic(fmt.Errorf("cannot create control document mapping: %w", err))
 	}
 
-	return &types.CreateControlPolicyMappingPayload{
-		ControlEdge: types.NewControlEdge(control, coredata.ControlOrderFieldCreatedAt),
-		PolicyEdge:  types.NewPolicyEdge(policy, coredata.PolicyOrderFieldTitle),
+	return &types.CreateControlDocumentMappingPayload{
+		ControlEdge:  types.NewControlEdge(control, coredata.ControlOrderFieldCreatedAt),
+		DocumentEdge: types.NewDocumentEdge(document, coredata.DocumentOrderFieldTitle),
 	}, nil
 }
 
@@ -760,18 +760,18 @@ func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, inpu
 	}, nil
 }
 
-// DeleteControlPolicyMapping is the resolver for the deleteControlPolicyMapping field.
-func (r *mutationResolver) DeleteControlPolicyMapping(ctx context.Context, input types.DeleteControlPolicyMappingInput) (*types.DeleteControlPolicyMappingPayload, error) {
-	svc := GetTenantService(ctx, r.proboSvc, input.PolicyID.TenantID())
+// DeleteControlDocumentMapping is the resolver for the deleteControlDocumentMapping field.
+func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, input types.DeleteControlDocumentMappingInput) (*types.DeleteControlDocumentMappingPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.DocumentID.TenantID())
 
-	control, policy, err := svc.Controls.DeletePolicyMapping(ctx, input.ControlID, input.PolicyID)
+	control, document, err := svc.Controls.DeleteDocumentMapping(ctx, input.ControlID, input.DocumentID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete control policy mapping: %w", err))
+		panic(fmt.Errorf("cannot delete control document mapping: %w", err))
 	}
 
-	return &types.DeleteControlPolicyMappingPayload{
-		DeletedControlID: control.ID,
-		DeletedPolicyID:  policy.ID,
+	return &types.DeleteControlDocumentMappingPayload{
+		DeletedControlID:  control.ID,
+		DeletedDocumentID: document.ID,
 	}, nil
 }
 
@@ -959,33 +959,33 @@ func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input t
 	}, nil
 }
 
-// CreateRiskPolicyMapping is the resolver for the createRiskPolicyMapping field.
-func (r *mutationResolver) CreateRiskPolicyMapping(ctx context.Context, input types.CreateRiskPolicyMappingInput) (*types.CreateRiskPolicyMappingPayload, error) {
+// CreateRiskDocumentMapping is the resolver for the createRiskDocumentMapping field.
+func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input types.CreateRiskDocumentMappingInput) (*types.CreateRiskDocumentMappingPayload, error) {
 	svc := GetTenantService(ctx, r.proboSvc, input.RiskID.TenantID())
 
-	risk, policy, err := svc.Risks.CreatePolicyMapping(ctx, input.RiskID, input.PolicyID)
+	risk, document, err := svc.Risks.CreateDocumentMapping(ctx, input.RiskID, input.DocumentID)
 	if err != nil {
-		panic(fmt.Errorf("cannot create risk policy mapping: %w", err))
+		panic(fmt.Errorf("cannot create risk document mapping: %w", err))
 	}
 
-	return &types.CreateRiskPolicyMappingPayload{
-		RiskEdge:   types.NewRiskEdge(risk, coredata.RiskOrderFieldCreatedAt),
-		PolicyEdge: types.NewPolicyEdge(policy, coredata.PolicyOrderFieldTitle),
+	return &types.CreateRiskDocumentMappingPayload{
+		RiskEdge:     types.NewRiskEdge(risk, coredata.RiskOrderFieldCreatedAt),
+		DocumentEdge: types.NewDocumentEdge(document, coredata.DocumentOrderFieldTitle),
 	}, nil
 }
 
-// DeleteRiskPolicyMapping is the resolver for the deleteRiskPolicyMapping field.
-func (r *mutationResolver) DeleteRiskPolicyMapping(ctx context.Context, input types.DeleteRiskPolicyMappingInput) (*types.DeleteRiskPolicyMappingPayload, error) {
+// DeleteRiskDocumentMapping is the resolver for the deleteRiskDocumentMapping field.
+func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input types.DeleteRiskDocumentMappingInput) (*types.DeleteRiskDocumentMappingPayload, error) {
 	svc := GetTenantService(ctx, r.proboSvc, input.RiskID.TenantID())
 
-	risk, policy, err := svc.Risks.DeletePolicyMapping(ctx, input.RiskID, input.PolicyID)
+	risk, document, err := svc.Risks.DeleteDocumentMapping(ctx, input.RiskID, input.DocumentID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete risk policy mapping: %w", err))
+		panic(fmt.Errorf("cannot delete risk document mapping: %w", err))
 	}
 
-	return &types.DeleteRiskPolicyMappingPayload{
-		DeletedRiskID:   risk.ID,
-		DeletedPolicyID: policy.ID,
+	return &types.DeleteRiskDocumentMappingPayload{
+		DeletedRiskID:     risk.ID,
+		DeletedDocumentID: document.ID,
 	}, nil
 }
 
@@ -1139,8 +1139,8 @@ func (r *mutationResolver) DeleteVendorComplianceReport(ctx context.Context, inp
 	}, nil
 }
 
-// CreatePolicy is the resolver for the createPolicy field.
-func (r *mutationResolver) CreatePolicy(ctx context.Context, input types.CreatePolicyInput) (*types.CreatePolicyPayload, error) {
+// CreateDocument is the resolver for the createDocument field.
+func (r *mutationResolver) CreateDocument(ctx context.Context, input types.CreateDocumentInput) (*types.CreateDocumentPayload, error) {
 	svc := GetTenantService(ctx, r.proboSvc, input.OrganizationID.TenantID())
 
 	user := UserFromContext(ctx)
@@ -1149,9 +1149,9 @@ func (r *mutationResolver) CreatePolicy(ctx context.Context, input types.CreateP
 		panic(fmt.Errorf("cannot get people: %w", err))
 	}
 
-	policy, policyVersion, err := svc.Policies.Create(
+	document, documentVersion, err := svc.Documents.Create(
 		ctx,
-		probo.CreatePolicyRequest{
+		probo.CreateDocumentRequest{
 			OrganizationID: input.OrganizationID,
 			Title:          input.Title,
 			OwnerID:        input.OwnerID,
@@ -1160,32 +1160,32 @@ func (r *mutationResolver) CreatePolicy(ctx context.Context, input types.CreateP
 		},
 	)
 	if err != nil {
-		panic(fmt.Errorf("cannot create policy: %w", err))
+		panic(fmt.Errorf("cannot create document: %w", err))
 	}
 
-	return &types.CreatePolicyPayload{
-		PolicyEdge:        types.NewPolicyEdge(policy, coredata.PolicyOrderFieldTitle),
-		PolicyVersionEdge: types.NewPolicyVersionEdge(policyVersion, coredata.PolicyVersionOrderFieldCreatedAt),
+	return &types.CreateDocumentPayload{
+		DocumentEdge:        types.NewDocumentEdge(document, coredata.DocumentOrderFieldTitle),
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
 }
 
-// DeletePolicy is the resolver for the deletePolicy field.
-func (r *mutationResolver) DeletePolicy(ctx context.Context, input types.DeletePolicyInput) (*types.DeletePolicyPayload, error) {
-	svc := GetTenantService(ctx, r.proboSvc, input.PolicyID.TenantID())
+// DeleteDocument is the resolver for the deleteDocument field.
+func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.DeleteDocumentInput) (*types.DeleteDocumentPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.DocumentID.TenantID())
 
-	err := svc.Policies.Delete(ctx, input.PolicyID)
+	err := svc.Documents.Delete(ctx, input.DocumentID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete policy: %w", err))
+		panic(fmt.Errorf("cannot delete document: %w", err))
 	}
 
-	return &types.DeletePolicyPayload{
-		DeletedPolicyID: input.PolicyID,
+	return &types.DeleteDocumentPayload{
+		DeletedDocumentID: input.DocumentID,
 	}, nil
 }
 
-// PublishPolicyVersion is the resolver for the publishPolicyVersion field.
-func (r *mutationResolver) PublishPolicyVersion(ctx context.Context, input types.PublishPolicyVersionInput) (*types.PublishPolicyVersionPayload, error) {
-	svc := GetTenantService(ctx, r.proboSvc, input.PolicyID.TenantID())
+// PublishDocumentVersion is the resolver for the publishDocumentVersion field.
+func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input types.PublishDocumentVersionInput) (*types.PublishDocumentVersionPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.DocumentID.TenantID())
 	user := UserFromContext(ctx)
 
 	people, err := svc.Peoples.GetByUserID(ctx, user.ID)
@@ -1193,20 +1193,20 @@ func (r *mutationResolver) PublishPolicyVersion(ctx context.Context, input types
 		panic(fmt.Errorf("cannot get people: %w", err))
 	}
 
-	policy, policyVersion, err := svc.Policies.PublishVersion(ctx, input.PolicyID, people.ID)
+	document, documentVersion, err := svc.Documents.PublishVersion(ctx, input.DocumentID, people.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot publish policy version: %w", err))
+		panic(fmt.Errorf("cannot publish document version: %w", err))
 	}
 
-	return &types.PublishPolicyVersionPayload{
-		PolicyVersion: types.NewPolicyVersion(policyVersion),
-		Policy:        types.NewPolicy(policy),
+	return &types.PublishDocumentVersionPayload{
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
+		Document:        types.NewDocument(document),
 	}, nil
 }
 
-// CreateDraftPolicyVersion is the resolver for the createDraftPolicyVersion field.
-func (r *mutationResolver) CreateDraftPolicyVersion(ctx context.Context, input types.CreateDraftPolicyVersionInput) (*types.CreateDraftPolicyVersionPayload, error) {
-	svc := GetTenantService(ctx, r.proboSvc, input.PolicyID.TenantID())
+// CreateDraftDocumentVersion is the resolver for the createDraftDocumentVersion field.
+func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input types.CreateDraftDocumentVersionInput) (*types.CreateDraftDocumentVersionPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.DocumentID.TenantID())
 
 	user := UserFromContext(ctx)
 	people, err := svc.Peoples.GetByUserID(ctx, user.ID)
@@ -1214,36 +1214,36 @@ func (r *mutationResolver) CreateDraftPolicyVersion(ctx context.Context, input t
 		panic(fmt.Errorf("cannot get people: %w", err))
 	}
 
-	policyVersion, err := svc.Policies.CreateDraft(ctx, input.PolicyID, people.ID)
+	documentVersion, err := svc.Documents.CreateDraft(ctx, input.DocumentID, people.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot create draft policy version: %w", err))
+		panic(fmt.Errorf("cannot create draft document version: %w", err))
 	}
 
-	return &types.CreateDraftPolicyVersionPayload{
-		PolicyVersionEdge: types.NewPolicyVersionEdge(policyVersion, coredata.PolicyVersionOrderFieldCreatedAt),
+	return &types.CreateDraftDocumentVersionPayload{
+		DocumentVersionEdge: types.NewDocumentVersionEdge(documentVersion, coredata.DocumentVersionOrderFieldCreatedAt),
 	}, nil
 }
 
-// UpdatePolicyVersion is the resolver for the updatePolicyVersion field.
-func (r *mutationResolver) UpdatePolicyVersion(ctx context.Context, input types.UpdatePolicyVersionInput) (*types.UpdatePolicyVersionPayload, error) {
-	svc := GetTenantService(ctx, r.proboSvc, input.PolicyVersionID.TenantID())
+// UpdateDocumentVersion is the resolver for the updateDocumentVersion field.
+func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input types.UpdateDocumentVersionInput) (*types.UpdateDocumentVersionPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.DocumentVersionID.TenantID())
 
-	policyVersion, err := svc.Policies.UpdateVersion(ctx, probo.UpdatePolicyVersionRequest{
-		ID:      input.PolicyVersionID,
+	documentVersion, err := svc.Documents.UpdateVersion(ctx, probo.UpdateDocumentVersionRequest{
+		ID:      input.DocumentVersionID,
 		Content: input.Content,
 	})
 	if err != nil {
-		panic(fmt.Errorf("cannot update policy version: %w", err))
+		panic(fmt.Errorf("cannot update document version: %w", err))
 	}
 
-	return &types.UpdatePolicyVersionPayload{
-		PolicyVersion: types.NewPolicyVersion(policyVersion),
+	return &types.UpdateDocumentVersionPayload{
+		DocumentVersion: types.NewDocumentVersion(documentVersion),
 	}, nil
 }
 
 // RequestSignature is the resolver for the requestSignature field.
 func (r *mutationResolver) RequestSignature(ctx context.Context, input types.RequestSignatureInput) (*types.RequestSignaturePayload, error) {
-	svc := GetTenantService(ctx, r.proboSvc, input.PolicyVersionID.TenantID())
+	svc := GetTenantService(ctx, r.proboSvc, input.DocumentVersionID.TenantID())
 
 	user := UserFromContext(ctx)
 
@@ -1252,12 +1252,12 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 		panic(fmt.Errorf("cannot get people: %w", err))
 	}
 
-	policyVersionSignature, err := svc.Policies.RequestSignature(
+	documentVersionSignature, err := svc.Documents.RequestSignature(
 		ctx,
 		probo.RequestSignatureRequest{
-			PolicyVersionID: input.PolicyVersionID,
-			RequestedBy:     people.ID,
-			Signatory:       input.SignatoryID,
+			DocumentVersionID: input.DocumentVersionID,
+			RequestedBy:       people.ID,
+			Signatory:         input.SignatoryID,
 		},
 	)
 	if err != nil {
@@ -1265,7 +1265,7 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 	}
 
 	return &types.RequestSignaturePayload{
-		PolicyVersionSignatureEdge: types.NewPolicyVersionSignatureEdge(policyVersionSignature, coredata.PolicyVersionSignatureOrderFieldCreatedAt),
+		DocumentVersionSignatureEdge: types.NewDocumentVersionSignatureEdge(documentVersionSignature, coredata.DocumentVersionSignatureOrderFieldCreatedAt),
 	}, nil
 }
 
@@ -1273,7 +1273,7 @@ func (r *mutationResolver) RequestSignature(ctx context.Context, input types.Req
 func (r *mutationResolver) SendSigningNotifications(ctx context.Context, input types.SendSigningNotificationsInput) (*types.SendSigningNotificationsPayload, error) {
 	svc := GetTenantService(ctx, r.proboSvc, input.OrganizationID.TenantID())
 
-	err := svc.Policies.SendSigningNotifications(ctx, input.OrganizationID)
+	err := svc.Documents.SendSigningNotifications(ctx, input.OrganizationID)
 	if err != nil {
 		panic(fmt.Errorf("cannot send signing notifications: %w", err))
 	}
@@ -1467,16 +1467,16 @@ func (r *organizationResolver) Peoples(ctx context.Context, obj *types.Organizat
 	return types.NewPeopleConnection(page), nil
 }
 
-// Policies is the resolver for the policies field.
-func (r *organizationResolver) Policies(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) (*types.PolicyConnection, error) {
+// Documents is the resolver for the documents field.
+func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.DocumentConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.PolicyOrderField]{
-		Field:     coredata.PolicyOrderFieldTitle,
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldTitle,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.PolicyOrderField]{
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1484,12 +1484,12 @@ func (r *organizationResolver) Policies(ctx context.Context, obj *types.Organiza
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Policies.ListByOrganizationID(ctx, obj.ID, cursor)
+	page, err := svc.Documents.ListByOrganizationID(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list organization policies: %w", err))
+		panic(fmt.Errorf("cannot list organization documents: %w", err))
 	}
 
-	return types.NewPolicyConnection(page), nil
+	return types.NewDocumentConnection(page), nil
 }
 
 // Measures is the resolver for the measures field.
@@ -1568,16 +1568,16 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 }
 
 // Owner is the resolver for the owner field.
-func (r *policyResolver) Owner(ctx context.Context, obj *types.Policy) (*types.People, error) {
+func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*types.People, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	policy, err := svc.Policies.Get(ctx, obj.ID)
+	document, err := svc.Documents.Get(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get policy: %w", err))
+		panic(fmt.Errorf("cannot get document: %w", err))
 	}
 
 	// Get the owner
-	owner, err := svc.Peoples.Get(ctx, policy.OwnerID)
+	owner, err := svc.Peoples.Get(ctx, document.OwnerID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
@@ -1586,15 +1586,15 @@ func (r *policyResolver) Owner(ctx context.Context, obj *types.Policy) (*types.P
 }
 
 // Organization is the resolver for the organization field.
-func (r *policyResolver) Organization(ctx context.Context, obj *types.Policy) (*types.Organization, error) {
+func (r *documentResolver) Organization(ctx context.Context, obj *types.Document) (*types.Organization, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	policy, err := svc.Policies.Get(ctx, obj.ID)
+	document, err := svc.Documents.Get(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get policy: %w", err))
+		panic(fmt.Errorf("cannot get document: %w", err))
 	}
 
-	organization, err := svc.Organizations.Get(ctx, policy.OrganizationID)
+	organization, err := svc.Organizations.Get(ctx, document.OrganizationID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -1603,15 +1603,15 @@ func (r *policyResolver) Organization(ctx context.Context, obj *types.Policy) (*
 }
 
 // Versions is the resolver for the versions field.
-func (r *policyResolver) Versions(ctx context.Context, obj *types.Policy, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyVersionOrderBy, filter *types.PolicyVersionFilter) (*types.PolicyVersionConnection, error) {
+func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.PolicyVersionOrderField]{
-		Field:     coredata.PolicyVersionOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
+		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.PolicyVersionOrderField]{
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1619,16 +1619,16 @@ func (r *policyResolver) Versions(ctx context.Context, obj *types.Policy, first 
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Policies.ListVersions(ctx, obj.ID, cursor)
+	page, err := svc.Documents.ListVersions(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list policy versions: %w", err))
+		panic(fmt.Errorf("cannot list document versions: %w", err))
 	}
 
-	return types.NewPolicyVersionConnection(page), nil
+	return types.NewDocumentVersionConnection(page), nil
 }
 
 // Controls is the resolver for the controls field.
-func (r *policyResolver) Controls(ctx context.Context, obj *types.Policy, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error) {
+func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy) (*types.ControlConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
@@ -1644,41 +1644,41 @@ func (r *policyResolver) Controls(ctx context.Context, obj *types.Policy, first 
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Controls.ListForPolicyID(ctx, obj.ID, cursor)
+	page, err := svc.Controls.ListForDocumentID(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list policy controls: %w", err))
+		panic(fmt.Errorf("cannot list document controls: %w", err))
 	}
 
 	return types.NewControlConnection(page), nil
 }
 
-// Policy is the resolver for the policy field.
-func (r *policyVersionResolver) Policy(ctx context.Context, obj *types.PolicyVersion) (*types.Policy, error) {
+// Document is the resolver for the document field.
+func (r *documentVersionResolver) Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	policyVersion, err := svc.Policies.GetVersion(ctx, obj.ID)
+	documentVersion, err := svc.Documents.GetVersion(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get policy version: %w", err))
+		panic(fmt.Errorf("cannot get document version: %w", err))
 	}
 
-	policy, err := svc.Policies.Get(ctx, policyVersion.PolicyID)
+	document, err := svc.Documents.Get(ctx, documentVersion.DocumentID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get policy: %w", err))
+		panic(fmt.Errorf("cannot get document: %w", err))
 	}
 
-	return types.NewPolicy(policy), nil
+	return types.NewDocument(document), nil
 }
 
 // Signatures is the resolver for the signatures field.
-func (r *policyVersionResolver) Signatures(ctx context.Context, obj *types.PolicyVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyVersionSignatureOrder) (*types.PolicyVersionSignatureConnection, error) {
+func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) (*types.DocumentVersionSignatureConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.PolicyVersionSignatureOrderField]{
-		Field:     coredata.PolicyVersionSignatureOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
+		Field:     coredata.DocumentVersionSignatureOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.PolicyVersionSignatureOrderField]{
+		pageOrderBy = page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1686,28 +1686,28 @@ func (r *policyVersionResolver) Signatures(ctx context.Context, obj *types.Polic
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Policies.ListSignatures(ctx, obj.ID, cursor)
+	page, err := svc.Documents.ListSignatures(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list policy version signatures: %w", err))
+		panic(fmt.Errorf("cannot list document version signatures: %w", err))
 	}
 
-	return types.NewPolicyVersionSignatureConnection(page), nil
+	return types.NewDocumentVersionSignatureConnection(page), nil
 }
 
 // PublishedBy is the resolver for the publishedBy field.
-func (r *policyVersionResolver) PublishedBy(ctx context.Context, obj *types.PolicyVersion) (*types.People, error) {
+func (r *documentVersionResolver) PublishedBy(ctx context.Context, obj *types.DocumentVersion) (*types.People, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	policyVersion, err := svc.Policies.GetVersion(ctx, obj.ID)
+	documentVersion, err := svc.Documents.GetVersion(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get policy version: %w", err))
+		panic(fmt.Errorf("cannot get document version: %w", err))
 	}
 
-	if policyVersion.PublishedBy == nil {
+	if documentVersion.PublishedBy == nil {
 		return nil, nil
 	}
 
-	people, err := svc.Peoples.Get(ctx, *policyVersion.PublishedBy)
+	people, err := svc.Peoples.Get(ctx, *documentVersion.PublishedBy)
 	if err != nil {
 		panic(fmt.Errorf("cannot get people: %w", err))
 	}
@@ -1715,33 +1715,33 @@ func (r *policyVersionResolver) PublishedBy(ctx context.Context, obj *types.Poli
 	return types.NewPeople(people), nil
 }
 
-// PolicyVersion is the resolver for the policyVersion field.
-func (r *policyVersionSignatureResolver) PolicyVersion(ctx context.Context, obj *types.PolicyVersionSignature) (*types.PolicyVersion, error) {
+// DocumentVersion is the resolver for the documentVersion field.
+func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	policyVersionSignature, err := svc.Policies.GetVersionSignature(ctx, obj.ID)
+	documentVersionSignature, err := svc.Documents.GetVersionSignature(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get policy version signature: %w", err))
+		panic(fmt.Errorf("cannot get document version signature: %w", err))
 	}
 
-	policyVersion, err := svc.Policies.GetVersion(ctx, policyVersionSignature.PolicyVersionID)
+	documentVersion, err := svc.Documents.GetVersion(ctx, documentVersionSignature.DocumentVersionID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get policy version: %w", err))
+		panic(fmt.Errorf("cannot get document version: %w", err))
 	}
 
-	return types.NewPolicyVersion(policyVersion), nil
+	return types.NewDocumentVersion(documentVersion), nil
 }
 
 // SignedBy is the resolver for the signedBy field.
-func (r *policyVersionSignatureResolver) SignedBy(ctx context.Context, obj *types.PolicyVersionSignature) (*types.People, error) {
+func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	policyVersionSignature, err := svc.Policies.GetVersionSignature(ctx, obj.ID)
+	documentVersionSignature, err := svc.Documents.GetVersionSignature(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get policy version signature: %w", err))
+		panic(fmt.Errorf("cannot get document version signature: %w", err))
 	}
 
-	people, err := svc.Peoples.Get(ctx, policyVersionSignature.SignedBy)
+	people, err := svc.Peoples.Get(ctx, documentVersionSignature.SignedBy)
 	if err != nil {
 		panic(fmt.Errorf("cannot get people: %w", err))
 	}
@@ -1750,15 +1750,15 @@ func (r *policyVersionSignatureResolver) SignedBy(ctx context.Context, obj *type
 }
 
 // RequestedBy is the resolver for the requestedBy field.
-func (r *policyVersionSignatureResolver) RequestedBy(ctx context.Context, obj *types.PolicyVersionSignature) (*types.People, error) {
+func (r *documentVersionSignatureResolver) RequestedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	policyVersionSignature, err := svc.Policies.GetVersionSignature(ctx, obj.ID)
+	documentVersionSignature, err := svc.Documents.GetVersionSignature(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get policy version signature: %w", err))
+		panic(fmt.Errorf("cannot get document version signature: %w", err))
 	}
 
-	people, err := svc.Peoples.Get(ctx, policyVersionSignature.RequestedBy)
+	people, err := svc.Peoples.Get(ctx, documentVersionSignature.RequestedBy)
 	if err != nil {
 		panic(fmt.Errorf("cannot get people: %w", err))
 	}
@@ -1820,12 +1820,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		return types.NewEvidence(evidence), nil
-	case coredata.PolicyEntityType:
-		policy, err := svc.Policies.Get(ctx, id)
+	case coredata.DocumentEntityType:
+		document, err := svc.Documents.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("cannot get policy: %w", err))
+			panic(fmt.Errorf("cannot get document: %w", err))
 		}
-		return types.NewPolicy(policy), nil
+		return types.NewDocument(document), nil
 	case coredata.ControlEntityType:
 		control, err := svc.Controls.Get(ctx, id)
 		if err != nil {
@@ -1845,18 +1845,18 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			panic(fmt.Errorf("cannot get vendor compliance report: %w", err))
 		}
 		return types.NewVendorComplianceReport(vendorComplianceReport), nil
-	case coredata.PolicyVersionEntityType:
-		policyVersion, err := svc.Policies.GetVersion(ctx, id)
+	case coredata.DocumentVersionEntityType:
+		documentVersion, err := svc.Documents.GetVersion(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("cannot get policy version: %w", err))
+			panic(fmt.Errorf("cannot get document version: %w", err))
 		}
-		return types.NewPolicyVersion(policyVersion), nil
-	case coredata.PolicyVersionSignatureEntityType:
-		policyVersionSignature, err := svc.Policies.GetVersionSignature(ctx, id)
+		return types.NewDocumentVersion(documentVersion), nil
+	case coredata.DocumentVersionSignatureEntityType:
+		documentVersionSignature, err := svc.Documents.GetVersionSignature(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("cannot get policy version signature: %w", err))
+			panic(fmt.Errorf("cannot get document version signature: %w", err))
 		}
-		return types.NewPolicyVersionSignature(policyVersionSignature), nil
+		return types.NewDocumentVersionSignature(documentVersionSignature), nil
 	default:
 	}
 
@@ -1937,16 +1937,16 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 	return types.NewMeasureConnection(page), nil
 }
 
-// Policies is the resolver for the policies field.
-func (r *riskResolver) Policies(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PolicyOrderBy) (*types.PolicyConnection, error) {
+// Documents is the resolver for the documents field.
+func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.DocumentConnection, error) {
 	svc := GetTenantService(ctx, r.proboSvc, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.PolicyOrderField]{
-		Field:     coredata.PolicyOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.PolicyOrderField]{
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -1954,12 +1954,12 @@ func (r *riskResolver) Policies(ctx context.Context, obj *types.Risk, first *int
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := svc.Policies.ListForRiskID(ctx, obj.ID, cursor)
+	page, err := svc.Documents.ListForRiskID(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list risk policies: %w", err))
+		panic(fmt.Errorf("cannot list risk documents: %w", err))
 	}
 
-	return types.NewPolicyConnection(page), nil
+	return types.NewDocumentConnection(page), nil
 }
 
 // Controls is the resolver for the controls field.
@@ -2283,15 +2283,17 @@ func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver
 // Organization returns schema.OrganizationResolver implementation.
 func (r *Resolver) Organization() schema.OrganizationResolver { return &organizationResolver{r} }
 
-// Policy returns schema.PolicyResolver implementation.
-func (r *Resolver) Policy() schema.PolicyResolver { return &policyResolver{r} }
+// Document returns schema.DocumentResolver implementation.
+func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver{r} }
 
-// PolicyVersion returns schema.PolicyVersionResolver implementation.
-func (r *Resolver) PolicyVersion() schema.PolicyVersionResolver { return &policyVersionResolver{r} }
+// DocumentVersion returns schema.DocumentVersionResolver implementation.
+func (r *Resolver) DocumentVersion() schema.DocumentVersionResolver {
+	return &documentVersionResolver{r}
+}
 
-// PolicyVersionSignature returns schema.PolicyVersionSignatureResolver implementation.
-func (r *Resolver) PolicyVersionSignature() schema.PolicyVersionSignatureResolver {
-	return &policyVersionSignatureResolver{r}
+// DocumentVersionSignature returns schema.DocumentVersionSignatureResolver implementation.
+func (r *Resolver) DocumentVersionSignature() schema.DocumentVersionSignatureResolver {
+	return &documentVersionSignatureResolver{r}
 }
 
 // Query returns schema.QueryResolver implementation.
@@ -2328,9 +2330,9 @@ type frameworkResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
-type policyResolver struct{ *Resolver }
-type policyVersionResolver struct{ *Resolver }
-type policyVersionSignatureResolver struct{ *Resolver }
+type documentResolver struct{ *Resolver }
+type documentVersionResolver struct{ *Resolver }
+type documentVersionSignatureResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }

@@ -56,11 +56,11 @@ func (c Control) CursorKey(orderBy ControlOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-func (c *Controls) LoadByPolicyID(
+func (c *Controls) LoadByDocumentID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	policyID gid.GID,
+	documentID gid.GID,
 	cursor *page.Cursor[ControlOrderField],
 ) error {
 	q := `
@@ -77,9 +77,9 @@ WITH ctrl AS (
 	FROM
 		controls c
 	INNER JOIN
-		controls_policies cp ON c.id = cp.control_id
+		controls_documents cp ON c.id = cp.control_id
 	WHERE
-		cp.policy_id = @policy_id
+		cp.document_id = @document_id
 )
 SELECT
 	id,
@@ -97,7 +97,7 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.NamedArgs{"policy_id": policyID}
+	args := pgx.NamedArgs{"document_id": documentID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
@@ -196,9 +196,9 @@ WITH ctrl AS (
 	FROM
 		controls c
 	LEFT JOIN
-		controls_policies cp ON c.id = cp.control_id
+		controls_documents cp ON c.id = cp.control_id
 	LEFT JOIN
-		risks_policies rp ON cp.policy_id = rp.policy_id
+		risks_documents rp ON cp.document_id = rp.document_id
 	LEFT JOIN
 		controls_measures cm ON c.id = cm.control_id
 	LEFT JOIN
@@ -449,7 +449,7 @@ UPDATE controls SET
     updated_at = @updated_at
 WHERE %s
     AND id = @control_id
-RETURNING 
+RETURNING
     id,
     framework_id,
     tenant_id,

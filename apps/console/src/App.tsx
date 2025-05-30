@@ -7,7 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { RelayEnvironmentProvider } from "react-relay";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import "./App.css";
-import "./styles/policy-content.css";
+import "./styles/document-content.css";
 import ErrorBoundary from "./components/ErrorBoundary";
 import AuthLayout from "./layouts/AuthLayout";
 import { RelayEnvironment } from "./RelayEnvironment";
@@ -55,7 +55,7 @@ function App() {
                   />
 
                   <Route
-                    path="policies/signing-requests"
+                    path="documents/signing-requests"
                     element={<SigningRequestsPage />}
                   />
 

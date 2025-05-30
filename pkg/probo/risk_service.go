@@ -80,13 +80,13 @@ func (s RiskService) ListForMeasureID(
 	return page.NewPage(risks, cursor), nil
 }
 
-func (s RiskService) CreatePolicyMapping(
+func (s RiskService) CreateDocumentMapping(
 	ctx context.Context,
 	riskID gid.GID,
-	policyID gid.GID,
-) (*coredata.Risk, *coredata.Policy, error) {
+	documentID gid.GID,
+) (*coredata.Risk, *coredata.Document, error) {
 	risk := &coredata.Risk{}
-	policy := &coredata.Policy{}
+	document := &coredata.Document{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -95,36 +95,36 @@ func (s RiskService) CreatePolicyMapping(
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := policy.LoadByID(ctx, conn, s.svc.scope, policyID); err != nil {
-				return fmt.Errorf("cannot load policy: %w", err)
+			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
 			}
 
-			riskPolicy := &coredata.RiskPolicy{
-				RiskID:    risk.ID,
-				PolicyID:  policy.ID,
-				TenantID:  s.svc.scope.GetTenantID(),
-				CreatedAt: time.Now(),
+			riskDocument := &coredata.RiskDocument{
+				RiskID:     risk.ID,
+				DocumentID: document.ID,
+				TenantID:   s.svc.scope.GetTenantID(),
+				CreatedAt:  time.Now(),
 			}
 
-			return riskPolicy.Insert(ctx, conn, s.svc.scope)
+			return riskDocument.Insert(ctx, conn, s.svc.scope)
 		},
 	)
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot create risk policy mapping: %w", err)
+		return nil, nil, fmt.Errorf("cannot create risk document mapping: %w", err)
 	}
 
-	return risk, policy, nil
+	return risk, document, nil
 }
 
-func (s RiskService) DeletePolicyMapping(
+func (s RiskService) DeleteDocumentMapping(
 	ctx context.Context,
 	riskID gid.GID,
-	policyID gid.GID,
-) (*coredata.Risk, *coredata.Policy, error) {
-	riskPolicy := &coredata.RiskPolicy{}
+	documentID gid.GID,
+) (*coredata.Risk, *coredata.Document, error) {
+	riskDocument := &coredata.RiskDocument{}
 	risk := &coredata.Risk{}
-	policy := &coredata.Policy{}
+	document := &coredata.Document{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -133,19 +133,19 @@ func (s RiskService) DeletePolicyMapping(
 				return fmt.Errorf("cannot load risk: %w", err)
 			}
 
-			if err := policy.LoadByID(ctx, conn, s.svc.scope, policyID); err != nil {
-				return fmt.Errorf("cannot load policy: %w", err)
+			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
 			}
 
-			return riskPolicy.Delete(ctx, conn, s.svc.scope, risk.ID, policy.ID)
+			return riskDocument.Delete(ctx, conn, s.svc.scope, risk.ID, document.ID)
 		},
 	)
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot delete risk policy mapping: %w", err)
+		return nil, nil, fmt.Errorf("cannot delete risk document mapping: %w", err)
 	}
 
-	return risk, policy, nil
+	return risk, document, nil
 }
 
 func (s RiskService) CreateMeasureMapping(

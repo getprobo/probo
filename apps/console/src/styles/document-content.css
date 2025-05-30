@@ -1,0 +1,127 @@
+/* Document Content Styles */
+.document-content {
+  line-height: 1.6;
+}
+
+.document-content h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  color: hsl(var(--foreground));
+}
+
+.document-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  color: hsl(var(--foreground));
+}
+
+.document-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: hsl(var(--foreground));
+}
+
+.document-content h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: hsl(var(--foreground));
+}
+
+.document-content p {
+  margin-bottom: 1rem;
+}
+
+.document-content ul,
+.document-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.document-content ul {
+  list-style-type: disc;
+}
+
+.document-content ol {
+  list-style-type: decimal;
+}
+
+.document-content li {
+  margin-bottom: 0.5rem;
+}
+
+.document-content a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+.document-content a:hover {
+  text-decoration: none;
+}
+
+.document-content blockquote {
+  border-left: 4px solid hsl(var(--solid-b));
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-right: 0;
+  font-style: italic;
+  color: hsl(var(--tertiary));
+}
+
+.document-content code {
+  font-family: monospace;
+  background-color: hsl(var(--invert-bg));
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.document-content pre {
+  background-color: hsl(var(--invert-bg));
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.document-content pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.document-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.document-content th,
+.document-content td {
+  border: 1px solid hsl(var(--solid-b));
+  padding: 0.5rem;
+}
+
+.document-content th {
+  background-color: hsl(var(--invert-bg));
+  font-weight: 600;
+}
+
+.document-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.document-content hr {
+  border: 0;
+  border-top: 1px solid hsl(var(--solid-b));
+  margin: 1.5rem 0;
+}

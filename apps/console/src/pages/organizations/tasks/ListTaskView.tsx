@@ -224,18 +224,18 @@ interface Task {
   badges?: Badge[];
 }
 
-function TaskCard({ task, onClick, onToggleState }: { 
-  task: Task; 
+function TaskCard({ task, onClick, onToggleState }: {
+  task: Task;
   onClick?: (task: Task) => void;
   onToggleState?: (taskId: string, newState: TaskState) => void;
 }) {
   return (
-    <div 
+    <div
       className="flex justify-between items-center px-6 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
       onClick={() => onClick && onClick(task)}
     >
       <div className="flex gap-4 items-center">
-        <div 
+        <div
           className="flex items-center cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
@@ -258,11 +258,11 @@ function TaskCard({ task, onClick, onToggleState }: {
             <span className={`text-sm font-medium ${task.state === "DONE" ? "text-gray-500 line-through" : "text-gray-900"}`}>
               {task.name}
             </span>
-            <Badge 
-              variant="outline" 
-              className={`text-xs px-1.5 py-0.5 rounded-lg flex items-center gap-1 
-                ${task.state === "TODO" 
-                  ? "bg-green-50 text-green-700 border-green-200" 
+            <Badge
+              variant="outline"
+              className={`text-xs px-1.5 py-0.5 rounded-lg flex items-center gap-1
+                ${task.state === "TODO"
+                  ? "bg-green-50 text-green-700 border-green-200"
                   : "bg-gray-50 text-gray-700 border-gray-200"}
               `}
             >
@@ -282,7 +282,7 @@ function TaskCard({ task, onClick, onToggleState }: {
           )}
         </div>
       </div>
-      
+
       <div className="flex items-center gap-4">
         <div className="flex gap-2">
           {task.badges && task.badges.map((badge) => (
@@ -324,19 +324,19 @@ function ListTaskContent({
     organizationQuery,
     organizationQueryRef
   );
-  
+
   const organization = data.node;
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
-  
+
   // Get organization members
   const members = organizationData.organization?.peoples?.edges.map(edge => edge.node) || [];
-  
+
   // Fetch measures
   const environment = useRelayEnvironment();
   const [measures, setMeasures] = useState<Array<{id: string, name: string, category: string, description?: string, state?: string}>>([]);
   const [measuresLoading, setMeasuresLoading] = useState(false);
   const [measureSearchQuery, setMeasureSearchQuery] = useState("");
-  
+
   // Task form state
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
@@ -409,7 +409,7 @@ function ListTaskContent({
   // Function to convert timeEstimate to ISO8601 duration
   const convertToISODuration = (value: number | null, unit: string): string | null => {
     if (value === null || value <= 0) return null;
-    
+
     switch (unit) {
       case "minutes":
         return `PT${value}M`;
@@ -495,7 +495,7 @@ function ListTaskContent({
       description="Track your assigned compliance tasks and keep progress on track."
       actions={
         <>
-          <Button 
+          <Button
             className="bg-gray-900 text-white hover:bg-gray-800 gap-1.5"
             onClick={() => setIsNewTaskOpen(true)}
           >
@@ -539,15 +539,15 @@ function ListTaskContent({
                   </TabsTrigger>
                 </TabsList>
               </div>
-              
+
               <TabsContent value="todo">
                 {todoTasks.length > 0 ? (
                   todoTasks.map((task) => (
-                    <TaskCard 
-                      key={task.id} 
-                      task={task} 
+                    <TaskCard
+                      key={task.id}
+                      task={task}
                       onClick={handleTaskClick}
-                      onToggleState={handleToggleTaskState} 
+                      onToggleState={handleToggleTaskState}
                     />
                   ))
                 ) : (
@@ -556,13 +556,13 @@ function ListTaskContent({
                   </div>
                 )}
               </TabsContent>
-              
+
               <TabsContent value="done">
                 {doneTasks.length > 0 ? (
                   doneTasks.map((task) => (
-                    <TaskCard 
-                      key={task.id} 
-                      task={task} 
+                    <TaskCard
+                      key={task.id}
+                      task={task}
                       onClick={handleTaskClick}
                       onToggleState={handleToggleTaskState}
                     />
@@ -573,13 +573,13 @@ function ListTaskContent({
                   </div>
                 )}
               </TabsContent>
-              
+
               <TabsContent value="all">
                 {allTasks.length > 0 ? (
                   allTasks.map((task) => (
-                    <TaskCard 
-                      key={task.id} 
-                      task={task} 
+                    <TaskCard
+                      key={task.id}
+                      task={task}
                       onClick={handleTaskClick}
                       onToggleState={handleToggleTaskState}
                     />
@@ -627,25 +627,25 @@ function ListTaskContent({
                 onChange={(e) => setTaskDescription(e.target.value)}
               />
             </div>
-            
+
             {/* Right Column - Properties */}
             <div className="w-[400px] p-6">
               <h3 className="text-base font-medium text-gray-900 mb-4">Properties</h3>
-              
+
               <div className="space-y-4">
                 {/* Status */}
                 <div className="flex justify-between items-center border-b border-[rgba(2,42,2,0.08)] py-3">
                   <Label className="text-sm font-medium text-gray-500">Status</Label>
                   <div className="bg-[rgba(0,39,0,0.05)] px-[10px] py-[6px] rounded-lg flex items-center gap-1.5">
-                    <img 
-                      src="/images/radio-unchecked.svg" 
-                      alt="Radio" 
+                    <img
+                      src="/images/radio-unchecked.svg"
+                      alt="Radio"
                       className="w-4 h-4"
                     />
                     <span className="text-sm font-medium">To do</span>
                   </div>
                 </div>
-                
+
                 {/* Assignee */}
                 <div className="flex justify-between items-center border-b border-[rgba(2,42,2,0.08)] py-3">
                   <Label className="text-sm font-medium text-gray-500">Assignee</Label>
@@ -671,16 +671,16 @@ function ListTaskContent({
                       </div>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-[220px] max-h-[300px] overflow-y-auto">
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         className="flex items-center gap-2 cursor-pointer"
                         onClick={() => setAssignee(null)}
                       >
                         <User className="h-4 w-4 text-gray-500" />
                         <span>Unassigned</span>
                       </DropdownMenuItem>
-                      
+
                       {members.map(member => (
-                        <DropdownMenuItem 
+                        <DropdownMenuItem
                           key={member.id}
                           className="flex items-center gap-2 cursor-pointer"
                           onClick={() => setAssignee({id: member.id, fullName: member.fullName})}
@@ -696,7 +696,7 @@ function ListTaskContent({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                
+
                 {/* Measure */}
                 <div className="flex justify-between items-center border-b border-[rgba(2,42,2,0.08)] py-3">
                   <Label className="text-sm font-medium text-gray-500">Measure</Label>
@@ -723,8 +723,8 @@ function ListTaskContent({
                           />
                         </div>
                       </div>
-                      
-                      <DropdownMenuItem 
+
+                      <DropdownMenuItem
                         className="flex items-center gap-2 cursor-pointer"
                         onClick={() => {
                           setSelectedMeasure(null);
@@ -733,14 +733,14 @@ function ListTaskContent({
                       >
                         <span>No measure</span>
                       </DropdownMenuItem>
-                      
+
                       {measuresLoading ? (
                         <div className="p-3 text-center text-sm text-gray-500">
                           Loading measures...
                         </div>
                       ) : filteredMeasures.length > 0 ? (
                         filteredMeasures.map(measure => (
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             key={measure.id}
                             className="flex items-start gap-2 cursor-pointer py-2"
                             onClick={() => {
@@ -764,15 +764,15 @@ function ListTaskContent({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                
+
                 {/* Time estimate */}
                 <div className="flex justify-between items-center border-b border-[rgba(2,42,2,0.08)] py-3">
                   <Label className="text-sm font-medium text-gray-500">Time estimate</Label>
                   <div className="flex items-center gap-2">
                     {timeEstimate === null ? (
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="h-8 px-2"
                         onClick={() => setTimeEstimate(0)}
                       >
@@ -789,9 +789,9 @@ function ListTaskContent({
                         />
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="h-8 flex items-center gap-1"
                             >
                               <span>{timeUnit}</span>
@@ -813,10 +813,10 @@ function ListTaskContent({
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-8 p-0" 
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 p-0"
                           onClick={() => setTimeEstimate(null)}
                         >
                           <X className="w-4 h-4" />
@@ -831,14 +831,14 @@ function ListTaskContent({
 
           {/* Modal Footer */}
           <div className="flex justify-between items-center px-6 py-4 border-t border-[rgba(2,42,2,0.08)]">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="h-8 flex items-center gap-1.5 border-[rgba(2,42,2,0.08)]"
             >
               <img src="/images/attachment.svg" alt="Attachment" className="w-4 h-4" />
               Upload evidence
             </Button>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"

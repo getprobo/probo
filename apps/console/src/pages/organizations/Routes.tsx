@@ -18,9 +18,9 @@ import { NewMeasurePage } from "./measures/NewMeasurePage";
 import { NewPeoplePage } from "./people/NewPeoplePage";
 import { PeopleListPage } from "./people/PeopleListPage";
 import { PeoplePage } from "./people/PeoplePage";
-import { EditPolicyPage } from "./policies/EditPolicyPage";
-import { PolicyListPage } from "./policies/PolicyListPage";
-import { ShowPolicyPage } from "./policies/ShowPolicyPage";
+import { EditDocumentPage } from "./documents/EditDocumentPage";
+import { DocumentListPage } from "./documents/DocumentListPage";
+import { ShowDocumentPage } from "./documents/ShowDocumentPage";
 import { EditRiskPage } from "./risks/EditRiskPage";
 import { NewRiskPage } from "./risks/NewRiskPage";
 import { ListRiskPage } from "./risks/ListRiskPage";
@@ -54,11 +54,11 @@ export function OrganizationsRoutes() {
         <Route path="measures/:measureId" element={<MeasurePage />} />
         <Route path="measures/:measureId/edit" element={<EditMeasurePage />} />
         <Route path="vendors/:vendorId" element={<VendorPage />} />
-        <Route path="policies" element={<PolicyListPage />} />
-        <Route path="policies/:policyId" element={<ShowPolicyPage />} />
+        <Route path="documents" element={<DocumentListPage />} />
+        <Route path="documents/:documentId" element={<ShowDocumentPage />} />
         <Route
-          path="policies/:policyId/versions/:versionId/edit"
-          element={<EditPolicyPage />}
+          path="documents/:documentId/versions/:versionId/edit"
+          element={<EditDocumentPage />}
         />
         <Route path="risks" element={<ListRiskPage />} />
         <Route path="risks/new" element={<NewRiskPage />} />

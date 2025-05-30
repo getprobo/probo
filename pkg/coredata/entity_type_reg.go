@@ -25,12 +25,12 @@ const (
 	VendorEntityType
 	PeopleEntityType
 	VendorComplianceReportEntityType
-	PolicyEntityType
+	DocumentEntityType
 	UserEntityType
 	SessionEntityType
 	EmailEntityType
 	ControlEntityType
 	RiskEntityType
-	PolicyVersionEntityType
-	PolicyVersionSignatureEntityType
+	DocumentVersionEntityType
+	DocumentVersionSignatureEntityType
 )

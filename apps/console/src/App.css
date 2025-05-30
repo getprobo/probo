@@ -13,7 +13,7 @@
 @import "@radix-ui/colors/orange.css";
 @import "@radix-ui/colors/orange-dark.css";
 
-@import "./styles/policy-content.css";
+@import "./styles/document-content.css";
 
 @plugin 'tailwindcss-animate';
 @plugin "@tailwindcss/typography";

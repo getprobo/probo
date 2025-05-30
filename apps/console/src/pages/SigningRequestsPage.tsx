@@ -17,7 +17,7 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from 'rehype-raw';
 
 type Document = {
-  policy_version_id: string;
+  document_version_id: string;
   title: string;
   content: string;
   signed?: boolean;
@@ -49,7 +49,7 @@ export default function SigningRequestsPage() {
     async function fetchDocuments() {
       try {
         const response = await fetch(
-          buildEndpoint("/api/console/v1/policies/signing-requests"),
+          buildEndpoint("/api/console/v1/documents/signing-requests"),
           {
             method: "GET",
             headers: {
@@ -96,7 +96,7 @@ export default function SigningRequestsPage() {
     try {
       const response = await fetch(
         buildEndpoint(
-          `/api/console/v1/policies/signing-requests/${docToSign.policy_version_id}/sign`,
+          `/api/console/v1/documents/signing-requests/${docToSign.document_version_id}/sign`,
         ),
         {
           method: "POST",

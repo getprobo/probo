@@ -89,7 +89,7 @@ func NewMux(
 	r := chi.NewMux()
 
 	r.Get(
-		"/policies/signing-requests",
+		"/documents/signing-requests",
 		func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
 			if token == "" {
@@ -106,7 +106,7 @@ func NewMux(
 
 			svc := proboSvc.WithTenant(data.Data.OrganizationID.TenantID())
 
-			requests, err := svc.Policies.ListSigningRequests(r.Context(), data.Data.OrganizationID, data.Data.PeopleID)
+			requests, err := svc.Documents.ListSigningRequests(r.Context(), data.Data.OrganizationID, data.Data.PeopleID)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -118,7 +118,7 @@ func NewMux(
 	)
 
 	r.Post(
-		"/policies/signing-requests/{policy_version_id}/sign",
+		"/documents/signing-requests/{document_version_id}/sign",
 		func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
 			if token == "" {
@@ -133,15 +133,15 @@ func NewMux(
 				return
 			}
 
-			policyVersionID, err := gid.ParseGID(chi.URLParam(r, "policy_version_id"))
+			documentVersionID, err := gid.ParseGID(chi.URLParam(r, "document_version_id"))
 			if err != nil {
-				http.Error(w, "invalid policy version id", http.StatusBadRequest)
+				http.Error(w, "invalid document version id", http.StatusBadRequest)
 				return
 			}
 
 			svc := proboSvc.WithTenant(data.Data.OrganizationID.TenantID())
 
-			if err := svc.Policies.SignPolicyVersion(r.Context(), policyVersionID, data.Data.PeopleID); err != nil {
+			if err := svc.Documents.SignDocumentVersion(r.Context(), documentVersionID, data.Data.PeopleID); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
