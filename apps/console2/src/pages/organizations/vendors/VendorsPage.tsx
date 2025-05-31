@@ -14,8 +14,7 @@ import {
   ActionDropdown,
   DropdownItem,
   IconTrashCan,
-  ConfirmDialog,
-  useConfirmDialogRef,
+  useConfirm,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
@@ -133,40 +132,40 @@ function VendorRow({
     : false;
 
   const [deleteVendor] = useDeleteVendorMutation();
+  const confirm = useConfirm();
 
-  const onDelete = (vendorId: string) => {
-    return new Promise<void>((resolve) => {
-      deleteVendor({
-        variables: {
-          input: {
-            vendorId,
-          },
-          connections: [
-            ConnectionHandler.getConnectionID(
-              organizationId,
-              "VendorsPage_vendors"
-            ),
-          ],
-        },
-        onCompleted: () => resolve(),
-      });
-    });
-  };
-
-  const confirmRef = useConfirmDialogRef();
-
-  return (
-    <>
-      <ConfirmDialog
-        ref={confirmRef}
-        message={sprintf(
+  const onDelete = () => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deleteVendor({
+            variables: {
+              input: {
+                vendorId: vendor.id,
+              },
+              connections: [
+                ConnectionHandler.getConnectionID(
+                  organizationId,
+                  "VendorsPage_vendors"
+                ),
+              ],
+            },
+            onCompleted: () => resolve(),
+          });
+        }),
+      {
+        message: sprintf(
           __(
             'This will permanently delete the vendor "%s". This action cannot be undone.'
           ),
           vendor.name
-        )}
-        onConfirm={() => onDelete(vendor.id)}
-      />
+        ),
+      }
+    );
+  };
+
+  return (
+    <>
       <Tr to={`/organizations/${organizationId}/vendors/${vendor.id}`}>
         <Td>
           <div className="flex gap-2 items-center">
@@ -194,10 +193,10 @@ function VendorRow({
             {isExpired ? __("Late") : __("In progress")}
           </Badge>
         </Td>
-        <Td noLink>
+        <Td noLink width={50} className="text-end">
           <ActionDropdown>
             <DropdownItem
-              onClick={() => confirmRef.current?.open()}
+              onClick={onDelete}
               variant="danger"
               icon={IconTrashCan}
             >

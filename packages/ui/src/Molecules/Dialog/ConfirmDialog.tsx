@@ -9,6 +9,7 @@ import {
     Cancel,
 } from "@radix-ui/react-alert-dialog";
 import {
+    useCallback,
     useRef,
     useState,
     type ComponentProps,
@@ -18,57 +19,94 @@ import {
 import { Button } from "../../Atoms/Button/Button";
 import { Root as Portal } from "@radix-ui/react-portal";
 import { dialog } from "./Dialog";
+import { create } from "zustand";
+import { combine } from "zustand/middleware";
 
-type Props = {
-    children?: ReactNode;
-    title?: ReactNode;
-    message: string;
+type State = {
+    title?: string;
+    message: string | null;
     variant?: ComponentProps<typeof Button>["variant"];
     label?: string;
-    onConfirm?: () => Promise<void>;
-    ref?: RefObject<{ open: () => void } | null>;
+    onConfirm: () => Promise<void>;
 };
 
-export const useConfirmDialogRef = () => {
-    return useRef<{ open: () => void } | null>(null);
-};
+const useConfirmStore = create(
+    combine(
+        {
+            message: null,
+            onConfirm: () => Promise.resolve(),
+        } as State,
+        (set) => ({
+            open: (props: State) => {
+                set(props);
+            },
+            close: () => {
+                set({
+                    message: null,
+                });
+            },
+        }),
+    ),
+);
 
-export function ConfirmDialog(props: Props) {
+/**
+ * Hook used to open a confirm dialog
+ */
+export function useConfirm() {
+    const open = useConfirmStore((state) => state.open);
     const { __ } = useTranslate();
-    const title = props.title ?? __("Are you sure ?");
-    const variant = props.variant ?? "danger";
-    const label = variant === "danger" ? __("Delete") : props.label;
-    const [open, setOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
+
+    return useCallback(
+        (cb: State["onConfirm"], props: Omit<State, "onConfirm">) => {
+            open({
+                onConfirm: cb,
+                ...props,
+                message: props.message,
+                title: props.title ?? __("Are you sure ?"),
+                variant: props.variant ?? "danger",
+                label: props.label ?? __("Delete"),
+            });
+        },
+        [open],
+    );
+}
+
+/**
+ * Global component that displays a dialog when confirm() is called
+ */
+export function ConfirmDialog() {
+    const { message, title, variant, label, onConfirm, close } =
+        useConfirmStore();
+    const { __ } = useTranslate();
+    const isOpen = !!message;
     const {
         overlay,
         content,
         header,
-        footer,
         title: titleClassname,
+        footer,
     } = dialog();
-    const onConfirm = () => {
+    const [loading, setLoading] = useState(false);
+    const handleConfirm = () => {
         setLoading(true);
-        props.onConfirm?.().then(() => {
-            setLoading(false);
-            setOpen(false);
-        });
+        onConfirm()
+            .then(() => {
+                close();
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     };
-    if (props.ref) {
-        props.ref.current = {
-            open: () => setOpen(true),
-        };
-    }
+
     return (
-        <Root open={open} onOpenChange={setOpen}>
-            {props.children && <Trigger asChild children={props.children} />}
+        <Root open={isOpen} onOpenChange={close}>
             <Portal>
                 <Overlay className={overlay()} />
                 <Content className={content({ className: "max-w-[500px]" })}>
                     <header className={header()}>
                         <Title children={title} className={titleClassname()} />
                     </header>
-                    <Description className="p-6" children={props.message} />
+                    <Description className="p-6" children={message} />
                     <footer className={footer()}>
                         <Cancel asChild>
                             <Button disabled={loading} variant="tertiary">
@@ -78,7 +116,7 @@ export function ConfirmDialog(props: Props) {
                         <Button
                             disabled={loading}
                             variant={variant}
-                            onClick={onConfirm}
+                            onClick={handleConfirm}
                         >
                             {label}
                         </Button>
