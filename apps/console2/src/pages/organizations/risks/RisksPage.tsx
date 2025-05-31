@@ -1,7 +1,6 @@
 import {
   ActionDropdown,
   Button,
-  ConfirmDialog,
   DropdownItem,
   IconPencil,
   IconPlusLarge,
@@ -14,16 +13,15 @@ import {
   Th,
   Thead,
   Tr,
-  useConfirmDialogRef,
+  useConfirm,
   useDialogRef,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import FormRiskDialog from "./FormRiskDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { useState } from "react";
 import { usePageTitle } from "@probo/hooks";
 import { getTreatment, sprintf } from "@probo/helpers";
-import type { ItemOf, NodeOf } from "/types";
+import type { NodeOf } from "/types";
 import { useDeleteRiskMutation, useRisksQuery } from "/hooks/graph/RiskGraph";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import type { PreloadedQuery } from "react-relay";
@@ -103,31 +101,32 @@ function RiskRow(props: RowProps) {
   const { __ } = useTranslate();
   const { risk, connectionId, organizationId } = props;
   const [deleteRisk] = useDeleteRiskMutation();
-  const onDelete = (riskId: string) => {
-    return new Promise<void>((resolve) => {
-      deleteRisk({
-        variables: {
-          input: { riskId },
-          connections: [connectionId],
-        },
-        onCompleted: () => resolve(),
-      });
-    });
-  };
-  const confirmRef = useConfirmDialogRef();
-  const formDialogRef = useDialogRef();
-  return (
-    <>
-      <ConfirmDialog
-        ref={confirmRef}
-        message={sprintf(
+  const confirm = useConfirm();
+  const onDelete = () => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deleteRisk({
+            variables: {
+              input: { riskId: risk.id },
+              connections: [connectionId],
+            },
+            onCompleted: () => resolve(),
+          });
+        }),
+      {
+        message: sprintf(
           __(
             'This will permanently delete the risk "%s". This action cannot be undone.'
           ),
           risk.name
-        )}
-        onConfirm={() => onDelete(risk.id)}
-      />
+        ),
+      }
+    );
+  };
+  const formDialogRef = useDialogRef();
+  return (
+    <>
       <FormRiskDialog
         ref={formDialogRef}
         risk={risk}
@@ -147,7 +146,7 @@ function RiskRow(props: RowProps) {
           <ActionDropdown>
             <DropdownItem
               icon={IconPencil}
-              onClick={() => confirmRef.current?.open()}
+              onClick={() => formDialogRef.current?.open()}
             >
               {__("Edit")}
             </DropdownItem>
@@ -155,7 +154,7 @@ function RiskRow(props: RowProps) {
             <DropdownItem
               variant="danger"
               icon={IconTrashCan}
-              onClick={() => confirmRef.current?.open()}
+              onClick={onDelete}
             >
               {__("Delete")}
             </DropdownItem>

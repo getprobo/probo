@@ -9,7 +9,6 @@ import {
   ActionDropdown,
   Button,
   Card,
-  ConfirmDialog,
   DropdownItem,
   FileButton,
   IconChevronDown,
@@ -27,7 +26,7 @@ import {
   Th,
   Thead,
   Tr,
-  useConfirmDialogRef,
+  useConfirm,
 } from "@probo/ui";
 import {
   measuresQuery,
@@ -245,33 +244,33 @@ type MeasureRowProps = {
 function MeasureRow(props: MeasureRowProps) {
   const { __ } = useTranslate();
   const [deleteMeasure, isDeleting] = useDeleteMeasureMutation();
+  const confirm = useConfirm();
 
   const onDelete = () => {
-    return new Promise<void>((resolve) => {
-      deleteMeasure({
-        variables: {
-          input: { measureId: props.measure.id },
-          connections: [props.connectionId],
-        },
-        onCompleted: () => resolve(),
-      });
-    });
-  };
-
-  const confirmRef = useConfirmDialogRef();
-
-  return (
-    <>
-      <ConfirmDialog
-        message={sprintf(
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deleteMeasure({
+            variables: {
+              input: { measureId: props.measure.id },
+              connections: [props.connectionId],
+            },
+            onCompleted: () => resolve(),
+          });
+        }),
+      {
+        message: sprintf(
           __(
             'This will permanently delete the measure "%s". This action cannot be undone.'
           ),
           props.measure.name
-        )}
-        onConfirm={onDelete}
-        ref={confirmRef}
-      />
+        ),
+      }
+    );
+  };
+
+  return (
+    <>
       <Tr>
         <Td>{props.measure.name}</Td>
         <Td width={120}>
@@ -281,7 +280,7 @@ function MeasureRow(props: MeasureRowProps) {
           <ActionDropdown>
             <DropdownItem icon={IconPencil}>{__("Edit")}</DropdownItem>
             <DropdownItem
-              onClick={() => confirmRef.current?.open()}
+              onClick={onDelete}
               disabled={isDeleting}
               variant="danger"
               icon={IconTrashCan}

@@ -1,7 +1,20 @@
 import { graphql } from "relay-runtime";
 import type { PeopleGraphQuery } from "./__generated__/PeopleGraphQuery.graphql";
-import { useLazyLoadQuery } from "react-relay";
-import { useMemo } from "react";
+import {
+  useLazyLoadQuery,
+  useMutation,
+  usePreloadedQuery,
+  useRefetchableFragment,
+  type PreloadedQuery,
+} from "react-relay";
+import { useMemo, useTransition } from "react";
+import type { PeopleGraphPaginatedQuery } from "./__generated__/PeopleGraphPaginatedQuery.graphql";
+import type { PeopleGraphPaginatedFragment$key } from "./__generated__/PeopleGraphPaginatedFragment.graphql";
+import { useConfirm } from "@probo/ui";
+import type { PeopleGraphDeleteMutation } from "./__generated__/PeopleGraphDeleteMutation.graphql";
+import { sprintf } from "@probo/helpers";
+import { useTranslate } from "@probo/i18n";
+import type { PeopleGraphNodeQuery$data } from "./__generated__/PeopleGraphNodeQuery.graphql";
 
 const peopleQuery = graphql`
   query PeopleGraphQuery($organizationId: ID!) {
@@ -21,6 +34,9 @@ const peopleQuery = graphql`
   }
 `;
 
+/**
+ * Return a list of people (used for people selectors)
+ */
 export function usePeople(organizationId: string) {
   const data = useLazyLoadQuery<PeopleGraphQuery>(peopleQuery, {
     organizationId: organizationId,
@@ -29,3 +45,139 @@ export function usePeople(organizationId: string) {
     return data.organization?.peoples?.edges.map((edge) => edge.node) ?? [];
   }, [data]);
 }
+
+export const paginatedPeopleQuery = graphql`
+  query PeopleGraphPaginatedQuery($organizationId: ID!) {
+    organization: node(id: $organizationId) {
+      ... on Organization {
+        id
+        ...PeopleGraphPaginatedFragment
+      }
+    }
+  }
+`;
+
+const paginatedPeopleFragment = graphql`
+  fragment PeopleGraphPaginatedFragment on Organization
+  @refetchable(queryName: "PeopleListQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 50 }
+    order: { type: "PeopleOrder", defaultValue: null }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    peoples(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "PeopleGraphPaginatedQuery_peoples") {
+      __id
+      edges {
+        node {
+          id
+          fullName
+          primaryEmailAddress
+          kind
+          additionalEmailAddresses
+        }
+      }
+    }
+  }
+`;
+
+export function usePeopleQuery(
+  queryRef: PreloadedQuery<PeopleGraphPaginatedQuery>
+) {
+  const data = usePreloadedQuery(paginatedPeopleQuery, queryRef);
+  const [dataFragment, refetch] = useRefetchableFragment(
+    paginatedPeopleFragment,
+    data.organization as PeopleGraphPaginatedFragment$key
+  );
+  const people = dataFragment?.peoples?.edges.map((edge) => edge.node);
+  return {
+    people,
+    refetch,
+    connectionId: dataFragment.peoples.__id,
+  };
+}
+
+export const deletePeopleMutation = graphql`
+  mutation PeopleGraphDeleteMutation(
+    $input: DeletePeopleInput!
+    $connections: [ID!]!
+  ) {
+    deletePeople(input: $input) {
+      deletedPeopleId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
+export const PeopleConnectionKey = "PeopleGraphPaginatedQuery_peoples";
+
+export const useDeletePeople = (
+  people: { id?: string; fullName?: string },
+  connectionId: string
+) => {
+  const [mutate] = useMutation<PeopleGraphDeleteMutation>(deletePeopleMutation);
+  const confirm = useConfirm();
+  const { __ } = useTranslate();
+
+  return () => {
+    if (!people.id || !people.fullName) {
+      return alert(__("Failed to delete people: missing id or fullName"));
+    }
+    confirm(
+      () =>
+        new Promise((resolve) => {
+          mutate({
+            variables: {
+              input: {
+                peopleId: people.id!,
+              },
+              connections: [connectionId],
+            },
+            onCompleted: () => resolve(),
+          });
+        }),
+      {
+        message: sprintf(
+          __(
+            'This will permanently delete "%s". This action cannot be undone.'
+          ),
+          people.fullName
+        ),
+      }
+    );
+  };
+};
+
+export const peopleNodeQuery = graphql`
+  query PeopleGraphNodeQuery($peopleId: ID!) {
+    node(id: $peopleId) {
+      ... on People {
+        id
+        fullName
+        primaryEmailAddress
+        kind
+        additionalEmailAddresses
+      }
+    }
+  }
+`;
+
+export const updatePeopleMutation = graphql`
+  mutation PeopleGraphUpdateMutation($input: UpdatePeopleInput!) {
+    updatePeople(input: $input) {
+      people {
+        id
+        fullName
+        primaryEmailAddress
+        kind
+        additionalEmailAddresses
+      }
+    }
+  }
+`;

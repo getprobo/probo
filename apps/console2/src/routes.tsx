@@ -1,5 +1,6 @@
 import {
   createBrowserRouter,
+  Navigate,
   useLoaderData,
   useRouteError,
   type RouteObject,
@@ -18,13 +19,13 @@ import { riskRoutes } from "./routes/riskRoutes.ts";
 import { measureRoutes } from "./routes/measureRoutes.ts";
 import { policiesRoutes } from "./routes/policiesRoutes.ts";
 import { organizationViewQuery } from "./hooks/graph/OrganizationGraph.ts";
+import { peopleRoutes } from "./routes/peopleRoutes.ts";
 
 function ErrorBoundary() {
   const error = useRouteError();
   if (error instanceof UnAuthenticatedError) {
-    return <div></div>;
+    return <Navigate to="/auth/login" />;
   }
-  console.log(error);
   return <div>error</div>;
 }
 
@@ -50,6 +51,7 @@ const routes = [
     path: "/",
     Component: CenteredLayout,
     fallback: CenteredLayoutSkeleton,
+    ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
@@ -87,6 +89,7 @@ const routes = [
       ...riskRoutes,
       ...measureRoutes,
       ...policiesRoutes,
+      ...peopleRoutes,
     ],
   },
 ] satisfies AppRoute[];

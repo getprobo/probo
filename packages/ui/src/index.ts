@@ -47,13 +47,10 @@ export {
     DialogTitle,
     useDialogRef,
 } from "./Molecules/Dialog/Dialog";
+export { useConfirm } from "./Molecules/Dialog/ConfirmDialog";
 export { RiskBadge } from "./Molecules/Badge/RiskBadge";
 export { SeverityBadge } from "./Molecules/Badge/SeverityBadge.tsx";
 export { PolicyVersionBadge } from "./Molecules/Badge/PolicyVersionBadge.tsx";
-export {
-    ConfirmDialog,
-    useConfirmDialogRef,
-} from "./Molecules/Dialog/ConfirmDialog.tsx";
 export { RisksChart } from "./Molecules/Risks/RisksChart";
 export { RiskOverview } from "./Molecules/Risks/RiskOverview";
 export { Combobox, ComboboxItem } from "./Molecules/Combobox/Combobox";

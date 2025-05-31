@@ -12,6 +12,7 @@ import { Logo } from "../Atoms/Logo/Logo.tsx";
 import { Toasts } from "../Atoms/Toasts/Toasts.tsx";
 import { createPortal } from "react-dom";
 import clsx from "clsx";
+import { ConfirmDialog } from "../Molecules/Dialog/ConfirmDialog.tsx";
 
 type Props = PropsWithChildren<{
     header: ReactNode;
@@ -62,6 +63,7 @@ export function Layout({ header, sidebar, children }: Props) {
                     </main>
                 </div>
                 <Toasts />
+                <ConfirmDialog />
             </div>
         </LayoutContext>
     );
