@@ -9,10 +9,10 @@ import {
   Td,
   Avatar,
   Badge,
-  ConfirmDialog,
   IconTrashCan,
   Button,
   IconPlusLarge,
+  useConfirm,
 } from "@probo/ui";
 import {
   useFragment,
@@ -151,18 +151,30 @@ function PolicyRow({
   const signedCount = signatures.filter(
     (signature) => signature.state === "SIGNED"
   ).length;
-  const [deletePolicy] = useDeletePolicyMutation();
+  const [deletePolicy, isDeleting] = useDeletePolicyMutation();
+  const confirm = useConfirm();
 
   const handleDelete = () => {
-    return new Promise<void>((resolve) => {
-      deletePolicy({
-        variables: {
-          input: { policyId: policy.id },
-          connections: [connectionId],
-        },
-        onCompleted: () => resolve(),
-      });
-    });
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deletePolicy({
+            variables: {
+              input: { policyId: policy.id },
+              connections: [connectionId],
+            },
+            onCompleted: () => resolve(),
+          });
+        }),
+      {
+        message: sprintf(
+          __(
+            'This will permanently delete the policy "%s". This action cannot be undone.'
+          ),
+          policy.title
+        ),
+      }
+    );
   };
 
   return (
@@ -203,17 +215,12 @@ function PolicyRow({
           {signedCount}/{signatures.length}
         </Td>
         <Td noLink width={50} className="text-end">
-          <ConfirmDialog
-            message={sprintf(
-              __(
-                'This will permanently delete the policy "%s". This action cannot be undone.'
-              ),
-              policy.title
-            )}
-            onConfirm={handleDelete}
-          >
-            <Button icon={IconTrashCan} variant="danger" />
-          </ConfirmDialog>
+          <Button
+            icon={IconTrashCan}
+            variant="danger"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          />
         </Td>
       </Tr>
     </>
