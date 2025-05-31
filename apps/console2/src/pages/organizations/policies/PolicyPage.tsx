@@ -25,13 +25,12 @@ import {
   Badge,
   Avatar,
   DropdownItem,
-  ConfirmDialog,
   ActionDropdown,
   IconTrashCan,
   IconPencil,
-  useConfirmDialogRef,
   IconClock,
   IconSignature,
+  useConfirm,
 } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Button } from "@probo/ui";
@@ -136,27 +135,39 @@ export default function PolicyPage(props: Props) {
     });
   };
 
+  const confirm = useConfirm();
+
   const handleDelete = () => {
-    return new Promise<void>((resolve) => {
-      const connectionId = ConnectionHandler.getConnectionID(
-        organizationId,
-        PoliciesConnectionKey
-      );
-      deletePolicy({
-        variables: {
-          input: { policyId: policy.id },
-          connections: [connectionId],
-        },
-        onSuccess() {
-          navigate(`/organizations/${organizationId}/policies`);
-        },
-        onError: () => resolve(),
-      });
-    });
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          const connectionId = ConnectionHandler.getConnectionID(
+            organizationId,
+            PoliciesConnectionKey
+          );
+          deletePolicy({
+            variables: {
+              input: { policyId: policy.id },
+              connections: [connectionId],
+            },
+            onSuccess() {
+              navigate(`/organizations/${organizationId}/policies`);
+            },
+            onError: () => resolve(),
+          });
+        }),
+      {
+        message: sprintf(
+          __(
+            'This will permanently delete the policy "%s". This action cannot be undone.'
+          ),
+          policy.title
+        ),
+      }
+    );
   };
 
   const updateDialogRef = useRef<{ open: () => void }>(null);
-  const confirmRef = useConfirmDialogRef();
 
   return (
     <>
@@ -164,17 +175,6 @@ export default function PolicyPage(props: Props) {
         ref={updateDialogRef}
         policy={policy}
         connectionId={versionConnectionId}
-      />
-
-      <ConfirmDialog
-        ref={confirmRef}
-        message={sprintf(
-          __(
-            'This will permanently delete the policy "%s". This action cannot be undone.'
-          ),
-          policy.title
-        )}
-        onConfirm={handleDelete}
       />
       <div className="space-y-6">
         <div className="flex justify-between items-center mb-4">
@@ -221,7 +221,7 @@ export default function PolicyPage(props: Props) {
                 variant="danger"
                 icon={IconTrashCan}
                 disabled={isDeleting}
-                onClick={() => confirmRef.current?.open()}
+                onClick={handleDelete}
               >
                 {__("Delete")}
               </DropdownItem>
