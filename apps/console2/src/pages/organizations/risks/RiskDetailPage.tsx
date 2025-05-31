@@ -4,7 +4,6 @@ import {
   Badge,
   Breadcrumb,
   Button,
-  ConfirmDialog,
   Drawer,
   DropdownItem,
   IconPencil,
@@ -13,7 +12,7 @@ import {
   PropertyRow,
   TabLink,
   Tabs,
-  useConfirmDialogRef,
+  useConfirm,
 } from "@probo/ui";
 import { Outlet, useNavigate, useParams } from "react-router";
 import { useTranslate } from "@probo/i18n";
@@ -49,27 +48,37 @@ export default function RiskDetailPage(props: Props) {
   const [deleteRisk] = useDeleteRiskMutation();
 
   usePageTitle(risk.name ?? "Risk detail");
+  const confirm = useConfirm();
 
-  const onDelete = (riskId: string) => {
+  const onDelete = () => {
     const connectionId = ConnectionHandler.getConnectionID(
       organizationId,
       RisksConnectionKey
     );
-    return new Promise<void>((resolve) => {
-      deleteRisk({
-        variables: {
-          input: { riskId },
-          connections: [connectionId],
-        },
-        onSuccess() {
-          navigate(`/organizations/${organizationId}/risks`);
-          resolve();
-        },
-      });
-    });
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deleteRisk({
+            variables: {
+              input: { riskId },
+              connections: [connectionId],
+            },
+            onSuccess() {
+              navigate(`/organizations/${organizationId}/risks`);
+              resolve();
+            },
+          });
+        }),
+      {
+        message: sprintf(
+          __(
+            'This will permanently delete the risk "%s". This action cannot be undone.'
+          ),
+          risk.name
+        ),
+      }
+    );
   };
-
-  const confirmRef = useConfirmDialogRef();
 
   return (
     <div className="space-y-6">
@@ -99,24 +108,13 @@ export default function RiskDetailPage(props: Props) {
             <DropdownItem
               variant="danger"
               icon={IconTrashCan}
-              onClick={() => confirmRef.current?.open()}
+              onClick={onDelete}
             >
               {__("Delete")}
             </DropdownItem>
           </ActionDropdown>
         </div>
       </div>
-
-      <ConfirmDialog
-        ref={confirmRef}
-        message={sprintf(
-          __(
-            'This will permanently delete the risk "%s". This action cannot be undone.'
-          ),
-          risk.name
-        )}
-        onConfirm={() => onDelete(riskId)}
-      />
 
       <PageHeader title={risk.name} />
 
