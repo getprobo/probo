@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3d1854151a950f0b4b85faf16c995c61>>
+ * @generated SignedSource<<394470df6f042c06c640caad2df537cc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,10 +9,10 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type PolicyStatus = "DRAFT" | "PUBLISHED";
-export type PolicyVersionSignatureState = "REQUESTED" | "SIGNED";
+export type DocumentStatus = "DRAFT" | "PUBLISHED";
+export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
-export type PoliciesPageRowFragment$data = {
+export type DocumentsPageRowFragment$data = {
   readonly description: string;
   readonly id: string;
   readonly owner: {
@@ -29,19 +29,19 @@ export type PoliciesPageRowFragment$data = {
           readonly edges: ReadonlyArray<{
             readonly node: {
               readonly id: string;
-              readonly state: PolicyVersionSignatureState;
+              readonly state: DocumentVersionSignatureState;
             };
           }>;
         };
-        readonly status: PolicyStatus;
+        readonly status: DocumentStatus;
       };
     }>;
   };
-  readonly " $fragmentType": "PoliciesPageRowFragment";
+  readonly " $fragmentType": "DocumentsPageRowFragment";
 };
-export type PoliciesPageRowFragment$key = {
-  readonly " $data"?: PoliciesPageRowFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"PoliciesPageRowFragment">;
+export type DocumentsPageRowFragment$key = {
+  readonly " $data"?: DocumentsPageRowFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageRowFragment">;
 };
 
 const node: ReaderFragment = (function(){
@@ -56,7 +56,7 @@ return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "PoliciesPageRowFragment",
+  "name": "DocumentsPageRowFragment",
   "selections": [
     (v0/*: any*/),
     {
@@ -108,7 +108,7 @@ return {
           "value": 1
         }
       ],
-      "concreteType": "PolicyVersionConnection",
+      "concreteType": "DocumentVersionConnection",
       "kind": "LinkedField",
       "name": "versions",
       "plural": false,
@@ -116,7 +116,7 @@ return {
         {
           "alias": null,
           "args": null,
-          "concreteType": "PolicyVersionEdge",
+          "concreteType": "DocumentVersionEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -124,7 +124,7 @@ return {
             {
               "alias": null,
               "args": null,
-              "concreteType": "PolicyVersion",
+              "concreteType": "DocumentVersion",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
@@ -146,7 +146,7 @@ return {
                       "value": 100
                     }
                   ],
-                  "concreteType": "PolicyVersionSignatureConnection",
+                  "concreteType": "DocumentVersionSignatureConnection",
                   "kind": "LinkedField",
                   "name": "signatures",
                   "plural": false,
@@ -154,7 +154,7 @@ return {
                     {
                       "alias": null,
                       "args": null,
-                      "concreteType": "PolicyVersionSignatureEdge",
+                      "concreteType": "DocumentVersionSignatureEdge",
                       "kind": "LinkedField",
                       "name": "edges",
                       "plural": true,
@@ -162,7 +162,7 @@ return {
                         {
                           "alias": null,
                           "args": null,
-                          "concreteType": "PolicyVersionSignature",
+                          "concreteType": "DocumentVersionSignature",
                           "kind": "LinkedField",
                           "name": "node",
                           "plural": false,
@@ -194,11 +194,11 @@ return {
       "storageKey": "versions(first:1)"
     }
   ],
-  "type": "Policy",
+  "type": "Document",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "b50c23e038e757685dfc7535825a389c";
+(node as any).hash = "b5339e945b607000f177036cad41e0d4";
 
 export default node;

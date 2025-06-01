@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6cbec0c0b675969ecdebebf74c7465ab>>
+ * @generated SignedSource<<3ef23505e9378ce7ea92943b394ba290>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,24 +9,22 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type UpdatePolicyVersionInput = {
-  content: string;
-  policyVersionId: string;
+export type PublishDocumentVersionInput = {
+  documentId: string;
 };
-export type UpdateVersionDialogUpdateMutation$variables = {
-  input: UpdatePolicyVersionInput;
+export type DocumentPagePublishMutation$variables = {
+  input: PublishDocumentVersionInput;
 };
-export type UpdateVersionDialogUpdateMutation$data = {
-  readonly updatePolicyVersion: {
-    readonly policyVersion: {
-      readonly content: string;
+export type DocumentPagePublishMutation$data = {
+  readonly publishDocumentVersion: {
+    readonly document: {
       readonly id: string;
     };
   };
 };
-export type UpdateVersionDialogUpdateMutation = {
-  response: UpdateVersionDialogUpdateMutation$data;
-  variables: UpdateVersionDialogUpdateMutation$variables;
+export type DocumentPagePublishMutation = {
+  response: DocumentPagePublishMutation$data;
+  variables: DocumentPagePublishMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -47,17 +45,17 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "UpdatePolicyVersionPayload",
+    "concreteType": "PublishDocumentVersionPayload",
     "kind": "LinkedField",
-    "name": "updatePolicyVersion",
+    "name": "publishDocumentVersion",
     "plural": false,
     "selections": [
       {
         "alias": null,
         "args": null,
-        "concreteType": "PolicyVersion",
+        "concreteType": "Document",
         "kind": "LinkedField",
-        "name": "policyVersion",
+        "name": "document",
         "plural": false,
         "selections": [
           {
@@ -65,13 +63,6 @@ v1 = [
             "args": null,
             "kind": "ScalarField",
             "name": "id",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "content",
             "storageKey": null
           }
         ],
@@ -86,7 +77,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "UpdateVersionDialogUpdateMutation",
+    "name": "DocumentPagePublishMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -95,20 +86,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "UpdateVersionDialogUpdateMutation",
+    "name": "DocumentPagePublishMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "374557bf1319583b7d590f5bea438e63",
+    "cacheID": "fad75c1a396f60d6d13e1605fe85f33e",
     "id": null,
     "metadata": {},
-    "name": "UpdateVersionDialogUpdateMutation",
+    "name": "DocumentPagePublishMutation",
     "operationKind": "mutation",
-    "text": "mutation UpdateVersionDialogUpdateMutation(\n  $input: UpdatePolicyVersionInput!\n) {\n  updatePolicyVersion(input: $input) {\n    policyVersion {\n      id\n      content\n    }\n  }\n}\n"
+    "text": "mutation DocumentPagePublishMutation(\n  $input: PublishDocumentVersionInput!\n) {\n  publishDocumentVersion(input: $input) {\n    document {\n      id\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d863d893bfa969b02768096e024275a4";
+(node as any).hash = "488029ccd88b4c637b63cd11d1bef986";
 
 export default node;
