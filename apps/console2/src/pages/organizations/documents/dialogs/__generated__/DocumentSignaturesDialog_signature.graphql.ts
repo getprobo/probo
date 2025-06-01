@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4bda7ac839740680ea31b4c20299d9d4>>
+ * @generated SignedSource<<71e44f5802c3eaba88dde399af20ed89>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,9 +9,9 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type PolicyVersionSignatureState = "REQUESTED" | "SIGNED";
+export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
-export type PolicySignaturesDialog_signature$data = {
+export type DocumentSignaturesDialog_signature$data = {
   readonly id: string;
   readonly requestedAt: any;
   readonly signedAt: any | null | undefined;
@@ -19,19 +19,19 @@ export type PolicySignaturesDialog_signature$data = {
     readonly fullName: string;
     readonly primaryEmailAddress: string;
   };
-  readonly state: PolicyVersionSignatureState;
-  readonly " $fragmentType": "PolicySignaturesDialog_signature";
+  readonly state: DocumentVersionSignatureState;
+  readonly " $fragmentType": "DocumentSignaturesDialog_signature";
 };
-export type PolicySignaturesDialog_signature$key = {
-  readonly " $data"?: PolicySignaturesDialog_signature$data;
-  readonly " $fragmentSpreads": FragmentRefs<"PolicySignaturesDialog_signature">;
+export type DocumentSignaturesDialog_signature$key = {
+  readonly " $data"?: DocumentSignaturesDialog_signature$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesDialog_signature">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "PolicySignaturesDialog_signature",
+  "name": "DocumentSignaturesDialog_signature",
   "selections": [
     {
       "alias": null,
@@ -87,10 +87,10 @@ const node: ReaderFragment = {
       "storageKey": null
     }
   ],
-  "type": "PolicyVersionSignature",
+  "type": "DocumentVersionSignature",
   "abstractKey": null
 };
 
-(node as any).hash = "b2e435dc6db3a0df223af98251adcb30";
+(node as any).hash = "0db843d4ebd21f44a3d126e85da8cf26";
 
 export default node;

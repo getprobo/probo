@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<088b04713ff854ffccb30532513bb093>>
+ * @generated SignedSource<<c182ef1b9491681644676e99e0b07ee7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,10 +9,10 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type PolicyStatus = "DRAFT" | "PUBLISHED";
-export type PolicyVersionSignatureState = "REQUESTED" | "SIGNED";
+export type DocumentStatus = "DRAFT" | "PUBLISHED";
+export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
-export type PolicyPagePolicyFragment$data = {
+export type DocumentPageDocumentFragment$data = {
   readonly id: string;
   readonly owner: {
     readonly fullName: string;
@@ -34,23 +34,23 @@ export type PolicyPagePolicyFragment$data = {
               readonly signedBy: {
                 readonly id: string;
               };
-              readonly state: PolicyVersionSignatureState;
-              readonly " $fragmentSpreads": FragmentRefs<"PolicySignaturesDialog_signature">;
+              readonly state: DocumentVersionSignatureState;
+              readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesDialog_signature">;
             };
           }>;
         };
-        readonly status: PolicyStatus;
+        readonly status: DocumentStatus;
         readonly updatedAt: any;
         readonly version: number;
-        readonly " $fragmentSpreads": FragmentRefs<"PolicySignaturesDialog_version" | "PolicyVersionHistoryDialogFragment">;
+        readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesDialog_version" | "DocumentVersionHistoryDialogFragment">;
       };
     }>;
   };
-  readonly " $fragmentType": "PolicyPagePolicyFragment";
+  readonly " $fragmentType": "DocumentPageDocumentFragment";
 };
-export type PolicyPagePolicyFragment$key = {
-  readonly " $data"?: PolicyPagePolicyFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"PolicyPagePolicyFragment">;
+export type DocumentPageDocumentFragment$key = {
+  readonly " $data"?: DocumentPageDocumentFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentPageDocumentFragment">;
 };
 
 const node: ReaderFragment = (function(){
@@ -133,7 +133,7 @@ return {
       }
     ]
   },
-  "name": "PolicyPagePolicyFragment",
+  "name": "DocumentPageDocumentFragment",
   "selections": [
     (v0/*: any*/),
     {
@@ -165,15 +165,15 @@ return {
     {
       "alias": "versions",
       "args": null,
-      "concreteType": "PolicyVersionConnection",
+      "concreteType": "DocumentVersionConnection",
       "kind": "LinkedField",
-      "name": "__PolicyPage_versions_connection",
+      "name": "__DocumentPage_versions_connection",
       "plural": false,
       "selections": [
         {
           "alias": null,
           "args": null,
-          "concreteType": "PolicyVersionEdge",
+          "concreteType": "DocumentVersionEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -181,7 +181,7 @@ return {
             {
               "alias": null,
               "args": null,
-              "concreteType": "PolicyVersion",
+              "concreteType": "DocumentVersion",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
@@ -225,15 +225,15 @@ return {
                 {
                   "alias": "signatures",
                   "args": null,
-                  "concreteType": "PolicyVersionSignatureConnection",
+                  "concreteType": "DocumentVersionSignatureConnection",
                   "kind": "LinkedField",
-                  "name": "__PolicyPage_signatures_connection",
+                  "name": "__DocumentPage_signatures_connection",
                   "plural": false,
                   "selections": [
                     {
                       "alias": null,
                       "args": null,
-                      "concreteType": "PolicyVersionSignatureEdge",
+                      "concreteType": "DocumentVersionSignatureEdge",
                       "kind": "LinkedField",
                       "name": "edges",
                       "plural": true,
@@ -241,7 +241,7 @@ return {
                         {
                           "alias": null,
                           "args": null,
-                          "concreteType": "PolicyVersionSignature",
+                          "concreteType": "DocumentVersionSignature",
                           "kind": "LinkedField",
                           "name": "node",
                           "plural": false,
@@ -269,7 +269,7 @@ return {
                             {
                               "args": null,
                               "kind": "FragmentSpread",
-                              "name": "PolicySignaturesDialog_signature"
+                              "name": "DocumentSignaturesDialog_signature"
                             },
                             (v1/*: any*/)
                           ],
@@ -287,12 +287,12 @@ return {
                 {
                   "args": null,
                   "kind": "FragmentSpread",
-                  "name": "PolicyVersionHistoryDialogFragment"
+                  "name": "DocumentVersionHistoryDialogFragment"
                 },
                 {
                   "args": null,
                   "kind": "FragmentSpread",
-                  "name": "PolicySignaturesDialog_version"
+                  "name": "DocumentSignaturesDialog_version"
                 },
                 (v1/*: any*/)
               ],
@@ -308,11 +308,11 @@ return {
       "storageKey": null
     }
   ],
-  "type": "Policy",
+  "type": "Document",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "b53b22a05e1abd608ecd688b6a9d5bad";
+(node as any).hash = "b42e98e8e26bc94a2d412bd73cd601f2";
 
 export default node;

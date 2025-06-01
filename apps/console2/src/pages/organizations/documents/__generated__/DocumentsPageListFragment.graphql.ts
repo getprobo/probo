@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<89063899241b0557e2a6df4ff74ecea1>>
+ * @generated SignedSource<<5d1d855cd444dbaa6fc92493bc333dd4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,21 +10,21 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type PoliciesPageListFragment$data = {
-  readonly policies: {
+export type DocumentsPageListFragment$data = {
+  readonly documents: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"PoliciesPageRowFragment">;
+        readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageRowFragment">;
       };
     }>;
   };
-  readonly " $fragmentType": "PoliciesPageListFragment";
+  readonly " $fragmentType": "DocumentsPageListFragment";
 };
-export type PoliciesPageListFragment$key = {
-  readonly " $data"?: PoliciesPageListFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"PoliciesPageListFragment">;
+export type DocumentsPageListFragment$key = {
+  readonly " $data"?: DocumentsPageListFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageListFragment">;
 };
 
 const node: ReaderFragment = {
@@ -37,25 +37,25 @@ const node: ReaderFragment = {
         "cursor": null,
         "direction": "forward",
         "path": [
-          "policies"
+          "documents"
         ]
       }
     ]
   },
-  "name": "PoliciesPageListFragment",
+  "name": "DocumentsPageListFragment",
   "selections": [
     {
-      "alias": "policies",
+      "alias": "documents",
       "args": null,
-      "concreteType": "PolicyConnection",
+      "concreteType": "DocumentConnection",
       "kind": "LinkedField",
-      "name": "__PoliciesPageFragment_policies_connection",
+      "name": "__DocumentsPageFragment_documents_connection",
       "plural": false,
       "selections": [
         {
           "alias": null,
           "args": null,
-          "concreteType": "PolicyEdge",
+          "concreteType": "DocumentEdge",
           "kind": "LinkedField",
           "name": "edges",
           "plural": true,
@@ -63,7 +63,7 @@ const node: ReaderFragment = {
             {
               "alias": null,
               "args": null,
-              "concreteType": "Policy",
+              "concreteType": "Document",
               "kind": "LinkedField",
               "name": "node",
               "plural": false,
@@ -78,7 +78,7 @@ const node: ReaderFragment = {
                 {
                   "args": null,
                   "kind": "FragmentSpread",
-                  "name": "PoliciesPageRowFragment"
+                  "name": "DocumentsPageRowFragment"
                 },
                 {
                   "alias": null,
@@ -145,6 +145,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "1c1fa3340a1fe9de3995ffcb374c9124";
+(node as any).hash = "f6098fe2da00c369d0386e3854cd894b";
 
 export default node;

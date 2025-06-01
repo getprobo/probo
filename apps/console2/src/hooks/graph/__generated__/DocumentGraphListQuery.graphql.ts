@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b9027c9c44291af1bebb38760fd96fc8>>
+ * @generated SignedSource<<db2f3c23a3ecbb61ac692a46e93da44a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,18 +10,18 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type PolicyGraphListQuery$variables = {
+export type DocumentGraphListQuery$variables = {
   organizationId: string;
 };
-export type PolicyGraphListQuery$data = {
+export type DocumentGraphListQuery$data = {
   readonly organization: {
     readonly id: string;
-    readonly " $fragmentSpreads": FragmentRefs<"PoliciesPageListFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageListFragment">;
   };
 };
-export type PolicyGraphListQuery = {
-  response: PolicyGraphListQuery$data;
-  variables: PolicyGraphListQuery$variables;
+export type DocumentGraphListQuery = {
+  response: DocumentGraphListQuery$data;
+  variables: DocumentGraphListQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -65,7 +65,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "PolicyGraphListQuery",
+    "name": "DocumentGraphListQuery",
     "selections": [
       {
         "alias": "organization",
@@ -79,7 +79,7 @@ return {
           {
             "args": null,
             "kind": "FragmentSpread",
-            "name": "PoliciesPageListFragment"
+            "name": "DocumentsPageListFragment"
           }
         ],
         "storageKey": null
@@ -92,7 +92,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "PolicyGraphListQuery",
+    "name": "DocumentGraphListQuery",
     "selections": [
       {
         "alias": "organization",
@@ -110,15 +110,15 @@ return {
               {
                 "alias": null,
                 "args": (v4/*: any*/),
-                "concreteType": "PolicyConnection",
+                "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
-                "name": "policies",
+                "name": "documents",
                 "plural": false,
                 "selections": [
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "PolicyEdge",
+                    "concreteType": "DocumentEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -126,7 +126,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "Policy",
+                        "concreteType": "Document",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
@@ -181,7 +181,7 @@ return {
                                 "value": 1
                               }
                             ],
-                            "concreteType": "PolicyVersionConnection",
+                            "concreteType": "DocumentVersionConnection",
                             "kind": "LinkedField",
                             "name": "versions",
                             "plural": false,
@@ -189,7 +189,7 @@ return {
                               {
                                 "alias": null,
                                 "args": null,
-                                "concreteType": "PolicyVersionEdge",
+                                "concreteType": "DocumentVersionEdge",
                                 "kind": "LinkedField",
                                 "name": "edges",
                                 "plural": true,
@@ -197,7 +197,7 @@ return {
                                   {
                                     "alias": null,
                                     "args": null,
-                                    "concreteType": "PolicyVersion",
+                                    "concreteType": "DocumentVersion",
                                     "kind": "LinkedField",
                                     "name": "node",
                                     "plural": false,
@@ -213,7 +213,7 @@ return {
                                       {
                                         "alias": null,
                                         "args": (v4/*: any*/),
-                                        "concreteType": "PolicyVersionSignatureConnection",
+                                        "concreteType": "DocumentVersionSignatureConnection",
                                         "kind": "LinkedField",
                                         "name": "signatures",
                                         "plural": false,
@@ -221,7 +221,7 @@ return {
                                           {
                                             "alias": null,
                                             "args": null,
-                                            "concreteType": "PolicyVersionSignatureEdge",
+                                            "concreteType": "DocumentVersionSignatureEdge",
                                             "kind": "LinkedField",
                                             "name": "edges",
                                             "plural": true,
@@ -229,7 +229,7 @@ return {
                                               {
                                                 "alias": null,
                                                 "args": null,
-                                                "concreteType": "PolicyVersionSignature",
+                                                "concreteType": "DocumentVersionSignature",
                                                 "kind": "LinkedField",
                                                 "name": "node",
                                                 "plural": false,
@@ -312,16 +312,16 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "policies(first:100)"
+                "storageKey": "documents(first:100)"
               },
               {
                 "alias": null,
                 "args": (v4/*: any*/),
                 "filters": null,
                 "handle": "connection",
-                "key": "PoliciesPageFragment_policies",
+                "key": "DocumentsPageFragment_documents",
                 "kind": "LinkedHandle",
-                "name": "policies"
+                "name": "documents"
               }
             ],
             "type": "Organization",
@@ -333,16 +333,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b0b3546b418ff2cfd5dd7678d3b0be14",
+    "cacheID": "d567583accd89d49f0c40fe1bac5ed84",
     "id": null,
     "metadata": {},
-    "name": "PolicyGraphListQuery",
+    "name": "DocumentGraphListQuery",
     "operationKind": "query",
-    "text": "query PolicyGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...PoliciesPageListFragment\n  }\n}\n\nfragment PoliciesPageListFragment on Organization {\n  policies(first: 100) {\n    edges {\n      node {\n        id\n        ...PoliciesPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment PoliciesPageRowFragment on Policy {\n  id\n  title\n  description\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...DocumentsPageListFragment\n  }\n}\n\nfragment DocumentsPageListFragment on Organization {\n  documents(first: 100) {\n    edges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "29761736de791476004e17ad21659a59";
+(node as any).hash = "63de39eb2c87fc45b83eeee047ddd36c";
 
 export default node;

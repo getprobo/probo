@@ -26,7 +26,7 @@ export default function VendorOverviewTab() {
       [
         { name: "statusPageUrl", label: __("Status page URL") },
         { name: "termsOfServiceUrl", label: __("Terms of service URL") },
-        { name: "privacyPolicyUrl", label: __("Privacy policy URL") },
+        { name: "privacyPolicyUrl", label: __("Privacy document URL") },
         {
           name: "serviceLevelAgreementUrl",
           label: __("Service level agreement URL"),

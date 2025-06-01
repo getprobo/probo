@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<baab5b247999631abac20d0f5ab13925>>
+ * @generated SignedSource<<64c2c92a2a0806f34243f8fc9904167c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,21 +9,21 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type DeletePolicyInput = {
-  policyId: string;
+export type DeleteDocumentInput = {
+  documentId: string;
 };
-export type PolicyGraphDeleteMutation$variables = {
+export type DocumentGraphDeleteMutation$variables = {
   connections: ReadonlyArray<string>;
-  input: DeletePolicyInput;
+  input: DeleteDocumentInput;
 };
-export type PolicyGraphDeleteMutation$data = {
-  readonly deletePolicy: {
-    readonly deletedPolicyId: string;
+export type DocumentGraphDeleteMutation$data = {
+  readonly deleteDocument: {
+    readonly deletedDocumentId: string;
   };
 };
-export type PolicyGraphDeleteMutation = {
-  response: PolicyGraphDeleteMutation$data;
-  variables: PolicyGraphDeleteMutation$variables;
+export type DocumentGraphDeleteMutation = {
+  response: DocumentGraphDeleteMutation$data;
+  variables: DocumentGraphDeleteMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -48,7 +48,7 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "deletedPolicyId",
+  "name": "deletedDocumentId",
   "storageKey": null
 };
 return {
@@ -59,14 +59,14 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "PolicyGraphDeleteMutation",
+    "name": "DocumentGraphDeleteMutation",
     "selections": [
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "DeletePolicyPayload",
+        "concreteType": "DeleteDocumentPayload",
         "kind": "LinkedField",
-        "name": "deletePolicy",
+        "name": "deleteDocument",
         "plural": false,
         "selections": [
           (v3/*: any*/)
@@ -84,14 +84,14 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "PolicyGraphDeleteMutation",
+    "name": "DocumentGraphDeleteMutation",
     "selections": [
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "DeletePolicyPayload",
+        "concreteType": "DeleteDocumentPayload",
         "kind": "LinkedField",
-        "name": "deletePolicy",
+        "name": "deleteDocument",
         "plural": false,
         "selections": [
           (v3/*: any*/),
@@ -102,7 +102,7 @@ return {
             "handle": "deleteEdge",
             "key": "",
             "kind": "ScalarHandle",
-            "name": "deletedPolicyId",
+            "name": "deletedDocumentId",
             "handleArgs": [
               {
                 "kind": "Variable",
@@ -117,16 +117,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d635ed7113bd8ad32056f5b4fbb95b22",
+    "cacheID": "84c747138470346796393f93a85b7127",
     "id": null,
     "metadata": {},
-    "name": "PolicyGraphDeleteMutation",
+    "name": "DocumentGraphDeleteMutation",
     "operationKind": "mutation",
-    "text": "mutation PolicyGraphDeleteMutation(\n  $input: DeletePolicyInput!\n) {\n  deletePolicy(input: $input) {\n    deletedPolicyId\n  }\n}\n"
+    "text": "mutation DocumentGraphDeleteMutation(\n  $input: DeleteDocumentInput!\n) {\n  deleteDocument(input: $input) {\n    deletedDocumentId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f5178185f41864d20506abc44b37fa67";
+(node as any).hash = "355f3a70caecabb2146075657665633e";
 
 export default node;
