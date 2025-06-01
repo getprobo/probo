@@ -47,6 +47,7 @@ export {
     DialogFooter,
     DialogTitle,
     useDialogRef,
+    type DialogRef,
 } from "./Molecules/Dialog/Dialog";
 export { useConfirm } from "./Molecules/Dialog/ConfirmDialog";
 export { RiskBadge } from "./Molecules/Badge/RiskBadge";
@@ -58,6 +59,7 @@ export { Combobox, ComboboxItem } from "./Molecules/Combobox/Combobox";
 export { FileButton } from "./Molecules/FileButton/FileButton";
 export { MeasureBadge } from "./Molecules/Badge/MeasureBadge";
 export { MeasureImplementation } from "./Molecules/MeasureImplementation/MeasureImplementation";
+export { FrameworkSelector } from "./Molecules/FrameworkSelector/FrameworkSelector";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";

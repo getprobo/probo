@@ -37,17 +37,22 @@ export const dialog = tv({
     },
 });
 
+export type DialogRef = RefObject<{
+    open: () => void;
+    close: () => void;
+} | null>;
+
 type Props = {
     trigger?: ReactNode;
     title?: ReactNode;
     children?: ReactNode;
     defaultOpen?: boolean;
     className?: string;
-    ref?: RefObject<{ open: () => void; close: () => void } | null>;
+    ref?: DialogRef;
 };
 
-export const useDialogRef = () => {
-    return useRef<{ open: () => void; close: () => void } | null>(null);
+export const useDialogRef = (): DialogRef => {
+    return useRef(null);
 };
 
 export function Dialog({
