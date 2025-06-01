@@ -21,6 +21,7 @@ import { policiesRoutes } from "./routes/policiesRoutes.ts";
 import { vendorRoutes } from "./routes/vendorRoutes.ts";
 import { organizationViewQuery } from "./hooks/graph/OrganizationGraph.ts";
 import { peopleRoutes } from "./routes/peopleRoutes.ts";
+import { frameworkRoutes } from "./routes/frameworkRoutes.ts";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -85,6 +86,7 @@ const routes = [
       ...policiesRoutes,
       ...peopleRoutes,
       ...vendorRoutes,
+      ...frameworkRoutes,
     ],
   },
 ] satisfies AppRoute[];

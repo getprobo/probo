@@ -74,7 +74,7 @@ export function ActionDropdown(
             {...props}
             toggle={
                 <Button
-                    className="inline-flex"
+                    className="inline-flex isolate z-5"
                     variant={props.variant ?? "tertiary"}
                     icon={IconDotGrid1x3Horizontal}
                 />

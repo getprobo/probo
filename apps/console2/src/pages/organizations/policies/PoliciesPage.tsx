@@ -13,6 +13,8 @@ import {
   Button,
   IconPlusLarge,
   useConfirm,
+  ActionDropdown,
+  DropdownItem,
 } from "@probo/ui";
 import {
   useFragment,
@@ -157,14 +159,11 @@ function PolicyRow({
   const handleDelete = () => {
     confirm(
       () =>
-        new Promise<void>((resolve) => {
-          deletePolicy({
-            variables: {
-              input: { policyId: policy.id },
-              connections: [connectionId],
-            },
-            onCompleted: () => resolve(),
-          });
+        deletePolicy({
+          variables: {
+            input: { policyId: policy.id },
+            connections: [connectionId],
+          },
         }),
       {
         message: sprintf(
@@ -178,51 +177,52 @@ function PolicyRow({
   };
 
   return (
-    <>
-      <Tr to={`/organizations/${organizationId}/policies/${policy.id}`}>
-        <Td>
-          <div className="flex gap-4 items-center">
-            <img
-              src="/policy.png"
-              alt=""
-              width={28}
-              height={36}
-              className="border-4 border-highlight rounded box-content"
-            />
-            {policy.title}
-          </div>
-        </Td>
-        <Td>
-          <Badge variant={isDraft ? "neutral" : "success"}>
-            {isDraft ? __("Draft") : __("Published")}
-          </Badge>
-        </Td>
-        <Td>
-          <div className="flex gap-2 items-center">
-            <Avatar name={policy.owner.fullName} />
-            {policy.owner.fullName}
-          </div>
-        </Td>
-        <Td>
-          {dateFormat(policy.updatedAt, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            weekday: "short",
-          })}
-        </Td>
-        <Td>
-          {signedCount}/{signatures.length}
-        </Td>
-        <Td noLink width={50} className="text-end">
-          <Button
-            icon={IconTrashCan}
-            variant="danger"
-            onClick={handleDelete}
-            disabled={isDeleting}
+    <Tr to={`/organizations/${organizationId}/policies/${policy.id}`}>
+      <Td>
+        <div className="flex gap-4 items-center">
+          <img
+            src="/policy.png"
+            alt=""
+            width={28}
+            height={36}
+            className="border-4 border-highlight rounded box-content"
           />
-        </Td>
-      </Tr>
-    </>
+          {policy.title}
+        </div>
+      </Td>
+      <Td>
+        <Badge variant={isDraft ? "neutral" : "success"}>
+          {isDraft ? __("Draft") : __("Published")}
+        </Badge>
+      </Td>
+      <Td>
+        <div className="flex gap-2 items-center">
+          <Avatar name={policy.owner.fullName} />
+          {policy.owner.fullName}
+        </div>
+      </Td>
+      <Td>
+        {dateFormat(policy.updatedAt, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          weekday: "short",
+        })}
+      </Td>
+      <Td>
+        {signedCount}/{signatures.length}
+      </Td>
+      <Td noLink width={50} className="text-end">
+        <ActionDropdown>
+          <DropdownItem
+            variant="danger"
+            icon={IconTrashCan}
+            onClick={handleDelete}
+          >
+            {__("Delete")}
+          </DropdownItem>
+        </ActionDropdown>
+      </Td>
+    </Tr>
   );
 }
