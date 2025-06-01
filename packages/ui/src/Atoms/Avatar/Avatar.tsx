@@ -1,23 +1,33 @@
-import clsx from "clsx";
+import { tv } from "tailwind-variants";
 
 type Props = {
     name: string;
     src?: string | null;
     size?: "s" | "m" | "l" | "xl";
+    className?: string;
 };
 
-export function Avatar({ name, src, size = "m" }: Props) {
-    const className = clsx(
-        "bg-txt-success text-txt-invert rounded-full font-semibold flex items-center justify-center flex-none",
-        size === "s" && "size-5 text-xss",
-        size === "m" && "size-6 text-xxs",
-        size === "l" && "size-8 text-sm",
-        size === "xl" && "size-16 text-3xl",
-    );
-    if (src) {
-        return <img className={className} src={src} alt={name} />;
+const avatar = tv({
+    base: "bg-txt-success text-txt-invert rounded-full font-semibold flex items-center justify-center flex-none",
+    variants: {
+        size: {
+            s: "size-5 text-xss",
+            m: "size-6 text-xxs",
+            l: "size-8 text-sm",
+            xl: "size-16 text-3xl",
+        },
+    },
+    defaultVariants: {
+        size: "m",
+    },
+});
+
+export function Avatar(props: Props) {
+    const className = avatar(props);
+    if (props.src) {
+        return <img className={className} src={props.src} alt={props.name} />;
     }
-    return <div className={className}>{extractInitials(name ?? "")}</div>;
+    return <div className={className}>{extractInitials(props.name ?? "")}</div>;
 }
 
 function extractInitials(name: string) {
