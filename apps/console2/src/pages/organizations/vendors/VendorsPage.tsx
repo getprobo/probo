@@ -14,68 +14,34 @@ import {
   ActionDropdown,
   DropdownItem,
   IconTrashCan,
-  useConfirm,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
-import { ConnectionHandler, graphql } from "relay-runtime";
-import { useLazyLoadQuery } from "react-relay";
+import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type {
-  VendorsPageQuery,
-  VendorsPageQuery$data,
-} from "./__generated__/VendorsPageQuery.graphql";
-import { faviconUrl, sprintf } from "@probo/helpers";
+import { faviconUrl } from "@probo/helpers";
 import type { NodeOf } from "/types";
 import { CreateVendorDialog } from "./CreateVendorDialog";
-import { useDeleteVendorMutation } from "/hooks/graph/VendorGraph";
+import { useDeleteVendor, vendorsQuery } from "/hooks/graph/VendorGraph";
+import type {
+  VendorGraphListQuery,
+  VendorGraphListQuery$data,
+} from "/hooks/graph/__generated__/VendorGraphListQuery.graphql";
 
-const vendorsQuery = graphql`
-  query VendorsPageQuery($organizationId: ID!) {
-    node(id: $organizationId) {
-      ... on Organization {
-        vendors(first: 25) @connection(key: "VendorsPage_vendors") {
-          __id
-          edges {
-            node {
-              id
-              name
-              websiteUrl
-              updatedAt
-              riskAssessments(
-                first: 1
-                orderBy: { direction: DESC, field: ASSESSED_AT }
-              ) {
-                edges {
-                  node {
-                    id
-                    assessedAt
-                    expiresAt
-                    dataSensitivity
-                    businessImpact
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
+type Vendor = NodeOf<Required<VendorGraphListQuery$data["node"]>["vendors"]>;
 
-type Vendor = NodeOf<Required<VendorsPageQuery$data["node"]>["vendors"]>;
+type Props = {
+  queryRef: PreloadedQuery<VendorGraphListQuery>;
+};
 
-export default function VendorsPage() {
+export default function VendorsPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
-  const data = useLazyLoadQuery<VendorsPageQuery>(vendorsQuery, {
-    organizationId,
-  });
-  console.log(data);
+  const data = usePreloadedQuery(vendorsQuery, props.queryRef);
 
   const vendors = data.node?.vendors?.edges.map((edge) => edge.node);
+  const connectionId = data.node!.vendors!.__id;
 
   usePageTitle(__("Vendors"));
 
@@ -90,8 +56,9 @@ export default function VendorsPage() {
         <CreateVendorDialog
           connection={data.node!.vendors!.__id}
           organizationId={organizationId}
-          trigger={<Button icon={IconPlusLarge}>{__("Add vendor")}</Button>}
-        />
+        >
+          <Button icon={IconPlusLarge}>{__("Add vendor")}</Button>
+        </CreateVendorDialog>
       </PageHeader>
       <Table>
         <Thead>
@@ -110,6 +77,7 @@ export default function VendorsPage() {
               key={vendor.id}
               vendor={vendor}
               organizationId={organizationId}
+              connectionId={connectionId}
             />
           ))}
         </Tbody>
@@ -121,9 +89,11 @@ export default function VendorsPage() {
 function VendorRow({
   vendor,
   organizationId,
+  connectionId,
 }: {
   vendor: Vendor;
   organizationId: string;
+  connectionId: string;
 }) {
   const { __, dateFormat } = useTranslate();
   const latestAssessment = vendor.riskAssessments?.edges[0]?.node;
@@ -131,42 +101,11 @@ function VendorRow({
     ? new Date(latestAssessment.expiresAt) < new Date()
     : false;
 
-  const [deleteVendor] = useDeleteVendorMutation();
-  const confirm = useConfirm();
-
-  const onDelete = () => {
-    confirm(
-      () =>
-        new Promise<void>((resolve) => {
-          deleteVendor({
-            variables: {
-              input: {
-                vendorId: vendor.id,
-              },
-              connections: [
-                ConnectionHandler.getConnectionID(
-                  organizationId,
-                  "VendorsPage_vendors"
-                ),
-              ],
-            },
-            onCompleted: () => resolve(),
-          });
-        }),
-      {
-        message: sprintf(
-          __(
-            'This will permanently delete the vendor "%s". This action cannot be undone.'
-          ),
-          vendor.name
-        ),
-      }
-    );
-  };
+  const deleteVendor = useDeleteVendor(vendor, connectionId);
 
   return (
     <>
-      <Tr to={`/organizations/${organizationId}/vendors/${vendor.id}`}>
+      <Tr to={`/organizations/${organizationId}/vendors/${vendor.id}/overview`}>
         <Td>
           <div className="flex gap-2 items-center">
             <Avatar name={vendor.name} src={faviconUrl(vendor.websiteUrl)} />
@@ -196,7 +135,7 @@ function VendorRow({
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
             <DropdownItem
-              onClick={onDelete}
+              onClick={deleteVendor}
               variant="danger"
               icon={IconTrashCan}
             >

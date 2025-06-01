@@ -12,12 +12,12 @@ import {
   Textarea,
   useDialogRef,
 } from "@probo/ui";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { usePolicyForm } from "../../../../hooks/forms/usePolicyForm";
+import { usePolicyForm } from "/hooks/forms/usePolicyForm";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { PeopleSelect } from "/components/form/PeopleSelect";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import type { CreatePolicyDialogMutation } from "./__generated__/CreatePolicyDialogMutation.graphql";
 
 type Props = {
@@ -112,10 +112,10 @@ export function CreatePolicyDialog({ trigger, connection }: Props) {
               label={__("Owner")}
               error={errors.ownerId?.message}
             >
-              <PeopleSelect
+              <PeopleSelectField
                 name="ownerId"
                 control={control}
-                organization={organizationId}
+                organizationId={organizationId}
               />
             </PropertyRow>
           </div>
