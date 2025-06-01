@@ -1,42 +1,43 @@
-import { Avatar, Option, Select } from "@probo/ui";
+import { Avatar, Field, Option, Select } from "@probo/ui";
 import { Suspense } from "react";
 import { useTranslate } from "@probo/i18n";
 import { type Control, Controller } from "react-hook-form";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 
-export function PeopleSelect({
-  organization,
-  name,
-  control,
-}: {
-  organization: string;
-  name: string;
+type Props = {
+  organizationId: string;
   control: Control<any>;
-}) {
+  name: string;
+  label?: string;
+  error?: string;
+};
+
+export function PeopleSelectField({
+  organizationId,
+  control,
+  ...props
+}: Props) {
   return (
-    <Suspense
-      fallback={<Select variant="editor" disabled placeholder="Loading..." />}
-    >
-      <PeopleSelectWithQuery
-        organization={organization}
-        name={name}
-        control={control}
-      />
-    </Suspense>
+    <Field {...props}>
+      <Suspense
+        fallback={<Select variant="editor" disabled placeholder="Loading..." />}
+      >
+        <PeopleSelectWithQuery
+          organizationId={organizationId}
+          control={control}
+          name={props.name}
+        />
+      </Suspense>
+    </Field>
   );
 }
 
-function PeopleSelectWithQuery({
-  organization,
-  name,
-  control,
-}: {
-  organization: string;
-  name: string;
-  control: Control;
-}) {
+function PeopleSelectWithQuery(
+  props: Pick<Props, "organizationId" | "control" | "name">
+) {
   const { __ } = useTranslate();
-  const people = usePeople(organization);
+  const { name, organizationId, control } = props;
+  const people = usePeople(organizationId);
 
   return (
     <>
@@ -51,6 +52,7 @@ function PeopleSelectWithQuery({
             onValueChange={field.onChange}
             key={people?.length.toString() ?? "0"}
             {...field}
+            className="w-full"
             value={field.value ?? ""}
           >
             {people?.map((p) => (

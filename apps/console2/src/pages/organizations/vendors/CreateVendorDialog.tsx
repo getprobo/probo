@@ -7,6 +7,7 @@ import {
   DialogFooter,
   Avatar,
   IconPlusLarge,
+  useDialogRef,
 } from "@probo/ui";
 import { useVendorSearch } from "/hooks/useVendorSearch";
 import { faviconUrl } from "@probo/helpers";
@@ -15,20 +16,19 @@ import { useCreateVendorMutation } from "/hooks/graph/VendorGraph";
 import { type ReactNode, useState } from "react";
 
 type Props = {
-  trigger: ReactNode;
+  children: ReactNode;
   organizationId: string;
   connection: string;
 };
 
 export function CreateVendorDialog({
-  trigger,
+  children,
   organizationId,
   connection,
 }: Props) {
   const { __ } = useTranslate();
   const { search, vendors, query } = useVendorSearch();
   const [createVendor] = useCreateVendorMutation();
-  const [open, setOpen] = useState(false);
 
   const onSelect = (vendor: Vendor | string) => {
     const input =
@@ -61,18 +61,15 @@ export function CreateVendorDialog({
         connections: [connection],
       },
       onSuccess: () => {
-        setOpen(false);
+        dialogRef.current?.close();
       },
     });
   };
 
+  const dialogRef = useDialogRef();
+
   return (
-    <Dialog
-      title={__("Add a vendor")}
-      trigger={trigger}
-      open={open}
-      onOpenChange={setOpen}
-    >
+    <Dialog ref={dialogRef} trigger={children} title={__("Add a vendor")}>
       <DialogContent className="p-6">
         <Combobox onSearch={search} placeholder={__("Type vendor's name")}>
           {vendors.map((vendor) => (

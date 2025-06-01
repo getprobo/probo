@@ -26,36 +26,43 @@ export function useMutationWithToasts<T extends MutationParameters>(
       }
     ) => {
       const options = { ...baseOptions, ...queryOptions };
-      mutate({
-        ...options,
-        onCompleted: (response, error) => {
-          options.onCompleted?.(response, error);
-          if (error) {
+      return new Promise<void>((resolve, reject) =>
+        mutate({
+          ...options,
+          onCompleted: (response, error) => {
+            options.onCompleted?.(response, error);
+            if (error) {
+              toast({
+                title: __("Error"),
+                description:
+                  options.errorMessage ??
+                  __("Failed to commit this operation."),
+                variant: "error",
+              });
+              reject(error);
+              return;
+            }
+            toast({
+              title: __("Success"),
+              description:
+                options.successMessage ??
+                __("Operation completed successfully"),
+              variant: "success",
+            });
+            options.onSuccess?.();
+            resolve();
+          },
+          onError: (error) => {
             toast({
               title: __("Error"),
               description:
                 options.errorMessage ?? __("Failed to commit this operation."),
               variant: "error",
             });
-            return;
-          }
-          toast({
-            title: __("Success"),
-            description:
-              options.successMessage ?? __("Operation completed successfully"),
-            variant: "success",
-          });
-          options.onSuccess?.();
-        },
-        onError: () => {
-          toast({
-            title: __("Error"),
-            description:
-              options.errorMessage ?? __("Failed to commit this operation."),
-            variant: "error",
-          });
-        },
-      });
+            reject(error);
+          },
+        })
+      );
     },
     [mutate]
   );

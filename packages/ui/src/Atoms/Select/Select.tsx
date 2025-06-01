@@ -83,7 +83,10 @@ export function Select({
 
     return (
         <Root onValueChange={onValueChange} value={value}>
-            <Trigger {...props} className={trigger()}>
+            <Trigger
+                {...props}
+                className={trigger({ className: props.className })}
+            >
                 <Value placeholder={placeholder} />
                 <Icon className={icon()}>
                     <IconChevronGrabberVertical size={16} />

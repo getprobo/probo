@@ -18,6 +18,7 @@ import { useCleanup } from "./hooks/useDelayedEffect.ts";
 import { riskRoutes } from "./routes/riskRoutes.ts";
 import { measureRoutes } from "./routes/measureRoutes.ts";
 import { policiesRoutes } from "./routes/policiesRoutes.ts";
+import { vendorRoutes } from "./routes/vendorRoutes.ts";
 import { organizationViewQuery } from "./hooks/graph/OrganizationGraph.ts";
 import { peopleRoutes } from "./routes/peopleRoutes.ts";
 
@@ -79,17 +80,11 @@ const routes = [
           }),
         Component: lazy(() => import("./pages/organizations/SettingsPage")),
       },
-      {
-        path: "vendors",
-        fallback: PageSkeleton,
-        Component: lazy(
-          () => import("./pages/organizations/vendors/VendorsPage")
-        ),
-      },
       ...riskRoutes,
       ...measureRoutes,
       ...policiesRoutes,
       ...peopleRoutes,
+      ...vendorRoutes,
     ],
   },
 ] satisfies AppRoute[];

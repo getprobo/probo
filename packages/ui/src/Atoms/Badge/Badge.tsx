@@ -1,7 +1,9 @@
 import type { HTMLAttributes } from "react";
 import { tv } from "tailwind-variants";
+import { Slot } from "../Slot";
 
 type Props = {
+    asChild?: boolean;
     variant?:
         | "success"
         | "warning"
@@ -11,10 +13,10 @@ type Props = {
         | "outline"
         | "highlight";
     size?: "sm" | "md";
-} & HTMLAttributes<HTMLDivElement>;
+} & HTMLAttributes<HTMLElement>;
 
 const badge = tv({
-    base: "font-medium rounded-lg w-max flex gap-1 items-center",
+    base: "font-medium rounded-lg w-max flex gap-1 items-center group whitespace-nowrap",
     variants: {
         variant: {
             success: "bg-success text-txt-success",
@@ -37,5 +39,7 @@ const badge = tv({
 });
 
 export function Badge(props: Props) {
-    return <div {...props} className={badge(props)} />;
+    const Component = props.asChild ? Slot : "div";
+    const { asChild, size, variant, ...restProps } = props;
+    return <Component {...restProps} className={badge(props)} />;
 }

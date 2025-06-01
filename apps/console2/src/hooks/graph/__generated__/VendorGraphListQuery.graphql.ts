@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2de1bbc55eb7b45a9546c8ec306ad979>>
+ * @generated SignedSource<<bf60e491fedeea556cb63210ab364d6c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,10 +11,10 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type BusinessImpact = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM";
 export type DataSensitivity = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM" | "NONE";
-export type VendorsPageQuery$variables = {
+export type VendorGraphListQuery$variables = {
   organizationId: string;
 };
-export type VendorsPageQuery$data = {
+export type VendorGraphListQuery$data = {
   readonly node: {
     readonly vendors?: {
       readonly __id: string;
@@ -40,9 +40,9 @@ export type VendorsPageQuery$data = {
     };
   };
 };
-export type VendorsPageQuery = {
-  response: VendorsPageQuery$data;
-  variables: VendorsPageQuery$variables;
+export type VendorGraphListQuery = {
+  response: VendorGraphListQuery$data;
+  variables: VendorGraphListQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -253,7 +253,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "VendorsPageQuery",
+    "name": "VendorGraphListQuery",
     "selections": [
       {
         "alias": null,
@@ -291,7 +291,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "VendorsPageQuery",
+    "name": "VendorGraphListQuery",
     "selections": [
       {
         "alias": null,
@@ -335,7 +335,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "cfdef0fe4c1b737de9dfbf0a27a3de44",
+    "cacheID": "ce175c4c5d08117d3acdbd3eed92ca95",
     "id": null,
     "metadata": {
       "connection": [
@@ -350,13 +350,13 @@ return {
         }
       ]
     },
-    "name": "VendorsPageQuery",
+    "name": "VendorGraphListQuery",
     "operationKind": "query",
-    "text": "query VendorsPageQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      vendors(first: 25) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            updatedAt\n            riskAssessments(first: 1, orderBy: {direction: DESC, field: ASSESSED_AT}) {\n              edges {\n                node {\n                  id\n                  assessedAt\n                  expiresAt\n                  dataSensitivity\n                  businessImpact\n                }\n              }\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query VendorGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      vendors(first: 25) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            updatedAt\n            riskAssessments(first: 1, orderBy: {direction: DESC, field: ASSESSED_AT}) {\n              edges {\n                node {\n                  id\n                  assessedAt\n                  expiresAt\n                  dataSensitivity\n                  businessImpact\n                }\n              }\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ce37725ed4c8f58ae2e4af7cf6ee8564";
+(node as any).hash = "ef2b4fb44af8cef6cd3f50a6746c6de3";
 
 export default node;

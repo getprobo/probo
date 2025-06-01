@@ -18,13 +18,34 @@ type Props = {
     loading?: boolean;
     onSearch: (query: string) => void;
     placeholder?: string;
+    autoSelect?: boolean;
+    onSelect?: (value: string) => void;
+    resetValueOnHide?: boolean;
+    value?: string;
 };
 
-export function Combobox({ children, onSearch, placeholder }: Props) {
+export function Combobox({
+    children,
+    onSearch,
+    placeholder,
+    autoSelect,
+    onSelect,
+    resetValueOnHide,
+    value,
+}: Props) {
     const showDropdown = !isEmpty(children);
     return (
-        <ComboboxProvider setValue={onSearch}>
-            <AriaKitCombobox placeholder={placeholder} className={input()} />
+        <ComboboxProvider
+            value={value}
+            setValue={onSearch}
+            setSelectedValue={(v) => onSelect?.(v as string)}
+            resetValueOnHide={resetValueOnHide}
+        >
+            <AriaKitCombobox
+                autoSelect={autoSelect}
+                placeholder={placeholder}
+                className={input()}
+            />
             {showDropdown && (
                 <ComboboxPopover gutter={4} sameWidth className={dropdown()}>
                     {children}
@@ -39,7 +60,7 @@ export function ComboboxItem({
     ...props
 }: PropsWithChildren<ComponentProps<typeof AriaKitComboboxItem>>) {
     return (
-        <AriaKitComboboxItem className={dropdownItem()} {...props}>
+        <AriaKitComboboxItem hideOnClick className={dropdownItem()} {...props}>
             {children}
         </AriaKitComboboxItem>
     );

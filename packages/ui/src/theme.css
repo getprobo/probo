@@ -249,6 +249,11 @@ button:focus-visible {
     }
 }
 
+/* Allow interpolation : https://developer.chrome.com/docs/css-ui/animate-to-height-auto */
+:root {
+    interpolate-size: allow-keywords;
+}
+
 ::-webkit-scrollbar {
     width: 7px;
     height: 7px;
