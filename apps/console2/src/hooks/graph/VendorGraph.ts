@@ -131,6 +131,7 @@ export const vendorNodeQuery = graphql`
         name
         websiteUrl
         ...useVendorFormFragment
+        ...VendorComplianceTabFragment
       }
     }
   }
