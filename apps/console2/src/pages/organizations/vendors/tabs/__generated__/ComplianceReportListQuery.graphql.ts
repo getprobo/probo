@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<75defbef64a4ee18b514465a44c8eea1>>
+ * @generated SignedSource<<10fdd09e95fc5f2995b91c73cf9fb945>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -211,6 +211,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
+                          (v12/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -246,7 +247,6 @@ return {
                             "name": "fileSize",
                             "storageKey": null
                           },
-                          (v12/*: any*/),
                           (v11/*: any*/)
                         ],
                         "storageKey": null
@@ -299,6 +299,18 @@ return {
                       }
                     ],
                     "storageKey": null
+                  },
+                  {
+                    "kind": "ClientExtension",
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "__id",
+                        "storageKey": null
+                      }
+                    ]
                   }
                 ],
                 "storageKey": null
@@ -324,16 +336,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "76e0b5dbc01424695b8c642e27c0f4ed",
+    "cacheID": "c819e002dfe9f20004fb5bfb4f95b143",
     "id": null,
     "metadata": {},
     "name": "ComplianceReportListQuery",
     "operationKind": "query",
-    "text": "query ComplianceReportListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorComplianceReportOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorComplianceTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment_16fISc on Vendor {\n  complianceReports(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        ...VendorComplianceTabFragment_report\n        id\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  reportDate\n  validUntil\n  reportName\n  fileUrl\n  fileSize\n}\n"
+    "text": "query ComplianceReportListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorComplianceReportOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorComplianceTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment_16fISc on Vendor {\n  complianceReports(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  fileUrl\n  fileSize\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7aae49a4b414ed4db5e7b39f8969c02f";
+(node as any).hash = "1fe4e0b1f9fb781c3b01e539145d610a";
 
 export default node;
