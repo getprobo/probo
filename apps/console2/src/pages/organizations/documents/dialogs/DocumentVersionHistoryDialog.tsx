@@ -9,14 +9,14 @@ import {
 import { graphql } from "relay-runtime";
 import { useTranslate } from "@probo/i18n";
 import { useState, type ReactNode } from "react";
-import type { PolicyPagePolicyFragment$data } from "../__generated__/PolicyPagePolicyFragment.graphql";
+import type { DocumentPageDocumentFragment$data } from "../__generated__/DocumentPageDocumentFragment.graphql";
 import { useFragment } from "react-relay";
-import type { PolicyVersionHistoryDialogFragment$key } from "./__generated__/PolicyVersionHistoryDialogFragment.graphql";
+import type { DocumentVersionHistoryDialogFragment$key } from "./__generated__/DocumentVersionHistoryDialogFragment.graphql";
 import clsx from "clsx";
 import type { NodeOf } from "/types";
 
 const historyFragment = graphql`
-  fragment PolicyVersionHistoryDialogFragment on PolicyVersion {
+  fragment DocumentVersionHistoryDialogFragment on DocumentVersion {
     id
     version
     status
@@ -31,15 +31,15 @@ const historyFragment = graphql`
 `;
 
 type Props = {
-  policy: PolicyPagePolicyFragment$data;
+  document: DocumentPageDocumentFragment$data;
   children?: ReactNode;
 };
 
-type Version = NodeOf<PolicyPagePolicyFragment$data["versions"]>;
+type Version = NodeOf<DocumentPageDocumentFragment$data["versions"]>;
 
-export function PolicyVersionHistoryDialog(props: Props) {
+export function DocumentVersionHistoryDialog(props: Props) {
   const { __ } = useTranslate();
-  const versions = props.policy.versions.edges.map((edge) => edge.node);
+  const versions = props.document.versions.edges.map((edge) => edge.node);
   const [selectedVersion, setSelectedVersion] = useState<Version>(versions[0]);
   return (
     <Dialog trigger={props.children}>
@@ -51,7 +51,7 @@ export function PolicyVersionHistoryDialog(props: Props) {
           {versions.map((version) => (
             <VersionItem
               key={version.id}
-              policy={props.policy}
+              document={props.document}
               version={version}
               active={selectedVersion === version}
               onSelect={setSelectedVersion}
@@ -68,12 +68,12 @@ export function PolicyVersionHistoryDialog(props: Props) {
 }
 
 function VersionItem(props: {
-  policy: PolicyPagePolicyFragment$data;
+  document: DocumentPageDocumentFragment$data;
   version: Version;
   active?: boolean;
   onSelect: (v: Version) => void;
 }) {
-  const version = useFragment<PolicyVersionHistoryDialogFragment$key>(
+  const version = useFragment<DocumentVersionHistoryDialogFragment$key>(
     historyFragment,
     props.version
   );
@@ -87,12 +87,12 @@ function VersionItem(props: {
       )}
     >
       <Avatar
-        name={version.publishedBy?.fullName ?? props.policy.owner.fullName}
+        name={version.publishedBy?.fullName ?? props.document.owner.fullName}
         size="l"
       />
       <div className="text-start space-y-[2px] w-full overflow-hidden">
         <div className="text-sm text-txt-primary whitespace-nowrap overflow-hidden text-ellipsis">
-          {version.publishedBy?.fullName ?? props.policy.owner.fullName}
+          {version.publishedBy?.fullName ?? props.document.owner.fullName}
         </div>
         <div className="text-xs text-txt-secondary whitespace-nowrap overflow-hidden text-ellipsis">
           {dateTimeFormat(version.publishedAt ?? version.updatedAt)}

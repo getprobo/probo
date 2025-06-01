@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6a680118da31fa610f9638d27a9b48d1>>
+ * @generated SignedSource<<95aa70195a3e90acb366441fd037c2f2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,9 +10,11 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
+export type VendorCategory = "ANALYTICS" | "CLOUD_MONITORING" | "CLOUD_PROVIDER" | "COLLABORATION" | "CUSTOMER_SUPPORT" | "DATA_STORAGE_AND_PROCESSING" | "DOCUMENT_MANAGEMENT" | "EMPLOYEE_MANAGEMENT" | "ENGINEERING" | "FINANCE" | "IDENTITY_PROVIDER" | "IT" | "MARKETING" | "OFFICE_OPERATIONS" | "OTHER" | "PASSWORD_MANAGEMENT" | "PRODUCT_AND_DESIGN" | "PROFESSIONAL_SERVICES" | "RECRUITING" | "SALES" | "SECURITY" | "VERSION_CONTROL";
 export type UpdateVendorInput = {
+  businessAssociateAgreementUrl?: string | null | undefined;
   businessOwnerId?: string | null | undefined;
-  category?: string | null | undefined;
+  category?: VendorCategory | null | undefined;
   certifications?: ReadonlyArray<string> | null | undefined;
   dataProcessingAgreementUrl?: string | null | undefined;
   description?: string | null | undefined;
@@ -25,6 +27,7 @@ export type UpdateVendorInput = {
   securityPageUrl?: string | null | undefined;
   serviceLevelAgreementUrl?: string | null | undefined;
   statusPageUrl?: string | null | undefined;
+  subprocessorsListUrl?: string | null | undefined;
   termsOfServiceUrl?: string | null | undefined;
   trustPageUrl?: string | null | undefined;
   websiteUrl?: string | null | undefined;

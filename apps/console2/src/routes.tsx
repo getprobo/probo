@@ -17,7 +17,7 @@ import { loadQuery, type PreloadedQuery } from "react-relay";
 import { useCleanup } from "./hooks/useDelayedEffect.ts";
 import { riskRoutes } from "./routes/riskRoutes.ts";
 import { measureRoutes } from "./routes/measureRoutes.ts";
-import { policiesRoutes } from "./routes/policiesRoutes.ts";
+import { documentsRoutes } from "./routes/documentsRoutes.ts";
 import { vendorRoutes } from "./routes/vendorRoutes.ts";
 import { organizationViewQuery } from "./hooks/graph/OrganizationGraph.ts";
 import { peopleRoutes } from "./routes/peopleRoutes.ts";
@@ -83,7 +83,7 @@ const routes = [
       },
       ...riskRoutes,
       ...measureRoutes,
-      ...policiesRoutes,
+      ...documentsRoutes,
       ...peopleRoutes,
       ...vendorRoutes,
       ...frameworkRoutes,

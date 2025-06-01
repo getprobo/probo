@@ -7,13 +7,10 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
-  Field,
   Input,
   Textarea,
-  useDialogRef,
   type DialogRef,
 } from "@probo/ui";
-import type { RefObject } from "react";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 
@@ -46,12 +43,7 @@ const schema = z.object({
 
 export function CreateFrameworkDialog(props: Props) {
   const { __ } = useTranslate();
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useFormWithSchema(schema, {});
+  const { register, handleSubmit, reset } = useFormWithSchema(schema, {});
   const [commitCreate, isCreating] = useMutationWithToasts(
     createFrameworkMutation,
     {

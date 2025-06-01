@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b7defae939287f936c1eb687fe2d9bfe>>
+ * @generated SignedSource<<2cb115c83f67688124df197a8f944329>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,17 +10,17 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type PolicyGraphNodeQuery$variables = {
-  policyId: string;
+export type DocumentGraphNodeQuery$variables = {
+  documentId: string;
 };
-export type PolicyGraphNodeQuery$data = {
+export type DocumentGraphNodeQuery$data = {
   readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"PolicyPagePolicyFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"DocumentPageDocumentFragment">;
   };
 };
-export type PolicyGraphNodeQuery = {
-  response: PolicyGraphNodeQuery$data;
-  variables: PolicyGraphNodeQuery$variables;
+export type DocumentGraphNodeQuery = {
+  response: DocumentGraphNodeQuery$data;
+  variables: DocumentGraphNodeQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -28,14 +28,14 @@ var v0 = [
   {
     "defaultValue": null,
     "kind": "LocalArgument",
-    "name": "policyId"
+    "name": "documentId"
   }
 ],
 v1 = [
   {
     "kind": "Variable",
     "name": "id",
-    "variableName": "policyId"
+    "variableName": "documentId"
   }
 ],
 v2 = {
@@ -122,7 +122,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "PolicyGraphNodeQuery",
+    "name": "DocumentGraphNodeQuery",
     "selections": [
       {
         "alias": null,
@@ -138,10 +138,10 @@ return {
               {
                 "args": null,
                 "kind": "FragmentSpread",
-                "name": "PolicyPagePolicyFragment"
+                "name": "DocumentPageDocumentFragment"
               }
             ],
-            "type": "Policy",
+            "type": "Document",
             "abstractKey": null
           }
         ],
@@ -155,7 +155,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "PolicyGraphNodeQuery",
+    "name": "DocumentGraphNodeQuery",
     "selections": [
       {
         "alias": null,
@@ -193,7 +193,7 @@ return {
               {
                 "alias": null,
                 "args": (v5/*: any*/),
-                "concreteType": "PolicyVersionConnection",
+                "concreteType": "DocumentVersionConnection",
                 "kind": "LinkedField",
                 "name": "versions",
                 "plural": false,
@@ -201,7 +201,7 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "PolicyVersionEdge",
+                    "concreteType": "DocumentVersionEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -209,7 +209,7 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "PolicyVersion",
+                        "concreteType": "DocumentVersion",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
@@ -253,7 +253,7 @@ return {
                           {
                             "alias": null,
                             "args": (v6/*: any*/),
-                            "concreteType": "PolicyVersionSignatureConnection",
+                            "concreteType": "DocumentVersionSignatureConnection",
                             "kind": "LinkedField",
                             "name": "signatures",
                             "plural": false,
@@ -261,7 +261,7 @@ return {
                               {
                                 "alias": null,
                                 "args": null,
-                                "concreteType": "PolicyVersionSignatureEdge",
+                                "concreteType": "DocumentVersionSignatureEdge",
                                 "kind": "LinkedField",
                                 "name": "edges",
                                 "plural": true,
@@ -269,7 +269,7 @@ return {
                                   {
                                     "alias": null,
                                     "args": null,
-                                    "concreteType": "PolicyVersionSignature",
+                                    "concreteType": "DocumentVersionSignature",
                                     "kind": "LinkedField",
                                     "name": "node",
                                     "plural": false,
@@ -334,7 +334,7 @@ return {
                             "args": (v6/*: any*/),
                             "filters": null,
                             "handle": "connection",
-                            "key": "PolicyPage_signatures",
+                            "key": "DocumentPage_signatures",
                             "kind": "LinkedHandle",
                             "name": "signatures"
                           },
@@ -376,12 +376,12 @@ return {
                 "args": (v5/*: any*/),
                 "filters": null,
                 "handle": "connection",
-                "key": "PolicyPage_versions",
+                "key": "DocumentPage_versions",
                 "kind": "LinkedHandle",
                 "name": "versions"
               }
             ],
-            "type": "Policy",
+            "type": "Document",
             "abstractKey": null
           }
         ],
@@ -390,16 +390,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e9c0e78ebbf62684edbfa11ac1ee5d25",
+    "cacheID": "671e1a9b133593847c68af3abd9a721f",
     "id": null,
     "metadata": {},
-    "name": "PolicyGraphNodeQuery",
+    "name": "DocumentGraphNodeQuery",
     "operationKind": "query",
-    "text": "query PolicyGraphNodeQuery(\n  $policyId: ID!\n) {\n  node(id: $policyId) {\n    __typename\n    ... on Policy {\n      ...PolicyPagePolicyFragment\n    }\n    id\n  }\n}\n\nfragment PolicyPagePolicyFragment on Policy {\n  id\n  title\n  owner {\n    id\n    fullName\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...PolicySignaturesDialog_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        ...PolicyVersionHistoryDialogFragment\n        ...PolicySignaturesDialog_version\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment PolicySignaturesDialog_signature on PolicyVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment PolicySignaturesDialog_version on PolicyVersion {\n  version\n  status\n  publishedAt\n  updatedAt\n}\n\nfragment PolicyVersionHistoryDialogFragment on PolicyVersion {\n  id\n  version\n  status\n  content\n  changelog\n  publishedAt\n  updatedAt\n  publishedBy {\n    fullName\n    id\n  }\n}\n"
+    "text": "query DocumentGraphNodeQuery(\n  $documentId: ID!\n) {\n  node(id: $documentId) {\n    __typename\n    ... on Document {\n      ...DocumentPageDocumentFragment\n    }\n    id\n  }\n}\n\nfragment DocumentPageDocumentFragment on Document {\n  id\n  title\n  owner {\n    id\n    fullName\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesDialog_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        ...DocumentVersionHistoryDialogFragment\n        ...DocumentSignaturesDialog_version\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesDialog_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesDialog_version on DocumentVersion {\n  version\n  status\n  publishedAt\n  updatedAt\n}\n\nfragment DocumentVersionHistoryDialogFragment on DocumentVersion {\n  id\n  version\n  status\n  content\n  changelog\n  publishedAt\n  updatedAt\n  publishedBy {\n    fullName\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c06b24e46b33741678e07787ab1c69f3";
+(node as any).hash = "d6f55d4636b86d853b97b44e68e435f2";
 
 export default node;

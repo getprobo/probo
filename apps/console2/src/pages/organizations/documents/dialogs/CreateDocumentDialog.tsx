@@ -15,25 +15,25 @@ import {
 import { type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { usePolicyForm } from "/hooks/forms/usePolicyForm";
+import { useDocumentForm } from "/hooks/forms/useDocumentForm";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import type { CreatePolicyDialogMutation } from "./__generated__/CreatePolicyDialogMutation.graphql";
+import type { CreateDocumentDialogMutation } from "./__generated__/CreateDocumentDialogMutation.graphql";
 
 type Props = {
   trigger?: ReactNode;
   connection: string;
 };
 
-const createPolicyMutation = graphql`
-  mutation CreatePolicyDialogMutation(
-    $input: CreatePolicyInput!
+const createDocumentMutation = graphql`
+  mutation CreateDocumentDialogMutation(
+    $input: CreateDocumentInput!
     $connections: [ID!]!
   ) {
-    createPolicy(input: $input) {
-      policyEdge @prependEdge(connections: $connections) {
+    createDocument(input: $input) {
+      documentEdge @prependEdge(connections: $connections) {
         node {
-          ...PoliciesPageRowFragment
+          ...DocumentsPageRowFragment
         }
       }
     }
@@ -41,28 +41,30 @@ const createPolicyMutation = graphql`
 `;
 
 /**
- * Dialog to create or update a policy
+ * Dialog to create or update a document
  */
-export function CreatePolicyDialog({ trigger, connection }: Props) {
+export function CreateDocumentDialog({ trigger, connection }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
-  const { control, handleSubmit, register, formState, reset } = usePolicyForm();
+  const { control, handleSubmit, register, formState, reset } =
+    useDocumentForm();
   const errors = formState.errors ?? {};
-  const [createPolicy, isLoading] =
-    useMutationWithToasts<CreatePolicyDialogMutation>(createPolicyMutation);
+  const [createDocument, isLoading] =
+    useMutationWithToasts<CreateDocumentDialogMutation>(createDocumentMutation);
 
   const onSubmit = handleSubmit((data) => {
-    createPolicy({
+    createDocument({
       variables: {
         input: {
           ...data,
           organizationId,
+          documentType: "POLICY",
         },
         connections: [connection!],
       },
-      successMessage: __("Policy created successfully."),
-      errorMessage: __("Failed to create policy. Please try again."),
+      successMessage: __("Document created successfully."),
+      errorMessage: __("Failed to create document. Please try again."),
       onSuccess: () => {
         dialogRef.current?.close();
         reset();
@@ -76,7 +78,7 @@ export function CreatePolicyDialog({ trigger, connection }: Props) {
     <Dialog
       ref={dialogRef}
       trigger={trigger}
-      title={<Breadcrumb items={[__("Policies"), __("New Policy")]} />}
+      title={<Breadcrumb items={[__("Documents"), __("New Document")]} />}
     >
       <form onSubmit={onSubmit}>
         <DialogContent className="grid grid-cols-[1fr_420px]">
@@ -86,7 +88,7 @@ export function CreatePolicyDialog({ trigger, connection }: Props) {
               aria-label={__("Title")}
               required
               variant="title"
-              placeholder={__("Policy title")}
+              placeholder={__("Document title")}
               {...register("title")}
             />
             <Textarea
@@ -122,7 +124,7 @@ export function CreatePolicyDialog({ trigger, connection }: Props) {
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isLoading}>
-            {__("Create policy")}
+            {__("Create document")}
           </Button>
         </DialogFooter>
       </form>

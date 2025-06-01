@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<37dd4db659813ffa6fab65ffec643844>>
+ * @generated SignedSource<<8ef289e99926f279eb0e2d5ea955cb32>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,9 +9,11 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type VendorCategory = "ANALYTICS" | "CLOUD_MONITORING" | "CLOUD_PROVIDER" | "COLLABORATION" | "CUSTOMER_SUPPORT" | "DATA_STORAGE_AND_PROCESSING" | "DOCUMENT_MANAGEMENT" | "EMPLOYEE_MANAGEMENT" | "ENGINEERING" | "FINANCE" | "IDENTITY_PROVIDER" | "IT" | "MARKETING" | "OFFICE_OPERATIONS" | "OTHER" | "PASSWORD_MANAGEMENT" | "PRODUCT_AND_DESIGN" | "PROFESSIONAL_SERVICES" | "RECRUITING" | "SALES" | "SECURITY" | "VERSION_CONTROL";
 export type CreateVendorInput = {
+  businessAssociateAgreementUrl?: string | null | undefined;
   businessOwnerId?: string | null | undefined;
-  category?: string | null | undefined;
+  category?: VendorCategory | null | undefined;
   certifications?: ReadonlyArray<string> | null | undefined;
   dataProcessingAgreementUrl?: string | null | undefined;
   description?: string | null | undefined;
@@ -24,6 +26,7 @@ export type CreateVendorInput = {
   securityPageUrl?: string | null | undefined;
   serviceLevelAgreementUrl?: string | null | undefined;
   statusPageUrl?: string | null | undefined;
+  subprocessorsListUrl?: string | null | undefined;
   termsOfServiceUrl?: string | null | undefined;
   trustPageUrl?: string | null | undefined;
   websiteUrl?: string | null | undefined;

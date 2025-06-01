@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7c5151b921734cd14b58af145eba7267>>
+ * @generated SignedSource<<6369aba92b58ca2a67d57110a829bde4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type OrderDirection = "ASC" | "DESC";
-export type RiskOrderField = "CATEGORY" | "CREATED_AT" | "INITIAL_RISK_SCORE" | "NAME" | "RESIDUAL_RISK_SCORE" | "TREATMENT" | "UPDATED_AT";
+export type RiskOrderField = "CATEGORY" | "CREATED_AT" | "INHERENT_RISK_SCORE" | "NAME" | "RESIDUAL_RISK_SCORE" | "TREATMENT" | "UPDATED_AT";
 export type RiskOrder = {
   direction: OrderDirection;
   field: RiskOrderField;

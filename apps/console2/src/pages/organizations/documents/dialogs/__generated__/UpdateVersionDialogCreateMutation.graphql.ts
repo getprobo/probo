@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7b7cbab5e73007ace1e7d07970b633e8>>
+ * @generated SignedSource<<8c2484ed8e582d28aab0aa0b4cf30ebe>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,18 +9,18 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type PolicyStatus = "DRAFT" | "PUBLISHED";
-export type PolicyVersionSignatureState = "REQUESTED" | "SIGNED";
-export type CreateDraftPolicyVersionInput = {
-  policyID: string;
+export type DocumentStatus = "DRAFT" | "PUBLISHED";
+export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
+export type CreateDraftDocumentVersionInput = {
+  documentID: string;
 };
 export type UpdateVersionDialogCreateMutation$variables = {
   connections: ReadonlyArray<string>;
-  input: CreateDraftPolicyVersionInput;
+  input: CreateDraftDocumentVersionInput;
 };
 export type UpdateVersionDialogCreateMutation$data = {
-  readonly createDraftPolicyVersion: {
-    readonly policyVersionEdge: {
+  readonly createDraftDocumentVersion: {
+    readonly documentVersionEdge: {
       readonly node: {
         readonly content: string;
         readonly id: string;
@@ -29,11 +29,11 @@ export type UpdateVersionDialogCreateMutation$data = {
           readonly edges: ReadonlyArray<{
             readonly node: {
               readonly id: string;
-              readonly state: PolicyVersionSignatureState;
+              readonly state: DocumentVersionSignatureState;
             };
           }>;
         };
-        readonly status: PolicyStatus;
+        readonly status: DocumentStatus;
         readonly updatedAt: any;
         readonly version: number;
       };
@@ -73,15 +73,15 @@ v3 = {
 v4 = {
   "alias": null,
   "args": null,
-  "concreteType": "PolicyVersionEdge",
+  "concreteType": "DocumentVersionEdge",
   "kind": "LinkedField",
-  "name": "policyVersionEdge",
+  "name": "documentVersionEdge",
   "plural": false,
   "selections": [
     {
       "alias": null,
       "args": null,
-      "concreteType": "PolicyVersion",
+      "concreteType": "DocumentVersion",
       "kind": "LinkedField",
       "name": "node",
       "plural": false,
@@ -131,7 +131,7 @@ v4 = {
               "value": 100
             }
           ],
-          "concreteType": "PolicyVersionSignatureConnection",
+          "concreteType": "DocumentVersionSignatureConnection",
           "kind": "LinkedField",
           "name": "signatures",
           "plural": false,
@@ -139,7 +139,7 @@ v4 = {
             {
               "alias": null,
               "args": null,
-              "concreteType": "PolicyVersionSignatureEdge",
+              "concreteType": "DocumentVersionSignatureEdge",
               "kind": "LinkedField",
               "name": "edges",
               "plural": true,
@@ -147,7 +147,7 @@ v4 = {
                 {
                   "alias": null,
                   "args": null,
-                  "concreteType": "PolicyVersionSignature",
+                  "concreteType": "DocumentVersionSignature",
                   "kind": "LinkedField",
                   "name": "node",
                   "plural": false,
@@ -188,9 +188,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "CreateDraftPolicyVersionPayload",
+        "concreteType": "CreateDraftDocumentVersionPayload",
         "kind": "LinkedField",
-        "name": "createDraftPolicyVersion",
+        "name": "createDraftDocumentVersion",
         "plural": false,
         "selections": [
           (v4/*: any*/)
@@ -213,9 +213,9 @@ return {
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "CreateDraftPolicyVersionPayload",
+        "concreteType": "CreateDraftDocumentVersionPayload",
         "kind": "LinkedField",
-        "name": "createDraftPolicyVersion",
+        "name": "createDraftDocumentVersion",
         "plural": false,
         "selections": [
           (v4/*: any*/),
@@ -226,7 +226,7 @@ return {
             "handle": "prependEdge",
             "key": "",
             "kind": "LinkedHandle",
-            "name": "policyVersionEdge",
+            "name": "documentVersionEdge",
             "handleArgs": [
               {
                 "kind": "Variable",
@@ -241,16 +241,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c5b0f449a70a4043368de55bba176329",
+    "cacheID": "1a0f515ea5c0ca4fd3ab1ae969025ca0",
     "id": null,
     "metadata": {},
     "name": "UpdateVersionDialogCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation UpdateVersionDialogCreateMutation(\n  $input: CreateDraftPolicyVersionInput!\n) {\n  createDraftPolicyVersion(input: $input) {\n    policyVersionEdge {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation UpdateVersionDialogCreateMutation(\n  $input: CreateDraftDocumentVersionInput!\n) {\n  createDraftDocumentVersion(input: $input) {\n    documentVersionEdge {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6a451392a86776d33c376bfdcea7613c";
+(node as any).hash = "a78a88558effc43ceab6746d8a4fea46";
 
 export default node;

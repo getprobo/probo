@@ -52,7 +52,7 @@ export {
 export { useConfirm } from "./Molecules/Dialog/ConfirmDialog";
 export { RiskBadge } from "./Molecules/Badge/RiskBadge";
 export { SeverityBadge } from "./Molecules/Badge/SeverityBadge.tsx";
-export { PolicyVersionBadge } from "./Molecules/Badge/PolicyVersionBadge.tsx";
+export { DocumentVersionBadge } from "./Molecules/Badge/DocumentVersionBadge.tsx";
 export { RisksChart } from "./Molecules/Risks/RisksChart";
 export { RiskOverview } from "./Molecules/Risks/RiskOverview";
 export { Combobox, ComboboxItem } from "./Molecules/Combobox/Combobox";

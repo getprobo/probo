@@ -8,32 +8,32 @@ import {
   DialogTitle,
   IconCircleCheck,
   IconClock,
-  PolicyVersionBadge,
+  DocumentVersionBadge,
   Spinner,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useState, type ReactNode, Suspense } from "react";
-import type { PolicyPagePolicyFragment$data } from "../__generated__/PolicyPagePolicyFragment.graphql";
+import type { DocumentPageDocumentFragment$data } from "../__generated__/DocumentPageDocumentFragment.graphql";
 import clsx from "clsx";
 import type { ItemOf, NodeOf } from "/types";
 import { graphql, useFragment } from "react-relay";
-import type { PolicySignaturesDialog_version$key } from "./__generated__/PolicySignaturesDialog_version.graphql";
-import type { PolicySignaturesDialog_signature$key } from "./__generated__/PolicySignaturesDialog_signature.graphql";
+import type { DocumentSignaturesDialog_version$key } from "./__generated__/DocumentSignaturesDialog_version.graphql";
+import type { DocumentSignaturesDialog_signature$key } from "./__generated__/DocumentSignaturesDialog_signature.graphql";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 import { useOrganizationId } from "/hooks/useOrganizationId.ts";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
 import { sprintf } from "@probo/helpers";
 
 type Props = {
-  policy: PolicyPagePolicyFragment$data;
+  document: DocumentPageDocumentFragment$data;
   children?: ReactNode;
 };
 
-type Version = NodeOf<PolicyPagePolicyFragment$data["versions"]>;
+type Version = NodeOf<DocumentPageDocumentFragment$data["versions"]>;
 
-export function PolicySignaturesDialog(props: Props) {
+export function DocumentSignaturesDialog(props: Props) {
   const { __ } = useTranslate();
-  const versions = props.policy.versions.edges.map((edge) => edge.node);
+  const versions = props.document.versions.edges.map((edge) => edge.node);
   const [selectedVersionId, setSelectedVersionId] = useState<string>(
     versions[0].id
   );
@@ -79,7 +79,7 @@ export function PolicySignaturesDialog(props: Props) {
 }
 
 const versionFragment = graphql`
-  fragment PolicySignaturesDialog_version on PolicyVersion {
+  fragment DocumentSignaturesDialog_version on DocumentVersion {
     version
     status
     publishedAt
@@ -93,7 +93,7 @@ function VersionItem(props: {
   onSelect: (v: string) => void;
 }) {
   const { dateTimeFormat, __ } = useTranslate();
-  const version = useFragment<PolicySignaturesDialog_version$key>(
+  const version = useFragment<DocumentSignaturesDialog_version$key>(
     versionFragment,
     props.version
   );
@@ -109,7 +109,7 @@ function VersionItem(props: {
         <span>
           {__("Version")} {version.version}
         </span>
-        <PolicyVersionBadge state={version.status} />
+        <DocumentVersionBadge state={version.status} />
       </div>
       <div className="text-xs text-txt-secondary">
         {dateTimeFormat(version.publishedAt ?? version.updatedAt)}
@@ -152,7 +152,7 @@ function SignatureList(props: { version: Version }) {
  * Fragments
  */
 const signatureFragment = graphql`
-  fragment PolicySignaturesDialog_signature on PolicyVersionSignature {
+  fragment DocumentSignaturesDialog_signature on DocumentVersionSignature {
     id
     state
     signedAt
@@ -168,19 +168,19 @@ const signatureFragment = graphql`
  * Mutations
  */
 const requestSignatureMutation = graphql`
-  mutation PolicySignaturesDialog_requestSignatureMutation(
+  mutation DocumentSignaturesDialog_requestSignatureMutation(
     $input: RequestSignatureInput!
     $connections: [ID!]!
   ) {
     requestSignature(input: $input) {
-      policyVersionSignatureEdge @prependEdge(connections: $connections) {
+      documentVersionSignatureEdge @prependEdge(connections: $connections) {
         node {
           id
           state
           signedBy {
             id
           }
-          ...PolicySignaturesDialog_signature
+          ...DocumentSignaturesDialog_signature
         }
       }
     }
@@ -189,7 +189,7 @@ const requestSignatureMutation = graphql`
 
 function SignatureItem(props: {
   versionId: string;
-  signature?: PolicySignaturesDialog_signature$key;
+  signature?: DocumentSignaturesDialog_signature$key;
   people: ItemOf<ReturnType<typeof usePeople>>;
   connectionId: string;
 }) {
@@ -224,7 +224,7 @@ function SignatureItem(props: {
             requestSignature({
               variables: {
                 input: {
-                  policyVersionId: props.versionId,
+                  documentVersionId: props.versionId,
                   signatoryId: props.people.id,
                 },
                 connections: [props.connectionId],

@@ -5,7 +5,7 @@ type Props = {
     state: "DRAFT" | "PUBLISHED";
 };
 
-export function PolicyVersionBadge(props: Props) {
+export function DocumentVersionBadge(props: Props) {
     const { __ } = useTranslate();
     return (
         <Badge variant={props.state === "DRAFT" ? "neutral" : "success"}>

@@ -1,5 +1,5 @@
 import type { PreloadedQuery } from "react-relay";
-import type { PolicyGraphNodeQuery } from "/hooks/graph/__generated__/PolicyGraphNodeQuery.graphql";
+import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
 import {
   ConnectionHandler,
   graphql,
@@ -8,12 +8,12 @@ import {
   usePreloadedQuery,
 } from "react-relay";
 import {
-  PoliciesConnectionKey,
-  policyNodeQuery,
-  useDeletePolicyMutation,
-} from "/hooks/graph/PolicyGraph";
+  DocumentsConnectionKey,
+  documentNodeQuery,
+  useDeleteDocumentMutation,
+} from "/hooks/graph/DocumentGraph";
 import { usePageTitle } from "@probo/hooks";
-import type { PolicyPagePolicyFragment$key } from "./__generated__/PolicyPagePolicyFragment.graphql";
+import type { DocumentPageDocumentFragment$key } from "./__generated__/DocumentPageDocumentFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
   PageHeader,
@@ -39,22 +39,22 @@ import { sprintf } from "@probo/helpers";
 import { useNavigate } from "react-router";
 import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
 import { useRef } from "react";
-import { PolicyVersionHistoryDialog } from "./dialogs/PolicyVersionHistoryDialog";
-import { PolicySignaturesDialog } from "./dialogs/PolicySignaturesDialog";
+import { DocumentVersionHistoryDialog } from "./dialogs/DocumentVersionHistoryDialog";
+import { DocumentSignaturesDialog } from "./dialogs/DocumentSignaturesDialog";
 
 type Props = {
-  queryRef: PreloadedQuery<PolicyGraphNodeQuery>;
+  queryRef: PreloadedQuery<DocumentGraphNodeQuery>;
 };
 
-const policyFragment = graphql`
-  fragment PolicyPagePolicyFragment on Policy {
+const documentFragment = graphql`
+  fragment DocumentPageDocumentFragment on Document {
     id
     title
     owner {
       id
       fullName
     }
-    versions(first: 20) @connection(key: "PolicyPage_versions") {
+    versions(first: 20) @connection(key: "DocumentPage_versions") {
       __id
       edges {
         node {
@@ -64,7 +64,7 @@ const policyFragment = graphql`
           publishedAt
           version
           updatedAt
-          signatures(first: 100) @connection(key: "PolicyPage_signatures") {
+          signatures(first: 100) @connection(key: "DocumentPage_signatures") {
             __id
             edges {
               node {
@@ -73,61 +73,61 @@ const policyFragment = graphql`
                 signedBy {
                   id
                 }
-                ...PolicySignaturesDialog_signature
+                ...DocumentSignaturesDialog_signature
               }
             }
           }
-          ...PolicyVersionHistoryDialogFragment
-          ...PolicySignaturesDialog_version
+          ...DocumentVersionHistoryDialogFragment
+          ...DocumentSignaturesDialog_version
         }
       }
     }
   }
 `;
 
-const publishPolicyVersionMutation = graphql`
-  mutation PolicyPagePublishMutation($input: PublishPolicyVersionInput!) {
-    publishPolicyVersion(input: $input) {
-      policy {
+const publishDocumentVersionMutation = graphql`
+  mutation DocumentPagePublishMutation($input: PublishDocumentVersionInput!) {
+    publishDocumentVersion(input: $input) {
+      document {
         id
       }
     }
   }
 `;
 
-export default function PolicyPage(props: Props) {
-  const node = usePreloadedQuery(policyNodeQuery, props.queryRef).node;
-  const policy = useFragment(
-    policyFragment,
-    node as PolicyPagePolicyFragment$key
+export default function DocumentPage(props: Props) {
+  const node = usePreloadedQuery(documentNodeQuery, props.queryRef).node;
+  const document = useFragment(
+    documentFragment,
+    node as DocumentPageDocumentFragment$key
   );
   const { __, dateFormat } = useTranslate();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
-  const lastVersion = policy.versions.edges[0].node;
+  const lastVersion = document.versions.edges[0].node;
   const isDraft = lastVersion.status === "DRAFT";
-  const [publishPolicyVersion, isPublishing] = useMutationWithToasts(
-    publishPolicyVersionMutation,
+  const [publishDocumentVersion, isPublishing] = useMutationWithToasts(
+    publishDocumentVersionMutation,
     {
-      successMessage: __("Policy published successfully."),
-      errorMessage: __("Failed to publish policy. Please try again."),
+      successMessage: __("Document published successfully."),
+      errorMessage: __("Failed to publish document. Please try again."),
     }
   );
-  const [deletePolicy, isDeleting] = useDeletePolicyMutation();
-  const versionConnectionId = policy.versions.__id;
+  const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
+  const versionConnectionId = document.versions.__id;
 
-  usePageTitle(policy.title);
+  usePageTitle(document.title);
 
   const handlePublish = () => {
-    publishPolicyVersion({
+    publishDocumentVersion({
       variables: {
-        input: { policyId: policy.id },
+        input: { documentId: document.id },
       },
       onSuccess: () => {
         // Refresh the whole query to get the new version
         loadQuery(
           props.queryRef.environment,
-          policyNodeQuery,
+          documentNodeQuery,
           props.queryRef.variables,
           { fetchPolicy: "network-only" }
         );
@@ -143,15 +143,15 @@ export default function PolicyPage(props: Props) {
         new Promise<void>((resolve) => {
           const connectionId = ConnectionHandler.getConnectionID(
             organizationId,
-            PoliciesConnectionKey
+            DocumentsConnectionKey
           );
-          deletePolicy({
+          deleteDocument({
             variables: {
-              input: { policyId: policy.id },
+              input: { documentId: document.id },
               connections: [connectionId],
             },
             onSuccess() {
-              navigate(`/organizations/${organizationId}/policies`);
+              navigate(`/organizations/${organizationId}/documents`);
             },
             onError: () => resolve(),
           });
@@ -159,9 +159,9 @@ export default function PolicyPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the policy "%s". This action cannot be undone.'
+            'This will permanently delete the document "%s". This action cannot be undone.'
           ),
-          policy.title
+          document.title
         ),
       }
     );
@@ -173,7 +173,7 @@ export default function PolicyPage(props: Props) {
     <>
       <UpdateVersionDialog
         ref={updateDialogRef}
-        policy={policy}
+        document={document}
         connectionId={versionConnectionId}
       />
       <div className="space-y-6">
@@ -181,11 +181,11 @@ export default function PolicyPage(props: Props) {
           <Breadcrumb
             items={[
               {
-                label: __("Policies"),
-                to: `/organizations/${organizationId}/policies`,
+                label: __("Documents"),
+                to: `/organizations/${organizationId}/documents`,
               },
               {
-                label: policy.title,
+                label: document.title,
               },
             ]}
           />
@@ -199,23 +199,23 @@ export default function PolicyPage(props: Props) {
                 {__("Publish")}
               </Button>
             )}
-            <PolicyVersionHistoryDialog policy={policy}>
+            <DocumentVersionHistoryDialog document={document}>
               <Button icon={IconClock} variant="secondary">
                 {__("Version history")}
               </Button>
-            </PolicyVersionHistoryDialog>
-            <PolicySignaturesDialog policy={policy}>
+            </DocumentVersionHistoryDialog>
+            <DocumentSignaturesDialog document={document}>
               <Button icon={IconSignature} variant="secondary">
                 {__("Signatures history")}
               </Button>
-            </PolicySignaturesDialog>
+            </DocumentSignaturesDialog>
 
             <ActionDropdown variant="secondary">
               <DropdownItem
                 onClick={() => updateDialogRef.current?.open()}
                 icon={IconPencil}
               >
-                {isDraft ? __("Edit draft policy") : __("Create new draft")}
+                {isDraft ? __("Edit draft document") : __("Create new draft")}
               </DropdownItem>
               <DropdownItem
                 variant="danger"
@@ -228,7 +228,7 @@ export default function PolicyPage(props: Props) {
             </ActionDropdown>
           </div>
         </div>
-        <PageHeader title={policy.title} />
+        <PageHeader title={document.title} />
         <Markdown content={lastVersion.content} />
       </div>
       <Drawer>
@@ -237,8 +237,8 @@ export default function PolicyPage(props: Props) {
         </div>
         <PropertyRow label={__("Owner")}>
           <Badge variant="highlight" size="md" className="gap-2">
-            <Avatar name={policy.owner?.fullName ?? ""} />
-            {policy.owner?.fullName}
+            <Avatar name={document.owner?.fullName ?? ""} />
+            {document.owner?.fullName}
           </Badge>
         </PropertyRow>
         <PropertyRow label={__("Status")}>

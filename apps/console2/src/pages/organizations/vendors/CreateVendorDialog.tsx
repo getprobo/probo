@@ -37,6 +37,7 @@ export function CreateVendorDialog({
             organizationId,
             name: vendor,
             description: "",
+            category: null,
           }
         : {
             organizationId,
