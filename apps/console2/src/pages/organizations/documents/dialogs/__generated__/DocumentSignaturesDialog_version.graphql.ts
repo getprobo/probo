@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<efbbec863b7456c271e408fb553f9ea1>>
+ * @generated SignedSource<<dc19ab6bedc70a5b4546a2edb922b97f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,25 +9,25 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type PolicyStatus = "DRAFT" | "PUBLISHED";
+export type DocumentStatus = "DRAFT" | "PUBLISHED";
 import { FragmentRefs } from "relay-runtime";
-export type PolicySignaturesDialog_version$data = {
+export type DocumentSignaturesDialog_version$data = {
   readonly publishedAt: any | null | undefined;
-  readonly status: PolicyStatus;
+  readonly status: DocumentStatus;
   readonly updatedAt: any;
   readonly version: number;
-  readonly " $fragmentType": "PolicySignaturesDialog_version";
+  readonly " $fragmentType": "DocumentSignaturesDialog_version";
 };
-export type PolicySignaturesDialog_version$key = {
-  readonly " $data"?: PolicySignaturesDialog_version$data;
-  readonly " $fragmentSpreads": FragmentRefs<"PolicySignaturesDialog_version">;
+export type DocumentSignaturesDialog_version$key = {
+  readonly " $data"?: DocumentSignaturesDialog_version$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesDialog_version">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "PolicySignaturesDialog_version",
+  "name": "DocumentSignaturesDialog_version",
   "selections": [
     {
       "alias": null,
@@ -58,10 +58,10 @@ const node: ReaderFragment = {
       "storageKey": null
     }
   ],
-  "type": "PolicyVersion",
+  "type": "DocumentVersion",
   "abstractKey": null
 };
 
-(node as any).hash = "cdec8e3244fd6329a86b5825a4133c44";
+(node as any).hash = "564746ce584a834e25a5a341155d6b2c";
 
 export default node;

@@ -111,9 +111,9 @@ export function MainLayout() {
             to={`${prefix}/vendors`}
           />
           <SidebarItem
-            label={__("Policies")}
+            label={__("Documents")}
             icon={IconPageTextLine}
-            to={`${prefix}/policies`}
+            to={`${prefix}/documents`}
           />
           <SidebarItem
             label={__("Settings")}

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bbf8c99c9d2d556129349cfe82d26582>>
+ * @generated SignedSource<<b798b75c1d930af818109fd819d5cef3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,9 +12,12 @@ import { ConcreteRequest } from 'relay-runtime';
 export type PeopleKind = "CONTRACTOR" | "EMPLOYEE" | "SERVICE_ACCOUNT";
 export type UpdatePeopleInput = {
   additionalEmailAddresses?: ReadonlyArray<string> | null | undefined;
+  contractEndDate?: any | null | undefined;
+  contractStartDate?: any | null | undefined;
   fullName?: string | null | undefined;
   id: string;
   kind?: PeopleKind | null | undefined;
+  position?: string | null | undefined;
   primaryEmailAddress?: string | null | undefined;
 };
 export type PeopleGraphUpdateMutation$variables = {

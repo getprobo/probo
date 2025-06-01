@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<af123c927212dd99fbaeb81e3b2f2bd9>>
+ * @generated SignedSource<<fa604130d8725651770072b638fc5926>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,32 +10,32 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type PolicyVersionSignatureState = "REQUESTED" | "SIGNED";
+export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 export type RequestSignatureInput = {
-  policyVersionId: string;
+  documentVersionId: string;
   signatoryId: string;
 };
-export type PolicySignaturesDialog_requestSignatureMutation$variables = {
+export type DocumentSignaturesDialog_requestSignatureMutation$variables = {
   connections: ReadonlyArray<string>;
   input: RequestSignatureInput;
 };
-export type PolicySignaturesDialog_requestSignatureMutation$data = {
+export type DocumentSignaturesDialog_requestSignatureMutation$data = {
   readonly requestSignature: {
-    readonly policyVersionSignatureEdge: {
+    readonly documentVersionSignatureEdge: {
       readonly node: {
         readonly id: string;
         readonly signedBy: {
           readonly id: string;
         };
-        readonly state: PolicyVersionSignatureState;
-        readonly " $fragmentSpreads": FragmentRefs<"PolicySignaturesDialog_signature">;
+        readonly state: DocumentVersionSignatureState;
+        readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesDialog_signature">;
       };
     };
   };
 };
-export type PolicySignaturesDialog_requestSignatureMutation = {
-  response: PolicySignaturesDialog_requestSignatureMutation$data;
-  variables: PolicySignaturesDialog_requestSignatureMutation$variables;
+export type DocumentSignaturesDialog_requestSignatureMutation = {
+  response: DocumentSignaturesDialog_requestSignatureMutation$data;
+  variables: DocumentSignaturesDialog_requestSignatureMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -78,7 +78,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "PolicySignaturesDialog_requestSignatureMutation",
+    "name": "DocumentSignaturesDialog_requestSignatureMutation",
     "selections": [
       {
         "alias": null,
@@ -91,15 +91,15 @@ return {
           {
             "alias": null,
             "args": null,
-            "concreteType": "PolicyVersionSignatureEdge",
+            "concreteType": "DocumentVersionSignatureEdge",
             "kind": "LinkedField",
-            "name": "policyVersionSignatureEdge",
+            "name": "documentVersionSignatureEdge",
             "plural": false,
             "selections": [
               {
                 "alias": null,
                 "args": null,
-                "concreteType": "PolicyVersionSignature",
+                "concreteType": "DocumentVersionSignature",
                 "kind": "LinkedField",
                 "name": "node",
                 "plural": false,
@@ -121,7 +121,7 @@ return {
                   {
                     "args": null,
                     "kind": "FragmentSpread",
-                    "name": "PolicySignaturesDialog_signature"
+                    "name": "DocumentSignaturesDialog_signature"
                   }
                 ],
                 "storageKey": null
@@ -143,7 +143,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "PolicySignaturesDialog_requestSignatureMutation",
+    "name": "DocumentSignaturesDialog_requestSignatureMutation",
     "selections": [
       {
         "alias": null,
@@ -156,15 +156,15 @@ return {
           {
             "alias": null,
             "args": null,
-            "concreteType": "PolicyVersionSignatureEdge",
+            "concreteType": "DocumentVersionSignatureEdge",
             "kind": "LinkedField",
-            "name": "policyVersionSignatureEdge",
+            "name": "documentVersionSignatureEdge",
             "plural": false,
             "selections": [
               {
                 "alias": null,
                 "args": null,
-                "concreteType": "PolicyVersionSignature",
+                "concreteType": "DocumentVersionSignature",
                 "kind": "LinkedField",
                 "name": "node",
                 "plural": false,
@@ -224,7 +224,7 @@ return {
             "handle": "prependEdge",
             "key": "",
             "kind": "LinkedHandle",
-            "name": "policyVersionSignatureEdge",
+            "name": "documentVersionSignatureEdge",
             "handleArgs": [
               {
                 "kind": "Variable",
@@ -239,16 +239,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "20c460adbc3480622c4c91220a6e54fe",
+    "cacheID": "6a5413db69a07e0eef99245e949cf4b2",
     "id": null,
     "metadata": {},
-    "name": "PolicySignaturesDialog_requestSignatureMutation",
+    "name": "DocumentSignaturesDialog_requestSignatureMutation",
     "operationKind": "mutation",
-    "text": "mutation PolicySignaturesDialog_requestSignatureMutation(\n  $input: RequestSignatureInput!\n) {\n  requestSignature(input: $input) {\n    policyVersionSignatureEdge {\n      node {\n        id\n        state\n        signedBy {\n          id\n        }\n        ...PolicySignaturesDialog_signature\n      }\n    }\n  }\n}\n\nfragment PolicySignaturesDialog_signature on PolicyVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n"
+    "text": "mutation DocumentSignaturesDialog_requestSignatureMutation(\n  $input: RequestSignatureInput!\n) {\n  requestSignature(input: $input) {\n    documentVersionSignatureEdge {\n      node {\n        id\n        state\n        signedBy {\n          id\n        }\n        ...DocumentSignaturesDialog_signature\n      }\n    }\n  }\n}\n\nfragment DocumentSignaturesDialog_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "24825b1c4040debb7edda76c8ad3d662";
+(node as any).hash = "6c51f681411cd3de162c78a3db20ec30";
 
 export default node;

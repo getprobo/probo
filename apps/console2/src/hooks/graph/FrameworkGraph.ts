@@ -40,13 +40,10 @@ export const useDeleteFrameworkMutation = (
   framework: { id: string; name: string },
   connectionId: string
 ) => {
-  const [commitDelete, isDeleting] = useMutationWithToasts(
-    deleteFrameworkMutation,
-    {
-      errorMessage: "Failed to delete framework",
-      successMessage: "Framework deleted successfully",
-    }
-  );
+  const [commitDelete] = useMutationWithToasts(deleteFrameworkMutation, {
+    errorMessage: "Failed to delete framework",
+    successMessage: "Framework deleted successfully",
+  });
   const confirm = useConfirm();
   const { __ } = useTranslate();
 
