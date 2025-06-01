@@ -10,7 +10,7 @@ import {
   useDialogRef,
   useToast,
 } from "@probo/ui";
-import { useState, type RefObject } from "react";
+import { type RefObject } from "react";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
 import type { PolicyPagePolicyFragment$data } from "../__generated__/PolicyPagePolicyFragment.graphql";
