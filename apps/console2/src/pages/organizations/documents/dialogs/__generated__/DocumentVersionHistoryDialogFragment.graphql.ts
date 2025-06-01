@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<45feb21e3f613b3818af04725831a427>>
+ * @generated SignedSource<<dd89afd13dd17b29485a3fdaf840cd42>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,9 +9,9 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type PolicyStatus = "DRAFT" | "PUBLISHED";
+export type DocumentStatus = "DRAFT" | "PUBLISHED";
 import { FragmentRefs } from "relay-runtime";
-export type PolicyVersionHistoryDialogFragment$data = {
+export type DocumentVersionHistoryDialogFragment$data = {
   readonly changelog: string;
   readonly content: string;
   readonly id: string;
@@ -19,21 +19,21 @@ export type PolicyVersionHistoryDialogFragment$data = {
   readonly publishedBy: {
     readonly fullName: string;
   } | null | undefined;
-  readonly status: PolicyStatus;
+  readonly status: DocumentStatus;
   readonly updatedAt: any;
   readonly version: number;
-  readonly " $fragmentType": "PolicyVersionHistoryDialogFragment";
+  readonly " $fragmentType": "DocumentVersionHistoryDialogFragment";
 };
-export type PolicyVersionHistoryDialogFragment$key = {
-  readonly " $data"?: PolicyVersionHistoryDialogFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"PolicyVersionHistoryDialogFragment">;
+export type DocumentVersionHistoryDialogFragment$key = {
+  readonly " $data"?: DocumentVersionHistoryDialogFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentVersionHistoryDialogFragment">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "PolicyVersionHistoryDialogFragment",
+  "name": "DocumentVersionHistoryDialogFragment",
   "selections": [
     {
       "alias": null,
@@ -103,10 +103,10 @@ const node: ReaderFragment = {
       "storageKey": null
     }
   ],
-  "type": "PolicyVersion",
+  "type": "DocumentVersion",
   "abstractKey": null
 };
 
-(node as any).hash = "63ce12a876b10889d9ff2e4ee20af968";
+(node as any).hash = "947253287039236aa413ee33879a6e4b";
 
 export default node;

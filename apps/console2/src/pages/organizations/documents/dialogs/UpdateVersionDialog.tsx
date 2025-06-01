@@ -13,20 +13,20 @@ import {
 import { type RefObject } from "react";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
-import type { PolicyPagePolicyFragment$data } from "../__generated__/PolicyPagePolicyFragment.graphql";
+import type { DocumentPageDocumentFragment$data } from "../__generated__/DocumentPageDocumentFragment.graphql";
 import type { UpdateVersionDialogCreateMutation } from "./__generated__/UpdateVersionDialogCreateMutation.graphql";
 import type { UpdateVersionDialogUpdateMutation } from "./__generated__/UpdateVersionDialogUpdateMutation.graphql";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
-const createDraftPolicy = graphql`
+const createDraftDocument = graphql`
   mutation UpdateVersionDialogCreateMutation(
-    $input: CreateDraftPolicyVersionInput!
+    $input: CreateDraftDocumentVersionInput!
     $connections: [ID!]!
   ) {
-    createDraftPolicyVersion(input: $input) {
-      policyVersionEdge @prependEdge(connections: $connections) {
+    createDraftDocumentVersion(input: $input) {
+      documentVersionEdge @prependEdge(connections: $connections) {
         node {
           id
           content
@@ -48,12 +48,12 @@ const createDraftPolicy = graphql`
   }
 `;
 
-const UpdatePolicyMutation = graphql`
+const UpdateDocumentMutation = graphql`
   mutation UpdateVersionDialogUpdateMutation(
-    $input: UpdatePolicyVersionInput!
+    $input: UpdateDocumentVersionInput!
   ) {
-    updatePolicyVersion(input: $input) {
-      policyVersion {
+    updateDocumentVersion(input: $input) {
+      documentVersion {
         id
         content
       }
@@ -62,7 +62,7 @@ const UpdatePolicyMutation = graphql`
 `;
 
 type Props = {
-  policy: PolicyPagePolicyFragment$data;
+  document: DocumentPageDocumentFragment$data;
   connectionId: string;
   ref: RefObject<{ open: () => void } | null>;
 };
@@ -72,7 +72,7 @@ const versionSchema = z.object({
 });
 
 export default function UpdateVersionDialog({
-  policy,
+  document,
   connectionId,
   ref,
 }: Props) {
@@ -80,16 +80,16 @@ export default function UpdateVersionDialog({
   const { toast } = useToast();
   const dialogRef = useDialogRef();
 
-  const version = policy.versions.edges[0].node;
+  const version = document.versions.edges[0].node;
   const isDraft = version?.status === "DRAFT";
-  const [createDraftPolicyVersion, isCreatingDraft] =
-    useMutation<UpdateVersionDialogCreateMutation>(createDraftPolicy);
-  const [updatePolicyVersion, isUpdating] =
+  const [createDraftDocumentVersion, isCreatingDraft] =
+    useMutation<UpdateVersionDialogCreateMutation>(createDraftDocument);
+  const [updateDocumentVersion, isUpdating] =
     useMutationWithToasts<UpdateVersionDialogUpdateMutation>(
-      UpdatePolicyMutation,
+      UpdateDocumentMutation,
       {
-        successMessage: __("Policy updated successfully."),
-        errorMessage: __("Failed to update policy. Please try again."),
+        successMessage: __("Document updated successfully."),
+        errorMessage: __("Failed to update document. Please try again."),
       }
     );
   const { handleSubmit, register } = useFormWithSchema(versionSchema, {
@@ -102,10 +102,10 @@ export default function UpdateVersionDialog({
     open: () => {
       dialogRef.current?.open();
       if (!isDraft) {
-        createDraftPolicyVersion({
+        createDraftDocumentVersion({
           variables: {
             input: {
-              policyID: policy.id,
+              documentID: document.id,
             },
             connections: [connectionId],
           },
@@ -131,10 +131,10 @@ export default function UpdateVersionDialog({
   }
 
   const onSubmit = handleSubmit((data) => {
-    updatePolicyVersion({
+    updateDocumentVersion({
       variables: {
         input: {
-          policyVersionId: version.id,
+          documentVersionId: version.id,
           content: data.content,
         },
       },
@@ -147,7 +147,7 @@ export default function UpdateVersionDialog({
   return (
     <Dialog
       ref={dialogRef}
-      title={<Breadcrumb items={[__("Policies"), __("Edit policy")]} />}
+      title={<Breadcrumb items={[__("Documents"), __("Edit document")]} />}
     >
       {isCreatingDraft && <Spinner centered />}
       <form onSubmit={onSubmit}>
@@ -165,7 +165,7 @@ export default function UpdateVersionDialog({
         </DialogContent>
         <DialogFooter>
           <Button disabled={isUpdating} type="submit">
-            {__("Update policy")}
+            {__("Update document")}
           </Button>
         </DialogFooter>
       </form>
