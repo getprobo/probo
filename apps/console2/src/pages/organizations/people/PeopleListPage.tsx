@@ -12,23 +12,17 @@ import {
   DropdownItem,
   IconPencil,
   IconTrashCan,
-  useConfirm,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { PeopleGraphPaginatedQuery } from "/hooks/graph/__generated__/PeopleGraphPaginatedQuery.graphql";
-import { useMutation, type PreloadedQuery } from "react-relay";
-import {
-  deletePeopleMutation,
-  useDeletePeople,
-  usePeopleQuery,
-} from "/hooks/graph/PeopleGraph";
+import { type PreloadedQuery } from "react-relay";
+import { useDeletePeople, usePeopleQuery } from "/hooks/graph/PeopleGraph";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import type { PeopleGraphPaginatedFragment$data } from "/hooks/graph/__generated__/PeopleGraphPaginatedFragment.graphql";
 import type { NodeOf } from "/types";
 import { usePageTitle } from "@probo/hooks";
-import { getRole, sprintf } from "@probo/helpers";
+import { getRole } from "@probo/helpers";
 import { CreatePeopleDialog } from "./dialogs/CreatePeopleDialog";
-import type { PeopleGraphDeleteMutation } from "/hooks/graph/__generated__/PeopleGraphDeleteMutation.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Link } from "react-router";
 

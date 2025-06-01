@@ -11,7 +11,6 @@ import {
 } from "/hooks/graph/VendorGraph";
 import {
   ActionDropdown,
-  Avatar,
   Breadcrumb,
   DropdownItem,
   IconTrashCan,

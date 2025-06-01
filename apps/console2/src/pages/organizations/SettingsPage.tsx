@@ -5,7 +5,6 @@ import {
   Card,
   Field,
   FileButton,
-  IconPlusLarge,
   Label,
   PageHeader,
   Spinner,
@@ -23,7 +22,7 @@ import type {
   SettingsPageFragment$key,
 } from "./__generated__/SettingsPageFragment.graphql";
 import type { ChangeEventHandler } from "react";
-import { groupBy, sprintf } from "@probo/helpers";
+import { sprintf } from "@probo/helpers";
 import type { NodeOf } from "/types";
 
 type Props = {

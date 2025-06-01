@@ -38,6 +38,11 @@ export function PolicySignaturesDialog(props: Props) {
     versions[0].id
   );
   const selectedVersion = versions.find((v) => v.id === selectedVersionId);
+
+  if (!selectedVersion) {
+    return null;
+  }
+
   return (
     <Dialog trigger={props.children}>
       <DialogContent className="flex" scrollableChildren>
@@ -68,7 +73,7 @@ export function PolicySignaturesDialog(props: Props) {
           </Suspense>
         </main>
       </DialogContent>
-      <DialogFooter></DialogFooter>
+      <DialogFooter />
     </Dialog>
   );
 }
