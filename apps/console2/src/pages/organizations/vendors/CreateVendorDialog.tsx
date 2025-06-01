@@ -13,7 +13,7 @@ import { useVendorSearch } from "/hooks/useVendorSearch";
 import { faviconUrl } from "@probo/helpers";
 import type { Vendor } from "@probo/vendors";
 import { useCreateVendorMutation } from "/hooks/graph/VendorGraph";
-import { type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
 
 type Props = {
   children: ReactNode;

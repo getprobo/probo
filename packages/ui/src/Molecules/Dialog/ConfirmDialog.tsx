@@ -1,21 +1,13 @@
 import { useTranslate } from "@probo/i18n";
 import {
     Root,
-    Trigger,
     Overlay,
     Content,
     Title,
     Description,
     Cancel,
 } from "@radix-ui/react-alert-dialog";
-import {
-    useCallback,
-    useRef,
-    useState,
-    type ComponentProps,
-    type ReactNode,
-    type RefObject,
-} from "react";
+import { useCallback, useState, type ComponentProps } from "react";
 import { Button } from "../../Atoms/Button/Button";
 import { Root as Portal } from "@radix-ui/react-portal";
 import { dialog } from "./Dialog";

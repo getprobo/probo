@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<079a3066496976bd1238ba194f5a0660>>
+ * @generated SignedSource<<e5f0f2600db655bd96ca2c7ea52f8b44>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,8 +12,10 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type VendorComplianceTabFragment$data = {
   readonly complianceReports: {
+    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"VendorComplianceTabFragment_report">;
       };
     }>;
@@ -31,7 +33,14 @@ import ComplianceReportListQuery_graphql from './ComplianceReportListQuery.graph
 const node: ReaderFragment = (function(){
 var v0 = [
   "complianceReports"
-];
+],
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+};
 return {
   "argumentDefinitions": [
     {
@@ -124,6 +133,7 @@ return {
               "name": "node",
               "plural": false,
               "selections": [
+                (v1/*: any*/),
                 {
                   "args": null,
                   "kind": "FragmentSpread",
@@ -187,23 +197,29 @@ return {
             }
           ],
           "storageKey": null
+        },
+        {
+          "kind": "ClientExtension",
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "__id",
+              "storageKey": null
+            }
+          ]
         }
       ],
       "storageKey": null
     },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "id",
-      "storageKey": null
-    }
+    (v1/*: any*/)
   ],
   "type": "Vendor",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "7aae49a4b414ed4db5e7b39f8969c02f";
+(node as any).hash = "1fe4e0b1f9fb781c3b01e539145d610a";
 
 export default node;

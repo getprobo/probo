@@ -9,4 +9,24 @@ export default {
 
 type Story = StoryObj<typeof Dropzone>;
 
-export const Default: Story = {};
+export const Default: Story = {
+    args: {
+        description: "Maximum 500 MB file size",
+        isUploading: false,
+        disabled: false,
+    },
+};
+
+export const Disabled: Story = {
+    args: {
+        ...Default.args,
+        disabled: true,
+    },
+};
+
+export const Uploading: Story = {
+    args: {
+        ...Default.args,
+        isUploading: true,
+    },
+};

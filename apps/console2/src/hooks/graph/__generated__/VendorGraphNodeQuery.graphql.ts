@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<57ff86dca8786cdaf42f34f9cbe379a1>>
+ * @generated SignedSource<<6d50678dccfbe35e4ade26b58cda2ad3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,7 +18,7 @@ export type VendorGraphNodeQuery$data = {
     readonly id?: string;
     readonly name?: string;
     readonly websiteUrl?: string | null | undefined;
-    readonly " $fragmentSpreads": FragmentRefs<"useVendorFormFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"VendorComplianceTabFragment" | "useVendorFormFragment">;
   };
 };
 export type VendorGraphNodeQuery = {
@@ -62,8 +62,22 @@ v4 = {
   "name": "websiteUrl",
   "storageKey": null
 },
-v5 = [
+v5 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "__typename",
+  "storageKey": null
+},
+v6 = [
   (v2/*: any*/)
+],
+v7 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 50
+  }
 ];
 return {
   "fragment": {
@@ -90,6 +104,11 @@ return {
                 "args": null,
                 "kind": "FragmentSpread",
                 "name": "useVendorFormFragment"
+              },
+              {
+                "args": null,
+                "kind": "FragmentSpread",
+                "name": "VendorComplianceTabFragment"
               }
             ],
             "type": "Vendor",
@@ -116,13 +135,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "__typename",
-            "storageKey": null
-          },
+          (v5/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
@@ -213,7 +226,7 @@ return {
                 "kind": "LinkedField",
                 "name": "businessOwner",
                 "plural": false,
-                "selections": (v5/*: any*/),
+                "selections": (v6/*: any*/),
                 "storageKey": null
               },
               {
@@ -223,8 +236,147 @@ return {
                 "kind": "LinkedField",
                 "name": "securityOwner",
                 "plural": false,
-                "selections": (v5/*: any*/),
+                "selections": (v6/*: any*/),
                 "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": (v7/*: any*/),
+                "concreteType": "VendorComplianceReportConnection",
+                "kind": "LinkedField",
+                "name": "complianceReports",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "VendorComplianceReportEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "VendorComplianceReport",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "reportDate",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "validUntil",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "reportName",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "fileUrl",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "fileSize",
+                            "storageKey": null
+                          },
+                          (v5/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "cursor",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "PageInfo",
+                    "kind": "LinkedField",
+                    "name": "pageInfo",
+                    "plural": false,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "endCursor",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "hasNextPage",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "hasPreviousPage",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "startCursor",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  },
+                  {
+                    "kind": "ClientExtension",
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "__id",
+                        "storageKey": null
+                      }
+                    ]
+                  }
+                ],
+                "storageKey": "complianceReports(first:50)"
+              },
+              {
+                "alias": null,
+                "args": (v7/*: any*/),
+                "filters": [
+                  "orderBy"
+                ],
+                "handle": "connection",
+                "key": "VendorComplianceTabFragment_complianceReports",
+                "kind": "LinkedHandle",
+                "name": "complianceReports"
               }
             ],
             "type": "Vendor",
@@ -236,16 +388,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3e7b2628c65e007a1603b982e41fea12",
+    "cacheID": "f4827b073b1e66d0f2fa29283f276ac1",
     "id": null,
     "metadata": {},
     "name": "VendorGraphNodeQuery",
     "operationKind": "query",
-    "text": "query VendorGraphNodeQuery(\n  $vendorId: ID!\n) {\n  node(id: $vendorId) {\n    __typename\n    ... on Vendor {\n      id\n      name\n      websiteUrl\n      ...useVendorFormFragment\n    }\n    id\n  }\n}\n\nfragment useVendorFormFragment on Vendor {\n  id\n  name\n  description\n  statusPageUrl\n  termsOfServiceUrl\n  privacyPolicyUrl\n  serviceLevelAgreementUrl\n  dataProcessingAgreementUrl\n  websiteUrl\n  legalName\n  headquarterAddress\n  certifications\n  securityPageUrl\n  trustPageUrl\n  businessOwner {\n    id\n  }\n  securityOwner {\n    id\n  }\n}\n"
+    "text": "query VendorGraphNodeQuery(\n  $vendorId: ID!\n) {\n  node(id: $vendorId) {\n    __typename\n    ... on Vendor {\n      id\n      name\n      websiteUrl\n      ...useVendorFormFragment\n      ...VendorComplianceTabFragment\n    }\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment on Vendor {\n  complianceReports(first: 50) {\n    edges {\n      node {\n        id\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  fileUrl\n  fileSize\n}\n\nfragment useVendorFormFragment on Vendor {\n  id\n  name\n  description\n  statusPageUrl\n  termsOfServiceUrl\n  privacyPolicyUrl\n  serviceLevelAgreementUrl\n  dataProcessingAgreementUrl\n  websiteUrl\n  legalName\n  headquarterAddress\n  certifications\n  securityPageUrl\n  trustPageUrl\n  businessOwner {\n    id\n  }\n  securityOwner {\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9a718caa45c75f17f4b910ca2c555781";
+(node as any).hash = "97226bc4f316909815617a30a3a88cd9";
 
 export default node;
