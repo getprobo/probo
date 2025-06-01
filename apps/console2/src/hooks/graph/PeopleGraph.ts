@@ -7,14 +7,13 @@ import {
   useRefetchableFragment,
   type PreloadedQuery,
 } from "react-relay";
-import { useMemo, useTransition } from "react";
+import { useMemo } from "react";
 import type { PeopleGraphPaginatedQuery } from "./__generated__/PeopleGraphPaginatedQuery.graphql";
 import type { PeopleGraphPaginatedFragment$key } from "./__generated__/PeopleGraphPaginatedFragment.graphql";
 import { useConfirm } from "@probo/ui";
 import type { PeopleGraphDeleteMutation } from "./__generated__/PeopleGraphDeleteMutation.graphql";
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import type { PeopleGraphNodeQuery$data } from "./__generated__/PeopleGraphNodeQuery.graphql";
 
 const peopleQuery = graphql`
   query PeopleGraphQuery($organizationId: ID!) {

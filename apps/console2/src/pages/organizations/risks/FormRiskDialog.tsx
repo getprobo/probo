@@ -15,10 +15,10 @@ import {
   Textarea,
   useDialogRef,
 } from "@probo/ui";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useFetchQuery } from "/hooks/useFetchQuery";
 import { graphql } from "relay-runtime";
-import { PeopleSelect } from "/components/form/PeopleSelect";
+import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useToggle } from "@probo/hooks";
 import {
@@ -196,10 +196,10 @@ export default function FormRiskDialog({
               label={__("Owner")}
               error={errors.ownerId?.message}
             >
-              <PeopleSelect
+              <PeopleSelectField
                 name="ownerId"
                 control={control}
-                organization={organizationId}
+                organizationId={organizationId}
               />
             </PropertyRow>
 

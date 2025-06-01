@@ -2,7 +2,7 @@ import { tv } from "tailwind-variants";
 import { Label } from "../../Atoms/Label/Label";
 import { Input } from "../../Atoms/Input/Input";
 import { Textarea } from "../../Atoms/Textarea/Textarea";
-import { type ComponentProps } from "react";
+import { type ComponentProps, type ReactNode } from "react";
 import { Select } from "../../Atoms/Select/Select";
 
 type BaseProps<T extends string, P> = {
@@ -10,7 +10,8 @@ type BaseProps<T extends string, P> = {
     help?: string;
     error?: string;
     onValueChange?: (s: string) => void;
-    type: T;
+    type?: T;
+    children?: ReactNode;
 } & P;
 
 type Props =
@@ -33,6 +34,7 @@ const { base: baseClass, label: labelClass, help: helpClass } = field();
 
 export function Field(props: Props) {
     const showHelp = props.help && !props.error;
+    const childrenAsInput = !props.type && props.children;
     return (
         <div className={baseClass()}>
             {props.label && (
@@ -40,7 +42,7 @@ export function Field(props: Props) {
                     {props.label}
                 </Label>
             )}
-            {getInput(props)}
+            {childrenAsInput ? props.children : getInput(props)}
             {showHelp && <span className={helpClass()}>{props.help}</span>}
             {props.error && (
                 <span className="text-txt-danger text-sm mt-1">
