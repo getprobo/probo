@@ -37,12 +37,20 @@ import type {
   MeasuresPageFragment$data,
   MeasuresPageFragment$key,
 } from "./__generated__/MeasuresPageFragment.graphql";
-import { groupBy, objectKeys, sprintf } from "@probo/helpers";
-import { useMemo, useRef, useState, type ChangeEventHandler } from "react";
+import { groupBy, objectKeys, slugify, sprintf } from "@probo/helpers";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEventHandler,
+} from "react";
 import type { NodeOf } from "/types";
 import type { MeasuresPageImportMutation } from "./__generated__/MeasuresPageImportMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useToggle } from "@probo/hooks";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import { Link, useParams } from "react-router";
 
 type Props = {
   queryRef: PreloadedQuery<MeasureGraphListQuery>;
@@ -170,13 +178,16 @@ type CategoryProps = {
 };
 
 function Category(props: CategoryProps) {
+  const params = useParams<{ categoryId?: string }>();
   const { __ } = useTranslate();
+  const organizationId = useOrganizationId();
+  const categoryId = slugify(props.category);
   const [limit, setLimit] = useState<number | null>(4);
   const measures = useMemo(() => {
     return limit ? props.measures.slice(0, limit) : props.measures;
   }, [props.measures, limit]);
   const showMoreButton = limit !== null && props.measures.length > limit;
-  const [isExpanded, toggleExpanded] = useToggle(false);
+  const isExpanded = categoryId === params.categoryId;
   const ExpandComponent = isExpanded ? IconChevronUp : IconChevronDown;
   const completedMeasures = props.measures.filter(
     (m) => m.state === "IMPLEMENTED"
@@ -184,9 +195,9 @@ function Category(props: CategoryProps) {
 
   return (
     <Card className="py-3 px-5">
-      <div
+      <Link
+        to={`/organizations/${organizationId}/measures/category/${categoryId}`}
         className="flex items-center justify-between cursor-pointer"
-        onClick={toggleExpanded}
       >
         <h2 className="text-base font-medium">{props.category}</h2>
         <div className="flex items-center gap-3 text-sm text-txt-secondary">
@@ -199,7 +210,7 @@ function Category(props: CategoryProps) {
           <span className="text-border-low">|</span>
           <ExpandComponent size={16} className="text-txt-secondary" />
         </div>
-      </div>
+      </Link>
       {isExpanded && (
         <div className="mt-3">
           <Table className="bg-invert">
@@ -245,6 +256,7 @@ function MeasureRow(props: MeasureRowProps) {
   const { __ } = useTranslate();
   const [deleteMeasure, isDeleting] = useDeleteMeasureMutation();
   const confirm = useConfirm();
+  const organizationId = useOrganizationId();
 
   const onDelete = () => {
     confirm(
@@ -271,12 +283,12 @@ function MeasureRow(props: MeasureRowProps) {
 
   return (
     <>
-      <Tr>
+      <Tr to={`/organizations/${organizationId}/measures/${props.measure.id}`}>
         <Td>{props.measure.name}</Td>
         <Td width={120}>
           <MeasureBadge state={props.measure.state} />
         </Td>
-        <Td width={50} className="text-end">
+        <Td noLink width={50} className="text-end">
           <ActionDropdown>
             <DropdownItem icon={IconPencil}>{__("Edit")}</DropdownItem>
             <DropdownItem
