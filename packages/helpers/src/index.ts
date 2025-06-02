@@ -1,5 +1,5 @@
 export { objectKeys, objectEntries } from "./object";
-export { sprintf, faviconUrl } from "./string";
+export { sprintf, faviconUrl, slugify } from "./string";
 export {
     getTreatment,
     getRiskImpacts,
@@ -13,3 +13,4 @@ export { getMeasureStateLabel, measureStates } from "./measure";
 export { getRole, getRoles, peopleRoles } from "./people";
 export { certificationCategoryLabel, certifications } from "./certifications";
 export { availableFrameworks } from "./frameworks";
+export { getDocumentTypeLabel, documentTypes } from "./documents";

@@ -24,7 +24,6 @@ import { usePageTitle } from "@probo/hooks";
 import { getRole } from "@probo/helpers";
 import { CreatePeopleDialog } from "./dialogs/CreatePeopleDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { Link } from "react-router";
 
 type People = NodeOf<PeopleGraphPaginatedFragment$data["peoples"]>;
 
@@ -99,14 +98,6 @@ function PeopleRow({
       <Td className="text-sm">{getRole(__, people.kind)}</Td>
       <Td noLink width={50} className="text-end">
         <ActionDropdown>
-          <DropdownItem asChild>
-            <Link
-              to={`/organizations/${organizationId}/people/${people.id}/tasks`}
-            >
-              <IconPencil size={16} />
-              {__("Edit")}
-            </Link>
-          </DropdownItem>
           <DropdownItem
             icon={IconTrashCan}
             variant="danger"
