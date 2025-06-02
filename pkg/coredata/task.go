@@ -38,6 +38,7 @@ type (
 		ReferenceID    string         `db:"reference_id"`
 		TimeEstimate   *time.Duration `db:"time_estimate"`
 		AssignedToID   *gid.GID       `db:"assigned_to"`
+		Deadline       *time.Time     `db:"deadline"`
 		CreatedAt      time.Time      `db:"created_at"`
 		UpdatedAt      time.Time      `db:"updated_at"`
 	}
@@ -71,6 +72,7 @@ SELECT
     reference_id,
     time_estimate,
     assigned_to,
+	deadline
     created_at,
     updated_at
 FROM
@@ -119,6 +121,7 @@ INSERT INTO
         state,
         time_estimate,
         assigned_to,
+		deadline,
         created_at,
         updated_at
     )
@@ -133,6 +136,7 @@ VALUES (
     @state,
     @time_estimate,
     @assigned_to,
+	@deadline,
     @created_at,
     @updated_at
 );
@@ -149,6 +153,7 @@ VALUES (
 		"state":           c.State,
 		"time_estimate":   c.TimeEstimate,
 		"assigned_to":     c.AssignedToID,
+		"deadline":        c.Deadline,
 		"created_at":      c.CreatedAt,
 		"updated_at":      c.UpdatedAt,
 	}
@@ -174,6 +179,7 @@ INSERT INTO
         state,
         time_estimate,
         assigned_to,
+		deadline,
         created_at,
         updated_at
     )
@@ -188,6 +194,7 @@ VALUES (
     @state,
     @time_estimate,
     @assigned_to,
+	@deadline,
     @created_at,
     @updated_at
 )
@@ -205,6 +212,7 @@ RETURNING
     state,
     time_estimate,
     assigned_to,
+	deadline,
     created_at,
     updated_at
 `
@@ -220,6 +228,7 @@ RETURNING
 		"state":           c.State,
 		"time_estimate":   c.TimeEstimate,
 		"assigned_to":     c.AssignedToID,
+		"deadline":        c.Deadline,
 		"created_at":      c.CreatedAt,
 		"updated_at":      c.UpdatedAt,
 	}
@@ -256,6 +265,7 @@ func (c *Tasks) LoadByOrganizationID(
 		reference_id,
 		time_estimate,
 		assigned_to,
+		deadline,
 		created_at,
 		updated_at
 	FROM
@@ -304,6 +314,7 @@ SELECT
     reference_id,
     time_estimate,
     assigned_to,
+	deadline,
     created_at,
     updated_at
 FROM
@@ -347,7 +358,8 @@ SET
   state = @state,
   time_estimate = @time_estimate,
   updated_at = @updated_at,
-  assigned_to = @assigned_to
+  assigned_to = @assigned_to,
+  deadline = @deadline
 WHERE %s
     AND id = @task_id
 `
@@ -361,6 +373,7 @@ WHERE %s
 		"time_estimate": c.TimeEstimate,
 		"updated_at":    c.UpdatedAt,
 		"assigned_to":   c.AssignedToID,
+		"deadline":      c.Deadline,
 	}
 
 	maps.Copy(args, scope.SQLArguments())

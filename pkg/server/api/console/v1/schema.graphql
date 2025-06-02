@@ -719,6 +719,7 @@ type Task implements Node {
   description: String!
   state: TaskState!
   timeEstimate: Duration
+  deadline: Datetime
   assignedTo: People @goField(forceResolver: true)
 
   organization: Organization! @goField(forceResolver: true)
@@ -1265,6 +1266,7 @@ input CreateTaskInput {
   description: String!
   timeEstimate: Duration
   assignedToId: ID
+  deadline: Datetime
 }
 
 input UpdateTaskInput {
@@ -1273,6 +1275,7 @@ input UpdateTaskInput {
   description: String
   state: TaskState
   timeEstimate: Duration
+  deadline: Datetime
 }
 
 input DeleteTaskInput {

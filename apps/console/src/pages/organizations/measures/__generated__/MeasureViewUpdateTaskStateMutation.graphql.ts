@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1595fa9771d6baa14534b181f4a1384a>>
+ * @generated SignedSource<<39aa2870923a48745f02566c1adc6227>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type TaskState = "DONE" | "TODO";
 export type UpdateTaskInput = {
+  deadline?: string | null | undefined;
   description?: string | null | undefined;
   name?: string | null | undefined;
   state?: TaskState | null | undefined;

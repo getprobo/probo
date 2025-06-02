@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7732676a00f7ed0f6817555b68540aca>>
+ * @generated SignedSource<<14a914bdd269eb18124d002d2c61a5b9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,6 +25,7 @@ export type ListTaskViewQuery$data = {
             readonly fullName: string;
             readonly id: string;
           } | null | undefined;
+          readonly deadline: string | null | undefined;
           readonly description: string;
           readonly id: string;
           readonly measure: {
@@ -118,6 +119,13 @@ v5 = [
             "args": null,
             "kind": "ScalarField",
             "name": "timeEstimate",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "deadline",
             "storageKey": null
           },
           {
@@ -301,7 +309,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "52b577b08c305249855293949d6e2339",
+    "cacheID": "7519a481d7930f14c53c8c1a72d66f58",
     "id": null,
     "metadata": {
       "connection": [
@@ -318,11 +326,11 @@ return {
     },
     "name": "ListTaskViewQuery",
     "operationKind": "query",
-    "text": "query ListTaskViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      name\n      tasks(first: 100) {\n        edges {\n          node {\n            id\n            name\n            description\n            state\n            timeEstimate\n            measure {\n              id\n              name\n            }\n            assignedTo {\n              id\n              fullName\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query ListTaskViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      name\n      tasks(first: 100) {\n        edges {\n          node {\n            id\n            name\n            description\n            state\n            timeEstimate\n            deadline\n            measure {\n              id\n              name\n            }\n            assignedTo {\n              id\n              fullName\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "5ca091444c547744068f2b2a83cb31df";
+(node as any).hash = "52b99d58a5b95dadd4e66bfad588d924";
 
 export default node;

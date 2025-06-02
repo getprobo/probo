@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<84a35602a155b0f1fa8504cf32c10932>>
+ * @generated SignedSource<<a4c4d53df4bc73d2bdc48ef0eb38a500>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 export type TaskState = "DONE" | "TODO";
 export type CreateTaskInput = {
   assignedToId?: string | null | undefined;
+  deadline?: string | null | undefined;
   description: string;
   measureId?: string | null | undefined;
   name: string;
@@ -30,6 +31,7 @@ export type ListTaskViewCreateTaskMutation$data = {
           readonly fullName: string;
           readonly id: string;
         } | null | undefined;
+        readonly deadline: string | null | undefined;
         readonly description: string;
         readonly id: string;
         readonly measure: {
@@ -117,6 +119,13 @@ v5 = {
           "args": null,
           "kind": "ScalarField",
           "name": "timeEstimate",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "deadline",
           "storageKey": null
         },
         {
@@ -223,16 +232,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7b9680f637411402ff51239a43b44a14",
+    "cacheID": "6fe245ddb913332138beda8377ebd88c",
     "id": null,
     "metadata": {},
     "name": "ListTaskViewCreateTaskMutation",
     "operationKind": "mutation",
-    "text": "mutation ListTaskViewCreateTaskMutation(\n  $input: CreateTaskInput!\n) {\n  createTask(input: $input) {\n    taskEdge {\n      node {\n        id\n        name\n        description\n        state\n        timeEstimate\n        measure {\n          id\n          name\n        }\n        assignedTo {\n          id\n          fullName\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation ListTaskViewCreateTaskMutation(\n  $input: CreateTaskInput!\n) {\n  createTask(input: $input) {\n    taskEdge {\n      node {\n        id\n        name\n        description\n        state\n        timeEstimate\n        deadline\n        measure {\n          id\n          name\n        }\n        assignedTo {\n          id\n          fullName\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "43ccaf49d31ec84dcf3b6b3f2e3a851c";
+(node as any).hash = "934ee4a5b5bfd4c9e9c4acab49d11304";
 
 export default node;

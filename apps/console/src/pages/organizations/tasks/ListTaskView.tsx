@@ -122,6 +122,7 @@ const createTaskMutation = graphql`
           description
           state
           timeEstimate
+          deadline
           measure {
             id
             name
@@ -165,6 +166,7 @@ const listTaskViewQuery = graphql`
               description
               state
               timeEstimate
+              deadline
               measure {
                 id
                 name
@@ -455,6 +457,7 @@ function ListTaskContent({
           measureId: selectedMeasure?.id || null,
           assignedToId: assignee?.id,
           timeEstimate: formattedTimeEstimate,
+          deadline: deadline
         },
         connections: [data.node?.tasks?.__id || ""],
       },
@@ -478,6 +481,8 @@ function ListTaskContent({
     setTimeEstimate(null);
     setTimeUnit("hours");
     setMeasureSearchQuery("");
+    setDeadlineString('');
+    setDeadline(null);
   };
 
   // Get initials from name

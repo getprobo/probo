@@ -38,6 +38,7 @@ type (
 		Description    string
 		TimeEstimate   *time.Duration
 		AssignedToID   *gid.GID
+		Deadline       *time.Time
 	}
 
 	UpdateTaskRequest struct {
@@ -46,6 +47,7 @@ type (
 		Description  *string
 		State        *coredata.TaskState
 		TimeEstimate *time.Duration
+		Deadline     *time.Time
 	}
 )
 
@@ -69,6 +71,7 @@ func (s TaskService) Create(
 		Description:    req.Description,
 		TimeEstimate:   req.TimeEstimate,
 		AssignedToID:   req.AssignedToID,
+		Deadline:       req.Deadline,
 		State:          coredata.TaskStateTodo,
 		ReferenceID:    "custom-task-" + referenceID.String(),
 		CreatedAt:      now,
@@ -201,6 +204,10 @@ func (s TaskService) Update(
 
 			if req.TimeEstimate != nil {
 				task.TimeEstimate = req.TimeEstimate
+			}
+
+			if req.Deadline != nil {
+				task.Deadline = req.Deadline
 			}
 
 			task.UpdatedAt = time.Now()
