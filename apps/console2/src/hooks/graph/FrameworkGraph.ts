@@ -5,6 +5,8 @@ import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 import { useConfirm } from "@probo/ui";
 
+export const connectionListKey = "FrameworksListQuery_frameworks";
+
 export const frameworksQuery = graphql`
   query FrameworkGraphListQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
@@ -47,28 +49,32 @@ export const useDeleteFrameworkMutation = (
   const confirm = useConfirm();
   const { __ } = useTranslate();
 
-  return useCallback(() => {
-    confirm(
-      () => {
-        return commitDelete({
-          variables: {
-            input: {
-              frameworkId: framework.id!,
+  return useCallback(
+    (options?: { onSuccess?: () => void }) => {
+      return confirm(
+        () => {
+          return commitDelete({
+            variables: {
+              input: {
+                frameworkId: framework.id!,
+              },
+              connections: [connectionId],
             },
-            connections: [connectionId],
-          },
-        });
-      },
-      {
-        message: sprintf(
-          __(
-            'This will permanently delete framework "%s". This action cannot be undone.'
+            ...options,
+          });
+        },
+        {
+          message: sprintf(
+            __(
+              'This will permanently delete framework "%s". This action cannot be undone.'
+            ),
+            framework.name
           ),
-          framework.name
-        ),
-      }
-    );
-  }, [framework, connectionId, commitDelete]);
+        }
+      );
+    },
+    [framework, connectionId, commitDelete]
+  );
 };
 
 export const frameworkNodeQuery = graphql`

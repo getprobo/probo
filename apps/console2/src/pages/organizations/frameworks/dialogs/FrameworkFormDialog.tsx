@@ -9,13 +9,14 @@ import {
   DialogFooter,
   Input,
   Textarea,
+  useDialogRef,
   type DialogRef,
 } from "@probo/ui";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 
 const createFrameworkMutation = graphql`
-  mutation CreateFrameworkDialogMutation(
+  mutation FrameworkFormDialogMutation(
     $input: CreateFrameworkInput!
     $connections: [ID!]!
   ) {
@@ -30,10 +31,28 @@ const createFrameworkMutation = graphql`
   }
 `;
 
+const updateFrameworkMutation = graphql`
+  mutation FrameworkFormDialogUpdateMutation($input: UpdateFrameworkInput!) {
+    updateFramework(input: $input) {
+      framework {
+        id
+        name
+        description
+      }
+    }
+  }
+`;
+
 type Props = {
-  connectionId: string;
+  connectionId?: string;
   organizationId: string;
-  ref: DialogRef;
+  framework?: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  ref?: DialogRef;
+  children?: React.ReactNode;
 };
 
 const schema = z.object({
@@ -41,18 +60,41 @@ const schema = z.object({
   description: z.string().max(255).optional(),
 });
 
-export function CreateFrameworkDialog(props: Props) {
+/**
+ * Form to update or create a new framework
+ */
+export function FrameworkFormDialog(props: Props) {
   const { __ } = useTranslate();
-  const { register, handleSubmit, reset } = useFormWithSchema(schema, {});
-  const [commitCreate, isCreating] = useMutationWithToasts(
-    createFrameworkMutation,
-    {
-      successMessage: __("Framework created successfully"),
-      errorMessage: __("Failed to create framework"),
-    }
-  );
+  const dialogRef = props.ref ?? useDialogRef();
+  const { register, handleSubmit, reset } = useFormWithSchema(schema, {
+    defaultValues: {
+      name: props.framework?.name ?? "",
+      description: props.framework?.description ?? "",
+    },
+  });
+  const [create, isCreating] = useMutationWithToasts(createFrameworkMutation, {
+    successMessage: __("Framework created successfully"),
+    errorMessage: __("Failed to create framework"),
+  });
+  const [update, isUpdating] = useMutationWithToasts(updateFrameworkMutation, {
+    successMessage: __("Framework updated successfully"),
+    errorMessage: __("Failed to update framework"),
+  });
   const onSubmit = handleSubmit(async (data) => {
-    await commitCreate({
+    if (props.framework) {
+      await update({
+        variables: {
+          input: {
+            id: props.framework.id,
+            ...data,
+          },
+        },
+      });
+      reset(data);
+      dialogRef.current?.close();
+      return;
+    }
+    await create({
       variables: {
         input: {
           ...data,
@@ -62,12 +104,13 @@ export function CreateFrameworkDialog(props: Props) {
       },
     });
     reset();
-    props.ref.current?.close();
+    dialogRef.current?.close();
   });
 
   return (
     <Dialog
-      ref={props.ref}
+      trigger={props.children}
+      ref={dialogRef}
       title={<Breadcrumb items={[__("Framework"), __("New Framework")]} />}
     >
       <form onSubmit={onSubmit}>
@@ -86,8 +129,8 @@ export function CreateFrameworkDialog(props: Props) {
           />
         </DialogContent>
         <DialogFooter>
-          <Button type="submit" disabled={isCreating}>
-            {__("Create framework")}
+          <Button type="submit" disabled={isCreating || isUpdating}>
+            {props.framework ? __("Update framework") : __("Create framework")}
           </Button>
         </DialogFooter>
       </form>
