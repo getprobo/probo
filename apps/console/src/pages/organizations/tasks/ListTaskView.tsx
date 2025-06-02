@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import {ChangeEvent, Suspense, useEffect, useState} from "react";
 import {
   useQueryLoader,
   graphql,
@@ -47,6 +47,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ListTaskViewOrganizationQuery } from "./__generated__/ListTaskViewOrganizationQuery.graphql";
+import {parseISO} from "date-fns";
 
 // Function to format ISO8601 duration to human-readable format
 const formatDuration = (isoDuration: string | null | undefined): string => {
@@ -346,6 +347,8 @@ function ListTaskContent({
   const [selectedMeasure, setSelectedMeasure] = useState<{id: string, name: string} | null>(null);
   const [timeEstimate, setTimeEstimate] = useState<number | null>(null);
   const [timeUnit, setTimeUnit] = useState<"minutes" | "hours" | "days" | "weeks">("hours");
+  const [deadlineString, setDeadlineString] = useState<string>('');
+  const [deadline, setDeadline] = useState<Date | null>(null);
 
   // Create task mutation
   const [createTask, isCreatingTask] = useMutation(createTaskMutation);
@@ -381,6 +384,19 @@ function ListTaskContent({
       });
     }
   }, [environment, organization?.id]);
+
+  // Parse deadline string into Date-object
+  const handleDeadlineChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    setDeadlineString(value);
+
+    if (value) {
+      const date = parseISO(value);
+      setDeadline(date);
+    } else {
+      setDeadline(null)
+    }
+  };
 
   // Filter measures based on search query
   const filteredMeasures = measures.filter(measure => 
@@ -823,6 +839,15 @@ function ListTaskContent({
                         </Button>
                       </>
                     )}
+                  </div>
+                </div>
+
+                {/* Deadline */}
+                <div className="flex justify-between items-center broder-b border-[rgba(2,42,2,0.08)] py-3">
+                  <Label className="text-sm font-medium text-gray-500">Deadline</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Input type="date" value={deadlineString} onChange={handleDeadlineChange}
+                           className="text-sm font-medium bg-[rgba(0,39,0,0.05)] px-[10px] py-[6px] rounded-lg"/>
                   </div>
                 </div>
               </div>
