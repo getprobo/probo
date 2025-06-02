@@ -140,7 +140,7 @@ function UserDropdown() {
         label={__("Settings")}
       />
       <UserDropdownItem
-        to="/settings"
+        to="mailto:support@getprobo.com"
         icon={IconCircleQuestionmark}
         label={__("Help")}
       />
