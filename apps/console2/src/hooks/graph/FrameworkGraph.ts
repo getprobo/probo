@@ -70,3 +70,15 @@ export const useDeleteFrameworkMutation = (
     );
   }, [framework, connectionId, commitDelete]);
 };
+
+export const frameworkNodeQuery = graphql`
+  query FrameworkGraphNodeQuery($frameworkId: ID!) {
+    node(id: $frameworkId) {
+      ... on Framework {
+        id
+        name
+        ...FrameworkDetailPageFragment
+      }
+    }
+  }
+`;
