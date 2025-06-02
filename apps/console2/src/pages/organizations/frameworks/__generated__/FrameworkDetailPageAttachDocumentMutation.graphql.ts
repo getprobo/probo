@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<174d7c77d0d858ecc59261174b424af2>>
+ * @generated SignedSource<<7d4a807c299030c97164951cbe8ef067>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -161,6 +161,13 @@ return {
                   },
                   {
                     "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "documentType",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
                     "args": [
                       {
                         "kind": "Literal",
@@ -234,12 +241,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9100dabaa4861920eab52dc47e551b06",
+    "cacheID": "968bd0beeabab861ca610804640e5e11",
     "id": null,
     "metadata": {},
     "name": "FrameworkDetailPageAttachDocumentMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkDetailPageAttachDocumentMutation(\n  $input: CreateControlDocumentMappingInput!\n) {\n  createControlDocumentMapping(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...LinkedDocumentsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
+    "text": "mutation FrameworkDetailPageAttachDocumentMutation(\n  $input: CreateControlDocumentMappingInput!\n) {\n  createControlDocumentMapping(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...LinkedDocumentsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
   }
 };
 })();
