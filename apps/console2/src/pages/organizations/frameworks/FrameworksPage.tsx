@@ -6,6 +6,7 @@ import {
   DropdownItem,
   FileButton,
   FrameworkSelector,
+  IconPencil,
   IconTrashCan,
   IconUpload,
   PageHeader,
@@ -26,8 +27,8 @@ import { Link } from "react-router";
 import type { FrameworksPageCardFragment$key } from "./__generated__/FrameworksPageCardFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useState, type ChangeEventHandler } from "react";
-import { CreateFrameworkDialog } from "./dialogs/CreateFrameworkDialog";
 import { FrameworkLogo } from "/components/FrameworkLogo";
+import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 
 type Props = {
   queryRef: PreloadedQuery<FrameworkGraphListQuery>;
@@ -119,7 +120,7 @@ export default function FrameworksPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <CreateFrameworkDialog
+      <FrameworkFormDialog
         ref={dialogRef}
         connectionId={connectionId}
         organizationId={data.organization.id!}
@@ -177,14 +178,29 @@ function FrameworkCard(props: FrameworkCardProps) {
     props.connectionId
   );
   const { __ } = useTranslate();
+  const dialogRef = useDialogRef();
   return (
     <Card padded className="p-6 bg-white rounded shadow relative">
+      <FrameworkFormDialog
+        ref={dialogRef}
+        connectionId={props.connectionId}
+        organizationId={props.organizationId}
+        framework={framework}
+      />
       <div className="flex justify-between mb-3">
         <FrameworkLogo {...framework} />
         <ActionDropdown className="z-10 relative">
           <DropdownItem
+            icon={IconPencil}
+            onClick={() => {
+              dialogRef.current?.open();
+            }}
+          >
+            {__("Edit")}
+          </DropdownItem>
+          <DropdownItem
             icon={IconTrashCan}
-            onClick={deleteFramework}
+            onClick={() => deleteFramework()}
             variant="danger"
           >
             {__("Delete")}

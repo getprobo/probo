@@ -5,17 +5,30 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { usePageTitle } from "@probo/hooks";
-import { graphql } from "relay-runtime";
-import { ControlItem, PageHeader } from "@probo/ui";
+import { ConnectionHandler, graphql } from "relay-runtime";
+import {
+  ActionDropdown,
+  Button,
+  ControlItem,
+  DropdownItem,
+  IconPencil,
+  IconTrashCan,
+  PageHeader,
+} from "@probo/ui";
 import { FrameworkLogo } from "/components/FrameworkLogo";
-import { frameworkNodeQuery } from "/hooks/graph/FrameworkGraph";
+import {
+  connectionListKey,
+  frameworkNodeQuery,
+  useDeleteFrameworkMutation,
+} from "/hooks/graph/FrameworkGraph";
 import { useTranslate } from "@probo/i18n";
 import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { FrameworkGraphNodeQuery } from "/hooks/graph/__generated__/FrameworkGraphNodeQuery.graphql";
 import type { FrameworkDetailPageFragment$key } from "./__generated__/FrameworkDetailPageFragment.graphql";
 import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
+import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 
 const frameworkDetailFragment = graphql`
   fragment FrameworkDetailPageFragment on Framework {
@@ -122,7 +135,14 @@ export default function FrameworkDetailPage(props: Props) {
     frameworkDetailFragment,
     data.node
   );
+  const navigate = useNavigate();
+  const controls = framework.controls.edges.map((edge) => edge.node);
+  const selectedControl = controlId
+    ? controls.find((control) => control.id === controlId)
+    : controls[0];
+  usePageTitle(`${framework.name} | ${selectedControl?.referenceId}`);
 
+  // Mutations
   const [detachMeasure, isDetachingMeasure] = useMutation(
     detachMeasureMutation
   );
@@ -135,13 +155,18 @@ export default function FrameworkDetailPage(props: Props) {
   const [attachDocument, isAttachingDocument] = useMutation(
     attachDocumentMutation
   );
+  const deleteFramework = useDeleteFrameworkMutation(
+    framework,
+    ConnectionHandler.getConnectionID(organizationId, connectionListKey)!
+  );
 
-  const controls = framework.controls.edges.map((edge) => edge.node);
-
-  const selectedControl = controlId
-    ? controls.find((control) => control.id === controlId)
-    : controls[0];
-  usePageTitle(`${framework.name} | ${selectedControl?.referenceId}`);
+  const onDelete = () => {
+    deleteFramework({
+      onSuccess: () => {
+        navigate(`/organizations/${organizationId}/frameworks`);
+      },
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -152,7 +177,21 @@ export default function FrameworkDetailPage(props: Props) {
             {framework.name}
           </>
         }
-      />
+      >
+        <FrameworkFormDialog
+          organizationId={organizationId}
+          framework={framework}
+        >
+          <Button icon={IconPencil} variant="secondary">
+            {__("Edit")}
+          </Button>
+        </FrameworkFormDialog>
+        <ActionDropdown variant="secondary">
+          <DropdownItem icon={IconTrashCan} variant="danger" onClick={onDelete}>
+            {__("Delete")}
+          </DropdownItem>
+        </ActionDropdown>
+      </PageHeader>
       <div className="text-lg font-semibold">
         {__("Requirement categories")}
       </div>
