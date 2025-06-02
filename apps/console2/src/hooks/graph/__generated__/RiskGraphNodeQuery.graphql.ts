@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<18341e1d2a7f480ad73ef32506121c5e>>
+ * @generated SignedSource<<dfb9e4b341ccc895fce60e2de5287ec1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -108,14 +108,7 @@ v8 = {
   "name": "__typename",
   "storageKey": null
 },
-v9 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "category",
-  "storageKey": null
-},
-v10 = [
+v9 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -195,7 +188,13 @@ return {
               (v4/*: any*/),
               (v6/*: any*/),
               (v7/*: any*/),
-              (v9/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "category",
+                "storageKey": null
+              },
               {
                 "alias": null,
                 "args": null,
@@ -240,7 +239,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v9/*: any*/),
                 "concreteType": "MeasureConnection",
                 "kind": "LinkedField",
                 "name": "measures",
@@ -264,15 +263,6 @@ return {
                         "selections": [
                           (v5/*: any*/),
                           (v2/*: any*/),
-                          (v3/*: any*/),
-                          (v9/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
                           {
                             "alias": null,
                             "args": null,
@@ -336,7 +326,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v9/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "Risk__measures",
@@ -353,12 +343,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "fc9da3522dfacf8b5f887a0ebbd3e21e",
+    "cacheID": "295ecc0e99f46b7790fe04db0deed1d8",
     "id": null,
     "metadata": {},
     "name": "RiskGraphNodeQuery",
     "operationKind": "query",
-    "text": "query RiskGraphNodeQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    ... on Risk {\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      note\n      ...useRiskFormFragment\n      ...RiskOverviewTabFragment\n      ...RiskMeasuresTabFragment\n    }\n    id\n  }\n}\n\nfragment RiskMeasuresTabFragment on Risk {\n  id\n  measures(first: 100) {\n    edges {\n      node {\n        id\n        name\n        description\n        category\n        createdAt\n        state\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskOverviewTabFragment on Risk {\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "query RiskGraphNodeQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    ... on Risk {\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      note\n      ...useRiskFormFragment\n      ...RiskOverviewTabFragment\n      ...RiskMeasuresTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment RiskMeasuresTabFragment on Risk {\n  id\n  measures(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedMeasuresCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskOverviewTabFragment on Risk {\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();

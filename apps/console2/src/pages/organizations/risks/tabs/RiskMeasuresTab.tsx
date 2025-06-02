@@ -1,28 +1,7 @@
 import { graphql, useFragment, useMutation } from "react-relay";
-import type {
-  RiskMeasuresTabFragment$data,
-  RiskMeasuresTabFragment$key,
-} from "./__generated__/RiskMeasuresTabFragment.graphql";
-import { useTranslate } from "@probo/i18n";
-import {
-  Button,
-  IconPlusLarge,
-  Table,
-  Thead,
-  Tbody,
-  Td,
-  Th,
-  Tr,
-  IconTrashCan,
-} from "@probo/ui";
-import {
-  detachMeasureMutation,
-  MeasureLinkDialog,
-} from "/components/risks/MeasureLinkDialog";
-import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { RiskMeasuresTabFragment$key } from "./__generated__/RiskMeasuresTabFragment.graphql";
 import { useOutletContext } from "react-router";
-import type { NodeOf } from "/types";
-import { useMemo } from "react";
+import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
 
 const measuresFragment = graphql`
   fragment RiskMeasuresTabFragment on Risk {
@@ -32,13 +11,36 @@ const measuresFragment = graphql`
       edges {
         node {
           id
-          name
-          description
-          category
-          createdAt
-          state
+          ...LinkedMeasuresCardFragment
         }
       }
+    }
+  }
+`;
+
+const attachMeasureMutation = graphql`
+  mutation RiskMeasuresTabCreateMutation(
+    $input: CreateRiskMeasureMappingInput!
+    $connections: [ID!]!
+  ) {
+    createRiskMeasureMapping(input: $input) {
+      measureEdge @prependEdge(connections: $connections) {
+        node {
+          id
+          ...LinkedMeasuresCardFragment
+        }
+      }
+    }
+  }
+`;
+
+export const detachMeasureMutation = graphql`
+  mutation RiskMeasuresTabDetachMutation(
+    $input: DeleteRiskMeasureMappingInput!
+    $connections: [ID!]!
+  ) {
+    deleteRiskMeasureMapping(input: $input) {
+      deletedMeasureId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -48,111 +50,21 @@ export default function RiskMeasuresTab() {
     risk: RiskMeasuresTabFragment$key & { id: string };
   }>();
   const data = useFragment(measuresFragment, risk);
-  const organizationId = useOrganizationId();
-  const { __ } = useTranslate();
   const connectionId = data.measures.__id;
   const measures = data.measures?.edges?.map((edge) => edge.node) ?? [];
-  const linkedIds = useMemo(
-    () => new Set(measures.map((measure) => measure.id)),
-    [measures]
-  );
 
-  if (measures.length === 0) {
-    return (
-      <div className="text-sm text-txt-secondary text-center flex flex-col gap-4 items-center justify-center py-10">
-        {__("No measures associated with this risk.")}
-        <MeasureLinkDialog
-          linkedIds={linkedIds}
-          connectionId={connectionId}
-          organizationId={organizationId}
-          riskId={data.id}
-          trigger={
-            <Button icon={IconPlusLarge} variant="quaternary">
-              {__("Link measure")}
-            </Button>
-          }
-        />
-      </div>
-    );
-  }
+  const [detachMeasure, isDetaching] = useMutation(detachMeasureMutation);
+  const [attachMeasure, isAttaching] = useMutation(attachMeasureMutation);
+  const isLoading = isDetaching || isAttaching;
 
   return (
-    <div className="relative">
-      <MeasureLinkDialog
-        linkedIds={linkedIds}
-        connectionId={connectionId}
-        organizationId={organizationId}
-        riskId={data.id}
-        trigger={
-          <Button
-            icon={IconPlusLarge}
-            variant="primary"
-            className="absolute -top-18 right-0"
-          >
-            {__("Link measure")}
-          </Button>
-        }
-      />
-      <Table>
-        <Thead>
-          <Tr>
-            <Th>{__("Measure")}</Th>
-            <Th></Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {measures.map((measure) => (
-            <MeasureRow
-              key={measure.id}
-              measure={measure}
-              riskId={data.id}
-              connectionId={connectionId}
-            />
-          ))}
-        </Tbody>
-      </Table>
-    </div>
-  );
-}
-
-function MeasureRow({
-  measure,
-  riskId,
-  connectionId,
-}: {
-  measure: NodeOf<RiskMeasuresTabFragment$data["measures"]>;
-  riskId: string;
-  connectionId: string;
-}) {
-  const { __ } = useTranslate();
-
-  const [detachMeasure, isFetching] = useMutation(detachMeasureMutation);
-
-  const onClick = () => {
-    detachMeasure({
-      variables: {
-        input: {
-          riskId: riskId,
-          measureId: measure.id,
-        },
-        connections: [connectionId],
-      },
-    });
-  };
-  return (
-    <Tr>
-      <Td>{measure.name}</Td>
-      <Td>
-        <Button
-          disabled={isFetching}
-          icon={IconTrashCan}
-          className="ml-auto"
-          variant="quaternary"
-          onClick={onClick}
-        >
-          {__("Unlink")}
-        </Button>
-      </Td>
-    </Tr>
+    <LinkedMeasuresCard
+      disabled={isLoading}
+      measures={measures}
+      onAttach={attachMeasure}
+      onDetach={detachMeasure}
+      params={{ riskId: data.id }}
+      connectionId={connectionId}
+    />
   );
 }

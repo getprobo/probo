@@ -12,9 +12,6 @@ export default {
 type Story = StoryObj<typeof Combobox>;
 
 export const Default: Story = {
-    args: {
-        open: true,
-    },
     render: () => {
         const [items, setItems] = useState(["a", "b", "c"] as string[]);
         const onSearch = (query: string) => {
@@ -22,10 +19,6 @@ export const Default: Story = {
         };
         return (
             <>
-                Lorem ipsum dolor sit, amet consectetur adipisicing elit.
-                Nostrum labore repellat facere voluptatum, in voluptatem eaque
-                quidem nam quod nesciunt repudiandae a illo non placeat nulla.
-                Ratione ipsa at sint?
                 <Combobox onSearch={onSearch}>
                     {items.map((item) => (
                         <ComboboxItem key={item}>{item}</ComboboxItem>

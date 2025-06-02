@@ -33,6 +33,7 @@ export { Table, Thead, Tr, Tbody, Td, Th } from "./Atoms/Table/Table";
 export { Tabs, TabLink } from "./Atoms/Tabs/Tabs";
 export { Markdown } from "./Atoms/Markdown/Markdown";
 export { Dropzone } from "./Atoms/Dropzone/Dropzone";
+export { ControlItem } from "./Atoms/ControlItem/ControlItem";
 
 // Molecules
 export {

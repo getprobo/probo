@@ -67,7 +67,6 @@ export function CreateFrameworkDialog(props: Props) {
 
   return (
     <Dialog
-      defaultOpen
       ref={props.ref}
       title={<Breadcrumb items={[__("Framework"), __("New Framework")]} />}
     >

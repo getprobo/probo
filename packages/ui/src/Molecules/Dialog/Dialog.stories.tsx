@@ -15,7 +15,6 @@ export const Default: Story = {
         return (
             <Dialog
                 {...args}
-                onClose={() => {}}
                 trigger={<Button>Open dialog</Button>}
                 title="Edit profile"
             >

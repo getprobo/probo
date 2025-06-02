@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<62ef6617862f528f26edaffe3adc3069>>
+ * @generated SignedSource<<5a37b1ce3c0c17ce36fc3e1157eadf8e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,6 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED";
 import { FragmentRefs } from "relay-runtime";
 export type RiskMeasuresTabFragment$data = {
   readonly id: string;
@@ -17,12 +16,8 @@ export type RiskMeasuresTabFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly category: string;
-        readonly createdAt: any;
-        readonly description: string;
         readonly id: string;
-        readonly name: string;
-        readonly state: MeasureState;
+        readonly " $fragmentSpreads": FragmentRefs<"LinkedMeasuresCardFragment">;
       };
     }>;
   };
@@ -85,39 +80,9 @@ return {
               "selections": [
                 (v0/*: any*/),
                 {
-                  "alias": null,
                   "args": null,
-                  "kind": "ScalarField",
-                  "name": "name",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "description",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "category",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "createdAt",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "state",
-                  "storageKey": null
+                  "kind": "FragmentSpread",
+                  "name": "LinkedMeasuresCardFragment"
                 },
                 {
                   "alias": null,
@@ -185,6 +150,6 @@ return {
 };
 })();
 
-(node as any).hash = "e04c5962a40b48aade0d1e4a31f0c583";
+(node as any).hash = "e928c83f7fea74daa5663d6f80518419";
 
 export default node;

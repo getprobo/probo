@@ -2,7 +2,6 @@ import { usePageTitle } from "@probo/hooks";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
-  Avatar,
   Card,
   DropdownItem,
   FileButton,
@@ -27,8 +26,8 @@ import { Link } from "react-router";
 import type { FrameworksPageCardFragment$key } from "./__generated__/FrameworksPageCardFragment.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useState, type ChangeEventHandler } from "react";
-import { availableFrameworks } from "@probo/helpers";
 import { CreateFrameworkDialog } from "./dialogs/CreateFrameworkDialog";
+import { FrameworkLogo } from "/components/FrameworkLogo";
 
 type Props = {
   queryRef: PreloadedQuery<FrameworkGraphListQuery>;
@@ -49,10 +48,6 @@ const importFrameworkMutation = graphql`
     }
   }
 `;
-
-const availableLogos = new Map(
-  availableFrameworks.map((framework) => [framework.name, framework.logo])
-);
 
 export default function FrameworksPage(props: Props) {
   const { __ } = useTranslate();
@@ -182,15 +177,10 @@ function FrameworkCard(props: FrameworkCardProps) {
     props.connectionId
   );
   const { __ } = useTranslate();
-  const logo = availableLogos.get(framework.name);
   return (
     <Card padded className="p-6 bg-white rounded shadow relative">
       <div className="flex justify-between mb-3">
-        {logo ? (
-          <img src={logo} alt="" className="size-12" />
-        ) : (
-          <Avatar name={framework.name} size="l" className="size-12" />
-        )}
+        <FrameworkLogo {...framework} />
         <ActionDropdown className="z-10 relative">
           <DropdownItem
             icon={IconTrashCan}

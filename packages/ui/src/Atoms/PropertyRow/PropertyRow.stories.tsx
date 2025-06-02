@@ -18,13 +18,6 @@ export const Default: Story = {
     },
 };
 
-export const Disabled: Story = {
-    args: {
-        ...Default.args,
-        disabled: true,
-    },
-};
-
 export const WithError: Story = {
     args: {
         ...Default.args,

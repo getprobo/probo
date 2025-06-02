@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6a9b2c4428ed2255dda81771894c0c6c>>
+ * @generated SignedSource<<0b725ea8709fbf5da3f17545fcd2b8c4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -92,6 +92,13 @@ v4 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
+            "name": "state",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
             "name": "description",
             "storageKey": null
           },
@@ -100,13 +107,6 @@ v4 = [
             "args": null,
             "kind": "ScalarField",
             "name": "category",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "state",
             "storageKey": null
           },
           (v3/*: any*/)
@@ -244,7 +244,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "13eb493b76ecc90bc9dd27963b5dba84",
+    "cacheID": "54fff8a0c07ebe02ef34f3bb35e7582e",
     "id": null,
     "metadata": {
       "connection": [
@@ -261,11 +261,11 @@ return {
     },
     "name": "MeasureLinkDialogQuery",
     "operationKind": "query",
-    "text": "query MeasureLinkDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            name\n            description\n            category\n            state\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query MeasureLinkDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            name\n            state\n            description\n            category\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "468d35ade53ae7655cd0fbab242b7d1a";
+(node as any).hash = "cf01fa3a766badd4f6150e1a544403ba";
 
 export default node;
