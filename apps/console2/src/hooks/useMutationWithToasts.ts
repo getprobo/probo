@@ -28,7 +28,7 @@ export function useMutationWithToasts<T extends MutationParameters>(
       const options = { ...baseOptions, ...queryOptions };
       return new Promise<void>((resolve, reject) =>
         mutate({
-          ...options,
+          ...queryOptions,
           onCompleted: (response, error) => {
             options.onCompleted?.(response, error);
             if (error) {
