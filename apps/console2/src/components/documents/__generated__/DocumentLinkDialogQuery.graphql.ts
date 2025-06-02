@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dfc2f49ef0ca7d3a3e62809aef61dfe6>>
+ * @generated SignedSource<<ec5910871c59f229db361be238007976>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type DocumentType = "ISMS" | "OTHER" | "POLICY";
 export type DocumentLinkDialogQuery$variables = {
   organizationId: string;
 };
@@ -17,6 +18,7 @@ export type DocumentLinkDialogQuery$data = {
     readonly documents?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
+          readonly documentType: DocumentType;
           readonly id: string;
           readonly title: string;
         };
@@ -82,6 +84,13 @@ v4 = [
             "args": null,
             "kind": "ScalarField",
             "name": "title",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "documentType",
             "storageKey": null
           },
           (v3/*: any*/)
@@ -219,7 +228,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "fa671324c6ab818f40ccf9f83ca9af8a",
+    "cacheID": "0905fffe448540bf9c3d8abcbb5b7583",
     "id": null,
     "metadata": {
       "connection": [
@@ -236,11 +245,11 @@ return {
     },
     "name": "DocumentLinkDialogQuery",
     "operationKind": "query",
-    "text": "query DocumentLinkDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            title\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentLinkDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            title\n            documentType\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "70a09260215ae0f74ccf06a0c0872e75";
+(node as any).hash = "6994e268de74f2102f48dc3e8156a797";
 
 export default node;

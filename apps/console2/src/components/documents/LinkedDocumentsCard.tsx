@@ -12,6 +12,7 @@ import {
   IconChevronDown,
   IconTrashCan,
   DocumentVersionBadge,
+  DocumentTypeBadge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { LinkedDocumentsCardFragment$key } from "./__generated__/LinkedDocumentsCardFragment.graphql";
@@ -26,6 +27,7 @@ const linkedDocumentFragment = graphql`
     id
     title
     createdAt
+    documentType
     versions(first: 1) {
       edges {
         node {
@@ -117,6 +119,7 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
           <Thead>
             <Tr>
               <Th>{__("Name")}</Th>
+              <Th>{__("Type")}</Th>
               <Th>{__("State")}</Th>
               <Th></Th>
             </Tr>
@@ -171,6 +174,9 @@ function DocumentRow(props: {
           />
           {document.title}
         </div>
+      </Td>
+      <Td>
+        <DocumentTypeBadge type={document.documentType} />
       </Td>
       <Td>
         <DocumentVersionBadge state={document.versions.edges[0].node.status} />

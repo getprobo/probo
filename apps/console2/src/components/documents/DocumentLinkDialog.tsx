@@ -3,6 +3,7 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  DocumentTypeBadge,
   IconMagnifyingGlass,
   IconPlusLarge,
   IconTrashCan,
@@ -13,8 +14,12 @@ import { useTranslate } from "@probo/i18n";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery } from "react-relay";
-import type { DocumentLinkDialogQuery } from "./__generated__/DocumentLinkDialogQuery.graphql";
+import type {
+  DocumentLinkDialogQuery,
+  DocumentLinkDialogQuery$data,
+} from "./__generated__/DocumentLinkDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import type { NodeOf } from "/types";
 
 const documentsQuery = graphql`
   query DocumentLinkDialogQuery($organizationId: ID!) {
@@ -26,6 +31,7 @@ const documentsQuery = graphql`
             node {
               id
               title
+              documentType
             }
           }
         }
@@ -102,8 +108,12 @@ function DocumentLinkDialogContent(props: Omit<Props, "children">) {
   );
 }
 
+type Document = NodeOf<
+  DocumentLinkDialogQuery$data["organization"]["documents"]
+>;
+
 type RowProps = {
-  document: { title: string; id: string };
+  document: Document;
   linkedDocuments: Set<string>;
   disabled?: boolean;
   onLink: (documentId: string) => void;
@@ -123,6 +133,7 @@ function DocumentRow(props: RowProps) {
       onClick={() => onClick(props.document.id)}
     >
       {props.document.title}
+      <DocumentTypeBadge type={props.document.documentType} />
       <Button
         disabled={props.disabled}
         className="ml-auto"

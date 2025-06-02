@@ -142,7 +142,6 @@ function CertificationInput({
 
   return (
     <div className="flex items-center gap-2">
-      {search}
       <Combobox
         autoSelect
         resetValueOnHide

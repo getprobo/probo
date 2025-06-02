@@ -61,6 +61,7 @@ export { FileButton } from "./Molecules/FileButton/FileButton";
 export { MeasureBadge } from "./Molecules/Badge/MeasureBadge";
 export { MeasureImplementation } from "./Molecules/MeasureImplementation/MeasureImplementation";
 export { FrameworkSelector } from "./Molecules/FrameworkSelector/FrameworkSelector";
+export { DocumentTypeBadge } from "./Molecules/Badge/DocumentTypeBadge";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";
