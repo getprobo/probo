@@ -11,7 +11,7 @@ type Story = StoryObj<typeof Markdown>;
 
 export const Default: Story = {
     args: {
-        children: `# Siquis facies post
+        content: `# Siquis facies post
 
 ## Venit Ianigenam egressus a tamen terra frater
 
