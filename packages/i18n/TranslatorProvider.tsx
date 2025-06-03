@@ -48,6 +48,23 @@ export function TranslatorProvider({
   );
 }
 
+const MINUTES = 60_000;
+const HOURS = MINUTES * 60;
+const DAYS = HOURS * 24;
+const WEEKS = DAYS * 7;
+const MONTHS = DAYS * 30;
+const YEARS = DAYS * 365;
+
+const relativeFormat = [
+  { limit: YEARS, unit: "years" },
+  { limit: MONTHS, unit: "months" },
+  { limit: WEEKS, unit: "weeks" },
+  { limit: DAYS, unit: "days" },
+  { limit: HOURS, unit: "hours" },
+  { limit: MINUTES, unit: "minutes" },
+  { limit: 0, unit: "seconds" },
+] as const;
+
 export function useTranslate() {
   const { translate, lang } = useContext(TranslatorContext);
   const dateFormat = (
@@ -67,12 +84,33 @@ export function useTranslate() {
     }
     return new Intl.DateTimeFormat(lang, options).format(date);
   };
+
+  const relativeDateFormat = (
+    data: Date | string | null | undefined,
+    options: Intl.RelativeTimeFormatOptions = {
+      style: "long",
+    }
+  ) => {
+    if (!data) {
+      return "";
+    }
+    const distanceInSeconds =
+      (data instanceof Date ? data.getTime() : parseDate(data).getTime()) -
+      Date.now();
+    const formatter = new Intl.RelativeTimeFormat(lang, options);
+    for (const { limit, unit } of relativeFormat) {
+      if (Math.abs(distanceInSeconds) > limit) {
+        return formatter.format(Math.round(distanceInSeconds / limit), unit);
+      }
+    }
+    return "";
+  };
+
   return {
     lang,
     __: translate,
-
     dateFormat: dateFormat,
-
+    relativeDateFormat,
     dateTimeFormat: (
       date: Date | string | null | undefined,
       options: Intl.DateTimeFormatOptions = {

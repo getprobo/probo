@@ -38,17 +38,10 @@ import type {
   MeasuresPageFragment$key,
 } from "./__generated__/MeasuresPageFragment.graphql";
 import { groupBy, objectKeys, slugify, sprintf } from "@probo/helpers";
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEventHandler,
-} from "react";
+import { useMemo, useRef, useState, type ChangeEventHandler } from "react";
 import type { NodeOf } from "/types";
 import type { MeasuresPageImportMutation } from "./__generated__/MeasuresPageImportMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { useToggle } from "@probo/hooks";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Link, useParams } from "react-router";
 

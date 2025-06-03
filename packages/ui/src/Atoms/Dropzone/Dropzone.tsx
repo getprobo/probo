@@ -80,8 +80,6 @@ export function Dropzone(props: Props) {
         hasError: !!error,
     });
 
-    console.log(error);
-
     return (
         <div {...getRootProps()} className={wrapper()}>
             <div className={zone()}>

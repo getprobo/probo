@@ -62,6 +62,8 @@ export { MeasureBadge } from "./Molecules/Badge/MeasureBadge";
 export { MeasureImplementation } from "./Molecules/MeasureImplementation/MeasureImplementation";
 export { FrameworkSelector } from "./Molecules/FrameworkSelector/FrameworkSelector";
 export { DocumentTypeBadge } from "./Molecules/Badge/DocumentTypeBadge";
+export { SentitivityOptions } from "./Molecules/Select/SentitivityOptions";
+export { ImpactOptions } from "./Molecules/Select/ImpactOptions";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";

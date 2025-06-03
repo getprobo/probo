@@ -16,9 +16,10 @@ export const vendorRoutes = [
   {
     path: "vendors/:vendorId",
     fallback: PageSkeleton,
-    queryLoader: ({ vendorId }) =>
+    queryLoader: ({ vendorId, organizationId }) =>
       loadQuery(relayEnvironment, vendorNodeQuery, {
         vendorId,
+        organizationId,
       }),
     Component: lazy(
       () => import("../pages/organizations/vendors/VendorDetailPage")
@@ -44,6 +45,15 @@ export const vendorRoutes = [
         Component: lazy(
           () =>
             import("../pages/organizations/vendors/tabs/VendorComplianceTab")
+        ),
+      },
+      {
+        path: "risks",
+        Component: lazy(
+          () =>
+            import(
+              "../pages/organizations/vendors/tabs/VendorRiskAssessmentTab"
+            )
         ),
       },
     ],

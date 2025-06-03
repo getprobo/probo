@@ -10,7 +10,6 @@ import {
   Avatar,
   ActionDropdown,
   DropdownItem,
-  IconPencil,
   IconTrashCan,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";

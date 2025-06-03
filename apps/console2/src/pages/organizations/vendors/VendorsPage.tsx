@@ -21,14 +21,14 @@ import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { faviconUrl } from "@probo/helpers";
 import type { NodeOf } from "/types";
-import { CreateVendorDialog } from "./CreateVendorDialog";
+import { CreateVendorDialog } from "./dialogs/CreateVendorDialog";
 import { useDeleteVendor, vendorsQuery } from "/hooks/graph/VendorGraph";
 import type {
   VendorGraphListQuery,
   VendorGraphListQuery$data,
 } from "/hooks/graph/__generated__/VendorGraphListQuery.graphql";
 
-type Vendor = NodeOf<Required<VendorGraphListQuery$data["node"]>["vendors"]>;
+type Vendor = NodeOf<VendorGraphListQuery$data["node"]["vendors"]>;
 
 type Props = {
   queryRef: PreloadedQuery<VendorGraphListQuery>;
