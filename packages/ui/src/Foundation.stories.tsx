@@ -161,7 +161,6 @@ export const Typography: Story = {
 
 export const Icons: Story = {
     render() {
-        console.log();
         return (
             <div className="flex flex-wrap gap-4">
                 {objectKeys(icons).map((k) => {

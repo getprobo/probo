@@ -1,4 +1,9 @@
-import { createContext, useContext, type PropsWithChildren } from "react";
+import {
+    createContext,
+    useContext,
+    type HTMLAttributes,
+    type PropsWithChildren,
+} from "react";
 import { Card } from "../Card/Card";
 import { Link } from "react-router";
 import clsx from "clsx";
@@ -25,9 +30,13 @@ export function Thead({ children }: PropsWithChildren) {
 export function Th({
     children,
     className,
-}: PropsWithChildren<{ className?: string }>) {
+    width,
+}: PropsWithChildren<{ className?: string; width?: number }>) {
     return (
-        <th className={clsx("first:pl-6 last:pr-6 py-3", className)}>
+        <th
+            className={clsx("first:pl-6 last:pr-6 py-3", className)}
+            style={{ width }}
+        >
             {children}
         </th>
     );
@@ -35,17 +44,21 @@ export function Th({
 
 const TrContext = createContext({} as { to?: string });
 
-export function Tr({ children, to }: PropsWithChildren<{ to?: string }>) {
+export function Tr({
+    to,
+    className,
+    ...props
+}: { to?: string } & HTMLAttributes<HTMLTableRowElement>) {
     return (
         <TrContext value={{ to }}>
             <tr
+                {...props}
                 className={clsx(
                     "border-border-low border-y first:border-none last:border-none",
-                    to && "hover:bg-subtle",
+                    (to || props.onClick) && "hover:bg-subtle",
+                    className,
                 )}
-            >
-                {children}
-            </tr>
+            />
         </TrContext>
     );
 }
@@ -63,15 +76,17 @@ export function Td({
     noLink,
     className,
     width,
-}: PropsWithChildren<{
+    ...props
+}: {
     noLink?: boolean;
-    className?: string;
     width?: number;
-}>) {
+    colSpan?: number;
+} & HTMLAttributes<HTMLTableCellElement>) {
     const { to } = useContext(TrContext);
     if (!to || noLink) {
         return (
             <td
+                {...props}
                 width={width}
                 className={clsx("first:pl-6 last:pr-6 py-3", className)}
             >
@@ -81,6 +96,7 @@ export function Td({
     }
     return (
         <td
+            {...props}
             width={width}
             className={clsx(
                 "first:*:pl-6 *:block last:*:pr-6 *:py-3",
