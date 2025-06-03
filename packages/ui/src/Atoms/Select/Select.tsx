@@ -15,16 +15,17 @@ import { IconChevronGrabberVertical } from "../Icons/IconChevronGrabberVertical.
 import { tv } from "tailwind-variants";
 import { Children, type ComponentProps, type PropsWithChildren } from "react";
 
-type Props = PropsWithChildren<
+type Props<T> = PropsWithChildren<
     {
         id?: string;
         placeholder?: string;
-        onValueChange?: (s: string) => void;
+        onValueChange?: (s: NonNullable<T>) => void;
         variant?: "default" | "editor" | "dashed";
         invalid?: boolean;
         disabled?: boolean;
         className?: string;
-    } & Omit<ComponentProps<typeof Root>, "onChange">
+        value?: T;
+    } & Omit<ComponentProps<typeof Root>, "onChange" | "value">
 >;
 
 const select = tv({
@@ -70,19 +71,19 @@ const select = tv({
     },
 });
 
-export function Select({
+export function Select<T>({
     placeholder,
     children,
     onValueChange,
     value,
     ...props
-}: Props) {
+}: Props<T>) {
     const { trigger, content, icon } = select({
         ...props,
     });
 
     return (
-        <Root onValueChange={onValueChange} value={value}>
+        <Root onValueChange={onValueChange} value={value as string}>
             <Trigger
                 {...props}
                 className={trigger({ className: props.className })}
@@ -122,7 +123,7 @@ export function Option({ children, ...props }: ComponentProps<typeof Item>) {
         <Item
             {...props}
             className={
-                "flex gap-2 items-center h-8 text-sm font-medium text-txt-primary hover:bg-tertiary-hover active:bg-tertiary-pressed cursor-pointer px-[10px]"
+                "flex gap-2 items-center min-h-8 py-1 text-sm font-medium text-txt-primary hover:bg-tertiary-hover active:bg-tertiary-pressed cursor-pointer px-[10px] text-start"
             }
         >
             <ItemText asChild>
