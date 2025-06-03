@@ -72,7 +72,7 @@ SELECT
     reference_id,
     time_estimate,
     assigned_to,
-	deadline
+	deadline,
     created_at,
     updated_at
 FROM
