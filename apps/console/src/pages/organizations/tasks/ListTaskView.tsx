@@ -47,7 +47,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ListTaskViewOrganizationQuery } from "./__generated__/ListTaskViewOrganizationQuery.graphql";
-import {parseISO} from "date-fns";
+import {formatDate, parseISO} from "date-fns";
 
 // Function to format ISO8601 duration to human-readable format
 const formatDuration = (isoDuration: string | null | undefined): string => {
@@ -216,6 +216,7 @@ interface Task {
   description?: string;
   state: string;
   timeEstimate?: number | null;
+  deadline?: string | null;
   assignedTo?: {
     id: string;
     fullName: string;
@@ -274,6 +275,11 @@ function TaskCard({ task, onClick, onToggleState }: {
             {task.timeEstimate && (
               <span className="text-xs text-gray-500">
                 {formatDuration(task.timeEstimate.toString())}
+              </span>
+            )}
+            {task.deadline && (
+              <span className="text-xs text-gray-500">
+                {formatDate(task.deadline, "dd MMM yyyy")}
               </span>
             )}
           </div>
