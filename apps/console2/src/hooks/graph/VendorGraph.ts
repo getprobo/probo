@@ -124,7 +124,7 @@ export const vendorsQuery = graphql`
 `;
 
 export const vendorNodeQuery = graphql`
-  query VendorGraphNodeQuery($vendorId: ID!) {
+  query VendorGraphNodeQuery($vendorId: ID!, $organizationId: ID!) {
     node(id: $vendorId) {
       ... on Vendor {
         id
@@ -132,6 +132,14 @@ export const vendorNodeQuery = graphql`
         websiteUrl
         ...useVendorFormFragment
         ...VendorComplianceTabFragment
+        ...VendorRiskAssessmentTabFragment
+      }
+    }
+    viewer {
+      user {
+        people(organizationId: $organizationId) {
+          id
+        }
       }
     }
   }
