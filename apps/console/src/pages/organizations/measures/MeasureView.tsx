@@ -109,7 +109,7 @@ import { MeasureViewRisksQuery } from "./__generated__/MeasureViewRisksQuery.gra
 import { MeasureViewDeleteMeasureMutation } from "./__generated__/MeasureViewDeleteMeasureMutation.graphql";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-import { formatISO, parseISO } from "date-fns";
+import { format, formatISO, parseISO } from "date-fns";
 
 // Function to format ISO8601 duration to human-readable format
 const formatDuration = (isoDuration: string): string => {
@@ -220,6 +220,7 @@ const updateTaskStateMutation = graphql`
         id
         state
         timeEstimate
+        deadline
       }
     }
   }
@@ -1761,12 +1762,12 @@ function MeasureViewContent({
   // Function to handle saving the updated deadline
   const handleSaveDeadline = useCallback(
     (taskId: string) => {
-      const deadline = editDeadline === "" ? null : formatISO(editDeadline);
+      const newDeadline = editDeadline === "" ? null : formatISO(editDeadline);
       updateTask({
         variables: {
           input: {
             taskId,
-            deadline,
+            deadline: newDeadline,
           },
         },
         onCompleted: () => {
@@ -1776,7 +1777,7 @@ function MeasureViewContent({
           if (selectedTask && selectedTask.id === taskId) {
             setSelectedTask({
               ...selectedTask,
-              deadline,
+              deadline: newDeadline,
             });
           }
         },
@@ -3162,8 +3163,8 @@ function MeasureViewContent({
                           size="sm"
                           className="p-1 h-auto"
                           onClick={() => {
-                            const selectedDeadline = selectedTask.deadline ?? "";
-                            setEditDeadline(formatISO(selectedDeadline) || "");
+                            const selectedDeadline = selectedTask.deadline ? format(selectedTask.deadline, 'yyyy-MM-dd') : "";
+                            setEditDeadline(selectedDeadline);
                             setIsEditingDeadline(true);
                           }}
                         >
