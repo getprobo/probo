@@ -109,7 +109,7 @@ import { MeasureViewRisksQuery } from "./__generated__/MeasureViewRisksQuery.gra
 import { MeasureViewDeleteMeasureMutation } from "./__generated__/MeasureViewDeleteMeasureMutation.graphql";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
-import { formatISO } from "date-fns";
+import { formatISO, parseISO } from "date-fns";
 
 // Function to format ISO8601 duration to human-readable format
 const formatDuration = (isoDuration: string): string => {
@@ -182,6 +182,7 @@ const measureViewQuery = graphql`
               description
               state
               timeEstimate
+              deadline
               assignedTo {
                 id
                 fullName
@@ -236,6 +237,7 @@ const createTaskMutation = graphql`
           name
           description
           timeEstimate
+          deadline
           state
           assignedTo {
             id
@@ -1722,9 +1724,11 @@ function MeasureViewContent({
 
   // Add state variables for tracking edit mode and duration components
   const [isEditingDuration, setIsEditingDuration] = useState(false);
+  const [isEditingDeadline, setIsEditingDeadline] = useState(false);
   const [editTimeEstimateDays, setEditTimeEstimateDays] = useState("");
   const [editTimeEstimateHours, setEditTimeEstimateHours] = useState("");
   const [editTimeEstimateMinutes, setEditTimeEstimateMinutes] = useState("");
+  const [editDeadline, setEditDeadline] = useState("");
 
   // Function to parse ISO duration string into components for editing
   const parseISODuration = useCallback(
@@ -1752,6 +1756,40 @@ function MeasureViewContent({
       }
     },
     []
+  );
+
+  // Function to handle saving the updated deadline
+  const handleSaveDeadline = useCallback(
+    (taskId: string) => {
+      const deadline = editDeadline === "" ? null : formatISO(editDeadline);
+      updateTask({
+        variables: {
+          input: {
+            taskId,
+            deadline,
+          },
+        },
+        onCompleted: () => {
+          setIsEditingDeadline(false);
+
+          // Update the selected task state if it's the current task
+          if (selectedTask && selectedTask.id === taskId) {
+            setSelectedTask({
+              ...selectedTask,
+              deadline,
+            });
+          }
+        },
+        onError: (error) => {
+          toast({
+            title: "Error updating task",
+            description: error.message,
+            variant: "destructive",
+          });
+        },
+      });
+    },
+    [editDeadline, updateTask, toast, selectedTask, setSelectedTask]
   );
 
   // Function to handle saving the updated duration
@@ -2609,6 +2647,11 @@ function MeasureViewContent({
                             {formatDuration(task.timeEstimate)}
                           </div>
                         )}
+                        {task.deadline && (
+                          <div className="text-sm text-secondary">
+                            {formatDate(task.deadline)} 
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -3059,6 +3102,69 @@ function MeasureViewContent({
                             setEditTimeEstimateHours(hours);
                             setEditTimeEstimateMinutes(minutes);
                             setIsEditingDuration(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Deadline */}
+                  <div>
+                    <h3 className="text-sm font-medium text-secondary mb-2">
+                      Deadline
+                    </h3>
+                    {isEditingDeadline ? (
+                      <div className="space-y-2">
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <Input
+                              type="date"
+                              value={editDeadline}
+                              onChange={(e) =>
+                                setEditDeadline(e.target.value)
+                              }
+                            />
+                          </div>                        
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsEditingDeadline(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveDeadline(selectedTask.id)}
+                          >
+                            Save
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          {selectedTask.deadline ? (
+                            <span>
+                              {formatDate(selectedTask.deadline)}
+                            </span>
+                          ) : (
+                            <span className="text-secondary">
+                              No deadline
+                            </span>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1 h-auto"
+                          onClick={() => {
+                            const selectedDeadline = selectedTask.deadline ?? "";
+                            setEditDeadline(formatISO(selectedDeadline) || "");
+                            setIsEditingDeadline(true);
                           }}
                         >
                           Edit

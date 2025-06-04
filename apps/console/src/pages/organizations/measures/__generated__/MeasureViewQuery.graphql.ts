@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<03d8e2eca1cc7ffaf797c66ef7fa11c1>>
+ * @generated SignedSource<<a6d5ebf3d09595b1da2cd16746fa1163>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -48,6 +48,7 @@ export type MeasureViewQuery$data = {
             readonly id: string;
             readonly primaryEmailAddress: string;
           } | null | undefined;
+          readonly deadline: string | null | undefined;
           readonly description: string;
           readonly evidences: {
             readonly __id: string;
@@ -263,6 +264,13 @@ v12 = {
 v13 = {
   "alias": null,
   "args": null,
+  "kind": "ScalarField",
+  "name": "deadline",
+  "storageKey": null
+},
+v14 = {
+  "alias": null,
+  "args": null,
   "concreteType": "People",
   "kind": "LinkedField",
   "name": "assignedTo",
@@ -286,14 +294,14 @@ v13 = {
   ],
   "storageKey": null
 },
-v14 = [
+v15 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 100
   }
 ],
-v15 = [
+v16 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -363,6 +371,7 @@ return {
                           (v5/*: any*/),
                           (v12/*: any*/),
                           (v13/*: any*/),
+                          (v14/*: any*/),
                           {
                             "alias": "evidences",
                             "args": null,
@@ -422,7 +431,7 @@ return {
               (v6/*: any*/),
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v15/*: any*/),
                 "concreteType": "EvidenceConnection",
                 "kind": "LinkedField",
                 "name": "evidences",
@@ -432,7 +441,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v15/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "MeasureView_evidences",
@@ -441,7 +450,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v15/*: any*/),
                 "concreteType": "TaskConnection",
                 "kind": "LinkedField",
                 "name": "tasks",
@@ -469,9 +478,10 @@ return {
                           (v5/*: any*/),
                           (v12/*: any*/),
                           (v13/*: any*/),
+                          (v14/*: any*/),
                           {
                             "alias": null,
-                            "args": (v15/*: any*/),
+                            "args": (v16/*: any*/),
                             "concreteType": "EvidenceConnection",
                             "kind": "LinkedField",
                             "name": "evidences",
@@ -481,7 +491,7 @@ return {
                           },
                           {
                             "alias": null,
-                            "args": (v15/*: any*/),
+                            "args": (v16/*: any*/),
                             "filters": null,
                             "handle": "connection",
                             "key": "MeasureView_task_evidences",
@@ -503,7 +513,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v15/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "MeasureView_tasks",
@@ -520,7 +530,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d3e4d9723d12bce8158b83eb76d05a90",
+    "cacheID": "2693fa3e0141f58235566f539194fcd6",
     "id": null,
     "metadata": {
       "connection": [
@@ -552,11 +562,11 @@ return {
     },
     "name": "MeasureViewQuery",
     "operationKind": "query",
-    "text": "query MeasureViewQuery(\n  $measureId: ID!\n) {\n  measure: node(id: $measureId) {\n    __typename\n    id\n    ... on Measure {\n      name\n      description\n      state\n      category\n      evidences(first: 100) {\n        edges {\n          node {\n            id\n            mimeType\n            filename\n            size\n            state\n            type\n            url\n            createdAt\n            description\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      tasks(first: 100) {\n        edges {\n          node {\n            id\n            name\n            description\n            state\n            timeEstimate\n            assignedTo {\n              id\n              fullName\n              primaryEmailAddress\n            }\n            evidences(first: 50) {\n              edges {\n                node {\n                  id\n                  mimeType\n                  filename\n                  size\n                  state\n                  type\n                  url\n                  createdAt\n                  description\n                  __typename\n                }\n                cursor\n              }\n              pageInfo {\n                endCursor\n                hasNextPage\n              }\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query MeasureViewQuery(\n  $measureId: ID!\n) {\n  measure: node(id: $measureId) {\n    __typename\n    id\n    ... on Measure {\n      name\n      description\n      state\n      category\n      evidences(first: 100) {\n        edges {\n          node {\n            id\n            mimeType\n            filename\n            size\n            state\n            type\n            url\n            createdAt\n            description\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      tasks(first: 100) {\n        edges {\n          node {\n            id\n            name\n            description\n            state\n            timeEstimate\n            deadline\n            assignedTo {\n              id\n              fullName\n              primaryEmailAddress\n            }\n            evidences(first: 50) {\n              edges {\n                node {\n                  id\n                  mimeType\n                  filename\n                  size\n                  state\n                  type\n                  url\n                  createdAt\n                  description\n                  __typename\n                }\n                cursor\n              }\n              pageInfo {\n                endCursor\n                hasNextPage\n              }\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "288412cccb1f4c14b1852504e5536af1";
+(node as any).hash = "4e211c36d94ebd914b6de254dfbdf946";
 
 export default node;

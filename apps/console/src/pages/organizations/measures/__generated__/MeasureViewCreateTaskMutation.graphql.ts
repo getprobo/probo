@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d6e83c101c0889aeda98b83a59b8a95e>>
+ * @generated SignedSource<<d258cc7c047ea5b1e81d5ef895e63ac6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -32,6 +32,7 @@ export type MeasureViewCreateTaskMutation$data = {
           readonly id: string;
           readonly primaryEmailAddress: string;
         } | null | undefined;
+        readonly deadline: string | null | undefined;
         readonly description: string;
         readonly id: string;
         readonly name: string;
@@ -107,6 +108,13 @@ v4 = {
           "args": null,
           "kind": "ScalarField",
           "name": "timeEstimate",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "deadline",
           "storageKey": null
         },
         {
@@ -214,16 +222,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "53b934e0e7a3d4abf8789ad8672687df",
+    "cacheID": "8f9aeb0df92f9535d728ef27a7dee963",
     "id": null,
     "metadata": {},
     "name": "MeasureViewCreateTaskMutation",
     "operationKind": "mutation",
-    "text": "mutation MeasureViewCreateTaskMutation(\n  $input: CreateTaskInput!\n) {\n  createTask(input: $input) {\n    taskEdge {\n      node {\n        id\n        name\n        description\n        timeEstimate\n        state\n        assignedTo {\n          id\n          fullName\n          primaryEmailAddress\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation MeasureViewCreateTaskMutation(\n  $input: CreateTaskInput!\n) {\n  createTask(input: $input) {\n    taskEdge {\n      node {\n        id\n        name\n        description\n        timeEstimate\n        deadline\n        state\n        assignedTo {\n          id\n          fullName\n          primaryEmailAddress\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0df98f5aee4233dc4ffedcff8256891a";
+(node as any).hash = "f323b5caa0912478e715f0c409898eff";
 
 export default node;
