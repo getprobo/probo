@@ -1,0 +1,16 @@
+{
+  "name": "@probo/i18n",
+  "version": "1.0.0",
+  "author": "",
+  "main": "./TranslatorProvider.tsx",
+  "devDependencies": {
+    "@types/react": "^19.1.2"
+  },
+  "peerDependencies": {
+    "react": "^18.0"
+  },
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "scripts": {}
+}
