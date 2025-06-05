@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8c59833cd4588accdf1d316d9e494d26>>
+ * @generated SignedSource<<50304bfb34b0581895a71491f521c273>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,7 +14,7 @@ export type ControlFragment_Control$data = {
   readonly description: string;
   readonly id: string;
   readonly name: string;
-  readonly referenceId: string;
+  readonly sectionTitle: string;
   readonly " $fragmentType": "ControlFragment_Control";
 };
 export type ControlFragment_Control$key = {
@@ -53,7 +53,7 @@ const node: ReaderFragment = {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "referenceId",
+      "name": "sectionTitle",
       "storageKey": null
     }
   ],
@@ -61,6 +61,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "ccbc9d6743d45b9a4049b661a1f0ad57";
+(node as any).hash = "b04ce9de2a583d415011d88563120b09";
 
 export default node;

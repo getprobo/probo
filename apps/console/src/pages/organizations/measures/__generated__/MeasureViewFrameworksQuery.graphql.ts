@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f3d959452f28259f74fc44f4c1eedcb2>>
+ * @generated SignedSource<<dbee9bd358b3985bd5ae5f8630474534>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,7 +23,7 @@ export type MeasureViewFrameworksQuery$data = {
                 readonly description: string;
                 readonly id: string;
                 readonly name: string;
-                readonly referenceId: string;
+                readonly sectionTitle: string;
               };
             }>;
           };
@@ -130,7 +130,7 @@ v7 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "referenceId",
+            "name": "sectionTitle",
             "storageKey": null
           },
           (v3/*: any*/),
@@ -331,7 +331,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f32215939196e9e13f1347b57111f5cb",
+    "cacheID": "5dc8707d458fdb4ab9cf4967b716b85e",
     "id": null,
     "metadata": {
       "connection": [
@@ -354,11 +354,11 @@ return {
     },
     "name": "MeasureViewFrameworksQuery",
     "operationKind": "query",
-    "text": "query MeasureViewFrameworksQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      frameworks(first: 100) {\n        edges {\n          node {\n            id\n            name\n            controls(first: 100) {\n              edges {\n                node {\n                  id\n                  referenceId\n                  name\n                  description\n                  __typename\n                }\n                cursor\n              }\n              pageInfo {\n                endCursor\n                hasNextPage\n              }\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query MeasureViewFrameworksQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      frameworks(first: 100) {\n        edges {\n          node {\n            id\n            name\n            controls(first: 100) {\n              edges {\n                node {\n                  id\n                  sectionTitle\n                  name\n                  description\n                  __typename\n                }\n                cursor\n              }\n              pageInfo {\n                endCursor\n                hasNextPage\n              }\n            }\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f1183b14c80a91b160f222af00d49b6f";
+(node as any).hash = "106bc944729f346777ecf0182ac41ad3";
 
 export default node;

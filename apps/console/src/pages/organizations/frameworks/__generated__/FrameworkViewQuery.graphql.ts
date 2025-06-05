@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2f29bc26fdb324cad6eb8d7bdd48447f>>
+ * @generated SignedSource<<878dff73b0684026603de1884d9f5ed9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -250,7 +250,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "referenceId",
+                            "name": "sectionTitle",
                             "storageKey": null
                           },
                           (v6/*: any*/)
@@ -286,7 +286,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c7d856630ed8706055e1ff572d0e7293",
+    "cacheID": "58ce0c4b37adb468f356e1296948150e",
     "id": null,
     "metadata": {
       "connection": [
@@ -303,7 +303,7 @@ return {
     },
     "name": "FrameworkViewQuery",
     "operationKind": "query",
-    "text": "query FrameworkViewQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    id\n    ... on Framework {\n      name\n      description\n      firstControl: controls(first: 1, orderBy: {field: CREATED_AT, direction: ASC}) {\n        edges {\n          node {\n            ...ControlFragment_Control\n            id\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n\nfragment ControlFragment_Control on Control {\n  id\n  description\n  name\n  referenceId\n}\n"
+    "text": "query FrameworkViewQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    id\n    ... on Framework {\n      name\n      description\n      firstControl: controls(first: 1, orderBy: {field: CREATED_AT, direction: ASC}) {\n        edges {\n          node {\n            ...ControlFragment_Control\n            id\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n\nfragment ControlFragment_Control on Control {\n  id\n  description\n  name\n  sectionTitle\n}\n"
   }
 };
 })();

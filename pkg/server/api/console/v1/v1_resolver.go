@@ -967,6 +967,60 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 	}, nil
 }
 
+// CreateControl is the resolver for the createControl field.
+func (r *mutationResolver) CreateControl(ctx context.Context, input types.CreateControlInput) (*types.CreateControlPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.OrganizationID.TenantID())
+
+	control, err := svc.Controls.Create(ctx, probo.CreateControlRequest{
+		OrganizationID: input.OrganizationID,
+		FrameworkID:    input.FrameworkID,
+		Name:           input.Name,
+		Description:    input.Description,
+		SectionTitle:   input.SectionTitle,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot create control: %w", err)
+	}
+
+	return &types.CreateControlPayload{
+		ControlEdge: types.NewControlEdge(control, coredata.ControlOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateControl is the resolver for the updateControl field.
+func (r *mutationResolver) UpdateControl(ctx context.Context, input types.UpdateControlInput) (*types.UpdateControlPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.ID.TenantID())
+
+	control, err := svc.Controls.Update(ctx, probo.UpdateControlRequest{
+		ID:           input.ID,
+		Name:         input.Name,
+		Description:  input.Description,
+		SectionTitle: input.SectionTitle,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot update framework: %w", err)
+	}
+
+	return &types.UpdateControlPayload{
+		Control: types.NewControl(control),
+	}, nil
+}
+
+// DeleteControl is the resolver for the deleteControl field.
+func (r *mutationResolver) DeleteControl(ctx context.Context, input types.DeleteControlInput) (*types.DeleteControlPayload, error) {
+	svc := GetTenantService(ctx, r.proboSvc, input.ControlID.TenantID())
+
+	err := svc.Controls.Delete(ctx, input.ControlID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot delete control: %w", err)
+	}
+
+	return &types.DeleteControlPayload{
+		DeletedControlID: input.ControlID,
+	}, nil
+}
+
 // // CreateMeasure is the resolver for the createMeasure field.
 func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.CreateMeasureInput) (*types.CreateMeasurePayload, error) {
 	svc := GetTenantService(ctx, r.proboSvc, input.OrganizationID.TenantID())

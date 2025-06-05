@@ -110,7 +110,7 @@ const showRiskViewQuery = graphql`
           edges {
             node {
               id
-              referenceId
+              sectionTitle
               name
               description
               createdAt
@@ -1211,7 +1211,7 @@ function ShowRiskViewContent({
                             to={`/organizations/${organizationId}/controls/${control.id}`}
                             className="font-medium text-blue-600 hover:underline"
                           >
-                            {control.referenceId} - {control.name}
+                            {control.sectionTitle} - {control.name}
                           </Link>
                         </TableCell>
                       </TableRow>

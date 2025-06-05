@@ -34,6 +34,8 @@ import { AssetPage } from "./assets/AssetPage";
 import { DataListPage } from "./data/DataListPage";
 import { NewDatumPage } from "./data/NewDatumPage";
 import { DatumPage } from "./data/DatumPage";
+import { EditControlPage } from "./frameworks/controls/EditControlPage";
+import { NewControlPage } from "./frameworks/controls/NewControlPage";
 
 export function OrganizationsRoutes() {
   return (
@@ -50,7 +52,9 @@ export function OrganizationsRoutes() {
         <Route path="frameworks/:frameworkId/*">
           <Route element={<FrameworkLayout />}>
             <Route index element={<FrameworkPage />} />
+            <Route path="controls/new" element={<NewControlPage />} />
             <Route path="controls/:controlId" element={<ControlPage />} />
+            <Route path="controls/:controlId/edit" element={<EditControlPage />} />
           </Route>
           <Route path="edit" element={<EditFrameworkPage />} />
           <Route path="*" element={<NotFoundPage />} />

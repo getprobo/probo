@@ -28,22 +28,22 @@ import (
 
 type (
 	Control struct {
-		ID          gid.GID      `db:"id"`
-		ReferenceID string       `db:"reference_id"`
-		TenantID    gid.TenantID `db:"tenant_id"`
-		FrameworkID gid.GID      `db:"framework_id"`
-		Name        string       `db:"name"`
-		Description string       `db:"description"`
-		CreatedAt   time.Time    `db:"created_at"`
-		UpdatedAt   time.Time    `db:"updated_at"`
+		ID           gid.GID      `db:"id"`
+		SectionTitle string       `db:"section_title"`
+		TenantID     gid.TenantID `db:"tenant_id"`
+		FrameworkID  gid.GID      `db:"framework_id"`
+		Name         string       `db:"name"`
+		Description  string       `db:"description"`
+		CreatedAt    time.Time    `db:"created_at"`
+		UpdatedAt    time.Time    `db:"updated_at"`
 	}
 
 	Controls []*Control
 
 	UpdateControlParams struct {
-		ExpectedVersion int
-		Name            *string
-		Description     *string
+		Name         *string
+		Description  *string
+		SectionTitle *string
 	}
 )
 
@@ -51,6 +51,8 @@ func (c Control) CursorKey(orderBy ControlOrderField) page.CursorKey {
 	switch orderBy {
 	case ControlOrderFieldCreatedAt:
 		return page.CursorKey{ID: c.ID, Value: c.CreatedAt}
+	case ControlOrderFieldSectionTitle:
+		return page.CursorKey{ID: c.ID, Value: c.SectionTitle}
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -67,7 +69,7 @@ func (c *Controls) LoadByDocumentID(
 WITH ctrl AS (
 	SELECT
 		c.id,
-		c.reference_id,
+		c.section_title,
 		c.framework_id,
 		c.tenant_id,
 		c.name,
@@ -83,7 +85,7 @@ WITH ctrl AS (
 )
 SELECT
 	id,
-	reference_id,
+	section_title,
 	framework_id,
 	tenant_id,
 	name,
@@ -127,7 +129,7 @@ func (c *Controls) LoadByMeasureID(
 WITH ctrl AS (
 	SELECT
 		c.id,
-		c.reference_id,
+		c.section_title,
 		c.framework_id,
 		c.tenant_id,
 		c.name,
@@ -143,7 +145,7 @@ WITH ctrl AS (
 )
 SELECT
 	id,
-	reference_id,
+	section_title,
 	framework_id,
     tenant_id,
 	name,
@@ -186,7 +188,7 @@ func (c *Controls) LoadByRiskID(
 WITH ctrl AS (
 	SELECT DISTINCT
 		c.id,
-		c.reference_id,
+		c.section_title,
 		c.framework_id,
 		c.tenant_id,
 		c.name,
@@ -208,7 +210,7 @@ WITH ctrl AS (
 )
 SELECT
 	id,
-	reference_id,
+	section_title,
 	framework_id,
     tenant_id,
 	name,
@@ -251,7 +253,7 @@ func (c *Controls) LoadByFrameworkID(
 	q := `
 SELECT
     id,
-    reference_id,
+    section_title,
     framework_id,
     tenant_id,
     name,
@@ -285,17 +287,17 @@ WHERE
 	return nil
 }
 
-func (c *Control) LoadByFrameworkIDAndReferenceID(
+func (c *Control) LoadByFrameworkIDAndSectionTitle(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 	frameworkID gid.GID,
-	referenceID string,
+	sectionTitle string,
 ) error {
 	q := `
 SELECT
     id,
-    reference_id,
+    section_title,
     framework_id,
     tenant_id,
     name,
@@ -307,12 +309,12 @@ FROM
 WHERE
     %s
     AND framework_id = @framework_id
-    AND reference_id = @reference_id
+    AND section_title = @section_title
 LIMIT 1;
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"framework_id": frameworkID, "reference_id": referenceID}
+	args := pgx.StrictNamedArgs{"framework_id": frameworkID, "section_title": sectionTitle}
 	maps.Copy(args, scope.SQLArguments())
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {
@@ -338,7 +340,7 @@ func (c *Control) LoadByID(
 	q := `
 SELECT
     id,
-    reference_id,
+    section_title,
     framework_id,
     tenant_id,
     name,
@@ -382,7 +384,7 @@ INSERT INTO
         tenant_id,
         id,
         framework_id,
-        reference_id,
+        section_title,
         name,
         description,
         created_at,
@@ -392,7 +394,7 @@ VALUES (
     @tenant_id,
     @control_id,
     @framework_id,
-    @reference_id,
+    @section_title,
     @name,
     @description,
     @created_at,
@@ -401,14 +403,14 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":    scope.GetTenantID(),
-		"control_id":   c.ID,
-		"framework_id": c.FrameworkID,
-		"reference_id": c.ReferenceID,
-		"name":         c.Name,
-		"description":  c.Description,
-		"created_at":   c.CreatedAt,
-		"updated_at":   c.UpdatedAt,
+		"tenant_id":     scope.GetTenantID(),
+		"control_id":    c.ID,
+		"framework_id":  c.FrameworkID,
+		"section_title": c.SectionTitle,
+		"name":          c.Name,
+		"description":   c.Description,
+		"created_at":    c.CreatedAt,
+		"updated_at":    c.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	return err
@@ -446,6 +448,7 @@ func (c *Control) Update(
 UPDATE controls SET
     name = COALESCE(@name, name),
     description = COALESCE(@description, description),
+    section_title = COALESCE(@section_title, section_title),
     updated_at = @updated_at
 WHERE %s
     AND id = @control_id
@@ -455,15 +458,16 @@ RETURNING
     tenant_id,
     name,
     description,
+	section_title,
     created_at,
     updated_at
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"control_id":       c.ID,
-		"expected_version": params.ExpectedVersion,
-		"updated_at":       time.Now(),
+		"control_id":    c.ID,
+		"section_title": params.SectionTitle,
+		"updated_at":    time.Now(),
 	}
 
 	if params.Name != nil {

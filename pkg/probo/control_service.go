@@ -31,17 +31,19 @@ type (
 	}
 
 	CreateControlRequest struct {
-		ID          gid.GID
-		FrameworkID gid.GID
-		Name        string
-		Description string
+		ID             gid.GID
+		OrganizationID gid.GID
+		FrameworkID    gid.GID
+		Name           string
+		Description    string
+		SectionTitle   string
 	}
 
 	UpdateControlRequest struct {
-		ID              gid.GID
-		ExpectedVersion int
-		Name            *string
-		Description     *string
+		ID           gid.GID
+		Name         *string
+		Description  *string
+		SectionTitle *string
 	}
 
 	ConnectControlToMitigationRequest struct {
@@ -263,13 +265,14 @@ func (s ControlService) Create(
 	framework := &coredata.Framework{}
 
 	control := &coredata.Control{
-		ID:          req.ID,
-		FrameworkID: req.FrameworkID,
-		TenantID:    s.svc.scope.GetTenantID(),
-		Name:        req.Name,
-		Description: req.Description,
-		CreatedAt:   now,
-		UpdatedAt:   now,
+		ID:           gid.New(s.svc.scope.GetTenantID(), coredata.ControlEntityType),
+		FrameworkID:  req.FrameworkID,
+		TenantID:     s.svc.scope.GetTenantID(),
+		Name:         req.Name,
+		Description:  req.Description,
+		SectionTitle: req.SectionTitle,
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 
 	err := s.svc.pg.WithTx(
@@ -317,9 +320,9 @@ func (s ControlService) Update(
 	req UpdateControlRequest,
 ) (*coredata.Control, error) {
 	params := coredata.UpdateControlParams{
-		ExpectedVersion: req.ExpectedVersion,
-		Name:            req.Name,
-		Description:     req.Description,
+		Name:         req.Name,
+		Description:  req.Description,
+		SectionTitle: req.SectionTitle,
 	}
 
 	control := &coredata.Control{ID: req.ID}

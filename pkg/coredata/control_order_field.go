@@ -19,11 +19,19 @@ type (
 )
 
 const (
-	ControlOrderFieldCreatedAt ControlOrderField = "CREATED_AT"
+	ControlOrderFieldCreatedAt    ControlOrderField = "CREATED_AT"
+	ControlOrderFieldSectionTitle ControlOrderField = "SECTION_TITLE"
 )
 
 func (p ControlOrderField) Column() string {
-	return string(p)
+	switch p {
+	case ControlOrderFieldCreatedAt:
+		return "created_at"
+	case ControlOrderFieldSectionTitle:
+		return "section_title_sort_key(section_title)"
+	default:
+		return string(p)
+	}
 }
 
 func (p ControlOrderField) String() string {

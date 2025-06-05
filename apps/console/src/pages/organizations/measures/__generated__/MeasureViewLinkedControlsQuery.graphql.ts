@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9b551f9e8f59a5ffe5c00700cdb59c88>>
+ * @generated SignedSource<<c82317e2abf68f766fe616c69437f338>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type MeasureViewLinkedControlsQuery$data = {
           readonly description: string;
           readonly id: string;
           readonly name: string;
-          readonly referenceId: string;
+          readonly sectionTitle: string;
         };
       }>;
     };
@@ -83,7 +83,7 @@ v4 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "referenceId",
+            "name": "sectionTitle",
             "storageKey": null
           },
           {
@@ -235,7 +235,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b4f524eea7ce57decf321b7efacdaa03",
+    "cacheID": "1d1f61565fa1616f441ad54c7b590200",
     "id": null,
     "metadata": {
       "connection": [
@@ -252,11 +252,11 @@ return {
     },
     "name": "MeasureViewLinkedControlsQuery",
     "operationKind": "query",
-    "text": "query MeasureViewLinkedControlsQuery(\n  $measureId: ID!\n) {\n  measure: node(id: $measureId) {\n    __typename\n    id\n    ... on Measure {\n      controls(first: 100) {\n        edges {\n          node {\n            id\n            referenceId\n            name\n            description\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query MeasureViewLinkedControlsQuery(\n  $measureId: ID!\n) {\n  measure: node(id: $measureId) {\n    __typename\n    id\n    ... on Measure {\n      controls(first: 100) {\n        edges {\n          node {\n            id\n            sectionTitle\n            name\n            description\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "5dfd96b1ab2edc5c8c654346046a968f";
+(node as any).hash = "5553b0d4c34e498e432315f8fa1dd805";
 
 export default node;

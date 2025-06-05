@@ -24,6 +24,7 @@ import { PageTemplate } from "@/components/PageTemplate";
 import { FrameworkLayoutViewSkeleton } from "./FrameworkLayout";
 import { ControlList } from "./FrameworkLayoutView/ControlList";
 import { FrameworkLayoutViewExportAuditMutation } from "./__generated__/FrameworkLayoutViewExportAuditMutation.graphql";
+import { Plus } from "lucide-react";
 
 const FrameworkLayoutViewQuery = graphql`
   query FrameworkLayoutViewQuery($frameworkId: ID!) {
@@ -35,12 +36,12 @@ const FrameworkLayoutViewQuery = graphql`
         ...ControlList_List
         firstControl: controls(
           first: 1
-          orderBy: { field: CREATED_AT, direction: ASC }
+          orderBy: { field: SECTION_TITLE, direction: ASC }
         ) @connection(key: "FrameworkLayoutView_firstControl") {
           edges {
             node {
               id
-              referenceId
+              sectionTitle
               name
             }
           }
@@ -153,6 +154,14 @@ function FrameworkLayoutViewContent({
       description={framework.description || ""}
       actions={
         <div className="flex gap-4">
+          <Button variant="secondary" asChild>
+            <Link
+              to={`/organizations/${organizationId}/frameworks/${framework.id}/controls/new`}
+            >
+              <Plus className="w-3 h-4 mr-2" />
+              Create Control
+            </Link>
+          </Button>
           <Button variant="secondary" asChild>
             <Link
               to={`/organizations/${organizationId}/frameworks/${framework.id}/edit`}

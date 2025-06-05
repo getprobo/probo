@@ -377,13 +377,30 @@ function BreadcrumbMeasureView() {
 
 function BreadcrumbControl() {
   const { organizationId, frameworkId, controlId } = useParams();
+
+  // Special handling for the "new" route
+  if (controlId === "new") {
+    return (
+      <>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbNavLink
+            to={`/organizations/${organizationId}/frameworks/${frameworkId}/controls/new`}
+          >
+            New Control
+          </BreadcrumbNavLink>
+        </BreadcrumbItem>
+      </>
+    );
+  }
+
   const data = useLazyLoadQuery<OrganizationBreadcrumbBreadcrumbControlQuery>(
     graphql`
       query OrganizationBreadcrumbBreadcrumbControlQuery($controlId: ID!) {
         control: node(id: $controlId) {
           id
           ... on Control {
-            referenceId
+            sectionTitle
           }
         }
       }
@@ -399,7 +416,7 @@ function BreadcrumbControl() {
         <BreadcrumbNavLink
           to={`/organizations/${organizationId}/frameworks/${frameworkId}/controls/${controlId}`}
         >
-          {data.control?.referenceId}
+          {data.control?.sectionTitle}
         </BreadcrumbNavLink>
       </BreadcrumbItem>
     </>

@@ -396,7 +396,7 @@ const frameworksQuery = graphql`
                 edges {
                   node {
                     id
-                    referenceId
+                    sectionTitle
                     name
                     description
                   }
@@ -419,7 +419,7 @@ const linkedControlsQuery = graphql`
           edges {
             node {
               id
-              referenceId
+              sectionTitle
               name
               description
             }
@@ -2087,7 +2087,7 @@ function MeasureViewContent({
     const lowerQuery = controlSearchQuery.toLowerCase();
     return controls.filter(
       (control) =>
-        control.referenceId.toLowerCase().includes(lowerQuery) ||
+        control.sectionTitle.toLowerCase().includes(lowerQuery) ||
         control.name.toLowerCase().includes(lowerQuery) ||
         (control.description &&
           control.description.toLowerCase().includes(lowerQuery))
@@ -2733,7 +2733,7 @@ function MeasureViewContent({
                               <div className="flex items-center gap-2">
                                 <ShieldCheck className="w-4 h-4 text-green-600" />
                                 <span className="font-medium">
-                                  {control.referenceId}
+                                  {control.sectionTitle}
                                 </span>
                               </div>
                             </td>
@@ -3829,7 +3829,7 @@ function MeasureViewContent({
                             <div className="flex items-center gap-2">
                               <ShieldCheck className="w-4 h-4 text-green-600" />
                               <span className="font-medium">
-                                {control.referenceId}
+                                {control.sectionTitle}
                               </span>
                             </div>
                           </td>

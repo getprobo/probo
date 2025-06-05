@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { DialogHeader, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogFooter,
   DialogTitle,
   DialogDescription,
-} from "@radix-ui/react-dialog";
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import {
   Select,
   SelectTrigger,
@@ -24,7 +25,7 @@ import {
   useMutation,
   useRelayEnvironment,
 } from "react-relay";
-import { useParams, Link } from "react-router";
+import { useParams, Link, useNavigate } from "react-router";
 import {
   ControlLinkedMeasuresQuery$data,
   ControlLinkedMeasuresQuery,
@@ -48,7 +49,7 @@ const controlFragment = graphql`
     id
     description
     name
-    referenceId
+    sectionTitle
   }
 `;
 
@@ -202,18 +203,27 @@ const deleteDocumentMappingMutation = graphql`
   }
 `;
 
+const deleteControlMutation = graphql`
+  mutation ControlDeleteMutation($input: DeleteControlInput!, $connections: [ID!]!) {
+    deleteControl(input: $input) {
+      deletedControlId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
 export function Control({
   controlKey,
 }: {
   controlKey: ControlFragment_Control$key;
 }) {
-  const { organizationId /* frameworkId */ } = useParams<{
+  const { organizationId, frameworkId } = useParams<{
     organizationId: string;
     frameworkId: string;
   }>();
   const control = useFragment(controlFragment, controlKey);
   const { toast } = useToast();
   const environment = useRelayEnvironment();
+  const navigate = useNavigate();
 
   // State for measure mapping
   const [isMeasureMappingDialogOpen, setIsMeasureMappingDialogOpen] =
@@ -249,6 +259,11 @@ export function Control({
   );
   const [commitCreateDocumentMapping] = useMutation(createDocumentMappingMutation);
   const [commitDeleteDocumentMapping] = useMutation(deleteDocumentMappingMutation);
+  const [commitDeleteControl] = useMutation(deleteControlMutation);
+
+  // State for delete dialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Load initial linked measures data
   useEffect(() => {
@@ -780,497 +795,591 @@ export function Control({
   };
 
   return (
-    <div className="w-auto p-5 flex items-start gap-5">
-      <div className="font-mono text-lg px-1 py-0.25 rounded-sm bg-active-bg border-mid-b border font-bold">
-        {control.referenceId}
-      </div>
-      <div className="flex-1">
-        <h2 className="text-2xl font-medium">{control.name}</h2>
+    <>
+      <div className="w-auto p-5 flex items-start gap-5">
+        <div className="font-mono text-lg px-1 py-0.25 rounded-sm bg-active-bg border-mid-b border font-bold">
+          {control.sectionTitle}
+        </div>
+        <div className="flex-1">
+          <h2 className="text-2xl font-medium">{control.name}</h2>
 
-        {/* Control Description */}
-        {control.description && (
-          <div className="mt-4 text-tertiary">{control.description}</div>
-        )}
+          {/* Control Description */}
+          {control.description && (
+            <div className="mt-4 text-tertiary">{control.description}</div>
+          )}
 
-        {/* Security Measures Section */}
-        <div className="mt-8">
-          {/* Measure Mapping Dialog */}
-          <Dialog
-            open={isMeasureMappingDialogOpen}
-            onOpenChange={setIsMeasureMappingDialogOpen}
-          >
-            <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
-              <DialogHeader>
-                <DialogTitle>Link Security Measures to Control</DialogTitle>
-                <DialogDescription>
-                  Search and select security measures to link to this control.
-                  This helps track which security measures address this control.
-                </DialogDescription>
-              </DialogHeader>
+          {/* Security Measures Section */}
+          <div className="mt-8">
+            {/* Measure Mapping Dialog */}
+            <Dialog
+              open={isMeasureMappingDialogOpen}
+              onOpenChange={setIsMeasureMappingDialogOpen}
+            >
+              <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+                <DialogHeader>
+                  <DialogTitle>Link Security Measures to Control</DialogTitle>
+                  <DialogDescription>
+                    Search and select security measures to link to this control.
+                    This helps track which security measures address this control.
+                  </DialogDescription>
+                </DialogHeader>
 
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-tertiary" />
-                    <Input
-                      placeholder="Search security measures by name or description..."
-                      value={measureSearchQuery}
-                      onChange={(e) => setMeasureSearchQuery(e.target.value)}
-                      className="w-full pl-10"
-                    />
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-tertiary" />
+                      <Input
+                        placeholder="Search security measures by name or description..."
+                        value={measureSearchQuery}
+                        onChange={(e) => setMeasureSearchQuery(e.target.value)}
+                        className="w-full pl-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="w-[200px]">
+                    <Select
+                      value={categoryFilter || "all"}
+                      onValueChange={(value) =>
+                        setCategoryFilter(value === "all" ? null : value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All categories" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All categories</SelectItem>
+                        {getMeasureCategories().map((category) => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <div className="w-[200px]">
-                  <Select
-                    value={categoryFilter || "all"}
-                    onValueChange={(value) =>
-                      setCategoryFilter(value === "all" ? null : value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="All categories" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All categories</SelectItem>
-                      {getMeasureCategories().map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category}
-                        </SelectItem>
+
+                <div className="flex-1 overflow-hidden">
+                  {isLoadingMeasures ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="w-8 h-8 animate-spin text-info" />
+                      <span className="ml-2">Loading security measures...</span>
+                    </div>
+                  ) : (
+                    <div className="max-h-[50vh] overflow-y-auto pr-2">
+                      {filteredMeasures().length === 0 ? (
+                        <div className="text-center py-8 text-secondary">
+                          No security measures found. Try adjusting your search or
+                          select a different category.
+                        </div>
+                      ) : (
+                        <table className="w-full bg-level-1">
+                          <thead className="sticky top-0 bg-white">
+                            <tr className="border-b text-left text-sm text-secondary bg-invert-bg">
+                              <th className="py-3 px-4 font-medium">Name</th>
+                              <th className="py-3 px-4 font-medium">State</th>
+                              <th className="py-3 px-4 font-medium text-right">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredMeasures().map((measure) => {
+                              const isLinked = isMeasureLinked(measure.id);
+                              return (
+                                <tr
+                                  key={measure.id}
+                                  className="border-b hover:bg-invert-bg"
+                                >
+                                  <td className="py-3 px-4">
+                                    <div className="font-medium">
+                                      {measure.name}
+                                    </div>
+                                    {measure.description && (
+                                      <div className="text-xs text-secondary line-clamp-1 mt-0.5">
+                                        {measure.description}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <div
+                                      className={`px-2 py-0.5 rounded-full text-xs ${getStateColor(
+                                        measure.state
+                                      )} inline-block`}
+                                    >
+                                      {formatState(measure.state)}
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-4 text-right whitespace-nowrap">
+                                    {isLinked ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleUnlinkMeasure(measure.id)
+                                        }
+                                        disabled={isUnlinkingMeasure}
+                                        className="text-xs h-7 text-danger border-danger-b hover:bg-h-danger-bg"
+                                      >
+                                        {isUnlinkingMeasure ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <X className="w-4 h-4" />
+                                        )}
+                                        <span className="ml-1">Unlink</span>
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleLinkMeasure(measure.id)
+                                        }
+                                        disabled={isLinkingMeasure}
+                                        className="text-xs h-7  text-info border-info-b hover:bg-h-info-bg"
+                                      >
+                                        {isLinkingMeasure ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <LinkIcon className="w-4 h-4" />
+                                        )}
+                                        <span className="ml-1">Link</span>
+                                      </Button>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <DialogFooter className="mt-4">
+                  <Button onClick={() => setIsMeasureMappingDialogOpen(false)}>
+                    Close
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Linked Measures List */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-medium text-secondary">
+                  Security measures
+                </h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1"
+                  onClick={handleOpenMeasureMappingDialog}
+                >
+                  <LinkIcon className="w-4 h-4" />
+                  <span>Link Security Measures</span>
+                </Button>
+              </div>
+
+              {isLoadingMeasures ? (
+                <div className="flex items-center justify-center h-24">
+                  <Loader2 className="w-6 h-6 animate-spin text-info" />
+                  <span className="ml-2">Loading security measures...</span>
+                </div>
+              ) : linkedMeasuresData?.control?.measures?.edges &&
+                linkedMeasuresData.control.measures.edges.length > 0 ? (
+                <div className="overflow-x-auto border rounded-md">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b text-left text-sm text-secondary bg-invert-bg">
+                        <th className="py-3 px-4 font-medium">Name</th>
+                        <th className="py-3 px-4 font-medium">State</th>
+                        <th className="py-3 px-4 font-medium text-right">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getLinkedMeasures().map((measure) => (
+                        <tr
+                          key={measure.id}
+                          className="border-b hover:bg-invert-bg"
+                        >
+                          <td className="py-3 px-4">
+                            <div className="font-medium">{measure.name}</div>
+                            {measure.description && (
+                              <div className="text-xs text-secondary line-clamp-1 mt-0.5">
+                                {measure.description}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div
+                              className={`px-2 py-0.5 rounded-full text-xs ${getStateColor(
+                                measure.state
+                              )} inline-block`}
+                            >
+                              {formatState(measure.state)}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="text-xs h-7"
+                              >
+                                <Link
+                                  to={`/organizations/${organizationId}/measures/${measure.id}`}
+                                >
+                                  View
+                                </Link>
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUnlinkMeasure(measure.id)}
+                                disabled={isUnlinkingMeasure}
+                                className="text-xs h-7 text-danger border-danger-b hover:bg-h-danger-bg"
+                              >
+                                Unlink
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </tbody>
+                  </table>
                 </div>
-              </div>
-
-              <div className="flex-1 overflow-hidden">
-                {isLoadingMeasures ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="w-8 h-8 animate-spin text-info" />
-                    <span className="ml-2">Loading security measures...</span>
-                  </div>
-                ) : (
-                  <div className="max-h-[50vh] overflow-y-auto pr-2">
-                    {filteredMeasures().length === 0 ? (
-                      <div className="text-center py-8 text-secondary">
-                        No security measures found. Try adjusting your search or
-                        select a different category.
-                      </div>
-                    ) : (
-                      <table className="w-full bg-level-1">
-                        <thead className="sticky top-0 bg-white">
-                          <tr className="border-b text-left text-sm text-secondary bg-invert-bg">
-                            <th className="py-3 px-4 font-medium">Name</th>
-                            <th className="py-3 px-4 font-medium">State</th>
-                            <th className="py-3 px-4 font-medium text-right">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredMeasures().map((measure) => {
-                            const isLinked = isMeasureLinked(measure.id);
-                            return (
-                              <tr
-                                key={measure.id}
-                                className="border-b hover:bg-invert-bg"
-                              >
-                                <td className="py-3 px-4">
-                                  <div className="font-medium">
-                                    {measure.name}
-                                  </div>
-                                  {measure.description && (
-                                    <div className="text-xs text-secondary line-clamp-1 mt-0.5">
-                                      {measure.description}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="py-3 px-4">
-                                  <div
-                                    className={`px-2 py-0.5 rounded-full text-xs ${getStateColor(
-                                      measure.state
-                                    )} inline-block`}
-                                  >
-                                    {formatState(measure.state)}
-                                  </div>
-                                </td>
-                                <td className="py-3 px-4 text-right whitespace-nowrap">
-                                  {isLinked ? (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleUnlinkMeasure(measure.id)
-                                      }
-                                      disabled={isUnlinkingMeasure}
-                                      className="text-xs h-7 text-danger border-danger-b hover:bg-h-danger-bg"
-                                    >
-                                      {isUnlinkingMeasure ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <X className="w-4 h-4" />
-                                      )}
-                                      <span className="ml-1">Unlink</span>
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleLinkMeasure(measure.id)
-                                      }
-                                      disabled={isLinkingMeasure}
-                                      className="text-xs h-7  text-info border-info-b hover:bg-h-info-bg"
-                                    >
-                                      {isLinkingMeasure ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <LinkIcon className="w-4 h-4" />
-                                      )}
-                                      <span className="ml-1">Link</span>
-                                    </Button>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <DialogFooter className="mt-4">
-                <Button onClick={() => setIsMeasureMappingDialogOpen(false)}>
-                  Close
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {/* Linked Measures List */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-medium text-secondary">
-                Security measures
-              </h3>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={handleOpenMeasureMappingDialog}
-              >
-                <LinkIcon className="w-4 h-4" />
-                <span>Link Security Measures</span>
-              </Button>
+              ) : (
+                <div className="text-center py-8 text-secondary border rounded-md">
+                  No security measures linked to this control yet. Click
+                  &quot;Link Security Measures&quot; to connect some.
+                </div>
+              )}
             </div>
-
-            {isLoadingMeasures ? (
-              <div className="flex items-center justify-center h-24">
-                <Loader2 className="w-6 h-6 animate-spin text-info" />
-                <span className="ml-2">Loading security measures...</span>
-              </div>
-            ) : linkedMeasuresData?.control?.measures?.edges &&
-              linkedMeasuresData.control.measures.edges.length > 0 ? (
-              <div className="overflow-x-auto border rounded-md">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b text-left text-sm text-secondary bg-invert-bg">
-                      <th className="py-3 px-4 font-medium">Name</th>
-                      <th className="py-3 px-4 font-medium">State</th>
-                      <th className="py-3 px-4 font-medium text-right">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getLinkedMeasures().map((measure) => (
-                      <tr
-                        key={measure.id}
-                        className="border-b hover:bg-invert-bg"
-                      >
-                        <td className="py-3 px-4">
-                          <div className="font-medium">{measure.name}</div>
-                          {measure.description && (
-                            <div className="text-xs text-secondary line-clamp-1 mt-0.5">
-                              {measure.description}
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div
-                            className={`px-2 py-0.5 rounded-full text-xs ${getStateColor(
-                              measure.state
-                            )} inline-block`}
-                          >
-                            {formatState(measure.state)}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-right whitespace-nowrap">
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              asChild
-                              className="text-xs h-7"
-                            >
-                              <Link
-                                to={`/organizations/${organizationId}/measures/${measure.id}`}
-                              >
-                                View
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleUnlinkMeasure(measure.id)}
-                              disabled={isUnlinkingMeasure}
-                              className="text-xs h-7 text-danger border-danger-b hover:bg-h-danger-bg"
-                            >
-                              Unlink
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-secondary border rounded-md">
-                No security measures linked to this control yet. Click
-                &quot;Link Security Measures&quot; to connect some.
-              </div>
-            )}
           </div>
-        </div>
 
-        {/* Documents Section */}
-        <div className="mt-8">
-          {/* Document Mapping Dialog */}
-          <Dialog
-            open={isDocumentMappingDialogOpen}
-            onOpenChange={setIsDocumentMappingDialogOpen}
-          >
-            <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
-              <DialogHeader>
-                <DialogTitle>Link Documents to Control</DialogTitle>
-                <DialogDescription>
-                  Search and select documents to link to this control. This helps
-                  track which documents address this control.
-                </DialogDescription>
-              </DialogHeader>
+          {/* Documents Section */}
+          <div className="mt-8">
+            {/* Document Mapping Dialog */}
+            <Dialog
+              open={isDocumentMappingDialogOpen}
+              onOpenChange={setIsDocumentMappingDialogOpen}
+            >
+              <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
+                <DialogHeader>
+                  <DialogTitle>Link Documents to Control</DialogTitle>
+                  <DialogDescription>
+                    Search and select documents to link to this control. This helps
+                    track which documents address this control.
+                  </DialogDescription>
+                </DialogHeader>
 
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-tertiary" />
-                    <Input
-                      placeholder="Search documents by name or content..."
-                      value={documentSearchQuery}
-                      onChange={(e) => setDocumentSearchQuery(e.target.value)}
-                      className="w-full pl-10"
-                    />
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-tertiary" />
+                      <Input
+                        placeholder="Search documents by name or content..."
+                        value={documentSearchQuery}
+                        onChange={(e) => setDocumentSearchQuery(e.target.value)}
+                        className="w-full pl-10"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex-1 overflow-hidden">
-                {isLoadingDocuments ? (
-                  <div className="flex items-center justify-center h-full">
-                    <Loader2 className="w-8 h-8 animate-spin text-info" />
-                    <span className="ml-2">Loading documents...</span>
-                  </div>
-                ) : (
-                  <div className="max-h-[50vh] overflow-y-auto pr-2">
-                    {filteredDocuments().length === 0 ? (
-                      <div className="text-center py-8 text-secondary">
-                        No documents found. Try adjusting your search.
-                      </div>
-                    ) : (
-                      <table className="w-full bg-level-1">
-                        <thead className="sticky top-0 bg-white">
-                          <tr className="border-b text-left text-sm text-secondary bg-invert-bg">
-                            <th className="py-3 px-4 font-medium">Name</th>
-                            <th className="py-3 px-4 font-medium">
-                              Review Date
-                            </th>
-                            <th className="py-3 px-4 font-medium text-right">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredDocuments().map((document) => {
-                            const isLinked = isDocumentLinked(document.id);
-                            return (
-                              <tr
-                                key={document.id}
-                                className="border-b hover:bg-invert-bg"
-                              >
-                                <td className="py-3 px-4">
-                                  <div className="font-medium">
-                                    {document.title}
-                                  </div>
-                                  {document.description && (
-                                    <div className="text-xs text-secondary line-clamp-1 mt-0.5">
-                                      {document.description}
+                <div className="flex-1 overflow-hidden">
+                  {isLoadingDocuments ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="w-8 h-8 animate-spin text-info" />
+                      <span className="ml-2">Loading documents...</span>
+                    </div>
+                  ) : (
+                    <div className="max-h-[50vh] overflow-y-auto pr-2">
+                      {filteredDocuments().length === 0 ? (
+                        <div className="text-center py-8 text-secondary">
+                          No documents found. Try adjusting your search.
+                        </div>
+                      ) : (
+                        <table className="w-full bg-level-1">
+                          <thead className="sticky top-0 bg-white">
+                            <tr className="border-b text-left text-sm text-secondary bg-invert-bg">
+                              <th className="py-3 px-4 font-medium">Name</th>
+                              <th className="py-3 px-4 font-medium">
+                                Review Date
+                              </th>
+                              <th className="py-3 px-4 font-medium text-right">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredDocuments().map((document) => {
+                              const isLinked = isDocumentLinked(document.id);
+                              return (
+                                <tr
+                                  key={document.id}
+                                  className="border-b hover:bg-invert-bg"
+                                >
+                                  <td className="py-3 px-4">
+                                    <div className="font-medium">
+                                      {document.title}
                                     </div>
-                                  )}
-                                </td>
-                                <td className="py-3 px-4">
-                                  {document.updatedAt
-                                    ? new Date(
-                                        document.updatedAt
-                                      ).toLocaleDateString()
-                                    : "Not set"}
-                                </td>
-                                <td className="py-3 px-4 text-right whitespace-nowrap">
-                                  {isLinked ? (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleUnlinkDocument(document.id)
-                                      }
-                                      disabled={isUnlinkingDocument}
-                                      className="text-xs h-7 text-danger border-danger-b hover:bg-h-danger-bg"
-                                    >
-                                      {isUnlinkingDocument ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <X className="w-4 h-4" />
-                                      )}
-                                      <span className="ml-1">Unlink</span>
-                                    </Button>
-                                  ) : (
-                                    <Button
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={() =>
-                                        handleLinkDocument(document.id)
-                                      }
-                                      disabled={isLinkingDocument}
-                                      className="text-xs h-7  text-info border-info-b hover:bg-h-info-bg"
-                                    >
-                                      {isLinkingDocument ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                      ) : (
-                                        <LinkIcon className="w-4 h-4" />
-                                      )}
-                                      <span className="ml-1">Link</span>
-                                    </Button>
-                                  )}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                )}
+                                    {document.description && (
+                                      <div className="text-xs text-secondary line-clamp-1 mt-0.5">
+                                        {document.description}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    {document.updatedAt
+                                      ? new Date(
+                                          document.updatedAt
+                                        ).toLocaleDateString()
+                                      : "Not set"}
+                                  </td>
+                                  <td className="py-3 px-4 text-right whitespace-nowrap">
+                                    {isLinked ? (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleUnlinkDocument(document.id)
+                                        }
+                                        disabled={isUnlinkingDocument}
+                                        className="text-xs h-7 text-danger border-danger-b hover:bg-h-danger-bg"
+                                      >
+                                        {isUnlinkingDocument ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <X className="w-4 h-4" />
+                                        )}
+                                        <span className="ml-1">Unlink</span>
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleLinkDocument(document.id)
+                                        }
+                                        disabled={isLinkingDocument}
+                                        className="text-xs h-7  text-info border-info-b hover:bg-h-info-bg"
+                                      >
+                                        {isLinkingDocument ? (
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                          <LinkIcon className="w-4 h-4" />
+                                        )}
+                                        <span className="ml-1">Link</span>
+                                      </Button>
+                                    )}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <DialogFooter className="mt-4">
+                  <Button onClick={() => setIsDocumentMappingDialogOpen(false)}>
+                    Close
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Linked Documents List */}
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-medium text-secondary">Documents</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1"
+                  onClick={handleOpenDocumentMappingDialog}
+                >
+                  <LinkIcon className="w-4 h-4" />
+                  <span>Link Documents</span>
+                </Button>
               </div>
 
-              <DialogFooter className="mt-4">
-                <Button onClick={() => setIsDocumentMappingDialogOpen(false)}>
-                  Close
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              {isLoadingDocuments ? (
+                <div className="flex items-center justify-center h-24">
+                  <Loader2 className="w-6 h-6 animate-spin text-info" />
+                  <span className="ml-2">Loading documents...</span>
+                </div>
+              ) : linkedDocumentsData?.control?.documents?.edges &&
+                linkedDocumentsData.control.documents.edges.length > 0 ? (
+                <div className="overflow-x-auto border rounded-md">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b text-left text-sm text-secondary bg-invert-bg">
+                        <th className="py-3 px-4 font-medium">Name</th>
+                        <th className="py-3 px-4 font-medium">Review Date</th>
+                        <th className="py-3 px-4 font-medium text-right">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {getLinkedDocuments().map((document) => (
+                        <tr
+                          key={document.id}
+                          className="border-b hover:bg-invert-bg"
+                        >
+                          <td className="py-3 px-4">
+                            <div className="font-medium">{document.title}</div>
+                            {document.description && (
+                              <div className="text-xs text-secondary line-clamp-1 mt-0.5">
+                                {document.description}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            {document.updatedAt
+                              ? new Date(document.updatedAt).toLocaleDateString()
+                              : "Not set"}
+                          </td>
+                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                asChild
+                                className="text-xs h-7"
+                              >
+                                <Link
+                                  to={`/organizations/${organizationId}/documents/${document.id}`}
+                                >
+                                  View
+                                </Link>
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUnlinkDocument(document.id)}
+                                disabled={isUnlinkingDocument}
+                                className="text-xs h-7 text-danger border-danger-b hover:bg-h-danger-bg"
+                              >
+                                Unlink
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-secondary border rounded-md">
+                  No documents linked to this control yet. Click &quot;Link
+                  Documents&quot; to connect some.
+                </div>
+              )}
+            </div>
+          </div>
 
-          {/* Linked Documents List */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-medium text-secondary">Documents</h3>
+          {/* Delete Control Section */}
+          <div className="mt-12 border-t pt-8">
+            <div className="flex justify-end items-center gap-2">
               <Button
                 variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={handleOpenDocumentMappingDialog}
+                onClick={() => navigate(`/organizations/${organizationId}/frameworks/${frameworkId}/controls/${control.id}/edit`)}
               >
-                <LinkIcon className="w-4 h-4" />
-                <span>Link Documents</span>
+                Edit Control
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => setIsDeleteDialogOpen(true)}
+              >
+                Delete Control
               </Button>
             </div>
-
-            {isLoadingDocuments ? (
-              <div className="flex items-center justify-center h-24">
-                <Loader2 className="w-6 h-6 animate-spin text-info" />
-                <span className="ml-2">Loading documents...</span>
-              </div>
-            ) : linkedDocumentsData?.control?.documents?.edges &&
-              linkedDocumentsData.control.documents.edges.length > 0 ? (
-              <div className="overflow-x-auto border rounded-md">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b text-left text-sm text-secondary bg-invert-bg">
-                      <th className="py-3 px-4 font-medium">Name</th>
-                      <th className="py-3 px-4 font-medium">Review Date</th>
-                      <th className="py-3 px-4 font-medium text-right">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {getLinkedDocuments().map((document) => (
-                      <tr
-                        key={document.id}
-                        className="border-b hover:bg-invert-bg"
-                      >
-                        <td className="py-3 px-4">
-                          <div className="font-medium">{document.title}</div>
-                          {document.description && (
-                            <div className="text-xs text-secondary line-clamp-1 mt-0.5">
-                              {document.description}
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          {document.updatedAt
-                            ? new Date(document.updatedAt).toLocaleDateString()
-                            : "Not set"}
-                        </td>
-                        <td className="py-3 px-4 text-right whitespace-nowrap">
-                          <div className="flex gap-2 justify-end">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              asChild
-                              className="text-xs h-7"
-                            >
-                              <Link
-                                to={`/organizations/${organizationId}/documents/${document.id}`}
-                              >
-                                View
-                              </Link>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleUnlinkDocument(document.id)}
-                              disabled={isUnlinkingDocument}
-                              className="text-xs h-7 text-danger border-danger-b hover:bg-h-danger-bg"
-                            >
-                              Unlink
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-secondary border rounded-md">
-                No documents linked to this control yet. Click &quot;Link
-                Documents&quot; to connect some.
-              </div>
-            )}
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Control</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the control &quot;{control.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setIsDeleting(true);
+                commitDeleteControl({
+                  variables: {
+                    input: {
+                      controlId: control.id,
+                    },
+                    connections: [
+                      `client:${frameworkId}:__Framework_controls_connection`,
+                      `client:${frameworkId}:FrameworkLayoutView_firstControl`
+                    ],
+                  },
+                  onCompleted: (_, errors) => {
+                    setIsDeleting(false);
+                    setIsDeleteDialogOpen(false);
+
+                    if (errors) {
+                      console.error("Error deleting control:", errors);
+                      toast({
+                        title: "Error",
+                        description: "Failed to delete control. Please try again.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+
+                    toast({
+                      title: "Success",
+                      description: "Control successfully deleted.",
+                    });
+
+                    // Navigate and force reload
+                    navigate(`/organizations/${organizationId}/frameworks/${frameworkId}`, { replace: true });
+                    window.location.reload();
+                  },
+                  onError: (error) => {
+                    setIsDeleting(false);
+                    setIsDeleteDialogOpen(false);
+                    console.error("Error deleting control:", error);
+                    toast({
+                      title: "Error",
+                      description: "Failed to delete control. Please try again.",
+                      variant: "destructive",
+                    });
+                  },
+                });
+              }}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

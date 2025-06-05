@@ -1,7 +1,7 @@
 import { Loader2 } from "lucide-react";
-import ControlView from "./ControlView";
+import NewControlView from "./NewControlView";
 
-export function ControlViewSkeleton() {
+export function NewControlViewSkeleton() {
   return (
     <div className="flex items-center justify-center h-full">
       <Loader2 className="w-8 h-8 animate-spin text-info" />
@@ -9,6 +9,6 @@ export function ControlViewSkeleton() {
   );
 }
 
-export function ControlPage() {
-  return <ControlView />;
+export function NewControlPage() {
+  return <NewControlView />;
 }

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4f0c7f7d3fb0272b838162d615ba905b>>
+ * @generated SignedSource<<483ff3a5c2b7785a8b8b8d308065a7de>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,7 +21,7 @@ export type FrameworkLayoutViewQuery$data = {
         readonly node: {
           readonly id: string;
           readonly name: string;
-          readonly referenceId: string;
+          readonly sectionTitle: string;
         };
       }>;
     };
@@ -76,7 +76,7 @@ v5 = {
   "name": "orderBy",
   "value": {
     "direction": "ASC",
-    "field": "CREATED_AT"
+    "field": "SECTION_TITLE"
   }
 },
 v6 = {
@@ -108,7 +108,7 @@ v7 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "referenceId",
+            "name": "sectionTitle",
             "storageKey": null
           },
           (v3/*: any*/),
@@ -207,7 +207,7 @@ return {
                 "name": "__FrameworkLayoutView_firstControl_connection",
                 "plural": false,
                 "selections": (v7/*: any*/),
-                "storageKey": "__FrameworkLayoutView_firstControl_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
+                "storageKey": "__FrameworkLayoutView_firstControl_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"SECTION_TITLE\"})"
               }
             ],
             "type": "Framework",
@@ -249,7 +249,7 @@ return {
                 "name": "controls",
                 "plural": false,
                 "selections": (v7/*: any*/),
-                "storageKey": "controls(first:100,orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
+                "storageKey": "controls(first:100,orderBy:{\"direction\":\"ASC\",\"field\":\"SECTION_TITLE\"})"
               },
               {
                 "alias": null,
@@ -268,7 +268,7 @@ return {
                 "name": "controls",
                 "plural": false,
                 "selections": (v7/*: any*/),
-                "storageKey": "controls(first:1,orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
+                "storageKey": "controls(first:1,orderBy:{\"direction\":\"ASC\",\"field\":\"SECTION_TITLE\"})"
               },
               {
                 "alias": "firstControl",
@@ -289,7 +289,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "98ca0e0c503bb7c5e3e538e8831eeefa",
+    "cacheID": "2fd37cafbd7284ade592b0cb2e7046ee",
     "id": null,
     "metadata": {
       "connection": [
@@ -306,11 +306,11 @@ return {
     },
     "name": "FrameworkLayoutViewQuery",
     "operationKind": "query",
-    "text": "query FrameworkLayoutViewQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    id\n    ... on Framework {\n      name\n      description\n      ...ControlList_List\n      firstControl: controls(first: 1, orderBy: {field: CREATED_AT, direction: ASC}) {\n        edges {\n          node {\n            id\n            referenceId\n            name\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n\nfragment ControlList_List on Framework {\n  controls(first: 100, orderBy: {field: CREATED_AT, direction: ASC}) {\n    edges {\n      node {\n        id\n        referenceId\n        name\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query FrameworkLayoutViewQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    id\n    ... on Framework {\n      name\n      description\n      ...ControlList_List\n      firstControl: controls(first: 1, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n        edges {\n          node {\n            id\n            sectionTitle\n            name\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n\nfragment ControlList_List on Framework {\n  controls(first: 100, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1935177e374d21015e102745c4d51e94";
+(node as any).hash = "45b60ab441af6a1c4543532be7f40d84";
 
 export default node;

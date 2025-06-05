@@ -169,6 +169,10 @@ enum ControlOrderField
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ControlOrderFieldCreatedAt"
     )
+  SECTION_TITLE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ControlOrderFieldSectionTitle"
+    )
 }
 
 enum MeasureOrderField
@@ -683,7 +687,7 @@ type Framework implements Node {
 
 type Control implements Node {
   id: ID!
-  referenceId: String!
+  sectionTitle: String!
   name: String!
   description: String!
 
@@ -1086,6 +1090,11 @@ type Mutation {
   updateFramework(input: UpdateFrameworkInput!): UpdateFrameworkPayload!
   importFramework(input: ImportFrameworkInput!): ImportFrameworkPayload!
   deleteFramework(input: DeleteFrameworkInput!): DeleteFrameworkPayload!
+
+  # Control mutations
+  createControl(input: CreateControlInput!): CreateControlPayload!
+  updateControl(input: UpdateControlInput!): UpdateControlPayload!
+  deleteControl(input: DeleteControlInput!): DeleteControlPayload!
 
   # Measure mutations
   createMeasure(input: CreateMeasureInput!): CreateMeasurePayload!
@@ -1502,6 +1511,25 @@ input RemoveUserInput {
   userId: ID!
 }
 
+input CreateControlInput {
+  organizationId: ID!
+  frameworkId: ID!
+  sectionTitle: String!
+  name: String!
+  description: String!
+}
+
+input UpdateControlInput {
+  id: ID!
+  sectionTitle: String
+  name: String
+  description: String
+}
+
+input DeleteControlInput {
+  controlId: ID!
+}
+
 # Payload Types
 type CreateOrganizationPayload {
   organizationEdge: OrganizationEdge!
@@ -1513,6 +1541,18 @@ type UpdateOrganizationPayload {
 
 type DeleteOrganizationPayload {
   deletedOrganizationId: ID!
+}
+
+type CreateControlPayload {
+  controlEdge: ControlEdge!
+}
+
+type UpdateControlPayload {
+  control: Control!
+}
+
+type DeleteControlPayload {
+  deletedControlId: ID!
 }
 
 type CreateVendorPayload {

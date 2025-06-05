@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a3e361b3b8152318476292098dd890f4>>
+ * @generated SignedSource<<35014a0564ea29edf018bcd38b2f3edf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type ControlList_List$data = {
       readonly node: {
         readonly id: string;
         readonly name: string;
-        readonly referenceId: string;
+        readonly sectionTitle: string;
       };
     }>;
   };
@@ -52,7 +52,7 @@ const node: ReaderFragment = {
           "name": "orderBy",
           "value": {
             "direction": "ASC",
-            "field": "CREATED_AT"
+            "field": "SECTION_TITLE"
           }
         }
       ],
@@ -88,7 +88,7 @@ const node: ReaderFragment = {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "referenceId",
+                  "name": "sectionTitle",
                   "storageKey": null
                 },
                 {
@@ -144,13 +144,13 @@ const node: ReaderFragment = {
           "storageKey": null
         }
       ],
-      "storageKey": "__FrameworkView_controls_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
+      "storageKey": "__FrameworkView_controls_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"SECTION_TITLE\"})"
     }
   ],
   "type": "Framework",
   "abstractKey": null
 };
 
-(node as any).hash = "aa95219172d60909d7a503d246e0f4f5";
+(node as any).hash = "14a919a4a894eeec4bed03c918f9e4d8";
 
 export default node;

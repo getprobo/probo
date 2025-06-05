@@ -241,14 +241,14 @@ func (s FrameworkService) Import(
 
 				now := time.Now()
 				control := &coredata.Control{
-					ID:          controlID,
-					TenantID:    organizationID.TenantID(),
-					FrameworkID: frameworkID,
-					ReferenceID: control.ID,
-					Name:        control.Name,
-					Description: control.Description,
-					CreatedAt:   now,
-					UpdatedAt:   now,
+					ID:           controlID,
+					TenantID:     organizationID.TenantID(),
+					FrameworkID:  frameworkID,
+					SectionTitle: control.ID,
+					Name:         control.Name,
+					Description:  control.Description,
+					CreatedAt:    now,
+					UpdatedAt:    now,
 				}
 
 				if err := control.Insert(ctx, tx, s.svc.scope); err != nil {
@@ -307,7 +307,7 @@ func (s FrameworkService) ExportAudit(
 			}
 
 			for _, control := range controls {
-				controlDir := filepath.Join(exportDir, control.ReferenceID)
+				controlDir := filepath.Join(exportDir, control.SectionTitle)
 				if err := os.MkdirAll(controlDir, 0755); err != nil {
 					return fmt.Errorf("cannot create control directory: %w", err)
 				}

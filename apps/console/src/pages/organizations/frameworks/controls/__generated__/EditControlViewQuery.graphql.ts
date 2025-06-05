@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<53940cf77492a6c53c699caeb14b1b54>>
+ * @generated SignedSource<<1e68e8f32977bfde6529ccb4244dd679>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,19 +9,20 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-import { FragmentRefs } from "relay-runtime";
-export type ControlViewQuery$variables = {
+export type EditControlViewQuery$variables = {
   controlId: string;
 };
-export type ControlViewQuery$data = {
-  readonly node: {
-    readonly id: string;
-    readonly " $fragmentSpreads": FragmentRefs<"ControlFragment_Control">;
+export type EditControlViewQuery$data = {
+  readonly control: {
+    readonly description?: string;
+    readonly id?: string;
+    readonly name?: string;
+    readonly sectionTitle?: string;
   };
 };
-export type ControlViewQuery = {
-  response: ControlViewQuery$data;
-  variables: ControlViewQuery$variables;
+export type EditControlViewQuery = {
+  response: EditControlViewQuery$data;
+  variables: EditControlViewQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -45,27 +46,53 @@ v2 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
+},
+v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "description",
+  "storageKey": null
+},
+v5 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "sectionTitle",
+  "storageKey": null
 };
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "ControlViewQuery",
+    "name": "EditControlViewQuery",
     "selections": [
       {
-        "alias": null,
+        "alias": "control",
         "args": (v1/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
           {
-            "args": null,
-            "kind": "FragmentSpread",
-            "name": "ControlFragment_Control"
+            "kind": "InlineFragment",
+            "selections": [
+              (v2/*: any*/),
+              (v3/*: any*/),
+              (v4/*: any*/),
+              (v5/*: any*/)
+            ],
+            "type": "Control",
+            "abstractKey": null
           }
         ],
         "storageKey": null
@@ -78,10 +105,10 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "ControlViewQuery",
+    "name": "EditControlViewQuery",
     "selections": [
       {
-        "alias": null,
+        "alias": "control",
         "args": (v1/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
@@ -99,27 +126,9 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "description",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "name",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "sectionTitle",
-                "storageKey": null
-              }
+              (v3/*: any*/),
+              (v4/*: any*/),
+              (v5/*: any*/)
             ],
             "type": "Control",
             "abstractKey": null
@@ -130,16 +139,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5afaae7974871ebac2058831d084514e",
+    "cacheID": "0b532a5fff1f69df57220aa122e32e18",
     "id": null,
     "metadata": {},
-    "name": "ControlViewQuery",
+    "name": "EditControlViewQuery",
     "operationKind": "query",
-    "text": "query ControlViewQuery(\n  $controlId: ID!\n) {\n  node(id: $controlId) {\n    __typename\n    id\n    ...ControlFragment_Control\n  }\n}\n\nfragment ControlFragment_Control on Control {\n  id\n  description\n  name\n  sectionTitle\n}\n"
+    "text": "query EditControlViewQuery(\n  $controlId: ID!\n) {\n  control: node(id: $controlId) {\n    __typename\n    ... on Control {\n      id\n      name\n      description\n      sectionTitle\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ea6b1e9919c960be158d2f48aa3b4254";
+(node as any).hash = "83b8034c722cd3fe442906b74a1613d3";
 
 export default node;

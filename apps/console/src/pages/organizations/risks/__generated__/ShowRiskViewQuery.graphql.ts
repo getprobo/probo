@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d43ef1981a6db6f7813e6587e3eaf192>>
+ * @generated SignedSource<<b49e4f8dc994a66c6e6c9450126028f5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,7 +23,7 @@ export type ShowRiskViewQuery$data = {
           readonly description: string;
           readonly id: string;
           readonly name: string;
-          readonly referenceId: string;
+          readonly sectionTitle: string;
         };
       }>;
     };
@@ -323,7 +323,7 @@ v19 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "referenceId",
+            "name": "sectionTitle",
             "storageKey": null
           },
           (v3/*: any*/),
@@ -514,7 +514,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9d1057cf6eac37c07ed841a80a4604b9",
+    "cacheID": "fe20c6f4cd1e70c14bb099af7ecfffc2",
     "id": null,
     "metadata": {
       "connection": [
@@ -549,11 +549,11 @@ return {
     },
     "name": "ShowRiskViewQuery",
     "operationKind": "query",
-    "text": "query ShowRiskViewQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    id\n    ... on Risk {\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      inherentLikelihood\n      inherentImpact\n      residualLikelihood\n      residualImpact\n      note\n      createdAt\n      updatedAt\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            name\n            description\n            category\n            createdAt\n            state\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            title\n            createdAt\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      controls(first: 100) {\n        edges {\n          node {\n            id\n            referenceId\n            name\n            description\n            createdAt\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query ShowRiskViewQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    id\n    ... on Risk {\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      inherentLikelihood\n      inherentImpact\n      residualLikelihood\n      residualImpact\n      note\n      createdAt\n      updatedAt\n      measures(first: 100) {\n        edges {\n          node {\n            id\n            name\n            description\n            category\n            createdAt\n            state\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            title\n            createdAt\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      controls(first: 100) {\n        edges {\n          node {\n            id\n            sectionTitle\n            name\n            description\n            createdAt\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "96763bbbebd3aa29a02fcf1e6e782293";
+(node as any).hash = "f1695786e4eb823466d6ebee4555cd9b";
 
 export default node;

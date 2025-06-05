@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f8a8d22a1da9cce219c0c3be9293fe47>>
+ * @generated SignedSource<<07652bb5a37a4cdf28c0df2f627ada0e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,7 @@ export type OrganizationBreadcrumbBreadcrumbControlQuery$variables = {
 export type OrganizationBreadcrumbBreadcrumbControlQuery$data = {
   readonly control: {
     readonly id: string;
-    readonly referenceId?: string;
+    readonly sectionTitle?: string;
   };
 };
 export type OrganizationBreadcrumbBreadcrumbControlQuery = {
@@ -52,7 +52,7 @@ v3 = {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "referenceId",
+      "name": "sectionTitle",
       "storageKey": null
     }
   ],
@@ -112,16 +112,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d46d6f288bc94595c84a4c028ba15f83",
+    "cacheID": "6d3e964652b3f13d0524f2db09668d7d",
     "id": null,
     "metadata": {},
     "name": "OrganizationBreadcrumbBreadcrumbControlQuery",
     "operationKind": "query",
-    "text": "query OrganizationBreadcrumbBreadcrumbControlQuery(\n  $controlId: ID!\n) {\n  control: node(id: $controlId) {\n    __typename\n    id\n    ... on Control {\n      referenceId\n    }\n  }\n}\n"
+    "text": "query OrganizationBreadcrumbBreadcrumbControlQuery(\n  $controlId: ID!\n) {\n  control: node(id: $controlId) {\n    __typename\n    id\n    ... on Control {\n      sectionTitle\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "dd4a9837ee450c35961ee67d3213c017";
+(node as any).hash = "04f863d003032971d0490bf0d0c90fce";
 
 export default node;

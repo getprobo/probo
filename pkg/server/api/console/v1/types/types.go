@@ -119,15 +119,15 @@ type ConnectorOrder struct {
 }
 
 type Control struct {
-	ID          gid.GID             `json:"id"`
-	ReferenceID string              `json:"referenceId"`
-	Name        string              `json:"name"`
-	Description string              `json:"description"`
-	Framework   *Framework          `json:"framework"`
-	Measures    *MeasureConnection  `json:"measures"`
-	Documents   *DocumentConnection `json:"documents"`
-	CreatedAt   time.Time           `json:"createdAt"`
-	UpdatedAt   time.Time           `json:"updatedAt"`
+	ID           gid.GID             `json:"id"`
+	SectionTitle string              `json:"sectionTitle"`
+	Name         string              `json:"name"`
+	Description  string              `json:"description"`
+	Framework    *Framework          `json:"framework"`
+	Measures     *MeasureConnection  `json:"measures"`
+	Documents    *DocumentConnection `json:"documents"`
+	CreatedAt    time.Time           `json:"createdAt"`
+	UpdatedAt    time.Time           `json:"updatedAt"`
 }
 
 func (Control) IsNode()             {}
@@ -168,6 +168,14 @@ type CreateControlDocumentMappingPayload struct {
 	DocumentEdge *DocumentEdge `json:"documentEdge"`
 }
 
+type CreateControlInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+	FrameworkID    gid.GID `json:"frameworkId"`
+	SectionTitle   string  `json:"sectionTitle"`
+	Name           string  `json:"name"`
+	Description    string  `json:"description"`
+}
+
 type CreateControlMeasureMappingInput struct {
 	ControlID gid.GID `json:"controlId"`
 	MeasureID gid.GID `json:"measureId"`
@@ -176,6 +184,10 @@ type CreateControlMeasureMappingInput struct {
 type CreateControlMeasureMappingPayload struct {
 	ControlEdge *ControlEdge `json:"controlEdge"`
 	MeasureEdge *MeasureEdge `json:"measureEdge"`
+}
+
+type CreateControlPayload struct {
+	ControlEdge *ControlEdge `json:"controlEdge"`
 }
 
 type CreateDatumInput struct {
@@ -406,6 +418,10 @@ type DeleteControlDocumentMappingPayload struct {
 	DeletedDocumentID gid.GID `json:"deletedDocumentId"`
 }
 
+type DeleteControlInput struct {
+	ControlID gid.GID `json:"controlId"`
+}
+
 type DeleteControlMeasureMappingInput struct {
 	ControlID gid.GID `json:"controlId"`
 	MeasureID gid.GID `json:"measureId"`
@@ -414,6 +430,10 @@ type DeleteControlMeasureMappingInput struct {
 type DeleteControlMeasureMappingPayload struct {
 	DeletedControlID gid.GID `json:"deletedControlId"`
 	DeletedMeasureID gid.GID `json:"deletedMeasureId"`
+}
+
+type DeleteControlPayload struct {
+	DeletedControlID gid.GID `json:"deletedControlId"`
 }
 
 type DeleteDatumInput struct {
@@ -978,6 +998,17 @@ type UpdateAssetInput struct {
 
 type UpdateAssetPayload struct {
 	Asset *Asset `json:"asset"`
+}
+
+type UpdateControlInput struct {
+	ID           gid.GID `json:"id"`
+	SectionTitle *string `json:"sectionTitle,omitempty"`
+	Name         *string `json:"name,omitempty"`
+	Description  *string `json:"description,omitempty"`
+}
+
+type UpdateControlPayload struct {
+	Control *Control `json:"control"`
 }
 
 type UpdateDatumInput struct {

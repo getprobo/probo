@@ -235,7 +235,7 @@ func (s MeasureService) Import(
 					}
 
 					control := &coredata.Control{}
-					if err := control.LoadByFrameworkIDAndReferenceID(ctx, tx, s.svc.scope, framework.ID, standard.Control); err != nil {
+					if err := control.LoadByFrameworkIDAndSectionTitle(ctx, tx, s.svc.scope, framework.ID, standard.Control); err != nil {
 						continue
 					}
 

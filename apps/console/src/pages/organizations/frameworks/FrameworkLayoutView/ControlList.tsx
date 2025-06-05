@@ -7,12 +7,12 @@ const maxControlNameLength = 80;
 
 export const controlListFragment = graphql`
   fragment ControlList_List on Framework {
-    controls(first: 100, orderBy: { field: CREATED_AT, direction: ASC })
+    controls(first: 100, orderBy: { field: SECTION_TITLE, direction: ASC })
       @connection(key: "FrameworkView_controls") {
       edges {
         node {
           id
-          referenceId
+          sectionTitle
           name
         }
       }
@@ -37,10 +37,6 @@ export function ControlList(props: ControlListProps) {
     fragmentKey,
   );
 
-  if (controls.edges.length === 0) {
-    return "No controls available for this framework";
-  }
-
   return (
     <aside
       className={cn(
@@ -48,43 +44,49 @@ export function ControlList(props: ControlListProps) {
         className,
       )}
     >
-      {controls.edges.map(({ node: control }, i) => (
-        <NavLink
-          key={control.id}
-          to={`/organizations/${organizationId}/frameworks/${frameworkId}/controls/${control.id}`}
-          className={({ isActive }) =>
-            cn(
-              "block pl-8 pr-4 py-4 border-b hover:bg-h-subtle-bg",
-              (isActive || (i === 0 && !controlId)) && "bg-subtle-bg",
-            )
-          }
-        >
-          {({ isActive }) => {
-            return (
-              <>
-                <div
-                  className={cn(
-                    "inline-block font-mono text-sm px-1 py-0.25 rounded-sm bg-highlight-bg border font-semibold",
-                    isActive && "font-bold bg-active-bg border-mid-b",
-                  )}
-                >
-                  {control.referenceId}
-                </div>
-                <div
-                  className={cn(
-                    "text-sm leading-none break-words mt-2",
-                    isActive && "font-medium",
-                  )}
-                >
-                  {control.name.length > maxControlNameLength
-                    ? `${control.name.slice(0, maxControlNameLength - 2)}…`
-                    : control.name}
-                </div>
-              </>
-            );
-          }}
-        </NavLink>
-      ))}
+      {controls.edges.length === 0 ? (
+        <div className="p-8 text-center text-tertiary">
+          No controls available for this framework. Create one to get started.
+        </div>
+      ) : (
+        controls.edges.map(({ node: control }, i) => (
+          <NavLink
+            key={control.id}
+            to={`/organizations/${organizationId}/frameworks/${frameworkId}/controls/${control.id}`}
+            className={({ isActive }) =>
+              cn(
+                "block pl-8 pr-4 py-4 border-b hover:bg-h-subtle-bg",
+                (isActive || (i === 0 && !controlId)) && "bg-subtle-bg",
+              )
+            }
+          >
+            {({ isActive }) => {
+              return (
+                <>
+                  <div
+                    className={cn(
+                      "inline-block font-mono text-sm px-1 py-0.25 rounded-sm bg-highlight-bg border font-semibold",
+                      isActive && "font-bold bg-active-bg border-mid-b",
+                    )}
+                  >
+                    {control.sectionTitle}
+                  </div>
+                  <div
+                    className={cn(
+                      "text-sm leading-none break-words mt-2",
+                      isActive && "font-medium",
+                    )}
+                  >
+                    {control.name.length > maxControlNameLength
+                      ? `${control.name.slice(0, maxControlNameLength - 2)}…`
+                      : control.name}
+                  </div>
+                </>
+              );
+            }}
+          </NavLink>
+        ))
+      )}
     </aside>
   );
 }
