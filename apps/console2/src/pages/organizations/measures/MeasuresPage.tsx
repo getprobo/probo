@@ -27,6 +27,7 @@ import {
   Thead,
   Tr,
   useConfirm,
+  useDialogRef,
 } from "@probo/ui";
 import {
   measuresQuery,
@@ -280,8 +281,11 @@ function MeasureRow(props: MeasureRowProps) {
     );
   };
 
+  const dialogRef = useDialogRef();
+
   return (
     <>
+      <MeasureFormDialog measure={props.measure} ref={dialogRef} />
       <Tr to={`/organizations/${organizationId}/measures/${props.measure.id}`}>
         <Td>{props.measure.name}</Td>
         <Td width={120}>
@@ -289,7 +293,12 @@ function MeasureRow(props: MeasureRowProps) {
         </Td>
         <Td noLink width={50} className="text-end">
           <ActionDropdown>
-            <DropdownItem icon={IconPencil}>{__("Edit")}</DropdownItem>
+            <DropdownItem
+              icon={IconPencil}
+              onClick={() => dialogRef.current?.open()}
+            >
+              {__("Edit")}
+            </DropdownItem>
             <DropdownItem
               onClick={onDelete}
               disabled={isDeleting}

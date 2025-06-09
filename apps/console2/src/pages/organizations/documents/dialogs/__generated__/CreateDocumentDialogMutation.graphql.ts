@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<828dc0f47cb0d218fc437848beac7878>>
+ * @generated SignedSource<<99814a217713cd574beb65c91802dc74>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,6 +26,7 @@ export type CreateDocumentDialogMutation$data = {
   readonly createDocument: {
     readonly documentEdge: {
       readonly node: {
+        readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"DocumentsPageRowFragment">;
       };
     };
@@ -95,6 +96,7 @@ return {
                 "name": "node",
                 "plural": false,
                 "selections": [
+                  (v3/*: any*/),
                   {
                     "args": null,
                     "kind": "FragmentSpread",
@@ -309,16 +311,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "bedd217ae32d45e8ac183a38e5624618",
+    "cacheID": "d535d393c2ab2e1a9798d193bcc8c17f",
     "id": null,
     "metadata": {},
     "name": "CreateDocumentDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        ...DocumentsPageRowFragment\n        id\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f3792f9bd5524dd1e7656908c2774069";
+(node as any).hash = "19d6bd18594154b918c529d15f7ee8d7";
 
 export default node;

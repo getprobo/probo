@@ -23,6 +23,7 @@ import { organizationViewQuery } from "./hooks/graph/OrganizationGraph.ts";
 import { peopleRoutes } from "./routes/peopleRoutes.ts";
 import { frameworkRoutes } from "./routes/frameworkRoutes.ts";
 import { PageError } from "./components/PageError.tsx";
+import { taskRoutes } from "./routes/taskRoutes.ts";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -88,6 +89,7 @@ const routes = [
       ...peopleRoutes,
       ...vendorRoutes,
       ...frameworkRoutes,
+      ...taskRoutes,
       {
         path: "*",
         Component: PageError,

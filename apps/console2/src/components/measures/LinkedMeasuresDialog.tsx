@@ -15,52 +15,8 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
-import { graphql } from "relay-runtime";
-import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
-import type { LinkedMeasuresDialogQuery } from "./__generated__/LinkedMeasuresDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import type { LinkedMeasuresDialogFragment$key } from "./__generated__/LinkedMeasuresDialogFragment.graphql";
-
-const measuresQuery = graphql`
-  query LinkedMeasuresDialogQuery($organizationId: ID!) {
-    organization: node(id: $organizationId) {
-      id
-      ... on Organization {
-        ...LinkedMeasuresDialogFragment
-      }
-    }
-  }
-`;
-
-const measuresFragment = graphql`
-  fragment LinkedMeasuresDialogFragment on Organization
-  @refetchable(queryName: "LinkedMeasuresDialogQuery_fragment")
-  @argumentDefinitions(
-    first: { type: "Int", defaultValue: 20 }
-    order: { type: "MeasureOrder", defaultValue: null }
-    after: { type: "CursorKey", defaultValue: null }
-    before: { type: "CursorKey", defaultValue: null }
-    last: { type: "Int", defaultValue: null }
-  ) {
-    measures(
-      first: $first
-      after: $after
-      last: $last
-      before: $before
-      orderBy: $order
-    ) @connection(key: "LinkedMeasuresDialogQuery_measures") {
-      edges {
-        node {
-          id
-          name
-          state
-          description
-          category
-        }
-      }
-    }
-  }
-`;
+import { usePaginatedMeasures } from "/hooks/graph/usePaginatedMeasures";
 
 type Props = {
   children: ReactNode;
@@ -88,13 +44,8 @@ export function LinkedMeasureDialog({ children, ...props }: Props) {
 
 function LinkedMeasuresDialogContent(props: Omit<Props, "children">) {
   const organizationId = useOrganizationId();
-  const query = useLazyLoadQuery<LinkedMeasuresDialogQuery>(measuresQuery, {
-    organizationId,
-  });
-  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
-    measuresFragment,
-    query.organization as LinkedMeasuresDialogFragment$key
-  );
+  const { data, loadNext, hasNext, isLoadingNext } =
+    usePaginatedMeasures(organizationId);
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string | null>(null);

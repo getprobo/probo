@@ -47,6 +47,7 @@ export const measureNodeQuery = graphql`
         state
         category
         ...MeasureRisksTabFragment
+        ...MeasureTasksTabFragment
         ...MeasureControlsTabFragment
         ...MeasureFormDialogMeasureFragment
         ...MeasureEvidencesTabFragment
