@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<47d66bf5d9b99eb598728999a7b2ce85>>
+ * @generated SignedSource<<4b559d5e004d1657ab8d52cf5770ac79>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "NOT_STARTED";
 import { FragmentRefs } from "relay-runtime";
-export type LinkedMeasuresDialogFragment$data = {
+export type usePaginatedMeasuresFragment$data = {
   readonly id: string;
   readonly measures: {
     readonly edges: ReadonlyArray<{
@@ -24,14 +24,14 @@ export type LinkedMeasuresDialogFragment$data = {
       };
     }>;
   };
-  readonly " $fragmentType": "LinkedMeasuresDialogFragment";
+  readonly " $fragmentType": "usePaginatedMeasuresFragment";
 };
-export type LinkedMeasuresDialogFragment$key = {
-  readonly " $data"?: LinkedMeasuresDialogFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"LinkedMeasuresDialogFragment">;
+export type usePaginatedMeasuresFragment$key = {
+  readonly " $data"?: usePaginatedMeasuresFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"usePaginatedMeasuresFragment">;
 };
 
-import LinkedMeasuresDialogQuery_fragment_graphql from './LinkedMeasuresDialogQuery_fragment.graphql';
+import usePaginatedMeasuresQuery_fragment_graphql from './usePaginatedMeasuresQuery_fragment.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
@@ -97,14 +97,14 @@ return {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": LinkedMeasuresDialogQuery_fragment_graphql,
+      "operation": usePaginatedMeasuresQuery_fragment_graphql,
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
       }
     }
   },
-  "name": "LinkedMeasuresDialogFragment",
+  "name": "usePaginatedMeasuresFragment",
   "selections": [
     {
       "alias": "measures",
@@ -117,7 +117,7 @@ return {
       ],
       "concreteType": "MeasureConnection",
       "kind": "LinkedField",
-      "name": "__LinkedMeasuresDialogQuery_measures_connection",
+      "name": "__usePaginatedMeasuresQuery_measures_connection",
       "plural": false,
       "selections": [
         {
@@ -234,6 +234,6 @@ return {
 };
 })();
 
-(node as any).hash = "69458f9aed8aee19f69cd58090b68947";
+(node as any).hash = "7d9401a3b7aad78951093dcac34df06e";
 
 export default node;

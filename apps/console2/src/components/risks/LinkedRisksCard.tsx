@@ -1,22 +1,19 @@
 import { graphql } from "relay-runtime";
 import {
-  IconPlusLarge,
   Button,
-  Tr,
-  Td,
-  Table,
-  Thead,
-  Tbody,
-  Th,
-  IconChevronDown,
-  RiskBadge,
   IconTrashCan,
+  RiskBadge,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { LinkedRisksCardFragment$key } from "./__generated__/LinkedRisksCardFragment.graphql";
 import { useFragment } from "react-relay";
-import { useMemo, useState } from "react";
-import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { LinkedRisksDialog } from "./LinkedRisksDialog.tsx";
 
@@ -58,11 +55,6 @@ type Props<Params> = {
  */
 export function LinkedRisksCard<Params>(props: Props<Params>) {
   const { __ } = useTranslate();
-  const [limit, setLimit] = useState<number | null>(4);
-  const risks = useMemo(() => {
-    return limit ? props.risks.slice(0, limit) : props.risks;
-  }, [props.risks, limit]);
-  const showMoreButton = limit !== null && props.risks.length > limit;
 
   const onAttach = (riskId: string) => {
     props.onAttach({
@@ -90,48 +82,37 @@ export function LinkedRisksCard<Params>(props: Props<Params>) {
 
   return (
     <div className="space-y-4 relative">
-      {risks.length > 0 ? (
-        <Table>
-          <Thead>
+      <Table>
+        <Thead>
+          <Tr>
+            <Th>{__("Name")}</Th>
+            <Th>{__("Inherent Risk")}</Th>
+            <Th>{__("Residual Risk")}</Th>
+            <Th></Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {props.risks.length === 0 && (
             <Tr>
-              <Th>{__("Name")}</Th>
-              <Th>{__("Inherent Risk")}</Th>
-              <Th>{__("Residual Risk")}</Th>
-              <Th></Th>
+              <Td colSpan={4} className="text-center text-txt-secondary">
+                {__("No risks linked")}
+              </Td>
             </Tr>
-          </Thead>
-          <Tbody>
-            {risks.map((risk) => (
-              <RiskRow key={risk.id} risk={risk} onClick={onDetach} />
-            ))}
-          </Tbody>
-        </Table>
-      ) : (
-        <div className="text-center text-sm text-txt-secondary">
-          {__("No risks linked")}
-        </div>
-      )}
-      {showMoreButton && (
-        <Button
-          variant="tertiary"
-          onClick={() => setLimit(null)}
-          className="mt-3 mx-auto"
-          icon={IconChevronDown}
-        >
-          {sprintf(__("Show %s more"), props.risks.length - limit)}
-        </Button>
-      )}
-      <LinkedRisksDialog
-        connectionId={props.connectionId}
-        disabled={props.disabled}
-        linkedRisks={props.risks}
-        onLink={onAttach}
-        onUnlink={onDetach}
-      >
-        <Button variant="secondary" icon={IconPlusLarge} className="ml-auto">
-          {__("Link risk")}
-        </Button>
-      </LinkedRisksDialog>
+          )}
+          {props.risks.map((risk) => (
+            <RiskRow key={risk.id} risk={risk} onClick={onDetach} />
+          ))}
+          <LinkedRisksDialog
+            connectionId={props.connectionId}
+            disabled={props.disabled}
+            linkedRisks={props.risks}
+            onLink={onAttach}
+            onUnlink={onDetach}
+          >
+            <TrButton colspan={4}>{__("Link risk")}</TrButton>
+          </LinkedRisksDialog>
+        </Tbody>
+      </Table>
     </div>
   );
 }

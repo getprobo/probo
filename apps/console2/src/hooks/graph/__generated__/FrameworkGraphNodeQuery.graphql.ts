@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7258ea81187f177613d9ef146df494ff>>
+ * @generated SignedSource<<5cb97bc6e333575149d6cc4418370d45>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -385,7 +385,8 @@ return {
                       }
                     ],
                     "storageKey": null
-                  }
+                  },
+                  (v9/*: any*/)
                 ],
                 "storageKey": "controls(first:100)"
               }
@@ -399,12 +400,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8071a760c42f4c3537bbc25d7b866419",
+    "cacheID": "4b21f0ec7a74eed125d96e4cfc7f94fd",
     "id": null,
     "metadata": {},
     "name": "FrameworkGraphNodeQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  controls(first: 100) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        description\n        measures(first: 100) {\n          edges {\n            node {\n              id\n              ...LinkedMeasuresCardFragment\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        documents(first: 100) {\n          edges {\n            node {\n              id\n              ...LinkedDocumentsCardFragment\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n"
+    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  controls(first: 100) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        description\n        ...FrameworkControlDialogFragment\n        measures(first: 100) {\n          edges {\n            node {\n              id\n              ...LinkedMeasuresCardFragment\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        documents(first: 100) {\n          edges {\n            node {\n              id\n              ...LinkedDocumentsCardFragment\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n      }\n    }\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n"
   }
 };
 })();

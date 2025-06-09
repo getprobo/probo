@@ -22,7 +22,7 @@ type Props = {
     onSelect?: (value: string) => void;
     resetValueOnHide?: boolean;
     value?: string;
-};
+} & Omit<ComponentProps<typeof AriaKitCombobox>, "onSelect" | "value">;
 
 export function Combobox({
     children,
@@ -32,6 +32,7 @@ export function Combobox({
     onSelect,
     resetValueOnHide,
     value,
+    ...props
 }: Props) {
     const showDropdown = !isEmpty(children);
     return (
@@ -42,6 +43,7 @@ export function Combobox({
             resetValueOnHide={resetValueOnHide}
         >
             <AriaKitCombobox
+                {...props}
                 autoSelect={autoSelect}
                 placeholder={placeholder}
                 className={input()}

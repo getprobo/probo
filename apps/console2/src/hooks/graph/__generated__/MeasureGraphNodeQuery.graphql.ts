@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<705084da2fb7faefcfb2f4346e16565e>>
+ * @generated SignedSource<<e7d82cc2843376766d45bdaac45f3b13>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,7 +21,7 @@ export type MeasureGraphNodeQuery$data = {
     readonly id?: string;
     readonly name?: string;
     readonly state?: MeasureState;
-    readonly " $fragmentSpreads": FragmentRefs<"MeasureControlsTabFragment" | "MeasureEvidencesTabFragment" | "MeasureFormDialogMeasureFragment" | "MeasureRisksTabFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"MeasureControlsTabFragment" | "MeasureEvidencesTabFragment" | "MeasureFormDialogMeasureFragment" | "MeasureRisksTabFragment" | "MeasureTasksTabFragment">;
   };
 };
 export type MeasureGraphNodeQuery = {
@@ -177,6 +177,11 @@ return {
               {
                 "args": null,
                 "kind": "FragmentSpread",
+                "name": "MeasureTasksTabFragment"
+              },
+              {
+                "args": null,
+                "kind": "FragmentSpread",
                 "name": "MeasureControlsTabFragment"
               },
               {
@@ -284,6 +289,101 @@ return {
                 "key": "Measure__risks",
                 "kind": "LinkedHandle",
                 "name": "risks"
+              },
+              {
+                "alias": null,
+                "args": (v8/*: any*/),
+                "concreteType": "TaskConnection",
+                "kind": "LinkedField",
+                "name": "tasks",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "TaskEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Task",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          (v3/*: any*/),
+                          (v5/*: any*/),
+                          (v4/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "timeEstimate",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "deadline",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "People",
+                            "kind": "LinkedField",
+                            "name": "assignedTo",
+                            "plural": false,
+                            "selections": [
+                              (v2/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "fullName",
+                                "storageKey": null
+                              }
+                            ],
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Measure",
+                            "kind": "LinkedField",
+                            "name": "measure",
+                            "plural": false,
+                            "selections": [
+                              (v2/*: any*/)
+                            ],
+                            "storageKey": null
+                          },
+                          (v7/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v9/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v12/*: any*/),
+                  (v13/*: any*/)
+                ],
+                "storageKey": "tasks(first:100)"
+              },
+              {
+                "alias": null,
+                "args": (v8/*: any*/),
+                "filters": null,
+                "handle": "connection",
+                "key": "Measure__tasks",
+                "kind": "LinkedHandle",
+                "name": "tasks"
               },
               {
                 "alias": null,
@@ -480,16 +580,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3c47df3d8325927791f007435186cf65",
+    "cacheID": "b5f77889cfcec3b09ae7f6707c65200f",
     "id": null,
     "metadata": {},
     "name": "MeasureGraphNodeQuery",
     "operationKind": "query",
-    "text": "query MeasureGraphNodeQuery(\n  $measureId: ID!\n) {\n  node(id: $measureId) {\n    __typename\n    ... on Measure {\n      id\n      name\n      description\n      state\n      category\n      ...MeasureRisksTabFragment\n      ...MeasureControlsTabFragment\n      ...MeasureFormDialogMeasureFragment\n      ...MeasureEvidencesTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    name\n    id\n  }\n}\n\nfragment LinkedRisksCardFragment on Risk {\n  id\n  name\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment MeasureControlsTabFragment on Measure {\n  id\n  controls(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment on Measure {\n  id\n  evidences(first: 50) {\n    edges {\n      node {\n        id\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  filename\n  size\n  type\n  createdAt\n  fileUrl\n  mimeType\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasureRisksTabFragment on Measure {\n  id\n  risks(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedRisksCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query MeasureGraphNodeQuery(\n  $measureId: ID!\n) {\n  node(id: $measureId) {\n    __typename\n    ... on Measure {\n      id\n      name\n      description\n      state\n      category\n      ...MeasureRisksTabFragment\n      ...MeasureTasksTabFragment\n      ...MeasureControlsTabFragment\n      ...MeasureFormDialogMeasureFragment\n      ...MeasureEvidencesTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    name\n    id\n  }\n}\n\nfragment LinkedRisksCardFragment on Risk {\n  id\n  name\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment MeasureControlsTabFragment on Measure {\n  id\n  controls(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment on Measure {\n  id\n  evidences(first: 50) {\n    edges {\n      node {\n        id\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  filename\n  size\n  type\n  createdAt\n  fileUrl\n  mimeType\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasureRisksTabFragment on Measure {\n  id\n  risks(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedRisksCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment MeasureTasksTabFragment on Measure {\n  tasks(first: 100) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        ...TaskFormDialogFragment\n        assignedTo {\n          id\n          fullName\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "5c4bd0699414117e0ed408348554ca7d";
+(node as any).hash = "d5f21c1b7cd6cd1997018b1c0cfaee39";
 
 export default node;

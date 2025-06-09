@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<412b6fd2ef44aa7bc3c9e66ec2284c37>>
+ * @generated SignedSource<<fcc24a794a473d9c17436612840d3228>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,28 +10,28 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type MeasureOrderField = "CREATED_AT";
 export type OrderDirection = "ASC" | "DESC";
-export type MeasureOrder = {
+export type TaskOrderField = "CREATED_AT";
+export type TaskOrder = {
   direction: OrderDirection;
-  field: MeasureOrderField;
+  field: TaskOrderField;
 };
-export type LinkedMeasuresDialogQuery_fragment$variables = {
+export type TasksPageFragment_query$variables = {
   after?: any | null | undefined;
   before?: any | null | undefined;
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;
-  order?: MeasureOrder | null | undefined;
+  order?: TaskOrder | null | undefined;
 };
-export type LinkedMeasuresDialogQuery_fragment$data = {
+export type TasksPageFragment_query$data = {
   readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"LinkedMeasuresDialogFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"TasksPageFragment">;
   };
 };
-export type LinkedMeasuresDialogQuery_fragment = {
-  response: LinkedMeasuresDialogQuery_fragment$data;
-  variables: LinkedMeasuresDialogQuery_fragment$variables;
+export type TasksPageFragment_query = {
+  response: TasksPageFragment_query$data;
+  variables: TasksPageFragment_query$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -116,7 +116,14 @@ v13 = [
     "name": "orderBy",
     "variableName": "order"
   }
-];
+],
+v14 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+};
 return {
   "fragment": {
     "argumentDefinitions": [
@@ -129,7 +136,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "LinkedMeasuresDialogQuery_fragment",
+    "name": "TasksPageFragment_query",
     "selections": [
       {
         "alias": null,
@@ -152,7 +159,7 @@ return {
               }
             ],
             "kind": "FragmentSpread",
-            "name": "LinkedMeasuresDialogFragment"
+            "name": "TasksPageFragment"
           }
         ],
         "storageKey": null
@@ -172,7 +179,7 @@ return {
       (v3/*: any*/)
     ],
     "kind": "Operation",
-    "name": "LinkedMeasuresDialogQuery_fragment",
+    "name": "TasksPageFragment_query",
     "selections": [
       {
         "alias": null,
@@ -190,15 +197,15 @@ return {
               {
                 "alias": null,
                 "args": (v13/*: any*/),
-                "concreteType": "MeasureConnection",
+                "concreteType": "TaskConnection",
                 "kind": "LinkedField",
-                "name": "measures",
+                "name": "tasks",
                 "plural": false,
                 "selections": [
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "MeasureEdge",
+                    "concreteType": "TaskEdge",
                     "kind": "LinkedField",
                     "name": "edges",
                     "plural": true,
@@ -206,19 +213,13 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "concreteType": "Measure",
+                        "concreteType": "Task",
                         "kind": "LinkedField",
                         "name": "node",
                         "plural": false,
                         "selections": [
                           (v12/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "name",
-                            "storageKey": null
-                          },
+                          (v14/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -237,7 +238,46 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "category",
+                            "name": "timeEstimate",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "deadline",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "People",
+                            "kind": "LinkedField",
+                            "name": "assignedTo",
+                            "plural": false,
+                            "selections": [
+                              (v12/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "fullName",
+                                "storageKey": null
+                              }
+                            ],
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Measure",
+                            "kind": "LinkedField",
+                            "name": "measure",
+                            "plural": false,
+                            "selections": [
+                              (v12/*: any*/),
+                              (v14/*: any*/)
+                            ],
                             "storageKey": null
                           },
                           (v11/*: any*/)
@@ -292,6 +332,18 @@ return {
                       }
                     ],
                     "storageKey": null
+                  },
+                  {
+                    "kind": "ClientExtension",
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "__id",
+                        "storageKey": null
+                      }
+                    ]
                   }
                 ],
                 "storageKey": null
@@ -303,9 +355,9 @@ return {
                   "orderBy"
                 ],
                 "handle": "connection",
-                "key": "LinkedMeasuresDialogQuery_measures",
+                "key": "TasksPageFragment_tasks",
                 "kind": "LinkedHandle",
-                "name": "measures"
+                "name": "tasks"
               }
             ],
             "type": "Organization",
@@ -317,16 +369,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9de5e8b136a2952dbb169f6b27aade30",
+    "cacheID": "9f6192e72e8d38b3150dfc8ece83ad97",
     "id": null,
     "metadata": {},
-    "name": "LinkedMeasuresDialogQuery_fragment",
+    "name": "TasksPageFragment_query",
     "operationKind": "query",
-    "text": "query LinkedMeasuresDialogQuery_fragment(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: MeasureOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...LinkedMeasuresDialogFragment_16fISc\n    id\n  }\n}\n\nfragment LinkedMeasuresDialogFragment_16fISc on Organization {\n  measures(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        category\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query TasksPageFragment_query(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: TaskOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...TasksPageFragment_16fISc\n    id\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n\nfragment TasksPageFragment_16fISc on Organization {\n  tasks(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        ...TaskFormDialogFragment\n        measure {\n          id\n          name\n        }\n        assignedTo {\n          id\n          fullName\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "69458f9aed8aee19f69cd58090b68947";
+(node as any).hash = "a555e698539fe819dd4713ac507ea440";
 
 export default node;
