@@ -1018,17 +1018,12 @@ function RiskAssessmentsTable({
                     </span>
                   </td>
                   <td className="text-right pr-6 py-3">
-                    <div
-                      className="relative"
-                      ref={showDropdown === assessment?.id ? dropdownRef : null}
-                    >
+                    <div className="relative" ref={showDropdown === assessment?.id ? dropdownRef : null}>
                       <button
                         className="rounded-full w-8 h-8 flex items-center justify-center hover:bg-[rgba(2,42,2,0.03)]"
                         onClick={() =>
                           setShowDropdown(
-                            showDropdown === assessment?.id
-                              ? null
-                              : assessment?.id,
+                            showDropdown === assessment?.id ? null : assessment?.id
                           )
                         }
                       >
@@ -1054,12 +1049,9 @@ function RiskAssessmentsTable({
                         </svg>
                       </button>
                       {showDropdown === assessment?.id && (
-                        <div
-                          className="absolute right-0 mt-1 bg-white rounded-md shadow-lg border border-[#ECEFEC] z-10"
-                          style={{ bottom: "100%", marginBottom: "5px" }}
-                        >
+                        <div className="absolute right-0 bottom-full mb-2 bg-white rounded-md shadow-lg border border-[#ECEFEC] z-10 w-32">
                           <button
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-[rgba(2,42,2,0.03)]"
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-[rgba(2,42,2,0.03)] whitespace-nowrap"
                             onClick={() => handleViewDetails(assessment)}
                           >
                             View details
