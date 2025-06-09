@@ -1,12 +1,15 @@
 import {
     createContext,
     useContext,
+    type FC,
     type HTMLAttributes,
     type PropsWithChildren,
+    type ReactNode,
 } from "react";
 import { Card } from "../Card/Card";
 import { Link } from "react-router";
 import clsx from "clsx";
+import { IconPlusLarge } from "../Icons";
 
 export function Table({
     children,
@@ -34,7 +37,10 @@ export function Th({
 }: PropsWithChildren<{ className?: string; width?: number }>) {
     return (
         <th
-            className={clsx("first:pl-6 last:pr-6 py-3", className)}
+            className={clsx(
+                "first:pl-6 last:pr-6 py-3 whitespace-nowrap",
+                className,
+            )}
             style={{ width }}
         >
             {children}
@@ -98,12 +104,35 @@ export function Td({
         <td
             {...props}
             width={width}
-            className={clsx(
-                "first:*:pl-6 *:block last:*:pr-6 *:py-3",
-                className,
-            )}
+            className={clsx("first:*:pl-6 *:pr-6 *:block *:py-3", className)}
         >
             <Link to={to}>{children}</Link>
         </td>
+    );
+}
+
+export function TrButton({
+    icon = IconPlusLarge,
+    children,
+    colspan,
+    ...props
+}: {
+    colspan?: number;
+    children: ReactNode;
+    icon?: FC<{ size: number; className?: string }>;
+} & HTMLAttributes<HTMLButtonElement>) {
+    const IconComponent = icon;
+    return (
+        <tr>
+            <td colSpan={colspan}>
+                <button
+                    {...props}
+                    className="py-2 bg-highlight hover:bg-highlight-hover active:bg-highlight-pressed cursor-pointer w-full flex gap-2 items-center justify-center"
+                >
+                    <IconComponent size={16} />
+                    {children}
+                </button>
+            </td>
+        </tr>
     );
 }

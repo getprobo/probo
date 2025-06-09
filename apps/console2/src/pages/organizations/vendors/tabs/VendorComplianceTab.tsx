@@ -18,8 +18,7 @@ import {
 import { useFragment, useMutation, useRefetchableFragment } from "react-relay";
 import type { VendorComplianceTabFragment_report$key } from "./__generated__/VendorComplianceTabFragment_report.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { sprintf } from "@probo/helpers";
-import { fileSize } from "@probo/helpers/src/file.ts";
+import { sprintf, fileSize } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 
 const complianceReportsFragment = graphql`

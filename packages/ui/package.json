@@ -24,6 +24,7 @@
         "@tailwindcss/vite": "^4.1.7",
         "clsx": "^2.1.1",
         "react-dropzone": "^14.3.8",
+        "react-intersection-observer": "^9.16.0",
         "react-markdown": "^10.1.0",
         "rehype-raw": "^7.0.0",
         "remark-gfm": "^4.0.1",

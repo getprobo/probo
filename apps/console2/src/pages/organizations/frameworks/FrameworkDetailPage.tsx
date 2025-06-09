@@ -205,7 +205,7 @@ export default function FrameworkDetailPage(props: Props) {
               key={control.id}
               id={control.referenceId}
               description={control.name ?? control.description}
-              to={`/organizations/${organizationId}/frameworks/${framework.id}/${control.id}`}
+              to={`/organizations/${organizationId}/frameworks/${framework.id}/controls/${control.id}`}
               active={selectedControl?.id === control.id}
             />
           ))}
@@ -217,6 +217,7 @@ export default function FrameworkDetailPage(props: Props) {
             </div>
             <div className="text-base">{selectedControl.name}</div>
             <LinkedMeasuresCard
+              variant="card"
               measures={
                 selectedControl?.measures.edges.map((edge) => edge.node) ?? []
               }
@@ -227,6 +228,7 @@ export default function FrameworkDetailPage(props: Props) {
               disabled={isAttachingMeasure || isDetachingMeasure}
             />
             <LinkedDocumentsCard
+              variant="card"
               documents={
                 selectedControl?.documents.edges.map((edge) => edge.node) ?? []
               }

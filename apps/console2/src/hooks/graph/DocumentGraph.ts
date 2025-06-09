@@ -41,7 +41,7 @@ export const documentNodeQuery = graphql`
   query DocumentGraphNodeQuery($documentId: ID!) {
     node(id: $documentId) {
       ... on Document {
-        ...DocumentPageDocumentFragment
+        ...DocumentDetailPageDocumentFragment
       }
     }
   }

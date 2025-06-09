@@ -12,6 +12,7 @@ import {
   IconChevronDown,
   MeasureBadge,
   IconTrashCan,
+  TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { LinkedMeasuresCardFragment$key } from "./__generated__/LinkedMeasuresCardFragment.graphql";
@@ -19,7 +20,8 @@ import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
 import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { MeasureLinkDialog } from "./MeasureLinkDialog";
+import { LinkedMeasureDialog } from "./LinkedMeasuresDialog.tsx";
+import clsx from "clsx";
 
 const linkedMeasureFragment = graphql`
   fragment LinkedMeasuresCardFragment on Measure {
@@ -51,6 +53,7 @@ type Props<Params> = {
   onAttach: Mutation<Params>;
   // Mutation to detach a measure (will receive {measureId, ...params})
   onDetach: Mutation<Params>;
+  variant?: "card" | "table";
 };
 
 /**
@@ -58,11 +61,14 @@ type Props<Params> = {
  */
 export function LinkedMeasuresCard<Params>(props: Props<Params>) {
   const { __ } = useTranslate();
-  const [limit, setLimit] = useState<number | null>(4);
+  const [limit, setLimit] = useState<number | null>(
+    props.variant === "card" ? 4 : null
+  );
   const measures = useMemo(() => {
     return limit ? props.measures.slice(0, limit) : props.measures;
   }, [props.measures, limit]);
   const showMoreButton = limit !== null && props.measures.length > limit;
+  const variant = props.variant ?? "table";
 
   const onAttach = (measureId: string) => {
     props.onAttach({
@@ -88,46 +94,60 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
     });
   };
 
+  const Wrapper = variant === "card" ? Card : "div";
+
   return (
-    <Card padded className="space-y-[10px]">
-      <div className="flex justify-between">
-        <div className="text-lg font-semibold">{__("Measures")}</div>
-        <MeasureLinkDialog
-          connectionId={props.connectionId}
-          disabled={props.disabled}
-          linkedMeasures={props.measures}
-          onLink={onAttach}
-          onUnlink={onDetach}
-        >
-          <Button variant="tertiary" icon={IconPlusLarge}>
-            {__("Link measure")}
-          </Button>
-        </MeasureLinkDialog>
-      </div>
-      {measures.length > 0 ? (
-        <Table className="bg-invert">
-          <Thead>
-            <Tr>
-              <Th>{__("Name")}</Th>
-              <Th>{__("State")}</Th>
-              <Th></Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {measures.map((measure) => (
-              <MeasureRow
-                key={measure.id}
-                measure={measure}
-                onClick={onDetach}
-              />
-            ))}
-          </Tbody>
-        </Table>
-      ) : (
-        <div className="text-center text-sm text-txt-secondary">
-          {__("No measures linked")}
+    <Wrapper padded className="space-y-[10px]">
+      {variant === "card" && (
+        <div className="flex justify-between">
+          <div className="text-lg font-semibold">{__("Measures")}</div>
+          <LinkedMeasureDialog
+            connectionId={props.connectionId}
+            disabled={props.disabled}
+            linkedMeasures={props.measures}
+            onLink={onAttach}
+            onUnlink={onDetach}
+          >
+            <Button variant="tertiary" icon={IconPlusLarge}>
+              {__("Link measure")}
+            </Button>
+          </LinkedMeasureDialog>
         </div>
       )}
+      <Table className={clsx(variant === "card" && "bg-invert")}>
+        <Thead>
+          <Tr>
+            <Th>{__("Name")}</Th>
+            <Th>{__("State")}</Th>
+            <Th></Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {measures.length === 0 && (
+            <Tr>
+              <Td colSpan={3} className="text-center text-txt-secondary">
+                {__("No measures linked")}
+              </Td>
+            </Tr>
+          )}
+          {measures.map((measure) => (
+            <MeasureRow key={measure.id} measure={measure} onClick={onDetach} />
+          ))}
+          {variant === "table" && (
+            <LinkedMeasureDialog
+              connectionId={props.connectionId}
+              disabled={props.disabled}
+              linkedMeasures={props.measures}
+              onLink={onAttach}
+              onUnlink={onDetach}
+            >
+              <TrButton colspan={3} icon={IconPlusLarge}>
+                {__("Link measure")}
+              </TrButton>
+            </LinkedMeasureDialog>
+          )}
+        </Tbody>
+      </Table>
       {showMoreButton && (
         <Button
           variant="tertiary"
@@ -138,7 +158,7 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
           {sprintf(__("Show %s more"), props.measures.length - limit)}
         </Button>
       )}
-    </Card>
+    </Wrapper>
   );
 }
 

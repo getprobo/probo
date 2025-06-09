@@ -13,12 +13,12 @@ import {
 import { type RefObject } from "react";
 import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
-import type { DocumentPageDocumentFragment$data } from "../__generated__/DocumentPageDocumentFragment.graphql";
 import type { UpdateVersionDialogCreateMutation } from "./__generated__/UpdateVersionDialogCreateMutation.graphql";
 import type { UpdateVersionDialogUpdateMutation } from "./__generated__/UpdateVersionDialogUpdateMutation.graphql";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import type { DocumentDetailPageDocumentFragment$data } from "../__generated__/DocumentDetailPageDocumentFragment.graphql";
 
 const createDraftDocument = graphql`
   mutation UpdateVersionDialogCreateMutation(
@@ -62,7 +62,7 @@ const UpdateDocumentMutation = graphql`
 `;
 
 type Props = {
-  document: DocumentPageDocumentFragment$data;
+  document: DocumentDetailPageDocumentFragment$data;
   connectionId: string;
   ref: RefObject<{ open: () => void } | null>;
 };

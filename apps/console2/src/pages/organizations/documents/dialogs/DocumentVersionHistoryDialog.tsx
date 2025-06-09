@@ -9,11 +9,11 @@ import {
 import { graphql } from "relay-runtime";
 import { useTranslate } from "@probo/i18n";
 import { useState, type ReactNode } from "react";
-import type { DocumentPageDocumentFragment$data } from "../__generated__/DocumentPageDocumentFragment.graphql";
 import { useFragment } from "react-relay";
 import type { DocumentVersionHistoryDialogFragment$key } from "./__generated__/DocumentVersionHistoryDialogFragment.graphql";
 import clsx from "clsx";
 import type { NodeOf } from "/types";
+import type { DocumentDetailPageDocumentFragment$data } from "../__generated__/DocumentDetailPageDocumentFragment.graphql";
 
 const historyFragment = graphql`
   fragment DocumentVersionHistoryDialogFragment on DocumentVersion {
@@ -31,11 +31,11 @@ const historyFragment = graphql`
 `;
 
 type Props = {
-  document: DocumentPageDocumentFragment$data;
+  document: DocumentDetailPageDocumentFragment$data;
   children?: ReactNode;
 };
 
-type Version = NodeOf<DocumentPageDocumentFragment$data["versions"]>;
+type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
 
 export function DocumentVersionHistoryDialog(props: Props) {
   const { __ } = useTranslate();
@@ -68,7 +68,7 @@ export function DocumentVersionHistoryDialog(props: Props) {
 }
 
 function VersionItem(props: {
-  document: DocumentPageDocumentFragment$data;
+  document: DocumentDetailPageDocumentFragment$data;
   version: Version;
   active?: boolean;
   onSelect: (v: Version) => void;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d474691920e943cf5df04fa93c746b28>>
+ * @generated SignedSource<<d2ea4d096aa13e35f9740af51ecd969f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,6 +20,7 @@ export type MeasuresPageFragment$data = {
         readonly id: string;
         readonly name: string;
         readonly state: MeasureState;
+        readonly " $fragmentSpreads": FragmentRefs<"MeasureFormDialogMeasureFragment">;
       };
     }>;
   };
@@ -100,6 +101,11 @@ const node: ReaderFragment = {
                   "storageKey": null
                 },
                 {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "MeasureFormDialogMeasureFragment"
+                },
+                {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
@@ -164,6 +170,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "6a45bee844bf79dc4540e20edf10ad78";
+(node as any).hash = "b9f66d2e9305aa568c33f708d4ce8fac";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c182ef1b9491681644676e99e0b07ee7>>
+ * @generated SignedSource<<72689566d977ab4171c75ba9ce2c62f4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,16 @@ import { ReaderFragment } from 'relay-runtime';
 export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
-export type DocumentPageDocumentFragment$data = {
+export type DocumentDetailPageDocumentFragment$data = {
+  readonly controls: {
+    readonly __id: string;
+    readonly edges: ReadonlyArray<{
+      readonly node: {
+        readonly id: string;
+        readonly " $fragmentSpreads": FragmentRefs<"LinkedControlsCardFragment">;
+      };
+    }>;
+  };
   readonly id: string;
   readonly owner: {
     readonly fullName: string;
@@ -46,11 +55,11 @@ export type DocumentPageDocumentFragment$data = {
       };
     }>;
   };
-  readonly " $fragmentType": "DocumentPageDocumentFragment";
+  readonly " $fragmentType": "DocumentDetailPageDocumentFragment";
 };
-export type DocumentPageDocumentFragment$key = {
-  readonly " $data"?: DocumentPageDocumentFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"DocumentPageDocumentFragment">;
+export type DocumentDetailPageDocumentFragment$key = {
+  readonly " $data"?: DocumentDetailPageDocumentFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentDetailPageDocumentFragment">;
 };
 
 const node: ReaderFragment = (function(){
@@ -121,6 +130,14 @@ return {
         "count": null,
         "cursor": null,
         "direction": "forward",
+        "path": [
+          "controls"
+        ]
+      },
+      {
+        "count": null,
+        "cursor": null,
+        "direction": "forward",
         "path": null
       },
       {
@@ -133,7 +150,7 @@ return {
       }
     ]
   },
-  "name": "DocumentPageDocumentFragment",
+  "name": "DocumentDetailPageDocumentFragment",
   "selections": [
     (v0/*: any*/),
     {
@@ -163,11 +180,54 @@ return {
       "storageKey": null
     },
     {
+      "alias": "controls",
+      "args": null,
+      "concreteType": "ControlConnection",
+      "kind": "LinkedField",
+      "name": "__DocumentDetailPage_controls_connection",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "ControlEdge",
+          "kind": "LinkedField",
+          "name": "edges",
+          "plural": true,
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "concreteType": "Control",
+              "kind": "LinkedField",
+              "name": "node",
+              "plural": false,
+              "selections": [
+                (v0/*: any*/),
+                {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "LinkedControlsCardFragment"
+                },
+                (v1/*: any*/)
+              ],
+              "storageKey": null
+            },
+            (v2/*: any*/)
+          ],
+          "storageKey": null
+        },
+        (v3/*: any*/),
+        (v4/*: any*/)
+      ],
+      "storageKey": null
+    },
+    {
       "alias": "versions",
       "args": null,
       "concreteType": "DocumentVersionConnection",
       "kind": "LinkedField",
-      "name": "__DocumentPage_versions_connection",
+      "name": "__DocumentDetailPage_versions_connection",
       "plural": false,
       "selections": [
         {
@@ -227,7 +287,7 @@ return {
                   "args": null,
                   "concreteType": "DocumentVersionSignatureConnection",
                   "kind": "LinkedField",
-                  "name": "__DocumentPage_signatures_connection",
+                  "name": "__DocumentDetailPage_signatures_connection",
                   "plural": false,
                   "selections": [
                     {
@@ -313,6 +373,6 @@ return {
 };
 })();
 
-(node as any).hash = "b42e98e8e26bc94a2d412bd73cd601f2";
+(node as any).hash = "df93b2fdd0ceea0637ddac2e4186181c";
 
 export default node;

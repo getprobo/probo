@@ -13,13 +13,12 @@ import {
   useDeleteDocumentMutation,
 } from "/hooks/graph/DocumentGraph";
 import { usePageTitle } from "@probo/hooks";
-import type { DocumentPageDocumentFragment$key } from "./__generated__/DocumentPageDocumentFragment.graphql";
+import type { DocumentDetailPageDocumentFragment$key } from "./__generated__/DocumentDetailPageDocumentFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
   PageHeader,
   Breadcrumb,
   IconCheckmark1,
-  Markdown,
   PropertyRow,
   Drawer,
   Badge,
@@ -31,12 +30,15 @@ import {
   IconClock,
   IconSignature,
   useConfirm,
+  Tabs,
+  TabLink,
+  TabBadge,
 } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Button } from "@probo/ui";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf } from "@probo/helpers";
-import { useNavigate } from "react-router";
+import { Outlet, useNavigate } from "react-router";
 import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
 import { useRef } from "react";
 import { DocumentVersionHistoryDialog } from "./dialogs/DocumentVersionHistoryDialog";
@@ -47,14 +49,23 @@ type Props = {
 };
 
 const documentFragment = graphql`
-  fragment DocumentPageDocumentFragment on Document {
+  fragment DocumentDetailPageDocumentFragment on Document {
     id
     title
     owner {
       id
       fullName
     }
-    versions(first: 20) @connection(key: "DocumentPage_versions") {
+    controls(first: 100) @connection(key: "DocumentDetailPage_controls") {
+      __id
+      edges {
+        node {
+          id
+          ...LinkedControlsCardFragment
+        }
+      }
+    }
+    versions(first: 20) @connection(key: "DocumentDetailPage_versions") {
       __id
       edges {
         node {
@@ -64,7 +75,8 @@ const documentFragment = graphql`
           publishedAt
           version
           updatedAt
-          signatures(first: 100) @connection(key: "DocumentPage_signatures") {
+          signatures(first: 100)
+            @connection(key: "DocumentDetailPage_signatures") {
             __id
             edges {
               node {
@@ -86,7 +98,9 @@ const documentFragment = graphql`
 `;
 
 const publishDocumentVersionMutation = graphql`
-  mutation DocumentPagePublishMutation($input: PublishDocumentVersionInput!) {
+  mutation DocumentDetailPagePublishMutation(
+    $input: PublishDocumentVersionInput!
+  ) {
     publishDocumentVersion(input: $input) {
       document {
         id
@@ -95,11 +109,11 @@ const publishDocumentVersionMutation = graphql`
   }
 `;
 
-export default function DocumentPage(props: Props) {
+export default function DocumentDetailPage(props: Props) {
   const node = usePreloadedQuery(documentNodeQuery, props.queryRef).node;
   const document = useFragment(
     documentFragment,
-    node as DocumentPageDocumentFragment$key
+    node as DocumentDetailPageDocumentFragment$key
   );
   const { __, dateFormat } = useTranslate();
   const organizationId = useOrganizationId();
@@ -229,7 +243,22 @@ export default function DocumentPage(props: Props) {
           </div>
         </div>
         <PageHeader title={document.title} />
-        <Markdown content={lastVersion.content} />
+
+        <Tabs>
+          <TabLink
+            to={`/organizations/${organizationId}/documents/${document.id}/description`}
+          >
+            {__("Description")}
+          </TabLink>
+          <TabLink
+            to={`/organizations/${organizationId}/documents/${document.id}/controls`}
+          >
+            {__("Controls")}
+            <TabBadge>{document.controls.edges.length}</TabBadge>
+          </TabLink>
+        </Tabs>
+
+        <Outlet context={{ document, lastVersion }} />
       </div>
       <Drawer>
         <div className="text-base text-txt-primary font-medium mb-4">
