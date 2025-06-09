@@ -1,41 +1,55 @@
-import type { PropsWithChildren } from "react";
+import type { HTMLAttributes, PropsWithChildren } from "react";
 import { NavLink } from "react-router";
 import { Root, List } from "@radix-ui/react-tabs";
-import clsx from "clsx";
+import { Slot, type AsChildProps } from "../Slot";
+import { tv } from "tailwind-variants";
 
-export function Tabs(props: PropsWithChildren) {
+const cls = tv({
+    slots: {
+        wrapper:
+            "border-b border-border-low flex gap-6 text-sm font-medium text-txt-secondary",
+        item: "py-4 hover:text-txt-primary border-b-2 active:border-border-active -mb-[1px] active:text-txt-primary flex items-center gap-2",
+        badge: "py-1 px-2 text-txt-secondary text-xs font-semibold rounded-lg bg-highlight",
+    },
+    variants: {
+        active: {
+            true: {
+                item: "border-border-active text-txt-primary",
+                wrapper: "border-border-active",
+            },
+            false: {
+                item: "border-transparent",
+            },
+        },
+    },
+})();
+
+export function Tabs(props: HTMLAttributes<HTMLElement>) {
     return (
-        <Root className="TabsRoot" defaultValue="tab1">
-            <List className="TabsList" aria-label="Manage your account">
-                <div
-                    className="border-b border-border-low flex gap-6 text-sm font-medium text-txt-secondary"
-                    {...props}
-                />
-            </List>
+        <Root>
+            <List {...props} className={cls.wrapper(props)} />
         </Root>
     );
+}
+
+export function TabItem({
+    asChild,
+    active,
+    ...props
+}: AsChildProps<{ active?: boolean }>) {
+    const Component = asChild ? Slot : "div";
+    return <Component {...props} className={cls.item({ active })} />;
 }
 
 export function TabLink(props: PropsWithChildren<{ to: string }>) {
     return (
         <NavLink
-            className={(params) =>
-                clsx(
-                    "py-4 hover:text-txt-primary border-b-2 active:border-border-active -mb-[1px] active:text-txt-primary flex items-center gap-1",
-                    params.isActive
-                        ? "border-border-active text-txt-primary"
-                        : "border-transparent",
-                )
-            }
+            className={(params) => cls.item({ active: params.isActive })}
             {...props}
         />
     );
 }
 
 export function TabBadge(props: PropsWithChildren) {
-    return (
-        <span className="py-1 px-2 text-txt-secondary text-xs font-semibold rounded-lg bg-highlight text-primary">
-            {props.children}
-        </span>
-    );
+    return <span className={cls.badge()}>{props.children}</span>;
 }

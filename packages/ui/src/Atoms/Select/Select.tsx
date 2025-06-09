@@ -10,10 +10,11 @@ import {
     ItemText,
 } from "@radix-ui/react-select";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
-import { input } from "../Input/Input.tsx";
+import { Input, input } from "../Input/Input.tsx";
 import { IconChevronGrabberVertical } from "../Icons/IconChevronGrabberVertical.tsx";
 import { tv } from "tailwind-variants";
 import { Children, type ComponentProps, type PropsWithChildren } from "react";
+import { IconMagnifyingGlass } from "../Icons/IconMagnifyingGlass.tsx";
 
 type Props<T> = PropsWithChildren<
     {
@@ -25,6 +26,9 @@ type Props<T> = PropsWithChildren<
         disabled?: boolean;
         className?: string;
         value?: T;
+        searchValue?: string;
+        onSearch?: (s: string) => void;
+        searchPlaceholder?: string;
     } & Omit<ComponentProps<typeof Root>, "onChange" | "value">
 >;
 
@@ -40,6 +44,11 @@ const select = tv({
         invalid: {
             true: {
                 trigger: "border-border-danger",
+            },
+        },
+        disabled: {
+            true: {
+                trigger: "opacity-60",
             },
         },
         variant: {
@@ -76,6 +85,9 @@ export function Select<T>({
     children,
     onValueChange,
     value,
+    searchValue,
+    onSearch,
+    searchPlaceholder,
     ...props
 }: Props<T>) {
     const { trigger, content, icon } = select({
@@ -86,7 +98,10 @@ export function Select<T>({
         <Root onValueChange={onValueChange} value={value as string}>
             <Trigger
                 {...props}
-                className={trigger({ className: props.className })}
+                className={trigger({
+                    className: props.className,
+                    disabled: props.disabled,
+                })}
             >
                 <Value placeholder={placeholder} />
                 <Icon className={icon()}>
@@ -104,6 +119,20 @@ export function Select<T>({
                             "var(--radix-select-content-available-height)",
                     }}
                 >
+                    {onSearch && (
+                        <Input
+                            // Prevent radix behaviour
+                            onBlurCapture={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                            }}
+                            autoFocus
+                            icon={IconMagnifyingGlass}
+                            placeholder={searchPlaceholder}
+                            value={searchValue}
+                            onChange={(e) => onSearch(e.target.value)}
+                        />
+                    )}
                     <ScrollArea.Root className="ScrollAreaRoot" type="auto">
                         <Viewport asChild>
                             <ScrollArea.Viewport className="ScrollAreaViewport">

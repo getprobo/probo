@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<987fdfe9c961d800699430963c5dba55>>
+ * @generated SignedSource<<6f19d3ea0d16b3f4418e85261e3e4915>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -52,6 +52,20 @@ v3 = {
   "args": null,
   "kind": "ScalarField",
   "name": "name",
+  "storageKey": null
+},
+v4 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 100
+  }
+],
+v5 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "createdAt",
   "storageKey": null
 };
 return {
@@ -125,13 +139,56 @@ return {
               },
               {
                 "alias": null,
-                "args": [
+                "args": (v4/*: any*/),
+                "concreteType": "UserConnection",
+                "kind": "LinkedField",
+                "name": "users",
+                "plural": false,
+                "selections": [
                   {
-                    "kind": "Literal",
-                    "name": "first",
-                    "value": 100
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "UserEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "User",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "fullName",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "email",
+                            "storageKey": null
+                          },
+                          (v5/*: any*/)
+                        ],
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
                   }
                 ],
+                "storageKey": "users(first:100)"
+              },
+              {
+                "alias": null,
+                "args": (v4/*: any*/),
                 "concreteType": "ConnectorConnection",
                 "kind": "LinkedField",
                 "name": "connectors",
@@ -162,13 +219,7 @@ return {
                             "name": "type",
                             "storageKey": null
                           },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          }
+                          (v5/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -188,12 +239,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "66677d1e24f46cd551b4201d60c5e0a2",
+    "cacheID": "3062be33ff59b816b10d098c083db370",
     "id": null,
     "metadata": {},
     "name": "OrganizationGraph_ViewQuery",
     "operationKind": "query",
-    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  users(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n        email\n        createdAt\n      }\n    }\n  }\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();

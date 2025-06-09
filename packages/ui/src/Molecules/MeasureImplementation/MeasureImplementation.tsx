@@ -37,7 +37,7 @@ export function MeasureImplementation({ measures, className }: Props) {
             <h2 className="text-base font-medium">
                 {__("Measure implementation")}
             </h2>
-            <div className="h-2 rounded bg-highlight flex justify-stretch item-stretch">
+            <div className="h-2 rounded overflow-hidden bg-highlight flex justify-stretch item-stretch">
                 {measureStates.map((state) => (
                     <div
                         key={state}
@@ -45,7 +45,7 @@ export function MeasureImplementation({ measures, className }: Props) {
                         style={{
                             flexGrow: counts[state] ?? 0,
                         }}
-                    ></div>
+                    />
                 ))}
             </div>
             <div className="flex gap-4 text-sm">

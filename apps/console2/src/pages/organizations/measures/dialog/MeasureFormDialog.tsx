@@ -9,6 +9,7 @@ import {
   PropertyRow,
   Textarea,
   useDialogRef,
+  type DialogRef,
 } from "@probo/ui";
 import type { ReactNode } from "react";
 import { useTranslate } from "@probo/i18n";
@@ -23,12 +24,6 @@ import { ControlledSelect } from "/components/form/ControlledField";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useUpdateMeasure } from "/hooks/graph/MeasureGraph";
-
-type Props = {
-  children: ReactNode;
-  measure?: MeasureFormDialogMeasureFragment$key;
-  connection?: string;
-};
 
 const measureFragment = graphql`
   fragment MeasureFormDialogMeasureFragment on Measure {
@@ -62,10 +57,17 @@ const measureSchema = z.object({
   state: z.enum(measureStates),
 });
 
+type Props = {
+  children?: ReactNode;
+  measure?: MeasureFormDialogMeasureFragment$key;
+  connection?: string;
+  ref?: DialogRef;
+};
+
 export default function MeasureFormDialog(props: Props) {
   const { __ } = useTranslate();
   const measure = useFragment(measureFragment, props.measure);
-  const dialogRef = useDialogRef();
+  const dialogRef = props.ref ?? useDialogRef();
   const organizationId = useOrganizationId();
   const [mutate] = props.measure
     ? useUpdateMeasure()
@@ -135,7 +137,7 @@ export default function MeasureFormDialog(props: Props) {
               id="title"
               required
               variant="title"
-              placeholder={__("Document title")}
+              placeholder={__("Measure title")}
               {...register("name")}
             />
             <Textarea
