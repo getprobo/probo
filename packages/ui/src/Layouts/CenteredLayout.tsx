@@ -4,7 +4,7 @@ import { Skeleton } from "../Atoms/Skeleton/Skeleton";
 
 export function CenteredLayout({ children }: PropsWithChildren) {
     return (
-        <div className="grid place-items-center h-screen">
+        <div className="grid place-items-center h-screen text-txt-primary bg-level-0">
             <div className="w-full max-w-2xl flex flex-col items-center">
                 {children ?? <Outlet />}
             </div>
