@@ -39,7 +39,7 @@ const frameworkDetailFragment = graphql`
       edges {
         node {
           id
-          referenceId
+          sectionTitle
           name
           description
           measures(first: 100)
@@ -140,7 +140,7 @@ export default function FrameworkDetailPage(props: Props) {
   const selectedControl = controlId
     ? controls.find((control) => control.id === controlId)
     : controls[0];
-  usePageTitle(`${framework.name} | ${selectedControl?.referenceId}`);
+  usePageTitle(`${framework.name} | ${selectedControl?.sectionTitle}`);
 
   // Mutations
   const [detachMeasure, isDetachingMeasure] = useMutation(
@@ -203,7 +203,7 @@ export default function FrameworkDetailPage(props: Props) {
           {controls.map((control) => (
             <ControlItem
               key={control.id}
-              id={control.referenceId}
+              id={control.sectionTitle}
               description={control.name ?? control.description}
               to={`/organizations/${organizationId}/frameworks/${framework.id}/controls/${control.id}`}
               active={selectedControl?.id === control.id}
@@ -213,7 +213,7 @@ export default function FrameworkDetailPage(props: Props) {
         {selectedControl ? (
           <div className="space-y-6">
             <div className="text-xl font-medium px-[6px] py-[2px] border border-border-low rounded-lg w-max bg-active mb-3">
-              {selectedControl.referenceId}
+              {selectedControl.sectionTitle}
             </div>
             <div className="text-base">{selectedControl.name}</div>
             <LinkedMeasuresCard

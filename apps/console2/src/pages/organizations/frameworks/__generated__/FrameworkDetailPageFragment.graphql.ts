@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<15cc2290d512a0cdde5241edd045d3f5>>
+ * @generated SignedSource<<3e2b13f2b9a543d8393fdb7a1d7c680d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -35,7 +35,7 @@ export type FrameworkDetailPageFragment$data = {
           }>;
         };
         readonly name: string;
-        readonly referenceId: string;
+        readonly sectionTitle: string;
       };
     }>;
   };
@@ -177,7 +177,7 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "referenceId",
+                  "name": "sectionTitle",
                   "storageKey": null
                 },
                 (v2/*: any*/),
@@ -283,6 +283,6 @@ return {
 };
 })();
 
-(node as any).hash = "15b523ca06d1a1e1a80379f6d51b92e2";
+(node as any).hash = "f0fe30240833b2da754f040f0c35aaaa";
 
 export default node;

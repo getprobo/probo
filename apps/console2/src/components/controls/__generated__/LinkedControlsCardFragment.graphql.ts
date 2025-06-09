@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c922ab2420ac172a8d9c18948fc4f006>>
+ * @generated SignedSource<<bdbc3097fad5d998519bb991b3a664c2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type LinkedControlsCardFragment$data = {
   };
   readonly id: string;
   readonly name: string;
-  readonly referenceId: string;
+  readonly sectionTitle: string;
   readonly " $fragmentType": "LinkedControlsCardFragment";
 };
 export type LinkedControlsCardFragment$key = {
@@ -50,7 +50,7 @@ return {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "referenceId",
+      "name": "sectionTitle",
       "storageKey": null
     },
     {
@@ -71,6 +71,6 @@ return {
 };
 })();
 
-(node as any).hash = "1b72ca232511c698e0cbdc84cbc81c02";
+(node as any).hash = "20d4049be0cad5dc766f22d9a0535625";
 
 export default node;
