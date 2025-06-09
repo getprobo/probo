@@ -21,7 +21,7 @@ export function TabLink(props: PropsWithChildren<{ to: string }>) {
         <NavLink
             className={(params) =>
                 clsx(
-                    "py-4 hover:text-txt-primary border-b-2 active:border-border-active -mb-[1px] active:text-txt-primary",
+                    "py-4 hover:text-txt-primary border-b-2 active:border-border-active -mb-[1px] active:text-txt-primary flex items-center gap-1",
                     params.isActive
                         ? "border-border-active text-txt-primary"
                         : "border-transparent",
@@ -29,5 +29,13 @@ export function TabLink(props: PropsWithChildren<{ to: string }>) {
             }
             {...props}
         />
+    );
+}
+
+export function TabBadge(props: PropsWithChildren) {
+    return (
+        <span className="py-1 px-2 text-txt-secondary text-xs font-semibold rounded-lg bg-highlight text-primary">
+            {props.children}
+        </span>
     );
 }

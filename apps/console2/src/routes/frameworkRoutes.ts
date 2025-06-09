@@ -6,7 +6,7 @@ import {
   frameworkNodeQuery,
 } from "/hooks/graph/FrameworkGraph";
 import type { AppRoute } from "/routes";
-import { lazy } from "react";
+import { Fragment, lazy } from "react";
 
 export const frameworkRoutes = [
   {
@@ -19,12 +19,22 @@ export const frameworkRoutes = [
     ),
   },
   {
-    path: "frameworks/:frameworkId/:controlId?",
+    path: "frameworks/:frameworkId",
     fallback: PageSkeleton,
     queryLoader: ({ frameworkId }) =>
       loadQuery(relayEnvironment, frameworkNodeQuery, { frameworkId }),
     Component: lazy(
       () => import("/pages/organizations/frameworks/FrameworkDetailPage")
     ),
+    children: [
+      {
+        path: "",
+        Component: Fragment,
+      },
+      {
+        path: "controls/:controlId",
+        Component: Fragment,
+      },
+    ],
   },
 ] satisfies AppRoute[];

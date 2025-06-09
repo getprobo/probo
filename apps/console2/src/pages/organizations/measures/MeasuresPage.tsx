@@ -44,6 +44,8 @@ import type { MeasuresPageImportMutation } from "./__generated__/MeasuresPageImp
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Link, useParams } from "react-router";
+import MeasureFormDialog from "./dialog/MeasureFormDialog";
+import { usePageTitle } from "@probo/hooks";
 
 type Props = {
   queryRef: PreloadedQuery<MeasureGraphListQuery>;
@@ -59,6 +61,7 @@ const measuresFragment = graphql`
           name
           category
           state
+          ...MeasureFormDialogMeasureFragment
         }
       }
     }
@@ -106,6 +109,7 @@ export default function MeasuresPage(props: Props) {
     }
   );
   const importFileRef = useRef<HTMLInputElement>(null);
+  usePageTitle(__("Measures"));
 
   const handleImport: ChangeEventHandler<HTMLInputElement> = (event) => {
     const file = event.target.files?.[0];
@@ -145,9 +149,11 @@ export default function MeasuresPage(props: Props) {
         >
           {__("Import")}
         </FileButton>
-        <Button variant="primary" icon={IconPlusLarge}>
-          {__("New measure")}
-        </Button>
+        <MeasureFormDialog connection={connectionId}>
+          <Button variant="primary" icon={IconPlusLarge}>
+            {__("New measure")}
+          </Button>
+        </MeasureFormDialog>
       </PageHeader>
       <MeasureImplementation measures={measures} className="my-10" />
       {objectKeys(measuresPerCategory)

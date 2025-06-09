@@ -23,6 +23,8 @@ const deleteMeasureMutation = graphql`
   }
 `;
 
+export const MeasureConnectionKey = "MeasuresGraphListQuery__measures";
+
 export function useDeleteMeasureMutation() {
   const { __ } = useTranslate();
 
@@ -34,3 +36,40 @@ export function useDeleteMeasureMutation() {
     }
   );
 }
+
+export const measureNodeQuery = graphql`
+  query MeasureGraphNodeQuery($measureId: ID!) {
+    node(id: $measureId) {
+      ... on Measure {
+        id
+        name
+        description
+        state
+        category
+        ...MeasureRisksTabFragment
+        ...MeasureControlsTabFragment
+        ...MeasureFormDialogMeasureFragment
+        ...MeasureEvidencesTabFragment
+      }
+    }
+  }
+`;
+
+const measureUpdateMutation = graphql`
+  mutation MeasureGraphUpdateMutation($input: UpdateMeasureInput!) {
+    updateMeasure(input: $input) {
+      measure {
+        ...MeasureFormDialogMeasureFragment
+      }
+    }
+  }
+`;
+
+export const useUpdateMeasure = () => {
+  const { __ } = useTranslate();
+
+  return useMutationWithToasts(measureUpdateMutation, {
+    successMessage: __("Measure updated successfully."),
+    errorMessage: __("Failed to update measure. Please try again."),
+  });
+};

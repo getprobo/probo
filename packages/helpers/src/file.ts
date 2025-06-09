@@ -17,3 +17,18 @@ export function fileSize(__: (s: string) => string, size: number): string {
 
     return `${formattedSize} ${units[unitIndex]}`;
 }
+
+type FileInfo = {
+    type: string;
+    mimeType: string;
+};
+
+export function fileType(__: (s: string) => string, info: FileInfo): string {
+    if (
+        info.type !== "FILE" ||
+        (info.mimeType !== "text/uri-list" && info.mimeType !== "text/uri")
+    ) {
+        return __("Document");
+    }
+    return __("Link");
+}

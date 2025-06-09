@@ -12,7 +12,9 @@ import {
 import {
   ActionDropdown,
   Breadcrumb,
+  Button,
   DropdownItem,
+  IconPageTextLine,
   IconTrashCan,
   TabLink,
   Tabs,
@@ -21,6 +23,7 @@ import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Outlet } from "react-router";
 import { faviconUrl } from "@probo/helpers";
+import { ImportAssessmentDialog } from "./dialogs/ImportAssessmentDialog";
 
 type Props = {
   queryRef: PreloadedQuery<VendorGraphNodeQuery>;
@@ -50,7 +53,7 @@ export default function VendorDetailPage(props: Props) {
           },
         ]}
       />
-      <div className="flex justify-between">
+      <div className="flex justify-between items-start">
         <div className="space-y-4">
           {logo && (
             <img
@@ -61,15 +64,22 @@ export default function VendorDetailPage(props: Props) {
           )}
           <div className="text-2xl">{vendor.name}</div>
         </div>
-        <ActionDropdown variant="secondary">
-          <DropdownItem
-            variant="danger"
-            icon={IconTrashCan}
-            onClick={deleteVendor}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+        <div className="flex gap-2 items-center">
+          <ImportAssessmentDialog vendorId={vendor.id!}>
+            <Button icon={IconPageTextLine} variant="secondary">
+              {__("Assessment From Website")}
+            </Button>
+          </ImportAssessmentDialog>
+          <ActionDropdown variant="secondary">
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={deleteVendor}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        </div>
       </div>
 
       <Tabs>
