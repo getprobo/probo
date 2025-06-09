@@ -71,6 +71,7 @@ export { IconSettingsGear2 } from "./IconSettingsGear2.tsx";
 export { IconBook } from "./IconBook.tsx";
 export { IconCircleQuestionmarkSolid } from "./IconCircleQuestionmarkSolid.tsx";
 export { IconBlock1 } from "./IconBlock1.tsx";
+export { IconWarning } from "./IconWarning.tsx";
 export { IconChevronUp } from "./IconChevronUp.tsx";
 export { IconBlock } from "./IconBlock.tsx";
 export { IconChevronDown } from "./IconChevronDown.tsx";

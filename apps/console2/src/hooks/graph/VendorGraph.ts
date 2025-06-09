@@ -5,7 +5,7 @@ import type { VendorGraphCreateMutation } from "./__generated__/VendorGraphCreat
 import type { VendorGraphDeleteMutation } from "./__generated__/VendorGraphDeleteMutation.graphql.ts";
 import { useMutation } from "react-relay";
 import { useConfirm } from "@probo/ui";
-import { sprintf } from "@probo/helpers";
+import { promisifyMutation, sprintf } from "@probo/helpers";
 
 const createVendorMutation = graphql`
   mutation VendorGraphCreateMutation(
@@ -64,16 +64,13 @@ export const useDeleteVendor = (
     }
     confirm(
       () =>
-        new Promise((resolve) => {
-          mutate({
-            variables: {
-              input: {
-                vendorId: vendor.id!,
-              },
-              connections: [connectionId],
+        promisifyMutation(mutate)({
+          variables: {
+            input: {
+              vendorId: vendor.id!,
             },
-            onCompleted: () => resolve(),
-          });
+            connections: [connectionId],
+          },
         }),
       {
         message: sprintf(

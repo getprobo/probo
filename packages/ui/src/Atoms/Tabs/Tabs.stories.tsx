@@ -1,4 +1,4 @@
-import { Tabs, TabLink } from "./Tabs";
+import { Tabs, TabLink, TabBadge } from "./Tabs";
 import type { Meta, StoryObj } from "@storybook/react";
 
 export default {
@@ -13,8 +13,10 @@ export const Default: Story = {
     render: () => (
         <Tabs>
             <TabLink to="#">Tab 1</TabLink>
-            <TabLink to="#">Tab 2</TabLink>
-            <TabLink to="#">Tab 3</TabLink>
+            <TabLink to="/demo">Tab 2</TabLink>
+            <TabLink to="/demo2">
+                Tab 3 <TabBadge>3</TabBadge>
+            </TabLink>
         </Tabs>
     ),
 };

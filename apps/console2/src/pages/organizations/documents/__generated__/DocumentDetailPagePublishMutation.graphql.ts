@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3ef23505e9378ce7ea92943b394ba290>>
+ * @generated SignedSource<<ce29629a1c8d489463cc22edbd8b81de>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,21 +10,22 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type PublishDocumentVersionInput = {
+  changelog?: string | null | undefined;
   documentId: string;
 };
-export type DocumentPagePublishMutation$variables = {
+export type DocumentDetailPagePublishMutation$variables = {
   input: PublishDocumentVersionInput;
 };
-export type DocumentPagePublishMutation$data = {
+export type DocumentDetailPagePublishMutation$data = {
   readonly publishDocumentVersion: {
     readonly document: {
       readonly id: string;
     };
   };
 };
-export type DocumentPagePublishMutation = {
-  response: DocumentPagePublishMutation$data;
-  variables: DocumentPagePublishMutation$variables;
+export type DocumentDetailPagePublishMutation = {
+  response: DocumentDetailPagePublishMutation$data;
+  variables: DocumentDetailPagePublishMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -77,7 +78,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentPagePublishMutation",
+    "name": "DocumentDetailPagePublishMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -86,20 +87,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "DocumentPagePublishMutation",
+    "name": "DocumentDetailPagePublishMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "fad75c1a396f60d6d13e1605fe85f33e",
+    "cacheID": "bbee8d20f444cdc0dbb012e8fecfa9c1",
     "id": null,
     "metadata": {},
-    "name": "DocumentPagePublishMutation",
+    "name": "DocumentDetailPagePublishMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentPagePublishMutation(\n  $input: PublishDocumentVersionInput!\n) {\n  publishDocumentVersion(input: $input) {\n    document {\n      id\n    }\n  }\n}\n"
+    "text": "mutation DocumentDetailPagePublishMutation(\n  $input: PublishDocumentVersionInput!\n) {\n  publishDocumentVersion(input: $input) {\n    document {\n      id\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "488029ccd88b4c637b63cd11d1bef986";
+(node as any).hash = "2f5cc9855133b614896a1ac3768e669f";
 
 export default node;

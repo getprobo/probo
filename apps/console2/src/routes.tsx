@@ -22,6 +22,7 @@ import { vendorRoutes } from "./routes/vendorRoutes.ts";
 import { organizationViewQuery } from "./hooks/graph/OrganizationGraph.ts";
 import { peopleRoutes } from "./routes/peopleRoutes.ts";
 import { frameworkRoutes } from "./routes/frameworkRoutes.ts";
+import { PageError } from "./components/PageError.tsx";
 
 function ErrorBoundary() {
   const error = useRouteError();
@@ -87,6 +88,10 @@ const routes = [
       ...peopleRoutes,
       ...vendorRoutes,
       ...frameworkRoutes,
+      {
+        path: "*",
+        Component: PageError,
+      },
     ],
   },
 ] satisfies AppRoute[];

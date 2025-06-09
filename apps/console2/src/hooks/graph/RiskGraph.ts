@@ -109,6 +109,7 @@ export const riskNodeQuery = graphql`
         ...useRiskFormFragment
         ...RiskOverviewTabFragment
         ...RiskMeasuresTabFragment
+        ...RiskDocumentsTabFragment
       }
     }
   }

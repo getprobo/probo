@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2cb115c83f67688124df197a8f944329>>
+ * @generated SignedSource<<1c8d31af825eefa7bfb5d58a2534f190>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,7 @@ export type DocumentGraphNodeQuery$variables = {
 };
 export type DocumentGraphNodeQuery$data = {
   readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"DocumentPageDocumentFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"DocumentDetailPageDocumentFragment">;
   };
 };
 export type DocumentGraphNodeQuery = {
@@ -63,16 +63,16 @@ v5 = [
   {
     "kind": "Literal",
     "name": "first",
-    "value": 20
-  }
-],
-v6 = [
-  {
-    "kind": "Literal",
-    "name": "first",
     "value": 100
   }
 ],
+v6 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
 v7 = {
   "alias": null,
   "args": null,
@@ -116,7 +116,14 @@ v9 = {
       "storageKey": null
     }
   ]
-};
+},
+v10 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 20
+  }
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -138,7 +145,7 @@ return {
               {
                 "args": null,
                 "kind": "FragmentSpread",
-                "name": "DocumentPageDocumentFragment"
+                "name": "DocumentDetailPageDocumentFragment"
               }
             ],
             "type": "Document",
@@ -193,6 +200,74 @@ return {
               {
                 "alias": null,
                 "args": (v5/*: any*/),
+                "concreteType": "ControlConnection",
+                "kind": "LinkedField",
+                "name": "controls",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "ControlEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Control",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v3/*: any*/),
+                          (v6/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "referenceId",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Framework",
+                            "kind": "LinkedField",
+                            "name": "framework",
+                            "plural": false,
+                            "selections": [
+                              (v6/*: any*/),
+                              (v3/*: any*/)
+                            ],
+                            "storageKey": null
+                          },
+                          (v2/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v7/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v8/*: any*/),
+                  (v9/*: any*/)
+                ],
+                "storageKey": "controls(first:100)"
+              },
+              {
+                "alias": null,
+                "args": (v5/*: any*/),
+                "filters": null,
+                "handle": "connection",
+                "key": "DocumentDetailPage_controls",
+                "kind": "LinkedHandle",
+                "name": "controls"
+              },
+              {
+                "alias": null,
+                "args": (v10/*: any*/),
                 "concreteType": "DocumentVersionConnection",
                 "kind": "LinkedField",
                 "name": "versions",
@@ -252,7 +327,7 @@ return {
                           },
                           {
                             "alias": null,
-                            "args": (v6/*: any*/),
+                            "args": (v5/*: any*/),
                             "concreteType": "DocumentVersionSignatureConnection",
                             "kind": "LinkedField",
                             "name": "signatures",
@@ -331,10 +406,10 @@ return {
                           },
                           {
                             "alias": null,
-                            "args": (v6/*: any*/),
+                            "args": (v5/*: any*/),
                             "filters": null,
                             "handle": "connection",
-                            "key": "DocumentPage_signatures",
+                            "key": "DocumentDetailPage_signatures",
                             "kind": "LinkedHandle",
                             "name": "signatures"
                           },
@@ -373,10 +448,10 @@ return {
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v10/*: any*/),
                 "filters": null,
                 "handle": "connection",
-                "key": "DocumentPage_versions",
+                "key": "DocumentDetailPage_versions",
                 "kind": "LinkedHandle",
                 "name": "versions"
               }
@@ -390,16 +465,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "671e1a9b133593847c68af3abd9a721f",
+    "cacheID": "cc52945231b42fbaf4c86eba5c3ee433",
     "id": null,
     "metadata": {},
     "name": "DocumentGraphNodeQuery",
     "operationKind": "query",
-    "text": "query DocumentGraphNodeQuery(\n  $documentId: ID!\n) {\n  node(id: $documentId) {\n    __typename\n    ... on Document {\n      ...DocumentPageDocumentFragment\n    }\n    id\n  }\n}\n\nfragment DocumentPageDocumentFragment on Document {\n  id\n  title\n  owner {\n    id\n    fullName\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesDialog_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        ...DocumentVersionHistoryDialogFragment\n        ...DocumentSignaturesDialog_version\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesDialog_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesDialog_version on DocumentVersion {\n  version\n  status\n  publishedAt\n  updatedAt\n}\n\nfragment DocumentVersionHistoryDialogFragment on DocumentVersion {\n  id\n  version\n  status\n  content\n  changelog\n  publishedAt\n  updatedAt\n  publishedBy {\n    fullName\n    id\n  }\n}\n"
+    "text": "query DocumentGraphNodeQuery(\n  $documentId: ID!\n) {\n  node(id: $documentId) {\n    __typename\n    ... on Document {\n      ...DocumentDetailPageDocumentFragment\n    }\n    id\n  }\n}\n\nfragment DocumentDetailPageDocumentFragment on Document {\n  id\n  title\n  owner {\n    id\n    fullName\n  }\n  controls(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesDialog_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        ...DocumentVersionHistoryDialogFragment\n        ...DocumentSignaturesDialog_version\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesDialog_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesDialog_version on DocumentVersion {\n  version\n  status\n  publishedAt\n  updatedAt\n}\n\nfragment DocumentVersionHistoryDialogFragment on DocumentVersion {\n  id\n  version\n  status\n  content\n  changelog\n  publishedAt\n  updatedAt\n  publishedBy {\n    fullName\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  referenceId\n  framework {\n    name\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d6f55d4636b86d853b97b44e68e435f2";
+(node as any).hash = "f7e5a8ebb67a7668627c01ca1c4c6b19";
 
 export default node;
