@@ -9,7 +9,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 import { Slot } from "../Slot";
 
 export const button = tv({
-    base: "flex items-center justify-center gap-[6px] px-3 py-2 rounded-full cursor-pointer text-sm font-medium h-8 focus:outline-none whitespace-nowrap",
+    base: "flex items-center justify-center gap-[6px] px-3 py-2 rounded-full cursor-pointer text-sm font-medium h-8 focus:outline-none whitespace-nowrap w-max",
     variants: {
         variant: {
             primary:

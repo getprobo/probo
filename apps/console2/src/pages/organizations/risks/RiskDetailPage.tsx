@@ -129,6 +129,11 @@ export default function RiskDetailPage(props: Props) {
         >
           {__("Measures")}
         </TabLink>
+        <TabLink
+          to={`/organizations/${organizationId}/risks/${riskId}/documents`}
+        >
+          {__("Documents")}
+        </TabLink>
       </Tabs>
 
       <Outlet context={{ risk }} />

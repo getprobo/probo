@@ -28,6 +28,8 @@ import { graphql } from "relay-runtime";
 import { useLazyLoadQuery } from "react-relay";
 import type { MainLayoutQuery as MainLayoutQueryType } from "./__generated__/MainLayoutQuery.graphql";
 import { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+import { PageError } from "/components/PageError";
 
 const MainLayoutQuery = graphql`
   query MainLayoutQuery {
@@ -123,7 +125,9 @@ export function MainLayout() {
         </ul>
       }
     >
-      <Outlet />
+      <ErrorBoundary FallbackComponent={PageError}>
+        <Outlet />
+      </ErrorBoundary>
     </Layout>
   );
 }

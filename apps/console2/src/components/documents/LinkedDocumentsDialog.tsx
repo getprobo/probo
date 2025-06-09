@@ -7,33 +7,55 @@ import {
   IconMagnifyingGlass,
   IconPlusLarge,
   IconTrashCan,
+  InfiniteScrollTrigger,
   Input,
   Spinner,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
-import { useLazyLoadQuery } from "react-relay";
-import type {
-  DocumentLinkDialogQuery,
-  DocumentLinkDialogQuery$data,
-} from "./__generated__/DocumentLinkDialogQuery.graphql";
+import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import type { LinkedDocumentsDialogQuery } from "./__generated__/LinkedDocumentsDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { NodeOf } from "/types";
+import type {
+  LinkedDocumentsDialogFragment$data,
+  LinkedDocumentsDialogFragment$key,
+} from "./__generated__/LinkedDocumentsDialogFragment.graphql";
 
 const documentsQuery = graphql`
-  query DocumentLinkDialogQuery($organizationId: ID!) {
+  query LinkedDocumentsDialogQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       id
       ... on Organization {
-        documents(first: 100) @connection(key: "Organization__documents") {
-          edges {
-            node {
-              id
-              title
-              documentType
-            }
-          }
+        ...LinkedDocumentsDialogFragment
+      }
+    }
+  }
+`;
+
+const documentsFragment = graphql`
+  fragment LinkedDocumentsDialogFragment on Organization
+  @refetchable(queryName: "LinkedDocumentsDialogQuery_fragment")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 20 }
+    order: { type: "DocumentOrder", defaultValue: null }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    documents(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "LinkedDocumentsDialogQuery_documents") {
+      edges {
+        node {
+          id
+          title
+          documentType
         }
       }
     }
@@ -49,14 +71,14 @@ type Props = {
   onUnlink: (documentId: string) => void;
 };
 
-export function DocumentLinkDialog({ children, ...props }: Props) {
+export function LinkedDocumentDialog({ children, ...props }: Props) {
   const { __ } = useTranslate();
 
   return (
     <Dialog trigger={children} title={__("Link documents")}>
       <DialogContent>
         <Suspense fallback={<Spinner centered />}>
-          <DocumentLinkDialogContent {...props} />
+          <LinkedDocumentsDialogContent {...props} />
         </Suspense>
       </DialogContent>
       <DialogFooter exitLabel={__("Close")} />
@@ -64,15 +86,18 @@ export function DocumentLinkDialog({ children, ...props }: Props) {
   );
 }
 
-function DocumentLinkDialogContent(props: Omit<Props, "children">) {
+function LinkedDocumentsDialogContent(props: Omit<Props, "children">) {
   const organizationId = useOrganizationId();
-  const data = useLazyLoadQuery<DocumentLinkDialogQuery>(documentsQuery, {
+  const query = useLazyLoadQuery<LinkedDocumentsDialogQuery>(documentsQuery, {
     organizationId,
   });
+  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
+    documentsFragment,
+    query.organization as LinkedDocumentsDialogFragment$key
+  );
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
-  const documents =
-    data.organization?.documents?.edges?.map((edge) => edge.node) ?? [];
+  const documents = data.documents?.edges?.map((edge) => edge.node) ?? [];
   const linkedIds = useMemo(() => {
     return new Set(props.linkedDocuments?.map((m) => m.id) ?? []);
   }, [props.linkedDocuments]);
@@ -103,14 +128,18 @@ function DocumentLinkDialogContent(props: Omit<Props, "children">) {
             disabled={props.disabled}
           />
         ))}
+        {hasNext && (
+          <InfiniteScrollTrigger
+            loading={isLoadingNext}
+            onView={() => loadNext(20)}
+          />
+        )}
       </div>
     </>
   );
 }
 
-type Document = NodeOf<
-  DocumentLinkDialogQuery$data["organization"]["documents"]
->;
+type Document = NodeOf<LinkedDocumentsDialogFragment$data["documents"]>;
 
 type RowProps = {
   document: Document;
@@ -129,7 +158,7 @@ function DocumentRow(props: RowProps) {
 
   return (
     <button
-      className="py-4 flex items-center gap-4 hover:bg-subtle cursor-pointer px-6 w-full"
+      className="py-4 flex items-center gap-4 hover:bg-subtle cursor-pointer px-6 w-full h-[100px]"
       onClick={() => onClick(props.document.id)}
     >
       {props.document.title}

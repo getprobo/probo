@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4d7510366af238f19e3bff7949776f0a>>
+ * @generated SignedSource<<792fbba36453d167b7844222f287183e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -153,6 +153,13 @@ return {
                             "name": "state",
                             "storageKey": null
                           },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "description",
+                            "storageKey": null
+                          },
                           (v3/*: any*/)
                         ],
                         "storageKey": null
@@ -226,12 +233,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "876c92c41e08247a4900883b56ac6762",
+    "cacheID": "aeaecdca869ba61b6602c2ebd701061d",
     "id": null,
     "metadata": {},
     "name": "MeasureGraphListQuery",
     "operationKind": "query",
-    "text": "query MeasureGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...MeasuresPageFragment\n  }\n}\n\nfragment MeasuresPageFragment on Organization {\n  measures(first: 100) {\n    edges {\n      node {\n        id\n        name\n        category\n        state\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query MeasureGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...MeasuresPageFragment\n  }\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasuresPageFragment on Organization {\n  measures(first: 100) {\n    edges {\n      node {\n        id\n        name\n        category\n        state\n        ...MeasureFormDialogMeasureFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();

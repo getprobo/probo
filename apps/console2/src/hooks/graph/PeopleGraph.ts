@@ -12,7 +12,7 @@ import type { PeopleGraphPaginatedQuery } from "./__generated__/PeopleGraphPagin
 import type { PeopleGraphPaginatedFragment$key } from "./__generated__/PeopleGraphPaginatedFragment.graphql";
 import { useConfirm } from "@probo/ui";
 import type { PeopleGraphDeleteMutation } from "./__generated__/PeopleGraphDeleteMutation.graphql";
-import { sprintf } from "@probo/helpers";
+import { promisifyMutation, sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 
 const peopleQuery = graphql`
@@ -130,16 +130,13 @@ export const useDeletePeople = (
     }
     confirm(
       () =>
-        new Promise((resolve) => {
-          mutate({
-            variables: {
-              input: {
-                peopleId: people.id!,
-              },
-              connections: [connectionId],
+        promisifyMutation(mutate)({
+          variables: {
+            input: {
+              peopleId: people.id!,
             },
-            onCompleted: () => resolve(),
-          });
+            connections: [connectionId],
+          },
         }),
       {
         message: sprintf(

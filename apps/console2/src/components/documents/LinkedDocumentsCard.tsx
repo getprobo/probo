@@ -13,6 +13,7 @@ import {
   IconTrashCan,
   DocumentVersionBadge,
   DocumentTypeBadge,
+  TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { LinkedDocumentsCardFragment$key } from "./__generated__/LinkedDocumentsCardFragment.graphql";
@@ -20,7 +21,8 @@ import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
 import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { DocumentLinkDialog } from "./DocumentLinkDialog";
+import { LinkedDocumentDialog } from "./LinkedDocumentsDialog.tsx";
+import clsx from "clsx";
 
 const linkedDocumentFragment = graphql`
   fragment LinkedDocumentsCardFragment on Document {
@@ -61,6 +63,7 @@ type Props<Params> = {
   onAttach: Mutation<Params>;
   // Mutation to detach a document (will receive {documentId, ...params})
   onDetach: Mutation<Params>;
+  variant?: "card" | "table";
 };
 
 /**
@@ -73,6 +76,7 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
     return limit ? props.documents.slice(0, limit) : props.documents;
   }, [props.documents, limit]);
   const showMoreButton = limit !== null && props.documents.length > limit;
+  const variant = props.variant ?? "table";
 
   const onAttach = (documentId: string) => {
     props.onAttach({
@@ -98,47 +102,65 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
     });
   };
 
+  const Wrapper = variant === "card" ? Card : "div";
+
   return (
-    <Card padded className="space-y-[10px]">
-      <div className="flex justify-between">
-        <div className="text-lg font-semibold">{__("Documents")}</div>
-        <DocumentLinkDialog
-          connectionId={props.connectionId}
-          disabled={props.disabled}
-          linkedDocuments={props.documents}
-          onLink={onAttach}
-          onUnlink={onDetach}
-        >
-          <Button variant="tertiary" icon={IconPlusLarge}>
-            {__("Link document")}
-          </Button>
-        </DocumentLinkDialog>
-      </div>
-      {documents.length > 0 ? (
-        <Table className="bg-invert">
-          <Thead>
-            <Tr>
-              <Th>{__("Name")}</Th>
-              <Th>{__("Type")}</Th>
-              <Th>{__("State")}</Th>
-              <Th></Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {documents.map((document) => (
-              <DocumentRow
-                key={document.id}
-                document={document}
-                onClick={onDetach}
-              />
-            ))}
-          </Tbody>
-        </Table>
-      ) : (
-        <div className="text-center text-sm text-txt-secondary">
-          {__("No documents linked")}
+    <Wrapper padded className="space-y-[10px]">
+      {variant === "card" && (
+        <div className="flex justify-between">
+          <div className="text-lg font-semibold">{__("Documents")}</div>
+          <LinkedDocumentDialog
+            connectionId={props.connectionId}
+            disabled={props.disabled}
+            linkedDocuments={props.documents}
+            onLink={onAttach}
+            onUnlink={onDetach}
+          >
+            <Button variant="tertiary" icon={IconPlusLarge}>
+              {__("Link document")}
+            </Button>
+          </LinkedDocumentDialog>
         </div>
       )}
+      <Table className={clsx(variant === "card" && "bg-invert")}>
+        <Thead>
+          <Tr>
+            <Th>{__("Name")}</Th>
+            <Th>{__("Type")}</Th>
+            <Th>{__("State")}</Th>
+            <Th></Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {documents.length === 0 && (
+            <Tr>
+              <Td colSpan={4} className="text-center text-txt-secondary">
+                {__("No documents linked")}
+              </Td>
+            </Tr>
+          )}
+          {documents.map((document) => (
+            <DocumentRow
+              key={document.id}
+              document={document}
+              onClick={onDetach}
+            />
+          ))}
+          {variant === "table" && (
+            <LinkedDocumentDialog
+              connectionId={props.connectionId}
+              disabled={props.disabled}
+              linkedDocuments={props.documents}
+              onLink={onAttach}
+              onUnlink={onDetach}
+            >
+              <TrButton colspan={4} icon={IconPlusLarge}>
+                {__("Link document")}
+              </TrButton>
+            </LinkedDocumentDialog>
+          )}
+        </Tbody>
+      </Table>
       {showMoreButton && (
         <Button
           variant="tertiary"
@@ -149,7 +171,7 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
           {sprintf(__("Show %s more"), props.documents.length - limit)}
         </Button>
       )}
-    </Card>
+    </Wrapper>
   );
 }
 

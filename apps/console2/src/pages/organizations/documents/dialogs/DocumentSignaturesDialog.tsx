@@ -13,7 +13,6 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useState, type ReactNode, Suspense } from "react";
-import type { DocumentPageDocumentFragment$data } from "../__generated__/DocumentPageDocumentFragment.graphql";
 import clsx from "clsx";
 import type { ItemOf, NodeOf } from "/types";
 import { graphql, useFragment } from "react-relay";
@@ -23,13 +22,14 @@ import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 import { useOrganizationId } from "/hooks/useOrganizationId.ts";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
 import { sprintf } from "@probo/helpers";
+import type { DocumentDetailPageDocumentFragment$data } from "../__generated__/DocumentDetailPageDocumentFragment.graphql";
 
 type Props = {
-  document: DocumentPageDocumentFragment$data;
+  document: DocumentDetailPageDocumentFragment$data;
   children?: ReactNode;
 };
 
-type Version = NodeOf<DocumentPageDocumentFragment$data["versions"]>;
+type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
 
 export function DocumentSignaturesDialog(props: Props) {
   const { __ } = useTranslate();

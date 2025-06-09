@@ -16,22 +16,23 @@ import { useTranslate } from "@probo/i18n";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery } from "react-relay";
-import type { MeasureLinkDialogQuery } from "./__generated__/MeasureLinkDialogQuery.graphql";
+import type { LinkedRisksDialogQuery } from "./__generated__/LinkedRisksDialogQuery.graphql";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 
-const measuresQuery = graphql`
-  query MeasureLinkDialogQuery($organizationId: ID!) {
+const risksQuery = graphql`
+  query LinkedRisksDialogQuery($organizationId: ID!) {
     organization: node(id: $organizationId) {
       id
       ... on Organization {
-        measures(first: 100) @connection(key: "Organization__measures") {
+        risks(first: 100) {
           edges {
             node {
               id
               name
-              state
-              description
               category
+              description
+              inherentRiskScore
+              residualRiskScore
             }
           }
         }
@@ -44,19 +45,19 @@ type Props = {
   children: ReactNode;
   connectionId: string;
   disabled?: boolean;
-  linkedMeasures?: { id: string }[];
-  onLink: (measureId: string) => void;
-  onUnlink: (measureId: string) => void;
+  linkedRisks?: { id: string }[];
+  onLink: (riskId: string) => void;
+  onUnlink: (riskId: string) => void;
 };
 
-export function MeasureLinkDialog({ children, ...props }: Props) {
+export function LinkedRisksDialog({ children, ...props }: Props) {
   const { __ } = useTranslate();
 
   return (
-    <Dialog trigger={children} title={__("Link measures")}>
+    <Dialog trigger={children} title={__("Link risks")}>
       <DialogContent>
         <Suspense fallback={<Spinner centered />}>
-          <MeasureLinkDialogContent {...props} />
+          <LinkedRisksDialogContent {...props} />
         </Suspense>
       </DialogContent>
       <DialogFooter exitLabel={__("Close")} />
@@ -64,32 +65,31 @@ export function MeasureLinkDialog({ children, ...props }: Props) {
   );
 }
 
-function MeasureLinkDialogContent(props: Omit<Props, "children">) {
+function LinkedRisksDialogContent(props: Omit<Props, "children">) {
   const organizationId = useOrganizationId();
-  const data = useLazyLoadQuery<MeasureLinkDialogQuery>(measuresQuery, {
+  const data = useLazyLoadQuery<LinkedRisksDialogQuery>(risksQuery, {
     organizationId,
   });
   const { __ } = useTranslate();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string | null>(null);
-  const measures =
-    data.organization?.measures?.edges?.map((edge) => edge.node) ?? [];
+  const risks = data.organization?.risks?.edges?.map((edge) => edge.node) ?? [];
   const linkedIds = useMemo(() => {
-    return new Set(props.linkedMeasures?.map((m) => m.id) ?? []);
-  }, [props.linkedMeasures]);
+    return new Set(props.linkedRisks?.map((r) => r.id) ?? []);
+  }, [props.linkedRisks]);
 
-  const filteredMeasures = useMemo(() => {
-    return measures.filter(
-      (measure) =>
-        (category === null || measure.category === category) &&
-        (measure.name.toLowerCase().includes(search.toLowerCase()) ||
-          measure.description?.toLowerCase().includes(search.toLowerCase()))
+  const filteredRisks = useMemo(() => {
+    return risks.filter(
+      (risk) =>
+        (category === null || risk.category === category) &&
+        (risk.name.toLowerCase().includes(search.toLowerCase()) ||
+          risk.description?.toLowerCase().includes(search.toLowerCase()))
     );
-  }, [measures, search, category]);
+  }, [risks, search, category]);
 
   const categories = useMemo(
-    () => Array.from(new Set(measures.map((m) => m.category))),
-    [measures]
+    () => Array.from(new Set(risks.map((r) => r.category))),
+    [risks]
   );
 
   return (
@@ -97,7 +97,7 @@ function MeasureLinkDialogContent(props: Omit<Props, "children">) {
       <div className="flex items-center gap-2 sticky top-0 relative py-4 bg-linear-to-b from-50% from-level-2 to-level-2/0 px-6">
         <Input
           icon={IconMagnifyingGlass}
-          placeholder={__("Search measures...")}
+          placeholder={__("Search risks...")}
           onValueChange={setSearch}
         />
         <Select
@@ -114,11 +114,11 @@ function MeasureLinkDialogContent(props: Omit<Props, "children">) {
         </Select>
       </div>
       <div className="divide-y divide-border-low">
-        {filteredMeasures.map((measure) => (
-          <MeasureRow
-            key={measure.id}
-            measure={measure}
-            linkedMeasures={linkedIds}
+        {filteredRisks.map((risk) => (
+          <RiskRow
+            key={risk.id}
+            risk={risk}
+            linkedRisks={linkedIds}
             onLink={props.onLink}
             onUnlink={props.onUnlink}
             disabled={props.disabled}
@@ -130,27 +130,33 @@ function MeasureLinkDialogContent(props: Omit<Props, "children">) {
 }
 
 type RowProps = {
-  measure: { name: string; category: string; id: string };
-  linkedMeasures: Set<string>;
+  risk: {
+    name: string;
+    category: string;
+    id: string;
+    inherentRiskScore: number;
+    residualRiskScore: number;
+  };
+  linkedRisks: Set<string>;
   disabled?: boolean;
-  onLink: (measureId: string) => void;
-  onUnlink: (measureId: string) => void;
+  onLink: (riskId: string) => void;
+  onUnlink: (riskId: string) => void;
 };
 
-function MeasureRow(props: RowProps) {
+function RiskRow(props: RowProps) {
   const { __ } = useTranslate();
 
-  const isLinked = props.linkedMeasures.has(props.measure.id);
+  const isLinked = props.linkedRisks.has(props.risk.id);
   const onClick = isLinked ? props.onUnlink : props.onLink;
   const IconComponent = isLinked ? IconTrashCan : IconPlusLarge;
 
   return (
     <button
       className="py-4 flex items-center gap-4 hover:bg-subtle cursor-pointer px-6 w-full"
-      onClick={() => onClick(props.measure.id)}
+      onClick={() => onClick(props.risk.id)}
     >
-      {props.measure.name}
-      <Badge variant="neutral">{props.measure.category}</Badge>
+      <div className="text-left">{props.risk.name}</div>
+      <Badge variant="neutral">{props.risk.category}</Badge>
       <Button
         disabled={props.disabled}
         className="ml-auto"

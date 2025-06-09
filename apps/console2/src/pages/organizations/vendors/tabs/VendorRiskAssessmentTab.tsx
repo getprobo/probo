@@ -13,6 +13,7 @@ import {
   IconPlusLarge,
   RiskBadge,
   Badge,
+  TrButton,
 } from "@probo/ui";
 import { useFragment, useRefetchableFragment } from "react-relay";
 import type { VendorRiskAssessmentTabFragment_assessment$key } from "./__generated__/VendorRiskAssessmentTabFragment_assessment.graphql";
@@ -104,17 +105,7 @@ export default function VendorRiskAssessmentTab() {
 
   return (
     <div className="space-y-6 relative">
-      <div className="flex justify-end">
-        <CreateRiskAssessmentDialog
-          vendorId={vendor.id}
-          connection={data.riskAssessments.__id}
-          peopleId={peopleId}
-        >
-          <Button icon={IconPlusLarge} variant="primary">
-            {__("Add Risk Assessment")}
-          </Button>
-        </CreateRiskAssessmentDialog>
-      </div>
+      <div className="flex justify-end"></div>
       <div className="overflow-x-auto">
         <SortableTable refetch={refetch}>
           <Thead>
@@ -126,6 +117,15 @@ export default function VendorRiskAssessmentTab() {
             </Tr>
           </Thead>
           <Tbody>
+            <CreateRiskAssessmentDialog
+              vendorId={vendor.id}
+              connection={data.riskAssessments.__id}
+              peopleId={peopleId}
+            >
+              <TrButton colspan={5} onClick={() => {}}>
+                {__("Add Risk Assessment")}
+              </TrButton>
+            </CreateRiskAssessmentDialog>
             {assessments.map((assessment) => (
               <AssessmentRow
                 key={assessment.id}
