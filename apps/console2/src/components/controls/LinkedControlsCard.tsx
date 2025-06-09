@@ -19,7 +19,7 @@ const linkedControlFragment = graphql`
   fragment LinkedControlsCardFragment on Control {
     id
     name
-    referenceId
+    sectionTitle
     framework {
       name
     }
@@ -105,7 +105,7 @@ function ControlRow(props: {
       <Td>
         <span className="inline-flex gap-2 items-center">
           {control.framework.name}{" "}
-          <Badge size="md">{control.referenceId}</Badge>
+          <Badge size="md">{control.sectionTitle}</Badge>
         </span>
       </Td>
       <Td>{control.name}</Td>

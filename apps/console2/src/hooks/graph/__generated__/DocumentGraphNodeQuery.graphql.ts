@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1c8d31af825eefa7bfb5d58a2534f190>>
+ * @generated SignedSource<<660dce2bed93af9863423c7d15ce41a9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -227,7 +227,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "referenceId",
+                            "name": "sectionTitle",
                             "storageKey": null
                           },
                           {
@@ -465,12 +465,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "cc52945231b42fbaf4c86eba5c3ee433",
+    "cacheID": "9660b8b2cc438fd732fcf0eb8265996b",
     "id": null,
     "metadata": {},
     "name": "DocumentGraphNodeQuery",
     "operationKind": "query",
-    "text": "query DocumentGraphNodeQuery(\n  $documentId: ID!\n) {\n  node(id: $documentId) {\n    __typename\n    ... on Document {\n      ...DocumentDetailPageDocumentFragment\n    }\n    id\n  }\n}\n\nfragment DocumentDetailPageDocumentFragment on Document {\n  id\n  title\n  owner {\n    id\n    fullName\n  }\n  controls(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesDialog_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        ...DocumentVersionHistoryDialogFragment\n        ...DocumentSignaturesDialog_version\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesDialog_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesDialog_version on DocumentVersion {\n  version\n  status\n  publishedAt\n  updatedAt\n}\n\nfragment DocumentVersionHistoryDialogFragment on DocumentVersion {\n  id\n  version\n  status\n  content\n  changelog\n  publishedAt\n  updatedAt\n  publishedBy {\n    fullName\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  referenceId\n  framework {\n    name\n    id\n  }\n}\n"
+    "text": "query DocumentGraphNodeQuery(\n  $documentId: ID!\n) {\n  node(id: $documentId) {\n    __typename\n    ... on Document {\n      ...DocumentDetailPageDocumentFragment\n    }\n    id\n  }\n}\n\nfragment DocumentDetailPageDocumentFragment on Document {\n  id\n  title\n  owner {\n    id\n    fullName\n  }\n  controls(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesDialog_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        ...DocumentVersionHistoryDialogFragment\n        ...DocumentSignaturesDialog_version\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesDialog_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesDialog_version on DocumentVersion {\n  version\n  status\n  publishedAt\n  updatedAt\n}\n\nfragment DocumentVersionHistoryDialogFragment on DocumentVersion {\n  id\n  version\n  status\n  content\n  changelog\n  publishedAt\n  updatedAt\n  publishedBy {\n    fullName\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    name\n    id\n  }\n}\n"
   }
 };
 })();
