@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3e2b13f2b9a543d8393fdb7a1d7c680d>>
+ * @generated SignedSource<<775e1361b15523efe196b9edbd406f5a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type FrameworkDetailPageFragment$data = {
   readonly controls: {
+    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly description: string;
@@ -36,6 +37,7 @@ export type FrameworkDetailPageFragment$data = {
         };
         readonly name: string;
         readonly sectionTitle: string;
+        readonly " $fragmentSpreads": FragmentRefs<"FrameworkControlDialogFragment">;
       };
     }>;
   };
@@ -183,6 +185,11 @@ return {
                 (v2/*: any*/),
                 (v3/*: any*/),
                 {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "FrameworkControlDialogFragment"
+                },
+                {
                   "alias": "measures",
                   "args": null,
                   "concreteType": "MeasureConnection",
@@ -273,7 +280,8 @@ return {
             }
           ],
           "storageKey": null
-        }
+        },
+        (v7/*: any*/)
       ],
       "storageKey": "controls(first:100)"
     }
@@ -283,6 +291,6 @@ return {
 };
 })();
 
-(node as any).hash = "f0fe30240833b2da754f040f0c35aaaa";
+(node as any).hash = "b70c5b2090c5db158c44f0b9fcc0f9bc";
 
 export default node;

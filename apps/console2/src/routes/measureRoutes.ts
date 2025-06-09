@@ -43,6 +43,12 @@ export const measureRoutes = [
         ),
       },
       {
+        path: "tasks",
+        Component: lazy(
+          () => import("/pages/organizations/measures/tabs/MeasureTasksTab.tsx")
+        ),
+      },
+      {
         path: "controls",
         Component: lazy(
           () =>

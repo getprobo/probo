@@ -1,5 +1,5 @@
 import { Avatar, Field, Option, Select } from "@probo/ui";
-import { Suspense } from "react";
+import { Suspense, type ComponentProps } from "react";
 import { useTranslate } from "@probo/i18n";
 import { type Control, Controller } from "react-hook-form";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
@@ -10,7 +10,7 @@ type Props = {
   name: string;
   label?: string;
   error?: string;
-};
+} & ComponentProps<typeof Field>;
 
 export function PeopleSelectField({
   organizationId,
@@ -26,6 +26,7 @@ export function PeopleSelectField({
           organizationId={organizationId}
           control={control}
           name={props.name}
+          disabled={props.disabled}
         />
       </Suspense>
     </Field>
@@ -33,7 +34,7 @@ export function PeopleSelectField({
 }
 
 function PeopleSelectWithQuery(
-  props: Pick<Props, "organizationId" | "control" | "name">
+  props: Pick<Props, "organizationId" | "control" | "name" | "disabled">
 ) {
   const { __ } = useTranslate();
   const { name, organizationId, control } = props;
@@ -46,6 +47,7 @@ function PeopleSelectWithQuery(
         name={name}
         render={({ field }) => (
           <Select
+            disabled={props.disabled}
             id={name}
             variant="editor"
             placeholder={__("Select an owner")}

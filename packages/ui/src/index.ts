@@ -30,11 +30,13 @@ export { Select, Option } from "./Atoms/Select/Select.tsx";
 export { Label } from "./Atoms/Label/Label";
 export { PropertyRow } from "./Atoms/PropertyRow/PropertyRow";
 export { Table, Thead, Tr, Tbody, Td, Th, TrButton } from "./Atoms/Table/Table";
-export { Tabs, TabLink, TabBadge } from "./Atoms/Tabs/Tabs";
+export { Tabs, TabLink, TabBadge, TabItem } from "./Atoms/Tabs/Tabs";
 export { Markdown } from "./Atoms/Markdown/Markdown";
 export { Dropzone } from "./Atoms/Dropzone/Dropzone";
 export { ControlItem } from "./Atoms/ControlItem/ControlItem";
 export { InfiniteScrollTrigger } from "./Atoms/InfiniteScrollTrigger/InfiniteScrollTrigger";
+export { PriorityLevel } from "./Atoms/PriorityLevel/PriorityLevel.tsx";
+export { TaskStateIcon } from "./Atoms/Icons/TaskStateIcon";
 
 // Molecules
 export {
@@ -65,6 +67,7 @@ export { FrameworkSelector } from "./Molecules/FrameworkSelector/FrameworkSelect
 export { DocumentTypeBadge } from "./Molecules/Badge/DocumentTypeBadge";
 export { SentitivityOptions } from "./Molecules/Select/SentitivityOptions";
 export { ImpactOptions } from "./Molecules/Select/ImpactOptions";
+export { DurationPicker } from "./Molecules/DurationPicker/DurationPicker";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";

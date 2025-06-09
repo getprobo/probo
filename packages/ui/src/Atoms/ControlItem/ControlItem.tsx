@@ -6,7 +6,7 @@ type Props = {
     active?: boolean;
     id: string;
     description?: string;
-    to: string;
+    to?: string;
 } & HTMLAttributes<HTMLAnchorElement>;
 
 const classNames = tv({
@@ -40,10 +40,12 @@ export function ControlItem({ active, id, description, to, ...props }: Props) {
     } = classNames({
         active,
     });
-    return (
-        <Link className={wrapper()} to={to} {...props}>
-            <div className={idCls()}>{id}</div>
-            <div className={descriptionCls()}>{description}</div>
-        </Link>
-    );
+    if (to) {
+        return (
+            <Link className={wrapper()} to={to} {...props}>
+                <div className={idCls()}>{id}</div>
+                <div className={descriptionCls()}>{description}</div>
+            </Link>
+        );
+    }
 }

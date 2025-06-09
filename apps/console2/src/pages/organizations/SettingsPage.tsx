@@ -1,13 +1,17 @@
 import {
+  ActionDropdown,
   Avatar,
   Badge,
   Button,
   Card,
+  DropdownItem,
   Field,
   FileButton,
+  IconTrashCan,
   Label,
   PageHeader,
   Spinner,
+  useConfirm,
   useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
@@ -21,9 +25,13 @@ import type {
   SettingsPageFragment$data,
   SettingsPageFragment$key,
 } from "./__generated__/SettingsPageFragment.graphql";
-import type { ChangeEventHandler } from "react";
+import { useState, type ChangeEventHandler } from "react";
 import { sprintf } from "@probo/helpers";
 import type { NodeOf } from "/types";
+import clsx from "clsx";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { useOrganizationId } from "/hooks/useOrganizationId";
+import { InviteUserDialog } from "/components/organizations/InviteUserDialog";
 
 type Props = {
   queryRef: PreloadedQuery<OrganizationGraph_ViewQuery>;
@@ -34,6 +42,16 @@ const organizationFragment = graphql`
     id
     name
     logoUrl
+    users(first: 100) {
+      edges {
+        node {
+          id
+          fullName
+          email
+          createdAt
+        }
+      }
+    }
     connectors(first: 100) {
       edges {
         node {
@@ -73,6 +91,7 @@ export default function SettingsPage({ queryRef }: Props) {
   const [updateOrganization, isUpdating] = useMutation(
     updateOrganizationMutation
   );
+  const users = organization.users.edges.map((edge) => edge.node);
 
   const updateOrganizationName = useDebounceCallback((name: string) => {
     if (!name) {
@@ -153,6 +172,21 @@ export default function SettingsPage({ queryRef }: Props) {
             placeholder={__("Organization name")}
             onChange={(e) => updateOrganizationName(e.currentTarget.value)}
           />
+        </Card>
+      </div>
+
+      {/* Integrations */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-medium">{__("Workspace members")}</h2>
+          <InviteUserDialog>
+            <Button variant="secondary">{__("Invite member")}</Button>
+          </InviteUserDialog>
+        </div>
+        <Card className="divide-y divide-border-solid">
+          {users.map((user) => (
+            <UserRow key={user.id} user={user} />
+          ))}
         </Card>
       </div>
 
@@ -240,6 +274,89 @@ function Connectors(props: {
           )}
         </Card>
       ))}
+    </div>
+  );
+}
+
+const removeUserMutation = graphql`
+  mutation SettingsPage_RemoveUserMutation($input: RemoveUserInput!) {
+    removeUser(input: $input) {
+      success
+    }
+  }
+`;
+
+function UserRow(props: { user: NodeOf<SettingsPageFragment$data["users"]> }) {
+  const { __ } = useTranslate();
+  const organizationId = useOrganizationId();
+  const [removeUser, isRemoving] = useMutationWithToasts(removeUserMutation, {
+    successMessage: sprintf(
+      __("User %s removed successfully"),
+      props.user.fullName
+    ),
+    errorMessage: sprintf(__("Failed to remove user %s"), props.user.fullName),
+  });
+  const confirm = useConfirm();
+  const [isRemoved, setIsRemoved] = useState(false);
+
+  if (isRemoved) {
+    return null;
+  }
+
+  const onRemove = async () => {
+    confirm(
+      () => {
+        return removeUser({
+          variables: {
+            input: {
+              userId: props.user.id,
+              organizationId: organizationId,
+            },
+          },
+          onSuccess: () => {
+            setIsRemoved(true);
+          },
+        });
+      },
+      {
+        message: sprintf(
+          __("Are you sure you want to remove %s?"),
+          props.user.fullName
+        ),
+      }
+    );
+  };
+
+  return (
+    <div
+      className={clsx(
+        "flex justify-between items-center py-4 px-4",
+        isRemoving && "opacity-60 pointer-events-none"
+      )}
+    >
+      <div className="flex items-center gap-4">
+        <Avatar name={props.user.fullName} size="l" />
+        <div>
+          <h3 className="text-base font-semibold">{props.user.fullName}</h3>
+          <p className="text-sm text-txt-tertiary">{props.user.email}</p>
+        </div>
+      </div>
+      <div className="flex gap-2 items-center">
+        <Badge>{__("Owner")}</Badge>
+        {isRemoving ? (
+          <Spinner size={16} />
+        ) : (
+          <ActionDropdown>
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={onRemove}
+            >
+              {__("Remove")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
+      </div>
     </div>
   );
 }

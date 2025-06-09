@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d357c78d6043fd24cd4b9df8e6ba5057>>
+ * @generated SignedSource<<30fa378f7e73bf788828131ecfccb812>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,18 +10,18 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type LinkedMeasuresDialogQuery$variables = {
+export type usePaginatedMeasuresQuery$variables = {
   organizationId: string;
 };
-export type LinkedMeasuresDialogQuery$data = {
+export type usePaginatedMeasuresQuery$data = {
   readonly organization: {
     readonly id: string;
-    readonly " $fragmentSpreads": FragmentRefs<"LinkedMeasuresDialogFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"usePaginatedMeasuresFragment">;
   };
 };
-export type LinkedMeasuresDialogQuery = {
-  response: LinkedMeasuresDialogQuery$data;
-  variables: LinkedMeasuresDialogQuery$variables;
+export type usePaginatedMeasuresQuery = {
+  response: usePaginatedMeasuresQuery$data;
+  variables: usePaginatedMeasuresQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -65,7 +65,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "LinkedMeasuresDialogQuery",
+    "name": "usePaginatedMeasuresQuery",
     "selections": [
       {
         "alias": "organization",
@@ -82,7 +82,7 @@ return {
               {
                 "args": null,
                 "kind": "FragmentSpread",
-                "name": "LinkedMeasuresDialogFragment"
+                "name": "usePaginatedMeasuresFragment"
               }
             ],
             "type": "Organization",
@@ -99,7 +99,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "LinkedMeasuresDialogQuery",
+    "name": "usePaginatedMeasuresQuery",
     "selections": [
       {
         "alias": "organization",
@@ -230,7 +230,7 @@ return {
                   "orderBy"
                 ],
                 "handle": "connection",
-                "key": "LinkedMeasuresDialogQuery_measures",
+                "key": "usePaginatedMeasuresQuery_measures",
                 "kind": "LinkedHandle",
                 "name": "measures"
               }
@@ -244,16 +244,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ecb3ffb566c178a40f6ea72b1947b3ed",
+    "cacheID": "5e37746b5ff660a2b5c817eb64ec0f6e",
     "id": null,
     "metadata": {},
-    "name": "LinkedMeasuresDialogQuery",
+    "name": "usePaginatedMeasuresQuery",
     "operationKind": "query",
-    "text": "query LinkedMeasuresDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      ...LinkedMeasuresDialogFragment\n    }\n  }\n}\n\nfragment LinkedMeasuresDialogFragment on Organization {\n  measures(first: 20) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        category\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query usePaginatedMeasuresQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ... on Organization {\n      ...usePaginatedMeasuresFragment\n    }\n  }\n}\n\nfragment usePaginatedMeasuresFragment on Organization {\n  measures(first: 20) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        category\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "8592f3602ea10f6c00f5eb32c3f6b638";
+(node as any).hash = "49bbe1012e06a7c38d335da0defc0270";
 
 export default node;
