@@ -24,6 +24,7 @@ const linkedControlFragment = graphql`
     name
     sectionTitle
     framework {
+      id
       name
     }
   }
@@ -138,7 +139,9 @@ function ControlRow(props: {
   const { __ } = useTranslate();
 
   return (
-    <Tr to={`/organizations/${organizationId}/controls/${control.id}`}>
+    <Tr
+      to={`/organizations/${organizationId}/frameworks/${control.framework.id}/controls/${control.id}`}
+    >
       <Td>
         <span className="inline-flex gap-2 items-center">
           {control.framework.name}{" "}
