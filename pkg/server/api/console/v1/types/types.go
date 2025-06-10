@@ -712,23 +712,32 @@ type Mutation struct {
 }
 
 type Organization struct {
-	ID         gid.GID              `json:"id"`
-	Name       string               `json:"name"`
-	LogoURL    *string              `json:"logoUrl,omitempty"`
-	Users      *UserConnection      `json:"users"`
-	Connectors *ConnectorConnection `json:"connectors"`
-	Frameworks *FrameworkConnection `json:"frameworks"`
-	Controls   *ControlConnection   `json:"controls"`
-	Vendors    *VendorConnection    `json:"vendors"`
-	Peoples    *PeopleConnection    `json:"peoples"`
-	Documents  *DocumentConnection  `json:"documents"`
-	Measures   *MeasureConnection   `json:"measures"`
-	Risks      *RiskConnection      `json:"risks"`
-	Tasks      *TaskConnection      `json:"tasks"`
-	Assets     *AssetConnection     `json:"assets"`
-	Data       *DatumConnection     `json:"data"`
-	CreatedAt  time.Time            `json:"createdAt"`
-	UpdatedAt  time.Time            `json:"updatedAt"`
+	ID                    gid.GID              `json:"id"`
+	Name                  string               `json:"name"`
+	LogoURL               *string              `json:"logoUrl,omitempty"`
+	FoundingYear          *int                 `json:"foundingYear,omitempty"`
+	CompanyType           *string              `json:"companyType,omitempty"`
+	PreMarketFit          *bool                `json:"preMarketFit,omitempty"`
+	UsesCloudProviders    *bool                `json:"usesCloudProviders,omitempty"`
+	AiFocused             *bool                `json:"aiFocused,omitempty"`
+	UsesAiGeneratedCode   *bool                `json:"usesAiGeneratedCode,omitempty"`
+	VcBacked              *bool                `json:"vcBacked,omitempty"`
+	HasRaisedMoney        *bool                `json:"hasRaisedMoney,omitempty"`
+	HasEnterpriseAccounts *bool                `json:"hasEnterpriseAccounts,omitempty"`
+	Users                 *UserConnection      `json:"users"`
+	Connectors            *ConnectorConnection `json:"connectors"`
+	Frameworks            *FrameworkConnection `json:"frameworks"`
+	Controls              *ControlConnection   `json:"controls"`
+	Vendors               *VendorConnection    `json:"vendors"`
+	Peoples               *PeopleConnection    `json:"peoples"`
+	Documents             *DocumentConnection  `json:"documents"`
+	Measures              *MeasureConnection   `json:"measures"`
+	Risks                 *RiskConnection      `json:"risks"`
+	Tasks                 *TaskConnection      `json:"tasks"`
+	Assets                *AssetConnection     `json:"assets"`
+	Data                  *DatumConnection     `json:"data"`
+	CreatedAt             time.Time            `json:"createdAt"`
+	UpdatedAt             time.Time            `json:"updatedAt"`
 }
 
 func (Organization) IsNode()             {}
@@ -980,9 +989,18 @@ type UpdateMeasurePayload struct {
 }
 
 type UpdateOrganizationInput struct {
-	OrganizationID gid.GID         `json:"organizationId"`
-	Name           *string         `json:"name,omitempty"`
-	Logo           *graphql.Upload `json:"logo,omitempty"`
+	OrganizationID        gid.GID         `json:"organizationId"`
+	Name                  *string         `json:"name,omitempty"`
+	Logo                  *graphql.Upload `json:"logo,omitempty"`
+	FoundingYear          *int            `json:"foundingYear,omitempty"`
+	CompanyType           *string         `json:"companyType,omitempty"`
+	PreMarketFit          *bool           `json:"preMarketFit,omitempty"`
+	UsesCloudProviders    *bool           `json:"usesCloudProviders,omitempty"`
+	AiFocused             *bool           `json:"aiFocused,omitempty"`
+	UsesAiGeneratedCode   *bool           `json:"usesAiGeneratedCode,omitempty"`
+	VcBacked              *bool           `json:"vcBacked,omitempty"`
+	HasRaisedMoney        *bool           `json:"hasRaisedMoney,omitempty"`
+	HasEnterpriseAccounts *bool           `json:"hasEnterpriseAccounts,omitempty"`
 }
 
 type UpdateOrganizationPayload struct {

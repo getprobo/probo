@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<302c6e908c1aea64db4820b83e5e2bcd>>
+ * @generated SignedSource<<1f66ba8e7d436aa543835a389d032651>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,6 +14,8 @@ export type SettingsViewQuery$variables = {
 };
 export type SettingsViewQuery$data = {
   readonly organization: {
+    readonly aiFocused?: boolean | null | undefined;
+    readonly companyType?: string | null | undefined;
     readonly connectors?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
@@ -24,9 +26,13 @@ export type SettingsViewQuery$data = {
         };
       }>;
     };
+    readonly foundingYear?: number | null | undefined;
+    readonly hasEnterpriseAccounts?: boolean | null | undefined;
+    readonly hasRaisedMoney?: boolean | null | undefined;
     readonly id: string;
     readonly logoUrl?: string | null | undefined;
     readonly name?: string;
+    readonly preMarketFit?: boolean | null | undefined;
     readonly users?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
@@ -37,6 +43,9 @@ export type SettingsViewQuery$data = {
         };
       }>;
     };
+    readonly usesAiGeneratedCode?: boolean | null | undefined;
+    readonly usesCloudProviders?: boolean | null | undefined;
+    readonly vcBacked?: boolean | null | undefined;
   };
 };
 export type SettingsViewQuery = {
@@ -96,6 +105,69 @@ v6 = {
       "args": null,
       "kind": "ScalarField",
       "name": "logoUrl",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "foundingYear",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "companyType",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "preMarketFit",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "usesCloudProviders",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "aiFocused",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "usesAiGeneratedCode",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "vcBacked",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "hasRaisedMoney",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "hasEnterpriseAccounts",
       "storageKey": null
     },
     {
@@ -247,16 +319,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e243498081f3875e74172abba80a88e8",
+    "cacheID": "cc8d6ab0a62bf590970091613d1399d3",
     "id": null,
     "metadata": {},
     "name": "SettingsViewQuery",
     "operationKind": "query",
-    "text": "query SettingsViewQuery(\n  $organizationID: ID!\n) {\n  organization: node(id: $organizationID) {\n    __typename\n    id\n    ... on Organization {\n      name\n      logoUrl\n      users(first: 100) {\n        edges {\n          node {\n            id\n            fullName\n            email\n            createdAt\n          }\n        }\n      }\n      connectors(first: 100) {\n        edges {\n          node {\n            id\n            name\n            type\n            createdAt\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query SettingsViewQuery(\n  $organizationID: ID!\n) {\n  organization: node(id: $organizationID) {\n    __typename\n    id\n    ... on Organization {\n      name\n      logoUrl\n      foundingYear\n      companyType\n      preMarketFit\n      usesCloudProviders\n      aiFocused\n      usesAiGeneratedCode\n      vcBacked\n      hasRaisedMoney\n      hasEnterpriseAccounts\n      users(first: 100) {\n        edges {\n          node {\n            id\n            fullName\n            email\n            createdAt\n          }\n        }\n      }\n      connectors(first: 100) {\n        edges {\n          node {\n            id\n            name\n            type\n            createdAt\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "52b24e3845bb31016ddad6f815be1cdb";
+(node as any).hash = "b9a0572ce518f5d473d09ef75ff2a80d";
 
 export default node;

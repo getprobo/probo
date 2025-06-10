@@ -624,6 +624,16 @@ type Organization implements Node {
   name: String!
   logoUrl: String @goField(forceResolver: true)
 
+  foundingYear: Int
+  companyType: String
+  preMarketFit: Boolean
+  usesCloudProviders: Boolean
+  aiFocused: Boolean
+  usesAiGeneratedCode: Boolean
+  vcBacked: Boolean
+  hasRaisedMoney: Boolean
+  hasEnterpriseAccounts: Boolean
+
   users(
     first: Int
     after: CursorKey
@@ -1402,6 +1412,15 @@ input UpdateOrganizationInput {
   organizationId: ID!
   name: String
   logo: Upload
+  foundingYear: Int
+  companyType: String
+  preMarketFit: Boolean
+  usesCloudProviders: Boolean
+  aiFocused: Boolean
+  usesAiGeneratedCode: Boolean
+  vcBacked: Boolean
+  hasRaisedMoney: Boolean
+  hasEnterpriseAccounts: Boolean
 }
 
 input CreateVendorInput {
