@@ -16,6 +16,7 @@ import {
   Option,
   PropertyRow,
   Select,
+  TabBadge,
   TabLink,
   Tabs,
   useConfirm,
@@ -23,6 +24,7 @@ import {
 import { useTranslate } from "@probo/i18n";
 import {
   ConnectionHandler,
+  useFragment,
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
@@ -38,6 +40,14 @@ import { getMeasureStateLabel, measureStates, slugify } from "@probo/helpers";
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
 import { sprintf } from "@probo/helpers";
 import { useNavigate } from "react-router";
+import { tasksFragment } from "./tabs/MeasureTasksTab";
+import type { MeasureTasksTabFragment$key } from "./tabs/__generated__/MeasureTasksTabFragment.graphql";
+import { evidencesFragment } from "./tabs/MeasureEvidencesTab";
+import type { MeasureEvidencesTabFragment$key } from "./tabs/__generated__/MeasureEvidencesTabFragment.graphql";
+import { controlsFragment } from "./tabs/MeasureControlsTab";
+import type { MeasureControlsTabFragment$key } from "./tabs/__generated__/MeasureControlsTabFragment.graphql";
+import { risksFragment } from "./tabs/MeasureRisksTab";
+import type { MeasureRisksTabFragment$key } from "./tabs/__generated__/MeasureRisksTabFragment.graphql";
 
 type Props = {
   queryRef: PreloadedQuery<MeasureGraphNodeQuery>;
@@ -59,6 +69,23 @@ export default function MeasureDetailPage(props: Props) {
       "Cannot load measure detail page without measureId parameter"
     );
   }
+
+  const tasksCount = useFragment(
+    tasksFragment,
+    measure as MeasureTasksTabFragment$key
+  ).tasks.edges.length;
+  const evidencesCount = useFragment(
+    evidencesFragment,
+    measure as MeasureEvidencesTabFragment$key
+  ).evidences.edges.length;
+  const controlsCount = useFragment(
+    controlsFragment,
+    measure as MeasureControlsTabFragment$key
+  ).controls.edges.length;
+  const risksCount = useFragment(
+    risksFragment,
+    measure as MeasureRisksTabFragment$key
+  ).risks.edges.length;
 
   const onDelete = () => {
     const connectionId = ConnectionHandler.getConnectionID(
@@ -157,24 +184,28 @@ export default function MeasureDetailPage(props: Props) {
         >
           <IconPageTextLine size={20} />
           {__("Evidences")}
+          {evidencesCount > 0 && <TabBadge>{evidencesCount}</TabBadge>}
         </TabLink>
         <TabLink
           to={`/organizations/${organizationId}/measures/${measureId}/tasks`}
         >
           <IconCheckmark1 size={20} />
           {__("Tasks")}
+          {tasksCount > 0 && <TabBadge>{tasksCount}</TabBadge>}
         </TabLink>
         <TabLink
           to={`/organizations/${organizationId}/measures/${measureId}/controls`}
         >
           <IconFrame2 size={20} />
           {__("Controls")}
+          {controlsCount > 0 && <TabBadge>{controlsCount}</TabBadge>}
         </TabLink>
         <TabLink
           to={`/organizations/${organizationId}/measures/${measureId}/risks`}
         >
           <IconWarning size={20} />
           {__("Risks")}
+          {risksCount > 0 && <TabBadge>{risksCount}</TabBadge>}
         </TabLink>
       </Tabs>
 

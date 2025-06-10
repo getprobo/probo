@@ -3,17 +3,20 @@ import {
   Button,
   Tr,
   Td,
-  Table,
   Thead,
   Tbody,
   Th,
   IconTrashCan,
   Badge,
+  TrButton,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { LinkedControlsCardFragment$key } from "./__generated__/LinkedControlsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { LinkedControlsDialog } from "./LinkedControlsDialog";
+import { SortableTable, SortableTh } from "../SortableTable";
+import type { ComponentProps } from "react";
 
 const linkedControlFragment = graphql`
   fragment LinkedControlsCardFragment on Control {
@@ -46,6 +49,10 @@ type Props<Params> = {
   connectionId: string;
   // Mutation to detach a control (will receive {controlId, ...params})
   onDetach: Mutation<Params>;
+  // Mutation to attach a control (will receive {controlId, ...params})
+  onAttach?: Mutation<Params>;
+  // Allow sorting in the table
+  refetch: Pick<ComponentProps<typeof SortableTable>, "refetch">;
 };
 
 /**
@@ -67,11 +74,26 @@ export function LinkedControlsCard<Params>(props: Props<Params>) {
     });
   };
 
+  const onAttach = (controlId: string) => {
+    if (!props.onAttach) {
+      return;
+    }
+    props.onAttach({
+      variables: {
+        input: {
+          controlId,
+          ...props.params,
+        },
+        connections: [props.connectionId],
+      },
+    });
+  };
+
   return (
-    <Table>
+    <SortableTable refetch={props.refetch as any}>
       <Thead>
         <Tr>
-          <Th>{__("Reference")}</Th>
+          <SortableTh field="SECTION_TITLE">{__("Reference")}</SortableTh>
           <Th>{__("Name")}</Th>
           <Th></Th>
         </Tr>
@@ -85,16 +107,31 @@ export function LinkedControlsCard<Params>(props: Props<Params>) {
           </Tr>
         )}
         {controls.map((control) => (
-          <ControlRow key={control.id} control={control} onClick={onDetach} />
+          <ControlRow
+            key={control.id}
+            control={control}
+            onClick={onDetach}
+            onAttach={onAttach}
+          />
         ))}
+        <LinkedControlsDialog
+          connectionId={props.connectionId}
+          disabled={props.disabled}
+          linkedControls={controls}
+          onLink={onAttach}
+          onUnlink={onDetach}
+        >
+          <TrButton colspan={3}>{__("Link control")}</TrButton>
+        </LinkedControlsDialog>
       </Tbody>
-    </Table>
+    </SortableTable>
   );
 }
 
 function ControlRow(props: {
   control: LinkedControlsCardFragment$key & { id: string };
   onClick: (controlId: string) => void;
+  onAttach?: (controlId: string) => void;
 }) {
   const control = useFragment(linkedControlFragment, props.control);
   const organizationId = useOrganizationId();

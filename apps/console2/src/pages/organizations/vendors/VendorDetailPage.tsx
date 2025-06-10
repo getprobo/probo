@@ -1,5 +1,6 @@
 import {
   ConnectionHandler,
+  useFragment,
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
@@ -16,6 +17,7 @@ import {
   DropdownItem,
   IconPageTextLine,
   IconTrashCan,
+  TabBadge,
   TabLink,
   Tabs,
 } from "@probo/ui";
@@ -24,6 +26,8 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Outlet } from "react-router";
 import { faviconUrl } from "@probo/helpers";
 import { ImportAssessmentDialog } from "./dialogs/ImportAssessmentDialog";
+import { complianceReportsFragment } from "./tabs/VendorComplianceTab";
+import type { VendorComplianceTabFragment$key } from "./tabs/__generated__/VendorComplianceTabFragment.graphql";
 
 type Props = {
   queryRef: PreloadedQuery<VendorGraphNodeQuery>;
@@ -39,6 +43,10 @@ export default function VendorDetailPage(props: Props) {
     ConnectionHandler.getConnectionID(organizationId, vendorConnectionKey)
   );
   const logo = faviconUrl(vendor.websiteUrl);
+  const reportsCount = useFragment(
+    complianceReportsFragment,
+    vendor as VendorComplianceTabFragment$key
+  ).complianceReports.edges.length;
 
   return (
     <div className="space-y-6">
@@ -97,6 +105,7 @@ export default function VendorDetailPage(props: Props) {
           to={`/organizations/${organizationId}/vendors/${vendor.id}/compliance`}
         >
           {__("Compliance reports")}
+          {reportsCount > 0 && <TabBadge>{reportsCount}</TabBadge>}
         </TabLink>
         <TabLink
           to={`/organizations/${organizationId}/vendors/${vendor.id}/risks`}

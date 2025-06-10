@@ -7,7 +7,7 @@ import { Button, IconPlusLarge } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import TaskFormDialog from "/components/tasks/TaskFormDialog";
 
-const tasksFragment = graphql`
+export const tasksFragment = graphql`
   fragment MeasureTasksTabFragment on Measure {
     tasks(first: 100) @connection(key: "Measure__tasks") {
       __id

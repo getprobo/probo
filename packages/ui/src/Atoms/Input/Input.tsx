@@ -19,8 +19,8 @@ export const input = tv({
         variant: {
             bordered:
                 "py-[6px] bg-secondary border border-border-mid rounded-[10px] hover:border-border-strong text-sm px-3 text-txt-primary",
-            ghost: "text-base text-txt-secondary",
-            title: "text-2xl font-semibold text-txt-primary",
+            ghost: "text-base text-txt-secondary outline-none",
+            title: "text-2xl font-semibold text-txt-primary outline-none",
         },
     },
     defaultVariants: {
