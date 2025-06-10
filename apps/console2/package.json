@@ -1,5 +1,5 @@
 {
-  "name": "console2",
+  "name": "@probo/console2",
   "private": true,
   "version": "0.0.0",
   "type": "module",
