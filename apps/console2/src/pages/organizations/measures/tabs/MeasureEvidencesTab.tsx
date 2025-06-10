@@ -21,7 +21,7 @@ import type { MeasureEvidencesTabFragment_evidence$key } from "./__generated__/M
 import { fileSize, fileType } from "@probo/helpers";
 import { promisifyMutation, sprintf } from "@probo/helpers";
 
-const evidencesFragment = graphql`
+export const evidencesFragment = graphql`
   fragment MeasureEvidencesTabFragment on Measure
   @refetchable(queryName: "MeasureEvidencesTabQuery")
   @argumentDefinitions(

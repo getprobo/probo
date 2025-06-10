@@ -21,7 +21,7 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { sprintf, fileSize } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 
-const complianceReportsFragment = graphql`
+export const complianceReportsFragment = graphql`
   fragment VendorComplianceTabFragment on Vendor
   @refetchable(queryName: "ComplianceReportListQuery")
   @argumentDefinitions(
