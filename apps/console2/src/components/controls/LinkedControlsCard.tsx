@@ -52,7 +52,7 @@ type Props<Params> = {
   // Mutation to attach a control (will receive {controlId, ...params})
   onAttach?: Mutation<Params>;
   // Allow sorting in the table
-  refetch: Pick<ComponentProps<typeof SortableTable>, "refetch">;
+  refetch: ComponentProps<typeof SortableTable>["refetch"];
 };
 
 /**
