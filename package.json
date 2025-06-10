@@ -20,8 +20,5 @@
     "turbo": "^2.5.3"
   },
   "license": "MIT",
-  "packageManager": "bun@1.2.4",
-  "volta": {
-    "node": "22.15.1"
-  }
+  "packageManager": "npm@11.1.0"
 }
