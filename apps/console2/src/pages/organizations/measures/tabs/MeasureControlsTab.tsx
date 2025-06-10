@@ -1,6 +1,5 @@
 import {
   graphql,
-  useFragment,
   useMutation,
   useRefetchableFragment,
 } from "react-relay";
