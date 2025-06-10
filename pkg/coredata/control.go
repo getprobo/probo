@@ -117,7 +117,7 @@ WITH ctrl AS (
 		c.name,
 		c.description,
 		c.created_at,
-		c.updated_at
+		c.updated_at,
 		c.search_vector
 	FROM
 		controls c
