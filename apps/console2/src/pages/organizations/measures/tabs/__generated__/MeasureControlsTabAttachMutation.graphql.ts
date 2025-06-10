@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<70f20e2c5e4b88b101691f90aecde2da>>
+ * @generated SignedSource<<957f5a27f6ad551be453f1c2b9e6b94d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -168,8 +168,8 @@ return {
                     "name": "framework",
                     "plural": false,
                     "selections": [
-                      (v4/*: any*/),
-                      (v3/*: any*/)
+                      (v3/*: any*/),
+                      (v4/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -201,12 +201,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7b0bd217fa037088f76cb4b6fc4a420a",
+    "cacheID": "4cb037f0d6be0338fb838653d7460d59",
     "id": null,
     "metadata": {},
     "name": "MeasureControlsTabAttachMutation",
     "operationKind": "mutation",
-    "text": "mutation MeasureControlsTabAttachMutation(\n  $input: CreateControlMeasureMappingInput!\n) {\n  createControlMeasureMapping(input: $input) {\n    controlEdge {\n      node {\n        id\n        ...LinkedControlsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    name\n    id\n  }\n}\n"
+    "text": "mutation MeasureControlsTabAttachMutation(\n  $input: CreateControlMeasureMappingInput!\n) {\n  createControlMeasureMapping(input: $input) {\n    controlEdge {\n      node {\n        id\n        ...LinkedControlsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
   }
 };
 })();

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bdbc3097fad5d998519bb991b3a664c2>>
+ * @generated SignedSource<<780834b432440afd9363100bb20f2529>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type LinkedControlsCardFragment$data = {
   readonly framework: {
+    readonly id: string;
     readonly name: string;
   };
   readonly id: string;
@@ -29,6 +30,13 @@ var v0 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 };
@@ -38,14 +46,8 @@ return {
   "metadata": null,
   "name": "LinkedControlsCardFragment",
   "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "id",
-      "storageKey": null
-    },
     (v0/*: any*/),
+    (v1/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -61,7 +63,8 @@ return {
       "name": "framework",
       "plural": false,
       "selections": [
-        (v0/*: any*/)
+        (v0/*: any*/),
+        (v1/*: any*/)
       ],
       "storageKey": null
     }
@@ -71,6 +74,6 @@ return {
 };
 })();
 
-(node as any).hash = "20d4049be0cad5dc766f22d9a0535625";
+(node as any).hash = "741820c65c4317cac48693023c3f9bcc";
 
 export default node;
