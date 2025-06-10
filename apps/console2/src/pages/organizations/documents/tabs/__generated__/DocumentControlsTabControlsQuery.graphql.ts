@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bc26166734fbdf91c377510fdb9dbfd6>>
+ * @generated SignedSource<<01a2b46af2246ccf2e27afc8a77805c8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -253,8 +253,8 @@ return {
                             "name": "framework",
                             "plural": false,
                             "selections": [
-                              (v16/*: any*/),
-                              (v14/*: any*/)
+                              (v14/*: any*/),
+                              (v16/*: any*/)
                             ],
                             "storageKey": null
                           },
@@ -348,12 +348,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9db5367f71ee867e25df15eb9babf4ce",
+    "cacheID": "3640a2f9f03d965c268474fdfb4aa5e0",
     "id": null,
     "metadata": {},
     "name": "DocumentControlsTabControlsQuery",
     "operationKind": "query",
-    "text": "query DocumentControlsTabControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentControlsTabFragment_4cFWzS\n    id\n  }\n}\n\nfragment DocumentControlsTabFragment_4cFWzS on Document {\n  id\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    name\n    id\n  }\n}\n"
+    "text": "query DocumentControlsTabControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentControlsTabFragment_4cFWzS\n    id\n  }\n}\n\nfragment DocumentControlsTabFragment_4cFWzS on Document {\n  id\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
   }
 };
 })();
