@@ -157,8 +157,6 @@ func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
 
 	etag, ok := s.etags[path]
 	if !ok {
-		fmt.Printf("XXX %+#v\n", path)
-
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
