@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router";
 import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
 import type { RiskDocumentsTabFragment$key } from "./__generated__/RiskDocumentsTabFragment.graphql";
 
-const documentsFragment = graphql`
+export const documentsFragment = graphql`
   fragment RiskDocumentsTabFragment on Risk {
     id
     documents(first: 100) @connection(key: "Risk__documents") {

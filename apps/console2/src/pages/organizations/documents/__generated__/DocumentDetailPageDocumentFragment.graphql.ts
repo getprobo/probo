@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<72689566d977ab4171c75ba9ce2c62f4>>
+ * @generated SignedSource<<6c0262b14b79c61016ad404fab7a1da0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,15 +13,6 @@ export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentDetailPageDocumentFragment$data = {
-  readonly controls: {
-    readonly __id: string;
-    readonly edges: ReadonlyArray<{
-      readonly node: {
-        readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"LinkedControlsCardFragment">;
-      };
-    }>;
-  };
   readonly id: string;
   readonly owner: {
     readonly fullName: string;
@@ -55,6 +46,7 @@ export type DocumentDetailPageDocumentFragment$data = {
       };
     }>;
   };
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentControlsTabFragment">;
   readonly " $fragmentType": "DocumentDetailPageDocumentFragment";
 };
 export type DocumentDetailPageDocumentFragment$key = {
@@ -130,14 +122,6 @@ return {
         "count": null,
         "cursor": null,
         "direction": "forward",
-        "path": [
-          "controls"
-        ]
-      },
-      {
-        "count": null,
-        "cursor": null,
-        "direction": "forward",
         "path": null
       },
       {
@@ -180,47 +164,9 @@ return {
       "storageKey": null
     },
     {
-      "alias": "controls",
       "args": null,
-      "concreteType": "ControlConnection",
-      "kind": "LinkedField",
-      "name": "__DocumentDetailPage_controls_connection",
-      "plural": false,
-      "selections": [
-        {
-          "alias": null,
-          "args": null,
-          "concreteType": "ControlEdge",
-          "kind": "LinkedField",
-          "name": "edges",
-          "plural": true,
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "concreteType": "Control",
-              "kind": "LinkedField",
-              "name": "node",
-              "plural": false,
-              "selections": [
-                (v0/*: any*/),
-                {
-                  "args": null,
-                  "kind": "FragmentSpread",
-                  "name": "LinkedControlsCardFragment"
-                },
-                (v1/*: any*/)
-              ],
-              "storageKey": null
-            },
-            (v2/*: any*/)
-          ],
-          "storageKey": null
-        },
-        (v3/*: any*/),
-        (v4/*: any*/)
-      ],
-      "storageKey": null
+      "kind": "FragmentSpread",
+      "name": "DocumentControlsTabFragment"
     },
     {
       "alias": "versions",
@@ -373,6 +319,6 @@ return {
 };
 })();
 
-(node as any).hash = "df93b2fdd0ceea0637ddac2e4186181c";
+(node as any).hash = "02b0af2263f78304097136c2466be18c";
 
 export default node;

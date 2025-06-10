@@ -3,7 +3,7 @@ import type { RiskMeasuresTabFragment$key } from "./__generated__/RiskMeasuresTa
 import { useOutletContext } from "react-router";
 import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
 
-const measuresFragment = graphql`
+export const measuresFragment = graphql`
   fragment RiskMeasuresTabFragment on Risk {
     id
     measures(first: 100) @connection(key: "Risk__measures") {

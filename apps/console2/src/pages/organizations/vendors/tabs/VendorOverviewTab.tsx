@@ -108,7 +108,10 @@ export default function VendorOverviewTab() {
         <h2 className="text-base font-medium">{__("Links")}</h2>
         <Card className="divide-y divide-border-low">
           {urls.map((url) => (
-            <div className="grid grid-cols-2 items-center divide-x divide-border-low">
+            <div
+              key={url.name}
+              className="grid grid-cols-2 items-center divide-x divide-border-low"
+            >
               <label
                 className="p-4 text-sm font-medium text-txt-secondary"
                 htmlFor={url.name}
