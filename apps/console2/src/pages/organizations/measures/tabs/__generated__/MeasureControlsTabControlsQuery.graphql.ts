@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a1db6b0b06d18d2d5cd1d2c6e6ea7617>>
+ * @generated SignedSource<<7d62dd9f271d13ca9220c8e54b79fa06>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -253,8 +253,8 @@ return {
                             "name": "framework",
                             "plural": false,
                             "selections": [
-                              (v16/*: any*/),
-                              (v14/*: any*/)
+                              (v14/*: any*/),
+                              (v16/*: any*/)
                             ],
                             "storageKey": null
                           },
@@ -348,12 +348,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "33e321fd8342ba1909b806fca25debf4",
+    "cacheID": "a7984d29c1f4c4274e71f939d6a313fe",
     "id": null,
     "metadata": {},
     "name": "MeasureControlsTabControlsQuery",
     "operationKind": "query",
-    "text": "query MeasureControlsTabControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureControlsTabFragment_4cFWzS\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    name\n    id\n  }\n}\n\nfragment MeasureControlsTabFragment_4cFWzS on Measure {\n  id\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n"
+    "text": "query MeasureControlsTabControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureControlsTabFragment_4cFWzS\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment MeasureControlsTabFragment_4cFWzS on Measure {\n  id\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n"
   }
 };
 })();
