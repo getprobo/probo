@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<08d4e9940fe4265f66568c81985cb591>>
+ * @generated SignedSource<<aad16d17ffa1259b4e99ceb4e583df5f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type MeasureControlsTabFragment$data = {
+export type DocumentControlsTabFragment$data = {
   readonly controls: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
@@ -21,14 +21,14 @@ export type MeasureControlsTabFragment$data = {
     }>;
   };
   readonly id: string;
-  readonly " $fragmentType": "MeasureControlsTabFragment";
+  readonly " $fragmentType": "DocumentControlsTabFragment";
 };
-export type MeasureControlsTabFragment$key = {
-  readonly " $data"?: MeasureControlsTabFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"MeasureControlsTabFragment">;
+export type DocumentControlsTabFragment$key = {
+  readonly " $data"?: DocumentControlsTabFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentControlsTabFragment">;
 };
 
-import MeasureControlsTabControlsQuery_graphql from './MeasureControlsTabControlsQuery.graphql';
+import DocumentControlsTabControlsQuery_graphql from './DocumentControlsTabControlsQuery.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
@@ -99,14 +99,14 @@ return {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": MeasureControlsTabControlsQuery_graphql,
+      "operation": DocumentControlsTabControlsQuery_graphql,
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
       }
     }
   },
-  "name": "MeasureControlsTabFragment",
+  "name": "DocumentControlsTabFragment",
   "selections": [
     (v1/*: any*/),
     {
@@ -125,7 +125,7 @@ return {
       ],
       "concreteType": "ControlConnection",
       "kind": "LinkedField",
-      "name": "__MeasureControlsTab_controls_connection",
+      "name": "__DocumentControlsTab_controls_connection",
       "plural": false,
       "selections": [
         {
@@ -225,11 +225,11 @@ return {
       "storageKey": null
     }
   ],
-  "type": "Measure",
+  "type": "Document",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "a9a268e40cc503e7e11fca8464f3e62c";
+(node as any).hash = "c1b6d5212b3fa33f60c02ddee32d5cea";
 
 export default node;

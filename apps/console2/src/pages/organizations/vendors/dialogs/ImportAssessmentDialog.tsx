@@ -73,7 +73,6 @@ export function ImportAssessmentDialog({ vendorId, children }: Props) {
   return (
     <Dialog
       ref={dialogRef}
-      defaultOpen
       trigger={children}
       title={__("Assessment from website")}
       className="max-w-lg"

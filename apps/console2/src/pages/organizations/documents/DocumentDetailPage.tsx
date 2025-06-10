@@ -43,6 +43,8 @@ import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
 import { useRef } from "react";
 import { DocumentVersionHistoryDialog } from "./dialogs/DocumentVersionHistoryDialog";
 import { DocumentSignaturesDialog } from "./dialogs/DocumentSignaturesDialog";
+import { controlsFragment } from "./tabs/DocumentControlsTab";
+import type { DocumentControlsTabFragment$key } from "./tabs/__generated__/DocumentControlsTabFragment.graphql";
 
 type Props = {
   queryRef: PreloadedQuery<DocumentGraphNodeQuery>;
@@ -56,15 +58,7 @@ const documentFragment = graphql`
       id
       fullName
     }
-    controls(first: 100) @connection(key: "DocumentDetailPage_controls") {
-      __id
-      edges {
-        node {
-          id
-          ...LinkedControlsCardFragment
-        }
-      }
-    }
+    ...DocumentControlsTabFragment
     versions(first: 20) @connection(key: "DocumentDetailPage_versions") {
       __id
       edges {
@@ -182,6 +176,10 @@ export default function DocumentDetailPage(props: Props) {
   };
 
   const updateDialogRef = useRef<{ open: () => void }>(null);
+  const controls = useFragment(
+    controlsFragment,
+    document as DocumentControlsTabFragment$key
+  ).controls;
 
   return (
     <>
@@ -254,7 +252,7 @@ export default function DocumentDetailPage(props: Props) {
             to={`/organizations/${organizationId}/documents/${document.id}/controls`}
           >
             {__("Controls")}
-            <TabBadge>{document.controls.edges.length}</TabBadge>
+            <TabBadge>{controls.edges.length}</TabBadge>
           </TabLink>
         </Tabs>
 

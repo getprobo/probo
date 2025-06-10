@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<08d4e9940fe4265f66568c81985cb591>>
+ * @generated SignedSource<<0be68327d7fa04dbceb53404ed1d5df4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,25 +10,25 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type MeasureControlsTabFragment$data = {
+export type LinkedControlsDialogFragment$data = {
   readonly controls: {
-    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"LinkedControlsCardFragment">;
+        readonly name: string;
+        readonly sectionTitle: string;
       };
     }>;
   };
   readonly id: string;
-  readonly " $fragmentType": "MeasureControlsTabFragment";
+  readonly " $fragmentType": "LinkedControlsDialogFragment";
 };
-export type MeasureControlsTabFragment$key = {
-  readonly " $data"?: MeasureControlsTabFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"MeasureControlsTabFragment">;
+export type LinkedControlsDialogFragment$key = {
+  readonly " $data"?: LinkedControlsDialogFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"LinkedControlsDialogFragment">;
 };
 
-import MeasureControlsTabControlsQuery_graphql from './MeasureControlsTabControlsQuery.graphql';
+import LinkedControlsDialogControlsQuery_graphql from './LinkedControlsDialogControlsQuery.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
@@ -59,7 +59,7 @@ return {
       "name": "filter"
     },
     {
-      "defaultValue": 20,
+      "defaultValue": 1,
       "kind": "LocalArgument",
       "name": "first"
     },
@@ -99,16 +99,15 @@ return {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": MeasureControlsTabControlsQuery_graphql,
+      "operation": LinkedControlsDialogControlsQuery_graphql,
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
       }
     }
   },
-  "name": "MeasureControlsTabFragment",
+  "name": "LinkedControlsDialogFragment",
   "selections": [
-    (v1/*: any*/),
     {
       "alias": "controls",
       "args": [
@@ -125,7 +124,7 @@ return {
       ],
       "concreteType": "ControlConnection",
       "kind": "LinkedField",
-      "name": "__MeasureControlsTab_controls_connection",
+      "name": "__LinkedControlsDialogControlsQuery_controls_connection",
       "plural": false,
       "selections": [
         {
@@ -146,9 +145,18 @@ return {
               "selections": [
                 (v1/*: any*/),
                 {
+                  "alias": null,
                   "args": null,
-                  "kind": "FragmentSpread",
-                  "name": "LinkedControlsCardFragment"
+                  "kind": "ScalarField",
+                  "name": "name",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "sectionTitle",
+                  "storageKey": null
                 },
                 {
                   "alias": null,
@@ -208,28 +216,17 @@ return {
             }
           ],
           "storageKey": null
-        },
-        {
-          "kind": "ClientExtension",
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "kind": "ScalarField",
-              "name": "__id",
-              "storageKey": null
-            }
-          ]
         }
       ],
       "storageKey": null
-    }
+    },
+    (v1/*: any*/)
   ],
-  "type": "Measure",
+  "type": "Organization",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "a9a268e40cc503e7e11fca8464f3e62c";
+(node as any).hash = "b4dbf5c3271581e4317726870476da8d";
 
 export default node;

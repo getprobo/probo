@@ -50,7 +50,12 @@ export const useRiskForm = (riskKey?: RiskKey) => {
           ...risk,
           ownerId: risk.owner?.id,
         }
-      : {},
+      : {
+          inherentLikelihood: 3,
+          inherentImpact: 3,
+          residualLikelihood: 3,
+          residualImpact: 3,
+        },
   });
 };
 
