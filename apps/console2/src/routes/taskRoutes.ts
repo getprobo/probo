@@ -1,4 +1,4 @@
-import { lazy } from "react";
+import { lazy } from "@probo/react-lazy";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { loadQuery } from "react-relay";
 import { relayEnvironment } from "/providers/RelayProviders";

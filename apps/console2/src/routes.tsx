@@ -8,13 +8,7 @@ import {
 } from "react-router";
 import { MainLayout } from "./layouts/MainLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
-import {
-  Fragment,
-  lazy,
-  Suspense,
-  type FC,
-  type LazyExoticComponent,
-} from "react";
+import { Fragment, Suspense, type FC, type LazyExoticComponent } from "react";
 import {
   relayEnvironment,
   UnAuthenticatedError,
@@ -31,8 +25,9 @@ import { peopleRoutes } from "./routes/peopleRoutes.ts";
 import { frameworkRoutes } from "./routes/frameworkRoutes.ts";
 import { PageError } from "./components/PageError.tsx";
 import { taskRoutes } from "./routes/taskRoutes.ts";
+import { lazy } from "@probo/react-lazy";
 
-function ErrorBoundary(props) {
+function ErrorBoundary() {
   const error = useRouteError();
 
   if (error instanceof UnAuthenticatedError) {
