@@ -78,7 +78,8 @@ func (r *Risks) CountByMeasureID(
 	q := `
 WITH rsks AS (
 	SELECT
-		r.id
+		r.id,
+		r.tenant_id
 	FROM
 		risks r
 	INNER JOIN
