@@ -1,13 +1,20 @@
 import {
   createBrowserRouter,
   Navigate,
+  redirect,
   useLoaderData,
   useRouteError,
   type RouteObject,
 } from "react-router";
 import { MainLayout } from "./layouts/MainLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
-import { lazy, Suspense, type FC, type LazyExoticComponent } from "react";
+import {
+  Fragment,
+  lazy,
+  Suspense,
+  type FC,
+  type LazyExoticComponent,
+} from "react";
 import {
   relayEnvironment,
   UnAuthenticatedError,
@@ -25,8 +32,9 @@ import { frameworkRoutes } from "./routes/frameworkRoutes.ts";
 import { PageError } from "./components/PageError.tsx";
 import { taskRoutes } from "./routes/taskRoutes.ts";
 
-function ErrorBoundary() {
+function ErrorBoundary(props) {
   const error = useRouteError();
+
   if (error instanceof UnAuthenticatedError) {
     return <Navigate to="/auth/login" />;
   }
@@ -74,6 +82,13 @@ const routes = [
     Component: MainLayout,
     ErrorBoundary: ErrorBoundary,
     children: [
+      {
+        path: "",
+        loader: () => {
+          throw redirect(`tasks`);
+        },
+        Component: Fragment,
+      },
       {
         path: "settings",
         fallback: PageSkeleton,
