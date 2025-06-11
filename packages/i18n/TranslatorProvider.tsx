@@ -48,7 +48,8 @@ export function TranslatorProvider({
   );
 }
 
-const MINUTES = 60_000;
+const SECONDS = 1000;
+const MINUTES = SECONDS * 60;
 const HOURS = MINUTES * 60;
 const DAYS = HOURS * 24;
 const WEEKS = DAYS * 7;
@@ -62,7 +63,7 @@ const relativeFormat = [
   { limit: DAYS, unit: "days" },
   { limit: HOURS, unit: "hours" },
   { limit: MINUTES, unit: "minutes" },
-  { limit: 0, unit: "seconds" },
+  { limit: SECONDS, unit: "seconds" },
 ] as const;
 
 export function useTranslate() {
@@ -86,17 +87,18 @@ export function useTranslate() {
   };
 
   const relativeDateFormat = (
-    data: Date | string | null | undefined,
+    date: Date | string | null | undefined,
     options: Intl.RelativeTimeFormatOptions = {
       style: "long",
     }
   ) => {
-    if (!data) {
+    if (!date) {
       return "";
     }
     const distanceInSeconds =
-      (data instanceof Date ? data.getTime() : parseDate(data).getTime()) -
+      (date instanceof Date ? date.getTime() : parseDate(date).getTime()) -
       Date.now();
+
     const formatter = new Intl.RelativeTimeFormat(lang, options);
     for (const { limit, unit } of relativeFormat) {
       if (Math.abs(distanceInSeconds) > limit) {
