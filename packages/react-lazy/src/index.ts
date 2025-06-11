@@ -5,9 +5,9 @@ import {
   type FC,
 } from "react";
 
-export const DEFAULT_STORAGE_KEY = "reactLazyReloadedFunctions";
+const DEFAULT_STORAGE_KEY = "reactLazyReloadedFunctions";
 
-export class ReloadStorage {
+class ReloadStorage {
   constructor(public readonly storageKey = DEFAULT_STORAGE_KEY) {}
 
   getMap(): Map<string, number> {
@@ -51,24 +51,24 @@ export class ReloadStorage {
   }
 }
 
-export interface ForceReloadConfig {
+type ForceReloadConfig = {
   maxRetries: number;
   storageKey?: string;
-}
+};
 
-export interface LazyConfigInit {
+type LazyConfigInit = {
   forceReload?: false | Partial<ForceReloadConfig>;
   importRetries?: number;
   retryDelay?: number;
   onImportError?: (error: unknown) => void;
-}
+};
 
-export interface LazyConfig {
+type LazyConfig = {
   forceReload: ForceReloadConfig;
   importRetries: number;
   retryDelay: number;
   onImportError?: (error: unknown) => void;
-}
+};
 
 const createConfig = (init: LazyConfigInit = {}): LazyConfig => ({
   forceReload: {
@@ -77,8 +77,8 @@ const createConfig = (init: LazyConfigInit = {}): LazyConfig => ({
     ...(typeof init.forceReload === "object"
       ? init.forceReload
       : init.forceReload === false
-      ? { maxRetries: 0 }
-      : {}),
+        ? { maxRetries: 0 }
+        : {}),
   },
   importRetries:
     typeof init.importRetries === "number"

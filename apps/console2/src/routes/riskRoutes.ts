@@ -1,11 +1,12 @@
-import { Fragment, lazy } from "react";
+import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import { RisksPageSkeleton } from "/components/skeletons/RisksPageSkeleton.tsx";
 import type { AppRoute } from "/routes.tsx";
 import { relayEnvironment } from "/providers/RelayProviders";
 import { riskNodeQuery, risksQuery } from "/hooks/graph/RiskGraph";
-import { PageSkeleton } from "/components/skeletons/PageSkeleton.tsx";
+import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect } from "react-router";
+import { lazy } from "@probo/react-lazy";
 
 export const riskRoutes = [
   {

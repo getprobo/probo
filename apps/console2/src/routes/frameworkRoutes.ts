@@ -6,7 +6,8 @@ import {
   frameworkNodeQuery,
 } from "/hooks/graph/FrameworkGraph";
 import type { AppRoute } from "/routes";
-import { Fragment, lazy } from "react";
+import { Fragment } from "react";
+import { lazy } from "@probo/react-lazy";
 
 export const frameworkRoutes = [
   {
