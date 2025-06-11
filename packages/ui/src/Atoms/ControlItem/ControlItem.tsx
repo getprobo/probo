@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from "react";
+import { useEffect, useRef, type HTMLAttributes } from "react";
 import { Link } from "react-router";
 import { tv } from "tailwind-variants";
 
@@ -6,7 +6,7 @@ type Props = {
     active?: boolean;
     id: string;
     description?: string;
-    to?: string;
+    to: string;
 } & HTMLAttributes<HTMLAnchorElement>;
 
 const classNames = tv({
@@ -40,12 +40,20 @@ export function ControlItem({ active, id, description, to, ...props }: Props) {
     } = classNames({
         active,
     });
-    if (to) {
-        return (
-            <Link className={wrapper()} to={to} {...props}>
-                <div className={idCls()}>{id}</div>
-                <div className={descriptionCls()}>{description}</div>
-            </Link>
-        );
-    }
+
+    const ref = useRef<HTMLAnchorElement>(null);
+
+    // Make the active element scroll into view when selected
+    useEffect(() => {
+        if (ref.current && active) {
+            ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }, [active]);
+
+    return (
+        <Link className={wrapper()} to={to} {...props} ref={ref}>
+            <div className={idCls()}>{id}</div>
+            <div className={descriptionCls()}>{description}</div>
+        </Link>
+    );
 }
