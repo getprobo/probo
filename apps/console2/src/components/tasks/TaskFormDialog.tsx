@@ -147,7 +147,8 @@ export default function TaskFormDialog(props: Props) {
     dialogRef.current?.close();
   });
   const isUpdating = !!task;
-  const showMeasure = !props.measureId;
+  const showMeasure = !props.measureId && !isUpdating;
+  const isCreating = !isUpdating;
 
   return (
     <Dialog
@@ -180,24 +181,24 @@ export default function TaskFormDialog(props: Props) {
           {/* Properties form */}
           <div className="py-5 px-6 bg-subtle">
             <Label>{__("Properties")}</Label>
-            <PropertyRow
-              label={__("Assigned to")}
-              error={formState.errors.assignedToId?.message}
-            >
-              <PeopleSelectField
-                disabled={isUpdating}
-                name="assignedToId"
-                control={control}
-                organizationId={organizationId}
-              />
-            </PropertyRow>
+            {isCreating && (
+              <PropertyRow
+                label={__("Assigned to")}
+                error={formState.errors.assignedToId?.message}
+              >
+                <PeopleSelectField
+                  name="assignedToId"
+                  control={control}
+                  organizationId={organizationId}
+                />
+              </PropertyRow>
+            )}
             {showMeasure && (
               <PropertyRow
                 label={__("Measure")}
                 error={formState.errors.measureId?.message}
               >
                 <MeasureSelectField
-                  disabled={isUpdating}
                   name="measureId"
                   control={control}
                   organizationId={organizationId}
