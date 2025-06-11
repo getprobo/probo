@@ -185,7 +185,7 @@ function RisksChartCell({
                     className="flex items-center justify-between gap-4"
                 >
                     <div className="text-txt-secondary">{info.label}</div>
-                    <div>{info.value}</div>
+                    <div className="text-txt-primary">{info.value}</div>
                 </div>
             ))}
             <DropdownSeparator className="my-3" />
