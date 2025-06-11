@@ -2650,18 +2650,17 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	var controlFilter *coredata.ControlFilter
+	var filters = coredata.NewControlFilter(nil)
 	if filter != nil {
-		controlFilter = coredata.NewControlFilter(filter.Query)
+		filters = coredata.NewControlFilter(filter.Query)
 	}
 
-	page, err := prb.Controls.ListForRiskID(ctx, obj.ID, cursor, controlFilter)
+	page, err := prb.Controls.ListForRiskID(ctx, obj.ID, cursor, filters)
 	if err != nil {
 		panic(fmt.Errorf("cannot list risk controls: %w", err))
 	}
 
-	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
+	return types.NewControlConnection(page, r, obj.ID, filters), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
