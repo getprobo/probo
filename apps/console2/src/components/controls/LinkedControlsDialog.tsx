@@ -14,6 +14,7 @@ import {
   Suspense,
   useMemo,
   useRef,
+  useState,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -82,7 +83,10 @@ type SearchRef = RefObject<{ search: (v: string) => void } | null>;
 export function LinkedControlsDialog(props: Props) {
   const { __ } = useTranslate();
   const searchRef: SearchRef = useRef(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [minHeight, setMinHeight] = useState(0);
   const onSearch = (v: string) => {
+    setMinHeight(contentRef.current?.clientHeight ?? 0);
     searchRef.current?.search(v);
   };
   return (
@@ -95,9 +99,17 @@ export function LinkedControlsDialog(props: Props) {
             onValueChange={onSearch}
           />
         </div>
-        <Suspense fallback={<Spinner centered />}>
-          <LinkedControlsDialogContent {...props} ref={searchRef} />
-        </Suspense>
+        <div ref={contentRef}>
+          <Suspense
+            fallback={
+              <div style={{ minHeight }}>
+                <Spinner centered />
+              </div>
+            }
+          >
+            <LinkedControlsDialogContent {...props} ref={searchRef} />
+          </Suspense>
+        </div>
       </DialogContent>
     </Dialog>
   );
