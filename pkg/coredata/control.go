@@ -68,7 +68,8 @@ func (c *Controls) CountByDocumentID(
 	q := `
 WITH ctrl AS (
 	SELECT
-		c.id
+		c.id,
+		c.tenant_id
 	FROM
 		controls c
 	INNER JOIN
@@ -173,7 +174,8 @@ func (c *Controls) CountByMeasureID(
 	q := `
 WITH ctrl AS (
 	SELECT
-		c.id
+		c.id,
+		c.tenant_id
 	FROM
 		controls c
 	INNER JOIN
@@ -278,7 +280,8 @@ func (c *Controls) CountByRiskID(
 	q := `
 WITH ctrl AS (
 	SELECT DISTINCT
-		c.id
+		c.id,
+		c.tenant_id
 	FROM
 		controls c
 	LEFT JOIN
@@ -475,7 +478,8 @@ func (c *Controls) CountByOrganizationID(
 	q := `
 WITH ctrl AS (
 	SELECT
-		c.id
+		c.id,
+		c.tenant_id
 	FROM
 		controls c
 	INNER JOIN
@@ -490,6 +494,8 @@ FROM
 WHERE %s
     AND %s
 `
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())

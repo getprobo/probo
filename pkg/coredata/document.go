@@ -289,7 +289,8 @@ func (p *Documents) CountByControlID(
 	q := `
 WITH plcs AS (
 	SELECT
-		p.id
+		p.id,
+		p.tenant_id
 	FROM
 		documents p
 	INNER JOIN
