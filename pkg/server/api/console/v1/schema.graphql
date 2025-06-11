@@ -618,6 +618,15 @@ input RiskFilter {
   query: String
 }
 
+# Input Types
+input GenerateRisksInput {
+  organizationId: ID!
+}
+
+type GenerateRisksPayload {
+  risks: [String!]!
+}
+
 # Core Types
 type Organization implements Node {
   id: ID!
@@ -1264,6 +1273,7 @@ type DatumEdge {
 type Query {
   node(id: ID!): Node!
   viewer: Viewer!
+  generateRisks(input: GenerateRisksInput!): GenerateRisksPayload!
 }
 
 type Mutation {

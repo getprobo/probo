@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { PeopleSelector_organization$key } from "./__generated__/PeopleSelector_organization.graphql";
 
-const peopleSelectorFragment = graphql`
+export const peopleSelectorFragment = graphql`
   fragment PeopleSelector_organization on Organization {
     id
     peoples(first: 100, orderBy: { direction: ASC, field: FULL_NAME })

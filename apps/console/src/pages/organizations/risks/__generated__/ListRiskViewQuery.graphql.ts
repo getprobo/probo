@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c0daa0e600804b3750294c11acacec17>>
+ * @generated SignedSource<<7209fc1c7505e0700daea499f23dcd47>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,8 +19,8 @@ export type ListRiskViewQuery$variables = {
 };
 export type ListRiskViewQuery$data = {
   readonly organization: {
-    readonly id: string;
-    readonly " $fragmentSpreads": FragmentRefs<"ListRiskView_risks">;
+    readonly id?: string;
+    readonly " $fragmentSpreads": FragmentRefs<"ListRiskView_risks" | "PeopleSelector_organization">;
   };
 };
 export type ListRiskViewQuery = {
@@ -97,7 +97,50 @@ v8 = {
   "name": "__typename",
   "storageKey": null
 },
-v9 = {
+v9 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 100
+  },
+  {
+    "kind": "Literal",
+    "name": "orderBy",
+    "value": {
+      "direction": "ASC",
+      "field": "FULL_NAME"
+    }
+  }
+],
+v10 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "fullName",
+  "storageKey": null
+},
+v11 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "cursor",
+  "storageKey": null
+},
+v12 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "endCursor",
+  "storageKey": null
+},
+v13 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "hasNextPage",
+  "storageKey": null
+},
+v14 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -125,11 +168,23 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v6/*: any*/),
           {
-            "args": (v7/*: any*/),
-            "kind": "FragmentSpread",
-            "name": "ListRiskView_risks"
+            "kind": "InlineFragment",
+            "selections": [
+              (v6/*: any*/),
+              {
+                "args": null,
+                "kind": "FragmentSpread",
+                "name": "PeopleSelector_organization"
+              },
+              {
+                "args": (v7/*: any*/),
+                "kind": "FragmentSpread",
+                "name": "ListRiskView_risks"
+              }
+            ],
+            "type": "Organization",
+            "abstractKey": null
           }
         ],
         "storageKey": null
@@ -163,6 +218,74 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              {
+                "alias": null,
+                "args": (v9/*: any*/),
+                "concreteType": "PeopleConnection",
+                "kind": "LinkedField",
+                "name": "peoples",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "PeopleEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "People",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v6/*: any*/),
+                          (v10/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "primaryEmailAddress",
+                            "storageKey": null
+                          },
+                          (v8/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v11/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "PageInfo",
+                    "kind": "LinkedField",
+                    "name": "pageInfo",
+                    "plural": false,
+                    "selections": [
+                      (v12/*: any*/),
+                      (v13/*: any*/)
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": "peoples(first:100,orderBy:{\"direction\":\"ASC\",\"field\":\"FULL_NAME\"})"
+              },
+              {
+                "alias": null,
+                "args": (v9/*: any*/),
+                "filters": [
+                  "orderBy"
+                ],
+                "handle": "connection",
+                "key": "PeopleSelector_organization_peoples",
+                "kind": "LinkedHandle",
+                "name": "peoples"
+              },
               {
                 "alias": null,
                 "args": (v7/*: any*/),
@@ -237,7 +360,7 @@ return {
                             "name": "description",
                             "storageKey": null
                           },
-                          (v9/*: any*/),
+                          (v14/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -261,13 +384,7 @@ return {
                             "plural": false,
                             "selections": [
                               (v6/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "fullName",
-                                "storageKey": null
-                              }
+                              (v10/*: any*/)
                             ],
                             "storageKey": null
                           },
@@ -301,7 +418,7 @@ return {
                                     "name": "node",
                                     "plural": false,
                                     "selections": [
-                                      (v9/*: any*/),
+                                      (v14/*: any*/),
                                       (v6/*: any*/)
                                     ],
                                     "storageKey": null
@@ -316,13 +433,7 @@ return {
                         ],
                         "storageKey": null
                       },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "cursor",
-                        "storageKey": null
-                      }
+                      (v11/*: any*/)
                     ],
                     "storageKey": null
                   },
@@ -334,13 +445,7 @@ return {
                     "name": "pageInfo",
                     "plural": false,
                     "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "hasNextPage",
-                        "storageKey": null
-                      },
+                      (v13/*: any*/),
                       {
                         "alias": null,
                         "args": null,
@@ -355,13 +460,7 @@ return {
                         "name": "startCursor",
                         "storageKey": null
                       },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "endCursor",
-                        "storageKey": null
-                      }
+                      (v12/*: any*/)
                     ],
                     "storageKey": null
                   },
@@ -399,16 +498,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3e7d8e722a266ae4e1892ad472d29e69",
+    "cacheID": "02ab3e965f04ff2acb99d0dd8794b5fc",
     "id": null,
     "metadata": {},
     "name": "ListRiskViewQuery",
     "operationKind": "query",
-    "text": "query ListRiskViewQuery(\n  $organizationId: ID!\n  $first: Int\n  $after: CursorKey\n  $last: Int\n  $before: CursorKey\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...ListRiskView_risks_pbnwq\n  }\n}\n\nfragment ListRiskView_risks_pbnwq on Organization {\n  risks(first: $first, after: $after, last: $last, before: $before) {\n    edges {\n      node {\n        id\n        name\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        treatment\n        description\n        category\n        createdAt\n        updatedAt\n        owner {\n          id\n          fullName\n        }\n        measures(first: 1) {\n          edges {\n            node {\n              category\n              id\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n  id\n}\n"
+    "text": "query ListRiskViewQuery(\n  $organizationId: ID!\n  $first: Int\n  $after: CursorKey\n  $last: Int\n  $before: CursorKey\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...PeopleSelector_organization\n      ...ListRiskView_risks_pbnwq\n    }\n    id\n  }\n}\n\nfragment ListRiskView_risks_pbnwq on Organization {\n  risks(first: $first, after: $after, last: $last, before: $before) {\n    edges {\n      node {\n        id\n        name\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        treatment\n        description\n        category\n        createdAt\n        updatedAt\n        owner {\n          id\n          fullName\n        }\n        measures(first: 1) {\n          edges {\n            node {\n              category\n              id\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n  }\n  id\n}\n\nfragment PeopleSelector_organization on Organization {\n  id\n  peoples(first: 100, orderBy: {direction: ASC, field: FULL_NAME}) {\n    edges {\n      node {\n        id\n        fullName\n        primaryEmailAddress\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "8f1ba48e6663d5f1e473aa52b70c7a67";
+(node as any).hash = "267a4fb19c4e5f103c13a132bb42daa5";
 
 export default node;

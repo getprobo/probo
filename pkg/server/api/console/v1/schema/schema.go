@@ -456,6 +456,10 @@ type ComplexityRoot struct {
 		Changelog func(childComplexity int) int
 	}
 
+	GenerateRisksPayload struct {
+		Risks func(childComplexity int) int
+	}
+
 	ImportFrameworkPayload struct {
 		FrameworkEdge func(childComplexity int) int
 	}
@@ -635,8 +639,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Node   func(childComplexity int, id gid.GID) int
-		Viewer func(childComplexity int) int
+		GenerateRisks func(childComplexity int, input types.GenerateRisksInput) int
+		Node          func(childComplexity int, id gid.GID) int
+		Viewer        func(childComplexity int) int
 	}
 
 	RemoveUserPayload struct {
@@ -1054,6 +1059,7 @@ type PeopleConnectionResolver interface {
 type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
 	Viewer(ctx context.Context) (*types.Viewer, error)
+	GenerateRisks(ctx context.Context, input types.GenerateRisksInput) (*types.GenerateRisksPayload, error)
 }
 type RiskResolver interface {
 	Owner(ctx context.Context, obj *types.Risk) (*types.People, error)
@@ -2399,6 +2405,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.GenerateDocumentChangelogPayload.Changelog(childComplexity), true
 
+	case "GenerateRisksPayload.risks":
+		if e.complexity.GenerateRisksPayload.Risks == nil {
+			break
+		}
+
+		return e.complexity.GenerateRisksPayload.Risks(childComplexity), true
+
 	case "ImportFrameworkPayload.frameworkEdge":
 		if e.complexity.ImportFrameworkPayload.FrameworkEdge == nil {
 			break
@@ -3725,6 +3738,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.PublishDocumentVersionPayload.DocumentVersion(childComplexity), true
 
+	case "Query.generateRisks":
+		if e.complexity.Query.GenerateRisks == nil {
+			break
+		}
+
+		args, err := ec.field_Query_generateRisks_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GenerateRisks(childComplexity, args["input"].(types.GenerateRisksInput)), true
+
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
 			break
@@ -4768,6 +4793,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputFrameworkOrder,
 		ec.unmarshalInputFulfillEvidenceInput,
 		ec.unmarshalInputGenerateDocumentChangelogInput,
+		ec.unmarshalInputGenerateRisksInput,
 		ec.unmarshalInputImportFrameworkInput,
 		ec.unmarshalInputImportMeasureInput,
 		ec.unmarshalInputInviteUserInput,
@@ -5520,6 +5546,15 @@ input RiskFilter {
   query: String
 }
 
+# Input Types
+input GenerateRisksInput {
+  organizationId: ID!
+}
+
+type GenerateRisksPayload {
+  risks: [String!]!
+}
+
 # Core Types
 type Organization implements Node {
   id: ID!
@@ -6166,6 +6201,7 @@ type DatumEdge {
 type Query {
   node(id: ID!): Node!
   viewer: Viewer!
+  generateRisks(input: GenerateRisksInput!): GenerateRisksPayload!
 }
 
 type Mutation {
@@ -11145,6 +11181,29 @@ func (ec *executionContext) field_Query___type_argsName(
 	}
 
 	var zeroVal string
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Query_generateRisks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Query_generateRisks_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Query_generateRisks_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.GenerateRisksInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNGenerateRisksInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐGenerateRisksInput(ctx, tmp)
+	}
+
+	var zeroVal types.GenerateRisksInput
 	return zeroVal, nil
 }
 
@@ -20970,6 +21029,50 @@ func (ec *executionContext) fieldContext_GenerateDocumentChangelogPayload_change
 	return fc, nil
 }
 
+func (ec *executionContext) _GenerateRisksPayload_risks(ctx context.Context, field graphql.CollectedField, obj *types.GenerateRisksPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_GenerateRisksPayload_risks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Risks, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_GenerateRisksPayload_risks(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "GenerateRisksPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ImportFrameworkPayload_frameworkEdge(ctx context.Context, field graphql.CollectedField, obj *types.ImportFrameworkPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ImportFrameworkPayload_frameworkEdge(ctx, field)
 	if err != nil {
@@ -28357,6 +28460,65 @@ func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field g
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_generateRisks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_generateRisks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GenerateRisks(rctx, fc.Args["input"].(types.GenerateRisksInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.GenerateRisksPayload)
+	fc.Result = res
+	return ec.marshalNGenerateRisksPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐGenerateRisksPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_generateRisks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "risks":
+				return ec.fieldContext_GenerateRisksPayload_risks(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type GenerateRisksPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_generateRisks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -39502,6 +39664,33 @@ func (ec *executionContext) unmarshalInputGenerateDocumentChangelogInput(ctx con
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputGenerateRisksInput(ctx context.Context, obj any) (types.GenerateRisksInput, error) {
+	var it types.GenerateRisksInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputImportFrameworkInput(ctx context.Context, obj any) (types.ImportFrameworkInput, error) {
 	var it types.ImportFrameworkInput
 	asMap := map[string]any{}
@@ -45438,6 +45627,45 @@ func (ec *executionContext) _GenerateDocumentChangelogPayload(ctx context.Contex
 	return out
 }
 
+var generateRisksPayloadImplementors = []string{"GenerateRisksPayload"}
+
+func (ec *executionContext) _GenerateRisksPayload(ctx context.Context, sel ast.SelectionSet, obj *types.GenerateRisksPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, generateRisksPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("GenerateRisksPayload")
+		case "risks":
+			out.Values[i] = ec._GenerateRisksPayload_risks(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var importFrameworkPayloadImplementors = []string{"ImportFrameworkPayload"}
 
 func (ec *executionContext) _ImportFrameworkPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ImportFrameworkPayload) graphql.Marshaler {
@@ -47342,6 +47570,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_viewer(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "generateRisks":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_generateRisks(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -52426,6 +52676,25 @@ func (ec *executionContext) marshalNGenerateDocumentChangelogPayload2ᚖgithub�
 		return graphql.Null
 	}
 	return ec._GenerateDocumentChangelogPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGenerateRisksInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐGenerateRisksInput(ctx context.Context, v any) (types.GenerateRisksInput, error) {
+	res, err := ec.unmarshalInputGenerateRisksInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGenerateRisksPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐGenerateRisksPayload(ctx context.Context, sel ast.SelectionSet, v types.GenerateRisksPayload) graphql.Marshaler {
+	return ec._GenerateRisksPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGenerateRisksPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐGenerateRisksPayload(ctx context.Context, sel ast.SelectionSet, v *types.GenerateRisksPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._GenerateRisksPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, v any) (gid.GID, error) {

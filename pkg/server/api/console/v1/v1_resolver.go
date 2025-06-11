@@ -865,17 +865,8 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.UpdateOrganizationRequest{
-		ID:                    input.OrganizationID,
-		Name:                  input.Name,
-		FoundingYear:          &input.FoundingYear,
-		CompanyType:           &input.CompanyType,
-		PreMarketFit:          &input.PreMarketFit,
-		UsesCloudProviders:    &input.UsesCloudProviders,
-		AIFocused:             &input.AiFocused,
-		UsesAIGeneratedCode:   &input.UsesAiGeneratedCode,
-		VCBacked:              &input.VcBacked,
-		HasRaisedMoney:        &input.HasRaisedMoney,
-		HasEnterpriseAccounts: &input.HasEnterpriseAccounts,
+		ID:   input.OrganizationID,
+		Name: input.Name,
 	}
 
 	if input.Logo != nil {
@@ -2543,6 +2534,18 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 		ID:   session.ID,
 		User: types.NewUser(user),
 	}, nil
+}
+
+// GenerateRisks is the resolver for the generateRisks field.
+func (r *queryResolver) GenerateRisks(ctx context.Context, input types.GenerateRisksInput) (*types.GenerateRisksPayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	riskNames, err := prb.Risks.GenerateRisks(ctx, input.OrganizationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot generate risks: %w", err))
+	}
+
+	return &types.GenerateRisksPayload{Risks: riskNames}, nil
 }
 
 // Owner is the resolver for the owner field.

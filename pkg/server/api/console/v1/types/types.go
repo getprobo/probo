@@ -654,6 +654,14 @@ type GenerateDocumentChangelogPayload struct {
 	Changelog string `json:"changelog"`
 }
 
+type GenerateRisksInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+}
+
+type GenerateRisksPayload struct {
+	Risks []string `json:"risks"`
+}
+
 type ImportFrameworkInput struct {
 	OrganizationID gid.GID        `json:"organizationId"`
 	File           graphql.Upload `json:"file"`

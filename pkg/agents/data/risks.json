@@ -1,0 +1,412 @@
+[
+  {
+    "category": "Compliance & Legal",
+    "name": "Regulatory penalty with GDPR non-compliance",
+    "description": "Failure to comply with data privacy laws such as GDPR leads to fines and reputational harm."
+  },
+  {
+    "category": "Compliance & Legal",
+    "name": "Intellectual property infringement",
+    "description": "Using or integrating third-party content or software without proper licensing results in lawsuits or product takedowns."
+  },
+  {
+    "category": "Compliance & Legal",
+    "name": "Legal Exposure via employment law violations",
+    "description": "Improper classification of employees or non-compliance with labor laws can lead to penalties or legal disputes."
+  },
+  {
+    "category": "Compliance & Legal",
+    "name": "Business suspension due to missing licenses or permits",
+    "description": "Operating without required business authorizations results in fines or forced operational halt."
+  },
+  {
+    "category": "Compliance & Legal",
+    "name": "Contractual risk due to poorly drafted agreements",
+    "description": "Weak contracts leads to disputes, missed deliverables, or revenue leakage"
+  },
+  {
+    "category": "Compliance & Legal",
+    "name": "Cross-border operations creates jurisdictional risk",
+    "description": "Operating in multiple countries without understanding local laws exposes the company to fines or bans"
+  },
+  {
+    "category": "Compliance & Legal",
+    "name": "Data sovereignty issue with cloud storage",
+    "description": "Storing user data in the wrong jurisdiction violates local data sovereignty laws"
+  },
+  {
+    "category": "Compliance & Legal",
+    "name": "IP infringement due to generative AI misuse",
+    "description": "Use of generative AI without proper content controls can create outputs that violate copyright or trademark protections"
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Data Breach via phishing",
+    "description": "Phishing attacks targeting employees can lead to unauthorized access to sensitive data, such as credentials, which can result in a data breach."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Ransomware locking critical systems",
+    "description": "Attackers can encrypt critical business data and systems, demanding ransom to restore access. This disrupts operations and can result in financial loss."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Malicious or negligent employee",
+    "description": "An employee could leak sensitive data or compromise systems, leading to data loss or operational damage."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Theft of intellectual property (IP)",
+    "description": "Attackers, including competitors, could steal intellectual property, including designs, algorithms, or trade secrets, harming competitive advantage."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Exploitation of unpatched vulnerabilities",
+    "description": "Failure to apply security patches on time leaves systems vulnerable to known exploits, allowing attackers to compromise or control critical systems."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Distributed denial-of-service (DDoS) attack",
+    "description": "A DDoS attack overwhelms your online services with fake traffic, making them unavailable to customers, causing operational downtime and reputational damage."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Third-party vendor breach compromising startup data",
+    "description": "If a third-party vendor with access to your systems is breached, your sensitive data may be exposed due to poor security on the vendor's side."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Loss of data due to poor or nonexistent backup strategy",
+    "description": "Inadequate or nonexistent backups can lead to permanent data loss, potentially halting operations for extended periods."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Account compromise via weak authentication",
+    "description": "Weak passwords or lack of multi-factor authentication (MFA) can lead to unauthorized access to accounts and critical business systems."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Reputational damage from customer data leak",
+    "description": "A breach that exposes sensitive customer data can cause significant reputational damage, reducing trust and potentially leading to lost revenue."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Regulatory non-compliance leading to penalties",
+    "description": "Failure to meet legal standards for data protection (e.g., GDPR) can result in fines and legal action following a breach or violation."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Fraud via social engineering (impersonation or BEC)",
+    "description": "Social engineering tactics such as impersonating executives or vendors can trick employees into making fraudulent payments, causing financial loss."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Device theft leading to data exposure",
+    "description": "Loss or theft of employee devices without proper encryption or remote wipe capabilities can result in exposure of sensitive company data."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Cloud misconfiguration causing data exposure",
+    "description": "Misconfigured cloud environments can accidentally expose sensitive data (e.g., public-facing storage buckets), leading to data leaks."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "API exploits leading to data breaches",
+    "description": "Poorly secured or vulnerable APIs can be exploited, allowing attackers to access, manipulate, or steal sensitive data from the backend."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Employee mishandling of data leading to privacy violations",
+    "description": "Untrained or negligent employees could mishandle sensitive data, resulting in accidental exposure or privacy law violations."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Account hijacking of social media platforms",
+    "description": "If attackers hijack your startup's social media accounts, they could post harmful content or engage in fraudulent activities, damaging the brand."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Weak encryption causing data exposure",
+    "description": "Insufficient encryption of sensitive data can lead to exposure in the event of interception or theft, making the data easily accessible to attackers."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Ineffective change management process",
+    "description": "Without proper control over changes to software systems, unauthorized or untested changes could introduce vulnerabilities."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Insufficient incident response plan",
+    "description": "A poorly defined or tested response plan can lead to a slow or inadequate response from the team in reaction to a security breach."
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Inadequate logging & monitoring",
+    "description": "Without proper logging and monitoring, suspicious activities or security incidents may go unnoticed"
+  },
+  {
+    "category": "Finance",
+    "name": "Cash flow shortage",
+    "description": "Running out of funds due to high burn rate or delayed revenue forces premature closure of the startup."
+  },
+  {
+    "category": "Finance",
+    "name": "Growth stagnation due to delayed fundraising",
+    "description": "Delays in securing investment halts product development, hiring, or expansion plans."
+  },
+  {
+    "category": "Finance",
+    "name": "Misalignment with investors",
+    "description": "Differences in strategic vision or milestones between founders and investors causes conflicts or withdrawals."
+  },
+  {
+    "category": "Finance",
+    "name": "Revenue loss due to pricing strategy",
+    "description": "Setting product prices too high or low either repels customers or leads to unsustainable margins."
+  },
+  {
+    "category": "Finance",
+    "name": "Revenue concentration on few clients",
+    "description": "Overreliance on one or two large customers makes cash flow vulnerable if they leave"
+  },
+  {
+    "category": "Finance",
+    "name": "Forecasting errors due to inaccurate assumptions",
+    "description": "Poor financial planning based on optimistic projections leads to undercapitalization"
+  },
+  {
+    "category": "Finance",
+    "name": "Non-paying clients lead to debt accumulation",
+    "description": "Providing services before payment without proper vetting leads to bad debt accumulation"
+  },
+  {
+    "category": "Human capital",
+    "name": "Inability to attract talent leads to hiring delay",
+    "description": "Lack of brand visibility, resources, or appeal prevents the startup from hiring the skilled talent it needs."
+  },
+  {
+    "category": "Human capital",
+    "name": "Poor hiring fit leads to culture break",
+    "description": "Recruiting individuals who do not align with the startup's values or pace cause conflict and reduce cohesion."
+  },
+  {
+    "category": "Human capital",
+    "name": "Leadership breakdown due to co-founder conflict",
+    "description": "Disputes among founders over equity, vision, or roles fracture leadership and jeopardize the company."
+  },
+  {
+    "category": "Human capital",
+    "name": "Unsustainable pace leads to team burnout",
+    "description": "Intense work environments without balance leads to high turnover and decreased productivity"
+  },
+  {
+    "category": "Human capital",
+    "name": "Leadership gaps due to delayed hiring",
+    "description": "Postponing key leadership hires limits decision-making quality and organizational growth"
+  },
+  {
+    "category": "Human capital",
+    "name": "Homogenous culture limit diversity, equity and inclusion",
+    "description": "Lack of diversity affects innovation, morale, and stakeholder perception"
+  },
+  {
+    "category": "Operations",
+    "name": "Fragile infrastructure prevent scaling",
+    "description": "Systems or processes not built to scale breaks down under rapid growth"
+  },
+  {
+    "category": "Operations",
+    "name": "Operational blackout due to dependency on single tool",
+    "description": "Relying on one saas tool for operations creates vulnerability if access is lost or the vendor fails"
+  },
+  {
+    "category": "Operations",
+    "name": "Lack of documented process impact customer service",
+    "description": "Inconsistent execution due to absence of documented procedures affects customer experience"
+  },
+  {
+    "category": "Operations",
+    "name": "Execution delays due to inefficient internal processes",
+    "description": "Inefficient or manual workflows slows execution, reduces quality, and increases costs across core operations."
+  },
+  {
+    "category": "Operations",
+    "name": "Supply disruption via vendor dependency",
+    "description": "Over-reliance on single suppliers or service providers causes operational halts if disruptions occur."
+  },
+  {
+    "category": "Operations",
+    "name": "Knowledge loss with departure of key people",
+    "description": "Loss of a critical employee without backup plans disrupts core activities and strategic continuity."
+  },
+  {
+    "category": "Operations",
+    "name": "Customer churn due to product/service failure",
+    "description": "Bugs, outages, or poor product performance drives away users and damages long-term brand trust."
+  },
+  {
+    "category": "Reputational",
+    "name": "Brand damage with negative public reviews",
+    "description": "Poor customer experience or public backlash quickly damage reputation, especially on digital platforms."
+  },
+  {
+    "category": "Reputational",
+    "name": "Reputational loss via unethical conduct",
+    "description": "Engagement in or association with unethical behavior leads to public criticism and loss of trust."
+  },
+  {
+    "category": "Reputational",
+    "name": "Trust erosion due to lack of transparency",
+    "description": "Hiding problems or failing to communicate openly with stakeholders undermines credibility and confidence."
+  },
+  {
+    "category": "Reputational",
+    "name": "Reputation loss due to poor crisis management",
+    "description": "Mishandling incidents such as downtime or breaches escalate to public backlash"
+  },
+  {
+    "category": "Reputational",
+    "name": "Misinformation spreads with social media",
+    "description": "Missteps or false information on social platforms spreads rapidly, harming the brand"
+  },
+  {
+    "category": "Reputational",
+    "name": "Overpromising impacts credibility",
+    "description": "Making bold claims that go unfulfilled damages trust with customers and investors"
+  },
+  {
+    "category": "Reputational",
+    "name": "Customer backlash via lack of AI transparency",
+    "description": "Using AI in ways not disclosed to users breach trust or data protection regulations, leading to complaints or sanctions"
+  },
+  {
+    "category": "Strategic",
+    "name": "Market failure due to misalignment with customer needs",
+    "description": "Failure to understand or respond to actual market demand leads to product rejection and poor sales performance."
+  },
+  {
+    "category": "Strategic",
+    "name": "Inability to pivot",
+    "description": "Sticking to an ineffective business model despite market feedback results in lost opportunities and startup failure."
+  },
+  {
+    "category": "Strategic",
+    "name": "Competitive loss due to market disruption",
+    "description": "New or existing competitors offering better or cheaper solutions rapidly erodes market share and customer base."
+  },
+  {
+    "category": "Strategic",
+    "name": "Operational instability due to partnership",
+    "description": "Unreliable or misaligned partners may cause delivery delays, service breakdowns, or reputational damage."
+  },
+  {
+    "category": "Strategic",
+    "name": "Unfocused expansion dilutes brand",
+    "description": "Expanding too quickly into unrelated markets dilutes the brand and confuse customers"
+  },
+  {
+    "category": "Strategic",
+    "name": "Poor differentiation limits traction",
+    "description": "Lack of clear value proposition makes it difficult to stand out, leading to weak market traction"
+  },
+  {
+    "category": "Strategic",
+    "name": "Founder vision misalignment",
+    "description": "Differences in long-term vision between founders leads to disjointed strategies and stalled progress"
+  },
+  {
+    "category": "Technology",
+    "name": "Development bottlenecks with accumulated technical debt",
+    "description": "Short-term coding shortcuts limits scalability and requires costly refactoring, delaying future development."
+  },
+  {
+    "category": "Technology",
+    "name": "Resource waste with overengineering",
+    "description": "Overbuilding features with little customer value leads to unnecessary complexity and resource exhaustion."
+  },
+  {
+    "category": "Technology",
+    "name": "Technology dependency due to platform lock-In",
+    "description": "Relying on a third-party platform that changes terms or shuts down disrupts operations and force migration."
+  },
+  {
+    "category": "Technology",
+    "name": "Shadow IT introduces security vulnerability",
+    "description": "Employees using unapproved tools introduces security gaps and compliance risks"
+  },
+  {
+    "category": "Technology",
+    "name": "Outdated stack limits performance",
+    "description": "Failure to update tech stack reduces performance and increase integration challenges"
+  },
+  {
+    "category": "Technology",
+    "name": "Poor test coverage led to system failures",
+    "description": "Inadequate testing before release lead to bugs, crashes, and poor user experience"
+  },
+  {
+    "category": "Technology",
+    "name": "Unbalanced training data leads to bias",
+    "description": "AI systems trained on incomplete or biased datasets produce discriminatory or inaccurate results, risking compliance and fairness"
+  },
+  {
+    "category": "Technology",
+    "name": "Overreliance on AI models leads to decision failure",
+    "description": "Automated systems making critical decisions without human oversight cause strategic or operational errors"
+  },
+  {
+    "category": "Technology",
+    "name": "Security exposure due to AI-generated code vulnerabilities",
+    "description": "AI-generated code that lacks proper validation introduces security flaws or backdoors into production systems"
+  },
+  {
+    "category": "Health",
+    "name": "HIPAA violation via unauthorized access to patient data",
+    "description": "Unauthorized employees or third parties accessing patient data without proper access control can lead to serious HIPAA violations"
+  },
+  {
+    "category": "Health",
+    "name": "Data breach via insecure storage of ePHI",
+    "description": "Storing patient data without encryption or adequate security controls may lead to unauthorized access and mandatory breach reporting"
+  },
+  {
+    "category": "Health",
+    "name": "Audit failure via incomplete HIPAA documentation",
+    "description": "Missing policies, procedures, or risk assessments can result in non-compliance findings during a HIPAA audit or investigation"
+  },
+  {
+    "category": "Health",
+    "name": "Breach notification failure via delayed incident reporting",
+    "description": "Failing to report a breach involving ePHI within the HIPAA-required timeframe can lead to additional fines and reputational damage"
+  },
+  {
+    "category": "Health",
+    "name": "Vendor risk via non-compliant business associates",
+    "description": "Third-party service providers handling ePHI without a business associate agreement (BAA) or proper controls can expose your organization to liability"
+  },
+  {
+    "category": "Health",
+    "name": "Workflow interruption via over-restriction of access controls",
+    "description": "Excessive limitations on access to ePHI may impair operations or delay care, especially in time-sensitive environments"
+  },
+  {
+    "category": "Health",
+    "name": "Privacy complaint via improper ePHI disclosure",
+    "description": "Accidental or inappropriate sharing of patient data with unauthorized individuals (e.g. marketing or external partners) may trigger complaints and investigations"
+  },
+  {
+    "category": "Health",
+    "name": "Data retention risk via inconsistent retention policies",
+    "description": "Retaining ePHI longer than necessary — or deleting it prematurely — can violate regulations or impair patient services"
+  },
+  {
+    "category": "Health",
+    "name": "Phishing compromise via targeted credential attacks",
+    "description": "Phishing emails aimed at accessing login credentials to systems containing ePHI can lead to unauthorized data access and regulatory breaches"
+  },
+  {
+    "category": "Health",
+    "name": "Security drift via outdated risk analysis",
+    "description": "Not regularly updating your HIPAA security risk assessment may result in blind spots in new systems, vendors, or workflows"
+  }
+]

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/getprobo/probo/pkg/agents"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
@@ -472,4 +473,52 @@ func (s RiskService) Delete(
 			return risk.Delete(ctx, conn, s.svc.scope, riskID)
 		},
 	)
+}
+
+func (s RiskService) GenerateRisks(
+	ctx context.Context,
+	riskID gid.GID,
+) ([]string, error) {
+	organization := coredata.Organization{}
+	peoples := coredata.Peoples{}
+	var peopleCount int
+
+	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+		var err error
+
+		if err = organization.LoadByID(ctx, conn, s.svc.scope, riskID); err != nil {
+			return fmt.Errorf("cannot load organization: %w", err)
+		}
+
+		peopleCount, err = peoples.CountByOrganizationID(ctx, conn, s.svc.scope, organization.ID)
+		if err != nil {
+			return fmt.Errorf("cannot count people: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	organizationInfo := agents.OrganizationInfo{
+		Name:                  &organization.Name,
+		FoundingYear:          organization.FoundingYear,
+		CompanyType:           organization.CompanyType,
+		PremarketFit:          organization.PreMarketFit,
+		UsesCloudProviders:    organization.UsesCloudProviders,
+		AIFocused:             organization.AIFocused,
+		UsesAIGeneratedCode:   organization.UsesAIGeneratedCode,
+		VCBacked:              organization.VCBacked,
+		HasRaisedMoney:        organization.HasRaisedMoney,
+		HasEnterpriseAccounts: organization.HasEnterpriseAccounts,
+		PeopleCount:           &peopleCount,
+	}
+
+	risks, err := s.svc.agent.GenerateRisks(ctx, organizationInfo)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate risks: %w", err)
+	}
+
+	return risks, nil
 }

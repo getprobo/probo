@@ -7,14 +7,17 @@ import {
   usePreloadedQuery,
   useQueryLoader,
   useMutation,
+  fetchQuery,
+  useRelayEnvironment,
 } from "react-relay";
+import { FragmentRefs } from "relay-runtime";
 import {
   Suspense,
-  useCallback,
   useEffect,
   useState,
   useTransition,
   useRef,
+  useCallback,
 } from "react";
 import type { ListRiskViewQuery } from "./__generated__/ListRiskViewQuery.graphql";
 import { useParams, useSearchParams } from "react-router";
@@ -44,6 +47,8 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import PeopleSelector from "@/components/PeopleSelector";
 
 const defaultPageSize = 25;
 
@@ -69,10 +74,12 @@ const listRiskViewQuery = graphql`
     $before: CursorKey
   ) {
     organization: node(id: $organizationId) {
-      id
-
-      ...ListRiskView_risks
-        @arguments(first: $first, after: $after, last: $last, before: $before)
+      ... on Organization {
+        id
+        ...PeopleSelector_organization
+        ...ListRiskView_risks
+          @arguments(first: $first, after: $after, last: $last, before: $before)
+      }
     }
   }
 `;
@@ -136,6 +143,52 @@ const deleteRiskMutation = graphql`
   }
 `;
 
+const createRiskMutation = graphql`
+  mutation ListRiskViewCreateRiskMutation(
+    $input: CreateRiskInput!
+    $connections: [ID!]!
+  ) {
+    createRisk(input: $input) {
+      riskEdge @prependEdge(connections: $connections) {
+        node {
+          id
+          name
+          description
+          category
+          inherentLikelihood
+          inherentImpact
+          residualLikelihood
+          residualImpact
+          treatment
+          createdAt
+          updatedAt
+        }
+      }
+    }
+  }
+`;
+
+const generateRisksQuery = graphql`
+  query ListRiskViewGenerateRisksQuery($input: GenerateRisksInput!) {
+    generateRisks(input: $input) {
+      risks
+    }
+  }
+`;
+
+type GenerateRisksQuery = {
+  readonly response: {
+    readonly generateRisks: {
+      readonly risks: ReadonlyArray<string>;
+    };
+  };
+  readonly variables: {
+    readonly input: {
+      readonly organizationId: string;
+    };
+  };
+};
+
 // Helper function to convert risk score to risk level
 const calculateRiskLevel = (score: number): string => {
   if (score >= 15) return "High";
@@ -168,6 +221,25 @@ const formatTreatment = (treatment: string): string => {
 
   return treatmentMap[treatment] || treatment;
 };
+
+// Define the risk type
+interface Risk {
+  category: string;
+  name: string;
+  description: string;
+}
+
+// Import risks from the public directory
+const predefinedRisks = (await import("../../../../public/data/risks/risks.json")).default as Risk[];
+
+// Group risks by category
+const risksByCategory = predefinedRisks.reduce((acc: Record<string, Risk[]>, risk: Risk) => {
+  if (!acc[risk.category]) {
+    acc[risk.category] = [];
+  }
+  acc[risk.category].push(risk);
+  return acc;
+}, {});
 
 function LoadAboveButton({
   isLoading,
@@ -534,25 +606,57 @@ function ListRiskViewContent({
   const { organizationId } = useParams<{ organizationId: string }>();
   const { toast } = useToast();
   const isPaginationUpdate = useRef(false);
+  const environment = useRelayEnvironment();
 
-  // State for delete confirmation dialog
-  const [riskToDelete, setRiskToDelete] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // State for toggling between initial and residual risk matrix
+  // State for generate risks dialog
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
+  const [selectedRisks, setSelectedRisks] = useState<Set<string>>(new Set());
+  const [selectedOwnerId, setSelectedOwnerId] = useState("");
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [suggestedRisks, setSuggestedRisks] = useState<string[]>([]);
   const [showResidualRisk, setShowResidualRisk] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [riskToDelete, setRiskToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const availableCategories = RISK_CATEGORIES;
 
-  // State for category filters
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
-    new Set(),
-  );
+  const toggleCategory = (category: string) => {
+    setSelectedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  };
+
+  // Setup create mutation
+  const [commitCreateMutation] = useMutation(createRiskMutation);
 
   // Setup delete mutation
-  const [commitDeleteMutation] =
-    useMutation<ListRiskViewDeleteMutation>(deleteRiskMutation);
+  const [commitDeleteMutation] = useMutation(deleteRiskMutation);
+
+  const handleDeleteRisk = async () => {
+    if (!riskToDelete || !connectionId) return;
+    setIsDeleting(true);
+    try {
+      await commitDeleteMutation({
+        variables: {
+          input: { riskId: riskToDelete.id },
+          connections: [connectionId],
+        },
+      });
+      toast({ title: "Success", description: "Risk deleted successfully" });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete risk", variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+      setRiskToDelete(null);
+    }
+  };
+
+  if (!data.organization) {
+    return <div>Organization not found</div>;
+  }
 
   const {
     data: risksConnection,
@@ -567,91 +671,288 @@ function ListRiskViewContent({
     ListRiskView_risks$key
   >(listRiskViewFragment, data.organization);
 
-  const risks = risksConnection?.risks?.edges?.map((edge) => edge.node) || [];
-  const pageInfo = risksConnection?.risks?.pageInfo;
   const connectionId = risksConnection?.risks?.__id;
+  const pageInfo = risksConnection?.risks?.pageInfo;
 
-  // Get unique categories from existing risks
-  const availableCategories = Array.from(
-    new Set(risks.map((risk) => risk.category)),
-  ).sort();
+  // Get risks from connection and filter them
+  const risks = risksConnection?.risks?.edges?.map((edge) => edge.node) ?? [];
+  const filteredRisks = risks;
 
-  // Filter risks based on selected categories
-  const filteredRisks =
-    selectedCategories.size === 0
-      ? risks
-      : risks.filter((risk) => selectedCategories.has(risk.category));
+  // Handle dialog open with risk generation
+  const handleOpenGenerateDialog = useCallback(() => {
+    if (!organizationId) return;
 
-  // Handle category toggle
-  const toggleCategory = (category: string) => {
-    setSelectedCategories((prev) => {
+    setIsGenerateDialogOpen(true);
+    setSuggestedRisks([]);
+    setSelectedRisks(new Set());
+    setIsLoadingSuggestions(true);
+
+    // Call the generate risks API
+    fetchQuery<GenerateRisksQuery>(environment, generateRisksQuery, {
+      input: { organizationId },
+    }).toPromise().then(
+      (response) => {
+        if (response) {
+          const suggestedRisksList = Array.from(response.generateRisks.risks);
+          setSuggestedRisks(suggestedRisksList);
+          // Update selectedRisks while preserving any user selections
+          setSelectedRisks(prev => {
+            const newSet = new Set(prev);
+            suggestedRisksList.forEach(risk => newSet.add(risk));
+            return newSet;
+          });
+        }
+      }
+    ).catch(
+      () => {
+        toast({
+          title: "Error",
+          description: "Failed to load risk suggestions",
+          variant: "destructive",
+        });
+      }
+    ).finally(() => {
+      setIsLoadingSuggestions(false);
+    });
+  }, [environment, organizationId, toast]);
+
+  // Handle dialog close
+  const handleDialogClose = () => {
+    setIsGenerateDialogOpen(false);
+    setSuggestedRisks([]);
+    setSelectedRisks(new Set());
+    setSelectedOwnerId("");
+  };
+
+  // Handle risk selection
+  const toggleRisk = (riskName: string) => {
+    setSelectedRisks((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(category)) {
-        newSet.delete(category);
+      if (newSet.has(riskName)) {
+        newSet.delete(riskName);
       } else {
-        newSet.add(category);
+        newSet.add(riskName);
       }
       return newSet;
     });
   };
 
-  // Handle delete risk
-  const handleDeleteRisk = useCallback(() => {
-    if (!riskToDelete || !connectionId) return;
+  // Handle generate risks
+  const handleGenerateRisks = async () => {
+    if (!selectedOwnerId) {
+      toast({
+        title: "Error",
+        description: "Please select an owner for the risks",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setIsDeleting(true);
+    if (selectedRisks.size === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one risk to generate",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    commitDeleteMutation({
-      variables: {
-        input: {
-          riskId: riskToDelete.id,
-        },
-        connections: [connectionId],
-      },
-      onCompleted: (_, errors) => {
-        setIsDeleting(false);
-        setRiskToDelete(null);
+    if (!connectionId) {
+      toast({
+        title: "Error",
+        description: "Connection ID not found",
+        variant: "destructive",
+      });
+      return;
+    }
 
-        if (errors) {
-          console.error("Error deleting risk:", errors);
-          toast({
-            title: "Error",
-            description: "Failed to delete risk. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
+    setIsGenerateDialogOpen(false);
 
-        toast({
-          title: "Success",
-          description: "Risk deleted successfully.",
-        });
-      },
-      onError: (error) => {
-        setIsDeleting(false);
-        setRiskToDelete(null);
-        console.error("Error deleting risk:", error);
-        toast({
-          title: "Error",
-          description: "Failed to delete risk. Please try again.",
-          variant: "destructive",
-        });
-      },
+    // Show initial toast
+    toast({
+      title: "Generating Risks",
+      description: `Creating ${selectedRisks.size} risks...`,
     });
-  }, [riskToDelete, connectionId, commitDeleteMutation, toast]);
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    // Create each selected risk
+    for (const riskName of selectedRisks) {
+      const template = Object.values(risksByCategory)
+        .flat()
+        .find(risk => risk.name === riskName);
+
+      if (!template) continue;
+
+      try {
+        await new Promise((resolve, reject) => {
+          commitCreateMutation({
+            variables: {
+              input: {
+                organizationId: organizationId!,
+                name: template.name,
+                description: template.description,
+                category: template.category,
+                inherentLikelihood: 3, // Default values
+                inherentImpact: 3,
+                residualLikelihood: 3,
+                residualImpact: 3,
+                treatment: "MITIGATED",
+                ownerId: selectedOwnerId,
+              },
+              connections: [connectionId],
+            },
+            onCompleted(response, errors) {
+              if (errors) {
+                reject(errors);
+              } else {
+                resolve(true);
+              }
+            },
+            onError(error) {
+              reject(error);
+            },
+          });
+        });
+        successCount++;
+      } catch (error) {
+        console.error(`Error creating risk "${template.name}":`, error);
+        failureCount++;
+      }
+    }
+
+    // Show final status toast
+    if (successCount > 0) {
+      toast({
+        title: "Success",
+        description: `Successfully created ${successCount} risk${successCount !== 1 ? 's' : ''}.${
+          failureCount > 0 ? ` Failed to create ${failureCount} risk${failureCount !== 1 ? 's' : ''}.` : ''
+        }`,
+        variant: failureCount > 0 ? "default" : "default",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to create any risks. Please try again.",
+        variant: "destructive",
+      });
+    }
+
+    // Clear selections
+    setSelectedRisks(new Set());
+    setSelectedOwnerId("");
+  };
 
   return (
     <PageTemplate
       title="Risks"
       actions={
-        <Button asChild>
-          <Link to={`/organizations/${organizationId}/risks/new`}>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleOpenGenerateDialog}
+          >
             <Plus className="mr-2 h-4 w-4" />
-            New Risk
-          </Link>
-        </Button>
+            Generate Risks
+          </Button>
+          <Button asChild>
+            <Link to={`/organizations/${organizationId}/risks/new`}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Risk
+            </Link>
+          </Button>
+        </div>
       }
     >
+      {/* Generate Risks Dialog */}
+      <Dialog open={isGenerateDialogOpen} onOpenChange={handleDialogClose}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Generate Risks</DialogTitle>
+            <DialogDescription>
+              Select predefined risks to add to your organization.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Risk Owner</Label>
+              <PeopleSelector
+                organizationRef={data.organization}
+                selectedPersonId={selectedOwnerId}
+                onSelect={setSelectedOwnerId}
+                placeholder="Select risk owner"
+                required
+              />
+            </div>
+            <div className="max-h-[400px] overflow-y-auto pr-4">
+              <div className="space-y-6">
+                {Object.entries(risksByCategory).map(([category, risks]) => {
+                  if (risks.length === 0) return null;
+
+                  return (
+                    <div key={category}>
+                      <h3 className="font-medium mb-2">{category}</h3>
+                      <div className="space-y-2 ml-4">
+                        {risks.map((risk) => {
+                          const isChecked = selectedRisks.has(risk.name);
+                          return (
+                            <div key={risk.name} className="flex items-start space-x-2">
+                              <Checkbox
+                                id={`risk-${risk.name}`}
+                                checked={isChecked}
+                                onCheckedChange={() => toggleRisk(risk.name)}
+                                className="mt-1"
+                              />
+                              <Label
+                                htmlFor={`risk-${risk.name}`}
+                                className={`text-sm cursor-pointer ${suggestedRisks.includes(risk.name) ? "text-primary font-medium" : "text-muted-foreground"}`}
+                              >
+                                {risk.name}
+                                {!isLoadingSuggestions && suggestedRisks.includes(risk.name) && (
+                                  <span className="ml-2 text-xs text-primary">(Suggested)</span>
+                                )}
+                              </Label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            {isLoadingSuggestions && (
+              <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-r-transparent" />
+                <span>Loading risk suggestions...</span>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <div className="flex justify-between items-center w-full">
+              <div className="text-sm text-muted-foreground">
+                {selectedRisks.size} risks selected
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDialogClose}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleGenerateRisks}
+                  disabled={selectedRisks.size === 0 || !selectedOwnerId}
+                >
+                  Generate
+                </Button>
+              </div>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="space-y-6">
         <LoadAboveButton
           isLoading={isLoadingPrevious}
@@ -977,3 +1278,10 @@ export default function ListRiskView() {
     </Suspense>
   );
 }
+
+export type ListRiskViewQuery$data = {
+  readonly organization: {
+    readonly id: string;
+    readonly " $fragmentSpreads": FragmentRefs<"ListRiskView_risks" | "PeopleSelector_organization">;
+  };
+};
