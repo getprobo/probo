@@ -31,9 +31,13 @@ func NewControlFilter(query *string) *ControlFilter {
 }
 
 func (f *ControlFilter) SQLArguments() pgx.NamedArgs {
-	return pgx.NamedArgs{
-		"query": f.query,
+	args := pgx.NamedArgs{}
+
+	if f.query != nil {
+		args["query"] = *f.query
 	}
+
+	return args
 }
 
 func (f *ControlFilter) SQLFragment() string {
