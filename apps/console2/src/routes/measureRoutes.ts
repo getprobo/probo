@@ -1,10 +1,11 @@
-import { Fragment, lazy } from "react";
+import { Fragment } from "react";
 import { loadQuery } from "react-relay";
 import type { AppRoute } from "/routes.tsx";
 import { relayEnvironment } from "/providers/RelayProviders";
 import { measureNodeQuery, measuresQuery } from "/hooks/graph/MeasureGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect } from "react-router";
+import { lazy } from "@probo/react-lazy";
 
 export const measureRoutes = [
   {

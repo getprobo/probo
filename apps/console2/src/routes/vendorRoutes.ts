@@ -1,4 +1,4 @@
-import { lazy } from "react";
+import { lazy } from "@probo/react-lazy";
 import { loadQuery } from "react-relay";
 import type { AppRoute } from "/routes.tsx";
 import { relayEnvironment } from "/providers/RelayProviders";
