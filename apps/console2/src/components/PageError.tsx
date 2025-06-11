@@ -1,6 +1,7 @@
-import { useRouteError } from "react-router";
+import { useLocation, useRouteError } from "react-router";
 import { IconPageCross } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { useEffect, useRef } from "react";
 
 const classNames = {
   wrapper: "py-10 text-center space-y-2 ",
@@ -8,9 +9,22 @@ const classNames = {
   description: "text-base text-txt-tertiary",
 };
 
-export function PageError() {
+type Props = {
+  resetErrorBoundary: () => void;
+};
+
+export function PageError({ resetErrorBoundary }: Props) {
   const error = useRouteError();
   const { __ } = useTranslate();
+  const location = useLocation();
+  const baseLocation = useRef(location);
+
+  // Reset error boundary on page change
+  useEffect(() => {
+    if (location.pathname !== baseLocation.current.pathname) {
+      resetErrorBoundary();
+    }
+  }, [location, resetErrorBoundary]);
 
   if (!error) {
     return (
