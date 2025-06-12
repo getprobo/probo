@@ -822,22 +822,31 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 
 // CreateOrganization is the resolver for the createOrganization field.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error) {
-	prb := r.ProboService(ctx, gid.NewTenantID())
+	prb := r.proboSvc.WithTenant(gid.NewTenantID())
 
-	organization, err := prb.Organizations.Create(ctx, probo.CreateOrganizationRequest{
-		Name: input.Name,
-	})
+	organization, err := prb.Organizations.Create(
+		ctx,
+		probo.CreateOrganizationRequest{
+			Name: input.Name,
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create organization: %w", err)
 	}
 
-	err = r.usrmgrSvc.EnrollUserInOrganization(ctx, UserFromContext(ctx).ID, organization.ID)
+	err = r.usrmgrSvc.EnrollUserInOrganization(
+		ctx,
+		UserFromContext(ctx).ID,
+		organization.ID,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add user to organization: %w", err)
 	}
 
 	tenantIDs, _ := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
 	*tenantIDs = append(*tenantIDs, organization.ID.TenantID())
+
+	prb = r.ProboService(ctx, organization.ID.TenantID())
 
 	_, err = prb.Peoples.Create(
 		ctx,
