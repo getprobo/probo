@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f4b385701b9d41fb1d7617694a08c117>>
+ * @generated SignedSource<<ed6783002ee6a5f6c4871f4e3897e1d3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,9 +10,18 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type UpdateOrganizationInput = {
+  aiFocused?: boolean | null | undefined;
+  companyType?: string | null | undefined;
+  foundingYear?: number | null | undefined;
+  hasEnterpriseAccounts?: boolean | null | undefined;
+  hasRaisedMoney?: boolean | null | undefined;
   logo?: any | null | undefined;
   name?: string | null | undefined;
   organizationId: string;
+  preMarketFit?: boolean | null | undefined;
+  usesAiGeneratedCode?: boolean | null | undefined;
+  usesCloudProviders?: boolean | null | undefined;
+  vcBacked?: boolean | null | undefined;
 };
 export type SettingsViewUpdateOrganizationMutation$variables = {
   input: UpdateOrganizationInput;
@@ -20,9 +29,18 @@ export type SettingsViewUpdateOrganizationMutation$variables = {
 export type SettingsViewUpdateOrganizationMutation$data = {
   readonly updateOrganization: {
     readonly organization: {
+      readonly aiFocused: boolean | null | undefined;
+      readonly companyType: string | null | undefined;
+      readonly foundingYear: number | null | undefined;
+      readonly hasEnterpriseAccounts: boolean | null | undefined;
+      readonly hasRaisedMoney: boolean | null | undefined;
       readonly id: string;
       readonly logoUrl: string | null | undefined;
       readonly name: string;
+      readonly preMarketFit: boolean | null | undefined;
+      readonly usesAiGeneratedCode: boolean | null | undefined;
+      readonly usesCloudProviders: boolean | null | undefined;
+      readonly vcBacked: boolean | null | undefined;
     };
   };
 };
@@ -82,6 +100,69 @@ v1 = [
             "kind": "ScalarField",
             "name": "logoUrl",
             "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "foundingYear",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "companyType",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "preMarketFit",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "usesCloudProviders",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "aiFocused",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "usesAiGeneratedCode",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "vcBacked",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "hasRaisedMoney",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "hasEnterpriseAccounts",
+            "storageKey": null
           }
         ],
         "storageKey": null
@@ -108,16 +189,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "f2a2984a2d4e764019f4355c13dab46e",
+    "cacheID": "6aeb228c4f20258fb5287c82314b3f21",
     "id": null,
     "metadata": {},
     "name": "SettingsViewUpdateOrganizationMutation",
     "operationKind": "mutation",
-    "text": "mutation SettingsViewUpdateOrganizationMutation(\n  $input: UpdateOrganizationInput!\n) {\n  updateOrganization(input: $input) {\n    organization {\n      id\n      name\n      logoUrl\n    }\n  }\n}\n"
+    "text": "mutation SettingsViewUpdateOrganizationMutation(\n  $input: UpdateOrganizationInput!\n) {\n  updateOrganization(input: $input) {\n    organization {\n      id\n      name\n      logoUrl\n      foundingYear\n      companyType\n      preMarketFit\n      usesCloudProviders\n      aiFocused\n      usesAiGeneratedCode\n      vcBacked\n      hasRaisedMoney\n      hasEnterpriseAccounts\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9570926c4f654570cbfe7328cd9893d6";
+(node as any).hash = "c668eb7004839c700a07048e2911ce0c";
 
 export default node;

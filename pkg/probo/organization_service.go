@@ -44,9 +44,18 @@ type (
 	}
 
 	UpdateOrganizationRequest struct {
-		ID   gid.GID
-		Name *string
-		File *File
+		ID                    gid.GID
+		Name                  *string
+		File                  *File
+		FoundingYear          **int
+		CompanyType           **string
+		PreMarketFit          **bool
+		UsesCloudProviders    **bool
+		AIFocused             **bool
+		UsesAIGeneratedCode   **bool
+		VCBacked              **bool
+		HasRaisedMoney        **bool
+		HasEnterpriseAccounts **bool
 	}
 )
 
@@ -188,6 +197,42 @@ func (s OrganizationService) Update(
 				}
 
 				organization.LogoObjectKey = objectKey.String()
+			}
+
+			if req.FoundingYear != nil {
+				organization.FoundingYear = *req.FoundingYear
+			}
+
+			if req.CompanyType != nil {
+				organization.CompanyType = *req.CompanyType
+			}
+
+			if req.PreMarketFit != nil {
+				organization.PreMarketFit = *req.PreMarketFit
+			}
+
+			if req.UsesCloudProviders != nil {
+				organization.UsesCloudProviders = *req.UsesCloudProviders
+			}
+
+			if req.AIFocused != nil {
+				organization.AIFocused = *req.AIFocused
+			}
+
+			if req.UsesAIGeneratedCode != nil {
+				organization.UsesAIGeneratedCode = *req.UsesAIGeneratedCode
+			}
+
+			if req.VCBacked != nil {
+				organization.VCBacked = *req.VCBacked
+			}
+
+			if req.HasRaisedMoney != nil {
+				organization.HasRaisedMoney = *req.HasRaisedMoney
+			}
+
+			if req.HasEnterpriseAccounts != nil {
+				organization.HasEnterpriseAccounts = *req.HasEnterpriseAccounts
 			}
 
 			if err := organization.Update(ctx, s.svc.scope, conn); err != nil {

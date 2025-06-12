@@ -45,9 +45,18 @@ func NewOrganizationEdge(o *coredata.Organization, orderBy coredata.Organization
 
 func NewOrganization(o *coredata.Organization) *Organization {
 	return &Organization{
-		ID:        o.ID,
-		Name:      o.Name,
-		CreatedAt: o.CreatedAt,
-		UpdatedAt: o.UpdatedAt,
+		ID:                    o.ID,
+		Name:                  o.Name,
+		FoundingYear:          o.FoundingYear,
+		CompanyType:           o.CompanyType,
+		PreMarketFit:          o.PreMarketFit,
+		UsesCloudProviders:    o.UsesCloudProviders,
+		AiFocused:             o.AIFocused,
+		UsesAiGeneratedCode:   o.UsesAIGeneratedCode,
+		VcBacked:              o.VCBacked,
+		HasRaisedMoney:        o.HasRaisedMoney,
+		HasEnterpriseAccounts: o.HasEnterpriseAccounts,
+		CreatedAt:             o.CreatedAt,
+		UpdatedAt:             o.UpdatedAt,
 	}
 }

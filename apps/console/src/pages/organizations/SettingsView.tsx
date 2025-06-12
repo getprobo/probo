@@ -1,4 +1,4 @@
-import { Building2, Upload, MoreVertical } from "lucide-react";
+import { Building2, Upload, MoreVertical, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,7 +23,6 @@ import {
   useMutation,
 } from "react-relay";
 import { useParams } from "react-router";
-import { Link } from "react-router";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -56,6 +55,15 @@ const settingsViewQuery = graphql`
       ... on Organization {
         name
         logoUrl
+        foundingYear
+        companyType
+        preMarketFit
+        usesCloudProviders
+        aiFocused
+        usesAiGeneratedCode
+        vcBacked
+        hasRaisedMoney
+        hasEnterpriseAccounts
         users(first: 100) {
           edges {
             node {
@@ -90,6 +98,15 @@ const updateOrganizationMutation = graphql`
         id
         name
         logoUrl
+        foundingYear
+        companyType
+        preMarketFit
+        usesCloudProviders
+        aiFocused
+        usesAiGeneratedCode
+        vcBacked
+        hasRaisedMoney
+        hasEnterpriseAccounts
       }
     }
   }
@@ -123,8 +140,11 @@ function SettingsViewContent({
     organization.connectors?.edges.map((edge) => edge.node) || [];
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { organizationId } = useParams();
+  const [, loadQuery] = useQueryLoader<SettingsViewQueryType>(settingsViewQuery);
 
   const [isEditNameOpen, setIsEditNameOpen] = useState(false);
+  const [isEditDetailsOpen, setIsEditDetailsOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteFullName, setInviteFullName] = useState("");
@@ -132,6 +152,17 @@ function SettingsViewContent({
   const [organizationName, setOrganizationName] = useState(
     organization.name || "",
   );
+  const [organizationDetails, setOrganizationDetails] = useState({
+    foundingYear: organization.foundingYear || null,
+    companyType: organization.companyType || "",
+    preMarketFit: organization.preMarketFit || false,
+    usesCloudProviders: organization.usesCloudProviders || false,
+    aiFocused: organization.aiFocused || false,
+    usesAiGeneratedCode: organization.usesAiGeneratedCode || false,
+    vcBacked: organization.vcBacked || false,
+    hasRaisedMoney: organization.hasRaisedMoney || false,
+    hasEnterpriseAccounts: organization.hasEnterpriseAccounts || false,
+  });
   const [isUploading, setIsUploading] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
@@ -167,10 +198,6 @@ function SettingsViewContent({
 
   const [removeUser] =
     useMutation<SettingsViewRemoveUserMutationType>(removeUserMutation);
-
-  const { organizationId } = useParams();
-  const [, loadQuery] =
-    useQueryLoader<SettingsViewQueryType>(settingsViewQuery);
 
   const handleUpdateName = () => {
     updateOrganization({
@@ -331,6 +358,32 @@ function SettingsViewContent({
     });
   };
 
+  const handleUpdateDetails = () => {
+    updateOrganization({
+      variables: {
+        input: {
+          organizationId: organization.id,
+          ...organizationDetails,
+        },
+      },
+      onCompleted: () => {
+        toast({
+          title: "Organization updated",
+          description: "Organization details have been updated successfully.",
+          variant: "default",
+        });
+        setIsEditDetailsOpen(false);
+      },
+      onError: (error) => {
+        toast({
+          title: "Error updating organization",
+          description: error.message,
+          variant: "destructive",
+        });
+      },
+    });
+  };
+
   return (
     <PageTemplate
       title="Settings"
@@ -403,6 +456,100 @@ function SettingsViewContent({
                   >
                     Edit
                   </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Company details</label>
+              <div className="rounded-lg border p-4 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-5 w-5 text-tertiary" />
+                    <span className="text-tertiary">Company information</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setOrganizationDetails({
+                        foundingYear: organization.foundingYear || null,
+                        companyType: organization.companyType || "",
+                        preMarketFit: organization.preMarketFit || false,
+                        usesCloudProviders: organization.usesCloudProviders || false,
+                        aiFocused: organization.aiFocused || false,
+                        usesAiGeneratedCode: organization.usesAiGeneratedCode || false,
+                        vcBacked: organization.vcBacked || false,
+                        hasRaisedMoney: organization.hasRaisedMoney || false,
+                        hasEnterpriseAccounts: organization.hasEnterpriseAccounts || false,
+                      });
+                      setIsEditDetailsOpen(true);
+                    }}
+                  >
+                    Edit details
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm font-medium">Founding Year</div>
+                    <div className="text-sm text-tertiary">
+                      {organization.foundingYear || "Not specified"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">Company Type</div>
+                    <div className="text-sm text-tertiary">
+                      {organization.companyType || "Not specified"}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {organization.preMarketFit && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                        <span className="text-sm text-tertiary">Pre-market fit</span>
+                      </div>
+                    )}
+                    {organization.usesCloudProviders && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                        <span className="text-sm text-tertiary">Uses cloud providers</span>
+                      </div>
+                    )}
+                    {organization.aiFocused && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                        <span className="text-sm text-tertiary">AI-focused</span>
+                      </div>
+                    )}
+                    {organization.usesAiGeneratedCode && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                        <span className="text-sm text-tertiary">Uses AI-generated code</span>
+                      </div>
+                    )}
+                    {organization.vcBacked && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                        <span className="text-sm text-tertiary">VC-backed</span>
+                      </div>
+                    )}
+                    {organization.hasRaisedMoney && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                        <span className="text-sm text-tertiary">Has raised money</span>
+                      </div>
+                    )}
+                    {organization.hasEnterpriseAccounts && (
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-green-500" />
+                        <span className="text-sm text-tertiary">Has enterprise accounts</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -675,6 +822,157 @@ function SettingsViewContent({
             <Button onClick={handleInviteMember} disabled={isInviting}>
               {isInviting ? "Sending..." : "Send Invitation"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditDetailsOpen} onOpenChange={setIsEditDetailsOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Company Details</DialogTitle>
+            <DialogDescription>
+              Update your company details and characteristics.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="founding-year">Founding Year</Label>
+              <Input
+                id="founding-year"
+                type="number"
+                value={organizationDetails.foundingYear || ""}
+                onChange={(e) =>
+                  setOrganizationDetails({
+                    ...organizationDetails,
+                    foundingYear: parseInt(e.target.value) || null,
+                  })
+                }
+                placeholder="Enter founding year"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="company-type">Company Type</Label>
+              <Input
+                id="company-type"
+                value={organizationDetails.companyType}
+                onChange={(e) =>
+                  setOrganizationDetails({
+                    ...organizationDetails,
+                    companyType: e.target.value,
+                  })
+                }
+                placeholder="Enter company type"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Company Characteristics</Label>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is-pre-market-fit"
+                    checked={organizationDetails.preMarketFit}
+                    onChange={(e) =>
+                      setOrganizationDetails({
+                        ...organizationDetails,
+                        preMarketFit: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="is-pre-market-fit">Pre-market fit</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="uses-cloud-providers"
+                    checked={organizationDetails.usesCloudProviders}
+                    onChange={(e) =>
+                      setOrganizationDetails({
+                        ...organizationDetails,
+                        usesCloudProviders: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="uses-cloud-providers">Uses cloud providers</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is-ai-focused"
+                    checked={organizationDetails.aiFocused}
+                    onChange={(e) =>
+                      setOrganizationDetails({
+                        ...organizationDetails,
+                        aiFocused: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="is-ai-focused">AI-focused</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="uses-ai-generated-code"
+                    checked={organizationDetails.usesAiGeneratedCode}
+                    onChange={(e) =>
+                      setOrganizationDetails({
+                        ...organizationDetails,
+                        usesAiGeneratedCode: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="uses-ai-generated-code">Uses AI-generated code</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="is-vc-backed"
+                    checked={organizationDetails.vcBacked}
+                    onChange={(e) =>
+                      setOrganizationDetails({
+                        ...organizationDetails,
+                        vcBacked: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="is-vc-backed">VC-backed</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="has-raised-money"
+                    checked={organizationDetails.hasRaisedMoney}
+                    onChange={(e) =>
+                      setOrganizationDetails({
+                        ...organizationDetails,
+                        hasRaisedMoney: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="has-raised-money">Has raised money</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="has-enterprise-accounts"
+                    checked={organizationDetails.hasEnterpriseAccounts}
+                    onChange={(e) =>
+                      setOrganizationDetails({
+                        ...organizationDetails,
+                        hasEnterpriseAccounts: e.target.checked,
+                      })
+                    }
+                  />
+                  <Label htmlFor="has-enterprise-accounts">Has enterprise accounts</Label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDetailsOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateDetails}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

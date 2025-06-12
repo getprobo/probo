@@ -560,23 +560,32 @@ type ComplexityRoot struct {
 	}
 
 	Organization struct {
-		Assets     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) int
-		Connectors func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
-		Controls   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
-		CreatedAt  func(childComplexity int) int
-		Data       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) int
-		Documents  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
-		Frameworks func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
-		ID         func(childComplexity int) int
-		LogoURL    func(childComplexity int) int
-		Measures   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
-		Name       func(childComplexity int) int
-		Peoples    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy) int
-		Risks      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
-		Tasks      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
-		UpdatedAt  func(childComplexity int) int
-		Users      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.UserOrderBy) int
-		Vendors    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
+		AiFocused             func(childComplexity int) int
+		Assets                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) int
+		CompanyType           func(childComplexity int) int
+		Connectors            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
+		Controls              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
+		CreatedAt             func(childComplexity int) int
+		Data                  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) int
+		Documents             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
+		FoundingYear          func(childComplexity int) int
+		Frameworks            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
+		HasEnterpriseAccounts func(childComplexity int) int
+		HasRaisedMoney        func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		LogoURL               func(childComplexity int) int
+		Measures              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
+		Name                  func(childComplexity int) int
+		Peoples               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy) int
+		PreMarketFit          func(childComplexity int) int
+		Risks                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
+		Tasks                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
+		UpdatedAt             func(childComplexity int) int
+		Users                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.UserOrderBy) int
+		UsesAiGeneratedCode   func(childComplexity int) int
+		UsesCloudProviders    func(childComplexity int) int
+		VcBacked              func(childComplexity int) int
+		Vendors               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
 	}
 
 	OrganizationConnection struct {
@@ -1025,6 +1034,7 @@ type MutationResolver interface {
 }
 type OrganizationResolver interface {
 	LogoURL(ctx context.Context, obj *types.Organization) (*string, error)
+
 	Users(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.UserOrderBy) (*types.UserConnection, error)
 	Connectors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) (*types.ConnectorConnection, error)
 	Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error)
@@ -3298,6 +3308,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.UploadVendorComplianceReport(childComplexity, args["input"].(types.UploadVendorComplianceReportInput)), true
 
+	case "Organization.aiFocused":
+		if e.complexity.Organization.AiFocused == nil {
+			break
+		}
+
+		return e.complexity.Organization.AiFocused(childComplexity), true
+
 	case "Organization.assets":
 		if e.complexity.Organization.Assets == nil {
 			break
@@ -3309,6 +3326,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Assets(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AssetOrderBy)), true
+
+	case "Organization.companyType":
+		if e.complexity.Organization.CompanyType == nil {
+			break
+		}
+
+		return e.complexity.Organization.CompanyType(childComplexity), true
 
 	case "Organization.connectors":
 		if e.complexity.Organization.Connectors == nil {
@@ -3365,6 +3389,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Organization.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentOrderBy), args["filter"].(*types.DocumentFilter)), true
 
+	case "Organization.foundingYear":
+		if e.complexity.Organization.FoundingYear == nil {
+			break
+		}
+
+		return e.complexity.Organization.FoundingYear(childComplexity), true
+
 	case "Organization.frameworks":
 		if e.complexity.Organization.Frameworks == nil {
 			break
@@ -3376,6 +3407,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Frameworks(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.FrameworkOrderBy)), true
+
+	case "Organization.hasEnterpriseAccounts":
+		if e.complexity.Organization.HasEnterpriseAccounts == nil {
+			break
+		}
+
+		return e.complexity.Organization.HasEnterpriseAccounts(childComplexity), true
+
+	case "Organization.hasRaisedMoney":
+		if e.complexity.Organization.HasRaisedMoney == nil {
+			break
+		}
+
+		return e.complexity.Organization.HasRaisedMoney(childComplexity), true
 
 	case "Organization.id":
 		if e.complexity.Organization.ID == nil {
@@ -3422,6 +3467,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Organization.Peoples(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.PeopleOrderBy)), true
 
+	case "Organization.preMarketFit":
+		if e.complexity.Organization.PreMarketFit == nil {
+			break
+		}
+
+		return e.complexity.Organization.PreMarketFit(childComplexity), true
+
 	case "Organization.risks":
 		if e.complexity.Organization.Risks == nil {
 			break
@@ -3464,6 +3516,27 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Users(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.UserOrderBy)), true
+
+	case "Organization.usesAiGeneratedCode":
+		if e.complexity.Organization.UsesAiGeneratedCode == nil {
+			break
+		}
+
+		return e.complexity.Organization.UsesAiGeneratedCode(childComplexity), true
+
+	case "Organization.usesCloudProviders":
+		if e.complexity.Organization.UsesCloudProviders == nil {
+			break
+		}
+
+		return e.complexity.Organization.UsesCloudProviders(childComplexity), true
+
+	case "Organization.vcBacked":
+		if e.complexity.Organization.VcBacked == nil {
+			break
+		}
+
+		return e.complexity.Organization.VcBacked(childComplexity), true
 
 	case "Organization.vendors":
 		if e.complexity.Organization.Vendors == nil {
@@ -5453,6 +5526,16 @@ type Organization implements Node {
   name: String!
   logoUrl: String @goField(forceResolver: true)
 
+  foundingYear: Int
+  companyType: String
+  preMarketFit: Boolean
+  usesCloudProviders: Boolean
+  aiFocused: Boolean
+  usesAiGeneratedCode: Boolean
+  vcBacked: Boolean
+  hasRaisedMoney: Boolean
+  hasEnterpriseAccounts: Boolean
+
   users(
     first: Int
     after: CursorKey
@@ -6231,6 +6314,15 @@ input UpdateOrganizationInput {
   organizationId: ID!
   name: String
   logo: Upload
+  foundingYear: Int
+  companyType: String
+  preMarketFit: Boolean
+  usesCloudProviders: Boolean
+  aiFocused: Boolean
+  usesAiGeneratedCode: Boolean
+  vcBacked: Boolean
+  hasRaisedMoney: Boolean
+  hasEnterpriseAccounts: Boolean
 }
 
 input CreateVendorInput {
@@ -12453,6 +12545,24 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "foundingYear":
+				return ec.fieldContext_Organization_foundingYear(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Organization_companyType(ctx, field)
+			case "preMarketFit":
+				return ec.fieldContext_Organization_preMarketFit(ctx, field)
+			case "usesCloudProviders":
+				return ec.fieldContext_Organization_usesCloudProviders(ctx, field)
+			case "aiFocused":
+				return ec.fieldContext_Organization_aiFocused(ctx, field)
+			case "usesAiGeneratedCode":
+				return ec.fieldContext_Organization_usesAiGeneratedCode(ctx, field)
+			case "vcBacked":
+				return ec.fieldContext_Organization_vcBacked(ctx, field)
+			case "hasRaisedMoney":
+				return ec.fieldContext_Organization_hasRaisedMoney(ctx, field)
+			case "hasEnterpriseAccounts":
+				return ec.fieldContext_Organization_hasEnterpriseAccounts(ctx, field)
 			case "users":
 				return ec.fieldContext_Organization_users(ctx, field)
 			case "connectors":
@@ -15536,6 +15646,24 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "foundingYear":
+				return ec.fieldContext_Organization_foundingYear(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Organization_companyType(ctx, field)
+			case "preMarketFit":
+				return ec.fieldContext_Organization_preMarketFit(ctx, field)
+			case "usesCloudProviders":
+				return ec.fieldContext_Organization_usesCloudProviders(ctx, field)
+			case "aiFocused":
+				return ec.fieldContext_Organization_aiFocused(ctx, field)
+			case "usesAiGeneratedCode":
+				return ec.fieldContext_Organization_usesAiGeneratedCode(ctx, field)
+			case "vcBacked":
+				return ec.fieldContext_Organization_vcBacked(ctx, field)
+			case "hasRaisedMoney":
+				return ec.fieldContext_Organization_hasRaisedMoney(ctx, field)
+			case "hasEnterpriseAccounts":
+				return ec.fieldContext_Organization_hasEnterpriseAccounts(ctx, field)
 			case "users":
 				return ec.fieldContext_Organization_users(ctx, field)
 			case "connectors":
@@ -17121,6 +17249,24 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "foundingYear":
+				return ec.fieldContext_Organization_foundingYear(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Organization_companyType(ctx, field)
+			case "preMarketFit":
+				return ec.fieldContext_Organization_preMarketFit(ctx, field)
+			case "usesCloudProviders":
+				return ec.fieldContext_Organization_usesCloudProviders(ctx, field)
+			case "aiFocused":
+				return ec.fieldContext_Organization_aiFocused(ctx, field)
+			case "usesAiGeneratedCode":
+				return ec.fieldContext_Organization_usesAiGeneratedCode(ctx, field)
+			case "vcBacked":
+				return ec.fieldContext_Organization_vcBacked(ctx, field)
+			case "hasRaisedMoney":
+				return ec.fieldContext_Organization_hasRaisedMoney(ctx, field)
+			case "hasEnterpriseAccounts":
+				return ec.fieldContext_Organization_hasEnterpriseAccounts(ctx, field)
 			case "users":
 				return ec.fieldContext_Organization_users(ctx, field)
 			case "connectors":
@@ -20274,6 +20420,24 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "foundingYear":
+				return ec.fieldContext_Organization_foundingYear(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Organization_companyType(ctx, field)
+			case "preMarketFit":
+				return ec.fieldContext_Organization_preMarketFit(ctx, field)
+			case "usesCloudProviders":
+				return ec.fieldContext_Organization_usesCloudProviders(ctx, field)
+			case "aiFocused":
+				return ec.fieldContext_Organization_aiFocused(ctx, field)
+			case "usesAiGeneratedCode":
+				return ec.fieldContext_Organization_usesAiGeneratedCode(ctx, field)
+			case "vcBacked":
+				return ec.fieldContext_Organization_vcBacked(ctx, field)
+			case "hasRaisedMoney":
+				return ec.fieldContext_Organization_hasRaisedMoney(ctx, field)
+			case "hasEnterpriseAccounts":
+				return ec.fieldContext_Organization_hasEnterpriseAccounts(ctx, field)
 			case "users":
 				return ec.fieldContext_Organization_users(ctx, field)
 			case "connectors":
@@ -25636,6 +25800,375 @@ func (ec *executionContext) fieldContext_Organization_logoUrl(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_foundingYear(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_foundingYear(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.FoundingYear, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_foundingYear(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_companyType(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_companyType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CompanyType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_companyType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_preMarketFit(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_preMarketFit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PreMarketFit, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_preMarketFit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_usesCloudProviders(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_usesCloudProviders(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UsesCloudProviders, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_usesCloudProviders(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_aiFocused(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_aiFocused(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AiFocused, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_aiFocused(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_usesAiGeneratedCode(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_usesAiGeneratedCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UsesAiGeneratedCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_usesAiGeneratedCode(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_vcBacked(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_vcBacked(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VcBacked, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_vcBacked(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_hasRaisedMoney(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_hasRaisedMoney(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasRaisedMoney, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_hasRaisedMoney(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_hasEnterpriseAccounts(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_hasEnterpriseAccounts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasEnterpriseAccounts, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_hasEnterpriseAccounts(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_users(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Organization_users(ctx, field)
 	if err != nil {
@@ -26669,6 +27202,24 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "foundingYear":
+				return ec.fieldContext_Organization_foundingYear(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Organization_companyType(ctx, field)
+			case "preMarketFit":
+				return ec.fieldContext_Organization_preMarketFit(ctx, field)
+			case "usesCloudProviders":
+				return ec.fieldContext_Organization_usesCloudProviders(ctx, field)
+			case "aiFocused":
+				return ec.fieldContext_Organization_aiFocused(ctx, field)
+			case "usesAiGeneratedCode":
+				return ec.fieldContext_Organization_usesAiGeneratedCode(ctx, field)
+			case "vcBacked":
+				return ec.fieldContext_Organization_vcBacked(ctx, field)
+			case "hasRaisedMoney":
+				return ec.fieldContext_Organization_hasRaisedMoney(ctx, field)
+			case "hasEnterpriseAccounts":
+				return ec.fieldContext_Organization_hasEnterpriseAccounts(ctx, field)
 			case "users":
 				return ec.fieldContext_Organization_users(ctx, field)
 			case "connectors":
@@ -28721,6 +29272,24 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "foundingYear":
+				return ec.fieldContext_Organization_foundingYear(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Organization_companyType(ctx, field)
+			case "preMarketFit":
+				return ec.fieldContext_Organization_preMarketFit(ctx, field)
+			case "usesCloudProviders":
+				return ec.fieldContext_Organization_usesCloudProviders(ctx, field)
+			case "aiFocused":
+				return ec.fieldContext_Organization_aiFocused(ctx, field)
+			case "usesAiGeneratedCode":
+				return ec.fieldContext_Organization_usesAiGeneratedCode(ctx, field)
+			case "vcBacked":
+				return ec.fieldContext_Organization_vcBacked(ctx, field)
+			case "hasRaisedMoney":
+				return ec.fieldContext_Organization_hasRaisedMoney(ctx, field)
+			case "hasEnterpriseAccounts":
+				return ec.fieldContext_Organization_hasEnterpriseAccounts(ctx, field)
 			case "users":
 				return ec.fieldContext_Organization_users(ctx, field)
 			case "connectors":
@@ -29807,6 +30376,24 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "foundingYear":
+				return ec.fieldContext_Organization_foundingYear(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Organization_companyType(ctx, field)
+			case "preMarketFit":
+				return ec.fieldContext_Organization_preMarketFit(ctx, field)
+			case "usesCloudProviders":
+				return ec.fieldContext_Organization_usesCloudProviders(ctx, field)
+			case "aiFocused":
+				return ec.fieldContext_Organization_aiFocused(ctx, field)
+			case "usesAiGeneratedCode":
+				return ec.fieldContext_Organization_usesAiGeneratedCode(ctx, field)
+			case "vcBacked":
+				return ec.fieldContext_Organization_vcBacked(ctx, field)
+			case "hasRaisedMoney":
+				return ec.fieldContext_Organization_hasRaisedMoney(ctx, field)
+			case "hasEnterpriseAccounts":
+				return ec.fieldContext_Organization_hasEnterpriseAccounts(ctx, field)
 			case "users":
 				return ec.fieldContext_Organization_users(ctx, field)
 			case "connectors":
@@ -30897,6 +31484,24 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "foundingYear":
+				return ec.fieldContext_Organization_foundingYear(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Organization_companyType(ctx, field)
+			case "preMarketFit":
+				return ec.fieldContext_Organization_preMarketFit(ctx, field)
+			case "usesCloudProviders":
+				return ec.fieldContext_Organization_usesCloudProviders(ctx, field)
+			case "aiFocused":
+				return ec.fieldContext_Organization_aiFocused(ctx, field)
+			case "usesAiGeneratedCode":
+				return ec.fieldContext_Organization_usesAiGeneratedCode(ctx, field)
+			case "vcBacked":
+				return ec.fieldContext_Organization_vcBacked(ctx, field)
+			case "hasRaisedMoney":
+				return ec.fieldContext_Organization_hasRaisedMoney(ctx, field)
+			case "hasEnterpriseAccounts":
+				return ec.fieldContext_Organization_hasEnterpriseAccounts(ctx, field)
 			case "users":
 				return ec.fieldContext_Organization_users(ctx, field)
 			case "connectors":
@@ -32114,6 +32719,24 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "foundingYear":
+				return ec.fieldContext_Organization_foundingYear(ctx, field)
+			case "companyType":
+				return ec.fieldContext_Organization_companyType(ctx, field)
+			case "preMarketFit":
+				return ec.fieldContext_Organization_preMarketFit(ctx, field)
+			case "usesCloudProviders":
+				return ec.fieldContext_Organization_usesCloudProviders(ctx, field)
+			case "aiFocused":
+				return ec.fieldContext_Organization_aiFocused(ctx, field)
+			case "usesAiGeneratedCode":
+				return ec.fieldContext_Organization_usesAiGeneratedCode(ctx, field)
+			case "vcBacked":
+				return ec.fieldContext_Organization_vcBacked(ctx, field)
+			case "hasRaisedMoney":
+				return ec.fieldContext_Organization_hasRaisedMoney(ctx, field)
+			case "hasEnterpriseAccounts":
+				return ec.fieldContext_Organization_hasEnterpriseAccounts(ctx, field)
 			case "users":
 				return ec.fieldContext_Organization_users(ctx, field)
 			case "connectors":
@@ -39794,7 +40417,7 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "name", "logo"}
+	fieldsInOrder := [...]string{"organizationId", "name", "logo", "foundingYear", "companyType", "preMarketFit", "usesCloudProviders", "aiFocused", "usesAiGeneratedCode", "vcBacked", "hasRaisedMoney", "hasEnterpriseAccounts"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39822,6 +40445,69 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 				return it, err
 			}
 			it.Logo = data
+		case "foundingYear":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("foundingYear"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FoundingYear = data
+		case "companyType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("companyType"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CompanyType = data
+		case "preMarketFit":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("preMarketFit"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PreMarketFit = data
+		case "usesCloudProviders":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("usesCloudProviders"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UsesCloudProviders = data
+		case "aiFocused":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aiFocused"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AiFocused = data
+		case "usesAiGeneratedCode":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("usesAiGeneratedCode"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.UsesAiGeneratedCode = data
+		case "vcBacked":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vcBacked"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VcBacked = data
+		case "hasRaisedMoney":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasRaisedMoney"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasRaisedMoney = data
+		case "hasEnterpriseAccounts":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hasEnterpriseAccounts"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HasEnterpriseAccounts = data
 		}
 	}
 
@@ -45743,6 +46429,24 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "foundingYear":
+			out.Values[i] = ec._Organization_foundingYear(ctx, field, obj)
+		case "companyType":
+			out.Values[i] = ec._Organization_companyType(ctx, field, obj)
+		case "preMarketFit":
+			out.Values[i] = ec._Organization_preMarketFit(ctx, field, obj)
+		case "usesCloudProviders":
+			out.Values[i] = ec._Organization_usesCloudProviders(ctx, field, obj)
+		case "aiFocused":
+			out.Values[i] = ec._Organization_aiFocused(ctx, field, obj)
+		case "usesAiGeneratedCode":
+			out.Values[i] = ec._Organization_usesAiGeneratedCode(ctx, field, obj)
+		case "vcBacked":
+			out.Values[i] = ec._Organization_vcBacked(ctx, field, obj)
+		case "hasRaisedMoney":
+			out.Values[i] = ec._Organization_hasRaisedMoney(ctx, field, obj)
+		case "hasEnterpriseAccounts":
+			out.Values[i] = ec._Organization_hasEnterpriseAccounts(ctx, field, obj)
 		case "users":
 			field := field
 
