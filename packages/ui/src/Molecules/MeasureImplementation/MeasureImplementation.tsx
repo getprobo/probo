@@ -49,9 +49,11 @@ export function MeasureImplementation({ measures, className }: Props) {
                 ))}
             </div>
             <div className="flex gap-4 text-sm">
-                <div className="mr-auto">
-                    {percent}% {__("Complete")}
-                </div>
+                {!isNaN(percent) && (
+                    <div className="mr-auto">
+                        {percent}% {__("Complete")}
+                    </div>
+                )}
                 {measureStates.map((state) => (
                     <div
                         key={state}
