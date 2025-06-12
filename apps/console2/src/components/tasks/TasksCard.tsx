@@ -15,6 +15,7 @@ import {
   useConfirm,
   useDialogRef,
 } from "@probo/ui";
+import { Fragment } from "react";
 import { graphql, useMutation } from "react-relay";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
@@ -88,7 +89,7 @@ export default function TasksCard({ tasks, connectionId }: Props) {
                   .slice(0, 2)
                   .filter((h) => tasksPerHash.get(h.hash)?.length)
                   .map((h) => (
-                    <>
+                    <Fragment key={h.label}>
                       <h2 className="px-6 py-3 text-sm font-medium flex items-center gap-2 bg-subtle">
                         <TaskStateIcon state={h.state!} />
                         {h.label}
@@ -102,7 +103,7 @@ export default function TasksCard({ tasks, connectionId }: Props) {
                             connectionId={connectionId}
                           />
                         ))}
-                    </>
+                    </Fragment>
                   ))
               : // Todo and Done tab simply list todos
                 filteredTasks?.map((task) => (
