@@ -1,4 +1,4 @@
-import { Outlet, useParams } from "react-router";
+import { Outlet, useNavigate, useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import {
   ActionDropdown,
@@ -14,6 +14,7 @@ import {
   IconWarning,
   MeasureBadge,
   Option,
+  PageHeader,
   PropertyRow,
   Select,
   TabBadge,
@@ -24,9 +25,8 @@ import {
 import { useTranslate } from "@probo/i18n";
 import {
   ConnectionHandler,
-  useFragment,
-  usePreloadedQuery,
   type PreloadedQuery,
+  usePreloadedQuery,
 } from "react-relay";
 import type { MeasureGraphNodeQuery } from "/hooks/graph/__generated__/MeasureGraphNodeQuery.graphql";
 import {
@@ -35,19 +35,13 @@ import {
   useDeleteMeasureMutation,
   useUpdateMeasure,
 } from "/hooks/graph/MeasureGraph";
-import { PageHeader } from "@probo/ui";
-import { getMeasureStateLabel, measureStates, slugify } from "@probo/helpers";
+import {
+  getMeasureStateLabel,
+  measureStates,
+  slugify,
+  sprintf,
+} from "@probo/helpers";
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
-import { sprintf } from "@probo/helpers";
-import { useNavigate } from "react-router";
-import { tasksFragment } from "./tabs/MeasureTasksTab";
-import type { MeasureTasksTabFragment$key } from "./tabs/__generated__/MeasureTasksTabFragment.graphql";
-import { evidencesFragment } from "./tabs/MeasureEvidencesTab";
-import type { MeasureEvidencesTabFragment$key } from "./tabs/__generated__/MeasureEvidencesTabFragment.graphql";
-import { controlsFragment } from "./tabs/MeasureControlsTab";
-import type { MeasureControlsTabFragment$key } from "./tabs/__generated__/MeasureControlsTabFragment.graphql";
-import { risksFragment } from "./tabs/MeasureRisksTab";
-import type { MeasureRisksTabFragment$key } from "./tabs/__generated__/MeasureRisksTabFragment.graphql";
 
 type Props = {
   queryRef: PreloadedQuery<MeasureGraphNodeQuery>;
@@ -66,31 +60,19 @@ export default function MeasureDetailPage(props: Props) {
 
   if (!measureId) {
     throw new Error(
-      "Cannot load measure detail page without measureId parameter"
+      "Cannot load measure detail page without measureId parameter",
     );
   }
 
-  const tasksCount = useFragment(
-    tasksFragment,
-    measure as MeasureTasksTabFragment$key
-  ).tasks.edges.length;
-  const evidencesCount = useFragment(
-    evidencesFragment,
-    measure as MeasureEvidencesTabFragment$key
-  ).evidences.edges.length;
-  const controlsCount = useFragment(
-    controlsFragment,
-    measure as MeasureControlsTabFragment$key
-  ).controls.edges.length;
-  const risksCount = useFragment(
-    risksFragment,
-    measure as MeasureRisksTabFragment$key
-  ).risks.edges.length;
+  const tasksCount = measure.tasksInfos?.totalCount ?? 0;
+  const evidencesCount = measure.evidencesInfos?.totalCount ?? 0;
+  const controlsCount = measure.controlsInfos?.totalCount ?? 0;
+  const risksCount = measure.risksInfos?.totalCount ?? 0;
 
   const onDelete = () => {
     const connectionId = ConnectionHandler.getConnectionID(
       organizationId,
-      MeasureConnectionKey
+      MeasureConnectionKey,
     );
     confirm(
       () =>
@@ -109,11 +91,11 @@ export default function MeasureDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the measure "%s". This action cannot be undone.'
+            'This will permanently delete the measure "%s". This action cannot be undone.',
           ),
-          measure.name
+          measure.name,
         ),
-      }
+      },
     );
   };
 
@@ -184,28 +166,28 @@ export default function MeasureDetailPage(props: Props) {
         >
           <IconPageTextLine size={20} />
           {__("Evidences")}
-          {evidencesCount > 0 && <TabBadge>{evidencesCount}</TabBadge>}
+          <TabBadge>{evidencesCount}</TabBadge>
         </TabLink>
         <TabLink
           to={`/organizations/${organizationId}/measures/${measureId}/tasks`}
         >
           <IconCheckmark1 size={20} />
           {__("Tasks")}
-          {tasksCount > 0 && <TabBadge>{tasksCount}</TabBadge>}
+          <TabBadge>{tasksCount}</TabBadge>
         </TabLink>
         <TabLink
           to={`/organizations/${organizationId}/measures/${measureId}/controls`}
         >
           <IconFrame2 size={20} />
           {__("Controls")}
-          {controlsCount > 0 && <TabBadge>{controlsCount}</TabBadge>}
+          <TabBadge>{controlsCount}</TabBadge>
         </TabLink>
         <TabLink
           to={`/organizations/${organizationId}/measures/${measureId}/risks`}
         >
           <IconWarning size={20} />
           {__("Risks")}
-          {risksCount > 0 && <TabBadge>{risksCount}</TabBadge>}
+          <TabBadge>{risksCount}</TabBadge>
         </TabLink>
       </Tabs>
 

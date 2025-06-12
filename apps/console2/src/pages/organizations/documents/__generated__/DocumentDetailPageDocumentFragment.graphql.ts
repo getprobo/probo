@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6c0262b14b79c61016ad404fab7a1da0>>
+ * @generated SignedSource<<de19bed523a0a3e24807f5e7ecfef466>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,6 +13,9 @@ export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentDetailPageDocumentFragment$data = {
+  readonly controlsInfo: {
+    readonly totalCount: number;
+  };
   readonly id: string;
   readonly owner: {
     readonly fullName: string;
@@ -169,6 +172,30 @@ return {
       "name": "DocumentControlsTabFragment"
     },
     {
+      "alias": "controlsInfo",
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "first",
+          "value": 0
+        }
+      ],
+      "concreteType": "ControlConnection",
+      "kind": "LinkedField",
+      "name": "controls",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "totalCount",
+          "storageKey": null
+        }
+      ],
+      "storageKey": "controls(first:0)"
+    },
+    {
       "alias": "versions",
       "args": null,
       "concreteType": "DocumentVersionConnection",
@@ -319,6 +346,6 @@ return {
 };
 })();
 
-(node as any).hash = "02b0af2263f78304097136c2466be18c";
+(node as any).hash = "ffd58750acd50c91d62a674ba158836c";
 
 export default node;

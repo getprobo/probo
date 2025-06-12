@@ -48,6 +48,12 @@ export const riskRoutes = [
           () => import("/pages/organizations/risks/tabs/RiskDocumentsTab.tsx")
         ),
       },
+      {
+        path: "controls",
+        Component: lazy(
+          () => import("/pages/organizations/risks/tabs/RiskControlsTab.tsx")
+        ),
+      },
     ],
   },
 ] satisfies AppRoute[];

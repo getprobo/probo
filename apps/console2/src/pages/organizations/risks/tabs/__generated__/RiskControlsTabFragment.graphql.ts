@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<06b39b49e82019064bd42a03c903fd93>>
+ * @generated SignedSource<<5bbce08d4b9359b961b9b1b4827f5756>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,11 +10,12 @@
 
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type LinkedControlsDialogFragment$data = {
+export type RiskControlsTabFragment$data = {
   readonly controls: {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly framework: {
+          readonly id: string;
           readonly name: string;
         };
         readonly id: string;
@@ -24,14 +25,14 @@ export type LinkedControlsDialogFragment$data = {
     }>;
   };
   readonly id: string;
-  readonly " $fragmentType": "LinkedControlsDialogFragment";
+  readonly " $fragmentType": "RiskControlsTabFragment";
 };
-export type LinkedControlsDialogFragment$key = {
-  readonly " $data"?: LinkedControlsDialogFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"LinkedControlsDialogFragment">;
+export type RiskControlsTabFragment$key = {
+  readonly " $data"?: RiskControlsTabFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"RiskControlsTabFragment">;
 };
 
-import LinkedControlsDialogControlsQuery_graphql from './LinkedControlsDialogControlsQuery.graphql';
+import RiskControlsTabControlsQuery_graphql from './RiskControlsTabControlsQuery.graphql';
 
 const node: ReaderFragment = (function(){
 var v0 = [
@@ -69,7 +70,7 @@ return {
       "name": "filter"
     },
     {
-      "defaultValue": 1,
+      "defaultValue": 20,
       "kind": "LocalArgument",
       "name": "first"
     },
@@ -109,15 +110,16 @@ return {
       "fragmentPathInResult": [
         "node"
       ],
-      "operation": LinkedControlsDialogControlsQuery_graphql,
+      "operation": RiskControlsTabControlsQuery_graphql,
       "identifierInfo": {
         "identifierField": "id",
         "identifierQueryVariableName": "id"
       }
     }
   },
-  "name": "LinkedControlsDialogFragment",
+  "name": "RiskControlsTabFragment",
   "selections": [
+    (v1/*: any*/),
     {
       "alias": "controls",
       "args": [
@@ -134,7 +136,7 @@ return {
       ],
       "concreteType": "ControlConnection",
       "kind": "LinkedField",
-      "name": "__LinkedControlsDialogControlsQuery_controls_connection",
+      "name": "__RiskControlsTab_controls_connection",
       "plural": false,
       "selections": [
         {
@@ -154,7 +156,6 @@ return {
               "plural": false,
               "selections": [
                 (v1/*: any*/),
-                (v2/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -162,6 +163,7 @@ return {
                   "name": "sectionTitle",
                   "storageKey": null
                 },
+                (v2/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -170,6 +172,7 @@ return {
                   "name": "framework",
                   "plural": false,
                   "selections": [
+                    (v1/*: any*/),
                     (v2/*: any*/)
                   ],
                   "storageKey": null
@@ -235,14 +238,13 @@ return {
         }
       ],
       "storageKey": null
-    },
-    (v1/*: any*/)
+    }
   ],
-  "type": "Organization",
+  "type": "Risk",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "9fc0bfbfc461d56748750b180bc232fc";
+(node as any).hash = "ef2896f4e53f88f6862ffef48bcccff3";
 
 export default node;

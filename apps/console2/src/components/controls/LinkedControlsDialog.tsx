@@ -63,6 +63,9 @@ const controlsFragment = graphql`
           id
           name
           sectionTitle
+          framework {
+            name
+          }
         }
       }
     }
@@ -179,9 +182,8 @@ function ControlRow(
       className="py-4 flex items-center gap-4 hover:bg-subtle cursor-pointer px-6 w-full text-start"
       onClick={() => onClick(props.control.id)}
     >
-      <Badge size="md">{props.control.sectionTitle}</Badge>
-      {props.control.name}
-
+      {props.control.sectionTitle} : {props.control.name}
+      <Badge>{props.control.framework.name}</Badge>
       <Button
         disabled={props.disabled}
         className="ml-auto"

@@ -46,6 +46,18 @@ export const measureNodeQuery = graphql`
         description
         state
         category
+        evidencesInfos: evidences(first: 0) {
+          totalCount
+        }
+        risksInfos: risks(first: 0) {
+          totalCount
+        }
+        tasksInfos: tasks(first: 0) {
+          totalCount
+        }
+        controlsInfos: controls(first: 0) {
+          totalCount
+        }
         ...MeasureRisksTabFragment
         ...MeasureTasksTabFragment
         ...MeasureControlsTabFragment

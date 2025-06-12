@@ -19,11 +19,7 @@ import { Outlet, useNavigate, useParams } from "react-router";
 import { useTranslate } from "@probo/i18n";
 import { getTreatment, sprintf } from "@probo/helpers";
 import { ConnectionHandler } from "relay-runtime";
-import {
-  useFragment,
-  usePreloadedQuery,
-  type PreloadedQuery,
-} from "react-relay";
+import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import FormRiskDialog from "./FormRiskDialog";
 import { usePageTitle } from "@probo/hooks";
 import { useOrganizationId } from "/hooks/useOrganizationId";
@@ -33,10 +29,6 @@ import {
   useDeleteRiskMutation,
 } from "/hooks/graph/RiskGraph";
 import type { RiskGraphNodeQuery } from "/hooks/graph/__generated__/RiskGraphNodeQuery.graphql";
-import { documentsFragment } from "./tabs/RiskDocumentsTab";
-import type { RiskDocumentsTabFragment$key } from "./tabs/__generated__/RiskDocumentsTabFragment.graphql";
-import { measuresFragment } from "./tabs/RiskMeasuresTab";
-import type { RiskMeasuresTabFragment$key } from "./tabs/__generated__/RiskMeasuresTabFragment.graphql";
 
 type Props = {
   queryRef: PreloadedQuery<RiskGraphNodeQuery>;
@@ -89,14 +81,9 @@ export default function RiskDetailPage(props: Props) {
     );
   };
 
-  const documentsCount = useFragment(
-    documentsFragment,
-    risk as RiskDocumentsTabFragment$key
-  ).documents.edges.length;
-  const measuresCount = useFragment(
-    measuresFragment,
-    risk as RiskMeasuresTabFragment$key
-  ).measures.edges.length;
+  const documentsCount = risk.documentsInfo?.totalCount ?? 0;
+  const measuresCount = risk.measuresInfo?.totalCount ?? 0;
+  const controlsCount = risk.controlsInfo?.totalCount ?? 0;
 
   return (
     <div className="space-y-6">
@@ -146,13 +133,19 @@ export default function RiskDetailPage(props: Props) {
           to={`/organizations/${organizationId}/risks/${riskId}/measures`}
         >
           {__("Measures")}
-          {measuresCount > 0 && <TabBadge>{measuresCount}</TabBadge>}
+          <TabBadge>{measuresCount}</TabBadge>
         </TabLink>
         <TabLink
           to={`/organizations/${organizationId}/risks/${riskId}/documents`}
         >
           {__("Documents")}
-          {documentsCount > 0 && <TabBadge>{documentsCount}</TabBadge>}
+          <TabBadge>{documentsCount}</TabBadge>
+        </TabLink>
+        <TabLink
+          to={`/organizations/${organizationId}/risks/${riskId}/controls`}
+        >
+          {__("Controls")}
+          <TabBadge>{controlsCount}</TabBadge>
         </TabLink>
       </Tabs>
 

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f8a28e26c1260135c13f22f9d35019c2>>
+ * @generated SignedSource<<082144ec3a6a9a4afe38398cdc3e84ed>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,57 +10,129 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type LinkedControlsDialogQuery$variables = {
-  organizationId: string;
+export type ControlOrderField = "CREATED_AT" | "SECTION_TITLE";
+export type OrderDirection = "ASC" | "DESC";
+export type ControlFilter = {
+  query?: string | null | undefined;
 };
-export type LinkedControlsDialogQuery$data = {
-  readonly organization: {
-    readonly id: string;
-    readonly " $fragmentSpreads": FragmentRefs<"LinkedControlsDialogFragment">;
+export type ControlOrder = {
+  direction: OrderDirection;
+  field: ControlOrderField;
+};
+export type RiskControlsTabControlsQuery$variables = {
+  after?: any | null | undefined;
+  before?: any | null | undefined;
+  filter?: ControlFilter | null | undefined;
+  first?: number | null | undefined;
+  id: string;
+  last?: number | null | undefined;
+  order?: ControlOrder | null | undefined;
+};
+export type RiskControlsTabControlsQuery$data = {
+  readonly node: {
+    readonly " $fragmentSpreads": FragmentRefs<"RiskControlsTabFragment">;
   };
 };
-export type LinkedControlsDialogQuery = {
-  response: LinkedControlsDialogQuery$data;
-  variables: LinkedControlsDialogQuery$variables;
+export type RiskControlsTabControlsQuery = {
+  response: RiskControlsTabControlsQuery$data;
+  variables: RiskControlsTabControlsQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = [
-  {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "organizationId"
-  }
-],
-v1 = [
+var v0 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "after"
+},
+v1 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "before"
+},
+v2 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "filter"
+},
+v3 = {
+  "defaultValue": 20,
+  "kind": "LocalArgument",
+  "name": "first"
+},
+v4 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "id"
+},
+v5 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "last"
+},
+v6 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "order"
+},
+v7 = [
   {
     "kind": "Variable",
     "name": "id",
-    "variableName": "organizationId"
+    "variableName": "id"
   }
 ],
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
+v8 = {
+  "kind": "Variable",
+  "name": "after",
+  "variableName": "after"
 },
-v3 = {
+v9 = {
+  "kind": "Variable",
+  "name": "before",
+  "variableName": "before"
+},
+v10 = {
+  "kind": "Variable",
+  "name": "filter",
+  "variableName": "filter"
+},
+v11 = {
+  "kind": "Variable",
+  "name": "first",
+  "variableName": "first"
+},
+v12 = {
+  "kind": "Variable",
+  "name": "last",
+  "variableName": "last"
+},
+v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = [
+v14 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v15 = [
+  (v8/*: any*/),
+  (v9/*: any*/),
+  (v10/*: any*/),
+  (v11/*: any*/),
+  (v12/*: any*/),
   {
-    "kind": "Literal",
-    "name": "first",
-    "value": 1
+    "kind": "Variable",
+    "name": "orderBy",
+    "variableName": "order"
   }
 ],
-v5 = {
+v16 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -69,24 +141,42 @@ v5 = {
 };
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/),
+      (v2/*: any*/),
+      (v3/*: any*/),
+      (v4/*: any*/),
+      (v5/*: any*/),
+      (v6/*: any*/)
+    ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "LinkedControlsDialogQuery",
+    "name": "RiskControlsTabControlsQuery",
     "selections": [
       {
-        "alias": "organization",
-        "args": (v1/*: any*/),
+        "alias": null,
+        "args": (v7/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
           {
-            "args": null,
+            "args": [
+              (v8/*: any*/),
+              (v9/*: any*/),
+              (v10/*: any*/),
+              (v11/*: any*/),
+              (v12/*: any*/),
+              {
+                "kind": "Variable",
+                "name": "order",
+                "variableName": "order"
+              }
+            ],
             "kind": "FragmentSpread",
-            "name": "LinkedControlsDialogFragment"
+            "name": "RiskControlsTabFragment"
           }
         ],
         "storageKey": null
@@ -97,26 +187,34 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/),
+      (v2/*: any*/),
+      (v3/*: any*/),
+      (v5/*: any*/),
+      (v6/*: any*/),
+      (v4/*: any*/)
+    ],
     "kind": "Operation",
-    "name": "LinkedControlsDialogQuery",
+    "name": "RiskControlsTabControlsQuery",
     "selections": [
       {
-        "alias": "organization",
-        "args": (v1/*: any*/),
+        "alias": null,
+        "args": (v7/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
-          (v2/*: any*/),
+          (v13/*: any*/),
+          (v14/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v15/*: any*/),
                 "concreteType": "ControlConnection",
                 "kind": "LinkedField",
                 "name": "controls",
@@ -138,8 +236,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v2/*: any*/),
-                          (v5/*: any*/),
+                          (v14/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -147,6 +244,7 @@ return {
                             "name": "sectionTitle",
                             "storageKey": null
                           },
+                          (v16/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -155,12 +253,12 @@ return {
                             "name": "framework",
                             "plural": false,
                             "selections": [
-                              (v5/*: any*/),
-                              (v2/*: any*/)
+                              (v14/*: any*/),
+                              (v16/*: any*/)
                             ],
                             "storageKey": null
                           },
-                          (v3/*: any*/)
+                          (v13/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -214,22 +312,22 @@ return {
                     "storageKey": null
                   }
                 ],
-                "storageKey": "controls(first:1)"
+                "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v15/*: any*/),
                 "filters": [
                   "orderBy",
                   "filter"
                 ],
                 "handle": "connection",
-                "key": "LinkedControlsDialogControlsQuery_controls",
+                "key": "RiskControlsTab_controls",
                 "kind": "LinkedHandle",
                 "name": "controls"
               }
             ],
-            "type": "Organization",
+            "type": "Risk",
             "abstractKey": null
           }
         ],
@@ -238,16 +336,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a36d424a3b8a087dbb40149bdbc2b6a2",
+    "cacheID": "ea5571d7c2f47861c81f19447ff3d345",
     "id": null,
     "metadata": {},
-    "name": "LinkedControlsDialogQuery",
+    "name": "RiskControlsTabControlsQuery",
     "operationKind": "query",
-    "text": "query LinkedControlsDialogQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...LinkedControlsDialogFragment\n  }\n}\n\nfragment LinkedControlsDialogFragment on Organization {\n  controls(first: 1) {\n    edges {\n      node {\n        id\n        name\n        sectionTitle\n        framework {\n          name\n          id\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query RiskControlsTabControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...RiskControlsTabFragment_4cFWzS\n    id\n  }\n}\n\nfragment RiskControlsTabFragment_4cFWzS on Risk {\n  id\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        framework {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1be60a2dc1efbd8992472862ca32910e";
+(node as any).hash = "ef2896f4e53f88f6862ffef48bcccff3";
 
 export default node;
