@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<abe97be0de1c878a30ced882c0d22fee>>
+ * @generated SignedSource<<68d29ea810c69f34b0da8d3e66b4eb5e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -131,7 +131,14 @@ v15 = [
     "name": "orderBy",
     "variableName": "order"
   }
-];
+],
+v16 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+};
 return {
   "fragment": {
     "argumentDefinitions": [
@@ -230,18 +237,25 @@ return {
                         "plural": false,
                         "selections": [
                           (v14/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "name",
-                            "storageKey": null
-                          },
+                          (v16/*: any*/),
                           {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
                             "name": "sectionTitle",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Framework",
+                            "kind": "LinkedField",
+                            "name": "framework",
+                            "plural": false,
+                            "selections": [
+                              (v16/*: any*/),
+                              (v14/*: any*/)
+                            ],
                             "storageKey": null
                           },
                           (v13/*: any*/)
@@ -322,16 +336,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ececbd47b66b771cf95244ee81dae1f7",
+    "cacheID": "e9bcdc36129e6a05c59f344433459b66",
     "id": null,
     "metadata": {},
     "name": "LinkedControlsDialogControlsQuery",
     "operationKind": "query",
-    "text": "query LinkedControlsDialogControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 1\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...LinkedControlsDialogFragment_4cFWzS\n    id\n  }\n}\n\nfragment LinkedControlsDialogFragment_4cFWzS on Organization {\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        name\n        sectionTitle\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query LinkedControlsDialogControlsQuery(\n  $after: CursorKey\n  $before: CursorKey = null\n  $filter: ControlFilter = null\n  $first: Int = 1\n  $last: Int = null\n  $order: ControlOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...LinkedControlsDialogFragment_4cFWzS\n    id\n  }\n}\n\nfragment LinkedControlsDialogFragment_4cFWzS on Organization {\n  controls(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: $filter) {\n    edges {\n      node {\n        id\n        name\n        sectionTitle\n        framework {\n          name\n          id\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b4dbf5c3271581e4317726870476da8d";
+(node as any).hash = "9fc0bfbfc461d56748750b180bc232fc";
 
 export default node;

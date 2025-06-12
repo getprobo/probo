@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1fce2cc80e82f95488675ab257cb1087>>
+ * @generated SignedSource<<a2f706d85c38022af0a3eb5e61409e7e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,16 @@ export type RiskGraphNodeQuery$variables = {
 };
 export type RiskGraphNodeQuery$data = {
   readonly node: {
+    readonly controlsInfo?: {
+      readonly totalCount: number;
+    };
     readonly description?: string;
+    readonly documentsInfo?: {
+      readonly totalCount: number;
+    };
+    readonly measuresInfo?: {
+      readonly totalCount: number;
+    };
     readonly name?: string;
     readonly note?: string;
     readonly owner?: {
@@ -24,7 +33,7 @@ export type RiskGraphNodeQuery$data = {
       readonly id: string;
     } | null | undefined;
     readonly treatment?: RiskTreatment;
-    readonly " $fragmentSpreads": FragmentRefs<"RiskDocumentsTabFragment" | "RiskMeasuresTabFragment" | "RiskOverviewTabFragment" | "useRiskFormFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"RiskControlsTabFragment" | "RiskDocumentsTabFragment" | "RiskMeasuresTabFragment" | "RiskOverviewTabFragment" | "useRiskFormFragment">;
   };
 };
 export type RiskGraphNodeQuery = {
@@ -101,28 +110,88 @@ v7 = {
   "name": "note",
   "storageKey": null
 },
-v8 = {
+v8 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 0
+  }
+],
+v9 = [
+  {
+    "alias": null,
+    "args": null,
+    "kind": "ScalarField",
+    "name": "totalCount",
+    "storageKey": null
+  }
+],
+v10 = {
+  "alias": "measuresInfo",
+  "args": (v8/*: any*/),
+  "concreteType": "MeasureConnection",
+  "kind": "LinkedField",
+  "name": "measures",
+  "plural": false,
+  "selections": (v9/*: any*/),
+  "storageKey": "measures(first:0)"
+},
+v11 = {
+  "alias": "documentsInfo",
+  "args": (v8/*: any*/),
+  "concreteType": "DocumentConnection",
+  "kind": "LinkedField",
+  "name": "documents",
+  "plural": false,
+  "selections": (v9/*: any*/),
+  "storageKey": "documents(first:0)"
+},
+v12 = {
+  "alias": "controlsInfo",
+  "args": (v8/*: any*/),
+  "concreteType": "ControlConnection",
+  "kind": "LinkedField",
+  "name": "controls",
+  "plural": false,
+  "selections": (v9/*: any*/),
+  "storageKey": "controls(first:0)"
+},
+v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v9 = [
+v14 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 100
   }
 ],
-v10 = {
+v15 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v11 = {
+v16 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "endCursor",
+  "storageKey": null
+},
+v17 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "hasNextPage",
+  "storageKey": null
+},
+v18 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -130,24 +199,12 @@ v11 = {
   "name": "pageInfo",
   "plural": false,
   "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "endCursor",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "hasNextPage",
-      "storageKey": null
-    }
+    (v16/*: any*/),
+    (v17/*: any*/)
   ],
   "storageKey": null
 },
-v12 = {
+v19 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -158,7 +215,14 @@ v12 = {
       "storageKey": null
     }
   ]
-};
+},
+v20 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 20
+  }
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -182,6 +246,9 @@ return {
               (v4/*: any*/),
               (v6/*: any*/),
               (v7/*: any*/),
+              (v10/*: any*/),
+              (v11/*: any*/),
+              (v12/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -201,6 +268,11 @@ return {
                 "args": null,
                 "kind": "FragmentSpread",
                 "name": "RiskDocumentsTabFragment"
+              },
+              {
+                "args": null,
+                "kind": "FragmentSpread",
+                "name": "RiskControlsTabFragment"
               }
             ],
             "type": "Risk",
@@ -227,7 +299,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v8/*: any*/),
+          (v13/*: any*/),
           (v5/*: any*/),
           {
             "kind": "InlineFragment",
@@ -237,6 +309,9 @@ return {
               (v4/*: any*/),
               (v6/*: any*/),
               (v7/*: any*/),
+              (v10/*: any*/),
+              (v11/*: any*/),
+              (v12/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -288,7 +363,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v9/*: any*/),
+                "args": (v14/*: any*/),
                 "concreteType": "MeasureConnection",
                 "kind": "LinkedField",
                 "name": "measures",
@@ -319,22 +394,22 @@ return {
                             "name": "state",
                             "storageKey": null
                           },
-                          (v8/*: any*/)
+                          (v13/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v10/*: any*/)
+                      (v15/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v11/*: any*/),
-                  (v12/*: any*/)
+                  (v18/*: any*/),
+                  (v19/*: any*/)
                 ],
                 "storageKey": "measures(first:100)"
               },
               {
                 "alias": null,
-                "args": (v9/*: any*/),
+                "args": (v14/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "Risk__measures",
@@ -343,7 +418,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v9/*: any*/),
+                "args": (v14/*: any*/),
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
                 "name": "documents",
@@ -434,27 +509,123 @@ return {
                             ],
                             "storageKey": "versions(first:1)"
                           },
-                          (v8/*: any*/)
+                          (v13/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v10/*: any*/)
+                      (v15/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v11/*: any*/),
-                  (v12/*: any*/)
+                  (v18/*: any*/),
+                  (v19/*: any*/)
                 ],
                 "storageKey": "documents(first:100)"
               },
               {
                 "alias": null,
-                "args": (v9/*: any*/),
+                "args": (v14/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "Risk__documents",
                 "kind": "LinkedHandle",
                 "name": "documents"
+              },
+              {
+                "alias": null,
+                "args": (v20/*: any*/),
+                "concreteType": "ControlConnection",
+                "kind": "LinkedField",
+                "name": "controls",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "ControlEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Control",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v5/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "sectionTitle",
+                            "storageKey": null
+                          },
+                          (v2/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Framework",
+                            "kind": "LinkedField",
+                            "name": "framework",
+                            "plural": false,
+                            "selections": [
+                              (v5/*: any*/),
+                              (v2/*: any*/)
+                            ],
+                            "storageKey": null
+                          },
+                          (v13/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v15/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "PageInfo",
+                    "kind": "LinkedField",
+                    "name": "pageInfo",
+                    "plural": false,
+                    "selections": [
+                      (v16/*: any*/),
+                      (v17/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "hasPreviousPage",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "startCursor",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": "controls(first:20)"
+              },
+              {
+                "alias": null,
+                "args": (v20/*: any*/),
+                "filters": [
+                  "orderBy",
+                  "filter"
+                ],
+                "handle": "connection",
+                "key": "RiskControlsTab_controls",
+                "kind": "LinkedHandle",
+                "name": "controls"
               }
             ],
             "type": "Risk",
@@ -466,16 +637,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "bb52cb7161bdf1bbba40f782f5ff22c2",
+    "cacheID": "6cfdb65a1c2cced451e5fa888cb4fc6d",
     "id": null,
     "metadata": {},
     "name": "RiskGraphNodeQuery",
     "operationKind": "query",
-    "text": "query RiskGraphNodeQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    ... on Risk {\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      note\n      ...useRiskFormFragment\n      ...RiskOverviewTabFragment\n      ...RiskMeasuresTabFragment\n      ...RiskDocumentsTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment RiskDocumentsTabFragment on Risk {\n  id\n  documents(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedDocumentsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskMeasuresTabFragment on Risk {\n  id\n  measures(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedMeasuresCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskOverviewTabFragment on Risk {\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "query RiskGraphNodeQuery(\n  $riskId: ID!\n) {\n  node(id: $riskId) {\n    __typename\n    ... on Risk {\n      name\n      description\n      treatment\n      owner {\n        id\n        fullName\n      }\n      note\n      measuresInfo: measures(first: 0) {\n        totalCount\n      }\n      documentsInfo: documents(first: 0) {\n        totalCount\n      }\n      controlsInfo: controls(first: 0) {\n        totalCount\n      }\n      ...useRiskFormFragment\n      ...RiskOverviewTabFragment\n      ...RiskMeasuresTabFragment\n      ...RiskDocumentsTabFragment\n      ...RiskControlsTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n\nfragment RiskControlsTabFragment on Risk {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        framework {\n          id\n          name\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment RiskDocumentsTabFragment on Risk {\n  id\n  documents(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedDocumentsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskMeasuresTabFragment on Risk {\n  id\n  measures(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedMeasuresCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment RiskOverviewTabFragment on Risk {\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "fad84c61c3943be5d63e810325aa8f62";
+(node as any).hash = "fdb501cd1a50f825e325ed673e2ed311";
 
 export default node;

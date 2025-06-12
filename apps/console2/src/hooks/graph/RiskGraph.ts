@@ -81,7 +81,7 @@ export function useRisksQuery(queryRef: PreloadedQuery<RiskGraphListQuery>) {
   const data = usePreloadedQuery(risksQuery, queryRef);
   const [dataFragment, refetch] = useRefetchableFragment(
     risksFragment,
-    data.organization as RiskGraphFragment$key
+    data.organization as RiskGraphFragment$key,
   );
   const risks = dataFragment?.risks?.edges.map((edge) => edge.node);
   return {
@@ -89,7 +89,7 @@ export function useRisksQuery(queryRef: PreloadedQuery<RiskGraphListQuery>) {
     refetch,
     connectionId: ConnectionHandler.getConnectionID(
       data.organization.id,
-      RisksConnectionKey
+      RisksConnectionKey,
     ),
   };
 }
@@ -106,10 +106,20 @@ export const riskNodeQuery = graphql`
           fullName
         }
         note
+        measuresInfo: measures(first: 0) {
+          totalCount
+        }
+        documentsInfo: documents(first: 0) {
+          totalCount
+        }
+        controlsInfo: controls(first: 0) {
+          totalCount
+        }
         ...useRiskFormFragment
         ...RiskOverviewTabFragment
         ...RiskMeasuresTabFragment
         ...RiskDocumentsTabFragment
+        ...RiskControlsTabFragment
       }
     }
   }

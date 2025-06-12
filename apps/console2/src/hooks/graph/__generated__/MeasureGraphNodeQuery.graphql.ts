@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<70372622c717225f055cc422e4a2ee39>>
+ * @generated SignedSource<<7e91345490d4b70ef6668bb6504be1e3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,10 +17,22 @@ export type MeasureGraphNodeQuery$variables = {
 export type MeasureGraphNodeQuery$data = {
   readonly node: {
     readonly category?: string;
+    readonly controlsInfos?: {
+      readonly totalCount: number;
+    };
     readonly description?: string;
+    readonly evidencesInfos?: {
+      readonly totalCount: number;
+    };
     readonly id?: string;
     readonly name?: string;
+    readonly risksInfos?: {
+      readonly totalCount: number;
+    };
     readonly state?: MeasureState;
+    readonly tasksInfos?: {
+      readonly totalCount: number;
+    };
     readonly " $fragmentSpreads": FragmentRefs<"MeasureControlsTabFragment" | "MeasureEvidencesTabFragment" | "MeasureFormDialogMeasureFragment" | "MeasureRisksTabFragment" | "MeasureTasksTabFragment">;
   };
 };
@@ -79,42 +91,98 @@ v6 = {
   "name": "category",
   "storageKey": null
 },
-v7 = {
+v7 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 0
+  }
+],
+v8 = [
+  {
+    "alias": null,
+    "args": null,
+    "kind": "ScalarField",
+    "name": "totalCount",
+    "storageKey": null
+  }
+],
+v9 = {
+  "alias": "evidencesInfos",
+  "args": (v7/*: any*/),
+  "concreteType": "EvidenceConnection",
+  "kind": "LinkedField",
+  "name": "evidences",
+  "plural": false,
+  "selections": (v8/*: any*/),
+  "storageKey": "evidences(first:0)"
+},
+v10 = {
+  "alias": "risksInfos",
+  "args": (v7/*: any*/),
+  "concreteType": "RiskConnection",
+  "kind": "LinkedField",
+  "name": "risks",
+  "plural": false,
+  "selections": (v8/*: any*/),
+  "storageKey": "risks(first:0)"
+},
+v11 = {
+  "alias": "tasksInfos",
+  "args": (v7/*: any*/),
+  "concreteType": "TaskConnection",
+  "kind": "LinkedField",
+  "name": "tasks",
+  "plural": false,
+  "selections": (v8/*: any*/),
+  "storageKey": "tasks(first:0)"
+},
+v12 = {
+  "alias": "controlsInfos",
+  "args": (v7/*: any*/),
+  "concreteType": "ControlConnection",
+  "kind": "LinkedField",
+  "name": "controls",
+  "plural": false,
+  "selections": (v8/*: any*/),
+  "storageKey": "controls(first:0)"
+},
+v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v8 = [
+v14 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 100
   }
 ],
-v9 = {
+v15 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v10 = {
+v16 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "endCursor",
   "storageKey": null
 },
-v11 = {
+v17 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "hasNextPage",
   "storageKey": null
 },
-v12 = {
+v18 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -122,12 +190,12 @@ v12 = {
   "name": "pageInfo",
   "plural": false,
   "selections": [
-    (v10/*: any*/),
-    (v11/*: any*/)
+    (v16/*: any*/),
+    (v17/*: any*/)
   ],
   "storageKey": null
 },
-v13 = {
+v19 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -139,14 +207,14 @@ v13 = {
     }
   ]
 },
-v14 = [
+v20 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 20
   }
 ],
-v15 = {
+v21 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -154,8 +222,8 @@ v15 = {
   "name": "pageInfo",
   "plural": false,
   "selections": [
-    (v10/*: any*/),
-    (v11/*: any*/),
+    (v16/*: any*/),
+    (v17/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -173,7 +241,7 @@ v15 = {
   ],
   "storageKey": null
 },
-v16 = [
+v22 = [
   {
     "kind": "Literal",
     "name": "first",
@@ -203,6 +271,10 @@ return {
               (v4/*: any*/),
               (v5/*: any*/),
               (v6/*: any*/),
+              (v9/*: any*/),
+              (v10/*: any*/),
+              (v11/*: any*/),
+              (v12/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -253,7 +325,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v7/*: any*/),
+          (v13/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
@@ -262,9 +334,13 @@ return {
               (v4/*: any*/),
               (v5/*: any*/),
               (v6/*: any*/),
+              (v9/*: any*/),
+              (v10/*: any*/),
+              (v11/*: any*/),
+              (v12/*: any*/),
               {
                 "alias": null,
-                "args": (v8/*: any*/),
+                "args": (v14/*: any*/),
                 "concreteType": "RiskConnection",
                 "kind": "LinkedField",
                 "name": "risks",
@@ -302,22 +378,22 @@ return {
                             "name": "residualRiskScore",
                             "storageKey": null
                           },
-                          (v7/*: any*/)
+                          (v13/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v15/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v12/*: any*/),
-                  (v13/*: any*/)
+                  (v18/*: any*/),
+                  (v19/*: any*/)
                 ],
                 "storageKey": "risks(first:100)"
               },
               {
                 "alias": null,
-                "args": (v8/*: any*/),
+                "args": (v14/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "Measure__risks",
@@ -326,7 +402,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v8/*: any*/),
+                "args": (v14/*: any*/),
                 "concreteType": "TaskConnection",
                 "kind": "LinkedField",
                 "name": "tasks",
@@ -397,22 +473,22 @@ return {
                             ],
                             "storageKey": null
                           },
-                          (v7/*: any*/)
+                          (v13/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v15/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v12/*: any*/),
-                  (v13/*: any*/)
+                  (v18/*: any*/),
+                  (v19/*: any*/)
                 ],
                 "storageKey": "tasks(first:100)"
               },
               {
                 "alias": null,
-                "args": (v8/*: any*/),
+                "args": (v14/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "Measure__tasks",
@@ -421,7 +497,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v20/*: any*/),
                 "concreteType": "ControlConnection",
                 "kind": "LinkedField",
                 "name": "controls",
@@ -465,22 +541,22 @@ return {
                             ],
                             "storageKey": null
                           },
-                          (v7/*: any*/)
+                          (v13/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v15/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v15/*: any*/),
-                  (v13/*: any*/)
+                  (v21/*: any*/),
+                  (v19/*: any*/)
                 ],
                 "storageKey": "controls(first:20)"
               },
               {
                 "alias": null,
-                "args": (v14/*: any*/),
+                "args": (v20/*: any*/),
                 "filters": [
                   "orderBy",
                   "filter"
@@ -492,7 +568,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v16/*: any*/),
+                "args": (v22/*: any*/),
                 "concreteType": "EvidenceConnection",
                 "kind": "LinkedField",
                 "name": "evidences",
@@ -557,22 +633,22 @@ return {
                             "name": "mimeType",
                             "storageKey": null
                           },
-                          (v7/*: any*/)
+                          (v13/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v15/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v15/*: any*/),
-                  (v13/*: any*/)
+                  (v21/*: any*/),
+                  (v19/*: any*/)
                 ],
                 "storageKey": "evidences(first:50)"
               },
               {
                 "alias": null,
-                "args": (v16/*: any*/),
+                "args": (v22/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
@@ -591,16 +667,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "89371663df31f5d410b2556da8472d53",
+    "cacheID": "4a923b265801da22c605af53e744d543",
     "id": null,
     "metadata": {},
     "name": "MeasureGraphNodeQuery",
     "operationKind": "query",
-    "text": "query MeasureGraphNodeQuery(\n  $measureId: ID!\n) {\n  node(id: $measureId) {\n    __typename\n    ... on Measure {\n      id\n      name\n      description\n      state\n      category\n      ...MeasureRisksTabFragment\n      ...MeasureTasksTabFragment\n      ...MeasureControlsTabFragment\n      ...MeasureFormDialogMeasureFragment\n      ...MeasureEvidencesTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedRisksCardFragment on Risk {\n  id\n  name\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment MeasureControlsTabFragment on Measure {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment on Measure {\n  id\n  evidences(first: 50) {\n    edges {\n      node {\n        id\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  filename\n  size\n  type\n  createdAt\n  fileUrl\n  mimeType\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasureRisksTabFragment on Measure {\n  id\n  risks(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedRisksCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment MeasureTasksTabFragment on Measure {\n  tasks(first: 100) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        ...TaskFormDialogFragment\n        assignedTo {\n          id\n          fullName\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n"
+    "text": "query MeasureGraphNodeQuery(\n  $measureId: ID!\n) {\n  node(id: $measureId) {\n    __typename\n    ... on Measure {\n      id\n      name\n      description\n      state\n      category\n      evidencesInfos: evidences(first: 0) {\n        totalCount\n      }\n      risksInfos: risks(first: 0) {\n        totalCount\n      }\n      tasksInfos: tasks(first: 0) {\n        totalCount\n      }\n      controlsInfos: controls(first: 0) {\n        totalCount\n      }\n      ...MeasureRisksTabFragment\n      ...MeasureTasksTabFragment\n      ...MeasureControlsTabFragment\n      ...MeasureFormDialogMeasureFragment\n      ...MeasureEvidencesTabFragment\n    }\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n\nfragment LinkedRisksCardFragment on Risk {\n  id\n  name\n  inherentRiskScore\n  residualRiskScore\n}\n\nfragment MeasureControlsTabFragment on Measure {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment on Measure {\n  id\n  evidences(first: 50) {\n    edges {\n      node {\n        id\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  filename\n  size\n  type\n  createdAt\n  fileUrl\n  mimeType\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasureRisksTabFragment on Measure {\n  id\n  risks(first: 100) {\n    edges {\n      node {\n        id\n        ...LinkedRisksCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment MeasureTasksTabFragment on Measure {\n  tasks(first: 100) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        ...TaskFormDialogFragment\n        assignedTo {\n          id\n          fullName\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d5f21c1b7cd6cd1997018b1c0cfaee39";
+(node as any).hash = "34931b0c662961228537121bf18bab4e";
 
 export default node;
