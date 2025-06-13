@@ -119,6 +119,13 @@ export const relayEnvironment = new Environment({
   store,
 });
 
+export const clearRelayStore = () => {
+  const source = relayEnvironment.getStore().getSource();
+  if (source instanceof Map) {
+    source.clear();
+  }
+};
+
 /**
  * Provider for relay with the probo environment
  */
