@@ -295,7 +295,7 @@ func (s Service) SignUp(
 	confirmationEmailUrl := url.URL{
 		Scheme: "https",
 		Host:   s.hostname,
-		Path:   "/confirm-email",
+		Path:   "/auth/confirm-email",
 		RawQuery: url.Values{
 			"token": []string{confirmationToken},
 		}.Encode(),
