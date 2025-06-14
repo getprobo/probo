@@ -7,6 +7,7 @@ import { riskNodeQuery, risksQuery } from "/hooks/graph/RiskGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect } from "react-router";
 import { lazy } from "@probo/react-lazy";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 
 export const riskRoutes = [
   {
@@ -32,24 +33,28 @@ export const riskRoutes = [
       },
       {
         path: "overview",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/risks/tabs/RiskOverviewTab.tsx")
         ),
       },
       {
         path: "measures",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/risks/tabs/RiskMeasuresTab.tsx")
         ),
       },
       {
         path: "documents",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/risks/tabs/RiskDocumentsTab.tsx")
         ),
       },
       {
         path: "controls",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/risks/tabs/RiskControlsTab.tsx")
         ),

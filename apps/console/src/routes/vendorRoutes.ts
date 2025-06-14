@@ -4,6 +4,7 @@ import type { AppRoute } from "/routes.tsx";
 import { relayEnvironment } from "/providers/RelayProviders";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { vendorNodeQuery, vendorsQuery } from "/hooks/graph/VendorGraph";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 
 export const vendorRoutes = [
   {
@@ -27,12 +28,14 @@ export const vendorRoutes = [
     children: [
       {
         path: "overview",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("../pages/organizations/vendors/tabs/VendorOverviewTab")
         ),
       },
       {
         path: "certifications",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import(
@@ -42,6 +45,7 @@ export const vendorRoutes = [
       },
       {
         path: "compliance",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("../pages/organizations/vendors/tabs/VendorComplianceTab")
@@ -49,6 +53,7 @@ export const vendorRoutes = [
       },
       {
         path: "risks",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import(

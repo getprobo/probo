@@ -7,6 +7,7 @@ import {
   paginatedPeopleQuery,
   peopleNodeQuery,
 } from "/hooks/graph/PeopleGraph";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 
 export const peopleRoutes = [
   {
@@ -27,18 +28,21 @@ export const peopleRoutes = [
     children: [
       {
         path: "tasks",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/people/tabs/PeopleTasksTab")
         ),
       },
       {
         path: "role",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/people/tabs/PeopleRoleTab")
         ),
       },
       {
         path: "profile",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/people/tabs/PeopleProfileTab")
         ),

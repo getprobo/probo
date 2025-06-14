@@ -165,7 +165,11 @@ function routeTransformer({
 
         useCleanup(dispose, 1000);
 
-        return <route.Component queryRef={queryRef} />;
+        return (
+          <Suspense fallback={FallbackComponent ? <FallbackComponent /> : null}>
+            <route.Component queryRef={queryRef} />
+          </Suspense>
+        );
       },
     };
   }

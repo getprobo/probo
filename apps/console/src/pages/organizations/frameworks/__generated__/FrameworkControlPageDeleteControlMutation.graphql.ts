@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ff996c0902be9e7b8c23c9dd3d0f3759>>
+ * @generated SignedSource<<87a74ac3a3c2523bd65512703dc2246e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,22 +9,21 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type DeleteControlMeasureMappingInput = {
+export type DeleteControlInput = {
   controlId: string;
-  measureId: string;
 };
-export type FrameworkDetailPageDetachMutation$variables = {
+export type FrameworkControlPageDeleteControlMutation$variables = {
   connections: ReadonlyArray<string>;
-  input: DeleteControlMeasureMappingInput;
+  input: DeleteControlInput;
 };
-export type FrameworkDetailPageDetachMutation$data = {
-  readonly deleteControlMeasureMapping: {
-    readonly deletedMeasureId: string;
+export type FrameworkControlPageDeleteControlMutation$data = {
+  readonly deleteControl: {
+    readonly deletedControlId: string;
   };
 };
-export type FrameworkDetailPageDetachMutation = {
-  response: FrameworkDetailPageDetachMutation$data;
-  variables: FrameworkDetailPageDetachMutation$variables;
+export type FrameworkControlPageDeleteControlMutation = {
+  response: FrameworkControlPageDeleteControlMutation$data;
+  variables: FrameworkControlPageDeleteControlMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -49,7 +48,7 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "deletedMeasureId",
+  "name": "deletedControlId",
   "storageKey": null
 };
 return {
@@ -60,14 +59,14 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "FrameworkDetailPageDetachMutation",
+    "name": "FrameworkControlPageDeleteControlMutation",
     "selections": [
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "DeleteControlMeasureMappingPayload",
+        "concreteType": "DeleteControlPayload",
         "kind": "LinkedField",
-        "name": "deleteControlMeasureMapping",
+        "name": "deleteControl",
         "plural": false,
         "selections": [
           (v3/*: any*/)
@@ -85,14 +84,14 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "FrameworkDetailPageDetachMutation",
+    "name": "FrameworkControlPageDeleteControlMutation",
     "selections": [
       {
         "alias": null,
         "args": (v2/*: any*/),
-        "concreteType": "DeleteControlMeasureMappingPayload",
+        "concreteType": "DeleteControlPayload",
         "kind": "LinkedField",
-        "name": "deleteControlMeasureMapping",
+        "name": "deleteControl",
         "plural": false,
         "selections": [
           (v3/*: any*/),
@@ -103,7 +102,7 @@ return {
             "handle": "deleteEdge",
             "key": "",
             "kind": "ScalarHandle",
-            "name": "deletedMeasureId",
+            "name": "deletedControlId",
             "handleArgs": [
               {
                 "kind": "Variable",
@@ -118,16 +117,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0bede5dc29caa4e2aba9b0dd96e58014",
+    "cacheID": "f5559c3bf33da22ba6cb83fc408426e0",
     "id": null,
     "metadata": {},
-    "name": "FrameworkDetailPageDetachMutation",
+    "name": "FrameworkControlPageDeleteControlMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkDetailPageDetachMutation(\n  $input: DeleteControlMeasureMappingInput!\n) {\n  deleteControlMeasureMapping(input: $input) {\n    deletedMeasureId\n  }\n}\n"
+    "text": "mutation FrameworkControlPageDeleteControlMutation(\n  $input: DeleteControlInput!\n) {\n  deleteControl(input: $input) {\n    deletedControlId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "96945bf8e909e7425af2297f7ee6ea0a";
+(node as any).hash = "c92c75d0666d2a60d3a2fcfb2959b2e9";
 
 export default node;

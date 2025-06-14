@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7d4a807c299030c97164951cbe8ef067>>
+ * @generated SignedSource<<47d493f6b225797004c11ba908c1e7d2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,11 +14,11 @@ export type CreateControlDocumentMappingInput = {
   controlId: string;
   documentId: string;
 };
-export type FrameworkDetailPageAttachDocumentMutation$variables = {
+export type FrameworkControlPageAttachDocumentMutation$variables = {
   connections: ReadonlyArray<string>;
   input: CreateControlDocumentMappingInput;
 };
-export type FrameworkDetailPageAttachDocumentMutation$data = {
+export type FrameworkControlPageAttachDocumentMutation$data = {
   readonly createControlDocumentMapping: {
     readonly documentEdge: {
       readonly node: {
@@ -28,9 +28,9 @@ export type FrameworkDetailPageAttachDocumentMutation$data = {
     };
   };
 };
-export type FrameworkDetailPageAttachDocumentMutation = {
-  response: FrameworkDetailPageAttachDocumentMutation$data;
-  variables: FrameworkDetailPageAttachDocumentMutation$variables;
+export type FrameworkControlPageAttachDocumentMutation = {
+  response: FrameworkControlPageAttachDocumentMutation$data;
+  variables: FrameworkControlPageAttachDocumentMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -66,7 +66,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "FrameworkDetailPageAttachDocumentMutation",
+    "name": "FrameworkControlPageAttachDocumentMutation",
     "selections": [
       {
         "alias": null,
@@ -118,7 +118,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "FrameworkDetailPageAttachDocumentMutation",
+    "name": "FrameworkControlPageAttachDocumentMutation",
     "selections": [
       {
         "alias": null,
@@ -241,16 +241,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "968bd0beeabab861ca610804640e5e11",
+    "cacheID": "857c472a56bba83b8249bb6f3b97eea2",
     "id": null,
     "metadata": {},
-    "name": "FrameworkDetailPageAttachDocumentMutation",
+    "name": "FrameworkControlPageAttachDocumentMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkDetailPageAttachDocumentMutation(\n  $input: CreateControlDocumentMappingInput!\n) {\n  createControlDocumentMapping(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...LinkedDocumentsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
+    "text": "mutation FrameworkControlPageAttachDocumentMutation(\n  $input: CreateControlDocumentMappingInput!\n) {\n  createControlDocumentMapping(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...LinkedDocumentsCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "26c53db439feba2b2d65c3e3a9a973c7";
+(node as any).hash = "6f019fa6bdfccc4cddd80f0de770440f";
 
 export default node;

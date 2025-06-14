@@ -4,10 +4,12 @@ import { relayEnvironment } from "/providers/RelayProviders";
 import {
   frameworksQuery,
   frameworkNodeQuery,
+  frameworkControlNodeQuery,
 } from "/hooks/graph/FrameworkGraph";
 import type { AppRoute } from "/routes";
 import { Fragment } from "react";
 import { lazy } from "@probo/react-lazy";
+import { ControlSkeleton } from "../components/skeletons/ControlSkeleton";
 
 export const frameworkRoutes = [
   {
@@ -34,7 +36,12 @@ export const frameworkRoutes = [
       },
       {
         path: "controls/:controlId",
-        Component: Fragment,
+        fallback: ControlSkeleton,
+        queryLoader: ({ controlId }) =>
+          loadQuery(relayEnvironment, frameworkControlNodeQuery, { controlId }),
+        Component: lazy(
+          () => import("/pages/organizations/frameworks/FrameworkControlPage")
+        ),
       },
     ],
   },

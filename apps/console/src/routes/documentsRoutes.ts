@@ -7,6 +7,7 @@ import { documentNodeQuery } from "/hooks/graph/DocumentGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect } from "react-router";
 import { lazy } from "@probo/react-lazy";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 
 export const documentsRoutes = [
   {
@@ -38,6 +39,7 @@ export const documentsRoutes = [
       },
       {
         path: "description",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import(
@@ -47,6 +49,7 @@ export const documentsRoutes = [
       },
       {
         path: "controls",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("../pages/organizations/documents/tabs/DocumentControlsTab")
