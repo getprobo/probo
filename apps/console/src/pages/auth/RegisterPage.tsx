@@ -150,7 +150,7 @@ export default function RegisterPage() {
           <p className="text-sm text-txt-tertiary">
             {__("Already have an account?")}{" "}
             <Link
-              to="/login"
+              to="/auth/login"
               className="underline text-txt-primary hover:text-txt-secondary"
             >
               {__("Log in here")}
