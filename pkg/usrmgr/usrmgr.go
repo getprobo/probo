@@ -523,7 +523,7 @@ func (s Service) ListTenantsForUserID(
 		return nil, err
 	}
 
-	tenantIDs := make([]gid.TenantID, len(uos))
+	tenantIDs := make([]gid.TenantID, 0, len(uos))
 	for _, uo := range uos {
 		tenantIDs = append(tenantIDs, uo.OrganizationID.TenantID())
 	}
