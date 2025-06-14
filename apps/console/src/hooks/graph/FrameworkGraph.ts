@@ -88,3 +88,37 @@ export const frameworkNodeQuery = graphql`
     }
   }
 `;
+
+export const frameworkControlNodeQuery = graphql`
+  query FrameworkGraphControlNodeQuery($controlId: ID!) {
+    node(id: $controlId) {
+      ... on Control {
+        id
+        name
+        sectionTitle
+        description
+        ...FrameworkControlDialogFragment
+        measures(first: 100)
+          @connection(key: "FrameworkGraphControl_measures") {
+          __id
+          edges {
+            node {
+              id
+              ...LinkedMeasuresCardFragment
+            }
+          }
+        }
+        documents(first: 100)
+          @connection(key: "FrameworkGraphControl_documents") {
+          __id
+          edges {
+            node {
+              id
+              ...LinkedDocumentsCardFragment
+            }
+          }
+        }
+      }
+    }
+  }
+`;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<81d008fc4116a78a92e2d925f8d6daa7>>
+ * @generated SignedSource<<1d23c8e1a8e16a9811d75d208ade0889>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,11 +14,11 @@ export type CreateControlMeasureMappingInput = {
   controlId: string;
   measureId: string;
 };
-export type FrameworkDetailPageAttachMutation$variables = {
+export type FrameworkControlPageAttachMutation$variables = {
   connections: ReadonlyArray<string>;
   input: CreateControlMeasureMappingInput;
 };
-export type FrameworkDetailPageAttachMutation$data = {
+export type FrameworkControlPageAttachMutation$data = {
   readonly createControlMeasureMapping: {
     readonly measureEdge: {
       readonly node: {
@@ -28,9 +28,9 @@ export type FrameworkDetailPageAttachMutation$data = {
     };
   };
 };
-export type FrameworkDetailPageAttachMutation = {
-  response: FrameworkDetailPageAttachMutation$data;
-  variables: FrameworkDetailPageAttachMutation$variables;
+export type FrameworkControlPageAttachMutation = {
+  response: FrameworkControlPageAttachMutation$data;
+  variables: FrameworkControlPageAttachMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -66,7 +66,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "FrameworkDetailPageAttachMutation",
+    "name": "FrameworkControlPageAttachMutation",
     "selections": [
       {
         "alias": null,
@@ -118,7 +118,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "FrameworkDetailPageAttachMutation",
+    "name": "FrameworkControlPageAttachMutation",
     "selections": [
       {
         "alias": null,
@@ -187,16 +187,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9fcb599cd78f3108d6d71aa571d7005d",
+    "cacheID": "85f870b18745fcd28bac3a52c404e98f",
     "id": null,
     "metadata": {},
-    "name": "FrameworkDetailPageAttachMutation",
+    "name": "FrameworkControlPageAttachMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkDetailPageAttachMutation(\n  $input: CreateControlMeasureMappingInput!\n) {\n  createControlMeasureMapping(input: $input) {\n    measureEdge {\n      node {\n        id\n        ...LinkedMeasuresCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n"
+    "text": "mutation FrameworkControlPageAttachMutation(\n  $input: CreateControlMeasureMappingInput!\n) {\n  createControlMeasureMapping(input: $input) {\n    measureEdge {\n      node {\n        id\n        ...LinkedMeasuresCardFragment\n      }\n    }\n  }\n}\n\nfragment LinkedMeasuresCardFragment on Measure {\n  id\n  name\n  state\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d3834b8c2656d347e13189469894be61";
+(node as any).hash = "e52f26e6906aa014ad020bd6f23a75d6";
 
 export default node;

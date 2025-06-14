@@ -6,6 +6,7 @@ import { measureNodeQuery, measuresQuery } from "/hooks/graph/MeasureGraph";
 import { PageSkeleton } from "/components/skeletons/PageSkeleton";
 import { redirect } from "react-router";
 import { lazy } from "@probo/react-lazy";
+import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 
 export const measureRoutes = [
   {
@@ -39,18 +40,21 @@ export const measureRoutes = [
       },
       {
         path: "risks",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/measures/tabs/MeasureRisksTab.tsx")
         ),
       },
       {
         path: "tasks",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/measures/tabs/MeasureTasksTab.tsx")
         ),
       },
       {
         path: "controls",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("/pages/organizations/measures/tabs/MeasureControlsTab.tsx")
@@ -58,6 +62,7 @@ export const measureRoutes = [
       },
       {
         path: "evidences",
+        fallback: LinkCardSkeleton,
         Component: lazy(
           () =>
             import("/pages/organizations/measures/tabs/MeasureEvidencesTab.tsx")

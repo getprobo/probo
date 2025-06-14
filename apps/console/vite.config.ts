@@ -6,6 +6,14 @@ import { fileURLToPath, URL } from "node:url";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react({ babel: { plugins: ["relay"] } }), tailwindcss()],
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
+    },
+  },
   resolve: {
     alias: {
       "/type": fileURLToPath(new URL("./src/type.ts", import.meta.url)),
