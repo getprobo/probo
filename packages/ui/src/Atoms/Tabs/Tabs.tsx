@@ -36,7 +36,7 @@ export function TabItem({
     asChild,
     active,
     ...props
-}: AsChildProps<{ active?: boolean }>) {
+}: AsChildProps<{ active?: boolean; onClick?: () => void }>) {
     const Component = asChild ? Slot : "div";
     return <Component {...props} className={cls.item({ active })} />;
 }

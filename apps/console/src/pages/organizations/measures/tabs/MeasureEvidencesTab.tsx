@@ -5,23 +5,26 @@ import { usePageTitle } from "@probo/hooks";
 import {
   ActionDropdown,
   DropdownItem,
-  Dropzone,
   IconArrowInbox,
+  IconPlusLarge,
   IconTrashCan,
   Tbody,
   Td,
   Th,
   Thead,
   Tr,
+  TrButton,
   useConfirm,
+  useDialogRef,
 } from "@probo/ui";
 import { graphql } from "relay-runtime";
-import { useFragment, useMutation, useRefetchableFragment } from "react-relay";
+import { useFragment, useMutation, usePaginationFragment } from "react-relay";
 import { SortableTable } from "/components/SortableTable";
 import type { MeasureEvidencesTabFragment_evidence$key } from "./__generated__/MeasureEvidencesTabFragment_evidence.graphql";
 import { fileSize, fileType, promisifyMutation, sprintf } from "@probo/helpers";
 import { EvidencePreviewDialog } from "../dialog/EvidencePreviewDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { CreateEvidenceDialog } from "../dialog/CreateEvidenceDialog";
 
 export const evidencesFragment = graphql`
   fragment MeasureEvidencesTabFragment on Measure
@@ -67,22 +70,6 @@ export const evidenceFragment = graphql`
   }
 `;
 
-const uploadEvidenceMutation = graphql`
-  mutation MeasureEvidencesTabUploadMutation(
-    $input: UploadMeasureEvidenceInput!
-    $connections: [ID!]!
-  ) {
-    uploadMeasureEvidence(input: $input) {
-      evidenceEdge @appendEdge(connections: $connections) {
-        node {
-          id
-          ...MeasureEvidencesTabFragment_evidence
-        }
-      }
-    }
-  }
-`;
-
 const deleteEvidenceMutation = graphql`
   mutation MeasureEvidencesTabDeleteMutation(
     $input: DeleteEvidenceInput!
@@ -99,58 +86,21 @@ export default function MeasureEvidencesTab() {
     measure: MeasureEvidencesTabFragment$key & { id: string; name: string };
   }>();
   const { evidenceId } = useParams<{ evidenceId: string }>();
-  const [data, refetch] = useRefetchableFragment(evidencesFragment, measure);
-  const connectionId = data.evidences.__id;
-  const evidences = data.evidences?.edges?.map((edge) => edge.node) ?? [];
+  const pagination = usePaginationFragment(evidencesFragment, measure);
+  const connectionId = pagination.data.evidences.__id;
+  const evidences =
+    pagination.data.evidences?.edges?.map((edge) => edge.node) ?? [];
   const navigate = useNavigate();
   const { __ } = useTranslate();
-  const [mutate, isUpdating] = useMutation(uploadEvidenceMutation);
   const evidence = evidences.find((e) => e.id === evidenceId);
   const organizationId = useOrganizationId();
+  const dialogRef = useDialogRef();
 
   usePageTitle(measure.name + " - " + __("Evidences"));
 
-  const handleDrop = (files: File[]) => {
-    for (const file of files) {
-      mutate({
-        variables: {
-          connections: [connectionId],
-          input: {
-            measureId: measure.id,
-            file: null,
-          },
-        },
-        uploadables: {
-          "input.file": file,
-        },
-      });
-    }
-  };
-
   return (
     <div className="space-y-6">
-      <Dropzone
-        description={__(
-          "Only PDF, DOCX, XLSX, PPTX, JPG, PNG, WEBP files up to 10MB are allowed",
-        )}
-        isUploading={isUpdating}
-        onDrop={handleDrop}
-        accept={{
-          "application/pdf": [".pdf"],
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-            [".docx"],
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
-            ".xlsx",
-          ],
-          "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-            [".pptx"],
-          "image/jpeg": [".jpg", ".jpeg"],
-          "image/png": [".png"],
-          "image/webp": [".webp"],
-        }}
-        maxSize={10}
-      />
-      <SortableTable refetch={refetch}>
+      <SortableTable {...pagination}>
         <Thead>
           <Tr>
             <Th>{__("Evidence name")}</Th>
@@ -170,6 +120,13 @@ export default function MeasureEvidencesTab() {
               connectionId={connectionId}
             />
           ))}
+          <TrButton
+            colspan={5}
+            onClick={() => dialogRef.current?.open()}
+            icon={IconPlusLarge}
+          >
+            {__("Add evidence")}
+          </TrButton>
         </Tbody>
       </SortableTable>
       {evidence && (
@@ -183,6 +140,11 @@ export default function MeasureEvidencesTab() {
           evidence={evidence}
         />
       )}
+      <CreateEvidenceDialog
+        ref={dialogRef}
+        measureId={measure.id}
+        connectionId={connectionId}
+      />
     </div>
   );
 }

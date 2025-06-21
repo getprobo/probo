@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dd129ccf57ef541ce24672d4b55d708f>>
+ * @generated SignedSource<<4e4aeb5c756375a47e6a260c6ff9e259>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,11 +14,11 @@ export type UploadMeasureEvidenceInput = {
   file: any;
   measureId: string;
 };
-export type MeasureEvidencesTabUploadMutation$variables = {
+export type CreateEvidenceDialogUploadMutation$variables = {
   connections: ReadonlyArray<string>;
   input: UploadMeasureEvidenceInput;
 };
-export type MeasureEvidencesTabUploadMutation$data = {
+export type CreateEvidenceDialogUploadMutation$data = {
   readonly uploadMeasureEvidence: {
     readonly evidenceEdge: {
       readonly node: {
@@ -28,9 +28,9 @@ export type MeasureEvidencesTabUploadMutation$data = {
     };
   };
 };
-export type MeasureEvidencesTabUploadMutation = {
-  response: MeasureEvidencesTabUploadMutation$data;
-  variables: MeasureEvidencesTabUploadMutation$variables;
+export type CreateEvidenceDialogUploadMutation = {
+  response: CreateEvidenceDialogUploadMutation$data;
+  variables: CreateEvidenceDialogUploadMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -66,7 +66,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "MeasureEvidencesTabUploadMutation",
+    "name": "CreateEvidenceDialogUploadMutation",
     "selections": [
       {
         "alias": null,
@@ -118,7 +118,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "MeasureEvidencesTabUploadMutation",
+    "name": "CreateEvidenceDialogUploadMutation",
     "selections": [
       {
         "alias": null,
@@ -215,16 +215,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "facbff238f3ee10c220a5c80883836da",
+    "cacheID": "7070386f52341969556753a27d42e226",
     "id": null,
     "metadata": {},
-    "name": "MeasureEvidencesTabUploadMutation",
+    "name": "CreateEvidenceDialogUploadMutation",
     "operationKind": "mutation",
-    "text": "mutation MeasureEvidencesTabUploadMutation(\n  $input: UploadMeasureEvidenceInput!\n) {\n  uploadMeasureEvidence(input: $input) {\n    evidenceEdge {\n      node {\n        id\n        ...MeasureEvidencesTabFragment_evidence\n      }\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  filename\n  size\n  type\n  createdAt\n  fileUrl\n  mimeType\n}\n"
+    "text": "mutation CreateEvidenceDialogUploadMutation(\n  $input: UploadMeasureEvidenceInput!\n) {\n  uploadMeasureEvidence(input: $input) {\n    evidenceEdge {\n      node {\n        id\n        ...MeasureEvidencesTabFragment_evidence\n      }\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  filename\n  size\n  type\n  createdAt\n  fileUrl\n  mimeType\n}\n"
   }
 };
 })();
 
-(node as any).hash = "37283c7d6f25ed8c768ba9e0f93ebafb";
+(node as any).hash = "719cce21cdff705c55dda3de31997a53";
 
 export default node;

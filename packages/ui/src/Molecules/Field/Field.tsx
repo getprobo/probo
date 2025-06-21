@@ -18,6 +18,7 @@ type Props =
     | BaseProps<never, ComponentProps<typeof Input>>
     | BaseProps<"text", ComponentProps<typeof Input>>
     | BaseProps<"email", ComponentProps<typeof Input>>
+    | BaseProps<"url", ComponentProps<typeof Input>>
     | BaseProps<"password", ComponentProps<typeof Input>>
     | BaseProps<"textarea", ComponentProps<typeof Textarea>>
     | BaseProps<"number", ComponentProps<typeof Input>>

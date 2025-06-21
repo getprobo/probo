@@ -99,7 +99,7 @@ export function SortableTh({
           size={16}
           className={clsx(
             isCurrentField && "text-txt-primary",
-            isCurrentField && !isDesc && "rotate-180"
+            isCurrentField && !isDesc && "rotate-180",
           )}
         />
       </button>

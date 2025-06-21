@@ -1,11 +1,16 @@
 import {
+  Breadcrumb,
   Button,
   Dialog,
   DialogContent,
   IconArrowInbox,
-  IconFilter,
+  IconWarning,
+  Spinner,
+  useDialogRef,
+  useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { useEffect } from "react";
 
 type Props = {
   evidence: {
@@ -18,25 +23,84 @@ type Props = {
 
 export function EvidencePreviewDialog({ evidence, onClose }: Props) {
   const { __ } = useTranslate();
+  const ref = useDialogRef();
   return (
-    <Dialog defaultOpen title={evidence.filename} onClose={onClose}>
+    <Dialog
+      ref={ref}
+      defaultOpen
+      title={
+        <Breadcrumb
+          items={[{ label: __("Evidences") }, { label: evidence.filename }]}
+        />
+      }
+      onClose={onClose}
+    >
       <DialogContent padded>
-        <p>
-          {__(
-            "Preview of the evidence file. You can view or download the file from here."
-          )}
-        </p>
-        <EvidencePreviewContent evidence={evidence} />
+        <EvidencePreviewContent
+          evidence={evidence}
+          onClose={() => ref.current?.close()}
+        />
       </DialogContent>
     </Dialog>
   );
 }
 
-function EvidencePreviewContent({ evidence }: Pick<Props, "evidence">) {
+const fetchUrlFromUriFile = async (
+  fileUrl: string,
+  options?: { signal?: AbortSignal }
+): Promise<string> => {
+  const response = await fetch(fileUrl, options);
+  const text = await response.text();
+  // URI files typically have the URL on the first line
+  const firstLine = text.trim().split("\n")[0];
+  if (!firstLine) {
+    throw new Error("No URL found in URI file");
+  }
+  return firstLine;
+};
+
+function EvidencePreviewContent({ evidence, onClose }: Props) {
   const { __ } = useTranslate();
+  const { toast } = useToast();
+  const isUriFile =
+    evidence.mimeType === "text/uri-list" || evidence.mimeType === "text/uri";
+  useEffect(() => {
+    if (!isUriFile) {
+      return;
+    }
+    const abortController = new AbortController();
+    fetchUrlFromUriFile(evidence.fileUrl ?? "", {
+      signal: abortController.signal,
+    })
+      .then((url) => {
+        window.open(url, "_blank");
+      })
+      .catch((e) => {
+        if (e.name === "AbortError") {
+          return;
+        }
+        toast({
+          title: __("Error"),
+          description: e.message ?? __("Failed to extract URL from URI file"),
+          variant: "error",
+        });
+      })
+      .finally(onClose);
+    return () => {
+      abortController.abort();
+    };
+  }, [evidence.fileUrl, isUriFile]);
 
   if (!evidence.fileUrl) {
     return null;
+  }
+
+  if (isUriFile) {
+    return (
+      <div className="flex flex-col items-center gap-2 justify-center">
+        <Spinner size={20} />
+      </div>
+    );
   }
 
   if (evidence.mimeType.startsWith("image/")) {
@@ -60,10 +124,10 @@ function EvidencePreviewContent({ evidence }: Pick<Props, "evidence">) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 justify-center">
-      <IconFilter size={20} />
-      <p className="text-secondary text-center">
-        {__("Preview not availeeable for this file type") +
+    <div className="flex flex-col items-center gap-2 justify-center">
+      <IconWarning size={20} />
+      <p className="text-txt-secondary text-center">
+        {__("Preview not available for this file type") +
           " " +
           evidence.mimeType}
       </p>
