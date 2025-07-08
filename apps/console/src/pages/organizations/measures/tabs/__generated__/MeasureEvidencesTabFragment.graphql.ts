@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f1947ff2accbc325c11c88fb343d82b2>>
+ * @generated SignedSource<<6c96b0b565302f1ec1601561087b30bd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,6 @@ export type MeasureEvidencesTabFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly fileUrl: string | null | undefined;
         readonly filename: string;
         readonly id: string;
         readonly mimeType: string;
@@ -149,13 +148,6 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "fileUrl",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "mimeType",
                   "storageKey": null
                 },
@@ -244,6 +236,6 @@ return {
 };
 })();
 
-(node as any).hash = "abae73e44e966689cd837465f93abcb3";
+(node as any).hash = "8e97649ca88af04aa1184e68a126cc36";
 
 export default node;

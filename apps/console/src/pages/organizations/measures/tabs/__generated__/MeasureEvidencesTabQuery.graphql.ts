@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e2a2d3c5470f8878acedd5e4ecc05300>>
+ * @generated SignedSource<<b2d32283d91e7ef9da2eeda3c789867f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -223,13 +223,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "fileUrl",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "mimeType",
                             "storageKey": null
                           },
@@ -343,16 +336,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "61b9596f07d5d2516f50e2f646eb21a2",
+    "cacheID": "9899e64b590ff4c76ca994845611d77a",
     "id": null,
     "metadata": {},
     "name": "MeasureEvidencesTabQuery",
     "operationKind": "query",
-    "text": "query MeasureEvidencesTabQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: EvidenceOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureEvidencesTabFragment_16fISc\n    id\n  }\n}\n\nfragment MeasureEvidencesTabFragment_16fISc on Measure {\n  id\n  evidences(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        filename\n        fileUrl\n        mimeType\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  filename\n  size\n  type\n  createdAt\n  fileUrl\n  mimeType\n}\n"
+    "text": "query MeasureEvidencesTabQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: EvidenceOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureEvidencesTabFragment_16fISc\n    id\n  }\n}\n\nfragment MeasureEvidencesTabFragment_16fISc on Measure {\n  id\n  evidences(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        filename\n        mimeType\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  filename\n  size\n  type\n  createdAt\n  mimeType\n}\n"
   }
 };
 })();
 
-(node as any).hash = "abae73e44e966689cd837465f93abcb3";
+(node as any).hash = "8e97649ca88af04aa1184e68a126cc36";
 
 export default node;

@@ -10,18 +10,22 @@ import {
   useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
+import { useLazyLoadQuery } from "react-relay";
+import { evidenceFileQuery } from "/hooks/graph/EvidenceGraph.ts";
+import type { EvidenceGraphFileQuery } from "/hooks/graph/__generated__/EvidenceGraphFileQuery.graphql.ts";
 
 type Props = {
-  evidence: {
-    filename: string;
-    fileUrl?: string | null;
-    mimeType: string;
-  };
+  evidenceId: string;
+  filename: string;
   onClose: () => void;
 };
 
-export function EvidencePreviewDialog({ evidence, onClose }: Props) {
+export function EvidencePreviewDialog({
+  evidenceId,
+  onClose,
+  filename,
+}: Props) {
   const { __ } = useTranslate();
   const ref = useDialogRef();
   return (
@@ -29,17 +33,17 @@ export function EvidencePreviewDialog({ evidence, onClose }: Props) {
       ref={ref}
       defaultOpen
       title={
-        <Breadcrumb
-          items={[{ label: __("Evidences") }, { label: evidence.filename }]}
-        />
+        <Breadcrumb items={[{ label: __("Evidences") }, { label: filename }]} />
       }
       onClose={onClose}
     >
       <DialogContent padded>
-        <EvidencePreviewContent
-          evidence={evidence}
-          onClose={() => ref.current?.close()}
-        />
+        <Suspense fallback={<Spinner />}>
+          <EvidencePreviewContent
+            evidenceId={evidenceId}
+            onClose={() => ref.current?.close()}
+          />
+        </Suspense>
       </DialogContent>
     </Dialog>
   );
@@ -47,7 +51,7 @@ export function EvidencePreviewDialog({ evidence, onClose }: Props) {
 
 const fetchUrlFromUriFile = async (
   fileUrl: string,
-  options?: { signal?: AbortSignal }
+  options?: { signal?: AbortSignal },
 ): Promise<string> => {
   const response = await fetch(fileUrl, options);
   const text = await response.text();
@@ -59,7 +63,15 @@ const fetchUrlFromUriFile = async (
   return firstLine;
 };
 
-function EvidencePreviewContent({ evidence, onClose }: Props) {
+function EvidencePreviewContent({
+  evidenceId,
+  onClose,
+}: Omit<Props, "filename">) {
+  const evidence = useLazyLoadQuery<EvidenceGraphFileQuery>(
+    evidenceFileQuery,
+    { evidenceId: evidenceId },
+    { fetchPolicy: "network-only" },
+  ).node;
   const { __ } = useTranslate();
   const { toast } = useToast();
   const isUriFile =
@@ -103,7 +115,7 @@ function EvidencePreviewContent({ evidence, onClose }: Props) {
     );
   }
 
-  if (evidence.mimeType.startsWith("image/")) {
+  if (evidence.mimeType?.startsWith("image/")) {
     return (
       <img
         src={evidence.fileUrl}
@@ -113,7 +125,7 @@ function EvidencePreviewContent({ evidence, onClose }: Props) {
     );
   }
 
-  if (evidence.mimeType.includes("pdf")) {
+  if (evidence.mimeType?.includes("pdf")) {
     return (
       <iframe
         src={evidence.fileUrl}
