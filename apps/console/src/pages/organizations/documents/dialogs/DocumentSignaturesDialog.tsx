@@ -35,7 +35,7 @@ export function DocumentSignaturesDialog(props: Props) {
   const { __ } = useTranslate();
   const versions = props.document.versions.edges.map((edge) => edge.node);
   const [selectedVersionId, setSelectedVersionId] = useState<string>(
-    versions[0].id
+    versions[0].id,
   );
   const selectedVersion = versions.find((v) => v.id === selectedVersionId);
 
@@ -65,7 +65,7 @@ export function DocumentSignaturesDialog(props: Props) {
           </DialogTitle>
           <p className="text-sm text-txt-secondary mb-4">
             {__(
-              "Click request to ask for a signature from people in your organization."
+              "Click request to ask for a signature from people in your organization.",
             )}
           </p>
           <Suspense fallback={<Spinner centered />}>
@@ -95,14 +95,14 @@ function VersionItem(props: {
   const { dateTimeFormat, __ } = useTranslate();
   const version = useFragment<DocumentSignaturesDialog_version$key>(
     versionFragment,
-    props.version
+    props.version,
   );
   return (
     <button
       onClick={() => props.onSelect(props.version.id)}
       className={clsx(
         "text-start space-y-1 w-full overflow-hidden py-2 px-3 w-full hover:bg-tertiary-hover cursor-pointer rounded",
-        props.active && "bg-tertiary-pressed"
+        props.active && "bg-tertiary-pressed",
       )}
     >
       <div className="flex gap-1 text-sm text-txt-primary">
@@ -188,6 +188,16 @@ const requestSignatureMutation = graphql`
     }
   }
 `;
+const cancelSignatureMutation = graphql`
+  mutation DocumentSignaturesDialog_cancelSignatureMutation(
+    $input: CancelSignatureRequestInput!
+    $connections: [ID!]!
+  ) {
+    cancelSignatureRequest(input: $input) {
+      deletedDocumentVersionSignatureId @deleteEdge(connections: $connections)
+    }
+  }
+`;
 
 function SignatureItem(props: {
   versionId: string;
@@ -203,7 +213,14 @@ function SignatureItem(props: {
     {
       successMessage: __("Signature request sent successfully"),
       errorMessage: __("Failed to send signature request"),
-    }
+    },
+  );
+  const [cancelSignature, isCancellingSignature] = useMutationWithToasts(
+    cancelSignatureMutation,
+    {
+      successMessage: __("Request cancelled successfully"),
+      errorMessage: __("Failed to cancel signature request"),
+    },
   );
 
   // No signature request for this user
@@ -263,15 +280,35 @@ function SignatureItem(props: {
             {sprintf(
               label,
               dateTimeFormat(
-                isSigned ? signature.signedAt : signature.requestedAt
-              )
+                isSigned ? signature.signedAt : signature.requestedAt,
+              ),
             )}
           </span>
         </div>
       </div>
-      <Badge variant={isSigned ? "success" : "warning"} className="ml-auto">
-        {isSigned ? __("Signed") : __("Pending")}
-      </Badge>
+      {isSigned ? (
+        <Badge variant="success" className="ml-auto">
+          {__("Signed")}
+        </Badge>
+      ) : (
+        <Button
+          variant="danger"
+          className="ml-auto"
+          disabled={isCancellingSignature}
+          onClick={() => {
+            cancelSignature({
+              variables: {
+                input: {
+                  documentVersionSignatureId: signature.id,
+                },
+                connections: [props.connectionId],
+              },
+            });
+          }}
+        >
+          {__("Cancel request")}
+        </Button>
+      )}
     </div>
   );
 }
