@@ -1,13 +1,13 @@
 import {
   ConnectionHandler,
-  usePreloadedQuery,
   type PreloadedQuery,
+  usePreloadedQuery,
 } from "react-relay";
 import {
   datumNodeQuery,
   useDeleteDatum,
   useUpdateDatum,
-} from "../../../hooks/graph/DatumGraph";
+} from "/hooks/graph/DatumGraph";
 import {
   ActionDropdown,
   Badge,
@@ -35,14 +35,11 @@ const updateDatumSchema = z.object({
 });
 
 type Props = {
-  queryRef: PreloadedQuery<any>;
+  queryRef: PreloadedQuery<DatumGraphNodeQuery>;
 };
 
 export default function DatumDetailsPage(props: Props) {
-  const datum = usePreloadedQuery<DatumGraphNodeQuery>(
-    datumNodeQuery,
-    props.queryRef,
-  );
+  const datum = usePreloadedQuery(datumNodeQuery, props.queryRef);
   const datumEntry = datum.node;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -67,9 +64,13 @@ export default function DatumDetailsPage(props: Props) {
   const updateDatum = useUpdateDatum();
 
   const onSubmit = handleSubmit(async (formData) => {
+    if (!datumEntry.id) {
+      alert("id is missing from data");
+      return;
+    }
     try {
       await updateDatum({
-        id: datumEntry?.id,
+        id: datumEntry.id,
         ...formData,
       });
       reset(formData);
