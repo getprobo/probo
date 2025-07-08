@@ -5,6 +5,7 @@ import {
     type HTMLAttributes,
     type PropsWithChildren,
     type ReactNode,
+    type ThHTMLAttributes,
 } from "react";
 import { Card } from "../Card/Card";
 import { Link } from "react-router";
@@ -34,9 +35,15 @@ export function Th({
     children,
     className,
     width,
-}: PropsWithChildren<{ className?: string; width?: number }>) {
+    ...props
+}: {
+    className?: string;
+    width?: number;
+    colspan?: number;
+} & ThHTMLAttributes<HTMLTableCellElement>) {
     return (
         <th
+            {...props}
             className={clsx(
                 "first:pl-6 last:pr-6 py-3 whitespace-nowrap",
                 className,

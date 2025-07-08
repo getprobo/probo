@@ -15,6 +15,10 @@ import {
   ActionDropdown,
   DropdownItem,
   IconBell2,
+  Checkbox,
+  IconCrossLargeX,
+  IconSignature,
+  IconCheckmark1,
 } from "@probo/ui";
 import {
   useFragment,
@@ -30,7 +34,7 @@ import {
   useSendSigningNotificationsMutation,
 } from "/hooks/graph/DocumentGraph";
 import type { DocumentsPageListFragment$key } from "./__generated__/DocumentsPageListFragment.graphql";
-import { usePageTitle } from "@probo/hooks";
+import { useList, usePageTitle } from "@probo/hooks";
 import { sprintf, getDocumentTypeLabel } from "@probo/helpers";
 import { CreateDocumentDialog } from "./dialogs/CreateDocumentDialog";
 import type { DocumentsPageRowFragment$key } from "./__generated__/DocumentsPageRowFragment.graphql";
@@ -76,16 +80,19 @@ export default function DocumentsPage(props: Props) {
 
   const organization = usePreloadedQuery(
     documentsQuery,
-    props.queryRef
+    props.queryRef,
   ).organization;
   const pagination = usePaginationFragment(
     documentsFragment,
-    organization as DocumentsPageListFragment$key
+    organization as DocumentsPageListFragment$key,
   );
 
   const documents = pagination.data.documents.edges.map((edge) => edge.node);
   const connectionId = pagination.data.documents.__id;
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
+  const { list: selection, toggle, clear, reset } = useList<string>([]);
+
+  // TODO : Add mutation to handle publishing multiple documents and request multiple signatures
 
   usePageTitle(__("Documents"));
 
@@ -119,19 +126,52 @@ export default function DocumentsPage(props: Props) {
       </PageHeader>
       <SortableTable {...pagination}>
         <Thead>
-          <Tr>
-            <SortableTh field="TITLE">{__("Name")}</SortableTh>
-            <Th>{__("Status")}</Th>
-            <SortableTh field="DOCUMENT_TYPE">{__("Type")}</SortableTh>
-            <Th>{__("Owner")}</Th>
-            <Th>{__("Last update")}</Th>
-            <Th>{__("Signatures")}</Th>
-            <Th></Th>
-          </Tr>
+          {selection.length === 0 ? (
+            <Tr>
+              <Th>
+                <Checkbox
+                  checked={selection.length === documents.length}
+                  onChange={() => reset(documents.map((d) => d.id))}
+                />
+              </Th>
+              <SortableTh field="TITLE">{__("Name")}</SortableTh>
+              <Th>{__("Status")}</Th>
+              <SortableTh field="DOCUMENT_TYPE">{__("Type")}</SortableTh>
+              <Th>{__("Owner")}</Th>
+              <Th>{__("Last update")}</Th>
+              <Th>{__("Signatures")}</Th>
+              <Th></Th>
+            </Tr>
+          ) : (
+            <Tr>
+              <Th colspan={8}>
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-2 items-center">
+                    {sprintf(__("%s documents selected"), selection.length)} -
+                    <button
+                      onClick={clear}
+                      className="flex gap-1 items-center hover:text-txt-primary"
+                    >
+                      <IconCrossLargeX size={12} />
+                      {__("Clear selection")}
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button icon={IconCheckmark1}>{__("Publish")}</Button>
+                    <Button variant="secondary" icon={IconSignature}>
+                      {__("Request signature")}
+                    </Button>
+                  </div>
+                </div>
+              </Th>
+            </Tr>
+          )}
         </Thead>
         <Tbody>
           {documents.map((document) => (
             <DocumentRow
+              checked={selection.includes(document.id)}
+              onCheck={() => toggle(document.id)}
               key={document.id}
               document={document}
               organizationId={organization.id}
@@ -178,21 +218,25 @@ function DocumentRow({
   document: documentKey,
   organizationId,
   connectionId,
+  checked,
+  onCheck,
 }: {
   document: DocumentsPageRowFragment$key;
   organizationId: string;
   connectionId: string;
+  checked: boolean;
+  onCheck: () => void;
 }) {
   const document = useFragment<DocumentsPageRowFragment$key>(
     rowFragment,
-    documentKey
+    documentKey,
   );
   const lastVersion = document.versions.edges[0].node;
   const isDraft = lastVersion.status === "DRAFT";
   const { __, dateFormat } = useTranslate();
   const signatures = lastVersion.signatures.edges.map((edge) => edge.node);
   const signedCount = signatures.filter(
-    (signature) => signature.state === "SIGNED"
+    (signature) => signature.state === "SIGNED",
   ).length;
   const [deleteDocument] = useDeleteDocumentMutation();
   const confirm = useConfirm();
@@ -209,16 +253,19 @@ function DocumentRow({
       {
         message: sprintf(
           __(
-            'This will permanently delete the document "%s". This action cannot be undone.'
+            'This will permanently delete the document "%s". This action cannot be undone.',
           ),
-          document.title
+          document.title,
         ),
-      }
+      },
     );
   };
 
   return (
     <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
+      <Td noLink>
+        <Checkbox checked={checked} onChange={onCheck} />
+      </Td>
       <Td>
         <div className="flex gap-4 items-center">
           <img
