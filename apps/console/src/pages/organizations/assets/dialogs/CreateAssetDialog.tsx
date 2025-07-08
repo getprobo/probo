@@ -32,18 +32,23 @@ type Props = {
   organizationId: string;
 };
 
-export function CreateAssetDialog({ children, connection, organizationId }: Props) {
+export function CreateAssetDialog({
+  children,
+  connection,
+  organizationId,
+}: Props) {
   const { __ } = useTranslate();
-  const { control, handleSubmit, register, formState } = useFormWithSchema(schema, {
-    defaultValues: {
-      name: "",
-      amount: 0,
-      criticity: "LOW",
-      assetType: "VIRTUAL",
-      ownerId: "",
-      vendorIds: [],
-    },
-  });
+  const { control, handleSubmit, register, formState, reset } =
+    useFormWithSchema(schema, {
+      defaultValues: {
+        name: "",
+        amount: 0,
+        criticity: "LOW",
+        assetType: "VIRTUAL",
+        ownerId: "",
+        vendorIds: [],
+      },
+    });
   const ref = useDialogRef();
   const createAsset = useCreateAsset(connection);
 
@@ -54,6 +59,7 @@ export function CreateAssetDialog({ children, connection, organizationId }: Prop
         organizationId,
       });
       ref.current?.close();
+      reset();
     } catch (error) {
       console.error("Failed to create asset:", error);
     }
@@ -67,11 +73,7 @@ export function CreateAssetDialog({ children, connection, organizationId }: Prop
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <DialogContent padded className="space-y-4">
-          <Field
-            label={__("Name")}
-            {...register("name")}
-            type="text"
-          />
+          <Field label={__("Name")} {...register("name")} type="text" />
           <Field
             label={__("Amount")}
             {...register("amount", { valueAsNumber: true })}

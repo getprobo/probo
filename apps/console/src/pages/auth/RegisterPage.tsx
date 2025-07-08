@@ -34,7 +34,7 @@ export default function RegisterPage() {
         },
         credentials: "include",
         body: JSON.stringify(data),
-      }
+      },
     );
 
     // Registration failed

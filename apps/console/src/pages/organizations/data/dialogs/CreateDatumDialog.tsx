@@ -29,16 +29,21 @@ type Props = {
   organizationId: string;
 };
 
-export function CreateDatumDialog({ children, connection, organizationId }: Props) {
+export function CreateDatumDialog({
+  children,
+  connection,
+  organizationId,
+}: Props) {
   const { __ } = useTranslate();
-  const { control, handleSubmit, register, formState } = useFormWithSchema(schema, {
-    defaultValues: {
-      name: "",
-      dataClassification: "PUBLIC",
-      ownerId: "",
-      vendorIds: [],
-    },
-  });
+  const { control, handleSubmit, register, formState, reset } =
+    useFormWithSchema(schema, {
+      defaultValues: {
+        name: "",
+        dataClassification: "PUBLIC",
+        ownerId: "",
+        vendorIds: [],
+      },
+    });
   const ref = useDialogRef();
   const createDatum = useCreateDatum(connection);
 
@@ -49,6 +54,7 @@ export function CreateDatumDialog({ children, connection, organizationId }: Prop
         organizationId,
       });
       ref.current?.close();
+      reset();
     } catch (error) {
       console.error("Failed to create datum:", error);
     }
@@ -62,11 +68,7 @@ export function CreateDatumDialog({ children, connection, organizationId }: Prop
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <DialogContent padded className="space-y-4">
-          <Field
-            label={__("Name")}
-            {...register("name")}
-            type="text"
-          />
+          <Field label={__("Name")} {...register("name")} type="text" />
           <ControlledField
             control={control}
             name="dataClassification"

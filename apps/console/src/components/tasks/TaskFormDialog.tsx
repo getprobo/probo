@@ -103,9 +103,8 @@ export default function TaskFormDialog(props: Props) {
         errorMessage: __("Failed to create task. Please try again."),
       });
 
-  const { control, handleSubmit, register, formState } = useFormWithSchema(
-    schema,
-    {
+  const { control, handleSubmit, register, formState, reset } =
+    useFormWithSchema(schema, {
       defaultValues: {
         name: task?.name ?? "",
         description: task?.description ?? "",
@@ -114,8 +113,7 @@ export default function TaskFormDialog(props: Props) {
         measureId: task?.measure?.id ?? props.measureId ?? "",
         deadline: task?.deadline?.split("T")[0] ?? null,
       },
-    }
-  );
+    });
 
   const onSubmit = handleSubmit(async (data) => {
     if (task) {
@@ -145,6 +143,7 @@ export default function TaskFormDialog(props: Props) {
           connections: [props.connection!],
         },
       });
+      reset();
     }
     dialogRef.current?.close();
   });

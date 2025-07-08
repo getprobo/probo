@@ -76,17 +76,15 @@ export default function MeasureFormDialog(props: Props) {
         errorMessage: __("Failed to create measure. Please try again."),
       });
 
-  const { control, handleSubmit, register, formState } = useFormWithSchema(
-    measureSchema,
-    {
+  const { control, handleSubmit, register, formState, reset } =
+    useFormWithSchema(measureSchema, {
       defaultValues: {
         name: measure?.name ?? "",
         description: measure?.description ?? "",
         category: measure?.category ?? "",
         state: "NOT_STARTED",
       },
-    }
-  );
+    });
 
   const onSubmit = handleSubmit(async (data) => {
     if (measure) {
@@ -113,6 +111,7 @@ export default function MeasureFormDialog(props: Props) {
           connections: [props.connection!],
         },
       });
+      reset();
     }
     dialogRef.current?.close();
   });

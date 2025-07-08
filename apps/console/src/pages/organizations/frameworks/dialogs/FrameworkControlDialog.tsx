@@ -77,7 +77,7 @@ export function FrameworkControlDialog(props: Props) {
         successMessage: __("Control created successfully."),
         errorMessage: __("Failed to create control. Please try again."),
       });
-  const { control, handleSubmit, register } = useFormWithSchema(schema, {
+  const { control, handleSubmit, register, reset } = useFormWithSchema(schema, {
     defaultValues: {
       name: frameworkControl?.name ?? "",
       description: frameworkControl?.description ?? "",
@@ -111,6 +111,7 @@ export function FrameworkControlDialog(props: Props) {
           connections: [props.connectionId!],
         },
       });
+      reset();
     }
     dialogRef.current?.close();
   });
