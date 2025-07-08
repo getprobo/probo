@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fa604130d8725651770072b638fc5926>>
+ * @generated SignedSource<<de274a51c1b339789540a969b0ebe507>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,11 +15,11 @@ export type RequestSignatureInput = {
   documentVersionId: string;
   signatoryId: string;
 };
-export type DocumentSignaturesDialog_requestSignatureMutation$variables = {
+export type DocumentSignaturesTab_requestSignatureMutation$variables = {
   connections: ReadonlyArray<string>;
   input: RequestSignatureInput;
 };
-export type DocumentSignaturesDialog_requestSignatureMutation$data = {
+export type DocumentSignaturesTab_requestSignatureMutation$data = {
   readonly requestSignature: {
     readonly documentVersionSignatureEdge: {
       readonly node: {
@@ -28,14 +28,14 @@ export type DocumentSignaturesDialog_requestSignatureMutation$data = {
           readonly id: string;
         };
         readonly state: DocumentVersionSignatureState;
-        readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesDialog_signature">;
+        readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesTab_signature">;
       };
     };
   };
 };
-export type DocumentSignaturesDialog_requestSignatureMutation = {
-  response: DocumentSignaturesDialog_requestSignatureMutation$data;
-  variables: DocumentSignaturesDialog_requestSignatureMutation$variables;
+export type DocumentSignaturesTab_requestSignatureMutation = {
+  response: DocumentSignaturesTab_requestSignatureMutation$data;
+  variables: DocumentSignaturesTab_requestSignatureMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -78,7 +78,7 @@ return {
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentSignaturesDialog_requestSignatureMutation",
+    "name": "DocumentSignaturesTab_requestSignatureMutation",
     "selections": [
       {
         "alias": null,
@@ -121,7 +121,7 @@ return {
                   {
                     "args": null,
                     "kind": "FragmentSpread",
-                    "name": "DocumentSignaturesDialog_signature"
+                    "name": "DocumentSignaturesTab_signature"
                   }
                 ],
                 "storageKey": null
@@ -143,7 +143,7 @@ return {
       (v0/*: any*/)
     ],
     "kind": "Operation",
-    "name": "DocumentSignaturesDialog_requestSignatureMutation",
+    "name": "DocumentSignaturesTab_requestSignatureMutation",
     "selections": [
       {
         "alias": null,
@@ -239,16 +239,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "6a5413db69a07e0eef99245e949cf4b2",
+    "cacheID": "e582b90bdad831d64741b45de17f45b5",
     "id": null,
     "metadata": {},
-    "name": "DocumentSignaturesDialog_requestSignatureMutation",
+    "name": "DocumentSignaturesTab_requestSignatureMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentSignaturesDialog_requestSignatureMutation(\n  $input: RequestSignatureInput!\n) {\n  requestSignature(input: $input) {\n    documentVersionSignatureEdge {\n      node {\n        id\n        state\n        signedBy {\n          id\n        }\n        ...DocumentSignaturesDialog_signature\n      }\n    }\n  }\n}\n\nfragment DocumentSignaturesDialog_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n"
+    "text": "mutation DocumentSignaturesTab_requestSignatureMutation(\n  $input: RequestSignatureInput!\n) {\n  requestSignature(input: $input) {\n    documentVersionSignatureEdge {\n      node {\n        id\n        state\n        signedBy {\n          id\n        }\n        ...DocumentSignaturesTab_signature\n      }\n    }\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6c51f681411cd3de162c78a3db20ec30";
+(node as any).hash = "f0b9fc6ff9db455e9079bf7e45fcd603";
 
 export default node;

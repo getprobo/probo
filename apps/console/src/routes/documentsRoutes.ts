@@ -9,6 +9,46 @@ import { redirect } from "react-router";
 import { lazy } from "@probo/react-lazy";
 import { LinkCardSkeleton } from "/components/skeletons/LinkCardSkeleton";
 
+const documentTabs = (prefix: string) => {
+  return [
+    {
+      path: `${prefix}`,
+      queryLoader: ({ organizationId, documentId }) => {
+        throw redirect(
+          `/organizations/${organizationId}/documents/${documentId}/description`,
+        );
+      },
+      Component: Fragment,
+    },
+    {
+      path: `${prefix}description`,
+      fallback: LinkCardSkeleton,
+      Component: lazy(
+        () =>
+          import(
+            "../pages/organizations/documents/tabs/DocumentDescriptionTab"
+          ),
+      ),
+    },
+    {
+      path: `${prefix}controls`,
+      fallback: LinkCardSkeleton,
+      Component: lazy(
+        () =>
+          import("../pages/organizations/documents/tabs/DocumentControlsTab"),
+      ),
+    },
+    {
+      path: `${prefix}signatures`,
+      fallback: LinkCardSkeleton,
+      Component: lazy(
+        () =>
+          import("../pages/organizations/documents/tabs/DocumentSignaturesTab"),
+      ),
+    },
+  ] satisfies AppRoute[];
+};
+
 export const documentsRoutes = [
   {
     path: "documents",
@@ -16,7 +56,7 @@ export const documentsRoutes = [
     queryLoader: ({ organizationId }) =>
       loadQuery(relayEnvironment, documentsQuery, { organizationId }),
     Component: lazy(
-      () => import("/pages/organizations/documents/DocumentsPage")
+      () => import("/pages/organizations/documents/DocumentsPage"),
     ),
   },
   {
@@ -25,36 +65,8 @@ export const documentsRoutes = [
     queryLoader: ({ documentId }) =>
       loadQuery(relayEnvironment, documentNodeQuery, { documentId }),
     Component: lazy(
-      () => import("../pages/organizations/documents/DocumentDetailPage")
+      () => import("../pages/organizations/documents/DocumentDetailPage"),
     ),
-    children: [
-      {
-        path: "",
-        queryLoader: ({ organizationId, documentId }) => {
-          throw redirect(
-            `/organizations/${organizationId}/documents/${documentId}/description`
-          );
-        },
-        Component: Fragment,
-      },
-      {
-        path: "description",
-        fallback: LinkCardSkeleton,
-        Component: lazy(
-          () =>
-            import(
-              "../pages/organizations/documents/tabs/DocumentDescriptionTab"
-            )
-        ),
-      },
-      {
-        path: "controls",
-        fallback: LinkCardSkeleton,
-        Component: lazy(
-          () =>
-            import("../pages/organizations/documents/tabs/DocumentControlsTab")
-        ),
-      },
-    ],
+    children: [...documentTabs(""), ...documentTabs("versions/:versionId/")],
   },
 ] satisfies AppRoute[];

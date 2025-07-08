@@ -2,119 +2,34 @@ import {
   Avatar,
   Badge,
   Button,
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTitle,
   IconCircleCheck,
   IconClock,
-  DocumentVersionBadge,
   Spinner,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useState, type ReactNode, Suspense } from "react";
-import clsx from "clsx";
+import { Suspense } from "react";
 import type { ItemOf, NodeOf } from "/types";
 import { graphql, useFragment } from "react-relay";
-import type { DocumentSignaturesDialog_version$key } from "./__generated__/DocumentSignaturesDialog_version.graphql";
-import type { DocumentSignaturesDialog_signature$key } from "./__generated__/DocumentSignaturesDialog_signature.graphql";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 import { useOrganizationId } from "/hooks/useOrganizationId.ts";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
 import { sprintf } from "@probo/helpers";
 import type { DocumentDetailPageDocumentFragment$data } from "../__generated__/DocumentDetailPageDocumentFragment.graphql";
-
-type Props = {
-  document: DocumentDetailPageDocumentFragment$data;
-  children?: ReactNode;
-};
+import { useOutletContext } from "react-router";
+import type { DocumentSignaturesTab_signature$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_signature.graphql.ts";
 
 type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
 
-export function DocumentSignaturesDialog(props: Props) {
-  const { __ } = useTranslate();
-  const versions = props.document.versions.edges.map((edge) => edge.node);
-  const [selectedVersionId, setSelectedVersionId] = useState<string>(
-    versions[0].id,
-  );
-  const selectedVersion = versions.find((v) => v.id === selectedVersionId);
-
-  if (!selectedVersion) {
+export default function DocumentSignaturesTab() {
+  const { version } = useOutletContext<{ version: Version }>();
+  if (!version) {
     return null;
   }
 
   return (
-    <Dialog trigger={props.children}>
-      <DialogContent className="flex" scrollableChildren>
-        <aside className="p-6 overflow-y-auto w-60 flex-none space-y-2">
-          <div className="text-base text-txt-primary font-medium mb-4">
-            {__("Version History")}
-          </div>
-          {versions.map((version) => (
-            <VersionItem
-              key={version.id}
-              version={version}
-              active={selectedVersionId === version.id}
-              onSelect={setSelectedVersionId}
-            />
-          ))}
-        </aside>
-        <main className="flex-1 px-12 py-8">
-          <DialogTitle className="text-2xl font-bold text-txt-primary mb-4">
-            {__("Signatures")}
-          </DialogTitle>
-          <p className="text-sm text-txt-secondary mb-4">
-            {__(
-              "Click request to ask for a signature from people in your organization.",
-            )}
-          </p>
-          <Suspense fallback={<Spinner centered />}>
-            <SignatureList version={selectedVersion} />
-          </Suspense>
-        </main>
-      </DialogContent>
-      <DialogFooter />
-    </Dialog>
-  );
-}
-
-const versionFragment = graphql`
-  fragment DocumentSignaturesDialog_version on DocumentVersion {
-    version
-    status
-    publishedAt
-    updatedAt
-  }
-`;
-
-function VersionItem(props: {
-  version: Version;
-  active?: boolean;
-  onSelect: (v: string) => void;
-}) {
-  const { dateTimeFormat, __ } = useTranslate();
-  const version = useFragment<DocumentSignaturesDialog_version$key>(
-    versionFragment,
-    props.version,
-  );
-  return (
-    <button
-      onClick={() => props.onSelect(props.version.id)}
-      className={clsx(
-        "text-start space-y-1 w-full overflow-hidden py-2 px-3 w-full hover:bg-tertiary-hover cursor-pointer rounded",
-        props.active && "bg-tertiary-pressed",
-      )}
-    >
-      <div className="flex gap-1 text-sm text-txt-primary">
-        <span>
-          {__("Version")} {version.version}
-        </span>
-        <DocumentVersionBadge state={version.status} />
-      </div>
-      <div className="text-xs text-txt-secondary">
-        {dateTimeFormat(version.publishedAt ?? version.updatedAt)}
-      </div>
-    </button>
+    <Suspense fallback={<Spinner centered />}>
+      <SignatureList version={version} />
+    </Suspense>
   );
 }
 
@@ -154,7 +69,7 @@ function SignatureList(props: { version: Version }) {
  * Fragments
  */
 const signatureFragment = graphql`
-  fragment DocumentSignaturesDialog_signature on DocumentVersionSignature {
+  fragment DocumentSignaturesTab_signature on DocumentVersionSignature {
     id
     state
     signedAt
@@ -170,7 +85,7 @@ const signatureFragment = graphql`
  * Mutations
  */
 const requestSignatureMutation = graphql`
-  mutation DocumentSignaturesDialog_requestSignatureMutation(
+  mutation DocumentSignaturesTab_requestSignatureMutation(
     $input: RequestSignatureInput!
     $connections: [ID!]!
   ) {
@@ -182,14 +97,14 @@ const requestSignatureMutation = graphql`
           signedBy {
             id
           }
-          ...DocumentSignaturesDialog_signature
+          ...DocumentSignaturesTab_signature
         }
       }
     }
   }
 `;
 const cancelSignatureMutation = graphql`
-  mutation DocumentSignaturesDialog_cancelSignatureMutation(
+  mutation DocumentSignaturesTab_cancelSignatureMutation(
     $input: CancelSignatureRequestInput!
     $connections: [ID!]!
   ) {
@@ -201,7 +116,7 @@ const cancelSignatureMutation = graphql`
 
 function SignatureItem(props: {
   versionId: string;
-  signature?: DocumentSignaturesDialog_signature$key;
+  signature?: DocumentSignaturesTab_signature$key;
   people: ItemOf<ReturnType<typeof usePeople>>;
   connectionId: string;
   signable: boolean;

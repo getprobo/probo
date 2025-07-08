@@ -3,7 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { clsx } from "clsx";
 import type { IconProps } from "../Icons/type.ts";
 import { tv } from "tailwind-variants";
-import { IconDotGrid1x3Horizontal } from "../Icons/IconDotGrid1x3Horizontal.tsx";
+import { IconDotGrid1x3Horizontal } from "../Icons";
 import { Button } from "../Button/Button.tsx";
 
 type Props = PropsWithChildren<{
@@ -24,6 +24,10 @@ export function Dropdown({ children, toggle, className, open }: Props) {
             )}
             <DropdownMenu.Portal>
                 <DropdownMenu.Content
+                    style={{
+                        maxHeight:
+                            "var(--radix-dropdown-menu-content-available-height)",
+                    }}
                     className={dropdown({ className })}
                     sideOffset={5}
                 >
