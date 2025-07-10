@@ -39,6 +39,8 @@ import { sprintf, getDocumentTypeLabel } from "@probo/helpers";
 import { CreateDocumentDialog } from "./dialogs/CreateDocumentDialog";
 import type { DocumentsPageRowFragment$key } from "./__generated__/DocumentsPageRowFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
+import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization
@@ -71,6 +73,36 @@ const documentsFragment = graphql`
   }
 `;
 
+const documentsPublishMutation = graphql`
+  mutation DocumentsPagePublishMutation(
+    $input: BulkPublishDocumentVersionsInput!
+  ) {
+    bulkPublishDocumentVersions(input: $input) {
+      documentEdges {
+        node {
+          id
+          ...DocumentsPageRowFragment
+        }
+      }
+    }
+  }
+`;
+
+const documentsSignatureMutation = graphql`
+  mutation DocumentsPageSignatureMutation(
+    $input: BulkRequestSignaturesInput!
+  ) {
+    bulkRequestSignatures(input: $input) {
+      documentVersionSignatureEdges {
+        node {
+          id
+          state
+        }
+      }
+    }
+  }
+`;
+
 type Props = {
   queryRef: PreloadedQuery<DocumentGraphListQuery>;
 };
@@ -92,8 +124,16 @@ export default function DocumentsPage(props: Props) {
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
   const { list: selection, toggle, clear, reset } = useList<string>([]);
 
-  // TODO : Add mutation to handle publishing multiple documents and request multiple signatures
+  const [publishMutation, isPublishing] = useMutationWithToasts(documentsPublishMutation, {
+    successMessage: sprintf(__("%s documents published"), selection.length),
+    errorMessage: sprintf(__("Failed to publish %s documents"), selection.length),
+  })
 
+  const [signatureMutation, isSigning] = useMutationWithToasts(documentsSignatureMutation, {
+    successMessage: __("Signature request send successfully"),
+    errorMessage: __("Failed to send signature requests"),
+  })
+  const people = usePeople(organization.id);
   usePageTitle(__("Documents"));
 
   const handleSendSigningNotifications = () => {
@@ -103,6 +143,30 @@ export default function DocumentsPage(props: Props) {
       },
     });
   };
+
+  const publish = async () => {
+    await publishMutation({
+      variables: {
+        input: {
+          documentIds: selection,
+          changelog: '',
+        }
+      }
+    })
+    clear();
+  }
+
+  const requestSignatures = async () => {
+    await signatureMutation({
+      variables: {
+        input: {
+          documentIds: selection,
+          signatoryIds: people.map(p => p.id),
+        }
+      }
+    })
+    clear();
+  }
 
   return (
     <div className="space-y-6">
@@ -157,8 +221,8 @@ export default function DocumentsPage(props: Props) {
                     </button>
                   </div>
                   <div className="flex gap-2">
-                    <Button icon={IconCheckmark1}>{__("Publish")}</Button>
-                    <Button variant="secondary" icon={IconSignature}>
+                    <Button icon={IconCheckmark1} onClick={publish} disabled={isPublishing}>{__("Publish")}</Button>
+                    <Button variant="secondary" icon={IconSignature} onClick={requestSignatures} disabled={isSigning}>
                       {__("Request signature")}
                     </Button>
                   </div>
