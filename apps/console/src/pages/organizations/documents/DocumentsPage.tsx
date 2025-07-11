@@ -41,6 +41,7 @@ import type { DocumentsPageRowFragment$key } from "./__generated__/DocumentsPage
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
+import { PublishDocumentsDialog } from "./dialogs/PublishDocumentsDialog.tsx";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization
@@ -73,25 +74,8 @@ const documentsFragment = graphql`
   }
 `;
 
-const documentsPublishMutation = graphql`
-  mutation DocumentsPagePublishMutation(
-    $input: BulkPublishDocumentVersionsInput!
-  ) {
-    bulkPublishDocumentVersions(input: $input) {
-      documentEdges {
-        node {
-          id
-          ...DocumentsPageRowFragment
-        }
-      }
-    }
-  }
-`;
-
 const documentsSignatureMutation = graphql`
-  mutation DocumentsPageSignatureMutation(
-    $input: BulkRequestSignaturesInput!
-  ) {
+  mutation DocumentsPageSignatureMutation($input: BulkRequestSignaturesInput!) {
     bulkRequestSignatures(input: $input) {
       documentVersionSignatureEdges {
         node {
@@ -112,11 +96,11 @@ export default function DocumentsPage(props: Props) {
 
   const organization = usePreloadedQuery(
     documentsQuery,
-    props.queryRef,
+    props.queryRef
   ).organization;
   const pagination = usePaginationFragment(
     documentsFragment,
-    organization as DocumentsPageListFragment$key,
+    organization as DocumentsPageListFragment$key
   );
 
   const documents = pagination.data.documents.edges.map((edge) => edge.node);
@@ -124,15 +108,13 @@ export default function DocumentsPage(props: Props) {
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
   const { list: selection, toggle, clear, reset } = useList<string>([]);
 
-  const [publishMutation, isPublishing] = useMutationWithToasts(documentsPublishMutation, {
-    successMessage: sprintf(__("%s documents published"), selection.length),
-    errorMessage: sprintf(__("Failed to publish %s documents"), selection.length),
-  })
-
-  const [signatureMutation, isSigning] = useMutationWithToasts(documentsSignatureMutation, {
-    successMessage: __("Signature request send successfully"),
-    errorMessage: __("Failed to send signature requests"),
-  })
+  const [signatureMutation, isSigning] = useMutationWithToasts(
+    documentsSignatureMutation,
+    {
+      successMessage: __("Signature request send successfully"),
+      errorMessage: __("Failed to send signature requests"),
+    }
+  );
   const people = usePeople(organization.id);
   usePageTitle(__("Documents"));
 
@@ -144,29 +126,17 @@ export default function DocumentsPage(props: Props) {
     });
   };
 
-  const publish = async () => {
-    await publishMutation({
-      variables: {
-        input: {
-          documentIds: selection,
-          changelog: '',
-        }
-      }
-    })
-    clear();
-  }
-
   const requestSignatures = async () => {
     await signatureMutation({
       variables: {
         input: {
           documentIds: selection,
-          signatoryIds: people.map(p => p.id),
-        }
-      }
-    })
+          signatoryIds: people.map((p) => p.id),
+        },
+      },
+    });
     clear();
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -221,8 +191,18 @@ export default function DocumentsPage(props: Props) {
                     </button>
                   </div>
                   <div className="flex gap-2">
-                    <Button icon={IconCheckmark1} onClick={publish} disabled={isPublishing}>{__("Publish")}</Button>
-                    <Button variant="secondary" icon={IconSignature} onClick={requestSignatures} disabled={isSigning}>
+                    <PublishDocumentsDialog
+                      documentIds={selection}
+                      onSave={clear}
+                    >
+                      <Button icon={IconCheckmark1}>{__("Publish")}</Button>
+                    </PublishDocumentsDialog>
+                    <Button
+                      variant="secondary"
+                      icon={IconSignature}
+                      onClick={requestSignatures}
+                      disabled={isSigning}
+                    >
                       {__("Request signature")}
                     </Button>
                   </div>
@@ -293,14 +273,14 @@ function DocumentRow({
 }) {
   const document = useFragment<DocumentsPageRowFragment$key>(
     rowFragment,
-    documentKey,
+    documentKey
   );
   const lastVersion = document.versions.edges[0].node;
   const isDraft = lastVersion.status === "DRAFT";
   const { __, dateFormat } = useTranslate();
   const signatures = lastVersion.signatures.edges.map((edge) => edge.node);
   const signedCount = signatures.filter(
-    (signature) => signature.state === "SIGNED",
+    (signature) => signature.state === "SIGNED"
   ).length;
   const [deleteDocument] = useDeleteDocumentMutation();
   const confirm = useConfirm();
@@ -317,11 +297,11 @@ function DocumentRow({
       {
         message: sprintf(
           __(
-            'This will permanently delete the document "%s". This action cannot be undone.',
+            'This will permanently delete the document "%s". This action cannot be undone.'
           ),
-          document.title,
+          document.title
         ),
-      },
+      }
     );
   };
 

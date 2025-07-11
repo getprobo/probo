@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ceff42181ddc76c55b97c976cfb1b697>>
+ * @generated SignedSource<<2961ff4f50f912f350acab5b0a341042>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,10 +14,10 @@ export type BulkPublishDocumentVersionsInput = {
   changelog: string;
   documentIds: ReadonlyArray<string>;
 };
-export type DocumentsPagePublishMutation$variables = {
+export type PublishDocumentsDialogMutation$variables = {
   input: BulkPublishDocumentVersionsInput;
 };
-export type DocumentsPagePublishMutation$data = {
+export type PublishDocumentsDialogMutation$data = {
   readonly bulkPublishDocumentVersions: {
     readonly documentEdges: ReadonlyArray<{
       readonly node: {
@@ -27,9 +27,9 @@ export type DocumentsPagePublishMutation$data = {
     }>;
   };
 };
-export type DocumentsPagePublishMutation = {
-  response: DocumentsPagePublishMutation$data;
-  variables: DocumentsPagePublishMutation$variables;
+export type PublishDocumentsDialogMutation = {
+  response: PublishDocumentsDialogMutation$data;
+  variables: PublishDocumentsDialogMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -59,7 +59,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentsPagePublishMutation",
+    "name": "PublishDocumentsDialogMutation",
     "selections": [
       {
         "alias": null,
@@ -108,7 +108,7 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "DocumentsPagePublishMutation",
+    "name": "PublishDocumentsDialogMutation",
     "selections": [
       {
         "alias": null,
@@ -288,16 +288,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7cd29425535c6d30017201fee219447b",
+    "cacheID": "bcc8589071b241670107f00c127f70d0",
     "id": null,
     "metadata": {},
-    "name": "DocumentsPagePublishMutation",
+    "name": "PublishDocumentsDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentsPagePublishMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "baea3e7dce61a42bf5bf2caefda998ea";
+(node as any).hash = "c9d699258bb8638d5474ab5e6b5e4585";
 
 export default node;
