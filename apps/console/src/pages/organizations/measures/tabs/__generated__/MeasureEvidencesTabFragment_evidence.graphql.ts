@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<aa88116272684a0ebbca38e57c798eee>>
+ * @generated SignedSource<<60897aba5bbafb70288358e56b0a442a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ export type EvidenceType = "FILE" | "LINK";
 import { FragmentRefs } from "relay-runtime";
 export type MeasureEvidencesTabFragment_evidence$data = {
   readonly createdAt: any;
-  readonly fileUrl: string | null | undefined;
   readonly filename: string;
   readonly id: string;
   readonly mimeType: string;
@@ -71,13 +70,6 @@ const node: ReaderFragment = {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "fileUrl",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
       "name": "mimeType",
       "storageKey": null
     }
@@ -86,6 +78,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "4fa5951157f130a8ed644151ef5facd6";
+(node as any).hash = "4b3289f3cb9d29cb48f1a370d943cd0e";
 
 export default node;

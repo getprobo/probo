@@ -1,5 +1,4 @@
 import type { PreloadedQuery } from "react-relay";
-import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
 import {
   ConnectionHandler,
   graphql,
@@ -7,42 +6,53 @@ import {
   useFragment,
   usePreloadedQuery,
 } from "react-relay";
+import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
 import {
-  DocumentsConnectionKey,
   documentNodeQuery,
+  DocumentsConnectionKey,
   useDeleteDocumentMutation,
 } from "/hooks/graph/DocumentGraph";
 import { usePageTitle } from "@probo/hooks";
-import type { DocumentDetailPageDocumentFragment$key } from "./__generated__/DocumentDetailPageDocumentFragment.graphql";
+import type {
+  DocumentDetailPageDocumentFragment$data,
+  DocumentDetailPageDocumentFragment$key,
+} from "./__generated__/DocumentDetailPageDocumentFragment.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
-  PageHeader,
-  Breadcrumb,
-  IconCheckmark1,
-  PropertyRow,
-  Drawer,
-  Badge,
-  Avatar,
-  DropdownItem,
   ActionDropdown,
-  IconTrashCan,
-  IconPencil,
+  Avatar,
+  Badge,
+  Breadcrumb,
+  Button,
+  Drawer,
+  Dropdown,
+  DropdownItem,
+  IconCheckmark1,
+  IconChevronDown,
   IconClock,
-  IconSignature,
-  useConfirm,
-  Tabs,
-  TabLink,
+  IconPencil,
+  IconTrashCan,
+  PageHeader,
+  PropertyRow,
   TabBadge,
+  TabLink,
+  Tabs,
+  useConfirm,
 } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { Button } from "@probo/ui";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { sprintf, getDocumentTypeLabel } from "@probo/helpers";
-import { Outlet, useNavigate } from "react-router";
+import { getDocumentTypeLabel, sprintf } from "@probo/helpers";
+import {
+  Link,
+  Outlet,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router";
 import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
 import { useRef } from "react";
-import { DocumentVersionHistoryDialog } from "./dialogs/DocumentVersionHistoryDialog";
-import { DocumentSignaturesDialog } from "./dialogs/DocumentSignaturesDialog";
+import type { NodeOf } from "/types.ts";
+import clsx from "clsx";
 
 type Props = {
   queryRef: PreloadedQuery<DocumentGraphNodeQuery>;
@@ -71,6 +81,9 @@ const documentFragment = graphql`
           publishedAt
           version
           updatedAt
+          publishedBy {
+            fullName
+          }
           signatures(first: 100)
             @connection(key: "DocumentDetailPage_signatures") {
             __id
@@ -81,12 +94,10 @@ const documentFragment = graphql`
                 signedBy {
                   id
                 }
-                ...DocumentSignaturesDialog_signature
+                ...DocumentSignaturesTab_signature
               }
             }
           }
-          ...DocumentVersionHistoryDialogFragment
-          ...DocumentSignaturesDialog_version
         }
       }
     }
@@ -106,22 +117,28 @@ const publishDocumentVersionMutation = graphql`
 `;
 
 export default function DocumentDetailPage(props: Props) {
+  const { versionId } = useParams<{ versionId?: string }>();
   const node = usePreloadedQuery(documentNodeQuery, props.queryRef).node;
   const document = useFragment(
     documentFragment,
-    node as DocumentDetailPageDocumentFragment$key
+    node as DocumentDetailPageDocumentFragment$key,
   );
   const { __, dateFormat } = useTranslate();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
-  const lastVersion = document.versions.edges[0].node;
-  const isDraft = lastVersion.status === "DRAFT";
+  const versions = document.versions.edges.map((edge) => edge.node);
+  const currentVersion =
+    document.versions.edges.find((v) => v.node.id === versionId)?.node ??
+    document.versions.edges[0].node;
+  const signatures = currentVersion.signatures.edges.map((s) => s.node);
+  const signedSignatures = signatures.filter((s) => s.state === "SIGNED");
+  const isDraft = currentVersion.status === "DRAFT";
   const [publishDocumentVersion, isPublishing] = useMutationWithToasts(
     publishDocumentVersionMutation,
     {
       successMessage: __("Document published successfully."),
       errorMessage: __("Failed to publish document. Please try again."),
-    }
+    },
   );
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
   const versionConnectionId = document.versions.__id;
@@ -139,7 +156,7 @@ export default function DocumentDetailPage(props: Props) {
           props.queryRef.environment,
           documentNodeQuery,
           props.queryRef.variables,
-          { fetchPolicy: "network-only" }
+          { fetchPolicy: "network-only" },
         );
       },
     });
@@ -153,7 +170,7 @@ export default function DocumentDetailPage(props: Props) {
         new Promise<void>((resolve) => {
           const connectionId = ConnectionHandler.getConnectionID(
             organizationId,
-            DocumentsConnectionKey
+            DocumentsConnectionKey,
           );
           deleteDocument({
             variables: {
@@ -169,16 +186,19 @@ export default function DocumentDetailPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete the document "%s". This action cannot be undone.'
+            'This will permanently delete the document "%s". This action cannot be undone.',
           ),
-          document.title
+          document.title,
         ),
-      }
+      },
     );
   };
 
   const updateDialogRef = useRef<{ open: () => void }>(null);
   const controlsCount = document.controlsInfo.totalCount;
+  const urlPrefix = versionId
+    ? `/organizations/${organizationId}/documents/${document.id}/versions/${versionId}`
+    : `/organizations/${organizationId}/documents/${document.id}`;
 
   return (
     <>
@@ -210,16 +230,155 @@ export default function DocumentDetailPage(props: Props) {
                 {__("Publish")}
               </Button>
             )}
-            <DocumentVersionHistoryDialog document={document}>
-              <Button icon={IconClock} variant="secondary">
-                {__("Version history")}
-              </Button>
-            </DocumentVersionHistoryDialog>
-            <DocumentSignaturesDialog document={document}>
-              <Button icon={IconSignature} variant="secondary">
-                {__("Signatures history")}
-              </Button>
-            </DocumentSignaturesDialog>
+            <Dropdown
+              toggle={
+                <Button icon={IconClock} variant="secondary">
+                  {__("Version history")}
+                  <IconChevronDown size={12} />
+                </Button>
+              }
+            >
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+              {versions.map((version) => (
+                <DropdownItem asChild key={version.id}>
+                  <VersionItem
+                    document={document}
+                    version={version}
+                    active={version.id === currentVersion.id}
+                    onSelect={() => {}}
+                  />
+                </DropdownItem>
+              ))}
+            </Dropdown>
 
             <ActionDropdown variant="secondary">
               <DropdownItem
@@ -242,20 +401,20 @@ export default function DocumentDetailPage(props: Props) {
         <PageHeader title={document.title} />
 
         <Tabs>
-          <TabLink
-            to={`/organizations/${organizationId}/documents/${document.id}/description`}
-          >
-            {__("Description")}
-          </TabLink>
-          <TabLink
-            to={`/organizations/${organizationId}/documents/${document.id}/controls`}
-          >
+          <TabLink to={`${urlPrefix}/description`}>{__("Description")}</TabLink>
+          <TabLink to={`${urlPrefix}/controls`}>
             {__("Controls")}
             <TabBadge>{controlsCount}</TabBadge>
           </TabLink>
+          <TabLink to={`${urlPrefix}/signatures`}>
+            {__("Signatures")}
+            <TabBadge>
+              {signedSignatures.length}/{signatures.length}
+            </TabBadge>
+          </TabLink>
         </Tabs>
 
-        <Outlet context={{ document, lastVersion }} />
+        <Outlet context={{ document, version: currentVersion }} />
       </div>
       <Drawer>
         <div className="text-base text-txt-primary font-medium mb-4">
@@ -283,22 +442,65 @@ export default function DocumentDetailPage(props: Props) {
         </PropertyRow>
         <PropertyRow label={__("Version")}>
           <div className="text-sm text-txt-secondary">
-            {lastVersion.version}
+            {currentVersion.version}
           </div>
         </PropertyRow>
         <PropertyRow label={__("Last modified")}>
           <div className="text-sm text-txt-secondary">
-            {dateFormat(lastVersion.updatedAt)}
+            {dateFormat(currentVersion.updatedAt)}
           </div>
         </PropertyRow>
-        {lastVersion.publishedAt && (
+        {currentVersion.publishedAt && (
           <PropertyRow label={__("Published Date")}>
             <div className="text-sm text-txt-secondary">
-              {dateFormat(lastVersion.publishedAt)}
+              {dateFormat(currentVersion.publishedAt)}
             </div>
           </PropertyRow>
         )}
       </Drawer>
     </>
+  );
+}
+
+type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
+
+function VersionItem({
+  document,
+  version,
+  active,
+  onSelect,
+  ...props
+}: {
+  document: DocumentDetailPageDocumentFragment$data;
+  version: Version;
+  active?: boolean;
+  onSelect: (v: Version) => void;
+}) {
+  const { dateTimeFormat } = useTranslate();
+  const organizationId = useOrganizationId();
+  const suffix = useLocation().pathname.split("/").at(-1);
+  return (
+    <Link
+      to={`/organizations/${organizationId}/documents/${document.id}/versions/${version.id}/${suffix}`}
+      onClick={() => onSelect(version)}
+      className={clsx(
+        "flex items-center gap-2 py-2 px-[10px] w-full hover:bg-tertiary-hover cursor-pointer rounded",
+        active && "bg-tertiary-pressed",
+      )}
+      {...props}
+    >
+      <Avatar
+        name={version.publishedBy?.fullName ?? document.owner.fullName}
+        size="l"
+      />
+      <div className="text-start space-y-[2px] w-full overflow-hidden">
+        <div className="text-sm text-txt-primary whitespace-nowrap overflow-hidden text-ellipsis">
+          {version.publishedBy?.fullName ?? document.owner.fullName}
+        </div>
+        <div className="text-xs text-txt-secondary whitespace-nowrap overflow-hidden text-ellipsis">
+          {dateTimeFormat(version.publishedAt ?? version.updatedAt)}
+        </div>
+      </div>
+    </Link>
   );
 }

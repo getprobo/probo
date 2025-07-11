@@ -1,13 +1,13 @@
 import {
   ConnectionHandler,
-  usePreloadedQuery,
   type PreloadedQuery,
+  usePreloadedQuery,
 } from "react-relay";
 import {
   datumNodeQuery,
   useDeleteDatum,
   useUpdateDatum,
-} from "../../../hooks/graph/DatumGraph";
+} from "/hooks/graph/DatumGraph";
 import {
   ActionDropdown,
   Badge,
@@ -25,6 +25,7 @@ import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
+import type { DatumGraphNodeQuery } from "/hooks/graph/__generated__/DatumGraphNodeQuery.graphql.ts";
 
 const updateDatumSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -34,7 +35,7 @@ const updateDatumSchema = z.object({
 });
 
 type Props = {
-  queryRef: PreloadedQuery<any>;
+  queryRef: PreloadedQuery<DatumGraphNodeQuery>;
 };
 
 export default function DatumDetailsPage(props: Props) {
@@ -44,27 +45,32 @@ export default function DatumDetailsPage(props: Props) {
   const organizationId = useOrganizationId();
   const deleteDatum = useDeleteDatum(
     datumEntry,
-    ConnectionHandler.getConnectionID(organizationId, "DataPage_data")
+    ConnectionHandler.getConnectionID(organizationId, "DataPage_data"),
   );
 
-  const vendors = datumEntry?.vendors?.edges.map((edge: any) => edge.node) ?? [];
-  const vendorIds = vendors.map((vendor: any) => vendor.id);
+  const vendors = datumEntry?.vendors?.edges.map((edge) => edge.node) ?? [];
+  const vendorIds = vendors.map((vendor) => vendor.id);
 
-  const { control, formState, handleSubmit, register, reset } = useFormWithSchema(updateDatumSchema, {
-    defaultValues: {
-      name: datumEntry?.name || "",
-      dataClassification: datumEntry?.dataClassification || "PUBLIC",
-      ownerId: datumEntry?.owner?.id || "",
-      vendorIds: vendorIds,
-    },
-  });
+  const { control, formState, handleSubmit, register, reset } =
+    useFormWithSchema(updateDatumSchema, {
+      defaultValues: {
+        name: datumEntry?.name || "",
+        dataClassification: datumEntry?.dataClassification || "PUBLIC",
+        ownerId: datumEntry?.owner?.id || "",
+        vendorIds: vendorIds,
+      },
+    });
 
   const updateDatum = useUpdateDatum();
 
   const onSubmit = handleSubmit(async (formData) => {
+    if (!datumEntry.id) {
+      alert("id is missing from data");
+      return;
+    }
     try {
       await updateDatum({
-        id: datumEntry?.id,
+        id: datumEntry.id,
         ...formData,
       });
       reset(formData);
@@ -104,11 +110,7 @@ export default function DatumDetailsPage(props: Props) {
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6 max-w-2xl">
-        <Field
-          label={__("Name")}
-          {...register("name")}
-          type="text"
-        />
+        <Field label={__("Name")} {...register("name")} type="text" />
 
         <ControlledField
           control={control}

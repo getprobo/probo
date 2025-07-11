@@ -37,6 +37,7 @@ export { ControlItem } from "./Atoms/ControlItem/ControlItem";
 export { InfiniteScrollTrigger } from "./Atoms/InfiniteScrollTrigger/InfiniteScrollTrigger";
 export { PriorityLevel } from "./Atoms/PriorityLevel/PriorityLevel.tsx";
 export { TaskStateIcon } from "./Atoms/Icons/TaskStateIcon";
+export { Checkbox } from "./Atoms/Checkbox/Checkbox";
 
 // Molecules
 export {

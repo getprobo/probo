@@ -34,7 +34,10 @@ export function InviteUserDialog({ children }: PropsWithChildren) {
     successMessage: __("User invited successfully"),
     errorMessage: __("Failed to invite user"),
   });
-  const { register, handleSubmit, formState } = useFormWithSchema(schema, {});
+  const { register, handleSubmit, formState, reset } = useFormWithSchema(
+    schema,
+    {},
+  );
 
   const dialogRef = useDialogRef();
 
@@ -48,6 +51,7 @@ export function InviteUserDialog({ children }: PropsWithChildren) {
         },
       },
       onSuccess: () => {
+        reset();
         dialogRef.current?.close();
       },
     });

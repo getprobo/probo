@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4e4aeb5c756375a47e6a260c6ff9e259>>
+ * @generated SignedSource<<9297f85591b8ab4723a207f6db6a27f6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -177,13 +177,6 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "fileUrl",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
                     "name": "mimeType",
                     "storageKey": null
                   }
@@ -215,12 +208,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7070386f52341969556753a27d42e226",
+    "cacheID": "5206b6576cacb45f5b42305bb1bb7df1",
     "id": null,
     "metadata": {},
     "name": "CreateEvidenceDialogUploadMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateEvidenceDialogUploadMutation(\n  $input: UploadMeasureEvidenceInput!\n) {\n  uploadMeasureEvidence(input: $input) {\n    evidenceEdge {\n      node {\n        id\n        ...MeasureEvidencesTabFragment_evidence\n      }\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  filename\n  size\n  type\n  createdAt\n  fileUrl\n  mimeType\n}\n"
+    "text": "mutation CreateEvidenceDialogUploadMutation(\n  $input: UploadMeasureEvidenceInput!\n) {\n  uploadMeasureEvidence(input: $input) {\n    evidenceEdge {\n      node {\n        id\n        ...MeasureEvidencesTabFragment_evidence\n      }\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  filename\n  size\n  type\n  createdAt\n  mimeType\n}\n"
   }
 };
 })();

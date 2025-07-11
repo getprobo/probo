@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<71e44f5802c3eaba88dde399af20ed89>>
+ * @generated SignedSource<<e3ddbde4beb849447cb819f8991245a7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
-export type DocumentSignaturesDialog_signature$data = {
+export type DocumentSignaturesTab_signature$data = {
   readonly id: string;
   readonly requestedAt: any;
   readonly signedAt: any | null | undefined;
@@ -20,18 +20,18 @@ export type DocumentSignaturesDialog_signature$data = {
     readonly primaryEmailAddress: string;
   };
   readonly state: DocumentVersionSignatureState;
-  readonly " $fragmentType": "DocumentSignaturesDialog_signature";
+  readonly " $fragmentType": "DocumentSignaturesTab_signature";
 };
-export type DocumentSignaturesDialog_signature$key = {
-  readonly " $data"?: DocumentSignaturesDialog_signature$data;
-  readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesDialog_signature">;
+export type DocumentSignaturesTab_signature$key = {
+  readonly " $data"?: DocumentSignaturesTab_signature$data;
+  readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesTab_signature">;
 };
 
 const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "DocumentSignaturesDialog_signature",
+  "name": "DocumentSignaturesTab_signature",
   "selections": [
     {
       "alias": null,
@@ -91,6 +91,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "0db843d4ebd21f44a3d126e85da8cf26";
+(node as any).hash = "b07437b34548744fef4ed78d4f1f0a62";
 
 export default node;

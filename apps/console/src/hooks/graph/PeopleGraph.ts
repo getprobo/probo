@@ -56,7 +56,7 @@ export const paginatedPeopleQuery = graphql`
   }
 `;
 
-const paginatedPeopleFragment = graphql`
+export const paginatedPeopleFragment = graphql`
   fragment PeopleGraphPaginatedFragment on Organization
   @refetchable(queryName: "PeopleListQuery")
   @argumentDefinitions(

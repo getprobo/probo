@@ -25,6 +25,8 @@ import { fileSize, fileType, promisifyMutation, sprintf } from "@probo/helpers";
 import { EvidencePreviewDialog } from "../dialog/EvidencePreviewDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateEvidenceDialog } from "../dialog/CreateEvidenceDialog";
+import { useState } from "react";
+import { EvidenceDownloadDialog } from "../dialog/EvidenceDownloadDialog";
 
 export const evidencesFragment = graphql`
   fragment MeasureEvidencesTabFragment on Measure
@@ -49,7 +51,6 @@ export const evidencesFragment = graphql`
         node {
           id
           filename
-          fileUrl
           mimeType
           ...MeasureEvidencesTabFragment_evidence
         }
@@ -65,7 +66,6 @@ export const evidenceFragment = graphql`
     size
     type
     createdAt
-    fileUrl
     mimeType
   }
 `;
@@ -137,7 +137,8 @@ export default function MeasureEvidencesTab() {
               `/organizations/${organizationId}/measures/${measure.id}/evidences`,
             )
           }
-          evidence={evidence}
+          evidenceId={evidence.id}
+          filename={evidence.filename}
         />
       )}
       <CreateEvidenceDialog
@@ -160,6 +161,7 @@ function EvidenceRow(props: {
 
   const [mutate, isDeleting] = useMutation(deleteEvidenceMutation);
   const confirm = useConfirm();
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDelete = () => {
     confirm(
@@ -185,33 +187,39 @@ function EvidenceRow(props: {
   };
 
   return (
-    <Tr
-      to={`/organizations/${props.organizationId}/measures/${props.measureId}/evidences/${evidence.id}`}
-    >
-      <Td>{evidence.filename}</Td>
-      <Td>{fileType(__, evidence)}</Td>
-      <Td>{fileSize(__, evidence.size)}</Td>
-      <Td>{dateFormat(evidence.createdAt)}</Td>
-      <Td noLink>
-        <div className="flex gap-2">
-          <ActionDropdown>
-            <DropdownItem asChild>
-              <a href={evidence.fileUrl ?? ""} target="_blank">
+    <>
+      {isDownloading && (
+        <EvidenceDownloadDialog
+          evidenceId={evidence.id}
+          onClose={() => setIsDownloading(false)}
+        />
+      )}
+      <Tr
+        to={`/organizations/${props.organizationId}/measures/${props.measureId}/evidences/${evidence.id}`}
+      >
+        <Td>{evidence.filename}</Td>
+        <Td>{fileType(__, evidence)}</Td>
+        <Td>{fileSize(__, evidence.size)}</Td>
+        <Td>{dateFormat(evidence.createdAt)}</Td>
+        <Td noLink>
+          <div className="flex gap-2">
+            <ActionDropdown>
+              <DropdownItem onClick={() => setIsDownloading(true)}>
                 <IconArrowInbox size={16} />
                 {__("Download")}
-              </a>
-            </DropdownItem>
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
-        </div>
-      </Td>
-    </Tr>
+              </DropdownItem>
+              <DropdownItem
+                variant="danger"
+                icon={IconTrashCan}
+                onClick={handleDelete}
+                disabled={isDeleting}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          </div>
+        </Td>
+      </Tr>
+    </>
   );
 }

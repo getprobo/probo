@@ -4,12 +4,12 @@ import type { NodeOf } from "/types";
 import { Markdown } from "@probo/ui";
 
 export default function DocumentDescriptionTab() {
-  const { lastVersion } = useOutletContext<{
-    lastVersion: NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
+  const { version } = useOutletContext<{
+    version: NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
   }>();
   return (
     <div>
-      <Markdown content={lastVersion.content} />
+      <Markdown content={version.content} />
     </div>
   );
 }

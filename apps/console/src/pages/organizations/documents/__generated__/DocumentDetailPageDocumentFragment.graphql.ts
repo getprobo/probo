@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4318aaecefe001fe6f42e6db26c421b4>>
+ * @generated SignedSource<<8db0c7dcd7ff31c01ec5facd5a3b598a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -31,6 +31,9 @@ export type DocumentDetailPageDocumentFragment$data = {
         readonly content: string;
         readonly id: string;
         readonly publishedAt: any | null | undefined;
+        readonly publishedBy: {
+          readonly fullName: string;
+        } | null | undefined;
         readonly signatures: {
           readonly __id: string;
           readonly edges: ReadonlyArray<{
@@ -40,14 +43,13 @@ export type DocumentDetailPageDocumentFragment$data = {
                 readonly id: string;
               };
               readonly state: DocumentVersionSignatureState;
-              readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesDialog_signature">;
+              readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesTab_signature">;
             };
           }>;
         };
         readonly status: DocumentStatus;
         readonly updatedAt: any;
         readonly version: number;
-        readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesDialog_version" | "DocumentVersionHistoryDialogFragment">;
       };
     }>;
   };
@@ -71,17 +73,24 @@ v1 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "__typename",
+  "name": "fullName",
   "storageKey": null
 },
 v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "cursor",
+  "name": "__typename",
   "storageKey": null
 },
 v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "cursor",
+  "storageKey": null
+},
+v4 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -106,7 +115,7 @@ v3 = {
   ],
   "storageKey": null
 },
-v4 = {
+v5 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -165,13 +174,7 @@ return {
       "plural": false,
       "selections": [
         (v0/*: any*/),
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "fullName",
-          "storageKey": null
-        }
+        (v1/*: any*/)
       ],
       "storageKey": null
     },
@@ -265,6 +268,18 @@ return {
                   "storageKey": null
                 },
                 {
+                  "alias": null,
+                  "args": null,
+                  "concreteType": "People",
+                  "kind": "LinkedField",
+                  "name": "publishedBy",
+                  "plural": false,
+                  "selections": [
+                    (v1/*: any*/)
+                  ],
+                  "storageKey": null
+                },
+                {
                   "alias": "signatures",
                   "args": null,
                   "concreteType": "DocumentVersionSignatureConnection",
@@ -311,41 +326,31 @@ return {
                             {
                               "args": null,
                               "kind": "FragmentSpread",
-                              "name": "DocumentSignaturesDialog_signature"
+                              "name": "DocumentSignaturesTab_signature"
                             },
-                            (v1/*: any*/)
+                            (v2/*: any*/)
                           ],
                           "storageKey": null
                         },
-                        (v2/*: any*/)
+                        (v3/*: any*/)
                       ],
                       "storageKey": null
                     },
-                    (v3/*: any*/),
-                    (v4/*: any*/)
+                    (v4/*: any*/),
+                    (v5/*: any*/)
                   ],
                   "storageKey": null
                 },
-                {
-                  "args": null,
-                  "kind": "FragmentSpread",
-                  "name": "DocumentVersionHistoryDialogFragment"
-                },
-                {
-                  "args": null,
-                  "kind": "FragmentSpread",
-                  "name": "DocumentSignaturesDialog_version"
-                },
-                (v1/*: any*/)
+                (v2/*: any*/)
               ],
               "storageKey": null
             },
-            (v2/*: any*/)
+            (v3/*: any*/)
           ],
           "storageKey": null
         },
-        (v3/*: any*/),
-        (v4/*: any*/)
+        (v4/*: any*/),
+        (v5/*: any*/)
       ],
       "storageKey": null
     }
@@ -355,6 +360,6 @@ return {
 };
 })();
 
-(node as any).hash = "da1a4055d701fa9c3e0e0e50df24860f";
+(node as any).hash = "1523ddad229ae2d6bf94d30de5579ae6";
 
 export default node;

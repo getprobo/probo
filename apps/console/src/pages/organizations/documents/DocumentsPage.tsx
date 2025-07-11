@@ -15,6 +15,10 @@ import {
   ActionDropdown,
   DropdownItem,
   IconBell2,
+  Checkbox,
+  IconCrossLargeX,
+  IconSignature,
+  IconCheckmark1,
 } from "@probo/ui";
 import {
   useFragment,
@@ -30,11 +34,14 @@ import {
   useSendSigningNotificationsMutation,
 } from "/hooks/graph/DocumentGraph";
 import type { DocumentsPageListFragment$key } from "./__generated__/DocumentsPageListFragment.graphql";
-import { usePageTitle } from "@probo/hooks";
+import { useList, usePageTitle } from "@probo/hooks";
 import { sprintf, getDocumentTypeLabel } from "@probo/helpers";
 import { CreateDocumentDialog } from "./dialogs/CreateDocumentDialog";
 import type { DocumentsPageRowFragment$key } from "./__generated__/DocumentsPageRowFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
+import { usePeople } from "/hooks/graph/PeopleGraph.ts";
+import { PublishDocumentsDialog } from "./dialogs/PublishDocumentsDialog.tsx";
+import { SignatureDocumentsDialog } from "./dialogs/SignatureDocumentsDialog.tsx";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization
@@ -86,7 +93,9 @@ export default function DocumentsPage(props: Props) {
   const documents = pagination.data.documents.edges.map((edge) => edge.node);
   const connectionId = pagination.data.documents.__id;
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
+  const { list: selection, toggle, clear, reset } = useList<string>([]);
 
+  const people = usePeople(organization.id);
   usePageTitle(__("Documents"));
 
   const handleSendSigningNotifications = () => {
@@ -119,19 +128,62 @@ export default function DocumentsPage(props: Props) {
       </PageHeader>
       <SortableTable {...pagination}>
         <Thead>
-          <Tr>
-            <SortableTh field="TITLE">{__("Name")}</SortableTh>
-            <Th>{__("Status")}</Th>
-            <SortableTh field="DOCUMENT_TYPE">{__("Type")}</SortableTh>
-            <Th>{__("Owner")}</Th>
-            <Th>{__("Last update")}</Th>
-            <Th>{__("Signatures")}</Th>
-            <Th></Th>
-          </Tr>
+          {selection.length === 0 ? (
+            <Tr>
+              <Th>
+                <Checkbox
+                  checked={selection.length === documents.length}
+                  onChange={() => reset(documents.map((d) => d.id))}
+                />
+              </Th>
+              <SortableTh field="TITLE">{__("Name")}</SortableTh>
+              <Th>{__("Status")}</Th>
+              <SortableTh field="DOCUMENT_TYPE">{__("Type")}</SortableTh>
+              <Th>{__("Owner")}</Th>
+              <Th>{__("Last update")}</Th>
+              <Th>{__("Signatures")}</Th>
+              <Th></Th>
+            </Tr>
+          ) : (
+            <Tr>
+              <Th colspan={8}>
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-2 items-center">
+                    {sprintf(__("%s documents selected"), selection.length)} -
+                    <button
+                      onClick={clear}
+                      className="flex gap-1 items-center hover:text-txt-primary"
+                    >
+                      <IconCrossLargeX size={12} />
+                      {__("Clear selection")}
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <PublishDocumentsDialog
+                      documentIds={selection}
+                      onSave={clear}
+                    >
+                      <Button icon={IconCheckmark1}>{__("Publish")}</Button>
+                    </PublishDocumentsDialog>
+                    <SignatureDocumentsDialog
+                      documentIds={selection}
+                      onSave={clear}
+                    >
+                      <Button variant="secondary" icon={IconSignature}>
+                        {__("Request signature")}
+                      </Button>
+                    </SignatureDocumentsDialog>
+                  </div>
+                </div>
+              </Th>
+            </Tr>
+          )}
         </Thead>
         <Tbody>
           {documents.map((document) => (
             <DocumentRow
+              checked={selection.includes(document.id)}
+              onCheck={() => toggle(document.id)}
               key={document.id}
               document={document}
               organizationId={organization.id}
@@ -178,10 +230,14 @@ function DocumentRow({
   document: documentKey,
   organizationId,
   connectionId,
+  checked,
+  onCheck,
 }: {
   document: DocumentsPageRowFragment$key;
   organizationId: string;
   connectionId: string;
+  checked: boolean;
+  onCheck: () => void;
 }) {
   const document = useFragment<DocumentsPageRowFragment$key>(
     rowFragment,
@@ -219,6 +275,9 @@ function DocumentRow({
 
   return (
     <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
+      <Td noLink>
+        <Checkbox checked={checked} onChange={onCheck} />
+      </Td>
       <Td>
         <div className="flex gap-4 items-center">
           <img

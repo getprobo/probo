@@ -129,12 +129,15 @@ const linkSchema = z.object({
 
 function EvidenceLink({ measureId, connectionId, ref }: Props) {
   const { __ } = useTranslate();
-  const { handleSubmit, register, formState } = useFormWithSchema(linkSchema, {
-    defaultValues: {
-      name: "",
-      url: "",
+  const { handleSubmit, register, formState, reset } = useFormWithSchema(
+    linkSchema,
+    {
+      defaultValues: {
+        name: "",
+        url: "",
+      },
     },
-  });
+  );
 
   const [mutate] = useMutationWithToasts(uploadEvidenceMutation, {
     successMessage: __("Evidence created successfully"),
@@ -158,6 +161,7 @@ function EvidenceLink({ measureId, connectionId, ref }: Props) {
       },
     });
     ref.current?.close();
+    reset();
   });
   return (
     <form onSubmit={onSubmit}>
