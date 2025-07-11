@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4c3514470041046f80f410ea5a3275d6>>
+ * @generated SignedSource<<14890a4f10a8862a8aaf30ee1dc6f065>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,10 +14,10 @@ export type BulkRequestSignaturesInput = {
   documentIds: ReadonlyArray<string>;
   signatoryIds: ReadonlyArray<string>;
 };
-export type DocumentsPageSignatureMutation$variables = {
+export type SignatureDocumentsDialogMutation$variables = {
   input: BulkRequestSignaturesInput;
 };
-export type DocumentsPageSignatureMutation$data = {
+export type SignatureDocumentsDialogMutation$data = {
   readonly bulkRequestSignatures: {
     readonly documentVersionSignatureEdges: ReadonlyArray<{
       readonly node: {
@@ -27,9 +27,9 @@ export type DocumentsPageSignatureMutation$data = {
     }>;
   };
 };
-export type DocumentsPageSignatureMutation = {
-  response: DocumentsPageSignatureMutation$data;
-  variables: DocumentsPageSignatureMutation$variables;
+export type SignatureDocumentsDialogMutation = {
+  response: SignatureDocumentsDialogMutation$data;
+  variables: SignatureDocumentsDialogMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -100,7 +100,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "DocumentsPageSignatureMutation",
+    "name": "SignatureDocumentsDialogMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -109,20 +109,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "DocumentsPageSignatureMutation",
+    "name": "SignatureDocumentsDialogMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "a61a828bc67d8b569c38f4826b42d00f",
+    "cacheID": "4426d76c855d441caab5c932c2ceb2ba",
     "id": null,
     "metadata": {},
-    "name": "DocumentsPageSignatureMutation",
+    "name": "SignatureDocumentsDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentsPageSignatureMutation(\n  $input: BulkRequestSignaturesInput!\n) {\n  bulkRequestSignatures(input: $input) {\n    documentVersionSignatureEdges {\n      node {\n        id\n        state\n      }\n    }\n  }\n}\n"
+    "text": "mutation SignatureDocumentsDialogMutation(\n  $input: BulkRequestSignaturesInput!\n) {\n  bulkRequestSignatures(input: $input) {\n    documentVersionSignatureEdges {\n      node {\n        id\n        state\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1cb2b7dfa938b35cf75b09b51cdd2dca";
+(node as any).hash = "1dbd9a7870416bf75d0a6fe44ebde408";
 
 export default node;

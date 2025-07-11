@@ -39,9 +39,9 @@ import { sprintf, getDocumentTypeLabel } from "@probo/helpers";
 import { CreateDocumentDialog } from "./dialogs/CreateDocumentDialog";
 import type { DocumentsPageRowFragment$key } from "./__generated__/DocumentsPageRowFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 import { PublishDocumentsDialog } from "./dialogs/PublishDocumentsDialog.tsx";
+import { SignatureDocumentsDialog } from "./dialogs/SignatureDocumentsDialog.tsx";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization
@@ -74,19 +74,6 @@ const documentsFragment = graphql`
   }
 `;
 
-const documentsSignatureMutation = graphql`
-  mutation DocumentsPageSignatureMutation($input: BulkRequestSignaturesInput!) {
-    bulkRequestSignatures(input: $input) {
-      documentVersionSignatureEdges {
-        node {
-          id
-          state
-        }
-      }
-    }
-  }
-`;
-
 type Props = {
   queryRef: PreloadedQuery<DocumentGraphListQuery>;
 };
@@ -108,13 +95,6 @@ export default function DocumentsPage(props: Props) {
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
   const { list: selection, toggle, clear, reset } = useList<string>([]);
 
-  const [signatureMutation, isSigning] = useMutationWithToasts(
-    documentsSignatureMutation,
-    {
-      successMessage: __("Signature request send successfully"),
-      errorMessage: __("Failed to send signature requests"),
-    }
-  );
   const people = usePeople(organization.id);
   usePageTitle(__("Documents"));
 
@@ -124,18 +104,6 @@ export default function DocumentsPage(props: Props) {
         input: { organizationId: organization.id },
       },
     });
-  };
-
-  const requestSignatures = async () => {
-    await signatureMutation({
-      variables: {
-        input: {
-          documentIds: selection,
-          signatoryIds: people.map((p) => p.id),
-        },
-      },
-    });
-    clear();
   };
 
   return (
@@ -197,14 +165,14 @@ export default function DocumentsPage(props: Props) {
                     >
                       <Button icon={IconCheckmark1}>{__("Publish")}</Button>
                     </PublishDocumentsDialog>
-                    <Button
-                      variant="secondary"
-                      icon={IconSignature}
-                      onClick={requestSignatures}
-                      disabled={isSigning}
+                    <SignatureDocumentsDialog
+                      documentIds={selection}
+                      onSave={clear}
                     >
-                      {__("Request signature")}
-                    </Button>
+                      <Button variant="secondary" icon={IconSignature}>
+                        {__("Request signature")}
+                      </Button>
+                    </SignatureDocumentsDialog>
                   </div>
                 </div>
               </Th>
