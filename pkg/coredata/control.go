@@ -28,22 +28,26 @@ import (
 
 type (
 	Control struct {
-		ID           gid.GID      `db:"id"`
-		SectionTitle string       `db:"section_title"`
-		TenantID     gid.TenantID `db:"tenant_id"`
-		FrameworkID  gid.GID      `db:"framework_id"`
-		Name         string       `db:"name"`
-		Description  string       `db:"description"`
-		CreatedAt    time.Time    `db:"created_at"`
-		UpdatedAt    time.Time    `db:"updated_at"`
+		ID                     gid.GID       `db:"id"`
+		SectionTitle           string        `db:"section_title"`
+		TenantID               gid.TenantID  `db:"tenant_id"`
+		FrameworkID            gid.GID       `db:"framework_id"`
+		Name                   string        `db:"name"`
+		Description            string        `db:"description"`
+		Status                 ControlStatus `db:"status"`
+		ExclusionJustification *string       `db:"exclusion_justification"`
+		CreatedAt              time.Time     `db:"created_at"`
+		UpdatedAt              time.Time     `db:"updated_at"`
 	}
 
 	Controls []*Control
 
 	UpdateControlParams struct {
-		Name         *string
-		Description  *string
-		SectionTitle *string
+		Name                   *string
+		Description            *string
+		SectionTitle           *string
+		Status                 *ControlStatus
+		ExclusionJustification *string
 	}
 )
 
@@ -117,6 +121,8 @@ WITH ctrl AS (
 		c.tenant_id,
 		c.name,
 		c.description,
+		c.status,
+		c.exclusion_justification,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -134,6 +140,8 @@ SELECT
 	tenant_id,
 	name,
 	description,
+	status,
+	exclusion_justification,
 	created_at,
 	updated_at
 FROM
@@ -223,6 +231,8 @@ WITH ctrl AS (
 		c.tenant_id,
 		c.name,
 		c.description,
+		c.status,
+		c.exclusion_justification,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -240,6 +250,8 @@ SELECT
     tenant_id,
 	name,
 	description,
+	status,
+	exclusion_justification,
 	created_at,
 	updated_at
 FROM
@@ -335,6 +347,8 @@ WITH ctrl AS (
 		c.tenant_id,
 		c.name,
 		c.description,
+		c.status,
+		c.exclusion_justification,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -358,6 +372,8 @@ SELECT
     tenant_id,
 	name,
 	description,
+	status,
+	exclusion_justification,
 	created_at,
 	updated_at
 FROM
@@ -400,8 +416,8 @@ SELECT
 	COUNT(id)
 FROM
 	controls
-WHERE %s 
-	AND framework_id = @framework_id 
+WHERE %s
+	AND framework_id = @framework_id
 	AND %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
@@ -436,6 +452,8 @@ SELECT
     tenant_id,
     name,
     description,
+    status,
+	exclusion_justification,
     created_at,
     updated_at
 FROM
@@ -528,6 +546,8 @@ WITH ctrl AS (
 		c.tenant_id,
 		c.name,
 		c.description,
+		c.status,
+		c.exclusion_justification,
 		c.created_at,
 		c.updated_at,
 		c.search_vector
@@ -545,6 +565,8 @@ SELECT
 	tenant_id,
 	name,
 	description,
+	status,
+	exclusion_justification,
 	created_at,
 	updated_at
 FROM
@@ -590,6 +612,8 @@ SELECT
     tenant_id,
     name,
     description,
+    status,
+    exclusion_justification,
     created_at,
     updated_at
 FROM
@@ -633,6 +657,8 @@ SELECT
     tenant_id,
     name,
     description,
+    status,
+exclusion_justification,
     created_at,
     updated_at
 FROM
@@ -675,6 +701,8 @@ INSERT INTO
         section_title,
         name,
         description,
+        status,
+        exclusion_justification,
         created_at,
         updated_at
     )
@@ -685,20 +713,24 @@ VALUES (
     @section_title,
     @name,
     @description,
+	@status,
+	@exclusion_justification,
     @created_at,
     @updated_at
 );
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":     scope.GetTenantID(),
-		"control_id":    c.ID,
-		"framework_id":  c.FrameworkID,
-		"section_title": c.SectionTitle,
-		"name":          c.Name,
-		"description":   c.Description,
-		"created_at":    c.CreatedAt,
-		"updated_at":    c.UpdatedAt,
+		"tenant_id":               scope.GetTenantID(),
+		"control_id":              c.ID,
+		"framework_id":            c.FrameworkID,
+		"section_title":           c.SectionTitle,
+		"name":                    c.Name,
+		"description":             c.Description,
+		"status":                  c.Status,
+		"exclusion_justification": c.ExclusionJustification,
+		"created_at":              c.CreatedAt,
+		"updated_at":              c.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	return err
@@ -737,6 +769,8 @@ UPDATE controls SET
     name = COALESCE(@name, name),
     description = COALESCE(@description, description),
     section_title = COALESCE(@section_title, section_title),
+	status = COALESCE(@status, status),
+	exclusion_justification = COALESCE(@exclusion_justification, exclusion_justification),
     updated_at = @updated_at
 WHERE %s
     AND id = @control_id
@@ -747,15 +781,19 @@ RETURNING
     name,
     description,
 	section_title,
+	status,
+	exclusion_justification,
     created_at,
     updated_at
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"control_id":    c.ID,
-		"section_title": params.SectionTitle,
-		"updated_at":    time.Now(),
+		"control_id":              c.ID,
+		"section_title":           params.SectionTitle,
+		"status":                  params.Status,
+		"exclusion_justification": params.ExclusionJustification,
+		"updated_at":              time.Now(),
 	}
 
 	if params.Name != nil {
@@ -763,6 +801,13 @@ RETURNING
 	}
 	if params.Description != nil {
 		args["description"] = *params.Description
+	}
+
+	if params.Status != nil {
+		args["status"] = *params.Status
+	}
+	if params.ExclusionJustification != nil {
+		args["exclusion_justification"] = *params.ExclusionJustification
 	}
 
 	maps.Copy(args, scope.SQLArguments())

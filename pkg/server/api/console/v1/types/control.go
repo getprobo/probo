@@ -65,11 +65,13 @@ func NewControlEdge(c *coredata.Control, orderBy coredata.ControlOrderField) *Co
 
 func NewControl(c *coredata.Control) *Control {
 	return &Control{
-		ID:           c.ID,
-		SectionTitle: c.SectionTitle,
-		Name:         c.Name,
-		Description:  c.Description,
-		CreatedAt:    c.CreatedAt,
-		UpdatedAt:    c.UpdatedAt,
+		ID:                     c.ID,
+		SectionTitle:           c.SectionTitle,
+		Name:                   c.Name,
+		Description:            c.Description,
+		Status:                 c.Status,
+		ExclusionJustification: c.ExclusionJustification,
+		CreatedAt:              c.CreatedAt,
+		UpdatedAt:              c.UpdatedAt,
 	}
 }

@@ -103,7 +103,7 @@ func writeSOARow(f *excelize.File, sheetName string, row int, data SOARowData, i
 		{"Contractual", data.Contractual},
 		{"BestPractice", data.BestPractice},
 		{"RiskAssessment", data.RiskAssessment},
-		{"JustificationExclusion", data.JustificationExclusion},
+		{"ExclusionJustification", data.ExclusionJustification},
 		{"SecurityMeasures", data.SecurityMeasures},
 	}
 

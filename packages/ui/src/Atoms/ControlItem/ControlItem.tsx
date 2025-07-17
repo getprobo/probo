@@ -6,6 +6,7 @@ type Props = {
     active?: boolean;
     id: string;
     description?: string;
+    excluded?: boolean;
     to: string;
 } & HTMLAttributes<HTMLAnchorElement>;
 
@@ -26,19 +27,39 @@ const classNames = tv({
                 id: "bg-highlight",
             },
         },
+        excluded: {
+            true: {
+                wrapper: "opacity-60",
+            },
+            false: {
+                wrapper: "",
+            },
+        },
     },
+    compoundVariants: [
+        {
+            active: true,
+            excluded: true,
+            class: {
+                wrapper: "bg-tertiary-pressed opacity-60",
+                id: "bg-active",
+            },
+        },
+    ],
     defaultVariants: {
         active: false,
+        excluded: false,
     },
 });
 
-export function ControlItem({ active, id, description, to, ...props }: Props) {
+export function ControlItem({ active, id, description, excluded, to, ...props }: Props) {
     const {
         wrapper,
         id: idCls,
         description: descriptionCls,
     } = classNames({
         active,
+        excluded,
     });
 
     const ref = useRef<HTMLAnchorElement>(null);

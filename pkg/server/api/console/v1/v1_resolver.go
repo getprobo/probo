@@ -1220,10 +1220,12 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	control, err := prb.Controls.Update(ctx, probo.UpdateControlRequest{
-		ID:           input.ID,
-		Name:         input.Name,
-		Description:  input.Description,
-		SectionTitle: input.SectionTitle,
+		ID:                     input.ID,
+		Name:                   input.Name,
+		Description:            input.Description,
+		SectionTitle:           input.SectionTitle,
+		Status:                 input.Status,
+		ExclusionJustification: input.ExclusionJustification,
 	})
 
 	if err != nil {

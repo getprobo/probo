@@ -118,15 +118,17 @@ type ConnectorOrder struct {
 }
 
 type Control struct {
-	ID           gid.GID             `json:"id"`
-	SectionTitle string              `json:"sectionTitle"`
-	Name         string              `json:"name"`
-	Description  string              `json:"description"`
-	Framework    *Framework          `json:"framework"`
-	Measures     *MeasureConnection  `json:"measures"`
-	Documents    *DocumentConnection `json:"documents"`
-	CreatedAt    time.Time           `json:"createdAt"`
-	UpdatedAt    time.Time           `json:"updatedAt"`
+	ID                     gid.GID                `json:"id"`
+	SectionTitle           string                 `json:"sectionTitle"`
+	Name                   string                 `json:"name"`
+	Description            string                 `json:"description"`
+	Status                 coredata.ControlStatus `json:"status"`
+	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
+	Framework              *Framework             `json:"framework"`
+	Measures               *MeasureConnection     `json:"measures"`
+	Documents              *DocumentConnection    `json:"documents"`
+	CreatedAt              time.Time              `json:"createdAt"`
+	UpdatedAt              time.Time              `json:"updatedAt"`
 }
 
 func (Control) IsNode()             {}
@@ -167,10 +169,12 @@ type CreateControlDocumentMappingPayload struct {
 }
 
 type CreateControlInput struct {
-	FrameworkID  gid.GID `json:"frameworkId"`
-	SectionTitle string  `json:"sectionTitle"`
-	Name         string  `json:"name"`
-	Description  string  `json:"description"`
+	FrameworkID            gid.GID                 `json:"frameworkId"`
+	SectionTitle           string                  `json:"sectionTitle"`
+	Name                   string                  `json:"name"`
+	Description            string                  `json:"description"`
+	Status                 *coredata.ControlStatus `json:"status,omitempty"`
+	ExclusionJustification *string                 `json:"exclusionJustification,omitempty"`
 }
 
 type CreateControlMeasureMappingInput struct {
@@ -948,10 +952,12 @@ type UpdateAssetPayload struct {
 }
 
 type UpdateControlInput struct {
-	ID           gid.GID `json:"id"`
-	SectionTitle *string `json:"sectionTitle,omitempty"`
-	Name         *string `json:"name,omitempty"`
-	Description  *string `json:"description,omitempty"`
+	ID                     gid.GID                 `json:"id"`
+	SectionTitle           *string                 `json:"sectionTitle,omitempty"`
+	Name                   *string                 `json:"name,omitempty"`
+	Description            *string                 `json:"description,omitempty"`
+	Status                 *coredata.ControlStatus `json:"status,omitempty"`
+	ExclusionJustification *string                 `json:"exclusionJustification,omitempty"`
 }
 
 type UpdateControlPayload struct {

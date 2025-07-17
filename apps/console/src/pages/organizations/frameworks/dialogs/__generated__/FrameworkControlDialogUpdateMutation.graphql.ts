@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<250267db99194edcb6fa20053d1d82df>>
+ * @generated SignedSource<<7d04994d5cabbbfc12f82754e8da0d83>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,11 +10,14 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
+export type ControlStatus = "EXCLUDED" | "INCLUDED";
 export type UpdateControlInput = {
   description?: string | null | undefined;
+  exclusionJustification?: string | null | undefined;
   id: string;
   name?: string | null | undefined;
   sectionTitle?: string | null | undefined;
+  status?: ControlStatus | null | undefined;
 };
 export type FrameworkControlDialogUpdateMutation$variables = {
   input: UpdateControlInput;
@@ -133,6 +136,20 @@ return {
                 "kind": "ScalarField",
                 "name": "sectionTitle",
                 "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "status",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "exclusionJustification",
+                "storageKey": null
               }
             ],
             "storageKey": null
@@ -143,12 +160,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "442b248ff35d4448c66052906ea5fff1",
+    "cacheID": "cee79ce9185400bad478453c44930dd6",
     "id": null,
     "metadata": {},
     "name": "FrameworkControlDialogUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation FrameworkControlDialogUpdateMutation(\n  $input: UpdateControlInput!\n) {\n  updateControl(input: $input) {\n    control {\n      ...FrameworkControlDialogFragment\n      id\n    }\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n}\n"
+    "text": "mutation FrameworkControlDialogUpdateMutation(\n  $input: UpdateControlInput!\n) {\n  updateControl(input: $input) {\n    control {\n      ...FrameworkControlDialogFragment\n      id\n    }\n  }\n}\n\nfragment FrameworkControlDialogFragment on Control {\n  id\n  name\n  description\n  sectionTitle\n  status\n  exclusionJustification\n}\n"
   }
 };
 })();
