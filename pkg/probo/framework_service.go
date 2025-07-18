@@ -253,6 +253,7 @@ func (s FrameworkService) Import(
 				SectionTitle: control.ID,
 				Name:         control.Name,
 				Description:  control.Description,
+				Status:       coredata.ControlStatusIncluded,
 				CreatedAt:    now,
 				UpdatedAt:    now,
 			}
@@ -306,37 +307,54 @@ func (s FrameworkService) StateOfApplicability(ctx context.Context, frameworkID 
 			}
 
 			for _, control := range controls {
+				exclusionJustification := ""
+				if control.ExclusionJustification != nil && control.Status == coredata.ControlStatusExcluded {
+					exclusionJustification = *control.ExclusionJustification
+				}
+
+				applicability := soagen.NewApplicability("Yes", true)
+				if control.Status == coredata.ControlStatusExcluded {
+					applicability = soagen.NewApplicability("No", false)
+				}
+
+				bestPractice := ref.Ref(true)
+				if control.Status == coredata.ControlStatusExcluded {
+					bestPractice = ref.Ref(false)
+				}
+
 				row := soagen.SOARowData{
 					SectionTitle:           control.SectionTitle,
 					ControlName:            control.Name,
-					Applicability:          soagen.NewApplicability("Yes", true),
-					JustificationExclusion: "",
+					Applicability:          applicability,
+					ExclusionJustification: exclusionJustification,
 					Regulatory:             ref.Ref(false),
 					Contractual:            ref.Ref(false),
-					BestPractice:           ref.Ref(true),
+					BestPractice:           bestPractice,
 					RiskAssessment:         ref.Ref(false),
 					SecurityMeasures:       []string{},
 				}
 
 				measures := coredata.Measures{}
-				err = measures.LoadByControlID(
-					ctx,
-					conn,
-					s.svc.scope,
-					control.ID,
-					page.NewCursor(
-						maxStateOfApplicabilityLimit,
-						nil,
-						page.Head,
-						page.OrderBy[coredata.MeasureOrderField]{
-							Field:     coredata.MeasureOrderFieldCreatedAt,
-							Direction: page.OrderDirectionAsc,
-						},
-					),
-					coredata.NewMeasureFilter(nil),
-				)
-				if err != nil {
-					return fmt.Errorf("cannot load measures: %w", err)
+				if control.Status == coredata.ControlStatusIncluded {
+					err = measures.LoadByControlID(
+						ctx,
+						conn,
+						s.svc.scope,
+						control.ID,
+						page.NewCursor(
+							maxStateOfApplicabilityLimit,
+							nil,
+							page.Head,
+							page.OrderBy[coredata.MeasureOrderField]{
+								Field:     coredata.MeasureOrderFieldCreatedAt,
+								Direction: page.OrderDirectionAsc,
+							},
+						),
+						coredata.NewMeasureFilter(nil),
+					)
+					if err != nil {
+						return fmt.Errorf("cannot load measures: %w", err)
+					}
 				}
 
 				for _, measure := range measures {

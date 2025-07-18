@@ -12,22 +12,41 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package soagen
+package coredata
 
-// SOARowData represents a single row in the State of Applicability Excel
-type SOARowData struct {
-	SectionTitle           string
-	ControlName            string
-	Applicability          Applicability
-	Regulatory             *bool
-	Contractual            *bool
-	BestPractice           *bool
-	RiskAssessment         *bool
-	ExclusionJustification string
-	SecurityMeasures       []string
+import (
+	"database/sql/driver"
+	"fmt"
+)
+
+type ControlStatus string
+
+const (
+	ControlStatusIncluded ControlStatus = "INCLUDED"
+	ControlStatusExcluded ControlStatus = "EXCLUDED"
+)
+
+func (cs ControlStatus) String() string {
+	return string(cs)
 }
 
-// SOAData contains all the data needed for State of Applicability generation
-type SOAData struct {
-	Rows []SOARowData
+func (cs *ControlStatus) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case string:
+		switch v {
+		case "INCLUDED":
+			*cs = ControlStatusIncluded
+		case "EXCLUDED":
+			*cs = ControlStatusExcluded
+		default:
+			return fmt.Errorf("invalid ControlStatus value: %q", v)
+		}
+	default:
+		return fmt.Errorf("unsupported type for ControlStatus: %T", value)
+	}
+	return nil
+}
+
+func (cs ControlStatus) Value() (driver.Value, error) {
+	return cs.String(), nil
 }

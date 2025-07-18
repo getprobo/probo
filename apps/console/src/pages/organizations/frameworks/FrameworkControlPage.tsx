@@ -146,8 +146,10 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between">
-        <div className="text-xl font-medium px-[6px] py-[2px] border border-border-low rounded-lg w-max bg-active mb-3">
-          {control.sectionTitle}
+        <div className="flex items-center gap-3">
+          <div className="text-xl font-medium px-[6px] py-[2px] border border-border-low rounded-lg w-max bg-active mb-3">
+            {control.sectionTitle}
+          </div>
         </div>
         <div className="flex gap-2">
           <FrameworkControlDialog
@@ -171,25 +173,39 @@ export default function FrameworkControlPage({ queryRef }: Props) {
         </div>
       </div>
 
-      <div className="text-base">{control.name}</div>
-      <LinkedMeasuresCard
-        variant="card"
-        measures={control.measures?.edges.map((edge) => edge.node) ?? []}
-        params={{ controlId: control.id }}
-        connectionId={control.measures?.__id!}
-        onAttach={attachMeasure}
-        onDetach={detachMeasure}
-        disabled={isAttachingMeasure || isDetachingMeasure}
+      {control.status === "EXCLUDED" && (
+        <div className="bg-danger border border-border-danger rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="font-medium text-txt-danger">
+              {__("This control is excluded")}
+            </div>
+          </div>
+          <div className="text-sm">
+            <strong>{__("Justification:")}</strong> {control.exclusionJustification || __("No justification provided")}
+          </div>
+        </div>
+      )}
+      <div className={control.status === "EXCLUDED" ? "opacity-60" : ""}>
+        <div className="text-base">{control.name}</div>
+        <LinkedMeasuresCard
+          variant="card"
+          measures={control.measures?.edges.map((edge) => edge.node) ?? []}
+          params={{ controlId: control.id }}
+          connectionId={control.measures?.__id!}
+          onAttach={attachMeasure}
+          onDetach={detachMeasure}
+          disabled={isAttachingMeasure || isDetachingMeasure}
+        />
+        <LinkedDocumentsCard
+          variant="card"
+          documents={control.documents?.edges.map((edge) => edge.node) ?? []}
+          params={{ controlId: control.id }}
+          connectionId={control.documents?.__id!}
+          onAttach={attachDocument}
+          onDetach={detachDocument}
+          disabled={isAttachingDocument || isDetachingDocument}
       />
-      <LinkedDocumentsCard
-        variant="card"
-        documents={control.documents?.edges.map((edge) => edge.node) ?? []}
-        params={{ controlId: control.id }}
-        connectionId={control.documents?.__id!}
-        onAttach={attachDocument}
-        onDetach={detachDocument}
-        disabled={isAttachingDocument || isDetachingDocument}
-      />
+      </div>
     </div>
   );
 }

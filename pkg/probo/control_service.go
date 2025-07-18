@@ -39,10 +39,12 @@ type (
 	}
 
 	UpdateControlRequest struct {
-		ID           gid.GID
-		Name         *string
-		Description  *string
-		SectionTitle *string
+		ID                     gid.GID
+		Name                   *string
+		Description            *string
+		SectionTitle           *string
+		Status                 *coredata.ControlStatus
+		ExclusionJustification *string
 	}
 
 	ConnectControlToMitigationRequest struct {
@@ -551,9 +553,11 @@ func (s ControlService) Update(
 	req UpdateControlRequest,
 ) (*coredata.Control, error) {
 	params := coredata.UpdateControlParams{
-		Name:         req.Name,
-		Description:  req.Description,
-		SectionTitle: req.SectionTitle,
+		Name:                   req.Name,
+		Description:            req.Description,
+		SectionTitle:           req.SectionTitle,
+		Status:                 req.Status,
+		ExclusionJustification: req.ExclusionJustification,
 	}
 
 	control := &coredata.Control{ID: req.ID}

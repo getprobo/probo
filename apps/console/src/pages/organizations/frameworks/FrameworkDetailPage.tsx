@@ -36,6 +36,9 @@ const frameworkDetailFragment = graphql`
     id
     name
     description
+    organization {
+      name
+    }
     controls(first: 250, orderBy: { field: SECTION_TITLE, direction: ASC }) {
       __id
       edges {
@@ -43,6 +46,8 @@ const frameworkDetailFragment = graphql`
           id
           sectionTitle
           name
+          status
+          exclusionJustification
         }
       }
     }
@@ -140,7 +145,7 @@ export default function FrameworkDetailPage(props: Props) {
                   if (data.generateFrameworkStateOfApplicability?.data) {
                     const link = window.document.createElement("a");
                     link.href = data.generateFrameworkStateOfApplicability.data;
-                    link.download = `${framework.name}-SOA.xlsx`;
+                    link.download = `${framework.organization.name}-${framework.name}-SOA.xlsx`;
                     window.document.body.appendChild(link);
                     link.click();
                     window.document.body.removeChild(link);
@@ -169,6 +174,7 @@ export default function FrameworkDetailPage(props: Props) {
               key={control.id}
               id={control.sectionTitle}
               description={control.name}
+              excluded={control.status === "EXCLUDED"}
               to={`/organizations/${organizationId}/frameworks/${framework.id}/controls/${control.id}`}
               active={selectedControl?.id === control.id}
             />

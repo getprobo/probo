@@ -97,6 +97,8 @@ export const frameworkControlNodeQuery = graphql`
         name
         sectionTitle
         description
+        status
+        exclusionJustification
         ...FrameworkControlDialogFragment
         measures(first: 100)
           @connection(key: "FrameworkGraphControl_measures") {

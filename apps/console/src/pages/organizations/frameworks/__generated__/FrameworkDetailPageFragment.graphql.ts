@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d3c93020e1d7d125fc2055a650dd62e3>>
+ * @generated SignedSource<<c6e55821a322dceae5408ac3898cfa48>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,21 +9,27 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type ControlStatus = "EXCLUDED" | "INCLUDED";
 import { FragmentRefs } from "relay-runtime";
 export type FrameworkDetailPageFragment$data = {
   readonly controls: {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly exclusionJustification: string | null | undefined;
         readonly id: string;
         readonly name: string;
         readonly sectionTitle: string;
+        readonly status: ControlStatus;
       };
     }>;
   };
   readonly description: string;
   readonly id: string;
   readonly name: string;
+  readonly organization: {
+    readonly name: string;
+  };
   readonly " $fragmentType": "FrameworkDetailPageFragment";
 };
 export type FrameworkDetailPageFragment$key = {
@@ -59,6 +65,18 @@ return {
       "args": null,
       "kind": "ScalarField",
       "name": "description",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "Organization",
+      "kind": "LinkedField",
+      "name": "organization",
+      "plural": false,
+      "selections": [
+        (v1/*: any*/)
+      ],
       "storageKey": null
     },
     {
@@ -107,7 +125,21 @@ return {
                   "name": "sectionTitle",
                   "storageKey": null
                 },
-                (v1/*: any*/)
+                (v1/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "status",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "exclusionJustification",
+                  "storageKey": null
+                }
               ],
               "storageKey": null
             }
@@ -135,6 +167,6 @@ return {
 };
 })();
 
-(node as any).hash = "ad59b1c61a01fdcb5afbf0ee920a46bb";
+(node as any).hash = "c31fd5c0f675d2524f736d69c4ebebe3";
 
 export default node;

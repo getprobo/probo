@@ -6,6 +6,7 @@ import {
   DialogFooter,
   Input,
   Textarea,
+  Option,
   useDialogRef,
 } from "@probo/ui";
 import type { ReactNode } from "react";
@@ -16,6 +17,7 @@ import type { FrameworkControlDialogFragment$key } from "./__generated__/Framewo
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { z } from "zod";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { ControlledSelect } from "/components/form/ControlledField";
 
 type Props = {
   children: ReactNode;
@@ -30,6 +32,8 @@ const controlFragment = graphql`
     name
     description
     sectionTitle
+    status
+    exclusionJustification
   }
 `;
 
@@ -62,6 +66,16 @@ const schema = z.object({
   name: z.string(),
   description: z.string(),
   sectionTitle: z.string(),
+  status: z.enum(["INCLUDED", "EXCLUDED"]),
+  exclusionJustification: z.string().optional(),
+}).refine((data) => {
+  if (data.status === "EXCLUDED") {
+    return data.exclusionJustification && data.exclusionJustification.trim().length > 0;
+  }
+  return true;
+}, {
+  message: "Exclusion justification is required when status is excluded",
+  path: ["exclusionJustification"],
 });
 
 export function FrameworkControlDialog(props: Props) {
@@ -77,13 +91,18 @@ export function FrameworkControlDialog(props: Props) {
         successMessage: __("Control created successfully."),
         errorMessage: __("Failed to create control. Please try again."),
       });
-  const { control, handleSubmit, register, reset } = useFormWithSchema(schema, {
+  const { control, handleSubmit, register, reset, watch } = useFormWithSchema(schema, {
     defaultValues: {
       name: frameworkControl?.name ?? "",
       description: frameworkControl?.description ?? "",
       sectionTitle: frameworkControl?.sectionTitle ?? "",
+      status: frameworkControl?.status ?? "INCLUDED",
+      exclusionJustification: frameworkControl?.exclusionJustification ?? "",
     },
   });
+
+  const statusValue = watch("status");
+  const showExclusionJustification = statusValue === "EXCLUDED";
 
   const onSubmit = handleSubmit(async (data) => {
     if (frameworkControl) {
@@ -95,6 +114,8 @@ export function FrameworkControlDialog(props: Props) {
             name: data.name,
             description: data.description,
             sectionTitle: data.sectionTitle,
+            status: data.status,
+            exclusionJustification: data.status === "EXCLUDED" ? data.exclusionJustification : null,
           },
         },
       });
@@ -107,6 +128,8 @@ export function FrameworkControlDialog(props: Props) {
             name: data.name,
             description: data.description,
             sectionTitle: data.sectionTitle,
+            status: data.status,
+            exclusionJustification: data.status === "EXCLUDED" ? data.exclusionJustification : null,
           },
           connections: [props.connectionId!],
         },
@@ -148,11 +171,26 @@ export function FrameworkControlDialog(props: Props) {
           <Textarea
             id="content"
             variant="ghost"
-            required
             autogrow
             placeholder={__("Add description")}
             {...register("description")}
           />
+          <ControlledSelect
+            control={control}
+            name="status"
+            placeholder={__("Select status")}
+          >
+            <Option value="INCLUDED">{__("Included")}</Option>
+            <Option value="EXCLUDED">{__("Excluded")}</Option>
+          </ControlledSelect>
+          {showExclusionJustification && (
+            <Input
+              id="exclusionJustification"
+              variant="bordered"
+              placeholder={__("Reason for exclusion")}
+              {...register("exclusionJustification")}
+            />
+          )}
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isMutating}>

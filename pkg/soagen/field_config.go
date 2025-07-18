@@ -50,7 +50,7 @@ var (
 			HasFilter:     true,
 		},
 		{
-			Field:         "JustificationExclusion",
+			Field:         "ExclusionJustification",
 			Columns:       []string{"D"},
 			FilterColumns: []string{},
 			Width:         []float64{25},
