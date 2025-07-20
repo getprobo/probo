@@ -12,11 +12,12 @@ import {
   type DialogRef,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { graphql } from "react-relay";
+import { graphql, useRelayEnvironment } from "react-relay";
 import { useState } from "react";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
 
 const uploadEvidenceMutation = graphql`
   mutation CreateEvidenceDialogUploadMutation(
@@ -73,6 +74,7 @@ export function CreateEvidenceDialog(props: Props) {
 function EvidenceUpload({ measureId, connectionId }: Omit<Props, "ref">) {
   const { __ } = useTranslate();
 
+  const relayEnv = useRelayEnvironment();
   const [mutate, isUpdating] = useMutationWithToasts(uploadEvidenceMutation, {
     successMessage: __("Evidence uploaded successfully"),
     errorMessage: __("Failed to create evidence"),
@@ -90,6 +92,9 @@ function EvidenceUpload({ measureId, connectionId }: Omit<Props, "ref">) {
         uploadables: {
           "input.file": file,
         },
+        onSuccess: () => {
+          updateStoreCounter(relayEnv, measureId, "evidences(first:0)", 1);
+        },
       });
     }
   };
@@ -98,7 +103,7 @@ function EvidenceUpload({ measureId, connectionId }: Omit<Props, "ref">) {
       <DialogContent padded>
         <Dropzone
           description={__(
-            "Only PDF, DOCX, XLSX, PPTX, JPG, PNG, WEBP, URI files up to 10MB are allowed",
+            "Only PDF, DOCX, XLSX, PPTX, JPG, PNG, WEBP, URI files up to 10MB are allowed"
           )}
           isUploading={isUpdating}
           onDrop={handleDrop}
@@ -136,7 +141,7 @@ function EvidenceLink({ measureId, connectionId, ref }: Props) {
         name: "",
         url: "",
       },
-    },
+    }
   );
 
   const [mutate] = useMutationWithToasts(uploadEvidenceMutation, {

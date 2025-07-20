@@ -1,7 +1,8 @@
-import { graphql, useFragment, useMutation } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 import type { RiskMeasuresTabFragment$key } from "./__generated__/RiskMeasuresTabFragment.graphql";
 import { useOutletContext } from "react-router";
 import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
+import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement.ts";
 
 export const measuresFragment = graphql`
   fragment RiskMeasuresTabFragment on Risk {
@@ -52,9 +53,24 @@ export default function RiskMeasuresTab() {
   const data = useFragment(measuresFragment, risk);
   const connectionId = data.measures.__id;
   const measures = data.measures?.edges?.map((edge) => edge.node) ?? [];
-
-  const [detachMeasure, isDetaching] = useMutation(detachMeasureMutation);
-  const [attachMeasure, isAttaching] = useMutation(attachMeasureMutation);
+  const incrementOptions = {
+    id: data.id,
+    node: "measures(first:0)",
+  };
+  const [detachMeasure, isDetaching] = useMutationWithIncrement(
+    detachMeasureMutation,
+    {
+      ...incrementOptions,
+      value: -1,
+    },
+  );
+  const [attachMeasure, isAttaching] = useMutationWithIncrement(
+    attachMeasureMutation,
+    {
+      ...incrementOptions,
+      value: 1,
+    },
+  );
   const isLoading = isDetaching || isAttaching;
 
   return (
