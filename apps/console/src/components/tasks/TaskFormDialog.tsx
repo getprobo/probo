@@ -15,7 +15,7 @@ import type { ReactNode } from "react";
 import { useTranslate } from "@probo/i18n";
 import { Breadcrumb } from "@probo/ui";
 import { graphql } from "relay-runtime";
-import { useFragment } from "react-relay";
+import { useFragment, useRelayEnvironment } from "react-relay";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
@@ -24,6 +24,7 @@ import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import type { TaskFormDialogFragment$key } from "./__generated__/TaskFormDialogFragment.graphql";
 import { MeasureSelectField } from "/components/form/MeasureSelectField";
 import { Controller } from "react-hook-form";
+import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
 
 const taskFragment = graphql`
   fragment TaskFormDialogFragment on Task {
@@ -93,6 +94,7 @@ export default function TaskFormDialog(props: Props) {
   const dialogRef = props.ref ?? useDialogRef();
   const organizationId = useOrganizationId();
   const task = useFragment(taskFragment, props.task);
+  const relayEnv = useRelayEnvironment();
   const [mutate] = task
     ? useMutationWithToasts(taskUpdateMutation, {
         successMessage: __("Task updated successfully."),
@@ -141,6 +143,9 @@ export default function TaskFormDialog(props: Props) {
             measureId: data.measureId,
           },
           connections: [props.connection!],
+        },
+        onCompleted: () => {
+          updateStoreCounter(relayEnv, data.measureId, "tasks(first:0)", 1);
         },
       });
       reset();
