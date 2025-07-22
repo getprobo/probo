@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5c976aa26b87b4f77dfcfeba71d3bbe3>>
+ * @generated SignedSource<<be64518840fd2564cffe1646a58c3762>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,7 @@ export type CreateControlInput = {
   frameworkId: string;
   name: string;
   sectionTitle: string;
-  status?: ControlStatus | null | undefined;
+  status: ControlStatus;
 };
 export type FrameworkControlDialogCreateMutation$variables = {
   connections: ReadonlyArray<string>;
