@@ -12,29 +12,20 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package coredata
+package types
 
-const (
-	OrganizationEntityType uint16 = iota
-	FrameworkEntityType
-	MeasureEntityType
-	TaskEntityType
-	EvidenceEntityType
-	ConnectorEntityType
-	VendorRiskAssessmentEntityType
-	VendorEntityType
-	PeopleEntityType
-	VendorComplianceReportEntityType
-	DocumentEntityType
-	UserEntityType
-	SessionEntityType
-	EmailEntityType
-	ControlEntityType
-	RiskEntityType
-	DocumentVersionEntityType
-	DocumentVersionSignatureEntityType
-	AssetEntityType
-	DatumEntityType
-	AuditEntityType
-	ReportEntityType
+import (
+	"github.com/getprobo/probo/pkg/coredata"
 )
+
+func NewReport(r *coredata.Report) *Report {
+	return &Report{
+		ID:        r.ID,
+		ObjectKey: r.ObjectKey,
+		MimeType:  r.MimeType,
+		Filename:  r.Filename,
+		Size:      int(r.Size),
+		CreatedAt: r.CreatedAt,
+		UpdatedAt: r.UpdatedAt,
+	}
+}

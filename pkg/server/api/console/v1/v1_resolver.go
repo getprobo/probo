@@ -107,6 +107,81 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// Organization is the resolver for the organization field.
+func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*types.Organization, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	if obj.Organization == nil {
+		return nil, fmt.Errorf("cannot get organization")
+	}
+
+	org, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get organization: %w", err)
+	}
+
+	return types.NewOrganization(org), nil
+}
+
+// Framework is the resolver for the framework field.
+func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	if obj.Framework == nil {
+		return nil, fmt.Errorf("cannot get framework")
+	}
+
+	framework, err := prb.Frameworks.Get(ctx, obj.Framework.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get framework: %w", err)
+	}
+
+	return types.NewFramework(framework), nil
+}
+
+// Report is the resolver for the report field.
+func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	if obj.Report == nil {
+		return nil, nil
+	}
+
+	report, err := prb.Reports.Get(ctx, obj.Report.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get report: %w", err)
+	}
+
+	return types.NewReport(report), nil
+}
+
+// ReportURL is the resolver for the reportUrl field.
+func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*string, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	if obj.Report == nil {
+		return nil, nil
+	}
+
+	url, err := prb.Audits.GenerateReportURL(ctx, obj.ID, 15*time.Minute)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate report URL: %w", err)
+	}
+
+	return url, nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error) {
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	count, err := prb.Audits.CountForOrganizationID(ctx, obj.ParentID)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count audits: %w", err)
+	}
+	return count, nil
+}
+
 // Framework is the resolver for the framework field.
 func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*types.Framework, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -2191,6 +2266,101 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 	}, nil
 }
 
+// CreateAudit is the resolver for the createAudit field.
+func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAuditInput) (*types.CreateAuditPayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	req := probo.CreateAuditRequest{
+		OrganizationID: input.OrganizationID,
+		FrameworkID:    input.FrameworkID,
+		ValidFrom:      input.ValidFrom,
+		ValidUntil:     input.ValidUntil,
+		State:          input.State,
+	}
+
+	audit, err := prb.Audits.Create(ctx, &req)
+	if err != nil {
+		panic(fmt.Errorf("cannot create audit: %w", err))
+	}
+
+	return &types.CreateAuditPayload{
+		AuditEdge: types.NewAuditEdge(audit, coredata.AuditOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateAudit is the resolver for the updateAudit field.
+func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAuditInput) (*types.UpdateAuditPayload, error) {
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	req := probo.UpdateAuditRequest{
+		ID:         input.ID,
+		ValidFrom:  input.ValidFrom,
+		ValidUntil: input.ValidUntil,
+		State:      input.State,
+	}
+
+	audit, err := prb.Audits.Update(ctx, &req)
+	if err != nil {
+		panic(fmt.Errorf("cannot update audit: %w", err))
+	}
+
+	return &types.UpdateAuditPayload{
+		Audit: types.NewAudit(audit),
+	}, nil
+}
+
+// DeleteAudit is the resolver for the deleteAudit field.
+func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAuditInput) (*types.DeleteAuditPayload, error) {
+	prb := r.ProboService(ctx, input.AuditID.TenantID())
+
+	err := prb.Audits.Delete(ctx, input.AuditID)
+	if err != nil {
+		panic(fmt.Errorf("cannot delete audit: %w", err))
+	}
+
+	return &types.DeleteAuditPayload{
+		DeletedAuditID: input.AuditID,
+	}, nil
+}
+
+// UploadAuditReport is the resolver for the uploadAuditReport field.
+func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.UploadAuditReportInput) (*types.UploadAuditReportPayload, error) {
+	prb := r.ProboService(ctx, input.AuditID.TenantID())
+
+	req := probo.UploadAuditReportRequest{
+		AuditID: input.AuditID,
+		File: probo.File{
+			Content:     input.File.File,
+			Filename:    input.File.Filename,
+			Size:        input.File.Size,
+			ContentType: input.File.ContentType,
+		},
+	}
+
+	audit, err := prb.Audits.UploadReport(ctx, req)
+	if err != nil {
+		panic(fmt.Errorf("cannot upload audit report: %w", err))
+	}
+
+	return &types.UploadAuditReportPayload{
+		Audit: types.NewAudit(audit),
+	}, nil
+}
+
+// DeleteAuditReport is the resolver for the deleteAuditReport field.
+func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.DeleteAuditReportInput) (*types.DeleteAuditReportPayload, error) {
+	prb := r.ProboService(ctx, input.AuditID.TenantID())
+
+	audit, err := prb.Audits.DeleteReport(ctx, input.AuditID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot delete audit report: %w", err)
+	}
+
+	return &types.DeleteAuditReportPayload{
+		Audit: types.NewAudit(audit),
+	}, nil
+}
+
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -2516,6 +2686,31 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 	return types.NewDataConnection(page, r, obj.ID), nil
 }
 
+// Audits is the resolver for the audits field.
+func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.Audits.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization audits: %w", err))
+	}
+
+	return types.NewAuditConnection(page, r, obj.ID), nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
@@ -2635,6 +2830,18 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			panic(fmt.Errorf("cannot get data: %w", err))
 		}
 		return types.NewDatum(datum), nil
+	case coredata.AuditEntityType:
+		audit, err := prb.Audits.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("cannot get audit: %w", err))
+		}
+		return types.NewAudit(audit), nil
+	case coredata.ReportEntityType:
+		report, err := prb.Reports.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("cannot get report: %w", err))
+		}
+		return types.NewReport(report), nil
 	default:
 	}
 
@@ -2650,6 +2857,18 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 		ID:   session.ID,
 		User: types.NewUser(user),
 	}, nil
+}
+
+// DownloadURL is the resolver for the downloadUrl field.
+func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*string, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	url, err := prb.Reports.GenerateDownloadURL(ctx, obj.ID, 15*time.Minute)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate download URL: %w", err)
+	}
+
+	return url, nil
 }
 
 // Owner is the resolver for the owner field.
@@ -3136,6 +3355,14 @@ func (r *Resolver) AssetConnection() schema.AssetConnectionResolver {
 	return &assetConnectionResolver{r}
 }
 
+// Audit returns schema.AuditResolver implementation.
+func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
+
+// AuditConnection returns schema.AuditConnectionResolver implementation.
+func (r *Resolver) AuditConnection() schema.AuditConnectionResolver {
+	return &auditConnectionResolver{r}
+}
+
 // Control returns schema.ControlResolver implementation.
 func (r *Resolver) Control() schema.ControlResolver { return &controlResolver{r} }
 
@@ -3208,6 +3435,9 @@ func (r *Resolver) PeopleConnection() schema.PeopleConnectionResolver {
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 
+// Report returns schema.ReportResolver implementation.
+func (r *Resolver) Report() schema.ReportResolver { return &reportResolver{r} }
+
 // Risk returns schema.RiskResolver implementation.
 func (r *Resolver) Risk() schema.RiskResolver { return &riskResolver{r} }
 
@@ -3246,6 +3476,8 @@ func (r *Resolver) Viewer() schema.ViewerResolver { return &viewerResolver{r} }
 
 type assetResolver struct{ *Resolver }
 type assetConnectionResolver struct{ *Resolver }
+type auditResolver struct{ *Resolver }
+type auditConnectionResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }
 type controlConnectionResolver struct{ *Resolver }
 type datumResolver struct{ *Resolver }
@@ -3264,6 +3496,7 @@ type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type peopleConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type reportResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }
 type riskConnectionResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }
