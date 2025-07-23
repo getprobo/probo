@@ -16,7 +16,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { Fragment } from "react";
-import { graphql, useMutation } from "react-relay";
+import { graphql, useMutation, useRelayEnvironment } from "react-relay";
 import { useTranslate } from "@probo/i18n";
 import { usePageTitle } from "@probo/hooks";
 import type { ItemOf } from "/types";
@@ -24,9 +24,10 @@ import TaskFormDialog, {
   taskUpdateMutation,
 } from "/components/tasks/TaskFormDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useParams } from "react-router";
 import { promisifyMutation } from "@probo/helpers";
 import type { TaskFormDialogFragment$key } from "./__generated__/TaskFormDialogFragment.graphql";
+import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
 
 type Props = {
   tasks: ({
@@ -94,15 +95,13 @@ export default function TasksCard({ tasks, connectionId }: Props) {
                         <TaskStateIcon state={h.state!} />
                         {h.label}
                       </h2>
-                      {tasksPerHash
-                        .get(h.hash)
-                        ?.map((task) => (
-                          <TaskRow
-                            key={task.id}
-                            task={task}
-                            connectionId={connectionId}
-                          />
-                        ))}
+                      {tasksPerHash.get(h.hash)?.map((task) => (
+                        <TaskRow
+                          key={task.id}
+                          task={task}
+                          connectionId={connectionId}
+                        />
+                      ))}
                     </Fragment>
                   ))
               : // Todo and Done tab simply list todos
@@ -142,7 +141,9 @@ function TaskRow(props: TaskRowProps) {
   const { __ } = useTranslate();
   const confirm = useConfirm();
   const [deleteTask] = useMutation(deleteMutation);
+  const params = useParams<{ measureId?: string }>();
 
+  const relayEnv = useRelayEnvironment();
   const [updateTask, isUpdating] = useMutation(taskUpdateMutation);
 
   const onToggle = () => {
@@ -163,6 +164,16 @@ function TaskRow(props: TaskRowProps) {
           variables: {
             input: { taskId: props.task.id },
             connections: [props.connectionId],
+          },
+          onCompleted: () => {
+            if (params.measureId) {
+              updateStoreCounter(
+                relayEnv,
+                params.measureId,
+                "tasks(first:0)",
+                -1
+              );
+            }
           },
         }),
       {

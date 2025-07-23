@@ -1,7 +1,8 @@
-import { graphql, useFragment, useMutation } from "react-relay";
+import { graphql, useFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
 import type { RiskDocumentsTabFragment$key } from "./__generated__/RiskDocumentsTabFragment.graphql";
+import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement.ts";
 
 export const documentsFragment = graphql`
   fragment RiskDocumentsTabFragment on Risk {
@@ -53,8 +54,24 @@ export default function RiskDocumentsTab() {
   const connectionId = data.documents.__id;
   const documents = data.documents?.edges?.map((edge) => edge.node) ?? [];
 
-  const [detachDocument, isDetaching] = useMutation(detachDocumentMutation);
-  const [attachDocument, isAttaching] = useMutation(attachDocumentMutation);
+  const incrementOptions = {
+    id: data.id,
+    node: "documents(first:0)",
+  };
+  const [detachDocument, isDetaching] = useMutationWithIncrement(
+    detachDocumentMutation,
+    {
+      ...incrementOptions,
+      value: -1,
+    },
+  );
+  const [attachDocument, isAttaching] = useMutationWithIncrement(
+    attachDocumentMutation,
+    {
+      ...incrementOptions,
+      value: 1,
+    },
+  );
   const isLoading = isDetaching || isAttaching;
 
   return (
