@@ -56,6 +56,27 @@ type AssignTaskPayload struct {
 	Task *Task `json:"task"`
 }
 
+type Audit struct {
+	ID           gid.GID             `json:"id"`
+	Organization *Organization       `json:"organization"`
+	Framework    *Framework          `json:"framework"`
+	ValidFrom    *time.Time          `json:"validFrom,omitempty"`
+	ValidUntil   *time.Time          `json:"validUntil,omitempty"`
+	Report       *Report             `json:"report,omitempty"`
+	ReportURL    *string             `json:"reportUrl,omitempty"`
+	State        coredata.AuditState `json:"state"`
+	CreatedAt    time.Time           `json:"createdAt"`
+	UpdatedAt    time.Time           `json:"updatedAt"`
+}
+
+func (Audit) IsNode()             {}
+func (this Audit) GetID() gid.GID { return this.ID }
+
+type AuditEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Audit         `json:"node"`
+}
+
 type BulkPublishDocumentVersionsInput struct {
 	DocumentIds []gid.GID `json:"documentIds"`
 	Changelog   string    `json:"changelog"`
@@ -156,6 +177,18 @@ type CreateAssetInput struct {
 
 type CreateAssetPayload struct {
 	AssetEdge *AssetEdge `json:"assetEdge"`
+}
+
+type CreateAuditInput struct {
+	OrganizationID gid.GID              `json:"organizationId"`
+	FrameworkID    gid.GID              `json:"frameworkId"`
+	ValidFrom      *time.Time           `json:"validFrom,omitempty"`
+	ValidUntil     *time.Time           `json:"validUntil,omitempty"`
+	State          *coredata.AuditState `json:"state,omitempty"`
+}
+
+type CreateAuditPayload struct {
+	AuditEdge *AuditEdge `json:"auditEdge"`
 }
 
 type CreateControlDocumentMappingInput struct {
@@ -397,6 +430,22 @@ type DeleteAssetInput struct {
 
 type DeleteAssetPayload struct {
 	DeletedAssetID gid.GID `json:"deletedAssetId"`
+}
+
+type DeleteAuditInput struct {
+	AuditID gid.GID `json:"auditId"`
+}
+
+type DeleteAuditPayload struct {
+	DeletedAuditID gid.GID `json:"deletedAuditId"`
+}
+
+type DeleteAuditReportInput struct {
+	AuditID gid.GID `json:"auditId"`
+}
+
+type DeleteAuditReportPayload struct {
+	Audit *Audit `json:"audit"`
 }
 
 type DeleteControlDocumentMappingInput struct {
@@ -766,6 +815,7 @@ type Organization struct {
 	Tasks      *TaskConnection      `json:"tasks"`
 	Assets     *AssetConnection     `json:"assets"`
 	Data       *DatumConnection     `json:"data"`
+	Audits     *AuditConnection     `json:"audits"`
 	CreatedAt  time.Time            `json:"createdAt"`
 	UpdatedAt  time.Time            `json:"updatedAt"`
 }
@@ -837,6 +887,20 @@ type RemoveUserInput struct {
 type RemoveUserPayload struct {
 	Success bool `json:"success"`
 }
+
+type Report struct {
+	ID          gid.GID   `json:"id"`
+	ObjectKey   string    `json:"objectKey"`
+	MimeType    string    `json:"mimeType"`
+	Filename    string    `json:"filename"`
+	Size        int       `json:"size"`
+	DownloadURL *string   `json:"downloadUrl,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+func (Report) IsNode()             {}
+func (this Report) GetID() gid.GID { return this.ID }
 
 type RequestEvidenceInput struct {
 	TaskID      gid.GID               `json:"taskId"`
@@ -949,6 +1013,17 @@ type UpdateAssetInput struct {
 
 type UpdateAssetPayload struct {
 	Asset *Asset `json:"asset"`
+}
+
+type UpdateAuditInput struct {
+	ID         gid.GID              `json:"id"`
+	ValidFrom  *time.Time           `json:"validFrom,omitempty"`
+	ValidUntil *time.Time           `json:"validUntil,omitempty"`
+	State      *coredata.AuditState `json:"state,omitempty"`
+}
+
+type UpdateAuditPayload struct {
+	Audit *Audit `json:"audit"`
 }
 
 type UpdateControlInput struct {
@@ -1100,6 +1175,15 @@ type UpdateVendorInput struct {
 
 type UpdateVendorPayload struct {
 	Vendor *Vendor `json:"vendor"`
+}
+
+type UploadAuditReportInput struct {
+	AuditID gid.GID        `json:"auditId"`
+	File    graphql.Upload `json:"file"`
+}
+
+type UploadAuditReportPayload struct {
+	Audit *Audit `json:"audit"`
 }
 
 type UploadMeasureEvidenceInput struct {
