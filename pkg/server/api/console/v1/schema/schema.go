@@ -115,16 +115,17 @@ type ComplexityRoot struct {
 	}
 
 	Audit struct {
-		CreatedAt    func(childComplexity int) int
-		Framework    func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Organization func(childComplexity int) int
-		Report       func(childComplexity int) int
-		ReportURL    func(childComplexity int) int
-		State        func(childComplexity int) int
-		UpdatedAt    func(childComplexity int) int
-		ValidFrom    func(childComplexity int) int
-		ValidUntil   func(childComplexity int) int
+		CreatedAt         func(childComplexity int) int
+		Framework         func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Organization      func(childComplexity int) int
+		Report            func(childComplexity int) int
+		ReportURL         func(childComplexity int) int
+		ShowOnTrustCenter func(childComplexity int) int
+		State             func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+		ValidFrom         func(childComplexity int) int
+		ValidUntil        func(childComplexity int) int
 	}
 
 	AuditConnection struct {
@@ -386,6 +387,7 @@ type ComplexityRoot struct {
 		ID                      func(childComplexity int) int
 		Organization            func(childComplexity int) int
 		Owner                   func(childComplexity int) int
+		ShowOnTrustCenter       func(childComplexity int) int
 		Title                   func(childComplexity int) int
 		UpdatedAt               func(childComplexity int) int
 		Versions                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) int
@@ -619,6 +621,7 @@ type ComplexityRoot struct {
 		UpdatePeople                          func(childComplexity int, input types.UpdatePeopleInput) int
 		UpdateRisk                            func(childComplexity int, input types.UpdateRiskInput) int
 		UpdateTask                            func(childComplexity int, input types.UpdateTaskInput) int
+		UpdateTrustCenter                     func(childComplexity int, input types.UpdateTrustCenterInput) int
 		UpdateVendor                          func(childComplexity int, input types.UpdateVendorInput) int
 		UploadAuditReport                     func(childComplexity int, input types.UploadAuditReportInput) int
 		UploadMeasureEvidence                 func(childComplexity int, input types.UploadMeasureEvidenceInput) int
@@ -627,24 +630,25 @@ type ComplexityRoot struct {
 	}
 
 	Organization struct {
-		Assets     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) int
-		Audits     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
-		Connectors func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
-		Controls   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
-		CreatedAt  func(childComplexity int) int
-		Data       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) int
-		Documents  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
-		Frameworks func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
-		ID         func(childComplexity int) int
-		LogoURL    func(childComplexity int) int
-		Measures   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
-		Name       func(childComplexity int) int
-		Peoples    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy) int
-		Risks      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
-		Tasks      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
-		UpdatedAt  func(childComplexity int) int
-		Users      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.UserOrderBy) int
-		Vendors    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
+		Assets      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) int
+		Audits      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
+		Connectors  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
+		Controls    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
+		CreatedAt   func(childComplexity int) int
+		Data        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) int
+		Documents   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
+		Frameworks  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
+		ID          func(childComplexity int) int
+		LogoURL     func(childComplexity int) int
+		Measures    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
+		Name        func(childComplexity int) int
+		Peoples     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy) int
+		Risks       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
+		Tasks       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
+		TrustCenter func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
+		Users       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.UserOrderBy) int
+		Vendors     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
 	}
 
 	OrganizationConnection struct {
@@ -789,6 +793,14 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	TrustCenter struct {
+		Active    func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Slug      func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+	}
+
 	UnassignTaskPayload struct {
 		Task func(childComplexity int) int
 	}
@@ -839,6 +851,10 @@ type ComplexityRoot struct {
 
 	UpdateTaskPayload struct {
 		Task func(childComplexity int) int
+	}
+
+	UpdateTrustCenterPayload struct {
+		TrustCenter func(childComplexity int) int
 	}
 
 	UpdateVendorPayload struct {
@@ -899,6 +915,7 @@ type ComplexityRoot struct {
 		SecurityOwner                 func(childComplexity int) int
 		SecurityPageURL               func(childComplexity int) int
 		ServiceLevelAgreementURL      func(childComplexity int) int
+		ShowOnTrustCenter             func(childComplexity int) int
 		StatusPageURL                 func(childComplexity int) int
 		SubprocessorsListURL          func(childComplexity int) int
 		TermsOfServiceURL             func(childComplexity int) int
@@ -1058,6 +1075,7 @@ type MeasureConnectionResolver interface {
 type MutationResolver interface {
 	CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error)
 	UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error)
+	UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error)
 	ConfirmEmail(ctx context.Context, input types.ConfirmEmailInput) (*types.ConfirmEmailPayload, error)
 	InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error)
 	RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error)
@@ -1144,6 +1162,7 @@ type OrganizationResolver interface {
 	Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) (*types.AssetConnection, error)
 	Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) (*types.DatumConnection, error)
 	Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error)
+	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
 }
 type PeopleConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error)
@@ -1392,6 +1411,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Audit.ReportURL(childComplexity), true
+
+	case "Audit.showOnTrustCenter":
+		if e.complexity.Audit.ShowOnTrustCenter == nil {
+			break
+		}
+
+		return e.complexity.Audit.ShowOnTrustCenter(childComplexity), true
 
 	case "Audit.state":
 		if e.complexity.Audit.State == nil {
@@ -2154,6 +2180,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Document.Owner(childComplexity), true
+
+	case "Document.showOnTrustCenter":
+		if e.complexity.Document.ShowOnTrustCenter == nil {
+			break
+		}
+
+		return e.complexity.Document.ShowOnTrustCenter(childComplexity), true
 
 	case "Document.title":
 		if e.complexity.Document.Title == nil {
@@ -3631,6 +3664,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.UpdateTask(childComplexity, args["input"].(types.UpdateTaskInput)), true
 
+	case "Mutation.updateTrustCenter":
+		if e.complexity.Mutation.UpdateTrustCenter == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateTrustCenter_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateTrustCenter(childComplexity, args["input"].(types.UpdateTrustCenterInput)), true
+
 	case "Mutation.updateVendor":
 		if e.complexity.Mutation.UpdateVendor == nil {
 			break
@@ -3850,6 +3895,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Tasks(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.TaskOrderBy)), true
+
+	case "Organization.trustCenter":
+		if e.complexity.Organization.TrustCenter == nil {
+			break
+		}
+
+		return e.complexity.Organization.TrustCenter(childComplexity), true
 
 	case "Organization.updatedAt":
 		if e.complexity.Organization.UpdatedAt == nil {
@@ -4481,6 +4533,41 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TaskEdge.Node(childComplexity), true
 
+	case "TrustCenter.active":
+		if e.complexity.TrustCenter.Active == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.Active(childComplexity), true
+
+	case "TrustCenter.createdAt":
+		if e.complexity.TrustCenter.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.CreatedAt(childComplexity), true
+
+	case "TrustCenter.id":
+		if e.complexity.TrustCenter.ID == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.ID(childComplexity), true
+
+	case "TrustCenter.slug":
+		if e.complexity.TrustCenter.Slug == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.Slug(childComplexity), true
+
+	case "TrustCenter.updatedAt":
+		if e.complexity.TrustCenter.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.UpdatedAt(childComplexity), true
+
 	case "UnassignTaskPayload.task":
 		if e.complexity.UnassignTaskPayload.Task == nil {
 			break
@@ -4571,6 +4658,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UpdateTaskPayload.Task(childComplexity), true
+
+	case "UpdateTrustCenterPayload.trustCenter":
+		if e.complexity.UpdateTrustCenterPayload.TrustCenter == nil {
+			break
+		}
+
+		return e.complexity.UpdateTrustCenterPayload.TrustCenter(childComplexity), true
 
 	case "UpdateVendorPayload.vendor":
 		if e.complexity.UpdateVendorPayload.Vendor == nil {
@@ -4817,6 +4911,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Vendor.ServiceLevelAgreementURL(childComplexity), true
+
+	case "Vendor.showOnTrustCenter":
+		if e.complexity.Vendor.ShowOnTrustCenter == nil {
+			break
+		}
+
+		return e.complexity.Vendor.ShowOnTrustCenter(childComplexity), true
 
 	case "Vendor.statusPageUrl":
 		if e.complexity.Vendor.StatusPageURL == nil {
@@ -5206,6 +5307,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdatePeopleInput,
 		ec.unmarshalInputUpdateRiskInput,
 		ec.unmarshalInputUpdateTaskInput,
+		ec.unmarshalInputUpdateTrustCenterInput,
 		ec.unmarshalInputUpdateVendorInput,
 		ec.unmarshalInputUploadAuditReportInput,
 		ec.unmarshalInputUploadMeasureEvidenceInput,
@@ -6017,6 +6119,14 @@ input RiskFilter {
 }
 
 # Core Types
+type TrustCenter implements Node {
+  id: ID!
+  active: Boolean!
+  slug: String!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
 type Organization implements Node {
   id: ID!
   name: String!
@@ -6130,6 +6240,8 @@ type Organization implements Node {
     orderBy: AuditOrder
   ): AuditConnection! @goField(forceResolver: true)
 
+  trustCenter: TrustCenter @goField(forceResolver: true)
+
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -6205,6 +6317,7 @@ type Vendor implements Node {
   headquarterAddress: String
   legalName: String
   websiteUrl: String
+  showOnTrustCenter: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -6366,6 +6479,7 @@ type Document implements Node {
   description: String!
   documentType: DocumentType!
   currentPublishedVersion: Int
+  showOnTrustCenter: Boolean!
   owner: People! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
 
@@ -6448,6 +6562,7 @@ type Audit implements Node {
   report: Report @goField(forceResolver: true)
   reportUrl: String @goField(forceResolver: true)
   state: AuditState!
+  showOnTrustCenter: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -6711,6 +6826,10 @@ type Mutation {
     input: UpdateOrganizationInput!
   ): UpdateOrganizationPayload!
 
+  updateTrustCenter(
+    input: UpdateTrustCenterInput!
+  ): UpdateTrustCenterPayload!
+
   # User mutations
   confirmEmail(input: ConfirmEmailInput!): ConfirmEmailPayload!
   inviteUser(input: InviteUserInput!): InviteUserPayload!
@@ -6877,6 +6996,12 @@ input UpdateOrganizationInput {
   logo: Upload
 }
 
+input UpdateTrustCenterInput {
+  trustCenterId: ID!
+  active: Boolean
+  slug: String
+}
+
 input CreateVendorInput {
   organizationId: ID!
   name: String!
@@ -6919,6 +7044,7 @@ input UpdateVendorInput {
   trustPageUrl: String
   businessOwnerId: ID
   securityOwnerId: ID
+  showOnTrustCenter: Boolean
 }
 
 input DeleteVendorInput {
@@ -7150,6 +7276,7 @@ input UpdateDocumentInput {
   ownerId: ID
   createdBy: ID
   documentType: DocumentType
+  showOnTrustCenter: Boolean
 }
 
 input ExportDocumentVersionPDFInput {
@@ -7211,6 +7338,7 @@ input UpdateAuditInput {
   validFrom: Datetime
   validUntil: Datetime
   state: AuditState
+  showOnTrustCenter: Boolean
 }
 
 input DeleteAuditInput {
@@ -7233,6 +7361,10 @@ type CreateOrganizationPayload {
 
 type UpdateOrganizationPayload {
   organization: Organization!
+}
+
+type UpdateTrustCenterPayload {
+  trustCenter: TrustCenter!
 }
 
 type CreateControlPayload {
@@ -10637,6 +10769,29 @@ func (ec *executionContext) field_Mutation_updateTask_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_updateTrustCenter_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_updateTrustCenter_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateTrustCenter_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.UpdateTrustCenterInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateTrustCenterInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterInput(ctx, tmp)
+	}
+
+	var zeroVal types.UpdateTrustCenterInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_updateVendor_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -13030,6 +13185,8 @@ func (ec *executionContext) fieldContext_AssessVendorPayload_vendor(_ context.Co
 				return ec.fieldContext_Vendor_legalName(ctx, field)
 			case "websiteUrl":
 				return ec.fieldContext_Vendor_websiteUrl(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Vendor_showOnTrustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
@@ -13505,6 +13662,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -14049,6 +14208,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -14341,6 +14502,50 @@ func (ec *executionContext) fieldContext_Audit_state(_ context.Context, field gr
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type AuditState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Audit_showOnTrustCenter(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ShowOnTrustCenter, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Audit_showOnTrustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Audit",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -14681,6 +14886,8 @@ func (ec *executionContext) fieldContext_AuditEdge_node(_ context.Context, field
 				return ec.fieldContext_Audit_reportUrl(ctx, field)
 			case "state":
 				return ec.fieldContext_Audit_state(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
@@ -17681,6 +17888,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -18177,6 +18386,8 @@ func (ec *executionContext) fieldContext_DeleteAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_reportUrl(ctx, field)
 			case "state":
 				return ec.fieldContext_Audit_state(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
@@ -19241,6 +19452,50 @@ func (ec *executionContext) fieldContext_Document_currentPublishedVersion(_ cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Document_showOnTrustCenter(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_showOnTrustCenter(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ShowOnTrustCenter, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_showOnTrustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Document_owner(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Document_owner(ctx, field)
 	if err != nil {
@@ -19378,6 +19633,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -19842,6 +20099,8 @@ func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, fi
 				return ec.fieldContext_Document_documentType(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Document_showOnTrustCenter(ctx, field)
 			case "owner":
 				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
@@ -19954,6 +20213,8 @@ func (ec *executionContext) fieldContext_DocumentVersion_document(_ context.Cont
 				return ec.fieldContext_Document_documentType(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Document_showOnTrustCenter(ctx, field)
 			case "owner":
 				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
@@ -22533,6 +22794,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -24161,6 +24424,65 @@ func (ec *executionContext) fieldContext_Mutation_updateOrganization(ctx context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateOrganization_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateTrustCenter(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateTrustCenter(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateTrustCenter(rctx, fc.Args["input"].(types.UpdateTrustCenterInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.UpdateTrustCenterPayload)
+	fc.Result = res
+	return ec.marshalNUpdateTrustCenterPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateTrustCenter(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "trustCenter":
+				return ec.fieldContext_UpdateTrustCenterPayload_trustCenter(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateTrustCenterPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateTrustCenter_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -29263,6 +29585,59 @@ func (ec *executionContext) fieldContext_Organization_audits(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_trustCenter(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_trustCenter(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Organization().TrustCenter(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*types.TrustCenter)
+	fc.Result = res
+	return ec.marshalOTrustCenter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenter(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_trustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TrustCenter_id(ctx, field)
+			case "active":
+				return ec.fieldContext_TrustCenter_active(ctx, field)
+			case "slug":
+				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TrustCenter_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_TrustCenter_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Organization_createdAt(ctx, field)
 	if err != nil {
@@ -29570,6 +29945,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -30561,6 +30938,8 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_document(
 				return ec.fieldContext_Document_documentType(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Document_showOnTrustCenter(ctx, field)
 			case "owner":
 				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
@@ -31973,6 +32352,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -33061,6 +33442,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -33550,6 +33933,226 @@ func (ec *executionContext) fieldContext_TaskEdge_node(_ context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenter_id(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenter_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_active(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenter_active(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Active, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_active(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_slug(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenter_slug(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Slug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_slug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenter_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenter_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UnassignTaskPayload_task(ctx context.Context, field graphql.CollectedField, obj *types.UnassignTaskPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UnassignTaskPayload_task(ctx, field)
 	if err != nil {
@@ -33743,6 +34346,8 @@ func (ec *executionContext) fieldContext_UpdateAuditPayload_audit(_ context.Cont
 				return ec.fieldContext_Audit_reportUrl(ctx, field)
 			case "state":
 				return ec.fieldContext_Audit_state(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
@@ -33933,6 +34538,8 @@ func (ec *executionContext) fieldContext_UpdateDocumentPayload_document(_ contex
 				return ec.fieldContext_Document_documentType(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Document_showOnTrustCenter(ctx, field)
 			case "owner":
 				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
@@ -34223,6 +34830,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -34454,6 +35063,62 @@ func (ec *executionContext) fieldContext_UpdateTaskPayload_task(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateTrustCenterPayload_trustCenter(ctx context.Context, field graphql.CollectedField, obj *types.UpdateTrustCenterPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateTrustCenterPayload_trustCenter(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TrustCenter, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.TrustCenter)
+	fc.Result = res
+	return ec.marshalNTrustCenter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenter(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateTrustCenterPayload_trustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateTrustCenterPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TrustCenter_id(ctx, field)
+			case "active":
+				return ec.fieldContext_TrustCenter_active(ctx, field)
+			case "slug":
+				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TrustCenter_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_TrustCenter_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateVendorPayload_vendor(ctx context.Context, field graphql.CollectedField, obj *types.UpdateVendorPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UpdateVendorPayload_vendor(ctx, field)
 	if err != nil {
@@ -34537,6 +35202,8 @@ func (ec *executionContext) fieldContext_UpdateVendorPayload_vendor(_ context.Co
 				return ec.fieldContext_Vendor_legalName(ctx, field)
 			case "websiteUrl":
 				return ec.fieldContext_Vendor_websiteUrl(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Vendor_showOnTrustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
@@ -34603,6 +35270,8 @@ func (ec *executionContext) fieldContext_UploadAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_reportUrl(ctx, field)
 			case "state":
 				return ec.fieldContext_Audit_state(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
@@ -35508,6 +36177,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -36303,6 +36974,50 @@ func (ec *executionContext) fieldContext_Vendor_websiteUrl(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Vendor_showOnTrustCenter(ctx context.Context, field graphql.CollectedField, obj *types.Vendor) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vendor_showOnTrustCenter(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ShowOnTrustCenter, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vendor_showOnTrustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vendor",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Vendor_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Vendor) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Vendor_createdAt(ctx, field)
 	if err != nil {
@@ -36518,6 +37233,8 @@ func (ec *executionContext) fieldContext_VendorComplianceReport_vendor(_ context
 				return ec.fieldContext_Vendor_legalName(ctx, field)
 			case "websiteUrl":
 				return ec.fieldContext_Vendor_websiteUrl(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Vendor_showOnTrustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
@@ -37321,6 +38038,8 @@ func (ec *executionContext) fieldContext_VendorEdge_node(_ context.Context, fiel
 				return ec.fieldContext_Vendor_legalName(ctx, field)
 			case "websiteUrl":
 				return ec.fieldContext_Vendor_websiteUrl(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Vendor_showOnTrustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
@@ -37459,6 +38178,8 @@ func (ec *executionContext) fieldContext_VendorRiskAssessment_vendor(_ context.C
 				return ec.fieldContext_Vendor_legalName(ctx, field)
 			case "websiteUrl":
 				return ec.fieldContext_Vendor_websiteUrl(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Vendor_showOnTrustCenter(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Vendor_createdAt(ctx, field)
 			case "updatedAt":
@@ -43148,7 +43869,7 @@ func (ec *executionContext) unmarshalInputUpdateAuditInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "validFrom", "validUntil", "state"}
+	fieldsInOrder := [...]string{"id", "validFrom", "validUntil", "state", "showOnTrustCenter"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -43183,6 +43904,13 @@ func (ec *executionContext) unmarshalInputUpdateAuditInput(ctx context.Context, 
 				return it, err
 			}
 			it.State = data
+		case "showOnTrustCenter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showOnTrustCenter"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShowOnTrustCenter = data
 		}
 	}
 
@@ -43313,7 +44041,7 @@ func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "title", "content", "ownerId", "createdBy", "documentType"}
+	fieldsInOrder := [...]string{"id", "title", "content", "ownerId", "createdBy", "documentType", "showOnTrustCenter"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -43362,6 +44090,13 @@ func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Contex
 				return it, err
 			}
 			it.DocumentType = data
+		case "showOnTrustCenter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showOnTrustCenter"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShowOnTrustCenter = data
 		}
 	}
 
@@ -43774,6 +44509,47 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateTrustCenterInput(ctx context.Context, obj any) (types.UpdateTrustCenterInput, error) {
+	var it types.UpdateTrustCenterInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"trustCenterId", "active", "slug"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "trustCenterId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrustCenterID = data
+		case "active":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("active"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Active = data
+		case "slug":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Slug = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateVendorInput(ctx context.Context, obj any) (types.UpdateVendorInput, error) {
 	var it types.UpdateVendorInput
 	asMap := map[string]any{}
@@ -43781,7 +44557,7 @@ func (ec *executionContext) unmarshalInputUpdateVendorInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "description", "statusPageUrl", "termsOfServiceUrl", "privacyPolicyUrl", "serviceLevelAgreementUrl", "dataProcessingAgreementUrl", "businessAssociateAgreementUrl", "subprocessorsListUrl", "websiteUrl", "legalName", "headquarterAddress", "category", "certifications", "securityPageUrl", "trustPageUrl", "businessOwnerId", "securityOwnerId"}
+	fieldsInOrder := [...]string{"id", "name", "description", "statusPageUrl", "termsOfServiceUrl", "privacyPolicyUrl", "serviceLevelAgreementUrl", "dataProcessingAgreementUrl", "businessAssociateAgreementUrl", "subprocessorsListUrl", "websiteUrl", "legalName", "headquarterAddress", "category", "certifications", "securityPageUrl", "trustPageUrl", "businessOwnerId", "securityOwnerId", "showOnTrustCenter"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -43921,6 +44697,13 @@ func (ec *executionContext) unmarshalInputUpdateVendorInput(ctx context.Context,
 				return it, err
 			}
 			it.SecurityOwnerID = data
+		case "showOnTrustCenter":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showOnTrustCenter"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ShowOnTrustCenter = data
 		}
 	}
 
@@ -44256,6 +45039,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._User(ctx, sel, obj)
+	case types.TrustCenter:
+		return ec._TrustCenter(ctx, sel, &obj)
+	case *types.TrustCenter:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._TrustCenter(ctx, sel, obj)
 	case types.Task:
 		return ec._Task(ctx, sel, &obj)
 	case *types.Task:
@@ -44952,6 +45742,11 @@ func (ec *executionContext) _Audit(ctx context.Context, sel ast.SelectionSet, ob
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "state":
 			out.Values[i] = ec._Audit_state(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "showOnTrustCenter":
+			out.Values[i] = ec._Audit_showOnTrustCenter(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -47535,6 +48330,11 @@ func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "currentPublishedVersion":
 			out.Values[i] = ec._Document_currentPublishedVersion(ctx, field, obj)
+		case "showOnTrustCenter":
+			out.Values[i] = ec._Document_showOnTrustCenter(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "owner":
 			field := field
 
@@ -49603,6 +50403,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateTrustCenter":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateTrustCenter(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "confirmEmail":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_confirmEmail(ctx, field)
@@ -50615,6 +51422,39 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "trustCenter":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_trustCenter(ctx, field, obj)
 				return res
 			}
 
@@ -52181,6 +53021,65 @@ func (ec *executionContext) _TaskEdge(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var trustCenterImplementors = []string{"TrustCenter", "Node"}
+
+func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionSet, obj *types.TrustCenter) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, trustCenterImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TrustCenter")
+		case "id":
+			out.Values[i] = ec._TrustCenter_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "active":
+			out.Values[i] = ec._TrustCenter_active(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "slug":
+			out.Values[i] = ec._TrustCenter_slug(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._TrustCenter_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._TrustCenter_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var unassignTaskPayloadImplementors = []string{"UnassignTaskPayload"}
 
 func (ec *executionContext) _UnassignTaskPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UnassignTaskPayload) graphql.Marshaler {
@@ -52662,6 +53561,45 @@ func (ec *executionContext) _UpdateTaskPayload(ctx context.Context, sel ast.Sele
 			out.Values[i] = graphql.MarshalString("UpdateTaskPayload")
 		case "task":
 			out.Values[i] = ec._UpdateTaskPayload_task(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateTrustCenterPayloadImplementors = []string{"UpdateTrustCenterPayload"}
+
+func (ec *executionContext) _UpdateTrustCenterPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateTrustCenterPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateTrustCenterPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateTrustCenterPayload")
+		case "trustCenter":
+			out.Values[i] = ec._UpdateTrustCenterPayload_trustCenter(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -53294,6 +54232,11 @@ func (ec *executionContext) _Vendor(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Vendor_legalName(ctx, field, obj)
 		case "websiteUrl":
 			out.Values[i] = ec._Vendor_websiteUrl(ctx, field, obj)
+		case "showOnTrustCenter":
+			out.Values[i] = ec._Vendor_showOnTrustCenter(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._Vendor_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -57651,6 +58594,16 @@ var (
 	}
 )
 
+func (ec *executionContext) marshalNTrustCenter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenter(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenter) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TrustCenter(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNUnassignTaskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnassignTaskInput(ctx context.Context, v any) (types.UnassignTaskInput, error) {
 	res, err := ec.unmarshalInputUnassignTaskInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -57896,6 +58849,25 @@ func (ec *executionContext) marshalNUpdateTaskPayload2ᚖgithubᚗcomᚋgetprobo
 		return graphql.Null
 	}
 	return ec._UpdateTaskPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateTrustCenterInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterInput(ctx context.Context, v any) (types.UpdateTrustCenterInput, error) {
+	res, err := ec.unmarshalInputUpdateTrustCenterInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateTrustCenterPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateTrustCenterPayload) graphql.Marshaler {
+	return ec._UpdateTrustCenterPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateTrustCenterPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateTrustCenterPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateTrustCenterPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateTrustCenterPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateVendorInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateVendorInput(ctx context.Context, v any) (types.UpdateVendorInput, error) {
@@ -59525,6 +60497,13 @@ var (
 		coredata.TaskStateDone: "DONE",
 	}
 )
+
+func (ec *executionContext) marshalOTrustCenter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenter(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenter) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TrustCenter(ctx, sel, v)
+}
 
 func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (*graphql.Upload, error) {
 	if v == nil {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<95aa70195a3e90acb366441fd037c2f2>>
+ * @generated SignedSource<<faa26838a242a98d5df14f51ff257950>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,6 +26,7 @@ export type UpdateVendorInput = {
   securityOwnerId?: string | null | undefined;
   securityPageUrl?: string | null | undefined;
   serviceLevelAgreementUrl?: string | null | undefined;
+  showOnTrustCenter?: boolean | null | undefined;
   statusPageUrl?: string | null | undefined;
   subprocessorsListUrl?: string | null | undefined;
   termsOfServiceUrl?: string | null | undefined;

@@ -57,16 +57,17 @@ type AssignTaskPayload struct {
 }
 
 type Audit struct {
-	ID           gid.GID             `json:"id"`
-	Organization *Organization       `json:"organization"`
-	Framework    *Framework          `json:"framework"`
-	ValidFrom    *time.Time          `json:"validFrom,omitempty"`
-	ValidUntil   *time.Time          `json:"validUntil,omitempty"`
-	Report       *Report             `json:"report,omitempty"`
-	ReportURL    *string             `json:"reportUrl,omitempty"`
-	State        coredata.AuditState `json:"state"`
-	CreatedAt    time.Time           `json:"createdAt"`
-	UpdatedAt    time.Time           `json:"updatedAt"`
+	ID                gid.GID             `json:"id"`
+	Organization      *Organization       `json:"organization"`
+	Framework         *Framework          `json:"framework"`
+	ValidFrom         *time.Time          `json:"validFrom,omitempty"`
+	ValidUntil        *time.Time          `json:"validUntil,omitempty"`
+	Report            *Report             `json:"report,omitempty"`
+	ReportURL         *string             `json:"reportUrl,omitempty"`
+	State             coredata.AuditState `json:"state"`
+	ShowOnTrustCenter bool                `json:"showOnTrustCenter"`
+	CreatedAt         time.Time           `json:"createdAt"`
+	UpdatedAt         time.Time           `json:"updatedAt"`
 }
 
 func (Audit) IsNode()             {}
@@ -582,6 +583,7 @@ type Document struct {
 	Description             string                     `json:"description"`
 	DocumentType            coredata.DocumentType      `json:"documentType"`
 	CurrentPublishedVersion *int                       `json:"currentPublishedVersion,omitempty"`
+	ShowOnTrustCenter       bool                       `json:"showOnTrustCenter"`
 	Owner                   *People                    `json:"owner"`
 	Organization            *Organization              `json:"organization"`
 	Versions                *DocumentVersionConnection `json:"versions"`
@@ -800,24 +802,25 @@ type Mutation struct {
 }
 
 type Organization struct {
-	ID         gid.GID              `json:"id"`
-	Name       string               `json:"name"`
-	LogoURL    *string              `json:"logoUrl,omitempty"`
-	Users      *UserConnection      `json:"users"`
-	Connectors *ConnectorConnection `json:"connectors"`
-	Frameworks *FrameworkConnection `json:"frameworks"`
-	Controls   *ControlConnection   `json:"controls"`
-	Vendors    *VendorConnection    `json:"vendors"`
-	Peoples    *PeopleConnection    `json:"peoples"`
-	Documents  *DocumentConnection  `json:"documents"`
-	Measures   *MeasureConnection   `json:"measures"`
-	Risks      *RiskConnection      `json:"risks"`
-	Tasks      *TaskConnection      `json:"tasks"`
-	Assets     *AssetConnection     `json:"assets"`
-	Data       *DatumConnection     `json:"data"`
-	Audits     *AuditConnection     `json:"audits"`
-	CreatedAt  time.Time            `json:"createdAt"`
-	UpdatedAt  time.Time            `json:"updatedAt"`
+	ID          gid.GID              `json:"id"`
+	Name        string               `json:"name"`
+	LogoURL     *string              `json:"logoUrl,omitempty"`
+	Users       *UserConnection      `json:"users"`
+	Connectors  *ConnectorConnection `json:"connectors"`
+	Frameworks  *FrameworkConnection `json:"frameworks"`
+	Controls    *ControlConnection   `json:"controls"`
+	Vendors     *VendorConnection    `json:"vendors"`
+	Peoples     *PeopleConnection    `json:"peoples"`
+	Documents   *DocumentConnection  `json:"documents"`
+	Measures    *MeasureConnection   `json:"measures"`
+	Risks       *RiskConnection      `json:"risks"`
+	Tasks       *TaskConnection      `json:"tasks"`
+	Assets      *AssetConnection     `json:"assets"`
+	Data        *DatumConnection     `json:"data"`
+	Audits      *AuditConnection     `json:"audits"`
+	TrustCenter *TrustCenter         `json:"trustCenter,omitempty"`
+	CreatedAt   time.Time            `json:"createdAt"`
+	UpdatedAt   time.Time            `json:"updatedAt"`
 }
 
 func (Organization) IsNode()             {}
@@ -992,6 +995,17 @@ type TaskEdge struct {
 	Node   *Task          `json:"node"`
 }
 
+type TrustCenter struct {
+	ID        gid.GID   `json:"id"`
+	Active    bool      `json:"active"`
+	Slug      string    `json:"slug"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (TrustCenter) IsNode()             {}
+func (this TrustCenter) GetID() gid.GID { return this.ID }
+
 type UnassignTaskInput struct {
 	TaskID gid.GID `json:"taskId"`
 }
@@ -1016,10 +1030,11 @@ type UpdateAssetPayload struct {
 }
 
 type UpdateAuditInput struct {
-	ID         gid.GID              `json:"id"`
-	ValidFrom  *time.Time           `json:"validFrom,omitempty"`
-	ValidUntil *time.Time           `json:"validUntil,omitempty"`
-	State      *coredata.AuditState `json:"state,omitempty"`
+	ID                gid.GID              `json:"id"`
+	ValidFrom         *time.Time           `json:"validFrom,omitempty"`
+	ValidUntil        *time.Time           `json:"validUntil,omitempty"`
+	State             *coredata.AuditState `json:"state,omitempty"`
+	ShowOnTrustCenter *bool                `json:"showOnTrustCenter,omitempty"`
 }
 
 type UpdateAuditPayload struct {
@@ -1052,12 +1067,13 @@ type UpdateDatumPayload struct {
 }
 
 type UpdateDocumentInput struct {
-	ID           gid.GID                `json:"id"`
-	Title        *string                `json:"title,omitempty"`
-	Content      *string                `json:"content,omitempty"`
-	OwnerID      *gid.GID               `json:"ownerId,omitempty"`
-	CreatedBy    *gid.GID               `json:"createdBy,omitempty"`
-	DocumentType *coredata.DocumentType `json:"documentType,omitempty"`
+	ID                gid.GID                `json:"id"`
+	Title             *string                `json:"title,omitempty"`
+	Content           *string                `json:"content,omitempty"`
+	OwnerID           *gid.GID               `json:"ownerId,omitempty"`
+	CreatedBy         *gid.GID               `json:"createdBy,omitempty"`
+	DocumentType      *coredata.DocumentType `json:"documentType,omitempty"`
+	ShowOnTrustCenter *bool                  `json:"showOnTrustCenter,omitempty"`
 }
 
 type UpdateDocumentPayload struct {
@@ -1151,6 +1167,16 @@ type UpdateTaskPayload struct {
 	Task *Task `json:"task"`
 }
 
+type UpdateTrustCenterInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+	Active        *bool   `json:"active,omitempty"`
+	Slug          *string `json:"slug,omitempty"`
+}
+
+type UpdateTrustCenterPayload struct {
+	TrustCenter *TrustCenter `json:"trustCenter"`
+}
+
 type UpdateVendorInput struct {
 	ID                            gid.GID                  `json:"id"`
 	Name                          *string                  `json:"name,omitempty"`
@@ -1171,6 +1197,7 @@ type UpdateVendorInput struct {
 	TrustPageURL                  *string                  `json:"trustPageUrl,omitempty"`
 	BusinessOwnerID               *gid.GID                 `json:"businessOwnerId,omitempty"`
 	SecurityOwnerID               *gid.GID                 `json:"securityOwnerId,omitempty"`
+	ShowOnTrustCenter             *bool                    `json:"showOnTrustCenter,omitempty"`
 }
 
 type UpdateVendorPayload struct {
@@ -1261,6 +1288,7 @@ type Vendor struct {
 	HeadquarterAddress            *string                           `json:"headquarterAddress,omitempty"`
 	LegalName                     *string                           `json:"legalName,omitempty"`
 	WebsiteURL                    *string                           `json:"websiteUrl,omitempty"`
+	ShowOnTrustCenter             bool                              `json:"showOnTrustCenter"`
 	CreatedAt                     time.Time                         `json:"createdAt"`
 	UpdatedAt                     time.Time                         `json:"updatedAt"`
 }

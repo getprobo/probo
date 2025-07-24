@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f55547fed473a026bb7c43be28a2c6dc>>
+ * @generated SignedSource<<d2c542541d5bfda5464af2b34ccae603>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 export type AuditState = "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED" | "OUTDATED" | "REJECTED";
 export type UpdateAuditInput = {
   id: string;
+  showOnTrustCenter?: boolean | null | undefined;
   state?: AuditState | null | undefined;
   validFrom?: any | null | undefined;
   validUntil?: any | null | undefined;

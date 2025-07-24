@@ -79,6 +79,7 @@ func NewVendor(v *coredata.Vendor) *Vendor {
 		LegalName:                     v.LegalName,
 		WebsiteURL:                    v.WebsiteURL,
 		Category:                      v.Category,
+		ShowOnTrustCenter:             v.ShowOnTrustCenter,
 		UpdatedAt:                     v.UpdatedAt,
 		CreatedAt:                     v.CreatedAt,
 	}

@@ -72,6 +72,7 @@ type (
 		StatusPageURL                 *string
 		BusinessOwnerID               *gid.GID
 		SecurityOwnerID               *gid.GID
+		ShowOnTrustCenter             *bool
 	}
 
 	AssessVendorRequest struct {
@@ -259,6 +260,10 @@ func (s VendorService) Update(
 				vendor.SecurityPageURL = req.SecurityPageURL
 			}
 
+			if req.ShowOnTrustCenter != nil {
+				vendor.ShowOnTrustCenter = *req.ShowOnTrustCenter
+			}
+
 			if req.TrustPageURL != nil {
 				vendor.TrustPageURL = req.TrustPageURL
 			}
@@ -385,6 +390,7 @@ func (s VendorService) Create(
 		TrustPageURL:                  req.TrustPageURL,
 		StatusPageURL:                 req.StatusPageURL,
 		TermsOfServiceURL:             req.TermsOfServiceURL,
+		ShowOnTrustCenter:             false,
 	}
 
 	err := s.svc.pg.WithTx(

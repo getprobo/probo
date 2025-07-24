@@ -973,6 +973,24 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 	}, nil
 }
 
+// UpdateTrustCenter is the resolver for the updateTrustCenter field.
+func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error) {
+	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
+
+	trustCenter, err := prb.TrustCenters.Update(ctx, &probo.UpdateTrustCenterRequest{
+		ID:     input.TrustCenterID,
+		Active: input.Active,
+		Slug:   input.Slug,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot update trust center: %w", err)
+	}
+
+	return &types.UpdateTrustCenterPayload{
+		TrustCenter: types.NewTrustCenter(trustCenter),
+	}, nil
+}
+
 // ConfirmEmail is the resolver for the confirmEmail field.
 func (r *mutationResolver) ConfirmEmail(ctx context.Context, input types.ConfirmEmailInput) (*types.ConfirmEmailPayload, error) {
 	err := r.usrmgrSvc.ConfirmEmail(ctx, input.Token)
@@ -1151,6 +1169,7 @@ func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateV
 		Certifications:                input.Certifications,
 		BusinessOwnerID:               input.BusinessOwnerID,
 		SecurityOwnerID:               input.SecurityOwnerID,
+		ShowOnTrustCenter:             input.ShowOnTrustCenter,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot update vendor: %w", err)
@@ -1872,6 +1891,7 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		input.OwnerID,
 		input.DocumentType,
 		input.Title,
+		input.ShowOnTrustCenter,
 	)
 
 	if err != nil {
@@ -2293,10 +2313,11 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateAuditRequest{
-		ID:         input.ID,
-		ValidFrom:  input.ValidFrom,
-		ValidUntil: input.ValidUntil,
-		State:      input.State,
+		ID:                input.ID,
+		ValidFrom:         input.ValidFrom,
+		ValidUntil:        input.ValidUntil,
+		State:             input.State,
+		ShowOnTrustCenter: input.ShowOnTrustCenter,
 	}
 
 	audit, err := prb.Audits.Update(ctx, &req)
@@ -2711,6 +2732,18 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 	return types.NewAuditConnection(page, r, obj.ID), nil
 }
 
+// TrustCenter is the resolver for the trustCenter field.
+func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get trust center: %w", err)
+	}
+
+	return types.NewTrustCenter(trustCenter), nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
@@ -2842,6 +2875,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			panic(fmt.Errorf("cannot get report: %w", err))
 		}
 		return types.NewReport(report), nil
+	case coredata.TrustCenterEntityType:
+		trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("cannot get trust center: %w", err))
+		}
+		return types.NewTrustCenter(trustCenter), nil
 	default:
 	}
 

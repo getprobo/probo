@@ -34,6 +34,7 @@ type (
 		Title                   string       `db:"title"`
 		DocumentType            DocumentType `db:"document_type"`
 		CurrentPublishedVersion *int         `db:"current_published_version"`
+		ShowOnTrustCenter       bool         `db:"show_on_trust_center"`
 		CreatedAt               time.Time    `db:"created_at"`
 		UpdatedAt               time.Time    `db:"updated_at"`
 	}
@@ -68,6 +69,7 @@ SELECT
     title,
     document_type,
     current_published_version,
+    show_on_trust_center,
     created_at,
     updated_at
 FROM
@@ -147,6 +149,7 @@ SELECT
     title,
     document_type,
     current_published_version,
+    show_on_trust_center,
     created_at,
     updated_at
 FROM
@@ -195,6 +198,7 @@ INSERT INTO
 		title,
 		document_type,
 		current_published_version,
+		show_on_trust_center,
 		created_at,
 		updated_at
     )
@@ -206,6 +210,7 @@ VALUES (
     @title,
     @document_type,
     @current_published_version,
+    @show_on_trust_center,
     @created_at,
     @updated_at
 );
@@ -219,6 +224,7 @@ VALUES (
 		"title":                     p.Title,
 		"document_type":             p.DocumentType,
 		"current_published_version": p.CurrentPublishedVersion,
+		"show_on_trust_center":      p.ShowOnTrustCenter,
 		"created_at":                p.CreatedAt,
 		"updated_at":                p.UpdatedAt,
 	}
@@ -257,6 +263,7 @@ SET
 	current_published_version = @current_published_version,
 	owner_id = @owner_id,
 	document_type = @document_type,
+	show_on_trust_center = @show_on_trust_center,
 	updated_at = @updated_at
 WHERE %s
     AND id = @document_id
@@ -270,6 +277,7 @@ WHERE %s
 		"current_published_version": p.CurrentPublishedVersion,
 		"owner_id":                  p.OwnerID,
 		"document_type":             p.DocumentType,
+		"show_on_trust_center":      p.ShowOnTrustCenter,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -342,6 +350,7 @@ WITH plcs AS (
 		p.title,
 		p.document_type,
 		p.current_published_version,
+		p.show_on_trust_center,
 		p.created_at,
 		p.updated_at
 	FROM
@@ -358,6 +367,7 @@ SELECT
 	title,
 	document_type,
 	current_published_version,
+	show_on_trust_center,
 	created_at,
 	updated_at
 FROM
@@ -448,6 +458,7 @@ WITH plcs AS (
 		p.title,
 		p.document_type,
 		p.current_published_version,
+		p.show_on_trust_center,
 		p.created_at,
 		p.updated_at
 	FROM
@@ -464,6 +475,7 @@ SELECT
 	title,
 	document_type,
 	current_published_version,
+	show_on_trust_center,
 	created_at,
 	updated_at
 FROM

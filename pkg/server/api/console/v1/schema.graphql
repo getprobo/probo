@@ -703,6 +703,14 @@ input RiskFilter {
 }
 
 # Core Types
+type TrustCenter implements Node {
+  id: ID!
+  active: Boolean!
+  slug: String!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
 type Organization implements Node {
   id: ID!
   name: String!
@@ -816,6 +824,8 @@ type Organization implements Node {
     orderBy: AuditOrder
   ): AuditConnection! @goField(forceResolver: true)
 
+  trustCenter: TrustCenter @goField(forceResolver: true)
+
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -891,6 +901,7 @@ type Vendor implements Node {
   headquarterAddress: String
   legalName: String
   websiteUrl: String
+  showOnTrustCenter: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -1052,6 +1063,7 @@ type Document implements Node {
   description: String!
   documentType: DocumentType!
   currentPublishedVersion: Int
+  showOnTrustCenter: Boolean!
   owner: People! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
 
@@ -1134,6 +1146,7 @@ type Audit implements Node {
   report: Report @goField(forceResolver: true)
   reportUrl: String @goField(forceResolver: true)
   state: AuditState!
+  showOnTrustCenter: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -1397,6 +1410,10 @@ type Mutation {
     input: UpdateOrganizationInput!
   ): UpdateOrganizationPayload!
 
+  updateTrustCenter(
+    input: UpdateTrustCenterInput!
+  ): UpdateTrustCenterPayload!
+
   # User mutations
   confirmEmail(input: ConfirmEmailInput!): ConfirmEmailPayload!
   inviteUser(input: InviteUserInput!): InviteUserPayload!
@@ -1563,6 +1580,12 @@ input UpdateOrganizationInput {
   logo: Upload
 }
 
+input UpdateTrustCenterInput {
+  trustCenterId: ID!
+  active: Boolean
+  slug: String
+}
+
 input CreateVendorInput {
   organizationId: ID!
   name: String!
@@ -1605,6 +1628,7 @@ input UpdateVendorInput {
   trustPageUrl: String
   businessOwnerId: ID
   securityOwnerId: ID
+  showOnTrustCenter: Boolean
 }
 
 input DeleteVendorInput {
@@ -1836,6 +1860,7 @@ input UpdateDocumentInput {
   ownerId: ID
   createdBy: ID
   documentType: DocumentType
+  showOnTrustCenter: Boolean
 }
 
 input ExportDocumentVersionPDFInput {
@@ -1897,6 +1922,7 @@ input UpdateAuditInput {
   validFrom: Datetime
   validUntil: Datetime
   state: AuditState
+  showOnTrustCenter: Boolean
 }
 
 input DeleteAuditInput {
@@ -1919,6 +1945,10 @@ type CreateOrganizationPayload {
 
 type UpdateOrganizationPayload {
   organization: Organization!
+}
+
+type UpdateTrustCenterPayload {
+  trustCenter: TrustCenter!
 }
 
 type CreateControlPayload {

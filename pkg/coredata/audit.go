@@ -28,15 +28,16 @@ import (
 
 type (
 	Audit struct {
-		ID             gid.GID    `db:"id"`
-		OrganizationID gid.GID    `db:"organization_id"`
-		FrameworkID    gid.GID    `db:"framework_id"`
-		ReportID       *gid.GID   `db:"report_id"`
-		ValidFrom      *time.Time `db:"valid_from"`
-		ValidUntil     *time.Time `db:"valid_until"`
-		State          AuditState `db:"state"`
-		CreatedAt      time.Time  `db:"created_at"`
-		UpdatedAt      time.Time  `db:"updated_at"`
+		ID                gid.GID    `db:"id"`
+		OrganizationID    gid.GID    `db:"organization_id"`
+		FrameworkID       gid.GID    `db:"framework_id"`
+		ReportID          *gid.GID   `db:"report_id"`
+		ValidFrom         *time.Time `db:"valid_from"`
+		ValidUntil        *time.Time `db:"valid_until"`
+		State             AuditState `db:"state"`
+		ShowOnTrustCenter bool       `db:"show_on_trust_center"`
+		CreatedAt         time.Time  `db:"created_at"`
+		UpdatedAt         time.Time  `db:"updated_at"`
 	}
 
 	Audits []*Audit
@@ -72,6 +73,7 @@ SELECT
 	valid_from,
 	valid_until,
 	state,
+	show_on_trust_center,
 	created_at,
 	updated_at
 FROM
@@ -150,6 +152,7 @@ SELECT
 	valid_from,
 	valid_until,
 	state,
+	show_on_trust_center,
 	created_at,
 	updated_at
 FROM
@@ -196,6 +199,7 @@ INSERT INTO audits (
 	valid_from,
 	valid_until,
 	state,
+	show_on_trust_center,
 	created_at,
 	updated_at
 ) VALUES (
@@ -207,22 +211,24 @@ INSERT INTO audits (
 	@valid_from,
 	@valid_until,
 	@state,
+	@show_on_trust_center,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              a.ID,
-		"tenant_id":       scope.GetTenantID(),
-		"organization_id": a.OrganizationID,
-		"framework_id":    a.FrameworkID,
-		"report_id":       a.ReportID,
-		"valid_from":      a.ValidFrom,
-		"valid_until":     a.ValidUntil,
-		"state":           a.State,
-		"created_at":      a.CreatedAt,
-		"updated_at":      a.UpdatedAt,
+		"id":                   a.ID,
+		"tenant_id":            scope.GetTenantID(),
+		"organization_id":      a.OrganizationID,
+		"framework_id":         a.FrameworkID,
+		"report_id":            a.ReportID,
+		"valid_from":           a.ValidFrom,
+		"valid_until":          a.ValidUntil,
+		"state":                a.State,
+		"show_on_trust_center": a.ShowOnTrustCenter,
+		"created_at":           a.CreatedAt,
+		"updated_at":           a.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -245,6 +251,7 @@ SET
 	valid_from = @valid_from,
 	valid_until = @valid_until,
 	state = @state,
+	show_on_trust_center = @show_on_trust_center,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -254,12 +261,13 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":          a.ID,
-		"report_id":   a.ReportID,
-		"valid_from":  a.ValidFrom,
-		"valid_until": a.ValidUntil,
-		"state":       a.State,
-		"updated_at":  a.UpdatedAt,
+		"id":                   a.ID,
+		"report_id":            a.ReportID,
+		"valid_from":           a.ValidFrom,
+		"valid_until":          a.ValidUntil,
+		"state":                a.State,
+		"show_on_trust_center": a.ShowOnTrustCenter,
+		"updated_at":           a.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

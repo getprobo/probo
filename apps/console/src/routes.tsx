@@ -28,6 +28,7 @@ import { taskRoutes } from "./routes/taskRoutes.ts";
 import { dataRoutes } from "./routes/dataRoutes.ts";
 import { assetRoutes } from "./routes/assetRoutes.ts";
 import { auditRoutes } from "./routes/auditRoutes.ts";
+import { trustCenterRoutes } from "./routes/trustCenterRoutes.ts";
 import { lazy } from "@probo/react-lazy";
 
 /**
@@ -136,6 +137,7 @@ const routes = [
       ...assetRoutes,
       ...dataRoutes,
       ...auditRoutes,
+      ...trustCenterRoutes,
       {
         path: "*",
         Component: PageError,

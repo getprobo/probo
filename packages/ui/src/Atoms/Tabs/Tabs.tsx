@@ -1,5 +1,5 @@
 import type { HTMLAttributes, PropsWithChildren } from "react";
-import { NavLink } from "react-router";
+import { NavLink, type NavLinkProps } from "react-router";
 import { Root, List } from "@radix-ui/react-tabs";
 import { Slot, type AsChildProps } from "../Slot";
 import { tv } from "tailwind-variants";
@@ -41,7 +41,7 @@ export function TabItem({
     return <Component {...props} className={cls.item({ active })} />;
 }
 
-export function TabLink(props: PropsWithChildren<{ to: string }>) {
+export function TabLink(props: PropsWithChildren<NavLinkProps & { isActive?: () => boolean }>) {
     return (
         <NavLink
             className={(params) => cls.item({ active: params.isActive })}

@@ -54,14 +54,15 @@ func NewAuditConnection(
 
 func NewAudit(a *coredata.Audit) *Audit {
 	audit := &Audit{
-		ID:           a.ID,
-		ValidFrom:    a.ValidFrom,
-		ValidUntil:   a.ValidUntil,
-		State:        a.State,
-		CreatedAt:    a.CreatedAt,
-		UpdatedAt:    a.UpdatedAt,
-		Organization: &Organization{ID: a.OrganizationID},
-		Framework:    &Framework{ID: a.FrameworkID},
+		ID:                a.ID,
+		ValidFrom:         a.ValidFrom,
+		ValidUntil:        a.ValidUntil,
+		State:             a.State,
+		ShowOnTrustCenter: a.ShowOnTrustCenter,
+		CreatedAt:         a.CreatedAt,
+		UpdatedAt:         a.UpdatedAt,
+		Organization:      &Organization{ID: a.OrganizationID},
+		Framework:         &Framework{ID: a.FrameworkID},
 	}
 
 	if a.ReportID != nil {

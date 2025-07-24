@@ -297,11 +297,12 @@ func (s *DocumentService) Create(
 	people := &coredata.People{}
 
 	document := &coredata.Document{
-		ID:           documentID,
-		Title:        req.Title,
-		DocumentType: req.DocumentType,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ID:                documentID,
+		Title:             req.Title,
+		DocumentType:      req.DocumentType,
+		ShowOnTrustCenter: false,
+		CreatedAt:         now,
+		UpdatedAt:         now,
 	}
 
 	documentVersion := &coredata.DocumentVersion{
@@ -984,6 +985,7 @@ func (s *DocumentService) Update(
 	newOwnerID *gid.GID,
 	documentType *coredata.DocumentType,
 	title *string,
+	showOnTrustCenter *bool,
 ) (*coredata.Document, error) {
 	document := &coredata.Document{}
 	people := &coredata.People{}
@@ -1009,6 +1011,10 @@ func (s *DocumentService) Update(
 
 			if title != nil {
 				document.Title = *title
+			}
+
+			if showOnTrustCenter != nil {
+				document.ShowOnTrustCenter = *showOnTrustCenter
 			}
 
 			document.UpdatedAt = now

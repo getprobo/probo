@@ -39,10 +39,11 @@ type (
 	}
 
 	UpdateAuditRequest struct {
-		ID         gid.GID
-		ValidFrom  *time.Time
-		ValidUntil *time.Time
-		State      *coredata.AuditState
+		ID                gid.GID
+		ValidFrom         *time.Time
+		ValidUntil        *time.Time
+		State             *coredata.AuditState
+		ShowOnTrustCenter *bool
 	}
 
 	UpdateAuditStateRequest struct {
@@ -87,14 +88,15 @@ func (s *AuditService) Create(
 	now := time.Now()
 
 	audit := &coredata.Audit{
-		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.AuditEntityType),
-		OrganizationID: req.OrganizationID,
-		FrameworkID:    req.FrameworkID,
-		ValidFrom:      req.ValidFrom,
-		ValidUntil:     req.ValidUntil,
-		State:          coredata.AuditStateNotStarted,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:                gid.New(s.svc.scope.GetTenantID(), coredata.AuditEntityType),
+		OrganizationID:    req.OrganizationID,
+		FrameworkID:       req.FrameworkID,
+		ValidFrom:         req.ValidFrom,
+		ValidUntil:        req.ValidUntil,
+		State:             coredata.AuditStateNotStarted,
+		ShowOnTrustCenter: false,
+		CreatedAt:         now,
+		UpdatedAt:         now,
 	}
 
 	if req.State != nil {
@@ -150,6 +152,9 @@ func (s *AuditService) Update(
 			}
 			if req.State != nil {
 				audit.State = *req.State
+			}
+			if req.ShowOnTrustCenter != nil {
+				audit.ShowOnTrustCenter = *req.ShowOnTrustCenter
 			}
 
 			audit.UpdatedAt = time.Now()

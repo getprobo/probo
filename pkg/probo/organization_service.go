@@ -65,11 +65,19 @@ func (s OrganizationService) Create(
 		UpdatedAt: now,
 	}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
 			if err := organization.Insert(ctx, tx); err != nil {
 				return fmt.Errorf("cannot insert organization: %w", err)
+			}
+
+			_, err := s.svc.TrustCenters.CreateWithConn(ctx, tx, &CreateTrustCenterRequest{
+				OrganizationID:   organization.ID,
+				OrganizationName: organization.Name,
+			})
+			if err != nil {
+				return fmt.Errorf("cannot create trust center: %w", err)
 			}
 
 			return nil

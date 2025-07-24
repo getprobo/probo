@@ -14,6 +14,7 @@ import {
   IconTodo,
   IconListStack,
   IconBox,
+  IconShield,
   Layout,
   SidebarItem,
   UserDropdown as UserDropdownRoot,
@@ -136,6 +137,11 @@ export function MainLayout() {
             label={__("Audits")}
             icon={IconCheckmark1}
             to={`${prefix}/audits`}
+          />
+          <SidebarItem
+            label={__("Trust Center")}
+            icon={IconShield}
+            to={`${prefix}/trust-center`}
           />
           <SidebarItem
             label={__("Settings")}

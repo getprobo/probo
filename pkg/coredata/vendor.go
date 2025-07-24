@@ -49,6 +49,7 @@ type (
 		TermsOfServiceURL             *string        `db:"terms_of_service_url"`
 		SecurityPageURL               *string        `db:"security_page_url"`
 		TrustPageURL                  *string        `db:"trust_page_url"`
+		ShowOnTrustCenter             bool           `db:"show_on_trust_center"`
 		CreatedAt                     time.Time      `db:"created_at"`
 		UpdatedAt                     time.Time      `db:"updated_at"`
 	}
@@ -98,6 +99,7 @@ SELECT
     terms_of_service_url,
     security_page_url,
     trust_page_url,
+    show_on_trust_center,
     created_at,
     updated_at
 FROM
@@ -158,6 +160,7 @@ INSERT INTO
         terms_of_service_url,
         security_page_url,
         trust_page_url,
+        show_on_trust_center,
         created_at,
         updated_at
     )
@@ -183,6 +186,7 @@ VALUES (
     @terms_of_service_url,
     @security_page_url,
     @trust_page_url,
+    @show_on_trust_center,
     @created_at,
     @updated_at
 )
@@ -210,6 +214,7 @@ VALUES (
 		"terms_of_service_url":             v.TermsOfServiceURL,
 		"security_page_url":                v.SecurityPageURL,
 		"trust_page_url":                   v.TrustPageURL,
+		"show_on_trust_center":             v.ShowOnTrustCenter,
 		"created_at":                       v.CreatedAt,
 		"updated_at":                       v.UpdatedAt,
 	}
@@ -297,6 +302,7 @@ SELECT
     terms_of_service_url,
     security_page_url,
     trust_page_url,
+    show_on_trust_center,
     created_at,
     updated_at
 FROM
@@ -353,6 +359,7 @@ SET
 	trust_page_url = @trust_page_url,
 	business_owner_id = @business_owner_id,
 	security_owner_id = @security_owner_id,
+	show_on_trust_center = @show_on_trust_center,
 	updated_at = @updated_at
 WHERE %s
     AND id = @vendor_id
@@ -380,6 +387,7 @@ WHERE %s
 		"trust_page_url":                   v.TrustPageURL,
 		"business_owner_id":                v.BusinessOwnerID,
 		"security_owner_id":                v.SecurityOwnerID,
+		"show_on_trust_center":             v.ShowOnTrustCenter,
 	}
 
 	maps.Copy(args, scope.SQLArguments())

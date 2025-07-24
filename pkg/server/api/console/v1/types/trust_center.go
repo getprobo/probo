@@ -12,30 +12,18 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package coredata
+package types
 
-const (
-	OrganizationEntityType uint16 = iota
-	FrameworkEntityType
-	MeasureEntityType
-	TaskEntityType
-	EvidenceEntityType
-	ConnectorEntityType
-	VendorRiskAssessmentEntityType
-	VendorEntityType
-	PeopleEntityType
-	VendorComplianceReportEntityType
-	DocumentEntityType
-	UserEntityType
-	SessionEntityType
-	EmailEntityType
-	ControlEntityType
-	RiskEntityType
-	DocumentVersionEntityType
-	DocumentVersionSignatureEntityType
-	AssetEntityType
-	DatumEntityType
-	AuditEntityType
-	ReportEntityType
-	TrustCenterEntityType
+import (
+	"github.com/getprobo/probo/pkg/coredata"
 )
+
+func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
+	return &TrustCenter{
+		ID:        tc.ID,
+		Active:    tc.Active,
+		Slug:      tc.Slug,
+		CreatedAt: tc.CreatedAt,
+		UpdatedAt: tc.UpdatedAt,
+	}
+}
