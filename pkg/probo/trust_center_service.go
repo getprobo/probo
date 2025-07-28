@@ -17,27 +17,13 @@ package probo
 import (
 	"context"
 	"fmt"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/slug"
 	"go.gearno.de/kit/pg"
 )
-
-var (
-	regSpacesTC      = regexp.MustCompile(`\s+`)
-	regNonAlphanumTC = regexp.MustCompile(`[^a-z0-9_]`)
-)
-
-func makeTrustCenterSlug(name string) string {
-	s := strings.ToLower(name)
-	s = regSpacesTC.ReplaceAllString(s, "_")
-	s = regNonAlphanumTC.ReplaceAllString(s, "")
-	s = strings.Trim(s, "_")
-	return s
-}
 
 type (
 	TrustCenterService struct {
@@ -67,7 +53,7 @@ func (s *TrustCenterService) Create(
 		OrganizationID: req.OrganizationID,
 		TenantID:       req.OrganizationID.TenantID(),
 		Active:         false,
-		Slug:           makeTrustCenterSlug(req.OrganizationName),
+		Slug:           slug.Make(req.OrganizationName),
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -107,7 +93,7 @@ func (s *TrustCenterService) CreateWithConn(
 		OrganizationID: req.OrganizationID,
 		TenantID:       req.OrganizationID.TenantID(),
 		Active:         false,
-		Slug:           makeTrustCenterSlug(req.OrganizationName),
+		Slug:           slug.Make(req.OrganizationName),
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
