@@ -36,26 +36,6 @@ type (
 	}
 )
 
-func (s TrustCenterService) Get(
-	ctx context.Context,
-	trustCenterID gid.GID,
-) (*coredata.TrustCenter, error) {
-	trustCenter := &coredata.TrustCenter{}
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			return trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID)
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return trustCenter, nil
-}
-
 func (s TrustCenterService) GetByOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
@@ -76,7 +56,7 @@ func (s TrustCenterService) GetByOrganizationID(
 	return trustCenter, nil
 }
 
-func (s *TrustCenterService) Update(
+func (s TrustCenterService) Update(
 	ctx context.Context,
 	req *UpdateTrustCenterRequest,
 ) (*coredata.TrustCenter, error) {

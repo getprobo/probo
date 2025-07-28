@@ -135,6 +135,45 @@ LIMIT 1;
 	return nil
 }
 
+// Public read-only methods for trust center
+func (tc *TrustCenter) LoadBySlug(
+	ctx context.Context,
+	conn pg.Conn,
+	slug string,
+) error {
+	q := `
+SELECT
+	id,
+	organization_id,
+	tenant_id,
+	active,
+	slug,
+	created_at,
+	updated_at
+FROM
+	trust_centers
+WHERE
+	slug = @slug
+LIMIT 1;
+`
+
+	args := pgx.StrictNamedArgs{"slug": slug}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query trust center: %w", err)
+	}
+
+	trustCenter, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenter])
+	if err != nil {
+		return fmt.Errorf("cannot collect trust center: %w", err)
+	}
+
+	*tc = trustCenter
+
+	return nil
+}
+
 func (tc *TrustCenter) Insert(
 	ctx context.Context,
 	conn pg.Conn,

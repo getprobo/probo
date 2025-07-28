@@ -836,6 +836,10 @@ type OrganizationEdge struct {
 	Node   *Organization  `json:"node"`
 }
 
+type OrganizationFilter struct {
+	TrustCenterSlug *string `json:"trustCenterSlug,omitempty"`
+}
+
 type OrganizationOrder struct {
 	Direction page.OrderDirection             `json:"direction"`
 	Field     coredata.OrganizationOrderField `json:"field"`
@@ -996,15 +1000,33 @@ type TaskEdge struct {
 }
 
 type TrustCenter struct {
-	ID        gid.GID   `json:"id"`
-	Active    bool      `json:"active"`
-	Slug      string    `json:"slug"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID              gid.GID             `json:"id"`
+	Active          bool                `json:"active"`
+	Slug            string              `json:"slug"`
+	CreatedAt       time.Time           `json:"createdAt"`
+	UpdatedAt       time.Time           `json:"updatedAt"`
+	Organization    *Organization       `json:"organization"`
+	PublicDocuments *DocumentConnection `json:"publicDocuments"`
+	PublicAudits    *AuditConnection    `json:"publicAudits"`
+	PublicVendors   *VendorConnection   `json:"publicVendors"`
 }
 
 func (TrustCenter) IsNode()             {}
 func (this TrustCenter) GetID() gid.GID { return this.ID }
+
+type TrustCenterConnection struct {
+	Edges    []*TrustCenterEdge `json:"edges"`
+	PageInfo *PageInfo          `json:"pageInfo"`
+}
+
+type TrustCenterEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *TrustCenter   `json:"node"`
+}
+
+type TrustCenterFilter struct {
+	Slug *string `json:"slug,omitempty"`
+}
 
 type UnassignTaskInput struct {
 	TaskID gid.GID `json:"taskId"`

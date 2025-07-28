@@ -201,7 +201,8 @@ func (s AuditService) ListForOrganizationID(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return audits.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
+			filter := coredata.NewAuditFilter()
+			return audits.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 		},
 	)
 

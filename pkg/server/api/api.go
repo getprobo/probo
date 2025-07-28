@@ -22,6 +22,7 @@ import (
 	"github.com/getprobo/probo/pkg/probo"
 	"github.com/getprobo/probo/pkg/saferedirect"
 	console_v1 "github.com/getprobo/probo/pkg/server/api/console/v1"
+	"github.com/getprobo/probo/pkg/trust"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
@@ -34,6 +35,7 @@ type (
 		AllowedOrigins    []string
 		Probo             *probo.Service
 		Usrmgr            *usrmgr.Service
+		Trust             *trust.Service
 		Auth              console_v1.AuthConfig
 		ConnectorRegistry *connector.ConnectorRegistry
 		SafeRedirect      *saferedirect.SafeRedirect
@@ -122,6 +124,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			s.cfg.Logger.Named("console.v1"),
 			s.cfg.Probo,
 			s.cfg.Usrmgr,
+			s.cfg.Trust,
 			s.cfg.Auth,
 			s.cfg.ConnectorRegistry,
 			s.cfg.SafeRedirect,

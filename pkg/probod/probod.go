@@ -36,6 +36,7 @@ import (
 	"github.com/getprobo/probo/pkg/saferedirect"
 	"github.com/getprobo/probo/pkg/server"
 	console_v1 "github.com/getprobo/probo/pkg/server/api/console/v1"
+	"github.com/getprobo/probo/pkg/trust"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/httpclient"
@@ -231,12 +232,18 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create probo service: %w", err)
 	}
 
+	trustService := trust.NewService(
+		pgClient,
+		impl.cfg.AWS.Bucket,
+	)
+
 	serverHandler, err := server.NewServer(
 		server.Config{
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
 			Usrmgr:            usrmgrService,
+			Trust:             trustService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			Agent:             agent,
 			SafeRedirect:      &saferedirect.SafeRedirect{AllowedHost: impl.cfg.Hostname},

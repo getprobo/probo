@@ -278,45 +278,48 @@ func (v *Vendors) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[VendorOrderField],
+	filter *VendorFilter,
 ) error {
 	q := `
 SELECT
-    id,
-    tenant_id,
-    organization_id,
-    name,
-    description,
-    category,
-    headquarter_address,
-    legal_name,
-    website_url,
-    privacy_policy_url,
-    service_level_agreement_url,
-    data_processing_agreement_url,
-    business_associate_agreement_url,
-    subprocessors_list_url,
-    certifications,
-    business_owner_id,
-    security_owner_id,
-    status_page_url,
-    terms_of_service_url,
-    security_page_url,
-    trust_page_url,
-    show_on_trust_center,
-    created_at,
-    updated_at
+	id,
+	tenant_id,
+	organization_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	business_owner_id,
+	security_owner_id,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	show_on_trust_center,
+	created_at,
+	updated_at
 FROM
-    vendors
+	vendors
 WHERE
-    %s
-    AND organization_id = @organization_id
-    AND %s
+	%s
+	AND organization_id = @organization_id
+	AND %s
+	AND %s
 `
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
-	maps.Copy(args, cursor.SQLArguments())
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

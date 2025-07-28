@@ -702,6 +702,14 @@ input RiskFilter {
   query: String
 }
 
+input OrganizationFilter {
+  trustCenterSlug: String
+}
+
+input TrustCenterFilter {
+  slug: String
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -709,6 +717,31 @@ type TrustCenter implements Node {
   slug: String!
   createdAt: Datetime!
   updatedAt: Datetime!
+  organization: Organization! @goField(forceResolver: true)
+
+  publicDocuments(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: DocumentOrder
+  ): DocumentConnection! @goField(forceResolver: true)
+
+  publicAudits(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: AuditOrder
+  ): AuditConnection! @goField(forceResolver: true)
+
+  publicVendors(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: VendorOrder
+  ): VendorConnection! @goField(forceResolver: true)
 }
 
 type Organization implements Node {
@@ -1177,6 +1210,7 @@ type Viewer {
     last: Int
     before: CursorKey
     orderBy: OrganizationOrder
+    filter: OrganizationFilter
   ): OrganizationConnection! @goField(forceResolver: true)
 }
 
@@ -1189,6 +1223,16 @@ type OrganizationConnection {
 type OrganizationEdge {
   cursor: CursorKey!
   node: Organization!
+}
+
+type TrustCenterConnection {
+  edges: [TrustCenterEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TrustCenterEdge {
+  cursor: CursorKey!
+  node: TrustCenter!
 }
 
 type UserConnection {
@@ -1399,6 +1443,14 @@ type AuditEdge {
 type Query {
   node(id: ID!): Node!
   viewer: Viewer!
+  trustCenters(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    filter: TrustCenterFilter
+  ): TrustCenterConnection! @goField(forceResolver: true)
+  trustCenterBySlug(slug: String!): TrustCenter @goField(forceResolver: true)
 }
 
 type Mutation {

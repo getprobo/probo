@@ -131,12 +131,14 @@ func (s VendorService) ListForOrganizationID(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
+			filter := coredata.NewVendorFilter()
 			return vendors.LoadByOrganizationID(
 				ctx,
 				conn,
 				s.svc.scope,
 				organization.ID,
 				cursor,
+				filter,
 			)
 		},
 	)

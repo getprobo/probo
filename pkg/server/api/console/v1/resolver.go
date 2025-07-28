@@ -39,6 +39,7 @@ import (
 	"github.com/getprobo/probo/pkg/securecookie"
 	"github.com/getprobo/probo/pkg/server/api/console/v1/schema"
 	"github.com/getprobo/probo/pkg/statelesstoken"
+	"github.com/getprobo/probo/pkg/trust"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"github.com/go-chi/chi/v5"
 	"github.com/vektah/gqlparser/v2/gqlerror"
@@ -55,9 +56,10 @@ type (
 	}
 
 	Resolver struct {
-		proboSvc  *probo.Service
-		usrmgrSvc *usrmgr.Service
-		authCfg   AuthConfig
+		proboSvc       *probo.Service
+		usrmgrSvc      *usrmgr.Service
+		trustCenterSvc *trust.Service
+		authCfg        AuthConfig
 	}
 
 	ctxKey struct{ name string }
@@ -83,6 +85,7 @@ func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
 	usrmgrSvc *usrmgr.Service,
+	trustSvc *trust.Service,
 	authCfg AuthConfig,
 	connectorRegistry *connector.ConnectorRegistry,
 	safeRedirect *saferedirect.SafeRedirect,
@@ -206,20 +209,21 @@ func NewMux(
 	}))
 
 	r.Get("/", playground.Handler("GraphQL", "/api/console/v1/query"))
-	r.Post("/query", graphqlHandler(logger, proboSvc, usrmgrSvc, authCfg))
+	r.Post("/query", graphqlHandler(logger, proboSvc, usrmgrSvc, trustSvc, authCfg))
 
 	return r
 }
 
-func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFunc {
+func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrmgr.Service, trustSvc *trust.Service, authCfg AuthConfig) http.HandlerFunc {
 	var mb int64 = 1 << 20
 
 	es := schema.NewExecutableSchema(
 		schema.Config{
 			Resolvers: &Resolver{
-				proboSvc:  proboSvc,
-				usrmgrSvc: usrmgrSvc,
-				authCfg:   authCfg,
+				proboSvc:       proboSvc,
+				usrmgrSvc:      usrmgrSvc,
+				trustCenterSvc: trustSvc,
+				authCfg:        authCfg,
 			},
 		},
 	)

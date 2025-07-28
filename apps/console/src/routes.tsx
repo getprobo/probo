@@ -29,6 +29,7 @@ import { dataRoutes } from "./routes/dataRoutes.ts";
 import { assetRoutes } from "./routes/assetRoutes.ts";
 import { auditRoutes } from "./routes/auditRoutes.ts";
 import { trustCenterRoutes } from "./routes/trustCenterRoutes.ts";
+import { publicTrustCenterQuery } from "./hooks/graph/PublicTrustCenterGraph.ts";
 import { lazy } from "@probo/react-lazy";
 
 /**
@@ -105,6 +106,14 @@ const routes = [
         ),
       },
     ],
+  },
+  {
+    path: "/trust/:slug",
+    ErrorBoundary: ErrorBoundary,
+    queryLoader: ({ slug }) =>
+      loadQuery(relayEnvironment, publicTrustCenterQuery, { slug }),
+    fallback: PageSkeleton,
+    Component: lazy(() => import("./pages/PublicTrustCenterPage")),
   },
   {
     path: "/organizations/:organizationId",

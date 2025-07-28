@@ -2905,6 +2905,36 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 	}, nil
 }
 
+// TrustCenters is the resolver for the trustCenters field.
+func (r *queryResolver) TrustCenters(ctx context.Context, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.TrustCenterFilter) (*types.TrustCenterConnection, error) {
+	panic(fmt.Errorf("not implemented: TrustCenters - trustCenters"))
+}
+
+// TrustCenterBySlug is the resolver for the trustCenterBySlug field.
+func (r *queryResolver) TrustCenterBySlug(ctx context.Context, slug string) (*types.TrustCenter, error) {
+	trust := r.trustCenterSvc.WithTenant(gid.NewTenantID())
+
+	trustCenter, err := trust.TrustCenters.GetBySlug(ctx, slug)
+	if err != nil {
+		return nil, nil
+	}
+
+	if !trustCenter.Active {
+		return nil, nil
+	}
+
+	prb := r.ProboService(ctx, trustCenter.OrganizationID.TenantID())
+	org, err := prb.Organizations.Get(ctx, trustCenter.OrganizationID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get organization: %w", err)
+	}
+
+	result := types.NewTrustCenter(trustCenter)
+	result.Organization = types.NewOrganization(org)
+
+	return result, nil
+}
+
 // DownloadURL is the resolver for the downloadUrl field.
 func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*string, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -3167,6 +3197,90 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// Organization is the resolver for the organization field.
+func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get organization: %w", err)
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// PublicDocuments is the resolver for the publicDocuments field.
+func (r *trustCenterResolver) PublicDocuments(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy) (*types.DocumentConnection, error) {
+	trust := r.trustCenterSvc.WithTenant(obj.Organization.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
+		Field:     coredata.DocumentOrderFieldTitle,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.DocumentOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	documentPage, err := trust.TrustCenters.ListPublicDocuments(ctx, obj.Organization.ID, cursor)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list public documents: %w", err)
+	}
+
+	return types.NewDocumentConnection(documentPage, r, obj.Organization.ID, coredata.NewDocumentTrustCenterFilter()), nil
+}
+
+// PublicAudits is the resolver for the publicAudits field.
+func (r *trustCenterResolver) PublicAudits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
+	trust := r.trustCenterSvc.WithTenant(obj.Organization.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
+		Field:     coredata.AuditOrderFieldValidFrom,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.AuditOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	auditPage, err := trust.TrustCenters.ListPublicAudits(ctx, obj.Organization.ID, cursor)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list public audits: %w", err)
+	}
+
+	return types.NewAuditConnection(auditPage, r, obj.Organization.ID), nil
+}
+
+// PublicVendors is the resolver for the publicVendors field.
+func (r *trustCenterResolver) PublicVendors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
+	trust := r.trustCenterSvc.WithTenant(obj.Organization.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
+		Field:     coredata.VendorOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	vendorPage, err := trust.TrustCenters.ListPublicVendors(ctx, obj.Organization.ID, cursor)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list public vendors: %w", err)
+	}
+
+	return types.NewVendorConnection(vendorPage, r, obj.Organization.ID), nil
+}
+
 // People is the resolver for the people field.
 func (r *userResolver) People(ctx context.Context, obj *types.User, organizationID gid.GID) (*types.People, error) {
 	prb := r.ProboService(ctx, organizationID.TenantID())
@@ -3369,7 +3483,7 @@ func (r *vendorRiskAssessmentResolver) AssessedBy(ctx context.Context, obj *type
 }
 
 // Organizations is the resolver for the organizations field.
-func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) (*types.OrganizationConnection, error) {
+func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder, filter *types.OrganizationFilter) (*types.OrganizationConnection, error) {
 	user := UserFromContext(ctx)
 
 	// For now, we're not using cursor pagination since we're loading all organizations
@@ -3496,6 +3610,9 @@ func (r *Resolver) Task() schema.TaskResolver { return &taskResolver{r} }
 // TaskConnection returns schema.TaskConnectionResolver implementation.
 func (r *Resolver) TaskConnection() schema.TaskConnectionResolver { return &taskConnectionResolver{r} }
 
+// TrustCenter returns schema.TrustCenterResolver implementation.
+func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
+
 // User returns schema.UserResolver implementation.
 func (r *Resolver) User() schema.UserResolver { return &userResolver{r} }
 
@@ -3547,6 +3664,7 @@ type riskResolver struct{ *Resolver }
 type riskConnectionResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }
 type taskConnectionResolver struct{ *Resolver }
+type trustCenterResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
 type vendorResolver struct{ *Resolver }
 type vendorComplianceReportResolver struct{ *Resolver }
