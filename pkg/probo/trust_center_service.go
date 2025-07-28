@@ -21,7 +21,6 @@ import (
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/slug"
 	"go.gearno.de/kit/pg"
 )
 
@@ -41,74 +40,6 @@ type (
 		Slug   *string
 	}
 )
-
-func (s *TrustCenterService) Create(
-	ctx context.Context,
-	req *CreateTrustCenterRequest,
-) (*coredata.TrustCenter, error) {
-	now := time.Now()
-
-	trustCenter := &coredata.TrustCenter{
-		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterEntityType),
-		OrganizationID: req.OrganizationID,
-		TenantID:       req.OrganizationID.TenantID(),
-		Active:         false,
-		Slug:           slug.Make(req.OrganizationName),
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(conn pg.Conn) error {
-			organization := &coredata.Organization{}
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
-				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			if err := trustCenter.Insert(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot insert trust center: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return trustCenter, nil
-}
-
-func (s *TrustCenterService) CreateWithConn(
-	ctx context.Context,
-	conn pg.Conn,
-	req *CreateTrustCenterRequest,
-) (*coredata.TrustCenter, error) {
-	now := time.Now()
-
-	trustCenter := &coredata.TrustCenter{
-		ID:             gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterEntityType),
-		OrganizationID: req.OrganizationID,
-		TenantID:       req.OrganizationID.TenantID(),
-		Active:         false,
-		Slug:           slug.Make(req.OrganizationName),
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-
-	organization := &coredata.Organization{}
-	if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
-		return nil, fmt.Errorf("cannot load organization: %w", err)
-	}
-
-	if err := trustCenter.Insert(ctx, conn, s.svc.scope); err != nil {
-		return nil, fmt.Errorf("cannot insert trust center: %w", err)
-	}
-
-	return trustCenter, nil
-}
 
 func (s TrustCenterService) Get(
 	ctx context.Context,
