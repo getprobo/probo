@@ -111,29 +111,31 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*types.Organization, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	if obj.Organization == nil {
-		return nil, fmt.Errorf("cannot get organization")
-	}
-
-	org, err := prb.Organizations.Get(ctx, obj.Organization.ID)
+	audit, err := prb.Audits.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get organization: %w", err)
+		return nil, fmt.Errorf("cannot load audit: %w", err)
 	}
 
-	return types.NewOrganization(org), nil
+	organization, err := prb.Organizations.Get(ctx, audit.OrganizationID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load organization: %w", err)
+	}
+
+	return types.NewOrganization(organization), nil
 }
 
 // Framework is the resolver for the framework field.
 func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	if obj.Framework == nil {
-		return nil, fmt.Errorf("cannot get framework")
+	audit, err := prb.Audits.Get(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load audit: %w", err)
 	}
 
-	framework, err := prb.Frameworks.Get(ctx, obj.Framework.ID)
+	framework, err := prb.Frameworks.Get(ctx, audit.FrameworkID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get framework: %w", err)
+		return nil, fmt.Errorf("cannot load framework: %w", err)
 	}
 
 	return types.NewFramework(framework), nil
@@ -143,13 +145,18 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	if obj.Report == nil {
+	audit, err := prb.Audits.Get(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load audit: %w", err)
+	}
+
+	if audit.ReportID == nil {
 		return nil, nil
 	}
 
-	report, err := prb.Reports.Get(ctx, obj.Report.ID)
+	report, err := prb.Reports.Get(ctx, *audit.ReportID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get report: %w", err)
+		return nil, fmt.Errorf("cannot load report: %w", err)
 	}
 
 	return types.NewReport(report), nil

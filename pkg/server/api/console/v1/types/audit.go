@@ -53,7 +53,7 @@ func NewAuditConnection(
 }
 
 func NewAudit(a *coredata.Audit) *Audit {
-	audit := &Audit{
+	return &Audit{
 		ID:                a.ID,
 		ValidFrom:         a.ValidFrom,
 		ValidUntil:        a.ValidUntil,
@@ -61,15 +61,7 @@ func NewAudit(a *coredata.Audit) *Audit {
 		ShowOnTrustCenter: a.ShowOnTrustCenter,
 		CreatedAt:         a.CreatedAt,
 		UpdatedAt:         a.UpdatedAt,
-		Organization:      &Organization{ID: a.OrganizationID},
-		Framework:         &Framework{ID: a.FrameworkID},
 	}
-
-	if a.ReportID != nil {
-		audit.Report = &Report{ID: *a.ReportID}
-	}
-
-	return audit
 }
 
 func NewAuditEdge(a *coredata.Audit, orderField coredata.AuditOrderField) *AuditEdge {
