@@ -177,7 +177,11 @@ func (s AuditService) Delete(
 	return s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return audit.Delete(ctx, conn, s.svc.scope)
+			err := audit.Delete(ctx, conn, s.svc.scope)
+			if err != nil {
+				return fmt.Errorf("cannot delete audit: %w", err)
+			}
+			return nil
 		},
 	)
 }
