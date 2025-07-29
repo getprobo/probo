@@ -144,14 +144,6 @@ SET
 WHERE
 	%s
 	AND id = @id
-RETURNING
-	id,
-	object_key,
-	mime_type,
-	filename,
-	size,
-	created_at,
-	updated_at
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -166,17 +158,10 @@ RETURNING
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update report: %w", err)
 	}
-
-	report, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Report])
-	if err != nil {
-		return fmt.Errorf("cannot collect updated report: %w", err)
-	}
-
-	*r = report
 
 	return nil
 }
