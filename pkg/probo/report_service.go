@@ -17,7 +17,6 @@ package probo
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -59,14 +58,19 @@ func (s ReportService) Create(
 	reportID := gid.New(s.svc.scope.GetTenantID(), coredata.ReportEntityType)
 	now := time.Now()
 
-	uuidVal, _ := uuid.NewV4()
-	objectKey := fmt.Sprintf("reports/%s/%s", reportID, uuidVal.String()+filepath.Ext(file.Filename))
+	objectKey, err := uuid.NewV7()
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate object key: %w", err)
+	}
 
-	_, err := s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
+	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:      aws.String(s.svc.bucket),
-		Key:         aws.String(objectKey),
+		Key:         aws.String(objectKey.String()),
 		Body:        file.Content,
 		ContentType: aws.String(file.ContentType),
+		Metadata: map[string]string{
+			"report-id": reportID.String(),
+		},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot upload report to S3: %w", err)
@@ -74,7 +78,7 @@ func (s ReportService) Create(
 
 	report := &coredata.Report{
 		ID:        reportID,
-		ObjectKey: objectKey,
+		ObjectKey: objectKey.String(),
 		MimeType:  file.ContentType,
 		Filename:  file.Filename,
 		Size:      file.Size,
