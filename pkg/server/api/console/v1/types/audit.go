@@ -64,7 +64,6 @@ func NewAudit(a *coredata.Audit) *Audit {
 		Framework:    &Framework{ID: a.FrameworkID},
 	}
 
-	// Set Report field if ReportID exists
 	if a.ReportID != nil {
 		audit.Report = &Report{ID: *a.ReportID}
 	}

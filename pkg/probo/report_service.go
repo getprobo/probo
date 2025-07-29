@@ -100,27 +100,28 @@ func (s ReportService) Delete(
 	ctx context.Context,
 	reportID gid.GID,
 ) error {
-	report, err := s.Get(ctx, reportID)
-	if err != nil {
-		return fmt.Errorf("cannot get report: %w", err)
-	}
+	return s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+		report := &coredata.Report{}
+		err := report.LoadByID(ctx, conn, s.svc.scope, reportID)
+		if err != nil {
+			return fmt.Errorf("cannot get report: %w", err)
+		}
 
-	_, err = s.svc.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
-		Bucket: aws.String(s.svc.bucket),
-		Key:    aws.String(report.ObjectKey),
+		_, err = s.svc.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
+			Bucket: aws.String(s.svc.bucket),
+			Key:    aws.String(report.ObjectKey),
+		})
+		if err != nil {
+			return fmt.Errorf("cannot delete report from S3: %w", err)
+		}
+
+		err = report.Delete(ctx, conn, s.svc.scope)
+		if err != nil {
+			return fmt.Errorf("cannot delete report: %w", err)
+		}
+
+		return nil
 	})
-	if err != nil {
-		return fmt.Errorf("cannot delete report from S3: %w", err)
-	}
-
-	err = s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		return report.Delete(ctx, conn, s.svc.scope)
-	})
-	if err != nil {
-		return fmt.Errorf("cannot delete report: %w", err)
-	}
-
-	return nil
 }
 
 func (s ReportService) GenerateDownloadURL(
