@@ -211,15 +211,3 @@ WHERE
 
 	return nil
 }
-
-type (
-	TrustCenterOrderField string
-)
-
-const (
-	TrustCenterOrderFieldCreatedAt TrustCenterOrderField = "CREATED_AT"
-)
-
-func (tof TrustCenterOrderField) String() string {
-	return string(tof)
-}
