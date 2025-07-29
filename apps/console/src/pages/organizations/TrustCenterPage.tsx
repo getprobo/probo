@@ -212,8 +212,7 @@ export default function TrustCenterPage({ queryRef }: Props) {
         </Card>
       </div>
       <div className="space-y-4">
-        <h2 className="text-base font-medium">{__("Content")}</h2>
-                <Tabs>
+        <Tabs>
           <TabItem
             asChild
             active={
@@ -230,6 +229,9 @@ export default function TrustCenterPage({ queryRef }: Props) {
           </TabLink>
           <TabLink to={`/organizations/${organizationId}/trust-center/documents`}>
             {__("Documents")}
+          </TabLink>
+          <TabLink to={`/organizations/${organizationId}/trust-center/access`}>
+            {__("Access")}
           </TabLink>
         </Tabs>
 

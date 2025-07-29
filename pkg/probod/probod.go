@@ -55,6 +55,7 @@ type (
 
 	config struct {
 		Hostname      string               `json:"hostname"`
+		HTTPS         bool                 `json:"https"`
 		EncryptionKey cipher.EncryptionKey `json:"encryption-key"`
 		Pg            pgConfig             `json:"pg"`
 		Api           apiConfig            `json:"api"`
@@ -76,6 +77,7 @@ func New() *Implm {
 	return &Implm{
 		cfg: config{
 			Hostname: "localhost:8080",
+			HTTPS:    true,
 			Api: apiConfig{
 				Addr: "localhost:8080",
 			},
@@ -224,9 +226,11 @@ func (impl *Implm) Run(
 		s3Client,
 		impl.cfg.AWS.Bucket,
 		impl.cfg.Hostname,
+		impl.cfg.HTTPS,
 		impl.cfg.Auth.Cookie.Secret,
 		agentConfig,
 		html2pdfConverter,
+		usrmgrService,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)

@@ -566,6 +566,14 @@ enum AuditOrderField
     )
 }
 
+enum TrustCenterAccessOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderFieldCreatedAt"
+    )
+}
+
 # Input Types
 input UserOrder
   @goModel(
@@ -647,6 +655,14 @@ input AuditOrder
   field: AuditOrderField!
 }
 
+input TrustCenterAccessOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterAccessOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: TrustCenterAccessOrderField!
+}
+
 input EvidenceOrder
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.EvidenceOrderBy"
@@ -718,6 +734,14 @@ type TrustCenter implements Node {
   createdAt: Datetime!
   updatedAt: Datetime!
   organization: Organization! @goField(forceResolver: true)
+
+  accesses(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: TrustCenterAccessOrder
+  ): TrustCenterAccessConnection! @goField(forceResolver: true)
 
   publicDocuments(
     first: Int
@@ -1235,6 +1259,25 @@ type TrustCenterEdge {
   node: TrustCenter!
 }
 
+type TrustCenterAccess implements Node {
+  id: ID!
+  email: String!
+  name: String!
+  active: Boolean!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type TrustCenterAccessConnection {
+  edges: [TrustCenterAccessEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TrustCenterAccessEdge {
+  cursor: CursorKey!
+  node: TrustCenterAccess!
+}
+
 type UserConnection {
   edges: [UserEdge!]!
   pageInfo: PageInfo!
@@ -1466,6 +1509,24 @@ type Mutation {
     input: UpdateTrustCenterInput!
   ): UpdateTrustCenterPayload!
 
+
+  revokeTrustCenterAccess(
+    input: RevokeTrustCenterAccessInput!
+  ): RevokeTrustCenterAccessPayload!
+
+  # Trust Center Access CRUD mutations
+  createTrustCenterAccess(
+    input: CreateTrustCenterAccessInput!
+  ): CreateTrustCenterAccessPayload!
+
+  updateTrustCenterAccess(
+    input: UpdateTrustCenterAccessInput!
+  ): UpdateTrustCenterAccessPayload!
+
+  deleteTrustCenterAccess(
+    input: DeleteTrustCenterAccessInput!
+  ): DeleteTrustCenterAccessPayload!
+
   # User mutations
   confirmEmail(input: ConfirmEmailInput!): ConfirmEmailPayload!
   inviteUser(input: InviteUserInput!): InviteUserPayload!
@@ -1636,6 +1697,31 @@ input UpdateTrustCenterInput {
   trustCenterId: ID!
   active: Boolean
   slug: String
+}
+
+
+
+input RevokeTrustCenterAccessInput {
+  accessId: ID!
+}
+
+input CreateTrustCenterAccessInput {
+  trustCenterId: ID!
+  email: String!
+  name: String!
+  sendEmail: Boolean! = true
+}
+
+input UpdateTrustCenterAccessInput {
+  accessId: ID!
+  email: String
+  name: String
+  active: Boolean
+  sendEmail: Boolean! = false
+}
+
+input DeleteTrustCenterAccessInput {
+  accessId: ID!
 }
 
 input CreateVendorInput {
@@ -2001,6 +2087,24 @@ type UpdateOrganizationPayload {
 
 type UpdateTrustCenterPayload {
   trustCenter: TrustCenter!
+}
+
+
+
+type RevokeTrustCenterAccessPayload {
+  trustCenterAccess: TrustCenterAccess!
+}
+
+type CreateTrustCenterAccessPayload {
+  trustCenterAccessEdge: TrustCenterAccessEdge!
+}
+
+type UpdateTrustCenterAccessPayload {
+  trustCenterAccess: TrustCenterAccess!
+}
+
+type DeleteTrustCenterAccessPayload {
+  deletedTrustCenterAccessId: ID!
 }
 
 type CreateControlPayload {

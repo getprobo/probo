@@ -18,6 +18,7 @@ package console_v1
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -33,6 +34,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/getprobo/probo/pkg/connector"
 	"github.com/getprobo/probo/pkg/coredata"
+	"github.com/getprobo/probo/pkg/crypto/cipher"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/probo"
 	"github.com/getprobo/probo/pkg/saferedirect"
@@ -66,9 +68,10 @@ type (
 )
 
 var (
-	sessionContextKey    = &ctxKey{name: "session"}
-	userContextKey       = &ctxKey{name: "user"}
-	userTenantContextKey = &ctxKey{name: "user_tenants"}
+	sessionContextKey     = &ctxKey{name: "session"}
+	userContextKey        = &ctxKey{name: "user"}
+	userTenantContextKey  = &ctxKey{name: "user_tenants"}
+	tokenAccessContextKey = &ctxKey{name: "token_access"}
 )
 
 func SessionFromContext(ctx context.Context) *coredata.Session {
@@ -81,6 +84,22 @@ func UserFromContext(ctx context.Context) *coredata.User {
 	return user
 }
 
+type TokenAccessData struct {
+	TrustCenterID gid.GID
+	Email         string
+	TenantID      gid.TenantID
+	Scope         string
+}
+
+const (
+	TokenScopeTrustCenterReadOnly = "trust_center_readonly"
+)
+
+func TokenAccessFromContext(ctx context.Context) *TokenAccessData {
+	tokenAccess, _ := ctx.Value(tokenAccessContextKey).(*TokenAccessData)
+	return tokenAccess
+}
+
 func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
@@ -91,6 +110,8 @@ func NewMux(
 	safeRedirect *saferedirect.SafeRedirect,
 ) *chi.Mux {
 	r := chi.NewMux()
+
+	encryptionKey := proboSvc.GetEncryptionKey()
 
 	r.Get(
 		"/documents/signing-requests",
@@ -160,8 +181,10 @@ func NewMux(
 	r.Post("/auth/invitation", InvitationConfirmationHandler(usrmgrSvc, proboSvc, authCfg))
 	r.Post("/auth/forget-password", ForgetPasswordHandler(usrmgrSvc, authCfg))
 	r.Post("/auth/reset-password", ResetPasswordHandler(usrmgrSvc, authCfg))
+	r.Post("/trust-center-access/authenticate", authTokenHandler(proboSvc, trustSvc, authCfg, encryptionKey))
+	r.Delete("/trust-center-access/logout", trustCenterLogoutHandler(authCfg))
 
-	r.Get("/connectors/initiate", WithSession(usrmgrSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/connectors/initiate", WithSession(usrmgrSvc, proboSvc, authCfg, encryptionKey, func(w http.ResponseWriter, r *http.Request) {
 		connectorID := r.URL.Query().Get("connector_id")
 		organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
 		if err != nil {
@@ -178,7 +201,7 @@ func NewMux(
 		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 	}))
 
-	r.Get("/connectors/complete", WithSession(usrmgrSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/connectors/complete", WithSession(usrmgrSvc, proboSvc, authCfg, encryptionKey, func(w http.ResponseWriter, r *http.Request) {
 		connectorID := r.URL.Query().Get("connector_id")
 		organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
 		if err != nil {
@@ -209,12 +232,12 @@ func NewMux(
 	}))
 
 	r.Get("/", playground.Handler("GraphQL", "/api/console/v1/query"))
-	r.Post("/query", graphqlHandler(logger, proboSvc, usrmgrSvc, trustSvc, authCfg))
+	r.Post("/query", graphqlHandler(logger, proboSvc, usrmgrSvc, trustSvc, authCfg, encryptionKey))
 
 	return r
 }
 
-func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrmgr.Service, trustSvc *trust.Service, authCfg AuthConfig) http.HandlerFunc {
+func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrmgr.Service, trustSvc *trust.Service, authCfg AuthConfig, encryptionKey cipher.EncryptionKey) http.HandlerFunc {
 	var mb int64 = 1 << 20
 
 	es := schema.NewExecutableSchema(
@@ -247,8 +270,9 @@ func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrm
 	srv.AroundOperations(
 		func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
 			user := UserFromContext(ctx)
+			tokenAccess := TokenAccessFromContext(ctx)
 
-			if user == nil {
+			if user == nil && tokenAccess == nil {
 				return func(ctx context.Context) *graphql.Response {
 					return &graphql.Response{
 						Errors: gqlerror.List{
@@ -267,10 +291,36 @@ func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrm
 		},
 	)
 
-	return WithSession(usrmgrSvc, authCfg, srv.ServeHTTP)
+	srv.AroundFields(
+		func(ctx context.Context, next graphql.Resolver) (interface{}, error) {
+			user := UserFromContext(ctx)
+			tokenAccess := TokenAccessFromContext(ctx)
+
+			if tokenAccess != nil && user == nil {
+				fc := graphql.GetFieldContext(ctx)
+				if fc != nil {
+					path := fc.Path()
+					if len(path) == 1 {
+						allowedOperations := map[string]bool{
+							"trustCenterBySlug":        true,
+							"exportDocumentVersionPDF": true,
+						}
+
+						if !allowedOperations[fc.Field.Name] {
+							return nil, fmt.Errorf("access denied: trust center access tokens can only query trustCenterBySlug and exportDocumentVersionPDF")
+						}
+					}
+				}
+			}
+
+			return next(ctx)
+		},
+	)
+
+	return WithSession(usrmgrSvc, proboSvc, authCfg, encryptionKey, srv.ServeHTTP)
 }
 
-func WithSession(usrmgrSvc *usrmgr.Service, authCfg AuthConfig, next http.HandlerFunc) http.HandlerFunc {
+func WithSession(usrmgrSvc *usrmgr.Service, proboSvc *probo.Service, authCfg AuthConfig, encryptionKey cipher.EncryptionKey, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -278,63 +328,82 @@ func WithSession(usrmgrSvc *usrmgr.Service, authCfg AuthConfig, next http.Handle
 			authCfg.CookieName,
 			authCfg.CookieSecret,
 		))
-		if err != nil {
-			if !errors.Is(err, securecookie.ErrCookieNotFound) {
-				panic(fmt.Errorf("failed to get session: %w", err))
+
+		if err == nil {
+			sessionID, err := gid.ParseGID(cookieValue)
+			if err == nil {
+				session, err := usrmgrSvc.GetSession(ctx, sessionID)
+				if err == nil {
+					user, err := usrmgrSvc.GetUserBySession(ctx, sessionID)
+					if err == nil {
+						tenantIDs, err := usrmgrSvc.ListTenantsForUserID(ctx, user.ID)
+						if err == nil {
+							ctx = context.WithValue(ctx, sessionContextKey, session)
+							ctx = context.WithValue(ctx, userContextKey, user)
+							ctx = context.WithValue(ctx, userTenantContextKey, &tenantIDs)
+
+							next(w, r.WithContext(ctx))
+
+							if err := usrmgrSvc.UpdateSession(ctx, session); err != nil {
+								panic(fmt.Errorf("failed to update session: %w", err))
+							}
+							return
+						}
+					}
+				}
 			}
 
-			next(w, r)
-			return
-		}
-
-		sessionID, err := gid.ParseGID(cookieValue)
-		if err != nil {
 			securecookie.Clear(w, securecookie.DefaultConfig(
 				authCfg.CookieName,
 				authCfg.CookieSecret,
 			))
-
-			next(w, r)
-			return
 		}
 
-		session, err := usrmgrSvc.GetSession(ctx, sessionID)
-		if err != nil {
-			securecookie.Clear(w, securecookie.DefaultConfig(
-				authCfg.CookieName,
-				authCfg.CookieSecret,
-			))
+		tokenCookieValue, err := securecookie.Get(r, securecookie.Config{
+			Name:   TokenCookieName,
+			Secret: authCfg.CookieSecret,
+		})
 
-			next(w, r)
-			return
+		if err == nil {
+			encryptedData, err := base64.StdEncoding.DecodeString(tokenCookieValue)
+			if err == nil {
+				decryptedData, err := cipher.Decrypt(encryptedData, encryptionKey)
+				if err == nil {
+					var tokenData TrustCenterTokenData
+					if err := json.Unmarshal(decryptedData, &tokenData); err == nil {
+						if time.Now().Before(tokenData.ExpiresAt) {
+							tenantSvc := proboSvc.WithTenant(tokenData.TenantID)
+							isActive, err := tenantSvc.TrustCenterAccesses.IsAccessActive(ctx, tokenData.TrustCenterID, tokenData.Email)
+
+							if err == nil && isActive {
+								tokenAccess := &TokenAccessData{
+									TrustCenterID: tokenData.TrustCenterID,
+									Email:         tokenData.Email,
+									TenantID:      tokenData.TenantID,
+									Scope:         tokenData.Scope,
+								}
+
+								ctx = context.WithValue(ctx, tokenAccessContextKey, tokenAccess)
+								next(w, r.WithContext(ctx))
+								return
+							} else {
+								securecookie.Clear(w, securecookie.Config{
+									Name:   TokenCookieName,
+									Secret: authCfg.CookieSecret,
+								})
+							}
+						} else {
+							securecookie.Clear(w, securecookie.Config{
+								Name:   TokenCookieName,
+								Secret: authCfg.CookieSecret,
+							})
+						}
+					}
+				}
+			}
 		}
 
-		user, err := usrmgrSvc.GetUserBySession(ctx, sessionID)
-		if err != nil {
-			securecookie.Clear(w, securecookie.DefaultConfig(
-				authCfg.CookieName,
-				authCfg.CookieSecret,
-			))
-
-			next(w, r)
-			return
-		}
-
-		tenantIDs, err := usrmgrSvc.ListTenantsForUserID(ctx, user.ID)
-		if err != nil {
-			panic(fmt.Errorf("failed to list tenants for user: %w", err))
-		}
-
-		ctx = context.WithValue(ctx, sessionContextKey, session)
-		ctx = context.WithValue(ctx, userContextKey, user)
-		ctx = context.WithValue(ctx, userTenantContextKey, &tenantIDs)
-
-		next(w, r.WithContext(ctx))
-
-		// Update session after the handler completes
-		if err := usrmgrSvc.UpdateSession(ctx, session); err != nil {
-			panic(fmt.Errorf("failed to update session: %w", err))
-		}
+		next(w, r)
 	}
 }
 
@@ -342,7 +411,33 @@ func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *pro
 	return GetTenantService(ctx, r.proboSvc, tenantID)
 }
 
+// ProboServiceFromContext gets the tenant service from context using either user or token access
+func (r *Resolver) ProboServiceFromContext(ctx context.Context) *probo.TenantService {
+	user := UserFromContext(ctx)
+	if user != nil {
+		userTenants, _ := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
+		if userTenants != nil && len(*userTenants) > 0 {
+			return r.ProboService(ctx, (*userTenants)[0])
+		}
+	}
+
+	tokenAccess := TokenAccessFromContext(ctx)
+	if tokenAccess != nil {
+		return r.ProboService(ctx, tokenAccess.TenantID)
+	}
+
+	return nil
+}
+
 func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid.TenantID) *probo.TenantService {
+	tokenAccess := TokenAccessFromContext(ctx)
+	if tokenAccess != nil {
+		if tokenAccess.TenantID == tenantID {
+			return proboSvc.WithTenant(tenantID)
+		}
+		panic(fmt.Errorf("tenant not found"))
+	}
+
 	tenantIDs, _ := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
 
 	if tenantIDs == nil {

@@ -1,0 +1,95 @@
+import { graphql } from 'react-relay';
+import { useLazyLoadQuery } from 'react-relay';
+
+export const trustCenterAccessesQuery = graphql`
+  query TrustCenterAccessGraphQuery($trustCenterId: ID!) {
+    node(id: $trustCenterId) {
+      ... on TrustCenter {
+        id
+        accesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC })
+          @connection(key: "TrustCenterAccessTab_accesses") {
+          __id
+          pageInfo {
+            hasNextPage
+            hasPreviousPage
+            startCursor
+            endCursor
+          }
+          edges {
+            cursor
+            node {
+              id
+              email
+              name
+              active
+              createdAt
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const revokeTrustCenterAccessMutation = graphql`
+  mutation TrustCenterAccessGraphRevokeMutation($input: RevokeTrustCenterAccessInput!) {
+    revokeTrustCenterAccess(input: $input) {
+      trustCenterAccess {
+        id
+        email
+        name
+        active
+        createdAt
+      }
+    }
+  }
+`;
+
+export const createTrustCenterAccessMutation = graphql`
+  mutation TrustCenterAccessGraphCreateMutation(
+    $input: CreateTrustCenterAccessInput!
+    $connections: [ID!]!
+  ) {
+    createTrustCenterAccess(input: $input) {
+      trustCenterAccessEdge @prependEdge(connections: $connections) {
+        cursor
+        node {
+          id
+          email
+          name
+          active
+          createdAt
+        }
+      }
+    }
+  }
+`;
+
+export const updateTrustCenterAccessMutation = graphql`
+  mutation TrustCenterAccessGraphUpdateMutation($input: UpdateTrustCenterAccessInput!) {
+    updateTrustCenterAccess(input: $input) {
+      trustCenterAccess {
+        id
+        email
+        name
+        active
+        createdAt
+      }
+    }
+  }
+`;
+
+export const deleteTrustCenterAccessMutation = graphql`
+  mutation TrustCenterAccessGraphDeleteMutation(
+    $input: DeleteTrustCenterAccessInput!
+    $connections: [ID!]!
+  ) {
+    deleteTrustCenterAccess(input: $input) {
+      deletedTrustCenterAccessId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
+export function useTrustCenterAccesses(trustCenterId: string) {
+  return useLazyLoadQuery(trustCenterAccessesQuery, { trustCenterId });
+}

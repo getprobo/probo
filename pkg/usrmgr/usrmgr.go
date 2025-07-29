@@ -123,6 +123,19 @@ var (
 
 	[1] %s
 	`
+
+	trustCenterAccessEmailSubject  = "Trust Center Access Invitation - %s"
+	trustCenterAccessEmailTemplate = `
+	You have been granted access to %s's Trust Center!
+
+	Click the link below to access it:
+
+	[1] %s
+
+	This link will expire in 7 days.
+
+	If the link above doesn't work, copy and paste the entire URL into your browser.
+	`
 )
 
 func (e ErrInvalidCredentials) Error() string {
@@ -908,4 +921,26 @@ func (s Service) ResetPassword(ctx context.Context, tokenString string, newPassw
 			return nil
 		},
 	)
+}
+
+func (s Service) SendTrustCenterAccessEmail(
+	ctx context.Context,
+	name string,
+	email string,
+	companyName string,
+	accessURL string,
+) error {
+	accessEmail := coredata.NewEmail(
+		name,
+		email,
+		fmt.Sprintf(trustCenterAccessEmailSubject, companyName),
+		fmt.Sprintf(trustCenterAccessEmailTemplate, companyName, accessURL),
+	)
+
+	return s.pg.WithTx(ctx, func(tx pg.Conn) error {
+		if err := accessEmail.Insert(ctx, tx); err != nil {
+			return fmt.Errorf("cannot insert access email: %w", err)
+		}
+		return nil
+	})
 }

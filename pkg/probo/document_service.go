@@ -1066,6 +1066,7 @@ func (s *DocumentService) CancelSignatureRequest(
 func (s *DocumentService) ExportPDF(
 	ctx context.Context,
 	documentVersionID gid.GID,
+	onlyVisibleOnTrustCenter bool,
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
@@ -1083,6 +1084,10 @@ func (s *DocumentService) ExportPDF(
 
 			if err := document.LoadByID(ctx, conn, s.svc.scope, version.DocumentID); err != nil {
 				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			if onlyVisibleOnTrustCenter && !document.ShowOnTrustCenter {
+				return fmt.Errorf("document not visible on trust center")
 			}
 
 			if version.PublishedBy != nil {

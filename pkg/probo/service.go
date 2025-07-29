@@ -25,6 +25,7 @@ import (
 	"github.com/getprobo/probo/pkg/filevalidation"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
+	"github.com/getprobo/probo/pkg/usrmgr"
 	"go.gearno.de/kit/pg"
 )
 
@@ -35,9 +36,11 @@ type (
 		bucket            string
 		encryptionKey     cipher.EncryptionKey
 		hostname          string
+		https             bool
 		tokenSecret       string
 		agentConfig       agents.Config
 		html2pdfConverter *html2pdf.Converter
+		usrmgr            *usrmgr.Service
 	}
 
 	TenantService struct {
@@ -47,6 +50,7 @@ type (
 		encryptionKey           cipher.EncryptionKey
 		scope                   coredata.Scoper
 		hostname                string
+		https                   bool
 		tokenSecret             string
 		agent                   *agents.Agent
 		Frameworks              *FrameworkService
@@ -66,6 +70,7 @@ type (
 		Audits                  *AuditService
 		Reports                 *ReportService
 		TrustCenters            *TrustCenterService
+		TrustCenterAccesses     *TrustCenterAccessService
 	}
 )
 
@@ -76,9 +81,11 @@ func NewService(
 	s3Client *s3.Client,
 	bucket string,
 	hostname string,
+	https bool,
 	tokenSecret string,
 	agentConfig agents.Config,
 	html2pdfConverter *html2pdf.Converter,
+	usrmgrService *usrmgr.Service,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -90,12 +97,18 @@ func NewService(
 		bucket:            bucket,
 		encryptionKey:     encryptionKey,
 		hostname:          hostname,
+		https:             https,
 		tokenSecret:       tokenSecret,
 		agentConfig:       agentConfig,
 		html2pdfConverter: html2pdfConverter,
+		usrmgr:            usrmgrService,
 	}
 
 	return svc, nil
+}
+
+func (s *Service) GetEncryptionKey() cipher.EncryptionKey {
+	return s.encryptionKey
 }
 
 func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
@@ -105,6 +118,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		bucket:        s.bucket,
 		encryptionKey: s.encryptionKey,
 		hostname:      s.hostname,
+		https:         s.https,
 		scope:         coredata.NewScope(tenantID),
 		tokenSecret:   s.tokenSecret,
 		agent:         agents.NewAgent(nil, s.agentConfig),
@@ -146,5 +160,9 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Audits = &AuditService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
+	tenantService.TrustCenterAccesses = &TrustCenterAccessService{
+		svc:    tenantService,
+		usrmgr: s.usrmgr,
+	}
 	return tenantService
 }

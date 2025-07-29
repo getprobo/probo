@@ -1,5 +1,7 @@
 import { Outlet } from "react-router";
-import { Logo } from "@probo/ui";
+import { Logo, Button, IconArrowBoxLeft } from "@probo/ui";
+import { useTranslate } from "@probo/i18n";
+import { buildEndpoint } from "/providers/RelayProviders";
 import type { ReactNode } from "react";
 
 type Props = {
@@ -9,6 +11,25 @@ type Props = {
 };
 
 export function PublicTrustCenterLayout({ organizationName, organizationLogo, children }: Props) {
+  const { __ } = useTranslate();
+
+    const handleLogout = async () => {
+    try {
+      await fetch(buildEndpoint('/api/console/v1/trust-center-access/logout'), {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      // Redirect to home page regardless of logout success/failure
+      window.location.href = "/";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-tertiary">
       <header className="bg-surface border-b border-border-solid">
@@ -31,20 +52,29 @@ export function PublicTrustCenterLayout({ organizationName, organizationLogo, ch
                 <p className="text-sm text-txt-secondary">Trust Center</p>
               </div>
             </div>
-            <div className="text-sm text-txt-tertiary">
-              <a
-                href="https://www.getprobo.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-txt-secondary transition-colors flex items-center space-x-1"
-              >
-                <img
-                  src="/favicons/favicon.ico"
-                  alt="Probo"
-                  className="h-4 w-4"
-                />
-                <span>Powered by Probo</span>
-              </a>
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-txt-tertiary">
+                <a
+                  href="https://www.getprobo.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-txt-secondary transition-colors flex items-center space-x-1"
+                >
+                  <img
+                    src="/favicons/favicon.ico"
+                    alt="Probo"
+                    className="h-4 w-4"
+                  />
+                  <span>Powered by Probo</span>
+                </a>
+              </div>
+              <Button
+                variant="tertiary"
+                icon={IconArrowBoxLeft}
+                onClick={handleLogout}
+                title={__("Logout")}
+                className="text-sm"
+              />
             </div>
           </div>
         </div>

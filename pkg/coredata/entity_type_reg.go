@@ -38,4 +38,5 @@ const (
 	AuditEntityType
 	ReportEntityType
 	TrustCenterEntityType
+	TrustCenterAccessEntityType
 )

@@ -998,6 +998,77 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 	}, nil
 }
 
+// RevokeTrustCenterAccess is the resolver for the revokeTrustCenterAccess field.
+func (r *mutationResolver) RevokeTrustCenterAccess(ctx context.Context, input types.RevokeTrustCenterAccessInput) (*types.RevokeTrustCenterAccessPayload, error) {
+	prb := r.ProboService(ctx, input.AccessID.TenantID())
+
+	access, err := prb.TrustCenterAccesses.RevokeAccess(ctx, &probo.RevokeTrustCenterAccessRequest{
+		AccessID: input.AccessID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot revoke trust center access: %w", err)
+	}
+
+	return &types.RevokeTrustCenterAccessPayload{
+		TrustCenterAccess: types.NewTrustCenterAccess(access),
+	}, nil
+}
+
+// CreateTrustCenterAccess is the resolver for the createTrustCenterAccess field.
+func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error) {
+	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
+
+	access, err := prb.TrustCenterAccesses.Create(ctx, &probo.CreateTrustCenterAccessRequest{
+		TrustCenterID: input.TrustCenterID,
+		Email:         input.Email,
+		Name:          input.Name,
+		SendEmail:     input.SendEmail,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot create trust center access: %w", err)
+	}
+
+	return &types.CreateTrustCenterAccessPayload{
+		TrustCenterAccessEdge: types.NewTrustCenterAccessEdge(access, coredata.TrustCenterAccessOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateTrustCenterAccess is the resolver for the updateTrustCenterAccess field.
+func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input types.UpdateTrustCenterAccessInput) (*types.UpdateTrustCenterAccessPayload, error) {
+	prb := r.ProboService(ctx, input.AccessID.TenantID())
+
+	access, err := prb.TrustCenterAccesses.Update(ctx, &probo.UpdateTrustCenterAccessRequest{
+		AccessID:  input.AccessID,
+		Email:     input.Email,
+		Name:      input.Name,
+		Active:    input.Active,
+		SendEmail: input.SendEmail,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot update trust center access: %w", err)
+	}
+
+	return &types.UpdateTrustCenterAccessPayload{
+		TrustCenterAccess: types.NewTrustCenterAccess(access),
+	}, nil
+}
+
+// DeleteTrustCenterAccess is the resolver for the deleteTrustCenterAccess field.
+func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input types.DeleteTrustCenterAccessInput) (*types.DeleteTrustCenterAccessPayload, error) {
+	prb := r.ProboService(ctx, input.AccessID.TenantID())
+
+	err := prb.TrustCenterAccesses.Delete(ctx, &probo.DeleteTrustCenterAccessRequest{
+		AccessID: input.AccessID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot delete trust center access: %w", err)
+	}
+
+	return &types.DeleteTrustCenterAccessPayload{
+		DeletedTrustCenterAccessID: input.AccessID,
+	}, nil
+}
+
 // ConfirmEmail is the resolver for the confirmEmail field.
 func (r *mutationResolver) ConfirmEmail(ctx context.Context, input types.ConfirmEmailInput) (*types.ConfirmEmailPayload, error) {
 	err := r.usrmgrSvc.ConfirmEmail(ctx, input.Token)
@@ -2126,7 +2197,11 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input types.ExportDocumentVersionPDFInput) (*types.ExportDocumentVersionPDFPayload, error) {
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
-	pdf, err := prb.Documents.ExportPDF(ctx, input.DocumentVersionID)
+	tokenAccess := TokenAccessFromContext(ctx)
+	user := UserFromContext(ctx)
+	onlyVisibleOnTrustCenter := tokenAccess != nil && user == nil
+
+	pdf, err := prb.Documents.ExportPDF(ctx, input.DocumentVersionID, onlyVisibleOnTrustCenter)
 	if err != nil {
 		panic(fmt.Errorf("cannot export document version PDF: %w", err))
 	}
@@ -2883,7 +2958,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 		return types.NewReport(report), nil
 	case coredata.TrustCenterEntityType:
-		trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, id)
+		trustCenter, err := prb.TrustCenters.Get(ctx, id)
 		if err != nil {
 			panic(fmt.Errorf("cannot get trust center: %w", err))
 		}
@@ -3207,6 +3282,31 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// Accesses is the resolver for the accesses field.
+func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) (*types.TrustCenterAccessConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterAccessOrderField]{
+		Field:     coredata.TrustCenterAccessOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrustCenterAccessOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := prb.TrustCenterAccesses.ListForTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list trust center accesses: %w", err))
+	}
+
+	return types.NewTrustCenterAccessConnection(result), nil
 }
 
 // PublicDocuments is the resolver for the publicDocuments field.

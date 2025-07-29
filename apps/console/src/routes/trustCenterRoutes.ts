@@ -44,6 +44,13 @@ export const trustCenterRoutes = [
           () => import("/pages/organizations/trustCenter/TrustCenterDocumentsTab")
         ),
       },
+      {
+        path: "access",
+        fallback: LinkCardSkeleton,
+        Component: lazy(
+          () => import("/pages/organizations/trustCenter/TrustCenterAccessTab")
+        ),
+      },
     ],
   },
 ] satisfies AppRoute[];

@@ -9,6 +9,7 @@ import { PublicTrustCenterLayout } from "/layouts/PublicTrustCenterLayout";
 import { PublicTrustCenterAudits } from "../components/trustCenter/PublicTrustCenterAudits";
 import { PublicTrustCenterVendors } from "../components/trustCenter/PublicTrustCenterVendors";
 import { PublicTrustCenterDocuments } from "../components/trustCenter/PublicTrustCenterDocuments";
+import { PageError } from "../components/PageError";
 
 type Props = {
   queryRef?: PreloadedQuery<PublicTrustCenterGraphQuery>;
@@ -29,11 +30,11 @@ export default function PublicTrustCenterPage({ queryRef }: Props) {
   const { trustCenterBySlug } = data as any;
 
   if (!trustCenterBySlug) {
-    return <Navigate to="/auth/login" replace />;
+    return <PageError />;
   }
 
   if (!trustCenterBySlug.active) {
-    return <Navigate to="/auth/login" replace />;
+    return <PageError />;
   }
 
   const { organization } = trustCenterBySlug;
