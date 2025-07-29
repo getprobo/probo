@@ -46,7 +46,7 @@ func (s ReportService) Get(
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get report: %w", err)
 	}
 
 	return report, nil
