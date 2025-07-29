@@ -223,9 +223,3 @@ const (
 func (tof TrustCenterOrderField) String() string {
 	return string(tof)
 }
-
-type (
-	UpdateTrustCenterParams struct {
-		Active *bool
-	}
-)

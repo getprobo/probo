@@ -5,7 +5,7 @@ CREATE TABLE trust_centers (
     organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     tenant_id TEXT NOT NULL,
     active BOOLEAN NOT NULL,
-    slug TEXT NOT NULL CHECK (slug ~ '^[a-z0-9_]+$'),
+    slug TEXT NOT NULL CHECK (slug ~ '^[a-z0-9_-]+$'),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
     UNIQUE(slug)

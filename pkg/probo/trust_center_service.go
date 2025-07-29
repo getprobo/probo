@@ -29,11 +29,6 @@ type (
 		svc *TenantService
 	}
 
-	CreateTrustCenterRequest struct {
-		OrganizationID   gid.GID
-		OrganizationName string
-	}
-
 	UpdateTrustCenterRequest struct {
 		ID     gid.GID
 		Active *bool
