@@ -165,7 +165,10 @@ func NewMux(
 			panic(fmt.Errorf("failed to parse organization id: %w", err))
 		}
 
-		_ = GetTenantService(r.Context(), proboSvc, organizationID.TenantID())
+		_, err = GetTenantService(r.Context(), proboSvc, organizationID.TenantID())
+		if err != nil {
+			panic(fmt.Errorf("cannot get tenant service: %w", err))
+		}
 
 		redirectURL, err := connectorRegistry.Initiate(r.Context(), connectorID, organizationID, r)
 		if err != nil {
@@ -187,7 +190,10 @@ func NewMux(
 			panic(fmt.Errorf("failed to complete connector: %w", err))
 		}
 
-		svc := GetTenantService(r.Context(), proboSvc, organizationID.TenantID())
+		svc, err := GetTenantService(r.Context(), proboSvc, organizationID.TenantID())
+		if err != nil {
+			panic(fmt.Errorf("cannot get tenant service: %w", err))
+		}
 
 		_, err = svc.Connectors.CreateOrUpdate(
 			r.Context(),
@@ -334,22 +340,22 @@ func WithSession(usrmgrSvc *usrmgr.Service, authCfg AuthConfig, next http.Handle
 	}
 }
 
-func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {
+func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) (*probo.TenantService, error) {
 	return GetTenantService(ctx, r.proboSvc, tenantID)
 }
 
-func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid.TenantID) *probo.TenantService {
-	tenantIDs, _ := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
+func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid.TenantID) (*probo.TenantService, error) {
+	tenantIDs, ok := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
 
-	if tenantIDs == nil {
-		panic(fmt.Errorf("tenant not found"))
+	if !ok || tenantIDs == nil {
+		return nil, fmt.Errorf("tenant not found")
 	}
 
 	for _, id := range *tenantIDs {
 		if id == tenantID {
-			return proboSvc.WithTenant(tenantID)
+			return proboSvc.WithTenant(tenantID), nil
 		}
 	}
 
-	panic(fmt.Errorf("tenant not found"))
+	return nil, fmt.Errorf("tenant not found")
 }

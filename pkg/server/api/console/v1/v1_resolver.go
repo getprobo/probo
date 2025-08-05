@@ -23,7 +23,10 @@ import (
 
 // Owner is the resolver for the owner field.
 func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	asset, err := prb.Assets.Get(ctx, obj.ID)
 	if err != nil {
@@ -40,7 +43,10 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Peo
 
 // Vendors is the resolver for the vendors field.
 func (r *assetResolver) Vendors(ctx context.Context, obj *types.Asset, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
 		Field:     coredata.VendorOrderFieldCreatedAt,
@@ -65,7 +71,10 @@ func (r *assetResolver) Vendors(ctx context.Context, obj *types.Asset, first *in
 
 // AssetType is the resolver for the assetType field.
 func (r *assetResolver) AssetType(ctx context.Context, obj *types.Asset) (coredata.AssetType, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return "", fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	asset, err := prb.Assets.Get(ctx, obj.ID)
 	if err != nil {
@@ -77,7 +86,11 @@ func (r *assetResolver) AssetType(ctx context.Context, obj *types.Asset) (coreda
 
 // Organization is the resolver for the organization field.
 func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*types.Organization, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	if obj.Organization == nil {
 		return nil, fmt.Errorf("cannot get organization")
@@ -93,7 +106,10 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 
 // TotalCount is the resolver for the totalCount field.
 func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.AssetConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get organization: %w", err)
+	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -109,7 +125,10 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 
 // Organization is the resolver for the organization field.
 func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*types.Organization, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get organization: %w", err)
+	}
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
 	if err != nil {
@@ -126,7 +145,10 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 
 // Framework is the resolver for the framework field.
 func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get organization: %w", err)
+	}
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
 	if err != nil {
@@ -143,7 +165,10 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 
 // Report is the resolver for the report field.
 func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
 	if err != nil {
@@ -164,7 +189,10 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 // ReportURL is the resolver for the reportUrl field.
 func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*string, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	if obj.Report == nil {
 		return nil, nil
@@ -180,7 +208,10 @@ func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*strin
 
 // TotalCount is the resolver for the totalCount field.
 func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	count, err := prb.Audits.CountForOrganizationID(ctx, obj.ParentID)
 	if err != nil {
@@ -191,7 +222,10 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 
 // Framework is the resolver for the framework field.
 func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*types.Framework, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	control, err := prb.Controls.Get(ctx, obj.ID)
 	if err != nil {
@@ -208,7 +242,10 @@ func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*t
 
 // Measures is the resolver for the measures field.
 func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
 		Field:     coredata.MeasureOrderFieldCreatedAt,
@@ -238,7 +275,10 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 
 // Documents is the resolver for the documents field.
 func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldCreatedAt,
@@ -268,7 +308,10 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 
 // TotalCount is the resolver for the totalCount field.
 func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.ControlConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -308,7 +351,10 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 
 // Owner is the resolver for the owner field.
 func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	data, err := prb.Data.Get(ctx, obj.ID)
 	if err != nil {
@@ -325,7 +371,10 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Peo
 
 // Vendors is the resolver for the vendors field.
 func (r *datumResolver) Vendors(ctx context.Context, obj *types.Datum, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
 		Field:     coredata.VendorOrderFieldCreatedAt,
@@ -350,7 +399,10 @@ func (r *datumResolver) Vendors(ctx context.Context, obj *types.Datum, first *in
 
 // Organization is the resolver for the organization field.
 func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*types.Organization, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	org, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
@@ -362,7 +414,10 @@ func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*ty
 
 // TotalCount is the resolver for the totalCount field.
 func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.DatumConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -378,7 +433,10 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 
 // Owner is the resolver for the owner field.
 func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	document, err := prb.Documents.Get(ctx, obj.ID)
 	if err != nil {
@@ -396,7 +454,10 @@ func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*typ
 
 // Organization is the resolver for the organization field.
 func (r *documentResolver) Organization(ctx context.Context, obj *types.Document) (*types.Organization, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	document, err := prb.Documents.Get(ctx, obj.ID)
 	if err != nil {
@@ -413,7 +474,10 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 
 // Versions is the resolver for the versions field.
 func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) (*types.DocumentVersionConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.DocumentVersionOrderField]{
 		Field:     coredata.DocumentVersionOrderFieldCreatedAt,
@@ -438,7 +502,10 @@ func (r *documentResolver) Versions(ctx context.Context, obj *types.Document, fi
 
 // Controls is the resolver for the controls field.
 func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
@@ -468,7 +535,10 @@ func (r *documentResolver) Controls(ctx context.Context, obj *types.Document, fi
 
 // TotalCount is the resolver for the totalCount field.
 func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.DocumentConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	switch obj.Resolver.(type) {
 	case *controlResolver:
@@ -496,7 +566,10 @@ func (r *documentConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // Document is the resolver for the document field.
 func (r *documentVersionResolver) Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	documentVersion, err := prb.Documents.GetVersion(ctx, obj.ID)
 	if err != nil {
@@ -513,7 +586,10 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 
 // Owner is the resolver for the owner field.
 func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.DocumentVersion) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	documentVersion, err := prb.Documents.GetVersion(ctx, obj.ID)
 	if err != nil {
@@ -530,7 +606,10 @@ func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.Document
 
 // Signatures is the resolver for the signatures field.
 func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) (*types.DocumentVersionSignatureConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
 		Field:     coredata.DocumentVersionSignatureOrderFieldCreatedAt,
@@ -555,7 +634,10 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 
 // PublishedBy is the resolver for the publishedBy field.
 func (r *documentVersionResolver) PublishedBy(ctx context.Context, obj *types.DocumentVersion) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	documentVersion, err := prb.Documents.GetVersion(ctx, obj.ID)
 	if err != nil {
@@ -576,7 +658,10 @@ func (r *documentVersionResolver) PublishedBy(ctx context.Context, obj *types.Do
 
 // DocumentVersion is the resolver for the documentVersion field.
 func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	documentVersionSignature, err := prb.Documents.GetVersionSignature(ctx, obj.ID)
 	if err != nil {
@@ -593,7 +678,10 @@ func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, 
 
 // SignedBy is the resolver for the signedBy field.
 func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	documentVersionSignature, err := prb.Documents.GetVersionSignature(ctx, obj.ID)
 	if err != nil {
@@ -610,7 +698,10 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 
 // RequestedBy is the resolver for the requestedBy field.
 func (r *documentVersionSignatureResolver) RequestedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	documentVersionSignature, err := prb.Documents.GetVersionSignature(ctx, obj.ID)
 	if err != nil {
@@ -627,7 +718,10 @@ func (r *documentVersionSignatureResolver) RequestedBy(ctx context.Context, obj 
 
 // FileURL is the resolver for the fileUrl field.
 func (r *evidenceResolver) FileURL(ctx context.Context, obj *types.Evidence) (*string, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	if obj.Type == coredata.EvidenceTypeLink {
 		return obj.URL, nil
@@ -644,7 +738,10 @@ func (r *evidenceResolver) FileURL(ctx context.Context, obj *types.Evidence) (*s
 
 // Task is the resolver for the task field.
 func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*types.Task, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	evidence, err := prb.Evidences.Get(ctx, obj.ID)
 	if err != nil {
@@ -665,7 +762,10 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 
 // Measure is the resolver for the measure field.
 func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*types.Measure, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	evidence, err := prb.Evidences.Get(ctx, obj.ID)
 	if err != nil {
@@ -682,7 +782,10 @@ func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*t
 
 // TotalCount is the resolver for the totalCount field.
 func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.EvidenceConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	switch obj.Resolver.(type) {
 	case *measureResolver:
@@ -704,7 +807,10 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 
 // Organization is the resolver for the organization field.
 func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framework) (*types.Organization, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	framework, err := prb.Frameworks.Get(ctx, obj.ID)
 	if err != nil {
@@ -721,7 +827,10 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 
 // Controls is the resolver for the controls field.
 func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
@@ -751,7 +860,10 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 
 // TotalCount is the resolver for the totalCount field.
 func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types.FrameworkConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -767,7 +879,10 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 
 // Evidences is the resolver for the evidences field.
 func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
 		Field:     coredata.EvidenceOrderFieldCreatedAt,
@@ -792,7 +907,10 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 
 // Tasks is the resolver for the tasks field.
 func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
 		Field:     coredata.TaskOrderFieldCreatedAt,
@@ -817,7 +935,10 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 // Risks is the resolver for the risks field.
 func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
 		Field:     coredata.RiskOrderFieldCreatedAt,
@@ -847,7 +968,10 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 
 // Controls is the resolver for the controls field.
 func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
@@ -877,7 +1001,10 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 
 // TotalCount is the resolver for the totalCount field.
 func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.MeasureConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -929,7 +1056,10 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	tenantIDs, _ := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
 	*tenantIDs = append(*tenantIDs, organization.ID.TenantID())
 
-	prb = r.ProboService(ctx, organization.ID.TenantID())
+	prb, err = r.ProboService(ctx, organization.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	_, err = prb.Peoples.Create(
 		ctx,
@@ -954,7 +1084,10 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 
 // UpdateOrganization is the resolver for the updateOrganization field.
 func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	req := probo.UpdateOrganizationRequest{
 		ID:   input.OrganizationID,
@@ -982,7 +1115,10 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 
 // UpdateTrustCenter is the resolver for the updateTrustCenter field.
 func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error) {
-	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
+	prb, err := r.ProboService(ctx, input.TrustCenterID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	trustCenter, err := prb.TrustCenters.Update(ctx, &probo.UpdateTrustCenterRequest{
 		ID:     input.TrustCenterID,
@@ -1057,7 +1193,10 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 
 // CreatePeople is the resolver for the createPeople field.
 func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreatePeopleInput) (*types.CreatePeoplePayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	people, err := prb.Peoples.Create(ctx, probo.CreatePeopleRequest{
 		OrganizationID:           input.OrganizationID,
@@ -1081,7 +1220,10 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 
 // UpdatePeople is the resolver for the updatePeople field.
 func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdatePeopleInput) (*types.UpdatePeoplePayload, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	prb, err := r.ProboService(ctx, input.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	people, err := prb.Peoples.Update(ctx, probo.UpdatePeopleRequest{
 		ID:                       input.ID,
@@ -1104,9 +1246,12 @@ func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdateP
 
 // DeletePeople is the resolver for the deletePeople field.
 func (r *mutationResolver) DeletePeople(ctx context.Context, input types.DeletePeopleInput) (*types.DeletePeoplePayload, error) {
-	prb := r.ProboService(ctx, input.PeopleID.TenantID())
+	prb, err := r.ProboService(ctx, input.PeopleID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Peoples.Delete(ctx, input.PeopleID)
+	err = prb.Peoples.Delete(ctx, input.PeopleID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot delete people: %w", err)
 	}
@@ -1118,7 +1263,10 @@ func (r *mutationResolver) DeletePeople(ctx context.Context, input types.DeleteP
 
 // CreateVendor is the resolver for the createVendor field.
 func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateVendorInput) (*types.CreateVendorPayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	vendor, err := prb.Vendors.Create(
 		ctx,
@@ -1154,7 +1302,10 @@ func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateV
 
 // UpdateVendor is the resolver for the updateVendor field.
 func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateVendorInput) (*types.UpdateVendorPayload, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	prb, err := r.ProboService(ctx, input.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	vendor, err := prb.Vendors.Update(ctx, probo.UpdateVendorRequest{
 		ID:                            input.ID,
@@ -1189,9 +1340,12 @@ func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateV
 
 // DeleteVendor is the resolver for the deleteVendor field.
 func (r *mutationResolver) DeleteVendor(ctx context.Context, input types.DeleteVendorInput) (*types.DeleteVendorPayload, error) {
-	prb := r.ProboService(ctx, input.VendorID.TenantID())
+	prb, err := r.ProboService(ctx, input.VendorID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Vendors.Delete(ctx, input.VendorID)
+	err = prb.Vendors.Delete(ctx, input.VendorID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot delete vendor: %w", err)
 	}
@@ -1203,7 +1357,10 @@ func (r *mutationResolver) DeleteVendor(ctx context.Context, input types.DeleteV
 
 // CreateFramework is the resolver for the createFramework field.
 func (r *mutationResolver) CreateFramework(ctx context.Context, input types.CreateFrameworkInput) (*types.CreateFrameworkPayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	framework, err := prb.Frameworks.Create(ctx, probo.CreateFrameworkRequest{
 		OrganizationID: input.OrganizationID,
@@ -1220,7 +1377,10 @@ func (r *mutationResolver) CreateFramework(ctx context.Context, input types.Crea
 
 // UpdateFramework is the resolver for the updateFramework field.
 func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.UpdateFrameworkInput) (*types.UpdateFrameworkPayload, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	prb, err := r.ProboService(ctx, input.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	framework, err := prb.Frameworks.Update(ctx, probo.UpdateFrameworkRequest{
 		ID:          input.ID,
@@ -1238,7 +1398,10 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 
 // ImportFramework is the resolver for the importFramework field.
 func (r *mutationResolver) ImportFramework(ctx context.Context, input types.ImportFrameworkInput) (*types.ImportFrameworkPayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	req := probo.ImportFrameworkRequest{}
 	if err := json.NewDecoder(input.File.File).Decode(&req.Framework); err != nil {
@@ -1268,9 +1431,12 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 
 // DeleteFramework is the resolver for the deleteFramework field.
 func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.DeleteFrameworkInput) (*types.DeleteFrameworkPayload, error) {
-	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
+	prb, err := r.ProboService(ctx, input.FrameworkID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Frameworks.Delete(ctx, input.FrameworkID)
+	err = prb.Frameworks.Delete(ctx, input.FrameworkID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot delete framework: %w", err)
 	}
@@ -1282,7 +1448,10 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 
 // GenerateFrameworkStateOfApplicability is the resolver for the generateFrameworkStateOfApplicability field.
 func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Context, input types.GenerateFrameworkStateOfApplicabilityInput) (*types.GenerateFrameworkStateOfApplicabilityPayload, error) {
-	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
+	prb, err := r.ProboService(ctx, input.FrameworkID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	soa, err := prb.Frameworks.StateOfApplicability(ctx, input.FrameworkID)
 	if err != nil {
@@ -1299,7 +1468,10 @@ func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Con
 
 // CreateControl is the resolver for the createControl field.
 func (r *mutationResolver) CreateControl(ctx context.Context, input types.CreateControlInput) (*types.CreateControlPayload, error) {
-	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
+	prb, err := r.ProboService(ctx, input.FrameworkID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	control, err := prb.Controls.Create(ctx, probo.CreateControlRequest{
 		FrameworkID:            input.FrameworkID,
@@ -1320,7 +1492,10 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 
 // UpdateControl is the resolver for the updateControl field.
 func (r *mutationResolver) UpdateControl(ctx context.Context, input types.UpdateControlInput) (*types.UpdateControlPayload, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	prb, err := r.ProboService(ctx, input.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	control, err := prb.Controls.Update(ctx, probo.UpdateControlRequest{
 		ID:                     input.ID,
@@ -1342,9 +1517,12 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 
 // DeleteControl is the resolver for the deleteControl field.
 func (r *mutationResolver) DeleteControl(ctx context.Context, input types.DeleteControlInput) (*types.DeleteControlPayload, error) {
-	prb := r.ProboService(ctx, input.ControlID.TenantID())
+	prb, err := r.ProboService(ctx, input.ControlID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Controls.Delete(ctx, input.ControlID)
+	err = prb.Controls.Delete(ctx, input.ControlID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot delete control: %w", err)
 	}
@@ -1356,7 +1534,10 @@ func (r *mutationResolver) DeleteControl(ctx context.Context, input types.Delete
 
 // // CreateMeasure is the resolver for the createMeasure field.
 func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.CreateMeasureInput) (*types.CreateMeasurePayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	measure, err := prb.Measures.Create(ctx, probo.CreateMeasureRequest{
 		OrganizationID: input.OrganizationID,
@@ -1375,7 +1556,10 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 
 // UpdateMeasure is the resolver for the updateMeasure field.
 func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.UpdateMeasureInput) (*types.UpdateMeasurePayload, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	prb, err := r.ProboService(ctx, input.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	measure, err := prb.Measures.Update(ctx, probo.UpdateMeasureRequest{
 		ID:          input.ID,
@@ -1395,7 +1579,10 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 
 // ImportMeasure is the resolver for the importMeasure field.
 func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.ImportMeasureInput) (*types.ImportMeasurePayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	var req probo.ImportMeasureRequest
 	if err := json.NewDecoder(input.File.File).Decode(&req.Measures); err != nil {
@@ -1419,9 +1606,12 @@ func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.Import
 
 // DeleteMeasure is the resolver for the deleteMeasure field.
 func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.DeleteMeasureInput) (*types.DeleteMeasurePayload, error) {
-	prb := r.ProboService(ctx, input.MeasureID.TenantID())
+	prb, err := r.ProboService(ctx, input.MeasureID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Measures.Delete(ctx, input.MeasureID)
+	err = prb.Measures.Delete(ctx, input.MeasureID)
 	if err != nil {
 		panic(fmt.Errorf("cannot delete measure: %w", err))
 	}
@@ -1433,7 +1623,10 @@ func (r *mutationResolver) DeleteMeasure(ctx context.Context, input types.Delete
 
 // CreateControlMeasureMapping is the resolver for the createControlMeasureMapping field.
 func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, input types.CreateControlMeasureMappingInput) (*types.CreateControlMeasureMappingPayload, error) {
-	prb := r.ProboService(ctx, input.MeasureID.TenantID())
+	prb, err := r.ProboService(ctx, input.MeasureID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	control, measure, err := prb.Controls.CreateMeasureMapping(ctx, input.ControlID, input.MeasureID)
 	if err != nil {
@@ -1448,7 +1641,10 @@ func (r *mutationResolver) CreateControlMeasureMapping(ctx context.Context, inpu
 
 // CreateControlDocumentMapping is the resolver for the createControlDocumentMapping field.
 func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, input types.CreateControlDocumentMappingInput) (*types.CreateControlDocumentMappingPayload, error) {
-	prb := r.ProboService(ctx, input.DocumentID.TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	control, document, err := prb.Controls.CreateDocumentMapping(ctx, input.ControlID, input.DocumentID)
 	if err != nil {
@@ -1463,7 +1659,10 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 
 // DeleteControlMeasureMapping is the resolver for the deleteControlMeasureMapping field.
 func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, input types.DeleteControlMeasureMappingInput) (*types.DeleteControlMeasureMappingPayload, error) {
-	prb := r.ProboService(ctx, input.MeasureID.TenantID())
+	prb, err := r.ProboService(ctx, input.MeasureID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	control, measure, err := prb.Controls.DeleteMeasureMapping(ctx, input.ControlID, input.MeasureID)
 	if err != nil {
@@ -1478,7 +1677,10 @@ func (r *mutationResolver) DeleteControlMeasureMapping(ctx context.Context, inpu
 
 // DeleteControlDocumentMapping is the resolver for the deleteControlDocumentMapping field.
 func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, input types.DeleteControlDocumentMappingInput) (*types.DeleteControlDocumentMappingPayload, error) {
-	prb := r.ProboService(ctx, input.DocumentID.TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	control, document, err := prb.Controls.DeleteDocumentMapping(ctx, input.ControlID, input.DocumentID)
 	if err != nil {
@@ -1493,7 +1695,10 @@ func (r *mutationResolver) DeleteControlDocumentMapping(ctx context.Context, inp
 
 // CreateTask is the resolver for the createTask field.
 func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTaskInput) (*types.CreateTaskPayload, error) {
-	prb := r.ProboService(ctx, input.MeasureID.TenantID())
+	prb, err := r.ProboService(ctx, input.MeasureID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	task, err := prb.Tasks.Create(ctx, probo.CreateTaskRequest{
 		MeasureID:      input.MeasureID,
@@ -1514,7 +1719,10 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 
 // UpdateTask is the resolver for the updateTask field.
 func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTaskInput) (*types.UpdateTaskPayload, error) {
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
+	prb, err := r.ProboService(ctx, input.TaskID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	task, err := prb.Tasks.Update(ctx, probo.UpdateTaskRequest{
 		TaskID:       input.TaskID,
@@ -1535,9 +1743,12 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 
 // DeleteTask is the resolver for the deleteTask field.
 func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTaskInput) (*types.DeleteTaskPayload, error) {
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
+	prb, err := r.ProboService(ctx, input.TaskID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Tasks.Delete(ctx, input.TaskID)
+	err = prb.Tasks.Delete(ctx, input.TaskID)
 	if err != nil {
 		panic(fmt.Errorf("cannot delete task: %w", err))
 	}
@@ -1549,7 +1760,10 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, input types.DeleteTas
 
 // AssignTask is the resolver for the assignTask field.
 func (r *mutationResolver) AssignTask(ctx context.Context, input types.AssignTaskInput) (*types.AssignTaskPayload, error) {
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
+	prb, err := r.ProboService(ctx, input.TaskID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	task, err := prb.Tasks.Assign(ctx, input.TaskID, input.AssignedToID)
 	if err != nil {
@@ -1563,7 +1777,10 @@ func (r *mutationResolver) AssignTask(ctx context.Context, input types.AssignTas
 
 // UnassignTask is the resolver for the unassignTask field.
 func (r *mutationResolver) UnassignTask(ctx context.Context, input types.UnassignTaskInput) (*types.UnassignTaskPayload, error) {
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
+	prb, err := r.ProboService(ctx, input.TaskID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	task, err := prb.Tasks.Unassign(ctx, input.TaskID)
 	if err != nil {
@@ -1577,7 +1794,10 @@ func (r *mutationResolver) UnassignTask(ctx context.Context, input types.Unassig
 
 // CreateRisk is the resolver for the createRisk field.
 func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRiskInput) (*types.CreateRiskPayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	risk, err := prb.Risks.Create(
 		ctx,
@@ -1606,7 +1826,10 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 
 // UpdateRisk is the resolver for the updateRisk field.
 func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRiskInput) (*types.UpdateRiskPayload, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	prb, err := r.ProboService(ctx, input.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	risk, err := prb.Risks.Update(
 		ctx,
@@ -1635,9 +1858,12 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 
 // DeleteRisk is the resolver for the deleteRisk field.
 func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRiskInput) (*types.DeleteRiskPayload, error) {
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
+	prb, err := r.ProboService(ctx, input.RiskID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Risks.Delete(ctx, input.RiskID)
+	err = prb.Risks.Delete(ctx, input.RiskID)
 	if err != nil {
 		panic(fmt.Errorf("cannot delete risk: %w", err))
 	}
@@ -1649,7 +1875,10 @@ func (r *mutationResolver) DeleteRisk(ctx context.Context, input types.DeleteRis
 
 // CreateRiskMeasureMapping is the resolver for the createRiskMeasureMapping field.
 func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input types.CreateRiskMeasureMappingInput) (*types.CreateRiskMeasureMappingPayload, error) {
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
+	prb, err := r.ProboService(ctx, input.RiskID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	risk, measure, err := prb.Risks.CreateMeasureMapping(ctx, input.RiskID, input.MeasureID)
 	if err != nil {
@@ -1664,7 +1893,10 @@ func (r *mutationResolver) CreateRiskMeasureMapping(ctx context.Context, input t
 
 // DeleteRiskMeasureMapping is the resolver for the deleteRiskMeasureMapping field.
 func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input types.DeleteRiskMeasureMappingInput) (*types.DeleteRiskMeasureMappingPayload, error) {
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
+	prb, err := r.ProboService(ctx, input.RiskID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	risk, measure, err := prb.Risks.DeleteMeasureMapping(ctx, input.RiskID, input.MeasureID)
 	if err != nil {
@@ -1679,7 +1911,10 @@ func (r *mutationResolver) DeleteRiskMeasureMapping(ctx context.Context, input t
 
 // CreateRiskDocumentMapping is the resolver for the createRiskDocumentMapping field.
 func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input types.CreateRiskDocumentMappingInput) (*types.CreateRiskDocumentMappingPayload, error) {
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
+	prb, err := r.ProboService(ctx, input.RiskID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	risk, document, err := prb.Risks.CreateDocumentMapping(ctx, input.RiskID, input.DocumentID)
 	if err != nil {
@@ -1694,7 +1929,10 @@ func (r *mutationResolver) CreateRiskDocumentMapping(ctx context.Context, input 
 
 // DeleteRiskDocumentMapping is the resolver for the deleteRiskDocumentMapping field.
 func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input types.DeleteRiskDocumentMappingInput) (*types.DeleteRiskDocumentMappingPayload, error) {
-	prb := r.ProboService(ctx, input.RiskID.TenantID())
+	prb, err := r.ProboService(ctx, input.RiskID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	risk, document, err := prb.Risks.DeleteDocumentMapping(ctx, input.RiskID, input.DocumentID)
 	if err != nil {
@@ -1709,7 +1947,10 @@ func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input 
 
 // RequestEvidence is the resolver for the requestEvidence field.
 func (r *mutationResolver) RequestEvidence(ctx context.Context, input types.RequestEvidenceInput) (*types.RequestEvidencePayload, error) {
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
+	prb, err := r.ProboService(ctx, input.TaskID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	evidence, err := prb.Evidences.Request(
 		ctx,
@@ -1731,7 +1972,10 @@ func (r *mutationResolver) RequestEvidence(ctx context.Context, input types.Requ
 
 // FulfillEvidence is the resolver for the fulfillEvidence field.
 func (r *mutationResolver) FulfillEvidence(ctx context.Context, input types.FulfillEvidenceInput) (*types.FulfillEvidencePayload, error) {
-	prb := r.ProboService(ctx, input.EvidenceID.TenantID())
+	prb, err := r.ProboService(ctx, input.EvidenceID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	req := probo.FulfilledEvidenceRequest{
 		EvidenceID: input.EvidenceID,
@@ -1758,9 +2002,12 @@ func (r *mutationResolver) FulfillEvidence(ctx context.Context, input types.Fulf
 
 // DeleteEvidence is the resolver for the deleteEvidence field.
 func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.DeleteEvidenceInput) (*types.DeleteEvidencePayload, error) {
-	prb := r.ProboService(ctx, input.EvidenceID.TenantID())
+	prb, err := r.ProboService(ctx, input.EvidenceID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Evidences.Delete(ctx, input.EvidenceID)
+	err = prb.Evidences.Delete(ctx, input.EvidenceID)
 	if err != nil {
 		panic(fmt.Errorf("failed to delete evidence: %w", err))
 	}
@@ -1772,7 +2019,10 @@ func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.Delet
 
 // UploadTaskEvidence is the resolver for the uploadTaskEvidence field.
 func (r *mutationResolver) UploadTaskEvidence(ctx context.Context, input types.UploadTaskEvidenceInput) (*types.UploadTaskEvidencePayload, error) {
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
+	prb, err := r.ProboService(ctx, input.TaskID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	evidence, err := prb.Evidences.UploadTaskEvidence(
 		ctx,
@@ -1797,7 +2047,10 @@ func (r *mutationResolver) UploadTaskEvidence(ctx context.Context, input types.U
 
 // UploadMeasureEvidence is the resolver for the uploadMeasureEvidence field.
 func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input types.UploadMeasureEvidenceInput) (*types.UploadMeasureEvidencePayload, error) {
-	prb := r.ProboService(ctx, input.MeasureID.TenantID())
+	prb, err := r.ProboService(ctx, input.MeasureID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	evidence, err := prb.Evidences.UploadMeasureEvidence(
 		ctx,
@@ -1822,7 +2075,10 @@ func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input type
 
 // UploadVendorComplianceReport is the resolver for the uploadVendorComplianceReport field.
 func (r *mutationResolver) UploadVendorComplianceReport(ctx context.Context, input types.UploadVendorComplianceReportInput) (*types.UploadVendorComplianceReportPayload, error) {
-	prb := r.ProboService(ctx, input.VendorID.TenantID())
+	prb, err := r.ProboService(ctx, input.VendorID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	vendorComplianceReport, err := prb.VendorComplianceReports.Upload(
 		ctx,
@@ -1845,9 +2101,12 @@ func (r *mutationResolver) UploadVendorComplianceReport(ctx context.Context, inp
 
 // DeleteVendorComplianceReport is the resolver for the deleteVendorComplianceReport field.
 func (r *mutationResolver) DeleteVendorComplianceReport(ctx context.Context, input types.DeleteVendorComplianceReportInput) (*types.DeleteVendorComplianceReportPayload, error) {
-	prb := r.ProboService(ctx, input.ReportID.TenantID())
+	prb, err := r.ProboService(ctx, input.ReportID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.VendorComplianceReports.Delete(ctx, input.ReportID)
+	err = prb.VendorComplianceReports.Delete(ctx, input.ReportID)
 	if err != nil {
 		panic(fmt.Errorf("failed to delete vendor compliance report: %w", err))
 	}
@@ -1859,7 +2118,10 @@ func (r *mutationResolver) DeleteVendorComplianceReport(ctx context.Context, inp
 
 // CreateDocument is the resolver for the createDocument field.
 func (r *mutationResolver) CreateDocument(ctx context.Context, input types.CreateDocumentInput) (*types.CreateDocumentPayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	user := UserFromContext(ctx)
 	people, err := prb.Peoples.GetByUserID(ctx, user.ID)
@@ -1890,7 +2152,10 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 
 // UpdateDocument is the resolver for the updateDocument field.
 func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.UpdateDocumentInput) (*types.UpdateDocumentPayload, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	prb, err := r.ProboService(ctx, input.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	document, err := prb.Documents.Update(
 		ctx,
@@ -1912,9 +2177,12 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 
 // DeleteDocument is the resolver for the deleteDocument field.
 func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.DeleteDocumentInput) (*types.DeleteDocumentPayload, error) {
-	prb := r.ProboService(ctx, input.DocumentID.TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Documents.Delete(ctx, input.DocumentID)
+	err = prb.Documents.Delete(ctx, input.DocumentID)
 	if err != nil {
 		panic(fmt.Errorf("cannot delete document: %w", err))
 	}
@@ -1926,7 +2194,10 @@ func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.Delet
 
 // PublishDocumentVersion is the resolver for the publishDocumentVersion field.
 func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input types.PublishDocumentVersionInput) (*types.PublishDocumentVersionPayload, error) {
-	prb := r.ProboService(ctx, input.DocumentID.TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 	user := UserFromContext(ctx)
 
 	people, err := prb.Peoples.GetByUserID(ctx, user.ID)
@@ -1954,7 +2225,10 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 		}, nil
 	}
 
-	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentIds[0].TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	user := UserFromContext(ctx)
 
@@ -1983,7 +2257,10 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 
 // GenerateDocumentChangelog is the resolver for the generateDocumentChangelog field.
 func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input types.GenerateDocumentChangelogInput) (*types.GenerateDocumentChangelogPayload, error) {
-	prb := r.ProboService(ctx, input.DocumentID.TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	changelog, err := prb.Documents.GenerateChangelog(ctx, input.DocumentID)
 	if err != nil {
@@ -1997,7 +2274,10 @@ func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input 
 
 // CreateDraftDocumentVersion is the resolver for the createDraftDocumentVersion field.
 func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input types.CreateDraftDocumentVersionInput) (*types.CreateDraftDocumentVersionPayload, error) {
-	prb := r.ProboService(ctx, input.DocumentID.TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	user := UserFromContext(ctx)
 	people, err := prb.Peoples.GetByUserID(ctx, user.ID)
@@ -2017,7 +2297,10 @@ func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input
 
 // UpdateDocumentVersion is the resolver for the updateDocumentVersion field.
 func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input types.UpdateDocumentVersionInput) (*types.UpdateDocumentVersionPayload, error) {
-	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentVersionID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	documentVersion, err := prb.Documents.UpdateVersion(ctx, probo.UpdateDocumentVersionRequest{
 		ID:      input.DocumentVersionID,
@@ -2034,7 +2317,10 @@ func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input type
 
 // RequestSignature is the resolver for the requestSignature field.
 func (r *mutationResolver) RequestSignature(ctx context.Context, input types.RequestSignatureInput) (*types.RequestSignaturePayload, error) {
-	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentVersionID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	user := UserFromContext(ctx)
 
@@ -2068,7 +2354,10 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 		}, nil
 	}
 
-	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentIds[0].TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	user := UserFromContext(ctx)
 
@@ -2096,9 +2385,12 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 
 // SendSigningNotifications is the resolver for the sendSigningNotifications field.
 func (r *mutationResolver) SendSigningNotifications(ctx context.Context, input types.SendSigningNotificationsInput) (*types.SendSigningNotificationsPayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Documents.SendSigningNotifications(ctx, input.OrganizationID)
+	err = prb.Documents.SendSigningNotifications(ctx, input.OrganizationID)
 	if err != nil {
 		panic(fmt.Errorf("cannot send signing notifications: %w", err))
 	}
@@ -2110,9 +2402,12 @@ func (r *mutationResolver) SendSigningNotifications(ctx context.Context, input t
 
 // CancelSignatureRequest is the resolver for the cancelSignatureRequest field.
 func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input types.CancelSignatureRequestInput) (*types.CancelSignatureRequestPayload, error) {
-	prb := r.ProboService(ctx, input.DocumentVersionSignatureID.TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentVersionSignatureID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Documents.CancelSignatureRequest(ctx, input.DocumentVersionSignatureID)
+	err = prb.Documents.CancelSignatureRequest(ctx, input.DocumentVersionSignatureID)
 	if err != nil {
 		panic(fmt.Errorf("cannot cancel signature request: %w", err))
 	}
@@ -2124,7 +2419,10 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 
 // ExportDocumentVersionPDF is the resolver for the exportDocumentVersionPDF field.
 func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input types.ExportDocumentVersionPDFInput) (*types.ExportDocumentVersionPDFPayload, error) {
-	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
+	prb, err := r.ProboService(ctx, input.DocumentVersionID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pdf, err := prb.Documents.ExportPDF(ctx, input.DocumentVersionID)
 	if err != nil {
@@ -2138,7 +2436,10 @@ func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input t
 
 // CreateVendorRiskAssessment is the resolver for the createVendorRiskAssessment field.
 func (r *mutationResolver) CreateVendorRiskAssessment(ctx context.Context, input types.CreateVendorRiskAssessmentInput) (*types.CreateVendorRiskAssessmentPayload, error) {
-	prb := r.ProboService(ctx, input.VendorID.TenantID())
+	prb, err := r.ProboService(ctx, input.VendorID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	vendorRiskAssessment, err := prb.Vendors.CreateRiskAssessment(
 		ctx,
@@ -2162,7 +2463,10 @@ func (r *mutationResolver) CreateVendorRiskAssessment(ctx context.Context, input
 
 // AssessVendor is the resolver for the assessVendor field.
 func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessVendorInput) (*types.AssessVendorPayload, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	prb, err := r.ProboService(ctx, input.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	vendor, err := prb.Vendors.Assess(ctx, probo.AssessVendorRequest{
 		ID:         input.ID,
@@ -2179,7 +2483,10 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 
 // CreateAsset is the resolver for the createAsset field.
 func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAssetInput) (*types.CreateAssetPayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	asset, err := prb.Assets.Create(ctx, probo.CreateAssetRequest{
 		OrganizationID:  input.OrganizationID,
@@ -2203,7 +2510,10 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 
 // UpdateAsset is the resolver for the updateAsset field.
 func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAssetInput) (*types.UpdateAssetPayload, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	prb, err := r.ProboService(ctx, input.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	asset, err := prb.Assets.Update(ctx, probo.UpdateAssetRequest{
 		ID:              input.ID,
@@ -2226,9 +2536,12 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 
 // DeleteAsset is the resolver for the deleteAsset field.
 func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAssetInput) (*types.DeleteAssetPayload, error) {
-	prb := r.ProboService(ctx, input.AssetID.TenantID())
+	prb, err := r.ProboService(ctx, input.AssetID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Assets.Delete(ctx, input.AssetID)
+	err = prb.Assets.Delete(ctx, input.AssetID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot delete asset: %w", err)
 	}
@@ -2240,7 +2553,10 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAs
 
 // CreateDatum is the resolver for the createDatum field.
 func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDatumInput) (*types.CreateDatumPayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	data, err := prb.Data.Create(ctx, probo.CreateDatumRequest{
 		OrganizationID:     input.OrganizationID,
@@ -2261,7 +2577,10 @@ func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDa
 
 // UpdateDatum is the resolver for the updateDatum field.
 func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDatumInput) (*types.UpdateDatumPayload, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	prb, err := r.ProboService(ctx, input.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	datum, err := prb.Data.Update(ctx, probo.UpdateDatumRequest{
 		ID:                 input.ID,
@@ -2282,7 +2601,10 @@ func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDa
 
 // DeleteDatum is the resolver for the deleteDatum field.
 func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDatumInput) (*types.DeleteDatumPayload, error) {
-	prb := r.ProboService(ctx, input.DatumID.TenantID())
+	prb, err := r.ProboService(ctx, input.DatumID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	if err := prb.Data.Delete(ctx, input.DatumID); err != nil {
 		return nil, fmt.Errorf("cannot delete datum: %w", err)
@@ -2295,7 +2617,10 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 
 // CreateAudit is the resolver for the createAudit field.
 func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAuditInput) (*types.CreateAuditPayload, error) {
-	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+	prb, err := r.ProboService(ctx, input.OrganizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	req := probo.CreateAuditRequest{
 		OrganizationID: input.OrganizationID,
@@ -2317,7 +2642,10 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 
 // UpdateAudit is the resolver for the updateAudit field.
 func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAuditInput) (*types.UpdateAuditPayload, error) {
-	prb := r.ProboService(ctx, input.ID.TenantID())
+	prb, err := r.ProboService(ctx, input.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	req := probo.UpdateAuditRequest{
 		ID:                input.ID,
@@ -2339,9 +2667,12 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 
 // DeleteAudit is the resolver for the deleteAudit field.
 func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAuditInput) (*types.DeleteAuditPayload, error) {
-	prb := r.ProboService(ctx, input.AuditID.TenantID())
+	prb, err := r.ProboService(ctx, input.AuditID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
-	err := prb.Audits.Delete(ctx, input.AuditID)
+	err = prb.Audits.Delete(ctx, input.AuditID)
 	if err != nil {
 		panic(fmt.Errorf("cannot delete audit: %w", err))
 	}
@@ -2353,7 +2684,10 @@ func (r *mutationResolver) DeleteAudit(ctx context.Context, input types.DeleteAu
 
 // UploadAuditReport is the resolver for the uploadAuditReport field.
 func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.UploadAuditReportInput) (*types.UploadAuditReportPayload, error) {
-	prb := r.ProboService(ctx, input.AuditID.TenantID())
+	prb, err := r.ProboService(ctx, input.AuditID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	req := probo.UploadAuditReportRequest{
 		AuditID: input.AuditID,
@@ -2377,7 +2711,10 @@ func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.Up
 
 // DeleteAuditReport is the resolver for the deleteAuditReport field.
 func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.DeleteAuditReportInput) (*types.DeleteAuditReportPayload, error) {
-	prb := r.ProboService(ctx, input.AuditID.TenantID())
+	prb, err := r.ProboService(ctx, input.AuditID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	audit, err := prb.Audits.DeleteReport(ctx, input.AuditID)
 	if err != nil {
@@ -2391,7 +2728,10 @@ func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.De
 
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	return prb.Organizations.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
 }
@@ -2421,7 +2761,10 @@ func (r *organizationResolver) Users(ctx context.Context, obj *types.Organizatio
 
 // Connectors is the resolver for the connectors field.
 func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) (*types.ConnectorConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.ConnectorOrderField]{
 		Field:     coredata.ConnectorOrderFieldCreatedAt,
@@ -2446,7 +2789,10 @@ func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organi
 
 // Frameworks is the resolver for the frameworks field.
 func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.FrameworkOrderField]{
 		Field:     coredata.FrameworkOrderFieldCreatedAt,
@@ -2471,7 +2817,10 @@ func (r *organizationResolver) Frameworks(ctx context.Context, obj *types.Organi
 
 // Controls is the resolver for the controls field.
 func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
@@ -2501,7 +2850,10 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 
 // Vendors is the resolver for the vendors field.
 func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
 		Field:     coredata.VendorOrderFieldCreatedAt,
@@ -2526,7 +2878,10 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 
 // Peoples is the resolver for the peoples field.
 func (r *organizationResolver) Peoples(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy) (*types.PeopleConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.PeopleOrderField]{
 		Field:     coredata.PeopleOrderFieldCreatedAt,
@@ -2551,7 +2906,10 @@ func (r *organizationResolver) Peoples(ctx context.Context, obj *types.Organizat
 
 // Documents is the resolver for the documents field.
 func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldTitle,
@@ -2581,7 +2939,10 @@ func (r *organizationResolver) Documents(ctx context.Context, obj *types.Organiz
 
 // Measures is the resolver for the measures field.
 func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
 		Field:     coredata.MeasureOrderFieldCreatedAt,
@@ -2611,7 +2972,10 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 
 // Risks is the resolver for the risks field.
 func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.RiskOrderField]{
 		Field:     coredata.RiskOrderFieldCreatedAt,
@@ -2641,7 +3005,10 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 
 // Tasks is the resolver for the tasks field.
 func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.TaskOrderField]{
 		Field:     coredata.TaskOrderFieldCreatedAt,
@@ -2666,7 +3033,10 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 
 // Assets is the resolver for the assets field.
 func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) (*types.AssetConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.AssetOrderField]{
 		Field:     coredata.AssetOrderFieldCreatedAt,
@@ -2691,7 +3061,10 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 
 // Assets is the resolver for the assets field.
 func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) (*types.DatumConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.DatumOrderField]{
 		Field:     coredata.DatumOrderFieldCreatedAt,
@@ -2716,7 +3089,10 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 
 // Audits is the resolver for the audits field.
 func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
 		Field:     coredata.AuditOrderFieldCreatedAt,
@@ -2741,7 +3117,10 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 
 // TrustCenter is the resolver for the trustCenter field.
 func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
 	if err != nil {
@@ -2753,7 +3132,10 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 
 // TotalCount is the resolver for the totalCount field.
 func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -2769,7 +3151,10 @@ func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.Pe
 
 // Node is the resolver for the node field.
 func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
-	prb := r.ProboService(ctx, id.TenantID())
+	prb, err := r.ProboService(ctx, id.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	switch id.EntityType() {
 	case coredata.OrganizationEntityType:
@@ -2907,7 +3292,10 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 
 // DownloadURL is the resolver for the downloadUrl field.
 func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*string, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	url, err := prb.Reports.GenerateDownloadURL(ctx, obj.ID, 15*time.Minute)
 	if err != nil {
@@ -2919,7 +3307,10 @@ func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*s
 
 // Owner is the resolver for the owner field.
 func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	risk, err := prb.Risks.Get(ctx, obj.ID)
 	if err != nil {
@@ -2940,7 +3331,10 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Peopl
 
 // Organization is the resolver for the organization field.
 func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*types.Organization, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	risk, err := prb.Risks.Get(ctx, obj.ID)
 	if err != nil {
@@ -2957,7 +3351,10 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 
 // Measures is the resolver for the measures field.
 func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.MeasureOrderField]{
 		Field:     coredata.MeasureOrderFieldCreatedAt,
@@ -2987,7 +3384,10 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 
 // Documents is the resolver for the documents field.
 func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldCreatedAt,
@@ -3017,7 +3417,10 @@ func (r *riskResolver) Documents(ctx context.Context, obj *types.Risk, first *in
 
 // Controls is the resolver for the controls field.
 func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.ControlOrderField]{
 		Field:     coredata.ControlOrderFieldCreatedAt,
@@ -3046,7 +3449,10 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 
 // TotalCount is the resolver for the totalCount field.
 func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.RiskConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	switch obj.Resolver.(type) {
 	case *measureResolver:
@@ -3068,7 +3474,10 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 
 // AssignedTo is the resolver for the assignedTo field.
 func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	task, err := prb.Tasks.Get(ctx, obj.ID)
 	if err != nil {
@@ -3089,7 +3498,10 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 
 // Organization is the resolver for the organization field.
 func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*types.Organization, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	task, err := prb.Tasks.Get(ctx, obj.ID)
 	if err != nil {
@@ -3106,7 +3518,10 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 
 // Measure is the resolver for the measure field.
 func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Measure, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	task, err := prb.Tasks.Get(ctx, obj.ID)
 	if err != nil {
@@ -3123,7 +3538,10 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 
 // Evidences is the resolver for the evidences field.
 func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.EvidenceOrderField]{
 		Field:     coredata.EvidenceOrderFieldCreatedAt,
@@ -3147,7 +3565,10 @@ func (r *taskResolver) Evidences(ctx context.Context, obj *types.Task, first *in
 
 // TotalCount is the resolver for the totalCount field.
 func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	switch obj.Resolver.(type) {
 	case *measureResolver:
@@ -3169,7 +3590,10 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 
 // People is the resolver for the people field.
 func (r *userResolver) People(ctx context.Context, obj *types.User, organizationID gid.GID) (*types.People, error) {
-	prb := r.ProboService(ctx, organizationID.TenantID())
+	prb, err := r.ProboService(ctx, organizationID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	people, err := prb.Peoples.GetByUserID(ctx, obj.ID)
 	if err != nil {
@@ -3181,7 +3605,10 @@ func (r *userResolver) People(ctx context.Context, obj *types.User, organization
 
 // Organization is the resolver for the organization field.
 func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*types.Organization, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
@@ -3198,7 +3625,10 @@ func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*
 
 // ComplianceReports is the resolver for the complianceReports field.
 func (r *vendorResolver) ComplianceReports(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorComplianceReportOrderBy) (*types.VendorComplianceReportConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.VendorComplianceReportOrderField]{
 		Field:     coredata.VendorComplianceReportOrderFieldReportDate,
@@ -3223,7 +3653,10 @@ func (r *vendorResolver) ComplianceReports(ctx context.Context, obj *types.Vendo
 
 // RiskAssessments is the resolver for the riskAssessments field.
 func (r *vendorResolver) RiskAssessments(ctx context.Context, obj *types.Vendor, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorRiskAssessmentOrder) (*types.VendorRiskAssessmentConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	pageOrderBy := page.OrderBy[coredata.VendorRiskAssessmentOrderField]{
 		Field:     coredata.VendorRiskAssessmentOrderFieldCreatedAt,
@@ -3248,7 +3681,10 @@ func (r *vendorResolver) RiskAssessments(ctx context.Context, obj *types.Vendor,
 
 // BusinessOwner is the resolver for the businessOwner field.
 func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
@@ -3269,7 +3705,10 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 
 // SecurityOwner is the resolver for the securityOwner field.
 func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("failed to get vendor: %w", err))
@@ -3289,7 +3728,10 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorComplianceReportResolver) Vendor(ctx context.Context, obj *types.VendorComplianceReport) (*types.Vendor, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
@@ -3301,7 +3743,10 @@ func (r *vendorComplianceReportResolver) Vendor(ctx context.Context, obj *types.
 
 // FileURL is the resolver for the fileUrl field.
 func (r *vendorComplianceReportResolver) FileURL(ctx context.Context, obj *types.VendorComplianceReport) (string, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return "", fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	fileURL, err := prb.VendorComplianceReports.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
@@ -3313,7 +3758,10 @@ func (r *vendorComplianceReportResolver) FileURL(ctx context.Context, obj *types
 
 // TotalCount is the resolver for the totalCount field.
 func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.VendorConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ParentID.TenantID())
+	if err != nil {
+		return 0, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
@@ -3341,7 +3789,10 @@ func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.Ve
 
 // Vendor is the resolver for the vendor field.
 func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.VendorRiskAssessment) (*types.Vendor, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
@@ -3353,7 +3804,10 @@ func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.Ve
 
 // AssessedBy is the resolver for the assessedBy field.
 func (r *vendorRiskAssessmentResolver) AssessedBy(ctx context.Context, obj *types.VendorRiskAssessment) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
+	prb, err := r.ProboService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot get probo service: %w", err)
+	}
 
 	vendorRiskAssessment, err := prb.Vendors.GetRiskAssessment(ctx, obj.ID)
 	if err != nil {
