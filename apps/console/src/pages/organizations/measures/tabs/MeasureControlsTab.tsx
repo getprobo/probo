@@ -1,11 +1,8 @@
-import {
-  graphql,
-  useMutation,
-  useRefetchableFragment,
-} from "react-relay";
+import { graphql, useRefetchableFragment } from "react-relay";
 import { useOutletContext } from "react-router";
 import { LinkedControlsCard } from "/components/controls/LinkedControlsCard";
 import type { MeasureControlsTabFragment$key } from "./__generated__/MeasureControlsTabFragment.graphql";
+import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement.ts";
 
 export const controlsFragment = graphql`
   fragment MeasureControlsTabFragment on Measure
@@ -73,8 +70,24 @@ export default function MeasureControlsTab() {
   const connectionId = data.controls.__id;
   const controls = data.controls?.edges?.map((edge) => edge.node) ?? [];
 
-  const [detachControl, isDetaching] = useMutation(detachControlMutation);
-  const [attachControl, isAttaching] = useMutation(attachControlMutation);
+  const incrementOptions = {
+    id: data.id,
+    node: "controls(first:0)",
+  };
+  const [detachControl, isDetaching] = useMutationWithIncrement(
+    detachControlMutation,
+    {
+      ...incrementOptions,
+      value: -1,
+    },
+  );
+  const [attachControl, isAttaching] = useMutationWithIncrement(
+    attachControlMutation,
+    {
+      ...incrementOptions,
+      value: 1,
+    },
+  );
   const isLoading = isDetaching || isAttaching;
 
   return (

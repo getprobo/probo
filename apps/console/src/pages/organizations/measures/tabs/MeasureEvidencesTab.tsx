@@ -18,7 +18,12 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { graphql } from "relay-runtime";
-import { useFragment, useMutation, usePaginationFragment } from "react-relay";
+import {
+  useFragment,
+  useMutation,
+  usePaginationFragment,
+  useRelayEnvironment,
+} from "react-relay";
 import { SortableTable } from "/components/SortableTable";
 import type { MeasureEvidencesTabFragment_evidence$key } from "./__generated__/MeasureEvidencesTabFragment_evidence.graphql";
 import { fileSize, fileType, promisifyMutation, sprintf } from "@probo/helpers";
@@ -27,6 +32,7 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateEvidenceDialog } from "../dialog/CreateEvidenceDialog";
 import { useState } from "react";
 import { EvidenceDownloadDialog } from "../dialog/EvidenceDownloadDialog";
+import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
 
 export const evidencesFragment = graphql`
   fragment MeasureEvidencesTabFragment on Measure
@@ -134,7 +140,7 @@ export default function MeasureEvidencesTab() {
           key={evidence?.id}
           onClose={() =>
             navigate(
-              `/organizations/${organizationId}/measures/${measure.id}/evidences`,
+              `/organizations/${organizationId}/measures/${measure.id}/evidences`
             )
           }
           evidenceId={evidence.id}
@@ -162,6 +168,7 @@ function EvidenceRow(props: {
   const [mutate, isDeleting] = useMutation(deleteEvidenceMutation);
   const confirm = useConfirm();
   const [isDownloading, setIsDownloading] = useState(false);
+  const relayEnv = useRelayEnvironment();
 
   const handleDelete = () => {
     confirm(
@@ -173,16 +180,24 @@ function EvidenceRow(props: {
               evidenceId: evidence.id,
             },
           },
+          onCompleted: () => {
+            updateStoreCounter(
+              relayEnv,
+              props.measureId,
+              "evidences(first:0)",
+              -1
+            );
+          },
         });
       },
       {
         message: sprintf(
           __(
-            'This will permanently delete the evidence "%s". This action cannot be undone.',
+            'This will permanently delete the evidence "%s". This action cannot be undone.'
           ),
-          evidence.filename,
+          evidence.filename
         ),
-      },
+      }
     );
   };
 
