@@ -3,6 +3,7 @@ import { graphql } from "relay-runtime";
 import { useMutationWithToasts } from "../useMutationWithToasts";
 import type { DocumentGraphDeleteMutation } from "./__generated__/DocumentGraphDeleteMutation.graphql";
 import type { DocumentGraphSendSigningNotificationsMutation } from "./__generated__/DocumentGraphSendSigningNotificationsMutation.graphql";
+import type { DocumentGraphDeleteDraftMutation } from "./__generated__/DocumentGraphDeleteDraftMutation.graphql";
 
 export const documentsQuery = graphql`
   query DocumentGraphListQuery($organizationId: ID!) {
@@ -13,15 +14,14 @@ export const documentsQuery = graphql`
   }
 `;
 
-export const DocumentsConnectionKey = "DocumentsPageFragment_documents";
+export const DocumentsConnectionKey = "DocumentsListQuery_documents";
 
 const deleteDocumentMutation = graphql`
   mutation DocumentGraphDeleteMutation(
     $input: DeleteDocumentInput!
-    $connections: [ID!]!
   ) {
     deleteDocument(input: $input) {
-      deletedDocumentId @deleteEdge(connections: $connections)
+      deletedDocumentId @deleteRecord
     }
   }
 `;
@@ -34,6 +34,29 @@ export function useDeleteDocumentMutation() {
     {
       successMessage: __("Document deleted successfully."),
       errorMessage: __("Failed to delete document. Please try again."),
+    }
+  );
+}
+
+const deleteDraftDocumentVersionMutation = graphql`
+  mutation DocumentGraphDeleteDraftMutation(
+    $input: DeleteDraftDocumentVersionInput!
+    $connections: [ID!]!
+  ) {
+    deleteDraftDocumentVersion(input: $input) {
+      deletedDocumentVersionId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
+export function useDeleteDraftDocumentVersionMutation() {
+  const { __ } = useTranslate();
+
+  return useMutationWithToasts<DocumentGraphDeleteDraftMutation>(
+    deleteDraftDocumentVersionMutation,
+    {
+      successMessage: __("Draft deleted successfully."),
+      errorMessage: __("Failed to delete draft. Please try again."),
     }
   );
 }
