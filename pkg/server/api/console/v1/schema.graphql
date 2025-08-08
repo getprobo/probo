@@ -1604,6 +1604,9 @@ type Mutation {
   createDraftDocumentVersion(
     input: CreateDraftDocumentVersionInput!
   ): CreateDraftDocumentVersionPayload!
+  deleteDraftDocumentVersion(
+    input: DeleteDraftDocumentVersionInput!
+  ): DeleteDraftDocumentVersionPayload!
   updateDocumentVersion(
     input: UpdateDocumentVersionInput!
   ): UpdateDocumentVersionPayload!
@@ -2427,8 +2430,16 @@ type CreateDraftDocumentVersionPayload {
   documentVersionEdge: DocumentVersionEdge!
 }
 
+type DeleteDraftDocumentVersionPayload {
+  deletedDocumentVersionId: ID!
+}
+
 input CreateDraftDocumentVersionInput {
   documentID: ID!
+}
+
+input DeleteDraftDocumentVersionInput {
+  documentVersionId: ID!
 }
 
 input UpdateDocumentVersionInput {

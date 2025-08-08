@@ -503,6 +503,14 @@ type DeleteDocumentPayload struct {
 	DeletedDocumentID gid.GID `json:"deletedDocumentId"`
 }
 
+type DeleteDraftDocumentVersionInput struct {
+	DocumentVersionID gid.GID `json:"documentVersionId"`
+}
+
+type DeleteDraftDocumentVersionPayload struct {
+	DeletedDocumentVersionID gid.GID `json:"deletedDocumentVersionId"`
+}
+
 type DeleteEvidenceInput struct {
 	EvidenceID gid.GID `json:"evidenceId"`
 }

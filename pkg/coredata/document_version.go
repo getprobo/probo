@@ -415,3 +415,29 @@ WHERE %s
 
 	return nil
 }
+
+func (p DocumentVersion) Delete(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+DELETE FROM document_versions
+WHERE %s
+	AND id = @document_version_id
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{
+		"document_version_id": p.ID,
+	}
+
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot delete document version: %w", err)
+	}
+
+	return nil
+}

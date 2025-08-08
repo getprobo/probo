@@ -343,6 +343,10 @@ type ComplexityRoot struct {
 		DeletedDocumentID func(childComplexity int) int
 	}
 
+	DeleteDraftDocumentVersionPayload struct {
+		DeletedDocumentVersionID func(childComplexity int) int
+	}
+
 	DeleteEvidencePayload struct {
 		DeletedEvidenceID func(childComplexity int) int
 	}
@@ -602,6 +606,7 @@ type ComplexityRoot struct {
 		DeleteControlMeasureMapping           func(childComplexity int, input types.DeleteControlMeasureMappingInput) int
 		DeleteDatum                           func(childComplexity int, input types.DeleteDatumInput) int
 		DeleteDocument                        func(childComplexity int, input types.DeleteDocumentInput) int
+		DeleteDraftDocumentVersion            func(childComplexity int, input types.DeleteDraftDocumentVersionInput) int
 		DeleteEvidence                        func(childComplexity int, input types.DeleteEvidenceInput) int
 		DeleteFramework                       func(childComplexity int, input types.DeleteFrameworkInput) int
 		DeleteMeasure                         func(childComplexity int, input types.DeleteMeasureInput) int
@@ -1179,6 +1184,7 @@ type MutationResolver interface {
 	BulkPublishDocumentVersions(ctx context.Context, input types.BulkPublishDocumentVersionsInput) (*types.BulkPublishDocumentVersionsPayload, error)
 	GenerateDocumentChangelog(ctx context.Context, input types.GenerateDocumentChangelogInput) (*types.GenerateDocumentChangelogPayload, error)
 	CreateDraftDocumentVersion(ctx context.Context, input types.CreateDraftDocumentVersionInput) (*types.CreateDraftDocumentVersionPayload, error)
+	DeleteDraftDocumentVersion(ctx context.Context, input types.DeleteDraftDocumentVersionInput) (*types.DeleteDraftDocumentVersionPayload, error)
 	UpdateDocumentVersion(ctx context.Context, input types.UpdateDocumentVersionInput) (*types.UpdateDocumentVersionPayload, error)
 	RequestSignature(ctx context.Context, input types.RequestSignatureInput) (*types.RequestSignaturePayload, error)
 	BulkRequestSignatures(ctx context.Context, input types.BulkRequestSignaturesInput) (*types.BulkRequestSignaturesPayload, error)
@@ -2099,6 +2105,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteDocumentPayload.DeletedDocumentID(childComplexity), true
+
+	case "DeleteDraftDocumentVersionPayload.deletedDocumentVersionId":
+		if e.complexity.DeleteDraftDocumentVersionPayload.DeletedDocumentVersionID == nil {
+			break
+		}
+
+		return e.complexity.DeleteDraftDocumentVersionPayload.DeletedDocumentVersionID(childComplexity), true
 
 	case "DeleteEvidencePayload.deletedEvidenceId":
 		if e.complexity.DeleteEvidencePayload.DeletedEvidenceID == nil {
@@ -3333,6 +3346,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteDocument(childComplexity, args["input"].(types.DeleteDocumentInput)), true
+
+	case "Mutation.deleteDraftDocumentVersion":
+		if e.complexity.Mutation.DeleteDraftDocumentVersion == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteDraftDocumentVersion_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteDraftDocumentVersion(childComplexity, args["input"].(types.DeleteDraftDocumentVersionInput)), true
 
 	case "Mutation.deleteEvidence":
 		if e.complexity.Mutation.DeleteEvidence == nil {
@@ -5495,6 +5520,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteControlMeasureMappingInput,
 		ec.unmarshalInputDeleteDatumInput,
 		ec.unmarshalInputDeleteDocumentInput,
+		ec.unmarshalInputDeleteDraftDocumentVersionInput,
 		ec.unmarshalInputDeleteEvidenceInput,
 		ec.unmarshalInputDeleteFrameworkInput,
 		ec.unmarshalInputDeleteMeasureInput,
@@ -7262,6 +7288,9 @@ type Mutation {
   createDraftDocumentVersion(
     input: CreateDraftDocumentVersionInput!
   ): CreateDraftDocumentVersionPayload!
+  deleteDraftDocumentVersion(
+    input: DeleteDraftDocumentVersionInput!
+  ): DeleteDraftDocumentVersionPayload!
   updateDocumentVersion(
     input: UpdateDocumentVersionInput!
   ): UpdateDocumentVersionPayload!
@@ -8085,8 +8114,16 @@ type CreateDraftDocumentVersionPayload {
   documentVersionEdge: DocumentVersionEdge!
 }
 
+type DeleteDraftDocumentVersionPayload {
+  deletedDocumentVersionId: ID!
+}
+
 input CreateDraftDocumentVersionInput {
   documentID: ID!
+}
+
+input DeleteDraftDocumentVersionInput {
+  documentVersionId: ID!
 }
 
 input UpdateDocumentVersionInput {
@@ -10335,6 +10372,29 @@ func (ec *executionContext) field_Mutation_deleteDocument_argsInput(
 	}
 
 	var zeroVal types.DeleteDocumentInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteDraftDocumentVersion_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteDraftDocumentVersion_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteDraftDocumentVersion_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.DeleteDraftDocumentVersionInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNDeleteDraftDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDraftDocumentVersionInput(ctx, tmp)
+	}
+
+	var zeroVal types.DeleteDraftDocumentVersionInput
 	return zeroVal, nil
 }
 
@@ -19375,6 +19435,50 @@ func (ec *executionContext) _DeleteDocumentPayload_deletedDocumentId(ctx context
 func (ec *executionContext) fieldContext_DeleteDocumentPayload_deletedDocumentId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteDocumentPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteDraftDocumentVersionPayload_deletedDocumentVersionId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteDraftDocumentVersionPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteDraftDocumentVersionPayload_deletedDocumentVersionId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedDocumentVersionID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteDraftDocumentVersionPayload_deletedDocumentVersionId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteDraftDocumentVersionPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -28457,6 +28561,65 @@ func (ec *executionContext) fieldContext_Mutation_createDraftDocumentVersion(ctx
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createDraftDocumentVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteDraftDocumentVersion(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteDraftDocumentVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteDraftDocumentVersion(rctx, fc.Args["input"].(types.DeleteDraftDocumentVersionInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DeleteDraftDocumentVersionPayload)
+	fc.Result = res
+	return ec.marshalNDeleteDraftDocumentVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDraftDocumentVersionPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteDraftDocumentVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedDocumentVersionId":
+				return ec.fieldContext_DeleteDraftDocumentVersionPayload_deletedDocumentVersionId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteDraftDocumentVersionPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteDraftDocumentVersion_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -44442,6 +44605,33 @@ func (ec *executionContext) unmarshalInputDeleteDocumentInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteDraftDocumentVersionInput(ctx context.Context, obj any) (types.DeleteDraftDocumentVersionInput, error) {
+	var it types.DeleteDraftDocumentVersionInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"documentVersionId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "documentVersionId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentVersionId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentVersionID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteEvidenceInput(ctx context.Context, obj any) (types.DeleteEvidenceInput, error) {
 	var it types.DeleteEvidenceInput
 	asMap := map[string]any{}
@@ -49915,6 +50105,45 @@ func (ec *executionContext) _DeleteDocumentPayload(ctx context.Context, sel ast.
 	return out
 }
 
+var deleteDraftDocumentVersionPayloadImplementors = []string{"DeleteDraftDocumentVersionPayload"}
+
+func (ec *executionContext) _DeleteDraftDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteDraftDocumentVersionPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteDraftDocumentVersionPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteDraftDocumentVersionPayload")
+		case "deletedDocumentVersionId":
+			out.Values[i] = ec._DeleteDraftDocumentVersionPayload_deletedDocumentVersionId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deleteEvidencePayloadImplementors = []string{"DeleteEvidencePayload"}
 
 func (ec *executionContext) _DeleteEvidencePayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteEvidencePayload) graphql.Marshaler {
@@ -52880,6 +53109,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "createDraftDocumentVersion":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createDraftDocumentVersion(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteDraftDocumentVersion":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteDraftDocumentVersion(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -59141,6 +59377,25 @@ func (ec *executionContext) marshalNDeleteDocumentPayload2ᚖgithubᚗcomᚋgetp
 		return graphql.Null
 	}
 	return ec._DeleteDocumentPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteDraftDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDraftDocumentVersionInput(ctx context.Context, v any) (types.DeleteDraftDocumentVersionInput, error) {
+	res, err := ec.unmarshalInputDeleteDraftDocumentVersionInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteDraftDocumentVersionPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDraftDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteDraftDocumentVersionPayload) graphql.Marshaler {
+	return ec._DeleteDraftDocumentVersionPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteDraftDocumentVersionPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDraftDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteDraftDocumentVersionPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteDraftDocumentVersionPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteEvidenceInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteEvidenceInput(ctx context.Context, v any) (types.DeleteEvidenceInput, error) {

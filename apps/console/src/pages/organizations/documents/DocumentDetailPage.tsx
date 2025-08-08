@@ -1,6 +1,5 @@
 import type { PreloadedQuery } from "react-relay";
 import {
-  ConnectionHandler,
   graphql,
   loadQuery,
   useFragment,
@@ -9,8 +8,8 @@ import {
 import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
 import {
   documentNodeQuery,
-  DocumentsConnectionKey,
   useDeleteDocumentMutation,
+  useDeleteDraftDocumentVersionMutation,
 } from "/hooks/graph/DocumentGraph";
 import { usePageTitle } from "@probo/hooks";
 import type {
@@ -187,6 +186,7 @@ export default function DocumentDetailPage(props: Props) {
     }
   );
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
+  const [deleteDraftDocumentVersion, isDeletingDraft] = useDeleteDraftDocumentVersionMutation();
   const [exportDocumentVersionPDF, isExporting] =
     useMutationWithToasts<DocumentDetailPageExportPDFMutation>(
       exportDocumentVersionPDFMutation,
@@ -285,17 +285,13 @@ export default function DocumentDetailPage(props: Props) {
     confirm(
       () =>
         new Promise<void>((resolve) => {
-          const connectionId = ConnectionHandler.getConnectionID(
-            organizationId,
-            DocumentsConnectionKey
-          );
           deleteDocument({
             variables: {
               input: { documentId: document.id },
-              connections: [connectionId],
             },
             onSuccess() {
               navigate(`/organizations/${organizationId}/documents`);
+              resolve();
             },
             onError: () => resolve(),
           });
@@ -305,6 +301,40 @@ export default function DocumentDetailPage(props: Props) {
           __(
             'This will permanently delete the document "%s". This action cannot be undone.'
           ),
+          document.title
+        ),
+      }
+    );
+  };
+
+  const handleDeleteDraft = () => {
+    confirm(
+      () =>
+        new Promise<void>((resolve) => {
+          deleteDraftDocumentVersion({
+            variables: {
+              input: { documentVersionId: currentVersion.id },
+              connections: [versionConnectionId],
+            },
+            onSuccess() {
+              loadQuery(
+                props.queryRef.environment,
+                documentNodeQuery,
+                props.queryRef.variables,
+                { fetchPolicy: "network-only" }
+              );
+
+              resolve();
+            },
+            onError: () => resolve(),
+          });
+        }),
+      {
+        message: sprintf(
+          __(
+            'This will permanently delete the draft version %s of "%s". This action cannot be undone.'
+          ),
+          currentVersion.version,
           document.title
         ),
       }
@@ -392,6 +422,15 @@ export default function DocumentDetailPage(props: Props) {
               >
                 {isDraft ? __("Edit draft document") : __("Create new draft")}
               </DropdownItem>
+              {isDraft && versions.length > 1 && (
+                <DropdownItem
+                  onClick={handleDeleteDraft}
+                  icon={IconTrashCan}
+                  disabled={isDeletingDraft}
+                >
+                  {__("Delete draft document")}
+                </DropdownItem>
+              )}
               <DropdownItem
                 onClick={handleDownloadPdf}
                 icon={IconArrowDown}
@@ -405,7 +444,7 @@ export default function DocumentDetailPage(props: Props) {
                 disabled={isDeleting}
                 onClick={handleDelete}
               >
-                {__("Delete")}
+                {__("Delete document")}
               </DropdownItem>
             </ActionDropdown>
           </div>

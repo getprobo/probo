@@ -2063,6 +2063,20 @@ func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input
 	}, nil
 }
 
+// DeleteDraftDocumentVersion is the resolver for the deleteDraftDocumentVersion field.
+func (r *mutationResolver) DeleteDraftDocumentVersion(ctx context.Context, input types.DeleteDraftDocumentVersionInput) (*types.DeleteDraftDocumentVersionPayload, error) {
+	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
+
+	err := prb.Documents.DeleteDraft(ctx, input.DocumentVersionID)
+	if err != nil {
+		panic(fmt.Errorf("cannot delete draft document version: %w", err))
+	}
+
+	return &types.DeleteDraftDocumentVersionPayload{
+		DeletedDocumentVersionID: input.DocumentVersionID,
+	}, nil
+}
+
 // UpdateDocumentVersion is the resolver for the updateDocumentVersion field.
 func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input types.UpdateDocumentVersionInput) (*types.UpdateDocumentVersionPayload, error) {
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())

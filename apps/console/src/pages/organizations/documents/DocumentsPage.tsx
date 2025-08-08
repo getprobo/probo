@@ -227,7 +227,6 @@ const rowFragment = graphql`
 function DocumentRow({
   document: documentKey,
   organizationId,
-  connectionId,
   checked,
   onCheck,
 }: {
@@ -257,7 +256,6 @@ function DocumentRow({
         deleteDocument({
           variables: {
             input: { documentId: document.id },
-            connections: [connectionId],
           },
         }),
       {

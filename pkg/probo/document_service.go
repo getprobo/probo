@@ -770,6 +770,36 @@ func (s *DocumentService) CreateDraft(
 	return draftVersion, nil
 }
 
+func (s *DocumentService) DeleteDraft(
+	ctx context.Context,
+	documentVersionID gid.GID,
+) error {
+	documentVersion := &coredata.DocumentVersion{}
+
+	return s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := documentVersion.LoadByID(ctx, conn, s.svc.scope, documentVersionID); err != nil {
+				return fmt.Errorf("cannot load document version: %w", err)
+			}
+
+			if documentVersion.Status != coredata.DocumentStatusDraft {
+				return fmt.Errorf("cannot delete published document version")
+			}
+
+			if documentVersion.VersionNumber == 1 {
+				return fmt.Errorf("cannot delete the first version of a document")
+			}
+
+			if err := documentVersion.Delete(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot delete document version: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
 func (s *DocumentService) Delete(
 	ctx context.Context,
 	documentID gid.GID,
