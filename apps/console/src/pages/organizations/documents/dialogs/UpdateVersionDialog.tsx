@@ -101,28 +101,6 @@ export default function UpdateVersionDialog({
   ref.current = {
     open: () => {
       dialogRef.current?.open();
-      if (!isDraft) {
-        createDraftDocumentVersion({
-          variables: {
-            input: {
-              documentID: document.id,
-            },
-            connections: [connectionId],
-          },
-          onCompleted: (_, errors) => {
-            if (errors) {
-              toast({
-                variant: "error",
-                title: __("Error creating draft"),
-                description:
-                  errors[0]?.message || __("An unknown error occurred"),
-              });
-              dialogRef.current?.close();
-              return;
-            }
-          },
-        });
-      }
     },
   };
 
@@ -131,25 +109,65 @@ export default function UpdateVersionDialog({
   }
 
   const onSubmit = handleSubmit((data) => {
-    updateDocumentVersion({
-      variables: {
-        input: {
-          documentVersionId: version.id,
-          content: data.content,
+    if (isDraft) {
+      updateDocumentVersion({
+        variables: {
+          input: {
+            documentVersionId: version.id,
+            content: data.content,
+          },
         },
-      },
-      onSuccess: () => {
-        dialogRef.current?.close();
-      },
-    });
+        onSuccess: () => {
+          dialogRef.current?.close();
+        },
+      });
+    } else {
+      createDraftDocumentVersion({
+        variables: {
+          input: {
+            documentID: document.id,
+          },
+          connections: [connectionId],
+        },
+        onCompleted: (createResponse, errors) => {
+          if (errors) {
+            toast({
+              variant: "error",
+              title: __("Error creating draft"),
+              description:
+                errors[0]?.message || __("An unknown error occurred"),
+            });
+            return;
+          }
+
+          const newVersionId = createResponse?.createDraftDocumentVersion?.documentVersionEdge?.node?.id;
+          if (newVersionId && data.content !== version.content) {
+            updateDocumentVersion({
+              variables: {
+                input: {
+                  documentVersionId: newVersionId,
+                  content: data.content,
+                },
+              },
+              onSuccess: () => {
+                dialogRef.current?.close();
+              },
+            });
+          } else {
+            dialogRef.current?.close();
+          }
+        },
+      });
+    }
   });
+
+  const isLoading = isCreatingDraft || isUpdating;
 
   return (
     <Dialog
       ref={dialogRef}
       title={<Breadcrumb items={[__("Documents"), __("Edit document")]} />}
     >
-      {isCreatingDraft && <Spinner centered />}
       <form onSubmit={onSubmit}>
         <DialogContent>
           <Textarea
@@ -164,7 +182,8 @@ export default function UpdateVersionDialog({
           />
         </DialogContent>
         <DialogFooter>
-          <Button disabled={isUpdating} type="submit">
+          <Button disabled={isLoading} type="submit">
+            {isLoading && <Spinner />}
             {__("Update document")}
           </Button>
         </DialogFooter>
