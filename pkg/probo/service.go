@@ -72,6 +72,7 @@ type (
 		Risks                             *RiskService
 		VendorComplianceReports           *VendorComplianceReportService
 		VendorBusinessAssociateAgreements *VendorBusinessAssociateAgreementService
+		VendorContacts                    *VendorContactService
 		Connectors                        *ConnectorService
 		Assets                            *AssetService
 		Data                              *DatumService
@@ -159,6 +160,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Risks = &RiskService{svc: tenantService}
 	tenantService.VendorComplianceReports = &VendorComplianceReportService{svc: tenantService}
 	tenantService.VendorBusinessAssociateAgreements = &VendorBusinessAssociateAgreementService{svc: tenantService}
+	tenantService.VendorContacts = &VendorContactService{svc: tenantService}
 	tenantService.Connectors = &ConnectorService{svc: tenantService}
 	tenantService.Assets = &AssetService{svc: tenantService}
 	tenantService.Data = &DatumService{svc: tenantService}

@@ -377,6 +377,18 @@ type CreateTrustCenterAccessPayload struct {
 	TrustCenterAccessEdge *TrustCenterAccessEdge `json:"trustCenterAccessEdge"`
 }
 
+type CreateVendorContactInput struct {
+	VendorID gid.GID `json:"vendorId"`
+	Name     *string `json:"name,omitempty"`
+	Email    *string `json:"email,omitempty"`
+	Phone    *string `json:"phone,omitempty"`
+	Role     *string `json:"role,omitempty"`
+}
+
+type CreateVendorContactPayload struct {
+	VendorContactEdge *VendorContactEdge `json:"vendorContactEdge"`
+}
+
 type CreateVendorInput struct {
 	OrganizationID                gid.GID                  `json:"organizationId"`
 	Name                          string                   `json:"name"`
@@ -609,6 +621,14 @@ type DeleteVendorComplianceReportInput struct {
 
 type DeleteVendorComplianceReportPayload struct {
 	DeletedVendorComplianceReportID gid.GID `json:"deletedVendorComplianceReportId"`
+}
+
+type DeleteVendorContactInput struct {
+	VendorContactID gid.GID `json:"vendorContactId"`
+}
+
+type DeleteVendorContactPayload struct {
+	DeletedVendorContactID gid.GID `json:"deletedVendorContactId"`
 }
 
 type DeleteVendorInput struct {
@@ -1274,6 +1294,18 @@ type UpdateVendorBusinessAssociateAgreementPayload struct {
 	VendorBusinessAssociateAgreement *VendorBusinessAssociateAgreement `json:"vendorBusinessAssociateAgreement"`
 }
 
+type UpdateVendorContactInput struct {
+	ID    gid.GID `json:"id"`
+	Name  *string `json:"name,omitempty"`
+	Email *string `json:"email,omitempty"`
+	Phone *string `json:"phone,omitempty"`
+	Role  *string `json:"role,omitempty"`
+}
+
+type UpdateVendorContactPayload struct {
+	VendorContact *VendorContact `json:"vendorContact"`
+}
+
 type UpdateVendorInput struct {
 	ID                            gid.GID                  `json:"id"`
 	Name                          *string                  `json:"name,omitempty"`
@@ -1382,6 +1414,7 @@ type Vendor struct {
 	Organization                  *Organization                     `json:"organization"`
 	ComplianceReports             *VendorComplianceReportConnection `json:"complianceReports"`
 	BusinessAssociateAgreement    *VendorBusinessAssociateAgreement `json:"businessAssociateAgreement,omitempty"`
+	Contacts                      *VendorContactConnection          `json:"contacts"`
 	RiskAssessments               *VendorRiskAssessmentConnection   `json:"riskAssessments"`
 	BusinessOwner                 *People                           `json:"businessOwner,omitempty"`
 	SecurityOwner                 *People                           `json:"securityOwner,omitempty"`
@@ -1444,6 +1477,30 @@ type VendorComplianceReportConnection struct {
 type VendorComplianceReportEdge struct {
 	Cursor page.CursorKey          `json:"cursor"`
 	Node   *VendorComplianceReport `json:"node"`
+}
+
+type VendorContact struct {
+	ID        gid.GID   `json:"id"`
+	Vendor    *Vendor   `json:"vendor"`
+	Name      *string   `json:"name,omitempty"`
+	Email     *string   `json:"email,omitempty"`
+	Phone     *string   `json:"phone,omitempty"`
+	Role      *string   `json:"role,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (VendorContact) IsNode()             {}
+func (this VendorContact) GetID() gid.GID { return this.ID }
+
+type VendorContactConnection struct {
+	Edges    []*VendorContactEdge `json:"edges"`
+	PageInfo *PageInfo            `json:"pageInfo"`
+}
+
+type VendorContactEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *VendorContact `json:"node"`
 }
 
 type VendorEdge struct {

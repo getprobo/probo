@@ -112,6 +112,11 @@ export default function VendorDetailPage(props: Props) {
         >
           {__("Risk Assessment")}
         </TabLink>
+        <TabLink
+          to={`/organizations/${organizationId}/vendors/${vendor.id}/contacts`}
+        >
+          {__("Contacts")}
+        </TabLink>
       </Tabs>
 
       <Outlet context={{ vendor, peopleId: data.viewer.user.people!.id }} />

@@ -292,6 +292,24 @@ enum VendorComplianceReportOrderField
     )
 }
 
+enum VendorContactOrderField
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.VendorContactOrderField"
+  ) {
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.VendorContactOrderFieldCreatedAt"
+    )
+  NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.VendorContactOrderFieldName"
+    )
+  EMAIL
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.VendorContactOrderFieldEmail"
+    )
+}
+
 enum OrganizationOrderField
   @goModel(
     model: "github.com/getprobo/probo/pkg/coredata.OrganizationOrderField"
@@ -679,6 +697,14 @@ input VendorComplianceReportOrder
   field: VendorComplianceReportOrderField!
 }
 
+input VendorContactOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.VendorContactOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: VendorContactOrderField!
+}
+
 input OrganizationOrder {
   direction: OrderDirection!
   field: OrganizationOrderField!
@@ -917,6 +943,14 @@ type Vendor implements Node {
 
   businessAssociateAgreement: VendorBusinessAssociateAgreement @goField(forceResolver: true)
 
+  contacts(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: VendorContactOrder
+  ): VendorContactConnection! @goField(forceResolver: true)
+
   riskAssessments(
     first: Int
     after: CursorKey
@@ -966,6 +1000,17 @@ type VendorBusinessAssociateAgreement implements Node {
   fileName: String!
   fileUrl: String! @goField(forceResolver: true)
   fileSize: Int!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type VendorContact implements Node {
+  id: ID!
+  vendor: Vendor! @goField(forceResolver: true)
+  name: String
+  email: String
+  phone: String
+  role: String
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -1418,6 +1463,16 @@ type VendorComplianceReportEdge {
   node: VendorComplianceReport!
 }
 
+type VendorContactConnection {
+  edges: [VendorContactEdge!]!
+  pageInfo: PageInfo!
+}
+
+type VendorContactEdge {
+  cursor: CursorKey!
+  node: VendorContact!
+}
+
 type ConnectorConnection {
   edges: [ConnectorEdge!]!
   pageInfo: PageInfo!
@@ -1528,6 +1583,11 @@ type Mutation {
   createVendor(input: CreateVendorInput!): CreateVendorPayload!
   updateVendor(input: UpdateVendorInput!): UpdateVendorPayload!
   deleteVendor(input: DeleteVendorInput!): DeleteVendorPayload!
+
+  # Vendor Contact mutations
+  createVendorContact(input: CreateVendorContactInput!): CreateVendorContactPayload!
+  updateVendorContact(input: UpdateVendorContactInput!): UpdateVendorContactPayload!
+  deleteVendorContact(input: DeleteVendorContactInput!): DeleteVendorContactPayload!
 
   # Framework mutations
   createFramework(input: CreateFrameworkInput!): CreateFrameworkPayload!
@@ -1761,6 +1821,26 @@ input UpdateVendorInput {
 
 input DeleteVendorInput {
   vendorId: ID!
+}
+
+input CreateVendorContactInput {
+  vendorId: ID!
+  name: String
+  email: String
+  phone: String
+  role: String
+}
+
+input UpdateVendorContactInput {
+  id: ID!
+  name: String
+  email: String
+  phone: String
+  role: String
+}
+
+input DeleteVendorContactInput {
+  vendorContactId: ID!
 }
 
 input CreatePeopleInput {
@@ -2133,6 +2213,18 @@ type UpdateVendorPayload {
 
 type DeleteVendorPayload {
   deletedVendorId: ID!
+}
+
+type CreateVendorContactPayload {
+  vendorContactEdge: VendorContactEdge!
+}
+
+type UpdateVendorContactPayload {
+  vendorContact: VendorContact!
+}
+
+type DeleteVendorContactPayload {
+  deletedVendorContactId: ID!
 }
 
 type CreatePeoplePayload {
