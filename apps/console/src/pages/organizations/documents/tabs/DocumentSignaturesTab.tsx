@@ -38,7 +38,7 @@ function SignatureList(props: { version: Version }) {
   const { __ } = useTranslate();
   const signatureMap = new Map(signatures.map((s) => [s.signedBy.id, s]));
   const organizationId = useOrganizationId();
-  const people = usePeople(organizationId);
+  const people = usePeople(organizationId, { excludeContractEnded: true });
   const signable = props.version.status === "PUBLISHED";
 
   if (!props.version.signatures) {

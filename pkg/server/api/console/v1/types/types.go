@@ -306,6 +306,24 @@ type CreateMeasurePayload struct {
 	MeasureEdge *MeasureEdge `json:"measureEdge"`
 }
 
+type CreateNonconformityRegistryInput struct {
+	OrganizationID     gid.GID                              `json:"organizationId"`
+	ReferenceID        string                               `json:"referenceId"`
+	Description        *string                              `json:"description,omitempty"`
+	AuditID            gid.GID                              `json:"auditId"`
+	DateIdentified     *time.Time                           `json:"dateIdentified,omitempty"`
+	RootCause          string                               `json:"rootCause"`
+	CorrectiveAction   *string                              `json:"correctiveAction,omitempty"`
+	OwnerID            gid.GID                              `json:"ownerId"`
+	DueDate            *time.Time                           `json:"dueDate,omitempty"`
+	Status             coredata.NonconformityRegistryStatus `json:"status"`
+	EffectivenessCheck *string                              `json:"effectivenessCheck,omitempty"`
+}
+
+type CreateNonconformityRegistryPayload struct {
+	NonconformityRegistryEdge *NonconformityRegistryEdge `json:"nonconformityRegistryEdge"`
+}
+
 type CreateOrganizationInput struct {
 	Name string `json:"name"`
 }
@@ -569,6 +587,14 @@ type DeleteMeasureInput struct {
 
 type DeleteMeasurePayload struct {
 	DeletedMeasureID gid.GID `json:"deletedMeasureId"`
+}
+
+type DeleteNonconformityRegistryInput struct {
+	NonconformityRegistryID gid.GID `json:"nonconformityRegistryId"`
+}
+
+type DeleteNonconformityRegistryPayload struct {
+	DeletedNonconformityRegistryID gid.GID `json:"deletedNonconformityRegistryId"`
 }
 
 type DeleteOrganizationInput struct {
@@ -895,26 +921,52 @@ type MeasureFilter struct {
 type Mutation struct {
 }
 
+type NonconformityRegistry struct {
+	ID                 gid.GID                              `json:"id"`
+	Organization       *Organization                        `json:"organization"`
+	ReferenceID        string                               `json:"referenceId"`
+	Description        *string                              `json:"description,omitempty"`
+	Audit              *Audit                               `json:"audit"`
+	DateIdentified     *time.Time                           `json:"dateIdentified,omitempty"`
+	RootCause          string                               `json:"rootCause"`
+	CorrectiveAction   *string                              `json:"correctiveAction,omitempty"`
+	Owner              *People                              `json:"owner"`
+	DueDate            *time.Time                           `json:"dueDate,omitempty"`
+	Status             coredata.NonconformityRegistryStatus `json:"status"`
+	EffectivenessCheck *string                              `json:"effectivenessCheck,omitempty"`
+	CreatedAt          time.Time                            `json:"createdAt"`
+	UpdatedAt          time.Time                            `json:"updatedAt"`
+}
+
+func (NonconformityRegistry) IsNode()             {}
+func (this NonconformityRegistry) GetID() gid.GID { return this.ID }
+
+type NonconformityRegistryEdge struct {
+	Cursor page.CursorKey         `json:"cursor"`
+	Node   *NonconformityRegistry `json:"node"`
+}
+
 type Organization struct {
-	ID          gid.GID              `json:"id"`
-	Name        string               `json:"name"`
-	LogoURL     *string              `json:"logoUrl,omitempty"`
-	Users       *UserConnection      `json:"users"`
-	Connectors  *ConnectorConnection `json:"connectors"`
-	Frameworks  *FrameworkConnection `json:"frameworks"`
-	Controls    *ControlConnection   `json:"controls"`
-	Vendors     *VendorConnection    `json:"vendors"`
-	Peoples     *PeopleConnection    `json:"peoples"`
-	Documents   *DocumentConnection  `json:"documents"`
-	Measures    *MeasureConnection   `json:"measures"`
-	Risks       *RiskConnection      `json:"risks"`
-	Tasks       *TaskConnection      `json:"tasks"`
-	Assets      *AssetConnection     `json:"assets"`
-	Data        *DatumConnection     `json:"data"`
-	Audits      *AuditConnection     `json:"audits"`
-	TrustCenter *TrustCenter         `json:"trustCenter,omitempty"`
-	CreatedAt   time.Time            `json:"createdAt"`
-	UpdatedAt   time.Time            `json:"updatedAt"`
+	ID                      gid.GID                          `json:"id"`
+	Name                    string                           `json:"name"`
+	LogoURL                 *string                          `json:"logoUrl,omitempty"`
+	Users                   *UserConnection                  `json:"users"`
+	Connectors              *ConnectorConnection             `json:"connectors"`
+	Frameworks              *FrameworkConnection             `json:"frameworks"`
+	Controls                *ControlConnection               `json:"controls"`
+	Vendors                 *VendorConnection                `json:"vendors"`
+	Peoples                 *PeopleConnection                `json:"peoples"`
+	Documents               *DocumentConnection              `json:"documents"`
+	Measures                *MeasureConnection               `json:"measures"`
+	Risks                   *RiskConnection                  `json:"risks"`
+	Tasks                   *TaskConnection                  `json:"tasks"`
+	Assets                  *AssetConnection                 `json:"assets"`
+	Data                    *DatumConnection                 `json:"data"`
+	Audits                  *AuditConnection                 `json:"audits"`
+	NonconformityRegistries *NonconformityRegistryConnection `json:"nonconformityRegistries"`
+	TrustCenter             *TrustCenter                     `json:"trustCenter,omitempty"`
+	CreatedAt               time.Time                        `json:"createdAt"`
+	UpdatedAt               time.Time                        `json:"updatedAt"`
 }
 
 func (Organization) IsNode()             {}
@@ -1249,6 +1301,23 @@ type UpdateMeasureInput struct {
 
 type UpdateMeasurePayload struct {
 	Measure *Measure `json:"measure"`
+}
+
+type UpdateNonconformityRegistryInput struct {
+	ID                 gid.GID                               `json:"id"`
+	ReferenceID        *string                               `json:"referenceId,omitempty"`
+	Description        *string                               `json:"description,omitempty"`
+	DateIdentified     *time.Time                            `json:"dateIdentified,omitempty"`
+	RootCause          *string                               `json:"rootCause,omitempty"`
+	CorrectiveAction   *string                               `json:"correctiveAction,omitempty"`
+	OwnerID            *gid.GID                              `json:"ownerId,omitempty"`
+	DueDate            *time.Time                            `json:"dueDate,omitempty"`
+	Status             *coredata.NonconformityRegistryStatus `json:"status,omitempty"`
+	EffectivenessCheck *string                               `json:"effectivenessCheck,omitempty"`
+}
+
+type UpdateNonconformityRegistryPayload struct {
+	NonconformityRegistry *NonconformityRegistry `json:"nonconformityRegistry"`
 }
 
 type UpdateOrganizationInput struct {
