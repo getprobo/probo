@@ -11,7 +11,7 @@ import { PageError } from "/components/PageError";
 import { TrustRelayProvider } from "/providers/TrustRelayProvider";
 import { useState, useEffect } from "react";
 import { buildEndpoint } from "/providers/RelayProviders";
-
+import { Spinner } from "@probo/ui";
 interface GraphQLError {
   message: string;
   path?: string[];
@@ -105,7 +105,9 @@ function PublicTrustCenterContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const organizationName = data?.trustCenterBySlug?.organization?.name;
-  usePageTitle(organizationName ? `${organizationName} - Trust Center` : "Trust Center");
+  usePageTitle(
+    organizationName ? `${organizationName} - Trust Center` : "Trust Center"
+  );
 
   useEffect(() => {
     if (!slug) {
@@ -120,7 +122,7 @@ function PublicTrustCenterContent() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json",
+        Accept: "application/json",
       },
       credentials: "include",
       body: JSON.stringify({
@@ -129,15 +131,17 @@ function PublicTrustCenterContent() {
         variables: { slug },
       }),
     })
-      .then(response => response.json())
+      .then((response) => response.json())
       .then((result: GraphQLResponse<PublicTrustCenterData>) => {
-        const accessDeniedErrors = result.errors?.filter((error: GraphQLError) =>
-          error.message.includes('access denied')
-        ) || [];
+        const accessDeniedErrors =
+          result.errors?.filter((error: GraphQLError) =>
+            error.message.includes("access denied")
+          ) || [];
 
-        const nonAuthErrors = result.errors?.filter((error: GraphQLError) =>
-          !error.message.includes('access denied')
-        ) || [];
+        const nonAuthErrors =
+          result.errors?.filter(
+            (error: GraphQLError) => !error.message.includes("access denied")
+          ) || [];
 
         if (nonAuthErrors.length > 0) {
           throw new Error(nonAuthErrors[0].message);
@@ -155,7 +159,7 @@ function PublicTrustCenterContent() {
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Spinner />;
   }
 
   if (error) {
@@ -174,14 +178,11 @@ function PublicTrustCenterContent() {
 
   const { organization } = trustCenterBySlug;
 
-  const documents = trustCenterBySlug.documents.edges
-    .map(edge => edge.node);
+  const documents = trustCenterBySlug.documents.edges.map((edge) => edge.node);
 
-  const audits = trustCenterBySlug.audits.edges
-    .map(edge => edge.node);
+  const audits = trustCenterBySlug.audits.edges.map((edge) => edge.node);
 
-  const vendors = trustCenterBySlug.vendors.edges
-    .map(edge => edge.node);
+  const vendors = trustCenterBySlug.vendors.edges.map((edge) => edge.node);
 
   return (
     <PublicTrustCenterLayout
@@ -194,7 +195,9 @@ function PublicTrustCenterContent() {
             {sprintf(__("%s Trust Center"), organization.name)}
           </h1>
           <p className="text-lg text-txt-secondary max-w-2xl mx-auto">
-            {__("Explore our security practices, compliance certifications, and transparency reports.")}
+            {__(
+              "Explore our security practices, compliance certifications, and transparency reports."
+            )}
           </p>
         </div>
         <PublicTrustCenterAudits
