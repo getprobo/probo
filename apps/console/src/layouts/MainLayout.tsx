@@ -3,6 +3,7 @@ import {
   DropdownSeparator,
   IconArrowBoxLeft,
   IconBank,
+  IconBook,
   IconCircleQuestionmark,
   IconFire3,
   IconGroup1,
@@ -137,6 +138,11 @@ export function MainLayout() {
             label={__("Audits")}
             icon={IconCheckmark1}
             to={`${prefix}/audits`}
+          />
+          <SidebarItem
+            label={__("Registries")}
+            icon={IconBook}
+            to={`${prefix}/registries`}
           />
           <SidebarItem
             label={__("Trust Center")}

@@ -81,6 +81,7 @@ type (
 		Reports                           *ReportService
 		TrustCenters                      *TrustCenterService
 		TrustCenterAccesses               *TrustCenterAccessService
+		NonconformityRegistries           *NonconformityRegistryService
 	}
 )
 
@@ -173,5 +174,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		svc:    tenantService,
 		usrmgr: s.usrmgr,
 	}
+	tenantService.NonconformityRegistries = &NonconformityRegistryService{svc: tenantService}
 	return tenantService
 }

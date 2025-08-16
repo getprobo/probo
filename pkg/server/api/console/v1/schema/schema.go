@@ -63,6 +63,8 @@ type ResolverRoot interface {
 	Measure() MeasureResolver
 	MeasureConnection() MeasureConnectionResolver
 	Mutation() MutationResolver
+	NonconformityRegistry() NonconformityRegistryResolver
+	NonconformityRegistryConnection() NonconformityRegistryConnectionResolver
 	Organization() OrganizationResolver
 	PeopleConnection() PeopleConnectionResolver
 	Query() QueryResolver
@@ -260,6 +262,10 @@ type ComplexityRoot struct {
 		MeasureEdge func(childComplexity int) int
 	}
 
+	CreateNonconformityRegistryPayload struct {
+		NonconformityRegistryEdge func(childComplexity int) int
+	}
+
 	CreateOrganizationPayload struct {
 		OrganizationEdge func(childComplexity int) int
 	}
@@ -377,6 +383,10 @@ type ComplexityRoot struct {
 
 	DeleteMeasurePayload struct {
 		DeletedMeasureID func(childComplexity int) int
+	}
+
+	DeleteNonconformityRegistryPayload struct {
+		DeletedNonconformityRegistryID func(childComplexity int) int
 	}
 
 	DeleteOrganizationPayload struct {
@@ -622,6 +632,7 @@ type ComplexityRoot struct {
 		CreateDraftDocumentVersion             func(childComplexity int, input types.CreateDraftDocumentVersionInput) int
 		CreateFramework                        func(childComplexity int, input types.CreateFrameworkInput) int
 		CreateMeasure                          func(childComplexity int, input types.CreateMeasureInput) int
+		CreateNonconformityRegistry            func(childComplexity int, input types.CreateNonconformityRegistryInput) int
 		CreateOrganization                     func(childComplexity int, input types.CreateOrganizationInput) int
 		CreatePeople                           func(childComplexity int, input types.CreatePeopleInput) int
 		CreateRisk                             func(childComplexity int, input types.CreateRiskInput) int
@@ -645,6 +656,7 @@ type ComplexityRoot struct {
 		DeleteEvidence                         func(childComplexity int, input types.DeleteEvidenceInput) int
 		DeleteFramework                        func(childComplexity int, input types.DeleteFrameworkInput) int
 		DeleteMeasure                          func(childComplexity int, input types.DeleteMeasureInput) int
+		DeleteNonconformityRegistry            func(childComplexity int, input types.DeleteNonconformityRegistryInput) int
 		DeleteOrganization                     func(childComplexity int, input types.DeleteOrganizationInput) int
 		DeletePeople                           func(childComplexity int, input types.DeletePeopleInput) int
 		DeleteRisk                             func(childComplexity int, input types.DeleteRiskInput) int
@@ -678,6 +690,7 @@ type ComplexityRoot struct {
 		UpdateDocumentVersion                  func(childComplexity int, input types.UpdateDocumentVersionInput) int
 		UpdateFramework                        func(childComplexity int, input types.UpdateFrameworkInput) int
 		UpdateMeasure                          func(childComplexity int, input types.UpdateMeasureInput) int
+		UpdateNonconformityRegistry            func(childComplexity int, input types.UpdateNonconformityRegistryInput) int
 		UpdateOrganization                     func(childComplexity int, input types.UpdateOrganizationInput) int
 		UpdatePeople                           func(childComplexity int, input types.UpdatePeopleInput) int
 		UpdateRisk                             func(childComplexity int, input types.UpdateRiskInput) int
@@ -695,26 +708,55 @@ type ComplexityRoot struct {
 		UploadVendorDataPrivacyAgreement       func(childComplexity int, input types.UploadVendorDataPrivacyAgreementInput) int
 	}
 
+	NonconformityRegistry struct {
+		Audit              func(childComplexity int) int
+		CorrectiveAction   func(childComplexity int) int
+		CreatedAt          func(childComplexity int) int
+		DateIdentified     func(childComplexity int) int
+		Description        func(childComplexity int) int
+		DueDate            func(childComplexity int) int
+		EffectivenessCheck func(childComplexity int) int
+		ID                 func(childComplexity int) int
+		Organization       func(childComplexity int) int
+		Owner              func(childComplexity int) int
+		ReferenceID        func(childComplexity int) int
+		RootCause          func(childComplexity int) int
+		Status             func(childComplexity int) int
+		UpdatedAt          func(childComplexity int) int
+	}
+
+	NonconformityRegistryConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	NonconformityRegistryEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	Organization struct {
-		Assets      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) int
-		Audits      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
-		Connectors  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
-		Controls    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
-		CreatedAt   func(childComplexity int) int
-		Data        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) int
-		Documents   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
-		Frameworks  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
-		ID          func(childComplexity int) int
-		LogoURL     func(childComplexity int) int
-		Measures    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
-		Name        func(childComplexity int) int
-		Peoples     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
-		Risks       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
-		Tasks       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
-		TrustCenter func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
-		Users       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.UserOrderBy) int
-		Vendors     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
+		Assets                  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) int
+		Audits                  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
+		Connectors              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
+		Controls                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
+		CreatedAt               func(childComplexity int) int
+		Data                    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) int
+		Documents               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
+		Frameworks              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
+		ID                      func(childComplexity int) int
+		LogoURL                 func(childComplexity int) int
+		Measures                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
+		Name                    func(childComplexity int) int
+		NonconformityRegistries func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy) int
+		Peoples                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
+		Risks                   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
+		Tasks                   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
+		TrustCenter             func(childComplexity int) int
+		UpdatedAt               func(childComplexity int) int
+		Users                   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.UserOrderBy) int
+		Vendors                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
 	}
 
 	OrganizationConnection struct {
@@ -932,6 +974,10 @@ type ComplexityRoot struct {
 
 	UpdateMeasurePayload struct {
 		Measure func(childComplexity int) int
+	}
+
+	UpdateNonconformityRegistryPayload struct {
+		NonconformityRegistry func(childComplexity int) int
 	}
 
 	UpdateOrganizationPayload struct {
@@ -1329,6 +1375,19 @@ type MutationResolver interface {
 	DeleteAudit(ctx context.Context, input types.DeleteAuditInput) (*types.DeleteAuditPayload, error)
 	UploadAuditReport(ctx context.Context, input types.UploadAuditReportInput) (*types.UploadAuditReportPayload, error)
 	DeleteAuditReport(ctx context.Context, input types.DeleteAuditReportInput) (*types.DeleteAuditReportPayload, error)
+	CreateNonconformityRegistry(ctx context.Context, input types.CreateNonconformityRegistryInput) (*types.CreateNonconformityRegistryPayload, error)
+	UpdateNonconformityRegistry(ctx context.Context, input types.UpdateNonconformityRegistryInput) (*types.UpdateNonconformityRegistryPayload, error)
+	DeleteNonconformityRegistry(ctx context.Context, input types.DeleteNonconformityRegistryInput) (*types.DeleteNonconformityRegistryPayload, error)
+}
+type NonconformityRegistryResolver interface {
+	Organization(ctx context.Context, obj *types.NonconformityRegistry) (*types.Organization, error)
+
+	Audit(ctx context.Context, obj *types.NonconformityRegistry) (*types.Audit, error)
+
+	Owner(ctx context.Context, obj *types.NonconformityRegistry) (*types.People, error)
+}
+type NonconformityRegistryConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.NonconformityRegistryConnection) (int, error)
 }
 type OrganizationResolver interface {
 	LogoURL(ctx context.Context, obj *types.Organization) (*string, error)
@@ -1345,6 +1404,7 @@ type OrganizationResolver interface {
 	Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) (*types.AssetConnection, error)
 	Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) (*types.DatumConnection, error)
 	Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error)
+	NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy) (*types.NonconformityRegistryConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
 }
 type PeopleConnectionResolver interface {
@@ -2049,6 +2109,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateMeasurePayload.MeasureEdge(childComplexity), true
 
+	case "CreateNonconformityRegistryPayload.nonconformityRegistryEdge":
+		if e.complexity.CreateNonconformityRegistryPayload.NonconformityRegistryEdge == nil {
+			break
+		}
+
+		return e.complexity.CreateNonconformityRegistryPayload.NonconformityRegistryEdge(childComplexity), true
+
 	case "CreateOrganizationPayload.organizationEdge":
 		if e.complexity.CreateOrganizationPayload.OrganizationEdge == nil {
 			break
@@ -2340,6 +2407,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteMeasurePayload.DeletedMeasureID(childComplexity), true
+
+	case "DeleteNonconformityRegistryPayload.deletedNonconformityRegistryId":
+		if e.complexity.DeleteNonconformityRegistryPayload.DeletedNonconformityRegistryID == nil {
+			break
+		}
+
+		return e.complexity.DeleteNonconformityRegistryPayload.DeletedNonconformityRegistryID(childComplexity), true
 
 	case "DeleteOrganizationPayload.deletedOrganizationId":
 		if e.complexity.DeleteOrganizationPayload.DeletedOrganizationID == nil {
@@ -3383,6 +3457,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreateMeasure(childComplexity, args["input"].(types.CreateMeasureInput)), true
 
+	case "Mutation.createNonconformityRegistry":
+		if e.complexity.Mutation.CreateNonconformityRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createNonconformityRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateNonconformityRegistry(childComplexity, args["input"].(types.CreateNonconformityRegistryInput)), true
+
 	case "Mutation.createOrganization":
 		if e.complexity.Mutation.CreateOrganization == nil {
 			break
@@ -3658,6 +3744,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteMeasure(childComplexity, args["input"].(types.DeleteMeasureInput)), true
+
+	case "Mutation.deleteNonconformityRegistry":
+		if e.complexity.Mutation.DeleteNonconformityRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteNonconformityRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteNonconformityRegistry(childComplexity, args["input"].(types.DeleteNonconformityRegistryInput)), true
 
 	case "Mutation.deleteOrganization":
 		if e.complexity.Mutation.DeleteOrganization == nil {
@@ -4055,6 +4153,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.UpdateMeasure(childComplexity, args["input"].(types.UpdateMeasureInput)), true
 
+	case "Mutation.updateNonconformityRegistry":
+		if e.complexity.Mutation.UpdateNonconformityRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateNonconformityRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateNonconformityRegistry(childComplexity, args["input"].(types.UpdateNonconformityRegistryInput)), true
+
 	case "Mutation.updateOrganization":
 		if e.complexity.Mutation.UpdateOrganization == nil {
 			break
@@ -4235,6 +4345,139 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.UploadVendorDataPrivacyAgreement(childComplexity, args["input"].(types.UploadVendorDataPrivacyAgreementInput)), true
 
+	case "NonconformityRegistry.audit":
+		if e.complexity.NonconformityRegistry.Audit == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.Audit(childComplexity), true
+
+	case "NonconformityRegistry.correctiveAction":
+		if e.complexity.NonconformityRegistry.CorrectiveAction == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.CorrectiveAction(childComplexity), true
+
+	case "NonconformityRegistry.createdAt":
+		if e.complexity.NonconformityRegistry.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.CreatedAt(childComplexity), true
+
+	case "NonconformityRegistry.dateIdentified":
+		if e.complexity.NonconformityRegistry.DateIdentified == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.DateIdentified(childComplexity), true
+
+	case "NonconformityRegistry.description":
+		if e.complexity.NonconformityRegistry.Description == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.Description(childComplexity), true
+
+	case "NonconformityRegistry.dueDate":
+		if e.complexity.NonconformityRegistry.DueDate == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.DueDate(childComplexity), true
+
+	case "NonconformityRegistry.effectivenessCheck":
+		if e.complexity.NonconformityRegistry.EffectivenessCheck == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.EffectivenessCheck(childComplexity), true
+
+	case "NonconformityRegistry.id":
+		if e.complexity.NonconformityRegistry.ID == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.ID(childComplexity), true
+
+	case "NonconformityRegistry.organization":
+		if e.complexity.NonconformityRegistry.Organization == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.Organization(childComplexity), true
+
+	case "NonconformityRegistry.owner":
+		if e.complexity.NonconformityRegistry.Owner == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.Owner(childComplexity), true
+
+	case "NonconformityRegistry.referenceId":
+		if e.complexity.NonconformityRegistry.ReferenceID == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.ReferenceID(childComplexity), true
+
+	case "NonconformityRegistry.rootCause":
+		if e.complexity.NonconformityRegistry.RootCause == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.RootCause(childComplexity), true
+
+	case "NonconformityRegistry.status":
+		if e.complexity.NonconformityRegistry.Status == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.Status(childComplexity), true
+
+	case "NonconformityRegistry.updatedAt":
+		if e.complexity.NonconformityRegistry.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.UpdatedAt(childComplexity), true
+
+	case "NonconformityRegistryConnection.edges":
+		if e.complexity.NonconformityRegistryConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistryConnection.Edges(childComplexity), true
+
+	case "NonconformityRegistryConnection.pageInfo":
+		if e.complexity.NonconformityRegistryConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistryConnection.PageInfo(childComplexity), true
+
+	case "NonconformityRegistryConnection.totalCount":
+		if e.complexity.NonconformityRegistryConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistryConnection.TotalCount(childComplexity), true
+
+	case "NonconformityRegistryEdge.cursor":
+		if e.complexity.NonconformityRegistryEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistryEdge.Cursor(childComplexity), true
+
+	case "NonconformityRegistryEdge.node":
+		if e.complexity.NonconformityRegistryEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistryEdge.Node(childComplexity), true
+
 	case "Organization.assets":
 		if e.complexity.Organization.Assets == nil {
 			break
@@ -4358,6 +4601,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Name(childComplexity), true
+
+	case "Organization.nonconformityRegistries":
+		if e.complexity.Organization.NonconformityRegistries == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_nonconformityRegistries_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.NonconformityRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.NonconformityRegistryOrderBy)), true
 
 	case "Organization.peoples":
 		if e.complexity.Organization.Peoples == nil {
@@ -5252,6 +5507,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateMeasurePayload.Measure(childComplexity), true
 
+	case "UpdateNonconformityRegistryPayload.nonconformityRegistry":
+		if e.complexity.UpdateNonconformityRegistryPayload.NonconformityRegistry == nil {
+			break
+		}
+
+		return e.complexity.UpdateNonconformityRegistryPayload.NonconformityRegistry(childComplexity), true
+
 	case "UpdateOrganizationPayload.organization":
 		if e.complexity.UpdateOrganizationPayload.Organization == nil {
 			break
@@ -6134,6 +6396,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateEvidenceInput,
 		ec.unmarshalInputCreateFrameworkInput,
 		ec.unmarshalInputCreateMeasureInput,
+		ec.unmarshalInputCreateNonconformityRegistryInput,
 		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreatePeopleInput,
 		ec.unmarshalInputCreateRiskDocumentMappingInput,
@@ -6158,6 +6421,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteEvidenceInput,
 		ec.unmarshalInputDeleteFrameworkInput,
 		ec.unmarshalInputDeleteMeasureInput,
+		ec.unmarshalInputDeleteNonconformityRegistryInput,
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeletePeopleInput,
 		ec.unmarshalInputDeleteRiskDocumentMappingInput,
@@ -6186,6 +6450,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputInviteUserInput,
 		ec.unmarshalInputMeasureFilter,
 		ec.unmarshalInputMeasureOrder,
+		ec.unmarshalInputNonconformityRegistryOrder,
 		ec.unmarshalInputOrganizationFilter,
 		ec.unmarshalInputOrganizationOrder,
 		ec.unmarshalInputPeopleFilter,
@@ -6209,6 +6474,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateDocumentVersionInput,
 		ec.unmarshalInputUpdateFrameworkInput,
 		ec.unmarshalInputUpdateMeasureInput,
+		ec.unmarshalInputUpdateNonconformityRegistryInput,
 		ec.unmarshalInputUpdateOrganizationInput,
 		ec.unmarshalInputUpdatePeopleInput,
 		ec.unmarshalInputUpdateRiskInput,
@@ -6476,6 +6742,22 @@ enum AuditState
   OUTDATED
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.AuditStateOutdated"
+    )
+}
+
+enum NonconformityRegistryStatus
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryStatus") {
+  OPEN
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryStatusOpen"
+    )
+  IN_PROGRESS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryStatusInProgress"
+    )
+  CLOSED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryStatusClosed"
     )
 }
 
@@ -6912,6 +7194,30 @@ enum AuditOrderField
     )
 }
 
+enum NonconformityRegistryOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderFieldCreatedAt"
+    )
+  REFERENCE_ID
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderFieldReferenceId"
+    )
+  DATE_IDENTIFIED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderFieldDateIdentified"
+    )
+  DUE_DATE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderFieldDueDate"
+    )
+  STATUS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderFieldStatus"
+    )
+}
+
 enum TrustCenterAccessOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField") {
   CREATED_AT
@@ -6999,6 +7305,14 @@ input AuditOrder
   ) {
   direction: OrderDirection!
   field: AuditOrderField!
+}
+
+input NonconformityRegistryOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.NonconformityRegistryOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: NonconformityRegistryOrderField!
 }
 
 input TrustCenterAccessOrder
@@ -7215,6 +7529,14 @@ type Organization implements Node {
     before: CursorKey
     orderBy: AuditOrder
   ): AuditConnection! @goField(forceResolver: true)
+
+  nonconformityRegistries(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: NonconformityRegistryOrder
+  ): NonconformityRegistryConnection! @goField(forceResolver: true)
 
   trustCenter: TrustCenter @goField(forceResolver: true)
 
@@ -7608,6 +7930,23 @@ type Audit implements Node {
   updatedAt: Datetime!
 }
 
+type NonconformityRegistry implements Node {
+  id: ID!
+  organization: Organization! @goField(forceResolver: true)
+  referenceId: String!
+  description: String
+  audit: Audit! @goField(forceResolver: true)
+  dateIdentified: Datetime
+  rootCause: String!
+  correctiveAction: String
+  owner: People! @goField(forceResolver: true)
+  dueDate: Datetime
+  status: NonconformityRegistryStatus!
+  effectivenessCheck: String
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
 type Report implements Node {
   id: ID!
   objectKey: String!
@@ -7891,6 +8230,20 @@ type AuditEdge {
   node: Audit!
 }
 
+type NonconformityRegistryConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.NonconformityRegistryConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [NonconformityRegistryEdge!]!
+  pageInfo: PageInfo!
+}
+
+type NonconformityRegistryEdge {
+  cursor: CursorKey!
+  node: NonconformityRegistry!
+}
+
 # Root Types
 type Query {
   node(id: ID!): Node!
@@ -8110,6 +8463,17 @@ type Mutation {
   deleteAudit(input: DeleteAuditInput!): DeleteAuditPayload!
   uploadAuditReport(input: UploadAuditReportInput!): UploadAuditReportPayload!
   deleteAuditReport(input: DeleteAuditReportInput!): DeleteAuditReportPayload!
+
+  # Nonconformity Registry mutations
+  createNonconformityRegistry(
+    input: CreateNonconformityRegistryInput!
+  ): CreateNonconformityRegistryPayload!
+  updateNonconformityRegistry(
+    input: UpdateNonconformityRegistryInput!
+  ): UpdateNonconformityRegistryPayload!
+  deleteNonconformityRegistry(
+    input: DeleteNonconformityRegistryInput!
+  ): DeleteNonconformityRegistryPayload!
 }
 
 # Input Types
@@ -8569,6 +8933,38 @@ input UploadAuditReportInput {
 
 input DeleteAuditReportInput {
   auditId: ID!
+}
+
+# Nonconformity Registry input types
+input CreateNonconformityRegistryInput {
+  organizationId: ID!
+  referenceId: String!
+  description: String
+  auditId: ID!
+  dateIdentified: Datetime
+  rootCause: String!
+  correctiveAction: String
+  ownerId: ID!
+  dueDate: Datetime
+  status: NonconformityRegistryStatus!
+  effectivenessCheck: String
+}
+
+input UpdateNonconformityRegistryInput {
+  id: ID!
+  referenceId: String
+  description: String
+  dateIdentified: Datetime
+  rootCause: String
+  correctiveAction: String
+  ownerId: ID
+  dueDate: Datetime
+  status: NonconformityRegistryStatus
+  effectivenessCheck: String
+}
+
+input DeleteNonconformityRegistryInput {
+  nonconformityRegistryId: ID!
 }
 
 # Payload Types
@@ -9238,6 +9634,19 @@ type UploadAuditReportPayload {
 
 type DeleteAuditReportPayload {
   audit: Audit!
+}
+
+# Nonconformity Registry payload types
+type CreateNonconformityRegistryPayload {
+  nonconformityRegistryEdge: NonconformityRegistryEdge!
+}
+
+type UpdateNonconformityRegistryPayload {
+  nonconformityRegistry: NonconformityRegistry!
+}
+
+type DeleteNonconformityRegistryPayload {
+  deletedNonconformityRegistryId: ID!
 }
 `, BuiltIn: false},
 }
@@ -11112,6 +11521,29 @@ func (ec *executionContext) field_Mutation_createMeasure_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_createNonconformityRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_createNonconformityRegistry_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_createNonconformityRegistry_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.CreateNonconformityRegistryInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNCreateNonconformityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateNonconformityRegistryInput(ctx, tmp)
+	}
+
+	var zeroVal types.CreateNonconformityRegistryInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_createOrganization_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -11638,6 +12070,29 @@ func (ec *executionContext) field_Mutation_deleteMeasure_argsInput(
 	}
 
 	var zeroVal types.DeleteMeasureInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteNonconformityRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteNonconformityRegistry_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteNonconformityRegistry_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.DeleteNonconformityRegistryInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNDeleteNonconformityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteNonconformityRegistryInput(ctx, tmp)
+	}
+
+	var zeroVal types.DeleteNonconformityRegistryInput
 	return zeroVal, nil
 }
 
@@ -12397,6 +12852,29 @@ func (ec *executionContext) field_Mutation_updateMeasure_argsInput(
 	}
 
 	var zeroVal types.UpdateMeasureInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateNonconformityRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_updateNonconformityRegistry_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateNonconformityRegistry_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.UpdateNonconformityRegistryInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateNonconformityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateNonconformityRegistryInput(ctx, tmp)
+	}
+
+	var zeroVal types.UpdateNonconformityRegistryInput
 	return zeroVal, nil
 }
 
@@ -13556,6 +14034,101 @@ func (ec *executionContext) field_Organization_measures_argsFilter(
 	}
 
 	var zeroVal *types.MeasureFilter
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_nonconformityRegistries_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Organization_nonconformityRegistries_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Organization_nonconformityRegistries_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Organization_nonconformityRegistries_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Organization_nonconformityRegistries_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Organization_nonconformityRegistries_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+func (ec *executionContext) field_Organization_nonconformityRegistries_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_nonconformityRegistries_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_nonconformityRegistries_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_nonconformityRegistries_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_nonconformityRegistries_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.NonconformityRegistryOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalONonconformityRegistryOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.NonconformityRegistryOrderBy
 	return zeroVal, nil
 }
 
@@ -15827,6 +16400,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
@@ -16414,6 +16989,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
@@ -19494,6 +20071,56 @@ func (ec *executionContext) fieldContext_CreateMeasurePayload_measureEdge(_ cont
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateNonconformityRegistryPayload_nonconformityRegistryEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateNonconformityRegistryPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateNonconformityRegistryPayload_nonconformityRegistryEdge(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NonconformityRegistryEdge, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.NonconformityRegistryEdge)
+	fc.Result = res
+	return ec.marshalNNonconformityRegistryEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateNonconformityRegistryPayload_nonconformityRegistryEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateNonconformityRegistryPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_NonconformityRegistryEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_NonconformityRegistryEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type NonconformityRegistryEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateOrganizationPayload_organizationEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateOrganizationPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreateOrganizationPayload_organizationEdge(ctx, field)
 	if err != nil {
@@ -20426,6 +21053,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
@@ -21513,6 +22142,50 @@ func (ec *executionContext) fieldContext_DeleteMeasurePayload_deletedMeasureId(_
 	return fc, nil
 }
 
+func (ec *executionContext) _DeleteNonconformityRegistryPayload_deletedNonconformityRegistryId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteNonconformityRegistryPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteNonconformityRegistryPayload_deletedNonconformityRegistryId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedNonconformityRegistryID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteNonconformityRegistryPayload_deletedNonconformityRegistryId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteNonconformityRegistryPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeleteOrganizationPayload_deletedOrganizationId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteOrganizationPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeleteOrganizationPayload_deletedOrganizationId(ctx, field)
 	if err != nil {
@@ -22527,6 +23200,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
@@ -25688,6 +26363,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
@@ -32424,6 +33101,1138 @@ func (ec *executionContext) fieldContext_Mutation_deleteAuditReport(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createNonconformityRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createNonconformityRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateNonconformityRegistry(rctx, fc.Args["input"].(types.CreateNonconformityRegistryInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.CreateNonconformityRegistryPayload)
+	fc.Result = res
+	return ec.marshalNCreateNonconformityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateNonconformityRegistryPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createNonconformityRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "nonconformityRegistryEdge":
+				return ec.fieldContext_CreateNonconformityRegistryPayload_nonconformityRegistryEdge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateNonconformityRegistryPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createNonconformityRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateNonconformityRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateNonconformityRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateNonconformityRegistry(rctx, fc.Args["input"].(types.UpdateNonconformityRegistryInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.UpdateNonconformityRegistryPayload)
+	fc.Result = res
+	return ec.marshalNUpdateNonconformityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateNonconformityRegistryPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateNonconformityRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "nonconformityRegistry":
+				return ec.fieldContext_UpdateNonconformityRegistryPayload_nonconformityRegistry(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateNonconformityRegistryPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateNonconformityRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteNonconformityRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteNonconformityRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteNonconformityRegistry(rctx, fc.Args["input"].(types.DeleteNonconformityRegistryInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DeleteNonconformityRegistryPayload)
+	fc.Result = res
+	return ec.marshalNDeleteNonconformityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteNonconformityRegistryPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteNonconformityRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedNonconformityRegistryId":
+				return ec.fieldContext_DeleteNonconformityRegistryPayload_deletedNonconformityRegistryId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteNonconformityRegistryPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteNonconformityRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_id(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_organization(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_organization(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.NonconformityRegistry().Organization(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Organization)
+	fc.Result = res
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "users":
+				return ec.fieldContext_Organization_users(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_referenceId(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_referenceId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReferenceID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_referenceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_description(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_audit(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_audit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.NonconformityRegistry().Audit(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Audit)
+	fc.Result = res
+	return ec.marshalNAudit2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_audit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Audit_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_Audit_organization(ctx, field)
+			case "framework":
+				return ec.fieldContext_Audit_framework(ctx, field)
+			case "validFrom":
+				return ec.fieldContext_Audit_validFrom(ctx, field)
+			case "validUntil":
+				return ec.fieldContext_Audit_validUntil(ctx, field)
+			case "report":
+				return ec.fieldContext_Audit_report(ctx, field)
+			case "reportUrl":
+				return ec.fieldContext_Audit_reportUrl(ctx, field)
+			case "state":
+				return ec.fieldContext_Audit_state(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Audit_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Audit_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_dateIdentified(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_dateIdentified(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DateIdentified, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_dateIdentified(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_rootCause(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_rootCause(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RootCause, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_rootCause(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_correctiveAction(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_correctiveAction(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CorrectiveAction, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_correctiveAction(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_owner(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_owner(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.NonconformityRegistry().Owner(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.People)
+	fc.Result = res
+	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_People_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_People_fullName(ctx, field)
+			case "primaryEmailAddress":
+				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_People_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_People_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_People_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_People_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_dueDate(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_dueDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DueDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_dueDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_status(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.NonconformityRegistryStatus)
+	fc.Result = res
+	return ec.marshalNNonconformityRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type NonconformityRegistryStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_effectivenessCheck(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_effectivenessCheck(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EffectivenessCheck, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_effectivenessCheck(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistry_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistryConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistryConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistryConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.NonconformityRegistryConnection().TotalCount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistryConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistryConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistryConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistryConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistryConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.NonconformityRegistryEdge)
+	fc.Result = res
+	return ec.marshalNNonconformityRegistryEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistryConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistryConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_NonconformityRegistryEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_NonconformityRegistryEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type NonconformityRegistryEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistryConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistryConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistryConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(types.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistryConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistryConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistryEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistryEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistryEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(page.CursorKey)
+	fc.Result = res
+	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistryEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistryEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NonconformityRegistryEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistryEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistryEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.NonconformityRegistry)
+	fc.Result = res
+	return ec.marshalNNonconformityRegistry2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistryEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistryEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_NonconformityRegistry_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_NonconformityRegistry_organization(ctx, field)
+			case "referenceId":
+				return ec.fieldContext_NonconformityRegistry_referenceId(ctx, field)
+			case "description":
+				return ec.fieldContext_NonconformityRegistry_description(ctx, field)
+			case "audit":
+				return ec.fieldContext_NonconformityRegistry_audit(ctx, field)
+			case "dateIdentified":
+				return ec.fieldContext_NonconformityRegistry_dateIdentified(ctx, field)
+			case "rootCause":
+				return ec.fieldContext_NonconformityRegistry_rootCause(ctx, field)
+			case "correctiveAction":
+				return ec.fieldContext_NonconformityRegistry_correctiveAction(ctx, field)
+			case "owner":
+				return ec.fieldContext_NonconformityRegistry_owner(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_NonconformityRegistry_dueDate(ctx, field)
+			case "status":
+				return ec.fieldContext_NonconformityRegistry_status(ctx, field)
+			case "effectivenessCheck":
+				return ec.fieldContext_NonconformityRegistry_effectivenessCheck(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_NonconformityRegistry_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_NonconformityRegistry_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type NonconformityRegistry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Organization_id(ctx, field)
 	if err != nil {
@@ -33368,6 +35177,69 @@ func (ec *executionContext) fieldContext_Organization_audits(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_nonconformityRegistries(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Organization().NonconformityRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.NonconformityRegistryOrderBy))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.NonconformityRegistryConnection)
+	fc.Result = res
+	return ec.marshalNNonconformityRegistryConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_nonconformityRegistries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_NonconformityRegistryConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_NonconformityRegistryConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_NonconformityRegistryConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type NonconformityRegistryConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_nonconformityRegistries_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_trustCenter(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Organization_trustCenter(ctx, field)
 	if err != nil {
@@ -33732,6 +35604,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
@@ -36200,6 +38074,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
@@ -37290,6 +39166,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
@@ -38072,6 +39950,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
@@ -39390,6 +41270,80 @@ func (ec *executionContext) fieldContext_UpdateMeasurePayload_measure(_ context.
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateNonconformityRegistryPayload_nonconformityRegistry(ctx context.Context, field graphql.CollectedField, obj *types.UpdateNonconformityRegistryPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateNonconformityRegistryPayload_nonconformityRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NonconformityRegistry, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.NonconformityRegistry)
+	fc.Result = res
+	return ec.marshalNNonconformityRegistry2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateNonconformityRegistryPayload_nonconformityRegistry(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateNonconformityRegistryPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_NonconformityRegistry_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_NonconformityRegistry_organization(ctx, field)
+			case "referenceId":
+				return ec.fieldContext_NonconformityRegistry_referenceId(ctx, field)
+			case "description":
+				return ec.fieldContext_NonconformityRegistry_description(ctx, field)
+			case "audit":
+				return ec.fieldContext_NonconformityRegistry_audit(ctx, field)
+			case "dateIdentified":
+				return ec.fieldContext_NonconformityRegistry_dateIdentified(ctx, field)
+			case "rootCause":
+				return ec.fieldContext_NonconformityRegistry_rootCause(ctx, field)
+			case "correctiveAction":
+				return ec.fieldContext_NonconformityRegistry_correctiveAction(ctx, field)
+			case "owner":
+				return ec.fieldContext_NonconformityRegistry_owner(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_NonconformityRegistry_dueDate(ctx, field)
+			case "status":
+				return ec.fieldContext_NonconformityRegistry_status(ctx, field)
+			case "effectivenessCheck":
+				return ec.fieldContext_NonconformityRegistry_effectivenessCheck(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_NonconformityRegistry_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_NonconformityRegistry_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type NonconformityRegistry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateOrganizationPayload_organization(ctx context.Context, field graphql.CollectedField, obj *types.UpdateOrganizationPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UpdateOrganizationPayload_organization(ctx, field)
 	if err != nil {
@@ -39461,6 +41415,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
@@ -41140,6 +43096,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_data(ctx, field)
 			case "audits":
 				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "createdAt":
@@ -48505,6 +50463,103 @@ func (ec *executionContext) unmarshalInputCreateMeasureInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateNonconformityRegistryInput(ctx context.Context, obj any) (types.CreateNonconformityRegistryInput, error) {
+	var it types.CreateNonconformityRegistryInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "referenceId", "description", "auditId", "dateIdentified", "rootCause", "correctiveAction", "ownerId", "dueDate", "status", "effectivenessCheck"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "referenceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("referenceId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReferenceID = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "auditId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("auditId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AuditID = data
+		case "dateIdentified":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateIdentified"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DateIdentified = data
+		case "rootCause":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rootCause"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RootCause = data
+		case "correctiveAction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("correctiveAction"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CorrectiveAction = data
+		case "ownerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "dueDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dueDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DueDate = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalNNonconformityRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "effectivenessCheck":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectivenessCheck"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectivenessCheck = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateOrganizationInput(ctx context.Context, obj any) (types.CreateOrganizationInput, error) {
 	var it types.CreateOrganizationInput
 	asMap := map[string]any{}
@@ -49559,6 +51614,33 @@ func (ec *executionContext) unmarshalInputDeleteMeasureInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteNonconformityRegistryInput(ctx context.Context, obj any) (types.DeleteNonconformityRegistryInput, error) {
+	var it types.DeleteNonconformityRegistryInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"nonconformityRegistryId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "nonconformityRegistryId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nonconformityRegistryId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.NonconformityRegistryID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteOrganizationInput(ctx context.Context, obj any) (types.DeleteOrganizationInput, error) {
 	var it types.DeleteOrganizationInput
 	asMap := map[string]any{}
@@ -50410,6 +52492,40 @@ func (ec *executionContext) unmarshalInputMeasureOrder(ctx context.Context, obj 
 		case "field":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
 			data, err := ec.unmarshalNMeasureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputNonconformityRegistryOrder(ctx context.Context, obj any) (types.NonconformityRegistryOrderBy, error) {
+	var it types.NonconformityRegistryOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNNonconformityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryOrderField(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -51350,6 +53466,96 @@ func (ec *executionContext) unmarshalInputUpdateMeasureInput(ctx context.Context
 				return it, err
 			}
 			it.State = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateNonconformityRegistryInput(ctx context.Context, obj any) (types.UpdateNonconformityRegistryInput, error) {
+	var it types.UpdateNonconformityRegistryInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "referenceId", "description", "dateIdentified", "rootCause", "correctiveAction", "ownerId", "dueDate", "status", "effectivenessCheck"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "referenceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("referenceId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReferenceID = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "dateIdentified":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateIdentified"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DateIdentified = data
+		case "rootCause":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rootCause"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RootCause = data
+		case "correctiveAction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("correctiveAction"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CorrectiveAction = data
+		case "ownerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "dueDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dueDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DueDate = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalONonconformityRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "effectivenessCheck":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("effectivenessCheck"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EffectivenessCheck = data
 		}
 	}
 
@@ -52513,6 +54719,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Organization(ctx, sel, obj)
+	case types.NonconformityRegistry:
+		return ec._NonconformityRegistry(ctx, sel, &obj)
+	case *types.NonconformityRegistry:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._NonconformityRegistry(ctx, sel, obj)
 	case types.Measure:
 		return ec._Measure(ctx, sel, &obj)
 	case *types.Measure:
@@ -54512,6 +56725,45 @@ func (ec *executionContext) _CreateMeasurePayload(ctx context.Context, sel ast.S
 	return out
 }
 
+var createNonconformityRegistryPayloadImplementors = []string{"CreateNonconformityRegistryPayload"}
+
+func (ec *executionContext) _CreateNonconformityRegistryPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateNonconformityRegistryPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createNonconformityRegistryPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateNonconformityRegistryPayload")
+		case "nonconformityRegistryEdge":
+			out.Values[i] = ec._CreateNonconformityRegistryPayload_nonconformityRegistryEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var createOrganizationPayloadImplementors = []string{"CreateOrganizationPayload"}
 
 func (ec *executionContext) _CreateOrganizationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateOrganizationPayload) graphql.Marshaler {
@@ -55699,6 +57951,45 @@ func (ec *executionContext) _DeleteMeasurePayload(ctx context.Context, sel ast.S
 			out.Values[i] = graphql.MarshalString("DeleteMeasurePayload")
 		case "deletedMeasureId":
 			out.Values[i] = ec._DeleteMeasurePayload_deletedMeasureId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteNonconformityRegistryPayloadImplementors = []string{"DeleteNonconformityRegistryPayload"}
+
+func (ec *executionContext) _DeleteNonconformityRegistryPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteNonconformityRegistryPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteNonconformityRegistryPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteNonconformityRegistryPayload")
+		case "deletedNonconformityRegistryId":
+			out.Values[i] = ec._DeleteNonconformityRegistryPayload_deletedNonconformityRegistryId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -58911,6 +61202,333 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createNonconformityRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createNonconformityRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateNonconformityRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateNonconformityRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteNonconformityRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteNonconformityRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var nonconformityRegistryImplementors = []string{"NonconformityRegistry", "Node"}
+
+func (ec *executionContext) _NonconformityRegistry(ctx context.Context, sel ast.SelectionSet, obj *types.NonconformityRegistry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, nonconformityRegistryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NonconformityRegistry")
+		case "id":
+			out.Values[i] = ec._NonconformityRegistry_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._NonconformityRegistry_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "referenceId":
+			out.Values[i] = ec._NonconformityRegistry_referenceId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._NonconformityRegistry_description(ctx, field, obj)
+		case "audit":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._NonconformityRegistry_audit(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "dateIdentified":
+			out.Values[i] = ec._NonconformityRegistry_dateIdentified(ctx, field, obj)
+		case "rootCause":
+			out.Values[i] = ec._NonconformityRegistry_rootCause(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "correctiveAction":
+			out.Values[i] = ec._NonconformityRegistry_correctiveAction(ctx, field, obj)
+		case "owner":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._NonconformityRegistry_owner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "dueDate":
+			out.Values[i] = ec._NonconformityRegistry_dueDate(ctx, field, obj)
+		case "status":
+			out.Values[i] = ec._NonconformityRegistry_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "effectivenessCheck":
+			out.Values[i] = ec._NonconformityRegistry_effectivenessCheck(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._NonconformityRegistry_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._NonconformityRegistry_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var nonconformityRegistryConnectionImplementors = []string{"NonconformityRegistryConnection"}
+
+func (ec *executionContext) _NonconformityRegistryConnection(ctx context.Context, sel ast.SelectionSet, obj *types.NonconformityRegistryConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, nonconformityRegistryConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NonconformityRegistryConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._NonconformityRegistryConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._NonconformityRegistryConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._NonconformityRegistryConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var nonconformityRegistryEdgeImplementors = []string{"NonconformityRegistryEdge"}
+
+func (ec *executionContext) _NonconformityRegistryEdge(ctx context.Context, sel ast.SelectionSet, obj *types.NonconformityRegistryEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, nonconformityRegistryEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NonconformityRegistryEdge")
+		case "cursor":
+			out.Values[i] = ec._NonconformityRegistryEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._NonconformityRegistryEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -59430,6 +62048,42 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._Organization_audits(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "nonconformityRegistries":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_nonconformityRegistries(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -61745,6 +64399,45 @@ func (ec *executionContext) _UpdateMeasurePayload(ctx context.Context, sel ast.S
 			out.Values[i] = graphql.MarshalString("UpdateMeasurePayload")
 		case "measure":
 			out.Values[i] = ec._UpdateMeasurePayload_measure(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateNonconformityRegistryPayloadImplementors = []string{"UpdateNonconformityRegistryPayload"}
+
+func (ec *executionContext) _UpdateNonconformityRegistryPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateNonconformityRegistryPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateNonconformityRegistryPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateNonconformityRegistryPayload")
+		case "nonconformityRegistry":
+			out.Values[i] = ec._UpdateNonconformityRegistryPayload_nonconformityRegistry(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -64528,6 +67221,10 @@ func (ec *executionContext) marshalNAssignTaskPayload2ᚖgithubᚗcomᚋgetprobo
 	return ec._AssignTaskPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNAudit2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit(ctx context.Context, sel ast.SelectionSet, v types.Audit) graphql.Marshaler {
+	return ec._Audit(ctx, sel, &v)
+}
+
 func (ec *executionContext) marshalNAudit2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit(ctx context.Context, sel ast.SelectionSet, v *types.Audit) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -65245,6 +67942,25 @@ func (ec *executionContext) marshalNCreateMeasurePayload2ᚖgithubᚗcomᚋgetpr
 	return ec._CreateMeasurePayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCreateNonconformityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateNonconformityRegistryInput(ctx context.Context, v any) (types.CreateNonconformityRegistryInput, error) {
+	res, err := ec.unmarshalInputCreateNonconformityRegistryInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateNonconformityRegistryPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateNonconformityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateNonconformityRegistryPayload) graphql.Marshaler {
+	return ec._CreateNonconformityRegistryPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateNonconformityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateNonconformityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateNonconformityRegistryPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateNonconformityRegistryPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateOrganizationInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateOrganizationInput(ctx context.Context, v any) (types.CreateOrganizationInput, error) {
 	res, err := ec.unmarshalInputCreateOrganizationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -65916,6 +68632,25 @@ func (ec *executionContext) marshalNDeleteMeasurePayload2ᚖgithubᚗcomᚋgetpr
 		return graphql.Null
 	}
 	return ec._DeleteMeasurePayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteNonconformityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteNonconformityRegistryInput(ctx context.Context, v any) (types.DeleteNonconformityRegistryInput, error) {
+	res, err := ec.unmarshalInputDeleteNonconformityRegistryInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteNonconformityRegistryPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteNonconformityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteNonconformityRegistryPayload) graphql.Marshaler {
+	return ec._DeleteNonconformityRegistryPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteNonconformityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteNonconformityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteNonconformityRegistryPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteNonconformityRegistryPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteOrganizationInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationInput(ctx context.Context, v any) (types.DeleteOrganizationInput, error) {
@@ -67164,6 +69899,148 @@ func (ec *executionContext) marshalNNode2githubᚗcomᚋgetproboᚋproboᚋpkg�
 	return ec._Node(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNNonconformityRegistry2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistry(ctx context.Context, sel ast.SelectionSet, v *types.NonconformityRegistry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._NonconformityRegistry(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNNonconformityRegistryConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryConnection(ctx context.Context, sel ast.SelectionSet, v types.NonconformityRegistryConnection) graphql.Marshaler {
+	return ec._NonconformityRegistryConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNNonconformityRegistryConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryConnection(ctx context.Context, sel ast.SelectionSet, v *types.NonconformityRegistryConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._NonconformityRegistryConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNNonconformityRegistryEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.NonconformityRegistryEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNNonconformityRegistryEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNNonconformityRegistryEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryEdge(ctx context.Context, sel ast.SelectionSet, v *types.NonconformityRegistryEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._NonconformityRegistryEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNNonconformityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryOrderField(ctx context.Context, v any) (coredata.NonconformityRegistryOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNNonconformityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNNonconformityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.NonconformityRegistryOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNNonconformityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNNonconformityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryOrderField = map[string]coredata.NonconformityRegistryOrderField{
+		"CREATED_AT":      coredata.NonconformityRegistryOrderFieldCreatedAt,
+		"REFERENCE_ID":    coredata.NonconformityRegistryOrderFieldReferenceId,
+		"DATE_IDENTIFIED": coredata.NonconformityRegistryOrderFieldDateIdentified,
+		"DUE_DATE":        coredata.NonconformityRegistryOrderFieldDueDate,
+		"STATUS":          coredata.NonconformityRegistryOrderFieldStatus,
+	}
+	marshalNNonconformityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryOrderField = map[coredata.NonconformityRegistryOrderField]string{
+		coredata.NonconformityRegistryOrderFieldCreatedAt:      "CREATED_AT",
+		coredata.NonconformityRegistryOrderFieldReferenceId:    "REFERENCE_ID",
+		coredata.NonconformityRegistryOrderFieldDateIdentified: "DATE_IDENTIFIED",
+		coredata.NonconformityRegistryOrderFieldDueDate:        "DUE_DATE",
+		coredata.NonconformityRegistryOrderFieldStatus:         "STATUS",
+	}
+)
+
+func (ec *executionContext) unmarshalNNonconformityRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus(ctx context.Context, v any) (coredata.NonconformityRegistryStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNNonconformityRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNNonconformityRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus(ctx context.Context, sel ast.SelectionSet, v coredata.NonconformityRegistryStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNNonconformityRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNNonconformityRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus = map[string]coredata.NonconformityRegistryStatus{
+		"OPEN":        coredata.NonconformityRegistryStatusOpen,
+		"IN_PROGRESS": coredata.NonconformityRegistryStatusInProgress,
+		"CLOSED":      coredata.NonconformityRegistryStatusClosed,
+	}
+	marshalNNonconformityRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus = map[coredata.NonconformityRegistryStatus]string{
+		coredata.NonconformityRegistryStatusOpen:       "OPEN",
+		coredata.NonconformityRegistryStatusInProgress: "IN_PROGRESS",
+		coredata.NonconformityRegistryStatusClosed:     "CLOSED",
+	}
+)
+
 func (ec *executionContext) unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx context.Context, v any) (page.OrderDirection, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection[tmp]
@@ -68223,6 +71100,25 @@ func (ec *executionContext) marshalNUpdateMeasurePayload2ᚖgithubᚗcomᚋgetpr
 		return graphql.Null
 	}
 	return ec._UpdateMeasurePayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateNonconformityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateNonconformityRegistryInput(ctx context.Context, v any) (types.UpdateNonconformityRegistryInput, error) {
+	res, err := ec.unmarshalInputUpdateNonconformityRegistryInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateNonconformityRegistryPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateNonconformityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateNonconformityRegistryPayload) graphql.Marshaler {
+	return ec._UpdateNonconformityRegistryPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateNonconformityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateNonconformityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateNonconformityRegistryPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateNonconformityRegistryPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateOrganizationInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateOrganizationInput(ctx context.Context, v any) (types.UpdateOrganizationInput, error) {
@@ -69957,6 +72853,46 @@ var (
 		coredata.MeasureStateInProgress:    "IN_PROGRESS",
 		coredata.MeasureStateNotApplicable: "NOT_APPLICABLE",
 		coredata.MeasureStateImplemented:   "IMPLEMENTED",
+	}
+)
+
+func (ec *executionContext) unmarshalONonconformityRegistryOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryOrderBy(ctx context.Context, v any) (*types.NonconformityRegistryOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputNonconformityRegistryOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalONonconformityRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus(ctx context.Context, v any) (*coredata.NonconformityRegistryStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalONonconformityRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalONonconformityRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus(ctx context.Context, sel ast.SelectionSet, v *coredata.NonconformityRegistryStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalONonconformityRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus[*v])
+	return res
+}
+
+var (
+	unmarshalONonconformityRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus = map[string]coredata.NonconformityRegistryStatus{
+		"OPEN":        coredata.NonconformityRegistryStatusOpen,
+		"IN_PROGRESS": coredata.NonconformityRegistryStatusInProgress,
+		"CLOSED":      coredata.NonconformityRegistryStatusClosed,
+	}
+	marshalONonconformityRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityRegistryStatus = map[coredata.NonconformityRegistryStatus]string{
+		coredata.NonconformityRegistryStatusOpen:       "OPEN",
+		coredata.NonconformityRegistryStatusInProgress: "IN_PROGRESS",
+		coredata.NonconformityRegistryStatusClosed:     "CLOSED",
 	}
 )
 

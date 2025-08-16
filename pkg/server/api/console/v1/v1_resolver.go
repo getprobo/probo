@@ -2713,6 +2713,167 @@ func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.De
 	}, nil
 }
 
+// CreateNonconformityRegistry is the resolver for the createNonconformityRegistry field.
+func (r *mutationResolver) CreateNonconformityRegistry(ctx context.Context, input types.CreateNonconformityRegistryInput) (*types.CreateNonconformityRegistryPayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	req := probo.CreateNonconformityRegistryRequest{
+		OrganizationID:     input.OrganizationID,
+		ReferenceID:        input.ReferenceID,
+		Description:        input.Description,
+		AuditID:            input.AuditID,
+		DateIdentified:     input.DateIdentified,
+		RootCause:          input.RootCause,
+		CorrectiveAction:   input.CorrectiveAction,
+		OwnerID:            input.OwnerID,
+		DueDate:            input.DueDate,
+		Status:             &input.Status,
+		EffectivenessCheck: input.EffectivenessCheck,
+	}
+
+	registry, err := prb.NonconformityRegistries.Create(ctx, &req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create nonconformity registry: %w", err)
+	}
+
+	return &types.CreateNonconformityRegistryPayload{
+		NonconformityRegistryEdge: types.NewNonconformityRegistryEdge(registry, coredata.NonconformityRegistryOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateNonconformityRegistry is the resolver for the updateNonconformityRegistry field.
+func (r *mutationResolver) UpdateNonconformityRegistry(ctx context.Context, input types.UpdateNonconformityRegistryInput) (*types.UpdateNonconformityRegistryPayload, error) {
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	req := probo.UpdateNonconformityRegistryRequest{
+		ID:                 input.ID,
+		ReferenceID:        input.ReferenceID,
+		Description:        &input.Description,
+		DateIdentified:     &input.DateIdentified,
+		RootCause:          input.RootCause,
+		CorrectiveAction:   &input.CorrectiveAction,
+		OwnerID:            input.OwnerID,
+		DueDate:            &input.DueDate,
+		Status:             input.Status,
+		EffectivenessCheck: &input.EffectivenessCheck,
+	}
+
+	registry, err := prb.NonconformityRegistries.Update(ctx, &req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot update nonconformity registry: %w", err)
+	}
+
+	return &types.UpdateNonconformityRegistryPayload{
+		NonconformityRegistry: types.NewNonconformityRegistry(registry),
+	}, nil
+}
+
+// DeleteNonconformityRegistry is the resolver for the deleteNonconformityRegistry field.
+func (r *mutationResolver) DeleteNonconformityRegistry(ctx context.Context, input types.DeleteNonconformityRegistryInput) (*types.DeleteNonconformityRegistryPayload, error) {
+	prb := r.ProboService(ctx, input.NonconformityRegistryID.TenantID())
+
+	err := prb.NonconformityRegistries.Delete(ctx, input.NonconformityRegistryID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot delete nonconformity registry: %w", err)
+	}
+
+	return &types.DeleteNonconformityRegistryPayload{
+		DeletedNonconformityRegistryID: input.NonconformityRegistryID,
+	}, nil
+}
+
+// NonconformityRegistries is the resolver for the nonconformityRegistries field.
+func (r *organizationResolver) NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy) (*types.NonconformityRegistryConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.NonconformityRegistryOrderField]{
+		Field:     coredata.NonconformityRegistryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.NonconformityRegistryOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.NonconformityRegistries.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list organization nonconformity registries: %w", err)
+	}
+
+	return types.NewNonconformityRegistryConnection(page, r, obj.ID), nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *nonconformityRegistryResolver) Organization(ctx context.Context, obj *types.NonconformityRegistry) (*types.Organization, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	registry, err := prb.NonconformityRegistries.Get(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get nonconformity registry: %w", err)
+	}
+
+	organization, err := prb.Organizations.Get(ctx, registry.OrganizationID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get nonconformity registry organization: %w", err)
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// Audit is the resolver for the audit field.
+func (r *nonconformityRegistryResolver) Audit(ctx context.Context, obj *types.NonconformityRegistry) (*types.Audit, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	registry, err := prb.NonconformityRegistries.Get(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get nonconformity registry: %w", err)
+	}
+
+	audit, err := prb.Audits.Get(ctx, registry.AuditID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get nonconformity registry audit: %w", err)
+	}
+
+	return types.NewAudit(audit), nil
+}
+
+// Owner is the resolver for the owner field.
+func (r *nonconformityRegistryResolver) Owner(ctx context.Context, obj *types.NonconformityRegistry) (*types.People, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	registry, err := prb.NonconformityRegistries.Get(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get nonconformity registry: %w", err)
+	}
+
+	people, err := prb.Peoples.Get(ctx, registry.OwnerID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get nonconformity registry owner: %w", err)
+	}
+
+	return types.NewPeople(people), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *nonconformityRegistryConnectionResolver) TotalCount(ctx context.Context, obj *types.NonconformityRegistryConnection) (int, error) {
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.NonconformityRegistries.CountForOrganizationID(ctx, obj.ParentID)
+		if err != nil {
+			return 0, fmt.Errorf("cannot count nonconformity registries: %w", err)
+		}
+		return count, nil
+	}
+
+	return 0, fmt.Errorf("unsupported resolver: %T", obj.Resolver)
+}
+
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -3970,6 +4131,16 @@ func (r *Resolver) MeasureConnection() schema.MeasureConnectionResolver {
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 
+// NonconformityRegistry returns schema.NonconformityRegistryResolver implementation.
+func (r *Resolver) NonconformityRegistry() schema.NonconformityRegistryResolver {
+	return &nonconformityRegistryResolver{r}
+}
+
+// NonconformityRegistryConnection returns schema.NonconformityRegistryConnectionResolver implementation.
+func (r *Resolver) NonconformityRegistryConnection() schema.NonconformityRegistryConnectionResolver {
+	return &nonconformityRegistryConnectionResolver{r}
+}
+
 // Organization returns schema.OrganizationResolver implementation.
 func (r *Resolver) Organization() schema.OrganizationResolver { return &organizationResolver{r} }
 
@@ -4055,6 +4226,8 @@ type frameworkConnectionResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }
 type measureConnectionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+type nonconformityRegistryResolver struct{ *Resolver }
+type nonconformityRegistryConnectionResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type peopleConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

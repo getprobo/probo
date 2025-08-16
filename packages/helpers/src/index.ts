@@ -16,6 +16,7 @@ export { availableFrameworks } from "./frameworks";
 export { getDocumentTypeLabel, documentTypes } from "./documents";
 export { getAssetTypeVariant, getCriticityVariant } from "./assets";
 export { getAuditStateLabel, getAuditStateVariant, auditStates } from "./audits";
+export { getStatusVariant, getStatusLabel } from "./registryStatus";
 export { promisifyMutation } from "./relay";
 export { fileType, fileSize } from "./file";
 export { formatDatetime } from "./date";
