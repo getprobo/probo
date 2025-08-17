@@ -73,6 +73,13 @@ type (
 
 const (
 	TokenTypeSigningRequest = "signing_request"
+	const signEmailTemplate = `Hi,
+	You have documents awaiting your signature.
+	Please follow this link to sign them: {{.SignURL}}
+
+	Regards,  
+	Probo Team
+	`
 )
 
 func (e ErrSignatureNotCancellable) Error() string {
@@ -440,15 +447,29 @@ func (s *DocumentService) SendSigningNotifications(
 					}.Encode(),
 				}
 
+<<<<<<< HEAD
 				data := struct {
 						SignURL string
 				}{
+=======
+				tmpl, err := template.New("signRequest").Parse(signEmailTemplate)
+				if err != nil {
+						panic(err)
+				}
+
+				data := SignEmailData{
+>>>>>>> origin/main
 						SignURL: signRequestURL.String(),
 				}
 
 				var body bytes.Buffer
+<<<<<<< HEAD
 				if err := signEmailTemplate.Execute(&body, data); err != nil {
 					return fmt.Errorf("failed to render email template: %w", err)
+=======
+				if err := tmpl.Execute(&body, data); err != nil {
+						panic(err)
+>>>>>>> origin/main
 				}
 
 				email := &coredata.Email{
