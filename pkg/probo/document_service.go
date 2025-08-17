@@ -15,6 +15,7 @@ import (
 	"github.com/getprobo/probo/pkg/statelesstoken"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"text/template"
 )
 
 type (
@@ -63,6 +64,10 @@ type (
 		DocumentIDs []gid.GID
 		PublishedBy gid.GID
 		Changelog   string
+	}
+
+	SignEmailData struct {
+		SignURL string
 	}
 )
 
@@ -435,12 +440,23 @@ func (s *DocumentService) SendSigningNotifications(
 					}.Encode(),
 				}
 
+				data := struct {
+						SignURL string
+				}{
+						SignURL: signRequestURL.String(),
+				}
+
+				var body bytes.Buffer
+				if err := signEmailTemplate.Execute(&body, data); err != nil {
+					return fmt.Errorf("failed to render email template: %w", err)
+				}
+
 				email := &coredata.Email{
 					ID:             emailID,
 					RecipientEmail: people.PrimaryEmailAddress,
 					RecipientName:  people.FullName,
 					Subject:        "Probo - Documents Signing Request",
-					TextBody:       fmt.Sprintf("Hi,\nYou have documents awaiting your signature. Please follow this link to sign them: %s", signRequestURL.String()),
+					TextBody:       body.String(),
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}
