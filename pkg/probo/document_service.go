@@ -65,21 +65,10 @@ type (
 		PublishedBy gid.GID
 		Changelog   string
 	}
-
-	SignEmailData struct {
-		SignURL string
-	}
 )
 
 const (
 	TokenTypeSigningRequest = "signing_request"
-	const signEmailTemplate = `Hi,
-	You have documents awaiting your signature.
-	Please follow this link to sign them: {{.SignURL}}
-
-	Regards,  
-	Probo Team
-	`
 )
 
 func (e ErrSignatureNotCancellable) Error() string {
@@ -448,9 +437,9 @@ func (s *DocumentService) SendSigningNotifications(
 				}
 
 				data := struct {
-						SignURL string
+					SignURL string
 				}{
-						SignURL: signRequestURL.String(),
+					SignURL: signRequestURL.String(),
 				}
 
 				var body bytes.Buffer
