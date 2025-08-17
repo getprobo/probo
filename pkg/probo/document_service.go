@@ -73,13 +73,6 @@ type (
 
 const (
 	TokenTypeSigningRequest = "signing_request"
-	const signEmailTemplate = `Hi,
-	You have documents awaiting your signature.
-	Please follow this link to sign them: {{.SignURL}}
-
-	Regards,  
-	Probo Team
-	`
 )
 
 func (e ErrSignatureNotCancellable) Error() string {
