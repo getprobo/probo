@@ -15,6 +15,7 @@ import (
 	"github.com/getprobo/probo/pkg/statelesstoken"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"text/template"
 )
 
 type (
@@ -64,10 +65,21 @@ type (
 		PublishedBy gid.GID
 		Changelog   string
 	}
+
+	SignEmailData struct {
+		SignURL string
+	}
 )
 
 const (
 	TokenTypeSigningRequest = "signing_request"
+	const signEmailTemplate = `Hi,
+	You have documents awaiting your signature.
+	Please follow this link to sign them: {{.SignURL}}
+
+	Regards,  
+	Probo Team
+	`
 )
 
 func (e ErrSignatureNotCancellable) Error() string {
@@ -435,12 +447,26 @@ func (s *DocumentService) SendSigningNotifications(
 					}.Encode(),
 				}
 
+				tmpl, err := template.New("signRequest").Parse(signEmailTemplate)
+				if err != nil {
+						panic(err)
+				}
+
+				data := SignEmailData{
+						SignURL: signRequestURL.String(),
+				}
+
+				var body bytes.Buffer
+				if err := tmpl.Execute(&body, data); err != nil {
+						panic(err)
+				}
+
 				email := &coredata.Email{
 					ID:             emailID,
 					RecipientEmail: people.PrimaryEmailAddress,
 					RecipientName:  people.FullName,
 					Subject:        "Probo - Documents Signing Request",
-					TextBody:       fmt.Sprintf("Hi,\nYou have documents awaiting your signature. Please follow this link to sign them: %s", signRequestURL.String()),
+					TextBody:       body.String(),
 					CreatedAt:      now,
 					UpdatedAt:      now,
 				}
