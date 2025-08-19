@@ -2995,6 +2995,38 @@ func (r *mutationResolver) DeleteComplianceRegistry(ctx context.Context, input t
 	}, nil
 }
 
+// CreateSnapshot is the resolver for the createSnapshot field.
+func (r *mutationResolver) CreateSnapshot(ctx context.Context, input types.CreateSnapshotInput) (*types.CreateSnapshotPayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	snapshot, err := prb.Snapshots.Create(ctx, &probo.CreateSnapshotRequest{
+		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
+		Description:    input.Description,
+		Type:           input.Type,
+	})
+	if err != nil {
+		panic(fmt.Errorf("cannot create snapshot: %w", err))
+	}
+
+	return &types.CreateSnapshotPayload{
+		SnapshotEdge: types.NewSnapshotEdge(snapshot, coredata.SnapshotOrderFieldCreatedAt),
+	}, nil
+}
+
+// DeleteSnapshot is the resolver for the deleteSnapshot field.
+func (r *mutationResolver) DeleteSnapshot(ctx context.Context, input types.DeleteSnapshotInput) (*types.DeleteSnapshotPayload, error) {
+	prb := r.ProboService(ctx, input.SnapshotID.TenantID())
+
+	if err := prb.Snapshots.Delete(ctx, input.SnapshotID); err != nil {
+		panic(fmt.Errorf("cannot delete snapshot: %w", err))
+	}
+
+	return &types.DeleteSnapshotPayload{
+		DeletedSnapshotID: input.SnapshotID,
+	}, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *nonconformityRegistryResolver) Organization(ctx context.Context, obj *types.NonconformityRegistry) (*types.Organization, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -3189,7 +3221,10 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Vendors.ListForOrganizationID(ctx, obj.ID, cursor)
+	var nilSnapshotID *gid.GID = nil
+	filter := coredata.NewVendorFilterBySnapshotID(&nilSnapshotID)
+
+	page, err := prb.Vendors.ListForOrganizationID(ctx, obj.ID, cursor, filter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization vendors: %w", err))
 	}
@@ -3368,7 +3403,7 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 }
 
 // Assets is the resolver for the assets field.
-func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy) (*types.DatumConnection, error) {
+func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) (*types.DatumConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DatumOrderField]{
@@ -3384,7 +3419,12 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Data.ListForOrganizationID(ctx, obj.ID, cursor)
+	datumFilter := coredata.NewDatumFilterBySnapshotID(nil)
+	if filter != nil {
+		datumFilter = coredata.NewDatumFilterBySnapshotID(&filter.SnapshotID)
+	}
+
+	page, err := prb.Data.ListForOrganizationID(ctx, obj.ID, cursor, datumFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization data: %w", err))
 	}
@@ -3465,6 +3505,31 @@ func (r *organizationResolver) ComplianceRegistries(ctx context.Context, obj *ty
 	}
 
 	return types.NewComplianceRegistryConnection(page, r, obj.ID), nil
+}
+
+// Snapshots is the resolver for the snapshots field.
+func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.SnapshotOrderField]{
+		Field:     coredata.SnapshotOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.SnapshotOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.Snapshots.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization snapshots: %w", err))
+	}
+
+	return types.NewSnapshotConnection(page, r, obj.ID), nil
 }
 
 // TrustCenter is the resolver for the trustCenter field.
@@ -3634,6 +3699,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			panic(fmt.Errorf("cannot get report: %w", err))
 		}
 		return types.NewReport(report), nil
+	case coredata.SnapshotEntityType:
+		snapshot, err := prb.Snapshots.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("cannot get snapshot: %w", err))
+		}
+		return types.NewSnapshot(snapshot), nil
 	case coredata.TrustCenterEntityType:
 		trustCenter, err := prb.TrustCenters.Get(ctx, id)
 		if err != nil {
@@ -3816,6 +3887,39 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 		count, err := prb.Risks.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			panic(fmt.Errorf("cannot count risks: %w", err))
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+}
+
+// Organization is the resolver for the organization field.
+func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot) (*types.Organization, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	snapshot, err := prb.Snapshots.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get snapshot: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, snapshot.OrganizationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *snapshotConnectionResolver) TotalCount(ctx context.Context, obj *types.SnapshotConnection) (int, error) {
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.Snapshots.CountForOrganizationID(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count snapshots: %w", err))
 		}
 		return count, nil
 	}
@@ -4470,6 +4574,14 @@ func (r *Resolver) Risk() schema.RiskResolver { return &riskResolver{r} }
 // RiskConnection returns schema.RiskConnectionResolver implementation.
 func (r *Resolver) RiskConnection() schema.RiskConnectionResolver { return &riskConnectionResolver{r} }
 
+// Snapshot returns schema.SnapshotResolver implementation.
+func (r *Resolver) Snapshot() schema.SnapshotResolver { return &snapshotResolver{r} }
+
+// SnapshotConnection returns schema.SnapshotConnectionResolver implementation.
+func (r *Resolver) SnapshotConnection() schema.SnapshotConnectionResolver {
+	return &snapshotConnectionResolver{r}
+}
+
 // Task returns schema.TaskResolver implementation.
 func (r *Resolver) Task() schema.TaskResolver { return &taskResolver{r} }
 
@@ -4548,6 +4660,8 @@ type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }
 type riskConnectionResolver struct{ *Resolver }
+type snapshotResolver struct{ *Resolver }
+type snapshotConnectionResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }
 type taskConnectionResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }

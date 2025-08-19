@@ -5,6 +5,7 @@ import {
   IconBank,
   IconBook,
   IconCircleQuestionmark,
+  IconClock,
   IconCrossLargeX,
   IconFire3,
   IconGroup1,
@@ -149,6 +150,11 @@ export function MainLayout() {
             label={__("Compliance Registries")}
             icon={IconBook}
             to={`${prefix}/complianceRegistries`}
+          />
+          <SidebarItem
+            label={__("Snapshots")}
+            icon={IconClock}
+            to={`${prefix}/snapshots`}
           />
           <SidebarItem
             label={__("Trust Center")}

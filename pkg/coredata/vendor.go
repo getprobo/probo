@@ -50,6 +50,8 @@ type (
 		SecurityPageURL               *string        `db:"security_page_url"`
 		TrustPageURL                  *string        `db:"trust_page_url"`
 		ShowOnTrustCenter             bool           `db:"show_on_trust_center"`
+		SnapshotID                    *gid.GID       `db:"snapshot_id"`
+		OriginalID                    *gid.GID       `db:"original_id"`
 		CreatedAt                     time.Time      `db:"created_at"`
 		UpdatedAt                     time.Time      `db:"updated_at"`
 	}
@@ -100,6 +102,8 @@ SELECT
     security_page_url,
     trust_page_url,
     show_on_trust_center,
+    snapshot_id,
+    original_id,
     created_at,
     updated_at
 FROM
@@ -161,6 +165,8 @@ INSERT INTO
         security_page_url,
         trust_page_url,
         show_on_trust_center,
+        snapshot_id,
+        original_id,
         created_at,
         updated_at
     )
@@ -187,6 +193,8 @@ VALUES (
     @security_page_url,
     @trust_page_url,
     @show_on_trust_center,
+    @snapshot_id,
+    @original_id,
     @created_at,
     @updated_at
 )
@@ -215,6 +223,8 @@ VALUES (
 		"security_page_url":                v.SecurityPageURL,
 		"trust_page_url":                   v.TrustPageURL,
 		"show_on_trust_center":             v.ShowOnTrustCenter,
+		"snapshot_id":                      v.SnapshotID,
+		"original_id":                      v.OriginalID,
 		"created_at":                       v.CreatedAt,
 		"updated_at":                       v.UpdatedAt,
 	}
@@ -304,6 +314,8 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	snapshot_id,
+	original_id,
 	created_at,
 	updated_at
 FROM
@@ -504,6 +516,8 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
+		v.snapshot_id,
+		v.original_id,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -536,6 +550,8 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	snapshot_id,
+	original_id,
 	created_at,
 	updated_at
 FROM
@@ -635,6 +651,8 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
+		v.snapshot_id,
+		v.original_id,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -667,6 +685,8 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	snapshot_id,
+	original_id,
 	created_at,
 	updated_at
 FROM
@@ -691,6 +711,149 @@ WHERE %s
 	}
 
 	*vs = vendors
+
+	return nil
+}
+
+func (vs *Vendors) LoadByDatumIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	datumIDs []gid.GID,
+) error {
+	q := `
+WITH vend AS (
+	SELECT
+		v.id,
+		v.tenant_id,
+		v.organization_id,
+		v.name,
+		v.description,
+		v.category,
+		v.headquarter_address,
+		v.legal_name,
+		v.website_url,
+		v.privacy_policy_url,
+		v.service_level_agreement_url,
+		v.data_processing_agreement_url,
+		v.business_associate_agreement_url,
+		v.subprocessors_list_url,
+		v.certifications,
+		v.business_owner_id,
+		v.security_owner_id,
+		v.status_page_url,
+		v.terms_of_service_url,
+		v.security_page_url,
+		v.trust_page_url,
+		v.show_on_trust_center,
+		v.snapshot_id,
+		v.original_id,
+		v.created_at,
+		v.updated_at
+	FROM
+		vendors v
+	INNER JOIN
+		data_vendors dv ON v.id = dv.vendor_id
+	WHERE
+		dv.datum_id = ANY(@datum_ids::text[])
+		AND v.snapshot_id IS NULL
+)
+SELECT DISTINCT
+	id,
+	tenant_id,
+	organization_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	business_owner_id,
+	security_owner_id,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	show_on_trust_center,
+	snapshot_id,
+	original_id,
+	created_at,
+	updated_at
+FROM
+	vend
+WHERE %s
+ORDER BY name
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"datum_ids": datumIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query vendors: %w", err)
+	}
+
+	vendors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Vendor])
+	if err != nil {
+		return fmt.Errorf("cannot collect vendors: %w", err)
+	}
+
+	*vs = vendors
+
+	return nil
+}
+
+func (v Vendors) BulkInsert(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	columnNames := []string{
+		"tenant_id",
+		"id",
+		"organization_id",
+		"name",
+		"description",
+		"category",
+		"headquarter_address",
+		"legal_name",
+		"website_url",
+		"privacy_policy_url",
+		"service_level_agreement_url",
+		"data_processing_agreement_url",
+		"business_associate_agreement_url",
+		"subprocessors_list_url",
+		"certifications",
+		"business_owner_id",
+		"security_owner_id",
+		"status_page_url",
+		"terms_of_service_url",
+		"security_page_url",
+		"trust_page_url",
+		"show_on_trust_center",
+		"snapshot_id",
+		"original_id",
+		"created_at",
+		"updated_at",
+	}
+
+	copyFromSource := &vendorCopy{
+		vendors:  v,
+		scope:    scope,
+		position: 0,
+	}
+
+	_, err := conn.CopyFrom(ctx, pgx.Identifier{"vendors"}, columnNames, copyFromSource)
+	if err != nil {
+		return fmt.Errorf("cannot bulk insert vendors: %w", err)
+	}
 
 	return nil
 }
