@@ -74,7 +74,7 @@ export default function ResetPasswordPage() {
       description: __("Password reset successfully"),
       variant: "success",
     });
-    navigate("/auth/login", { replace: true });
+    navigate("/auth/LoginPage.tsx", { replace: true });
   });
 
   usePageTitle(__("Reset password"));
