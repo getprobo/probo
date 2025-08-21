@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.50.0]
+
+### Added
+- Add compliance registries
+- Add vendor services
+
+### Chore
+- Replace mailhog
+
 ## [0.49.0]
 
 ### Added
