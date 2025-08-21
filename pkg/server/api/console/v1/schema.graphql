@@ -2446,7 +2446,7 @@ input DeleteDocumentInput {
 }
 
 input ConfirmEmailInput {
-  token: String!
+  authToken: String!
 }
 
 input InviteUserInput {

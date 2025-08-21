@@ -68,7 +68,7 @@ export default function TrustCenterAccessPage() {
   const { __ } = useTranslate();
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const token = searchParams.get('authToken');
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -93,7 +93,7 @@ export default function TrustCenterAccessPage() {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ authToken: token }),
     })
     .then(async response => {
       if (!response.ok) {

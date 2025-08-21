@@ -202,7 +202,7 @@ func (s Service) ForgetPassword(
 		Host:   s.hostname,
 		Path:   "/auth/reset-password",
 		RawQuery: url.Values{
-			"token": []string{passwordResetToken},
+			"authToken": []string{passwordResetToken},
 		}.Encode(),
 	}
 
@@ -725,7 +725,7 @@ func (s Service) InviteUser(
 		Host:   s.hostname,
 		Path:   "/auth/confirm-invitation",
 		RawQuery: url.Values{
-			"token": []string{confirmationToken},
+			"authToken": []string{confirmationToken},
 		}.Encode(),
 	}
 

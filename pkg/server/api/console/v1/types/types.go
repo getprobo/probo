@@ -134,7 +134,7 @@ type ComplianceRegistryEdge struct {
 }
 
 type ConfirmEmailInput struct {
-	Token string `json:"token"`
+	AuthToken string `json:"authToken"`
 }
 
 type ConfirmEmailPayload struct {

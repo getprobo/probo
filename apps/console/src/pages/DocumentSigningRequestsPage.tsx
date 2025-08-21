@@ -27,7 +27,7 @@ type DocumentSigningResponse = {
 export default function DocumentSigningRequestsPage() {
   const { __ } = useTranslate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams.get("authToken");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

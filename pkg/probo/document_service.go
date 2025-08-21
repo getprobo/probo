@@ -431,7 +431,7 @@ func (s *DocumentService) SendSigningNotifications(
 					Host:   s.svc.hostname,
 					Path:   "/documents/signing-requests",
 					RawQuery: url.Values{
-						"token": []string{token},
+						"authToken": []string{token},
 					}.Encode(),
 				}
 

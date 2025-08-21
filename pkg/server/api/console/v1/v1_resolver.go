@@ -1171,7 +1171,7 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 
 // ConfirmEmail is the resolver for the confirmEmail field.
 func (r *mutationResolver) ConfirmEmail(ctx context.Context, input types.ConfirmEmailInput) (*types.ConfirmEmailPayload, error) {
-	err := r.usrmgrSvc.ConfirmEmail(ctx, input.Token)
+	err := r.usrmgrSvc.ConfirmEmail(ctx, input.AuthToken)
 
 	if err != nil {
 		return nil, err

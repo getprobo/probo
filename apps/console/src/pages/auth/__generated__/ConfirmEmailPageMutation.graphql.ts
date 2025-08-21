@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3de8e69abff0cf5f1000d93dde7a3031>>
+ * @generated SignedSource<<8ce81f99207fec5774de2469a63953e1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type ConfirmEmailInput = {
-  token: string;
+  authToken: string;
 };
 export type ConfirmEmailPageMutation$variables = {
   input: ConfirmEmailInput;

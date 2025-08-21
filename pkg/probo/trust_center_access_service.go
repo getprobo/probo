@@ -216,7 +216,7 @@ func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Con
 		Host:   s.svc.hostname,
 		Path:   "/trust/" + trustCenter.Slug + "/access",
 		RawQuery: url.Values{
-			"token": []string{accessToken},
+			"authToken": []string{accessToken},
 		}.Encode(),
 	}
 

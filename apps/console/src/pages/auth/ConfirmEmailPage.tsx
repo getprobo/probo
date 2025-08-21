@@ -19,7 +19,7 @@ const ConfirmEmailMutation = graphql`
 `;
 
 const confirmEmailSchema = z.object({
-  token: z.string().min(1, "Please enter a confirmation token"),
+  authToken: z.string().min(1, "Please enter a confirmation token"),
 });
 
 export default function ConfirmEmailPage() {
@@ -34,7 +34,7 @@ export default function ConfirmEmailPage() {
 
   const form = useFormWithSchema(confirmEmailSchema, {
     defaultValues: {
-      token: "",
+      authToken: "",
     },
   });
 
@@ -42,10 +42,10 @@ export default function ConfirmEmailPage() {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const urlToken = searchParams.get("token");
+    const urlToken = searchParams.get("authToken");
 
     if (urlToken) {
-      form.setValue("token", urlToken);
+      form.setValue("authToken", urlToken);
     }
   }, [location.search, form]);
 
@@ -56,7 +56,7 @@ export default function ConfirmEmailPage() {
       commitMutation({
         variables: {
           input: {
-            token: data.token.trim(),
+            authToken: data.authToken.trim(),
           },
         },
         onCompleted: (_response, errors: PayloadError[] | null) => {
@@ -121,8 +121,8 @@ export default function ConfirmEmailPage() {
             label={__("Confirmation Token")}
             type="text"
             placeholder={__("Enter your confirmation token")}
-            {...form.register("token")}
-            error={form.formState.errors.token?.message}
+            {...form.register("authToken")}
+            error={form.formState.errors.authToken?.message}
             disabled={isLoading}
             help={__("The token has been automatically filled from the URL if available")}
           />

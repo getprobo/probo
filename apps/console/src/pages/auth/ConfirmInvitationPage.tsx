@@ -8,7 +8,7 @@ import { buildEndpoint } from "/providers/RelayProviders";
 import { useEffect } from "react";
 
 const schema = z.object({
-  token: z.string(),
+  authToken: z.string(),
   password: z.string().min(8),
 });
 
@@ -20,7 +20,7 @@ export default function ConfirmInvitationPage() {
     schema,
     {
       defaultValues: {
-        token: "",
+        authToken: "",
         password: "",
       },
     }
@@ -62,10 +62,10 @@ export default function ConfirmInvitationPage() {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const urlToken = searchParams.get("token");
+    const urlToken = searchParams.get("authToken");
 
     if (urlToken) {
-      setValue("token", urlToken);
+      setValue("authToken", urlToken);
     }
   }, [location.search, setValue]);
 
@@ -84,9 +84,9 @@ export default function ConfirmInvitationPage() {
           type="text"
           hidden
           placeholder={__("Enter your token")}
-          {...register("token")}
+          {...register("authToken")}
           required
-          error={formState.errors.token?.message}
+          error={formState.errors.authToken?.message}
         />
 
         <Field

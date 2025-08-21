@@ -29,7 +29,7 @@ import (
 
 type (
 	AuthTokenRequest struct {
-		Token string `json:"token"`
+		Token string `json:"authToken"`
 	}
 
 	AuthTokenResponse struct {

@@ -9500,7 +9500,7 @@ input DeleteDocumentInput {
 }
 
 input ConfirmEmailInput {
-  token: String!
+  authToken: String!
 }
 
 input InviteUserInput {
@@ -53180,20 +53180,20 @@ func (ec *executionContext) unmarshalInputConfirmEmailInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"token"}
+	fieldsInOrder := [...]string{"authToken"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "token":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+		case "authToken":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authToken"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Token = data
+			it.AuthToken = data
 		}
 	}
 
