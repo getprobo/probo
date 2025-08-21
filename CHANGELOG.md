@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.50.1]
+
+### Fixed
+- Fix authentification token error
+
 ## [0.50.0]
 
 ### Added
