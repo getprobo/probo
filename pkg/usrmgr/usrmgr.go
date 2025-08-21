@@ -21,6 +21,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"regexp"
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/passwdhash"
@@ -251,7 +252,8 @@ func (s Service) SignUp(
 		return nil, nil, &ErrSignupDisabled{}
 	}
 
-	if !strings.Contains(email, "@") {
+	var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
+	if !emailRegex.MatchString(email) {
 		return nil, nil, &ErrInvalidEmail{email}
 	}
 
