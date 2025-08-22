@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 	"regexp"
+	"net/mail"
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/passwdhash"
@@ -252,9 +253,8 @@ func (s Service) SignUp(
 		return nil, nil, &ErrSignupDisabled{}
 	}
 
-	var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-	if !emailRegex.MatchString(email) {
-		return nil, nil, &ErrInvalidEmail{email}
+	if _, err := mail.ParseAddress(email); err != nil {
+    return nil, nil, &ErrInvalidEmail{email}
 	}
 
 	if len(password) < 8 || len(password) > 128 {
