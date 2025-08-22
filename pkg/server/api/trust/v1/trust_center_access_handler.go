@@ -22,6 +22,8 @@ import (
 	"time"
 
 	"github.com/getprobo/probo/pkg/probo"
+	console_v1 "github.com/getprobo/probo/pkg/server/api/console/v1"
+	"github.com/getprobo/probo/pkg/server/session"
 	"github.com/getprobo/probo/pkg/statelesstoken"
 	"github.com/getprobo/probo/pkg/trust"
 	"go.gearno.de/kit/httpserver"
@@ -110,12 +112,16 @@ func validateTrustCenterAccessToken(ctx context.Context, trustSvc *trust.Service
 	tenantID := token.Data.TrustCenterID.TenantID()
 	tenantSvc := trustSvc.WithTenant(tenantID)
 
-	return tenantSvc.TrustCenterAccesses.ValidateToken(ctx, tokenString)
+	accessData, err := tenantSvc.TrustCenterAccesses.ValidateToken(ctx, tokenString)
+	if err != nil {
+		return nil, fmt.Errorf("cannot validate trust center access token: %w", err)
+	}
+
+	return accessData, nil
 }
 
-func trustCenterLogoutHandler(trustAuthCfg TrustAuthConfig) http.HandlerFunc {
+func trustCenterLogoutHandler(authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Clear cookie directly
 		http.SetCookie(w, &http.Cookie{
 			Name:     trustAuthCfg.CookieName,
 			Value:    "",
@@ -125,6 +131,11 @@ func trustCenterLogoutHandler(trustAuthCfg TrustAuthConfig) http.HandlerFunc {
 			Secure:   true,
 			HttpOnly: true,
 			SameSite: http.SameSiteStrictMode,
+		})
+
+		session.ClearCookie(w, session.AuthConfig{
+			CookieName:   authCfg.CookieName,
+			CookieSecret: authCfg.CookieSecret,
 		})
 
 		httpserver.RenderJSON(w, http.StatusOK, map[string]string{

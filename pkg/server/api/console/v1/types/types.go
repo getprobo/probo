@@ -448,6 +448,7 @@ type CreateTrustCenterAccessInput struct {
 	TrustCenterID gid.GID `json:"trustCenterId"`
 	Email         string  `json:"email"`
 	Name          string  `json:"name"`
+	Active        bool    `json:"active"`
 }
 
 type CreateTrustCenterAccessPayload struct {
@@ -715,7 +716,7 @@ type DeleteTaskPayload struct {
 }
 
 type DeleteTrustCenterAccessInput struct {
-	AccessID gid.GID `json:"accessId"`
+	ID gid.GID `json:"id"`
 }
 
 type DeleteTrustCenterAccessPayload struct {
@@ -1240,6 +1241,7 @@ type TrustCenterAccess struct {
 	ID        gid.GID   `json:"id"`
 	Email     string    `json:"email"`
 	Name      string    `json:"name"`
+	Active    bool      `json:"active"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -1468,6 +1470,16 @@ type UpdateTaskInput struct {
 
 type UpdateTaskPayload struct {
 	Task *Task `json:"task"`
+}
+
+type UpdateTrustCenterAccessInput struct {
+	ID     gid.GID `json:"id"`
+	Name   *string `json:"name,omitempty"`
+	Active *bool   `json:"active,omitempty"`
+}
+
+type UpdateTrustCenterAccessPayload struct {
+	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
 }
 
 type UpdateTrustCenterInput struct {

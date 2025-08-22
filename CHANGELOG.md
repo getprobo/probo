@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.51.0]
+
+### Added
+- Add trust center access requests
+
 ## [0.50.1]
 
 ### Fixed

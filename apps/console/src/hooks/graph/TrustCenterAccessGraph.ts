@@ -25,6 +25,7 @@ export const trustCenterAccessesQuery = graphql`
               id
               email
               name
+              active
               createdAt
             }
           }
@@ -46,8 +47,26 @@ export const createTrustCenterAccessMutation = graphql`
           id
           email
           name
+          active
           createdAt
         }
+      }
+    }
+  }
+`;
+
+export const updateTrustCenterAccessMutation = graphql`
+  mutation TrustCenterAccessGraphUpdateMutation(
+    $input: UpdateTrustCenterAccessInput!
+  ) {
+    updateTrustCenterAccess(input: $input) {
+      trustCenterAccess {
+        id
+        email
+        name
+        active
+        createdAt
+        updatedAt
       }
     }
   }

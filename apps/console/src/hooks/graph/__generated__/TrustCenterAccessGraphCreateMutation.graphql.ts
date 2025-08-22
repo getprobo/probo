@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<08687dbafb5515e9d2073b292a05ea0c>>
+ * @generated SignedSource<<ae95aed7bc22c95f8cc2ab591039c810>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,6 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type CreateTrustCenterAccessInput = {
+  active: boolean;
   email: string;
   name: string;
   trustCenterId: string;
@@ -23,6 +24,7 @@ export type TrustCenterAccessGraphCreateMutation$data = {
     readonly trustCenterAccessEdge: {
       readonly cursor: any;
       readonly node: {
+        readonly active: boolean;
         readonly createdAt: any;
         readonly email: string;
         readonly id: string;
@@ -96,6 +98,13 @@ v3 = {
           "args": null,
           "kind": "ScalarField",
           "name": "name",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "active",
           "storageKey": null
         },
         {
@@ -177,16 +186,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "86c21ac139bec74f2a4abad9caef68b1",
+    "cacheID": "eafddcd0263963235d3249c22eb50593",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAccessGraphCreateMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        email\n        name\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterAccessGraphCreateMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "59e0ab46fd6b68747566d666f5315292";
+(node as any).hash = "99676fee0b2de06a92cdad66c577eee7";
 
 export default node;

@@ -1143,6 +1143,7 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 		TrustCenterID: input.TrustCenterID,
 		Email:         input.Email,
 		Name:          input.Name,
+		Active:        input.Active,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot create trust center access: %w", err)
@@ -1153,19 +1154,37 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 	}, nil
 }
 
+// UpdateTrustCenterAccess is the resolver for the updateTrustCenterAccess field.
+func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input types.UpdateTrustCenterAccessInput) (*types.UpdateTrustCenterAccessPayload, error) {
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	access, err := prb.TrustCenterAccesses.Update(ctx, &probo.UpdateTrustCenterAccessRequest{
+		ID:     input.ID,
+		Name:   input.Name,
+		Active: input.Active,
+	})
+	if err != nil {
+		panic(fmt.Errorf("cannot update trust center access: %w", err))
+	}
+
+	return &types.UpdateTrustCenterAccessPayload{
+		TrustCenterAccess: types.NewTrustCenterAccess(access),
+	}, nil
+}
+
 // DeleteTrustCenterAccess is the resolver for the deleteTrustCenterAccess field.
 func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input types.DeleteTrustCenterAccessInput) (*types.DeleteTrustCenterAccessPayload, error) {
-	prb := r.ProboService(ctx, input.AccessID.TenantID())
+	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	err := prb.TrustCenterAccesses.Delete(ctx, &probo.DeleteTrustCenterAccessRequest{
-		AccessID: input.AccessID,
+		ID: input.ID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot delete trust center access: %w", err)
 	}
 
 	return &types.DeleteTrustCenterAccessPayload{
-		DeletedTrustCenterAccessID: input.AccessID,
+		DeletedTrustCenterAccessID: input.ID,
 	}, nil
 }
 

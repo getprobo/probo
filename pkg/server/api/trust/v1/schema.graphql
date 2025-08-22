@@ -80,7 +80,6 @@ type Audit implements Node {
   id: ID!
   framework: Framework! @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
-  reportUrl: String @goField(forceResolver: true) @mustBeAuthenticated(role: USER)
 }
 
 type AuditConnection {
@@ -224,6 +223,24 @@ type TrustCenter implements Node {
   ): VendorConnection! @goField(forceResolver: true)
 }
 
+type TrustCenterAccess implements Node {
+  id: ID!
+  email: String!
+  name: String!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+input CreateTrustCenterAccessInput {
+  trustCenterId: ID!
+  email: String!
+  name: String!
+}
+
+type CreateTrustCenterAccessPayload {
+  trustCenterAccess: TrustCenterAccess!
+}
+
 input ExportDocumentPDFInput {
   documentId: ID!
 }
@@ -237,6 +254,10 @@ type Query {
 }
 
 type Mutation {
+  createTrustCenterAccess(
+    input: CreateTrustCenterAccessInput!
+  ): CreateTrustCenterAccessPayload! @mustBeAuthenticated(role: NONE)
+
   exportDocumentPDF(
     input: ExportDocumentPDFInput!
   ): ExportDocumentPDFPayload! @mustBeAuthenticated(role: USER)

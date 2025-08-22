@@ -16,6 +16,7 @@ import (
 	"github.com/getprobo/probo/pkg/server/api/trust/v1/auth"
 	"github.com/getprobo/probo/pkg/server/api/trust/v1/schema"
 	"github.com/getprobo/probo/pkg/server/api/trust/v1/types"
+	"github.com/getprobo/probo/pkg/trust"
 )
 
 // Framework is the resolver for the framework field.
@@ -56,29 +57,28 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 	return types.NewReport(report), nil
 }
 
-// ReportURL is the resolver for the reportUrl field.
-func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*string, error) {
-	if err := auth.ValidateTenantAccess(ctx, r, userTenantContextKey, obj.ID.TenantID()); err != nil {
-		return nil, err
-	}
+// CreateTrustCenterAccess is the resolver for the createTrustCenterAccess field.
+func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error) {
+	trustSvc := r.trustCenterSvc.WithTenant(input.TrustCenterID.TenantID())
 
-	trust := r.TrustService(ctx, obj.ID.TenantID())
-
-	audit, err := trust.Audits.Get(ctx, obj.ID)
+	access, err := trustSvc.TrustCenterAccesses.Create(ctx, &trust.CreateTrustCenterAccessRequest{
+		TrustCenterID: input.TrustCenterID,
+		Email:         input.Email,
+		Name:          input.Name,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot load audit: %w", err)
+		panic(fmt.Errorf("cannot create trust center access: %w", err))
 	}
 
-	if audit.ReportID == nil {
-		return nil, nil
-	}
-
-	url, err := trust.Audits.GenerateReportURL(ctx, obj.ID, r.trustAuthCfg.ReportURLDuration)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate report URL: %w", err)
-	}
-
-	return url, nil
+	return &types.CreateTrustCenterAccessPayload{
+		TrustCenterAccess: &types.TrustCenterAccess{
+			ID:        access.ID,
+			Email:     access.Email,
+			Name:      access.Name,
+			CreatedAt: access.CreatedAt,
+			UpdatedAt: access.UpdatedAt,
+		},
+	}, nil
 }
 
 // ExportDocumentPDF is the resolver for the exportDocumentPDF field.
@@ -140,7 +140,7 @@ func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*s
 
 	trust := r.TrustService(ctx, obj.ID.TenantID())
 
-	url, err := trust.Reports.GenerateDownloadURL(ctx, obj.ID, 5*time.Minute)
+	url, err := trust.Reports.GenerateDownloadURL(ctx, obj.ID, r.trustAuthCfg.ReportURLDuration)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate download URL: %w", err)
 	}

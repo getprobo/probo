@@ -26,6 +26,7 @@ func NewTrustCenterAccess(tca *coredata.TrustCenterAccess) *TrustCenterAccess {
 		ID:        tca.ID,
 		Email:     tca.Email,
 		Name:      tca.Name,
+		Active:    tca.Active,
 		CreatedAt: tca.CreatedAt,
 		UpdatedAt: tca.UpdatedAt,
 	}

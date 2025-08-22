@@ -17,7 +17,6 @@ package trust
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
@@ -79,26 +78,4 @@ func (s AuditService) ListForOrganizationId(
 	}
 
 	return page.NewPage(audits, cursor), nil
-}
-
-func (s AuditService) GenerateReportURL(
-	ctx context.Context,
-	auditID gid.GID,
-	expiresIn time.Duration,
-) (*string, error) {
-	audit, err := s.Get(ctx, auditID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get audit: %w", err)
-	}
-
-	if audit.ReportID == nil {
-		return nil, fmt.Errorf("audit has no report")
-	}
-
-	url, err := s.svc.Reports.GenerateDownloadURL(ctx, *audit.ReportID, expiresIn)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate report download URL: %w", err)
-	}
-
-	return url, nil
 }

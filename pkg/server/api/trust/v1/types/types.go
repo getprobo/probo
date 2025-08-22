@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
@@ -22,7 +23,6 @@ type Audit struct {
 	ID        gid.GID    `json:"id"`
 	Framework *Framework `json:"framework"`
 	Report    *Report    `json:"report,omitempty"`
-	ReportURL *string    `json:"reportUrl,omitempty"`
 }
 
 func (Audit) IsNode()             {}
@@ -36,6 +36,16 @@ type AuditConnection struct {
 type AuditEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Audit         `json:"node"`
+}
+
+type CreateTrustCenterAccessInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+	Email         string  `json:"email"`
+	Name          string  `json:"name"`
+}
+
+type CreateTrustCenterAccessPayload struct {
+	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
 }
 
 type Document struct {
@@ -116,6 +126,17 @@ type TrustCenter struct {
 
 func (TrustCenter) IsNode()             {}
 func (this TrustCenter) GetID() gid.GID { return this.ID }
+
+type TrustCenterAccess struct {
+	ID        gid.GID   `json:"id"`
+	Email     string    `json:"email"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (TrustCenterAccess) IsNode()             {}
+func (this TrustCenterAccess) GetID() gid.GID { return this.ID }
 
 type Vendor struct {
 	ID               gid.GID                 `json:"id"`

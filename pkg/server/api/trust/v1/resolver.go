@@ -105,7 +105,7 @@ func NewMux(
 	r.Handle("/graphql", graphqlHandler(logger, usrmgrSvc, trustSvc, authCfg, trustAuthCfg))
 
 	r.Post("/auth/authenticate", authTokenHandler(trustSvc, trustAuthCfg))
-	r.Delete("/auth/logout", trustCenterLogoutHandler(trustAuthCfg))
+	r.Delete("/auth/logout", trustCenterLogoutHandler(authCfg, trustAuthCfg))
 
 	return r
 }

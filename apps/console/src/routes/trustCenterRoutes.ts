@@ -13,7 +13,7 @@ export const trustCenterRoutes = [
     queryLoader: ({ organizationId }) =>
       loadQuery(relayEnvironment, trustCenterQuery, { organizationId }),
     Component: lazy(
-      () => import("/pages/organizations/TrustCenterPage")
+      () => import("/pages/organizations/trustCenter/TrustCenterPage")
     ),
     children: [
       {
