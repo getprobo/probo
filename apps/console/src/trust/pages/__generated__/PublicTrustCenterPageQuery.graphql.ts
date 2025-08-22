@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7510cf085d283274b579e0571eb503c4>>
+ * @generated SignedSource<<029dd7c4e23d3456922e9a2778d4f4db>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -42,6 +42,7 @@ export type PublicTrustCenterPageQuery$data = {
       }>;
     };
     readonly id: string;
+    readonly isUserAuthenticated: boolean;
     readonly organization: {
       readonly id: string;
       readonly logoUrl: string | null | undefined;
@@ -106,10 +107,17 @@ v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "name",
+  "name": "isUserAuthenticated",
   "storageKey": null
 },
 v6 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v7 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
@@ -118,7 +126,7 @@ v6 = {
   "plural": false,
   "selections": [
     (v2/*: any*/),
-    (v5/*: any*/),
+    (v6/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -129,16 +137,16 @@ v6 = {
   ],
   "storageKey": null
 },
-v7 = [
+v8 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 100
   }
 ],
-v8 = {
+v9 = {
   "alias": null,
-  "args": (v7/*: any*/),
+  "args": (v8/*: any*/),
   "concreteType": "DocumentConnection",
   "kind": "LinkedField",
   "name": "documents",
@@ -184,7 +192,7 @@ v8 = {
   ],
   "storageKey": "documents(first:100)"
 },
-v9 = {
+v10 = {
   "alias": null,
   "args": null,
   "concreteType": "Report",
@@ -210,9 +218,9 @@ v9 = {
   ],
   "storageKey": null
 },
-v10 = {
+v11 = {
   "alias": null,
-  "args": (v7/*: any*/),
+  "args": (v8/*: any*/),
   "concreteType": "VendorConnection",
   "kind": "LinkedField",
   "name": "vendors",
@@ -235,7 +243,7 @@ v10 = {
           "plural": false,
           "selections": [
             (v2/*: any*/),
-            (v5/*: any*/),
+            (v6/*: any*/),
             {
               "alias": null,
               "args": null,
@@ -284,11 +292,12 @@ return {
           (v2/*: any*/),
           (v3/*: any*/),
           (v4/*: any*/),
-          (v6/*: any*/),
-          (v8/*: any*/),
+          (v5/*: any*/),
+          (v7/*: any*/),
+          (v9/*: any*/),
           {
             "alias": null,
-            "args": (v7/*: any*/),
+            "args": (v8/*: any*/),
             "concreteType": "AuditConnection",
             "kind": "LinkedField",
             "name": "audits",
@@ -319,11 +328,11 @@ return {
                         "name": "framework",
                         "plural": false,
                         "selections": [
-                          (v5/*: any*/)
+                          (v6/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v10/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -333,7 +342,7 @@ return {
             ],
             "storageKey": "audits(first:100)"
           },
-          (v10/*: any*/)
+          (v11/*: any*/)
         ],
         "storageKey": null
       }
@@ -358,11 +367,12 @@ return {
           (v2/*: any*/),
           (v3/*: any*/),
           (v4/*: any*/),
-          (v6/*: any*/),
-          (v8/*: any*/),
+          (v5/*: any*/),
+          (v7/*: any*/),
+          (v9/*: any*/),
           {
             "alias": null,
-            "args": (v7/*: any*/),
+            "args": (v8/*: any*/),
             "concreteType": "AuditConnection",
             "kind": "LinkedField",
             "name": "audits",
@@ -393,12 +403,12 @@ return {
                         "name": "framework",
                         "plural": false,
                         "selections": [
-                          (v5/*: any*/),
+                          (v6/*: any*/),
                           (v2/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v9/*: any*/)
+                      (v10/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -408,23 +418,23 @@ return {
             ],
             "storageKey": "audits(first:100)"
           },
-          (v10/*: any*/)
+          (v11/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "9d0437e87c7c88083619611892bcc422",
+    "cacheID": "88353d6751cb7dea9294fb6d2268745a",
     "id": null,
     "metadata": {},
     "name": "PublicTrustCenterPageQuery",
     "operationKind": "query",
-    "text": "query PublicTrustCenterPageQuery(\n  $slug: String!\n) {\n  trustCenterBySlug(slug: $slug) {\n    id\n    active\n    slug\n    organization {\n      id\n      name\n      logoUrl\n    }\n    documents(first: 100) {\n      edges {\n        node {\n          id\n          title\n          documentType\n        }\n      }\n    }\n    audits(first: 100) {\n      edges {\n        node {\n          id\n          framework {\n            name\n            id\n          }\n          report {\n            id\n            filename\n            downloadUrl\n          }\n        }\n      }\n    }\n    vendors(first: 100) {\n      edges {\n        node {\n          id\n          name\n          category\n          websiteUrl\n          privacyPolicyUrl\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query PublicTrustCenterPageQuery(\n  $slug: String!\n) {\n  trustCenterBySlug(slug: $slug) {\n    id\n    active\n    slug\n    isUserAuthenticated\n    organization {\n      id\n      name\n      logoUrl\n    }\n    documents(first: 100) {\n      edges {\n        node {\n          id\n          title\n          documentType\n        }\n      }\n    }\n    audits(first: 100) {\n      edges {\n        node {\n          id\n          framework {\n            name\n            id\n          }\n          report {\n            id\n            filename\n            downloadUrl\n          }\n        }\n      }\n    }\n    vendors(first: 100) {\n      edges {\n        node {\n          id\n          name\n          category\n          websiteUrl\n          privacyPolicyUrl\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7fc4b49f2a965be237cf3d51baa815bd";
+(node as any).hash = "9a87db527de655882bdeb429c265a3ee";
 
 export default node;

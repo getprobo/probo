@@ -8,7 +8,7 @@ import {
 
 import type { PropsWithChildren } from "react";
 import { RelayEnvironmentProvider } from "react-relay";
-import { createContext, useContext, useState, useRef } from "react";
+import { createContext, useContext, useState } from "react";
 import { buildEndpoint } from "./RelayProviders";
 
 export class TrustCenterError extends Error {
@@ -33,7 +33,31 @@ export function useTrustAuth() {
   return context;
 }
 
-const createFetchTrustRelay = (setAuthenticated: (auth: boolean) => void): FetchFunction => async (request, variables) => {
+let trustEnvironment: Environment | null = null;
+let authSetter: ((auth: boolean) => void) | null = null;
+
+function getTrustEnvironment(setAuthenticated: (auth: boolean) => void): Environment {
+  if (!trustEnvironment) {
+    authSetter = setAuthenticated;
+
+    const trustSource = new RecordSource();
+    const trustStore = new Store(trustSource, {
+      queryCacheExpirationTime: 5 * 60 * 1000, // 5 minutes
+      gcReleaseBufferSize: 10,
+    });
+
+    trustEnvironment = new Environment({
+      network: Network.create(createFetchTrustRelay()),
+      store: trustStore,
+    });
+  } else {
+    authSetter = setAuthenticated;
+  }
+
+  return trustEnvironment;
+}
+
+const createFetchTrustRelay = (): FetchFunction => async (request, variables) => {
   const requestInit: RequestInit = {
     method: "POST",
     headers: {
@@ -68,7 +92,9 @@ const createFetchTrustRelay = (setAuthenticated: (auth: boolean) => void): Fetch
     );
 
     if (hasAccessDeniedErrors) {
-      setAuthenticated(false);
+      if (authSetter) {
+        authSetter(false);
+      }
     } else {
       throw new TrustCenterError(
         `Error fetching GraphQL query '${
@@ -78,29 +104,15 @@ const createFetchTrustRelay = (setAuthenticated: (auth: boolean) => void): Fetch
         )}`
       );
     }
-  } else {
-    setAuthenticated(true);
   }
 
   return json;
 };
 
 export function TrustRelayProvider({ children }: PropsWithChildren) {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const environmentRef = useRef<Environment | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  if (!environmentRef.current) {
-    const trustSource = new RecordSource();
-    const trustStore = new Store(trustSource, {
-      queryCacheExpirationTime: 5 * 60 * 1000, // 5 minutes
-      gcReleaseBufferSize: 10,
-    });
-
-    environmentRef.current = new Environment({
-      network: Network.create(createFetchTrustRelay(setIsAuthenticated)),
-      store: trustStore,
-    });
-  }
+  const environment = getTrustEnvironment(setIsAuthenticated);
 
   const authContextValue: TrustAuthContextType = {
     isAuthenticated,
@@ -109,7 +121,7 @@ export function TrustRelayProvider({ children }: PropsWithChildren) {
 
   return (
     <TrustAuthContext.Provider value={authContextValue}>
-      <RelayEnvironmentProvider environment={environmentRef.current}>
+      <RelayEnvironmentProvider environment={environment}>
         {children}
       </RelayEnvironmentProvider>
     </TrustAuthContext.Provider>

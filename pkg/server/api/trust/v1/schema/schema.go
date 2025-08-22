@@ -131,13 +131,14 @@ type ComplexityRoot struct {
 	}
 
 	TrustCenter struct {
-		Active       func(childComplexity int) int
-		Audits       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		Documents    func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		ID           func(childComplexity int) int
-		Organization func(childComplexity int) int
-		Slug         func(childComplexity int) int
-		Vendors      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Active              func(childComplexity int) int
+		Audits              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Documents           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		ID                  func(childComplexity int) int
+		IsUserAuthenticated func(childComplexity int) int
+		Organization        func(childComplexity int) int
+		Slug                func(childComplexity int) int
+		Vendors             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 	}
 
 	TrustCenterAccess struct {
@@ -186,6 +187,7 @@ type ReportResolver interface {
 }
 type TrustCenterResolver interface {
 	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
+	IsUserAuthenticated(ctx context.Context, obj *types.TrustCenter) (bool, error)
 	Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error)
 	Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error)
 	Vendors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.VendorConnection, error)
@@ -479,6 +481,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenter.ID(childComplexity), true
+
+	case "TrustCenter.isUserAuthenticated":
+		if e.complexity.TrustCenter.IsUserAuthenticated == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.IsUserAuthenticated(childComplexity), true
 
 	case "TrustCenter.organization":
 		if e.complexity.TrustCenter.Organization == nil {
@@ -913,6 +922,7 @@ type TrustCenter implements Node {
   active: Boolean!
   slug: String!
   organization: Organization! @goField(forceResolver: true)
+  isUserAuthenticated: Boolean! @goField(forceResolver: true)
 
   documents(
     first: Int
@@ -2839,6 +2849,8 @@ func (ec *executionContext) fieldContext_Query_trustCenterBySlug(ctx context.Con
 				return ec.fieldContext_TrustCenter_slug(ctx, field)
 			case "organization":
 				return ec.fieldContext_TrustCenter_organization(ctx, field)
+			case "isUserAuthenticated":
+				return ec.fieldContext_TrustCenter_isUserAuthenticated(ctx, field)
 			case "documents":
 				return ec.fieldContext_TrustCenter_documents(ctx, field)
 			case "audits":
@@ -3329,6 +3341,50 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_isUserAuthenticated(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenter_isUserAuthenticated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TrustCenter().IsUserAuthenticated(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_isUserAuthenticated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7065,6 +7121,42 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 					}
 				}()
 				res = ec._TrustCenter_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "isUserAuthenticated":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_isUserAuthenticated(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

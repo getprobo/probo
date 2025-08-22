@@ -5,10 +5,10 @@ import { PublicTrustCenterLayout } from "/layouts/PublicTrustCenterLayout";
 import { PublicTrustCenterAudits } from "../components/PublicTrustCenterAudits";
 import { PublicTrustCenterVendors } from "../components/PublicTrustCenterVendors";
 import { PublicTrustCenterDocuments } from "../components/PublicTrustCenterDocuments";
-import { TrustRelayProvider, useTrustAuth } from "/providers/TrustRelayProvider";
-import { Suspense } from "react";
+import { TrustRelayProvider } from "/providers/TrustRelayProvider";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "react-relay";
+import { Suspense } from "react";
 import { Spinner } from "@probo/ui";
 import type { PublicTrustCenterPageQuery } from "./__generated__/PublicTrustCenterPageQuery.graphql";
 
@@ -44,6 +44,7 @@ const PublicTrustCenterQuery = graphql`
       id
       active
       slug
+      isUserAuthenticated
       organization {
         id
         name
@@ -91,7 +92,6 @@ const PublicTrustCenterQuery = graphql`
 function PublicTrustCenterContent() {
   const { __ } = useTranslate();
   const { slug } = useParams<{ slug: string }>();
-  const { isAuthenticated } = useTrustAuth();
 
   if (!slug) {
     return <Navigate to="/" replace />;
@@ -101,6 +101,8 @@ function PublicTrustCenterContent() {
 
   const organization = data?.trustCenterBySlug?.organization;
   const organizationName = organization?.name || "";
+
+  const isUserAuthenticated = data?.trustCenterBySlug?.isUserAuthenticated ?? false;
 
   usePageTitle(
     organizationName ? `${organizationName} - Trust Center` : "Trust Center"
@@ -131,19 +133,19 @@ function PublicTrustCenterContent() {
     <PublicTrustCenterLayout
       organizationName={organizationName}
       organizationLogo={organization?.logoUrl}
-      isAuthenticated={isAuthenticated}
+      isAuthenticated={isUserAuthenticated}
     >
       <div className="space-y-12">
         <PublicTrustCenterAudits
           audits={trustCenterAudits}
           organizationName={organizationName}
-          isAuthenticated={isAuthenticated}
+          isAuthenticated={isUserAuthenticated}
           trustCenterId={data.trustCenterBySlug.id}
         />
         <PublicTrustCenterDocuments
           documents={trustCenterDocuments}
           organizationName={organizationName}
-          isAuthenticated={isAuthenticated}
+          isAuthenticated={isUserAuthenticated}
           trustCenterId={data.trustCenterBySlug.id}
         />
         <PublicTrustCenterVendors
