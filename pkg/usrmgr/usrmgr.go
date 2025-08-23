@@ -21,6 +21,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"regexp"
+	"net/mail"
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/passwdhash"
@@ -251,8 +253,8 @@ func (s Service) SignUp(
 		return nil, nil, &ErrSignupDisabled{}
 	}
 
-	if !strings.Contains(email, "@") {
-		return nil, nil, &ErrInvalidEmail{email}
+	if _, err := mail.ParseAddress(email); err != nil {
+    return nil, nil, &ErrInvalidEmail{email}
 	}
 
 	if len(password) < 8 || len(password) > 128 {
