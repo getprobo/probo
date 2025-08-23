@@ -153,6 +153,14 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 	return obj.Organization, nil
 }
 
+// IsUserAuthenticated is the resolver for the isUserAuthenticated field.
+func (r *trustCenterResolver) IsUserAuthenticated(ctx context.Context, obj *types.TrustCenter) (bool, error) {
+	if err := auth.ValidateTenantAccess(ctx, r, userTenantContextKey, obj.Organization.ID.TenantID()); err != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
 // Documents is the resolver for the documents field.
 func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error) {
 	trust := r.trustCenterSvc.WithTenant(obj.Organization.ID.TenantID())

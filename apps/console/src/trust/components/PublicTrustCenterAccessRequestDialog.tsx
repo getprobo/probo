@@ -12,22 +12,7 @@ import { useTranslate } from "@probo/i18n";
 import { sprintf } from "@probo/helpers";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { z } from "zod";
-import { useMutation, graphql } from "react-relay";
-import type { PublicTrustCenterAccessRequestDialogMutation } from "./__generated__/PublicTrustCenterAccessRequestDialogMutation.graphql";
-
-const CreateTrustCenterAccessMutation = graphql`
-  mutation PublicTrustCenterAccessRequestDialogMutation(
-    $input: CreateTrustCenterAccessInput!
-  ) {
-    createTrustCenterAccess(input: $input) {
-      trustCenterAccess {
-        id
-        email
-        name
-      }
-    }
-  }
-`;
+import { useCreateTrustCenterAccess } from "/hooks/useTrustCenterQueries";
 
 type Props = {
   trigger: React.ReactNode;
@@ -45,7 +30,7 @@ export function PublicTrustCenterAccessRequestDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dialogRef = useDialogRef();
 
-  const [commitMutation] = useMutation<PublicTrustCenterAccessRequestDialogMutation>(CreateTrustCenterAccessMutation);
+  const mutation = useCreateTrustCenterAccess();
 
   const schema = z.object({
     name: z.string().min(1, __("Name is required")).min(2, __("Name must be at least 2 characters long")),
@@ -58,39 +43,36 @@ export function PublicTrustCenterAccessRequestDialog({
 
   const onSubmit = handleSubmit(async (data) => {
     setIsSubmitting(true);
+    mutation.mutate(
+      {
+        trustCenterId,
+        email: data.email,
+        name: data.name,
+      },
+      {
+        onSuccess: (result) => {
+          if (result.createTrustCenterAccess) {
+            toast({
+              title: __("Request Submitted"),
+              description: __("Your access request has been submitted. You will receive an email if your request is approved."),
+              variant: "success",
+            });
 
-    commitMutation({
-      variables: {
-        input: {
-          trustCenterId,
-          email: data.email,
-          name: data.name,
+            reset();
+            dialogRef.current?.close();
+          }
+          setIsSubmitting(false);
         },
-      },
-      onCompleted: (response) => {
-        if (response.createTrustCenterAccess) {
+        onError: (_: Error) => {
           toast({
-            title: __("Request Submitted"),
-            description: __("Your access request has been submitted. You will receive an email if your request is approved."),
-            variant: "success",
+            title: __("Error"),
+            description: __("An error occurred while submitting your request."),
+            variant: "error",
           });
-
-          reset();
-          dialogRef.current?.close();
-        }
-        setIsSubmitting(false);
-      },
-      onError: (error) => {
-        const errorMessage = error.message || __("An error occurred while submitting your request.");
-
-        toast({
-          title: __("Request Failed"),
-          description: errorMessage,
-          variant: "error",
-        });
-        setIsSubmitting(false);
-      },
-    });
+          setIsSubmitting(false);
+        },
+      }
+    );
   });
 
   return (
@@ -128,9 +110,9 @@ export function PublicTrustCenterAccessRequestDialog({
         <DialogFooter>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || mutation.isPending}
           >
-            {isSubmitting ? __("Submitting...") : __("Submit Request")}
+            {isSubmitting || mutation.isPending ? __("Submitting...") : __("Submit Request")}
           </Button>
         </DialogFooter>
       </form>

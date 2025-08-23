@@ -1,7 +1,0 @@
-{
-  "src": "./src/trust",
-  "schema": "../../pkg/server/api/trust/v1/schema.graphql",
-  "language": "typescript",
-  "eagerEsModules": true,
-  "noFutureProofEnums": true
-}

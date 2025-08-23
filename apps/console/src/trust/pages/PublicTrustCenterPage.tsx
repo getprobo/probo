@@ -5,99 +5,16 @@ import { PublicTrustCenterLayout } from "/layouts/PublicTrustCenterLayout";
 import { PublicTrustCenterAudits } from "../components/PublicTrustCenterAudits";
 import { PublicTrustCenterVendors } from "../components/PublicTrustCenterVendors";
 import { PublicTrustCenterDocuments } from "../components/PublicTrustCenterDocuments";
-import { TrustRelayProvider, useTrustAuth } from "/providers/TrustRelayProvider";
-import { Suspense } from "react";
-import { useLazyLoadQuery } from "react-relay";
-import { graphql } from "react-relay";
 import { Spinner } from "@probo/ui";
-import type { PublicTrustCenterPageQuery } from "./__generated__/PublicTrustCenterPageQuery.graphql";
+import { useTrustCenterQuery, type TrustCenterDocument, type TrustCenterAudit, type TrustCenterVendor } from "/hooks/useTrustCenterQueries";
 
-export interface TrustCenterDocument {
-  id: string;
-  title: string;
-  documentType: string;
-}
+export type { TrustCenterDocument, TrustCenterAudit, TrustCenterVendor };
 
-export interface TrustCenterAudit {
-  id: string;
-  framework: {
-    name: string;
-  };
-  report: {
-    id: string;
-    filename: string;
-    downloadUrl: string | null;
-  } | null;
-}
-
-export interface TrustCenterVendor {
-  id: string;
-  name: string;
-  category: string;
-  privacyPolicyUrl?: string | null;
-  websiteUrl?: string | null;
-}
-
-const PublicTrustCenterQuery = graphql`
-  query PublicTrustCenterPageQuery($slug: String!) {
-    trustCenterBySlug(slug: $slug) {
-      id
-      active
-      slug
-      organization {
-        id
-        name
-        logoUrl
-      }
-      documents(first: 100) {
-        edges {
-          node {
-            id
-            title
-            documentType
-          }
-        }
-      }
-      audits(first: 100) {
-        edges {
-          node {
-            id
-            framework {
-              name
-            }
-            report {
-              id
-              filename
-              downloadUrl
-            }
-          }
-        }
-      }
-      vendors(first: 100) {
-        edges {
-          node {
-            id
-            name
-            category
-            websiteUrl
-            privacyPolicyUrl
-          }
-        }
-      }
-    }
-  }
-`;
-
-function PublicTrustCenterContent() {
+export default function PublicTrustCenterPage() {
   const { __ } = useTranslate();
   const { slug } = useParams<{ slug: string }>();
-  const { isAuthenticated } = useTrustAuth();
 
-  if (!slug) {
-    return <Navigate to="/" replace />;
-  }
-
-  const data = useLazyLoadQuery<PublicTrustCenterPageQuery>(PublicTrustCenterQuery, { slug });
+  const { data, isLoading, error } = useTrustCenterQuery(slug || "");
 
   const organization = data?.trustCenterBySlug?.organization;
   const organizationName = organization?.name || "";
@@ -105,6 +22,33 @@ function PublicTrustCenterContent() {
   usePageTitle(
     organizationName ? `${organizationName} - Trust Center` : "Trust Center"
   );
+
+  if (!slug) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {__("Error Loading Trust Center")}
+          </h1>
+          <p className="text-gray-600">
+            {__("There was an error loading the trust center. Please try again later.")}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!data?.trustCenterBySlug) {
     return (
@@ -121,7 +65,8 @@ function PublicTrustCenterContent() {
     );
   }
 
-  const { documents, audits, vendors } = data.trustCenterBySlug;
+  const { trustCenterBySlug } = data;
+  const { documents, audits, vendors, isUserAuthenticated } = trustCenterBySlug;
 
   const trustCenterDocuments = documents.edges.map((edge) => edge.node) as TrustCenterDocument[];
   const trustCenterAudits = audits.edges.map((edge) => edge.node) as TrustCenterAudit[];
@@ -131,20 +76,20 @@ function PublicTrustCenterContent() {
     <PublicTrustCenterLayout
       organizationName={organizationName}
       organizationLogo={organization?.logoUrl}
-      isAuthenticated={isAuthenticated}
+      isAuthenticated={isUserAuthenticated}
     >
       <div className="space-y-12">
         <PublicTrustCenterAudits
           audits={trustCenterAudits}
           organizationName={organizationName}
-          isAuthenticated={isAuthenticated}
-          trustCenterId={data.trustCenterBySlug.id}
+          isAuthenticated={isUserAuthenticated}
+          trustCenterId={trustCenterBySlug.id}
         />
         <PublicTrustCenterDocuments
           documents={trustCenterDocuments}
           organizationName={organizationName}
-          isAuthenticated={isAuthenticated}
-          trustCenterId={data.trustCenterBySlug.id}
+          isAuthenticated={isUserAuthenticated}
+          trustCenterId={trustCenterBySlug.id}
         />
         <PublicTrustCenterVendors
           vendors={trustCenterVendors}
@@ -152,15 +97,5 @@ function PublicTrustCenterContent() {
         />
       </div>
     </PublicTrustCenterLayout>
-  );
-}
-
-export default function PublicTrustCenterPage() {
-  return (
-    <TrustRelayProvider>
-      <Suspense fallback={<Spinner />}>
-        <PublicTrustCenterContent />
-      </Suspense>
-    </TrustRelayProvider>
   );
 }

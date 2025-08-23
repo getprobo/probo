@@ -200,6 +200,7 @@ type TrustCenter implements Node {
   active: Boolean!
   slug: String!
   organization: Organization! @goField(forceResolver: true)
+  isUserAuthenticated: Boolean! @goField(forceResolver: true)
 
   documents(
     first: Int

@@ -115,13 +115,14 @@ func (Report) IsNode()             {}
 func (this Report) GetID() gid.GID { return this.ID }
 
 type TrustCenter struct {
-	ID           gid.GID             `json:"id"`
-	Active       bool                `json:"active"`
-	Slug         string              `json:"slug"`
-	Organization *Organization       `json:"organization"`
-	Documents    *DocumentConnection `json:"documents"`
-	Audits       *AuditConnection    `json:"audits"`
-	Vendors      *VendorConnection   `json:"vendors"`
+	ID                  gid.GID             `json:"id"`
+	Active              bool                `json:"active"`
+	Slug                string              `json:"slug"`
+	Organization        *Organization       `json:"organization"`
+	IsUserAuthenticated bool                `json:"isUserAuthenticated"`
+	Documents           *DocumentConnection `json:"documents"`
+	Audits              *AuditConnection    `json:"audits"`
+	Vendors             *VendorConnection   `json:"vendors"`
 }
 
 func (TrustCenter) IsNode()             {}

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.51.1]
+
+### Fixed
+- Fix query loops in public trust center
+- Fix button display when disconected in public trust center
+
 ## [0.51.0]
 
 ### Added

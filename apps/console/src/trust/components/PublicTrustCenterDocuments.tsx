@@ -13,20 +13,8 @@ import {
   useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useMutation, graphql } from "react-relay";
+import { useExportDocumentPDF, type TrustCenterDocument } from "/hooks/useTrustCenterQueries";
 import { PublicTrustCenterAccessRequestDialog } from "./PublicTrustCenterAccessRequestDialog";
-import type { PublicTrustCenterDocumentsExportPDFMutation } from "./__generated__/PublicTrustCenterDocumentsExportPDFMutation.graphql";
-import type { TrustCenterDocument } from "../pages/PublicTrustCenterPage";
-
-const ExportDocumentPDFMutation = graphql`
-  mutation PublicTrustCenterDocumentsExportPDFMutation(
-    $input: ExportDocumentPDFInput!
-  ) {
-    exportDocumentPDF(input: $input) {
-      data
-    }
-  }
-`;
 
 type Props = {
   documents: TrustCenterDocument[];
@@ -44,17 +32,14 @@ export function PublicTrustCenterDocuments({
   const { __ } = useTranslate();
   const { toast } = useToast();
 
-  const [commitMutation] = useMutation<PublicTrustCenterDocumentsExportPDFMutation>(ExportDocumentPDFMutation);
+  const mutation = useExportDocumentPDF();
 
-  const handleDownload = async (document: TrustCenterDocument) => {
-    commitMutation({
-      variables: {
-        input: { documentId: document.id }
-      },
-      onCompleted: (response) => {
-        if (response.exportDocumentPDF?.data) {
+  const handleDownload = (document: TrustCenterDocument) => {
+    mutation.mutate(document.id, {
+      onSuccess: (data) => {
+        if (data.exportDocumentPDF?.data) {
           const link = window.document.createElement("a");
-          link.href = response.exportDocumentPDF.data;
+          link.href = data.exportDocumentPDF.data;
           link.download = `${document.title}.pdf`;
           window.document.body.appendChild(link);
           link.click();
@@ -136,8 +121,9 @@ export function PublicTrustCenterDocuments({
                       variant="secondary"
                       icon={IconArrowDown}
                       onClick={() => handleDownload(document)}
+                      disabled={mutation.isPending}
                     >
-                      {__("Download")}
+                      {mutation.isPending ? __("Downloading...") : __("Download")}
                     </Button>
                   )}
                 </Td>
