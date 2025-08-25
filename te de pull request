@@ -1,0 +1,1369 @@
+[33m82f3093d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mminha-nova-feature[m[33m, [m[1;31mupstream/main[m[33m, [m[1;31mupstream/HEAD[m[33m, [m[1;31morigin/minha-nova-feature[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Release v0.50.1
+[33mbc2e0595[m Extract token directly from url
+[33m39774f81[m Release v0.50.0
+[33m54c14a18[m Add vendor services
+[33m0262bd1c[m Add compliance registries
+[33mcb8dc034[m Add vendors
+[33m0c4a8268[m Increase evidence size from 10 to 20
+[33m04c02194[m chore: Replace mailhog
+[33m36114311[m Release v0.49.0
+[33mc2209d38[m Wider sidebar
+[33m22fdf30a[m Fix trust center dark mode
+[33mbbb30653[m Fix control update
+[33m7b0363bd[m Center the trust center spinner
+[33m78b9cb80[m Show spinner while loading Public Trust Center
+[33me9f43d45[m Change registry query names
+[33m00c6b9fd[m Add nonconformity registries
+[33m210a05b5[m Remove circular import
+[33m73b2a146[m Release v0.48.1
+[33mc5f25995[m Fix authentification check in public trust center
+[33md8c872ba[m Release v0.48.0
+[33m55d488ed[m Add contols audits
+[33m215e97d9[m Add name to audit
+[33mee456aaa[m Add dpa on vendors
+[33m55bf6da7[m Wrap vendor contact errors
+[33m52f24a50[m Add vendor contacts
+[33m3839d200[m Add baa on vendors
+[33me78a7bea[m Fix hard coded trivy scan version
+[33m57a0cd59[m Release v0.47.0
+[33m3133a1e2[m Update trivy to run on local image
+[33m08bd3295[m Remove trivy ignore
+[33m020b28b8[m Ignore CVE-2025-47907 alert
+[33m67338d47[m Use fixed version instead of stable
+[33mbfeddf37[m Update go version to 1.25
+[33md65bc5f7[m Enhance people
+[33m6eb9a39c[m Update CHANGELOG
+[33ma4332856[m Better handling of document versions
+[33m81e7cd35[m Update configuration doc
+[33m6c63df0c[m Bootstrap basic docs
+[33md016c10f[m Release v0.46.2
+[33m7030bd8d[m Fix leaking internal error
+[33m23b54e75[m Fix SQL errors
+[33mb3002d83[m Release v0.46.1
+[33mf4f7326f[m Fix SQL query
+[33m5fcece20[m Release v0.46.0
+[33mab97fc8c[m Add organization deletion
+[33mc9ab0678[m Fix types generation
+[33m987c8565[m Add probo by default
+[33m86cb1ba6[m Release v0.45.1
+[33m86ac7e10[m Fix data page
+[33m57db92ec[m Release v0.45.0
+[33m649bf5e6[m Add configurable invitation token validity
+[33m3b1ef269[m Update CHANGELOG
+[33me0ad0fc4[m Use configuration for report url duration
+[33me49da8b0[m Check tenant access
+[33m58ea075f[m Check if token still exist for trust center access
+[33m41d112c9[m Create dedicated trust center access order field file
+[33m330ba0c1[m Refacto session cookie handling
+[33m05123185[m Refacto graphql recovery
+[33mbbac3903[m Refacto error handling in trust center front end
+[33m036970af[m Refacto document filter
+[33m7e595044[m Small fixes for trust center
+[33m2c337002[m Add current time to email creation
+[33m0b21afa2[m Refacto trust center access
+[33m60c4b945[m Use case when for document filter
+[33m2ebab9d5[m Share types between API
+[33m4ff71312[m Split Config
+[33m91e635ea[m Wrapp error in audit service
+[33m92e2e9a4[m Clean trust api
+[33md40317d6[m Change vendors to subcontractors
+[33m2355a69f[m Clean access priority
+[33m5fb0b9cf[m Clean trust center access
+[33m032fd141[m Change trust authentification endpoints
+[33m9afb80d5[m Remove document version from trust API
+[33m994ec7b6[m Change Authentification
+[33mcb3d7950[m Add trust center front
+[33m2ac8f314[m Fix email dates
+[33m1766896b[m Allow edition of some document fields
+[33m0ce98bdb[m Reset vendor form on assessment
+[33md095d28e[m Panic for unsupported report order
+[33m32c47a19[m Add trust center configuration
+[33me85a7b49[m Add audits
+[33m95caa4b6[m Fix empty documents checkbox
+[33md87dfa43[m Fix error when mapping already exist
+[33m3befb9e9[m Release v0.44.0
+[33mea6f1d27[m Update CHANGELOG
+[33mf0afde21[m Fix controls and frameworks small issues
+[33m07856757[m Update CHANGELOG
+[33m2df463c5[m Fix tables in pdf export
+[33mf420effb[m Release v0.43.1
+[33m4c1283b0[m Fix draft creation
+[33m535f72fc[m Release v0.43.0
+[33m09009f56[m Update CHANGELOG
+[33m85bd1405[m Exclude controls
+[33mc9b2fdb9[m Fix color
+[33mf8236a0f[m Fix missing err handler
+[33mafa5a822[m Refactor SOA generation
+[33mba71f0d7[m Release v0.42.1
+[33mef0a8b50[m Fix download button removed
+[33m63a629c0[m Release v0.42.0
+[33m23f7f843[m Update CHANGELOG
+[33m9dd2f399[m Fix version selector
+[33m55245398[m Reset controls framework foreign key
+[33mf8cb0c76[m Update existing people in confirm invitation
+[33m21139ba4[m Release v0.41.0
+[33mcb4af870[m Update CHANGELOG
+[33m5037b4df[m Use version id in document redirect
+[33m578289f0[m Fix bulk update document front counts
+[33mbe6c668a[m Ignore existing status in bulk document update
+[33mde366604[m Remove useless lines
+[33m9f03bc18[m Add request signature dialog
+[33m8fd8319a[m Add changelog dialog when bulk publishing
+[33m75656b1a[m Add bulk mutation for Documents
+[33m787fcf60[m Fix type missmatch in DatumDetailsPage
+[33m1240d2bb[m Add resets on forms
+[33mf114f3bc[m Add version selector on document
+[33ma4606f95[m Add checkboxes for documents table
+[33m25b330f9[m Load fileUrl on demand for evidence
+[33m0a5524ce[m Add cancel signature action
+[33m8a772713[m Fix github action workflows
+[33m2d79c8e6[m Always keep dist dir
+[33mc507f90d[m Fix lint and test target
+[33m0081d819[m Remove unused comment
+[33mb99c2b0e[m Block release when critial vulnerabilities founded in deps
+[33mdf394e01[m Fix go version
+[33m6035d29e[m Add lint workflow
+[33mbd1492f4[m Add test workflow
+[33m4817c6d9[m Add lint target
+[33m5e145a90[m Fix slug logic
+[33me9d5f86e[m Handle misconfiguration
+[33md5758be3[m Add make test target
+[33me21385c4[m Fix try to release on every commit
+[33mfee2031a[m Fix main workflow
+[33m725dec83[m Fix github output
+[33m17bdcf9c[m Fix SBOM for docker image
+[33m6f423f85[m Fix github storage consistency
+[33mea7174a9[m Fix buildx inspect
+[33m32aed6c5[m Remove warning uses a tag, not a digest, to identify the image to sign
+[33mbc06f2f2[m Fix sbom for docker image
+[33m983e713c[m Fix warning docker sign
+[33m7fa202df[m Fix file conflict
+[33m555ae4fb[m Fix missing buildx and qemu
+[33m7204d25c[m Fix docker syntax error on Github action
+[33m3cd7b71b[m Release v0.40.0
+[33mcf374f8a[m Update CHANGELOG
+[33m1a558f56[m Add new release workflow
+[33m53dfdf3b[m Configure goreleaser
+[33m6fda84e5[m Add people position
+[33m452c1b53[m Cleanup publish version
+[33mf00a5169[m Add bulk request signatures
+[33mf758b0db[m Add bulk publish document version
+[33m418bfd13[m Add sbom targets
+[33mafb42e8f[m Fix err is not defined
+[33mccae408a[m Validate signature request state before cancellation
+[33md9f78fae[m Add cancel request signature mutation
+[33mff99af01[m Update go.mod
+[33mf23a4316[m Release v0.39.0
+[33m57be18e9[m Update node dependencies
+[33m2396a576[m Update go dependencies
+[33mff7feedb[m Add frontend button
+[33m8189fa2a[m Add graphql resolver
+[33m68b422e0[m Fix publisher by format error
+[33med5226ca[m Add export pdf func
+[33m5574c68e[m Fix data url logged
+[33mabc36279[m Fix vet error
+[33m574a25fe[m Fix published by must be a string
+[33m90bd4d76[m Remove unused object
+[33m1025bcb5[m Add docgen package
+[33m47b65b10[m Update go mod
+[33mc6ae93a1[m Fix missing protocol
+[33mfe7e4ef5[m Add tracing and logging to html2pdf
+[33md48bf025[m Add missing chrome flags
+[33ma17b7049[m Add html2pdf package
+[33m3697985e[m Add chrome image
+[33mbeac70d8[m Release v0.38.1
+[33md4dbadee[m Fix 5xx on document type order
+[33m843b46ff[m Release v0.38.0
+[33mc97bc5bc[m Change default document sorting order
+[33m179fc5b6[m Release v0.37.5
+[33mcc655e90[m Fix missing risk score on risk detail page
+[33m8b9e0a66[m Fix risk score color on dark mode
+[33m9920da82[m Release v0.37.4
+[33mead7d15f[m Fix SOA risk
+[33m1aaf9ec7[m Release v0.37.3
+[33m2f9b64f3[m Style
+[33m6ff1db83[m Fix missing controls
+[33m234bb89d[m Release v0.37.2
+[33me9b68e92[m Returns error instead of printf
+[33m364c6e44[m Generate excel in memory
+[33m7268a731[m Style
+[33m999bc494[m Release v0.37.1
+[33m35067d03[m Add updated at and created at order for vendor
+[33mede3ea4e[m Fix SOA filename
+[33m8b109e75[m Release v0.37.0
+[33mc41d7439[m Add SOA generator
+[33m3d734a08[m Show last assement date
+[33m23b1c7c2[m Release v0.36.0
+[33m6da3de83[m Fix tasks deadline
+[33m79de9245[m Fix order people by kind
+[33mb428b964[m Update go.sum
+[33mc29c857e[m Fix missing people role order
+[33me63861ce[m Remove all data after logout
+[33mc0199fb3[m Enforce maximum password limit
+[33mbd9f3750[m Mitigate timing attack on signin
+[33m07d943be[m Use httplogger on graphlq error
+[33m92c1a1da[m Remove unused var
+[33mdc265158[m Returns internal error when error is know
+[33m11a2282c[m Add default security header to API
+[33m1ce030af[m Add support for extra header
+[33m294a126c[m Bump github.com/go-chi/chi/v5 in the go_modules group across 1 directory
+[33m3ecfb899[m Update CHANGELOG
+[33m3a1fdf02[m Add uri support
+[33mbd1e7396[m Add link dialog for measure evidences
+[33mac65ccd2[m Release v0.35.0
+[33mde0ea0cc[m Add forgot password feature
+[33m3b7d246e[m Fix page title
+[33m684166d6[m Release v0.34.0
+[33mb6cda52f[m Make text selectable inside td with links
+[33mb76096d1[m Remove signature button on draft policy
+[33meaf54f98[m Fix types
+[33m493d29cf[m Add pagination on data
+[33m348137e4[m Add pagination on assets
+[33m99d2fa97[m Reset people form on submit
+[33m3232bdc6[m Add pagination on documents
+[33m78e63955[m Add pagination on vendors
+[33mfdc2b107[m Add pagination on people
+[33mab54d13b[m Add evidence preview url
+[33md3ff7cc6[m Fix centered layout height
+[33m3799db1f[m Fix login redirection
+[33m2962e4b5[m Fix missing confirmation email page
+[33m588d96b7[m Add confirm email to the new ui
+[33m63c7090e[m Release v0.33.6
+[33m15880e99[m Fix upload file size too small
+[33m5c9e7457[m Release v0.33.5
+[33mf8b93d03[m Refactor register flow
+[33m94c335e5[m Fix login url for the registration
+[33mf7fad246[m Split framework loading in 2 query
+[33m5396e467[m Add proxy for the dev server
+[33m2c263291[m Allow images and documents
+[33me1330227[m Release v0.33.4
+[33m31a5c377[m Fix missing tenant_id
+[33me73c909d[m Release v0.33.3
+[33m6dc24d82[m Fix totalCount document risk
+[33m6a1b0788[m Fix leaking open pg conn
+[33m0cd0d1d1[m Release v0.33.2
+[33m40f88fb8[m Fix api url contain undefined
+[33mdfbc2aad[m Release v0.33.1
+[33m43939e48[m Fix localhost used as host at the build time
+[33m8889ae9d[m Release v0.33.0
+[33m8538fe04[m Clear relay cache on login
+[33m20fc71e9[m Fix tsc error
+[33mf709eda0[m Add loading state for select dropdown
+[33m2107713a[m Fix color for danger button for light theme
+[33m32744e60[m Fix error page for root routes
+[33m9f94603b[m Fix wrong icon on frameworks page
+[33m789e2826[m Fix new front end configuration
+[33m3cb48a21[m Remove settings link from user dropdown
+[33m5777bc4a[m Add register to new front end
+[33m92455311[m Fix logout does not work
+[33md6ba8e10[m Remove old frontend
+[33m2adfe500[m Add favicons to the new ui
+[33m0e2f14ea[m Remove useless people query for data
+[33m29a82b06[m Add document signing on the new ui
+[33m187bc843[m Create assets helper
+[33m24154cc3[m Remove useless people query for assets
+[33mf42f275c[m Fix measure select label
+[33mc6573252[m Add document type to the new ui
+[33m737accc7[m Add assets inventory to the new ui
+[33mbf266cfe[m Add data inventory to the new ui
+[33m095080f0[m Fix measure percentage
+[33m00a5665a[m Add controls tab on risks
+[33m86da13d2[m Fix missing key on tasks list
+[33m1f94ddba[m Fix totalCount 5xx
+[33m87b99ea9[m Fix missing strict args
+[33mc791544f[m Fix count measure sql query
+[33mbd24dad8[m Fix control risk resolver
+[33me0a3cfc2[m Fix remove uneditable fields on task edition
+[33maa1ab409[m Fix color for risk chart value
+[33mfb9bce02[m Fix typescript compilation error on public properties
+[33m155bbbd8[m Add schema path to package.json
+[33me1b63b59[m Use custom lazy for loading components
+[33m1ba61f69[m Add error detail on PageError
+[33mf22eb861[m Fix layout shift on controls search
+[33mb841e869[m Fix relativeDateFormat for short duractions
+[33m8a4c64c4[m Scroll control into view
+[33m20be4c57[m Reset error on page change
+[33m0b4f5520[m Update package lock
+[33m297f44f6[m Update generated files
+[33mc2dc89a8[m Fix control SQL query
+[33mc401234b[m Fix nav bar color
+[33m358e07b6[m Remove debug log
+[33mf7ed3a70[m Fix broken link
+[33mc38a46a4[m Fix build
+[33m6c3de607[m Ignore story book static
+[33me0e3c2e6[m Mograte from bun to npm
+[33mef1aff09[m Remove dead file
+[33m996a7132[m Fix console v1 build
+[33mab077c38[m Allow linking controls
+[33m93aeedf1[m Add tasks panels
+[33mdaaee079[m Rename referenceId to sectionTitle
+[33m140857bf[m Add measures evidences tab
+[33mb660c0ce[m Add risk assessment tab
+[33m7d2d26aa[m Add document type field
+[33m7a65ec86[m Add frameworks actions
+[33m74c136f6[m Add frameworks detail page
+[33mb6aec0b1[m Rename policy into document
+[33m1870e050[m Add frameworks listing and import
+[33m7cb84d8c[m Add vendor compliance report tab
+[33mdf23fd63[m Add vendor certifications tab
+[33mb94b58e2[m Add people pages
+[33m68628414[m Add organization settings page
+[33m61b1a241[m Add policies signature history
+[33m2e674194[m Add policies version history
+[33mabe0ce1d[m Add policies listing page
+[33m7903bd3a[m Add measure listing page
+[33mf9d1f033[m Add dark mode
+[33mfaf1ce0e[m Add alias for imports
+[33m1253145d[m Add measures tab
+[33mfbfc3bb2[m Use loader for relay
+[33m1448d37d[m Add sortable table with refetchable
+[33mc2a69b54[m Add vendor creation
+[33mfe3128da[m Add detail page
+[33m72c3fe58[m Add skeletons for routes
+[33m08bf65d9[m Add risk charts
+[33mfc45d2f0[m Add risk forms
+[33m3d4ecf5f[m Add risk creation form
+[33m15cf4714[m  Add UI input & textarea
+[33ma86181c8[m Add risks
+[33ma2d13107[m Migrate to vite & new structure
+[33mdb9e5f32[m Fix cannot create organization
+[33mc7f6dba5[m Refacto vendor associations queries
+[33me547a4e9[m Fix nil control filter
+[33m613eccf0[m Fix data list
+[33m32ae8e0f[m Fix broken ref package
+[33m069ff4aa[m Fix search queries
+[33m3b320c71[m Fix missing search vector column
+[33m61529476[m Refactor v1 resolver
+[33mb80589bc[m Update CHANGELOG
+[33m60d41c0d[m Add assets totalCount support
+[33m82effa84[m Fix order type
+[33m771ae6db[m Add datum totalCount support
+[33m9932212c[m Add peoples totalCount support
+[33md128e91c[m Add vendors totalCount support
+[33mf7ee529b[m Add evidences totalCount support
+[33mb1fe040e[m Add tasks totalCount support
+[33me0a575f9[m Style
+[33m5bc65d38[m Add documents totalCount support
+[33mc4e6de92[m Add risks totalCount support
+[33m6c965903[m Add measures totalCount support
+[33mc7c889e5[m Add frameworks totalCount support
+[33m35dcad82[m Add controls totalCount support
+[33mf8d7724f[m Fix CHANGELOG
+[33m20e918b0[m Update CHANGELOG
+[33ma9a5f9cf[m Add fulltext search on risks, documents, and measures
+[33m9d291891[m Update CHANGELOG
+[33mdf3b43cd[m Change data enum
+[33m13b7bfcc[m Clean graphql
+[33mf9240e65[m Update CHANGELOG
+[33m67cc9d9d[m Add control fulltext search
+[33m032144e0[m Release v0.32.0
+[33m0126666f[m Add controls on organization
+[33m40947328[m Update CHANGELOG
+[33m4b34157b[m Add controls crud
+[33mc1c19ba9[m Update CHANGELOG
+[33maf7d3c25[m Update changelog
+[33m6b9edeaa[m Update CHANGELOG
+[33m7a3c782e[m Format tasks code
+[33mfc008c27[m Add deadline on task
+[33m02ff3b02[m Release v0.31.0
+[33m59848475[m Update CHANGELOG
+[33m1ba43066[m Add breadcrumb to data
+[33mb54cb6d3[m Change document version
+[33m21e7891f[m Remove default values in db
+[33m0e668667[m Update CHANGELOG
+[33mca62749b[m Add data inventory
+[33mfa1cd6fb[m Add assets
+[33mb315be96[m Release v0.30.1
+[33m5eaab396[m Add updated sort key for vendors
+[33m505791e5[m Fix table does not exist
+[33m98510cb7[m Fix inherent risk score graphql error
+[33mf28294eb[m Release v0.30.0
+[33mfd7fa3d1[m Update CHANGELOG
+[33m2391b19d[m Add type to document
+[33me1b4079e[m Rename policy to document
+[33mc9f2df3c[m Update CHANGELOG
+[33mf9acc89e[m Fix HIPAA json name
+[33m9689c6dc[m Release v0.29.0
+[33m5d8758cd[m Update CHANGELOG
+[33mf60f7c23[m Import framework from json
+[33mca90664f[m Add HIPAA risks
+[33m27f9aa24[m Update CHANGELOG
+[33m9b309f12[m Change add vendor ui
+[33m4ea66749[m Update CHANGELOG
+[33m1b4610cd[m Fix url input type for vendor assessement
+[33m460cbfee[m Release v0.28.0
+[33m3d8e3314[m Update CHANGELOG
+[33m6eb33321[m Add new url fields to vendors
+[33ma4a279c5[m Update CHANGELOG
+[33m1254487e[m Add category field
+[33m5e138b7d[m Update CHANGELOG
+[33mc2f9cb20[m Fetch vendor data with openai
+[33m8f41461b[m Update README
+[33md7fc98d6[m Update CHANGELOG
+[33m5cc637c5[m Fix vendor update
+[33mc407842b[m Update CHANGELOG
+[33m17da3934[m Fix vendor creation bug
+[33m061c4cef[m Make toast text selectable
+[33m894c7c35[m Add HIPAA framework
+[33m65ea28dc[m Release v0.27.1
+[33mc3fc9c6b[m Fix position by adding migration
+[33mfbaa49b1[m Fix wrong version number
+[33m8c0cdc8f[m Release v0.26.0
+[33m0b51b362[m Remove useless help circle
+[33m0cc1bdbd[m Update CHANGELOG
+[33m9d07d54a[m Add level position to people
+[33m20cb7467[m Remove useless new people error toast
+[33mc3628866[m Add validation for contract dates
+[33mf728a29a[m Update CHANGELOG
+[33mcc89e76c[m Add contract dates to people
+[33m608768e6[m Fix graphql queries
+[33m6c356882[m Improve data isolation for policy and vendor
+[33m9959786f[m Improve measure data isolation
+[33mbac6f1a4[m Improve framework data isolation
+[33mb94a75ab[m Update graphql api to allow use of @prepend and @delete relay attr
+[33m2a25f624[m Improve control service data isolation
+[33mb43e61e3[m Improve data isolation for risks
+[33m65b7a477[m Change response for relay compatible one
+[33ma8da4257[m Update CHANGELOG
+[33mc6468088[m Add risk sort keys
+[33m62a0fb96[m Use generated column for risk score
+[33m9c5828b5[m Rename severity to score
+[33mce22fa7f[m Fix WriteHeader called with both Transfer-Encoding of "chunked" and a Content-Length
+[33m0aa5ddc6[m Update archive to s3
+[33m518b1824[m Add export
+[33m52a17a61[m Release v0.26.0
+[33m1aaa4963[m Add latest updated risk
+[33m9024f00b[m Upgrade from go 1.23 to 1.24
+[33m72fda010[m Fix html2text broken
+[33md5ea5aae[m Upgrade to ubuntu LTS
+[33me72612cf[m Upgrade go dependencies
+[33m167ea372[m Update kit migrator
+[33m0ea848ed[m Log graphql error
+[33m366fd9ea[m Update kit lib
+[33m4401416b[m Disable trivy vex notice
+[33m3c8f4ec4[m Fix missing trivy database
+[33mf4edf568[m Upgrade to latest ubuntu LTS
+[33mf2caba94[m Add trivy docker scan
+[33m6aa7be37[m Release v0.25.0
+[33m16a5f0c7[m Remove debug log
+[33mcc98c836[m Update CHANGELOG
+[33m7095208b[m Add csv and text category for evidence
+[33m4f9168a2[m Fix cannot upload organiation logo
+[33mcc7df8cb[m Add csv filetypes
+[33m7aae5cd6[m Update CHANGELOG
+[33me53f2780[m Fix people not create when user already exist
+[33m5b9d5295[m Update cover
+[33m8a765a75[m Release v0.24.0
+[33m7614b213[m Fix cannot show note of vendor assement
+[33m046c42eb[m Add tasks page
+[33mc93e795d[m Fix cannot delete measure linked to risk
+[33mcb2786df[m Update menu icons
+[33m5e071590[m Update CHANGELOG
+[33mfd6992ac[m Add filetype validation
+[33mfc76a642[m Release v0.23.1
+[33m1f250976[m Fix cannot delete measure with evidences
+[33mb432ed9b[m Fix etag hash not valid
+[33m4f3cb6e4[m Fix missing query variable
+[33m93112f89[m Add policy download pdf file
+[33me5636b2c[m Release v0.23.0
+[33m6d07127b[m Add ISO 27001 document header
+[33me5f8aac0[m Update CHANGELOG
+[33mccdfe67d[m Allow html in markdown
+[33mfc4891c6[m Release v0.22.0
+[33m2e5fcbf6[m Fix task evidence no linked
+[33m14e338b4[m Style
+[33m625343da[m Create file for link
+[33m45265457[m Update CHANGELOG
+[33m3bfb3ba4[m Move evidence to measure level
+[33m5b651093[m Fix typo
+[33m6dd26250[m Add owner and signature status on policies
+[33m244b01c0[m Update risk score color
+[33m193a4855[m Release v0.21.0
+[33m9872bdd2[m Explicit the risk score
+[33m333823f3[m Update CHANGELOG
+[33m5d690c07[m Allow table in markdown
+[33m81e6d974[m Generate file
+[33mcc031f56[m Add missing vendors
+[33m2d99bcf9[m Update generated file
+[33m30c0ff49[m Release v0.20.1
+[33m07af54d0[m Update hq address
+[33ma392f138[m Add TOC
+[33mab89d981[m Style
+[33m25c87d4c[m Update categories
+[33m8b313c2c[m Move vendors in a dedicated package
+[33mf3344f2c[m Style
+[33md691c373[m Release v0.20.0
+[33m83aee674[m Remove start and end service date
+[33m25614d5e[m Add display of assessedAt
+[33m9d6b1e23[m Add confirmation before send notification
+[33m122d4f27[m Fix not aligned button
+[33m2d7c89eb[m Release v0.19.2
+[33m448728c1[m Refactor ID generarion
+[33m27a1269b[m Fix missing people id
+[33md4811fbf[m Release v0.19.1
+[33mb93da88b[m Update CHANGELOG
+[33m7be0d964[m Fix url not set
+[33m68e60bc3[m Release v0.19.0
+[33m73b5ae1f[m Update CHANGELOG
+[33m1bcbcc50[m Remove unused lexical dep
+[33mce2a2e7f[m Update depdencies
+[33m4d7ec240[m Fix open redirect using //
+[33m7772229b[m Remove dead code
+[33mefed9d4a[m Update vendors.json
+[33mb0f037a4[m Release v0.18.1
+[33mefac2fb2[m Remove unused button
+[33m1cac29f8[m Fix typo on measure
+[33m29a40f57[m Add s3 url cache
+[33mee952bcc[m Expire relay cache store after 1 minute
+[33m5a960124[m Release v0.18.0
+[33m42c1ec99[m Configure gzip static response
+[33m06dd3439[m Configure static browser cache
+[33m329d52f9[m Remove static cache
+[33m4e6cc81a[m Update CHANGELOG
+[33m03879876[m Add signature handlers
+[33ma2bec08d[m Add policy sign email notif
+[33mae2ca41d[m Update vendors list
+[33m3a942cdb[m Fix migration when start from zero
+[33m1d15806f[m Release v0.16.0
+[33mc13b67e3[m adding 7 vendors
+[33m0528a157[m Update CHANGELOG
+[33m0d8e80ea[m Remove unused variable
+[33mbeb9dc81[m Fix pull request comments
+[33m14b5e248[m Fix types
+[33ma7cd9495[m Refatcor policies management
+[33mc208131b[m Update CHANGELOG
+[33m748f9c58[m Fix cannot delete measure with linked risk
+[33mb14adec2[m Release v0.15.1
+[33m7c71bad3[m Fix SQL column error
+[33mfa3f31e3[m Release v0.15.0
+[33mf5a76435[m Fix measure risks 5xx
+[33m461f34d9[m Fix connot delete evidence from task list
+[33m230ae113[m Add delete measure
+[33m76b6df79[m CHANGELOG
+[33m9471c38a[m Remove measure importance
+[33m78113dc0[m Use width more space
+[33mde618dd0[m Cleanup policies list
+[33mb7ccdbf8[m Release v0.14.0
+[33m839d842f[m Cache static assets
+[33mcece0726[m Add note to risk
+[33m60cdc8f1[m Release v0.13.2
+[33m7cac9130[m Fix people without user_id
+[33m196f4bcd[m Fix missing user_id for people
+[33m07cd9f42[m Fix failed to construct 'URL': Invalid URL
+[33m3c412e6d[m Fix base64 encoding
+[33mc8d45b85[m Fix base64 decode
+[33m29f96792[m Fix version does not exist
+[33m1ec8d741[m Fix not null user_id
+[33m173c0a53[m Fix migration name
+[33m9b9c5814[m Release v0.13.0
+[33m049c592e[m 10 new vendors.json
+[33mb7bfb86d[m Style
+[33m80ad4f64[m Add business and data impact on list
+[33mb65524d6[m Style
+[33mb3160366[m Style
+[33m5b781418[m Fix type
+[33mec028e9d[m Fix UI not refresh after create vendor risk
+[33mfd3e700c[m Fix form not reset
+[33me813fd8a[m Fix fk people
+[33mca1b7e8f[m Expire vendor risk assement
+[33m61eb6dc8[m Fix cannot update vendor
+[33m418766e3[m Remove prefix for vendor id
+[33m20444332[m Add shortcut to open link
+[33me8ba5fc6[m Fix certification update
+[33mbe0f73c1[m Update certifications tab UI
+[33m780693dd[m Redesign vendor list page
+[33me2e8f38f[m Add vendor risk assement
+[33mf038642e[m Add first risk assememnt implementation
+[33mf403d5ad[m Update vendors.json
+[33mfdd59623[m Fix continue ignored
+[33m3f6990b6[m Fix missing cursor key order
+[33m53c326d3[m Remove unused types
+[33m1e3c8fc4[m Fix typecheck
+[33m82f95a35[m Fix silient token reponse error
+[33m9aeed6da[m Add settins connector view
+[33m85935ac1[m Add redirect back to specific page
+[33mca4d14ca[m Add dedicated error when no connection
+[33m05063570[m Fix type not updated
+[33m44a05be1[m Encrypt connector sensitive data
+[33m34de088e[m Add connector config validation
+[33m868c45b1[m Fix empty string secret for state token
+[33m86cc9240[m Add connector request validation
+[33mfd698d84[m Fix no error with duplicate connector name
+[33m7d3a9e6d[m Remove debug log
+[33m5370d594[m Add connector service and http handlers
+[33mcdedf656[m Add connector config support
+[33m8c516c16[m Add connector with OAuth2 support
+[33m9063ff70[m Add connector table
+[33mbf35cd96[m Release v0.12.0
+[33mb73e683c[m Style
+[33m6cb8b94e[m Fix JSON syntax error
+[33m75117c7c[m Remove duplicated entry
+[33ma2e7aa5d[m Update vendors.json
+[33me9189e9d[m Fix typo
+[33md830f2c6[m Add coderabbit suggestions
+[33mc7f49c78[m Add category filter on risks
+[33mb137ec6b[m Add categories on risk
+[33m09fb70d7[m Update risks.json
+[33m0fa49e47[m Fix migration order
+[33mef6d3dc5[m Add carta and monday.com vendors
+[33m87766ffe[m Update CHANGELOG
+[33m34f02eef[m Upgrade node dependencies
+[33mf32352f9[m Upgrade golang dependencies
+[33meb437241[m Fix missing tsc as dev dependency
+[33m01b0e58c[m Release v0.11.1
+[33m7d9b4838[m Add mercury and signal vendors
+[33m7f1d6322[m Fix migration
+[33m4112c494[m Release v0.11.0
+[33m62b0f4d7[m Update CHNAGELOG
+[33maa7b11ab[m Update vendors.json
+[33me70558dc[m Update vendors.json
+[33m28ba4294[m Update vendors.json
+[33m168acc3b[m Update vendors.json
+[33ma90de1fd[m Update risk matrix
+[33m7ff083e3[m Remove policy verison column
+[33ma4312db9[m Fix misspell relay connection name
+[33mb3919aa8[m Fix stale framework controls
+[33m405c570d[m Align risk wording
+[33m156c3af6[m Release v0.10.1
+[33m95ea62f0[m Update CHANGELOG
+[33m90a6b6f6[m Fix list are not display in the editor
+[33m3b956dd6[m Fix lost focus on the policy editor
+[33m4cce21b7[m Remove dead file
+[33m4d087a41[m Update CHANGELOG
+[33me773ebc5[m Fix mesure types
+[33m021f6c0e[m Fix misspell
+[33m9a8ada11[m Release v0.10.0
+[33md51c348f[m Update CHANGELOG
+[33mce691630[m Clean risk matrix
+[33m3711bb4b[m Rename mitigation into mesure
+[33mdaff5e66[m Release v0.9.0
+[33m9b868220[m Add vendor business and security owner
+[33m8261e138[m Release v0.8.0
+[33m8bbb4f59[m Add risk ownership
+[33me3c7194a[m Add risk treatment
+[33md0f69916[m Release v0.7.0
+[33mc47381b5[m Update CHANGELOG
+[33m167cef5c[m Remove dead code
+[33m16efab77[m Refactor risk management
+[33mc5e7f030[m Update vendor database
+[33m2d76e877[m Revert MIT license
+[33m8a784927[m Fix json syntax error
+[33m1ab31af0[m Add google workspace vendor
+[33m82811396[m Add langfuse vendor
+[33me64dfd5a[m Add hubsport vendor
+[33mdb2e8c4f[m Add linear vendor
+[33m02e2b159[m Add heroku vendor
+[33mc1f7172b[m Add auth0 vendor
+[33m69c7d4f1[m Release v0.6.0
+[33m9fa33726[m Enhance vendor management with extended data fields
+[33m25ca9e5d[m Remove duplicated close modal UI element
+[33mc652fc0e[m Fix cannot create vendor who is already suggested
+[33m490f229a[m Release v0.5.0
+[33m1196b791[m Add ability to link policies to controls
+[33mc63e2756[m Add vendor compliance reports UI
+[33m9b4b3cc2[m Release v0.4.2
+[33m41861f2c[m Improve framework import error handling
+[33m1f1c133a[m Remove debug printf
+[33m9bad69a3[m Simplify policy update mechanism
+[33md5e0eba0[m Release v0.4.1
+[33m336487f3[m Update frameworks
+[33m785ad28b[m Tag stable docker version
+[33mf59ab105[m Release 0.4.0
+[33m21b40eb3[m Style
+[33m85a5f3a5[m Add pre-configured framework templates
+[33m92ed01a8[m Fix error handling in FrameworkView component
+[33m7e6fa449[m Add vendor compliance reports
+[33m4ce72c03[m Add control-policy mappings and rename control APIs
+[33m348e2641[m Update CHANGELOG
+[33ma16ffbc1[m Auto-scroll to the opened category
+[33m95d0fc53[m Update CHANGELOG
+[33m19bd7411[m Fix accessibility issues
+[33me8dacef3[m Add new colors and wip use them all instead of tailwind ones
+[33m5406e2ef[m Rename Create->New & Update->Edit
+[33m09cfa7fd[m Rename NewFrameworkPage -> NewFrameworkPage
+[33m225bcf58[m Rename UpdateFrameworkPage -> EditFrameworkPage
+[33m2141f14a[m Rename MitigationNew -> NewMitigation
+[33m0736213e[m Switch create/update url segments to new/edit
+[33m6c1f10e8[m Add .nvmrc file
+[33m70b440ea[m Fix framework page displaying first control
+[33m9a3327e9[m Rename FrameworkPage -> FrameworkLayout
+[33m0e9d0ec9[m Add mitigation edit page
+[33mda6e72f8[m Fix unauthenticated redirection
+[33ma6da14d8[m Fix duplicated request evidence on import
+[33mddc4cd45[m Fix import uniq violation
+[33m10349274[m Add evidence request support
+[33m91a0b673[m Fix typecheck error
+[33mc01ac671[m Show description
+[33mfd9442f6[m Fix fulfill missing upload
+[33m1988d647[m Update CHANGELOG
+[33mc145125b[m Add requested evidence
+[33m2f9f04c9[m Update CHANGELOG
+[33me8dc868e[m Add mitigation with task and mapping import
+[33m1ee0c3be[m Fix vendor update
+[33mf2d0866c[m Update CHANGELOG
+[33m54395817[m Add risk list to mitigations
+[33m747ed7ec[m Fix missing tenant_id
+[33mdbc39a53[m Improve control view for mitigation
+[33mca7bf094[m Fix graphql query
+[33m40d281e8[m Add UI for risk mapping
+[33mbd428cb1[m Add risks_mitigations table
+[33m34ed32f6[m Fix load risk error
+[33m3a1450e2[m Fix typecheck
+[33m0ec0c7d6[m Add mapping between risk and mitigation
+[33mf1451812[m Remove dead code
+[33m86e4547e[m Update CHANGELOG
+[33m82c70fc9[m Fix breadcrumb
+[33mc31f9a2e[m Add risk template
+[33md0fc5cd4[m Add mapping between control and mitigation
+[33m38a0458d[m Update README
+[33m915e5e9f[m Remove useless modal
+[33m5a7b0c8e[m Make framework reference id uniq
+[33m77a89074[m Fix error when no control
+[33mc582a105[m Add control reference id
+[33me0e0e953[m Style
+[33m0e9d2af8[m Less space between header and content
+[33m1d682c85[m Style
+[33mb9e04d72[m Convert float percent in text
+[33ma0367c55[m Style
+[33m2741be8f[m Remove table header
+[33mce4e75e7[m Update CHANGELOG
+[33m6b1dfa35[m Update home page
+[33mfd126b94[m Support importance in mitigation import
+[33m7d38882e[m Add risk proba and impact
+[33m835bab31[m Fix typecheck
+[33m3149156b[m Update CHANGELOG
+[33m5e601a0e[m Add risk list and create risk
+[33m6210458f[m Add SOC+ISO27001 mitigations
+[33m4e4e2369[m Add import mitigations
+[33m2baa2eb0[m Fix lint
+[33m1b15b017[m Add new mitigation page
+[33m47dd3b32[m Style
+[33m0fcffdfc[m Truncate control name in sidebar
+[33mb9e2c9e0[m Add control breadcrumb
+[33m5b7f49c8[m Fix FrameworkView
+[33mf34f8d40[m Fix mitigation breadcrumb
+[33mf04e1186[m Framework view with control list and view
+[33m0f16cc94[m Style
+[33m7282d8d7[m Fix create task
+[33m1867c79a[m Add mitigation views
+[33mbe7bfb9f[m Update data
+[33m70022cde[m Add full width organization layout mode on framework sub routes
+[33m1160c2ad[m Fix not found page
+[33m50bf6b9c[m Move breadcrumb in own file
+[33m2a21a3c3[m Put migration in right order
+[33m62feae2f[m Revert "Delete unused migrations"
+[33m4e707051[m Fix createMitigationMutation call input
+[33m4e3977cb[m Fix lint
+[33m922bee2d[m Delete unused migrations
+[33m2fda2a68[m Revamp framework view
+[33m5a2d1115[m Remove sub menu
+[33m7321862b[m First step of mitigation migration
+[33m449bd620[m Style
+[33m483a620f[m Rename control to mitigation
+[33mbe64c1c2[m Update CHANGELOG
+[33mb41b13b4[m Style
+[33m9f4ac8fb[m Fix delete task with evidences 5xx
+[33m739fc613[m Force reload page when chunk does not load
+[33mb05675d1[m Fix non-ASCII characters in filename unsupported
+[33m008af821[m Remove unused code
+[33mc92c2f92[m Fix @probo/react-lazy
+[33mb483ddf9[m Update CHANGELOG
+[33m608d0bab[m Fix sign in redirect unauthorized error
+[33m408f7b4d[m Update CHANGELOG
+[33mc6f47a2b[m Fix react lazy chunck error
+[33mc4e4b163[m Use @probo/react-lazy instead of native React.lazy
+[33mf93ee928[m Fix toast hide action button
+[33me1b18a67[m Keep clicked category expend when go back
+[33mcef69ddd[m Update go.gearno.de/kit
+[33m46d7f63a[m Update CHANGELOG
+[33mcc7c1db6[m Fix panic in GraphQL resolver not hit httpserver recover
+[33m4b828d39[m Update CHANGELOG
+[33m58871440[m Allow to edit time estimate
+[33m59ce9a28[m Style
+[33mfa09c2cc[m Fix assign people open task sidebar
+[33m99c937f5[m Update CHANGELOG
+[33m9cb0c329[m Add task view sidebar
+[33m979d7a66[m Add probod traces
+[33m7b6c1100[m Add GraphQL tracing
+[33m993032e5[m Add custom exception for internal server error
+[33mb8ddb110[m Omit gqlgen panic handler
+[33m5d770c16[m Fix panic print non json log line
+[33m39487ecc[m Fix non json log lije
+[33m6ff1faa7[m Update CHANGELOG
+[33maff9a2a2[m Fix password manager take reset password token as username
+[33mf53f2e0c[m Fix authentication area
+[33meeaae30d[m Fix framework page skeleton
+[33m33687286[m Fix some page skeletons
+[33m9eb1a1cf[m Clean framework view UI
+[33m5bd19997[m Fix all lazy suspense callbacks
+[33m961a460b[m Make progress more visible for a framework
+[33m825548d8[m Update CHANGELOG
+[33m16e1bd9c[m Fix some lazy suspense fallbacks
+[33m2f2414d8[m Split project structure, routing
+[33m0a0fa1be[m Fix warning div child of p
+[33mf176bf13[m Add all missing page skeletons and use them as fallback
+[33meca4f03e[m Refactor framework view to make it more usable
+[33m51e4d748[m Add PageTemplate with skeletons and apply to Framework list
+[33mcee11408[m Update remaining page headers
+[33mffa0072b[m Update CHANGELOG
+[33mb8bbeaba[m Add evidence type link
+[33m7117c6a2[m Add forget/reset password
+[33mef8e62d4[m Fix nil panic when tenantID is nil
+[33ma44c90c9[m Fix control order under a category
+[33m306c6707[m Fix flickering on hover on categories
+[33mffa4c93b[m Add configuration option to disable signup
+[33ma72c0269[m Fix migration filename
+[33mcaab4b08[m Fix UI does not refresh after importing a framework
+[33m7efae811[m Make task time estimate optional
+[33m84c634ca[m Fix cannot create control
+[33maadc2053[m Set invitation token to 12 hours
+[33m7c96378f[m Fix missing include cookie on confirmation invit
+[33ma13dc991[m Fix sign-in does not include cookie
+[33mb2d06616[m Fix missing version when create task
+[33mc6697473[m Change vendor and people default order
+[33m8d234358[m Change vendor order to use order by name
+[33m1505e5b0[m Expose new cursor over GraphQL API
+[33m5a1f873d[m Use dedicated type for each order field
+[33mc73e417e[m Refactor model cursor to use orderBy
+[33m709b3363[m Refactor pagination system with flexible ordering support
+[33mb64ab3da[m Fix random order on framework overview
+[33m40b9320c[m Add task import support
+[33mcee4f364[m Allow to create vendor when it not exist
+[33me3fc8af1[m Fix upload modal
+[33ma2d372ea[m Fix change task state not visible on UI
+[33m1fbde864[m Allow to edit control state without going to edit page
+[33m7a4ea49c[m Redirect on people list after people creation
+[33m93a3ab15[m Revert "Fix put back sidebar trigger"
+[33m257ea563[m Add service account people kind
+[33m34ef38a0[m Fix card items alignement
+[33m09f853e4[m Fix control square not wrapped
+[33m0120fb84[m Fix cannot delete task
+[33m4123db21[m Fix put back sidebar trigger
+[33mc9b58010[m Use REST API for confirm endpoint
+[33me56dac3f[m Unify page headers on most pages
+[33m4fc9430e[m Fix login include SSID
+[33m6d985119[m Global container
+[33mfdb247b8[m UI breadcrumb active link
+[33m1f0e8316[m Rename peoples to people
+[33m8a2478fe[m Fix cannot delete people assigned to task
+[33m7153831f[m Remove user from organization
+[33mc2a93f68[m Fix remove useless import
+[33m641430eb[m Fix breadcrumb not displaying
+[33m32dcc096[m Remove dead code
+[33mebc88ec7[m Add user invitation system
+[33mec637401[m Align token datetime
+[33m51f2bcb6[m Remove unused make target
+[33m73f0f01e[m Fix missing hostname http scheme
+[33ma941d654[m Remove default cors config
+[33m87f7654b[m Add organization member list
+[33mb3751636[m Create error boundary for unauthenticated zone
+[33mac7fa6ed[m Fix missing suspenses in routing
+[33m9d174bb4[m Add missing settings breadcrumb
+[33m8e0456b7[m Fix breadcrumb route nesting
+[33m2f63f680[m Fix cancel navigation on control creation page
+[33m7a57ee9b[m Fix App routes nesting
+[33m05a0965f[m Fix breadcrumb over fetching
+[33m279429c8[m Fix sidebar display on no org zone
+[33m934d9fef[m Fix CORS default config
+[33m32e81f27[m Fix live reload not enable in dev
+[33mdfe53df7[m Fix missing redirect after login success
+[33m5ca45552[m Render markdown for control description
+[33md6f105b1[m Fix number of validated controls
+[33mf23ad08b[m Load controls on framework page
+[33md0acd8b5[m Fix number of control
+[33m01e81fb0[m Remove unused github action
+[33m61e43e11[m Remove legacy content
+[33mf1d16f18[m Add SOC2 framework data
+[33m03f621ec[m Add framework import
+[33m2f229fc2[m Fix organization creation failed
+[33mb87ad9e6[m Style
+[33mfacab541[m Add ecs support for aws
+[33m9b9fa084[m Move default aws configuration to config file
+[33m060a1c5f[m Update kit/httpclient
+[33mab739d9b[m Add update organziation
+[33m843a3242[m Fix too big "drop file to upload"
+[33m6e51bcb5[m Fix evidence upload
+[33m3de73b9e[m Add missing deps
+[33mf7cdfe51[m Add popover comp
+[33m9381bdc1[m Add command comp
+[33m8cbe08d1[m Add assigned people to a task
+[33m376edd92[m Add task time estimate
+[33m3255e32e[m Fix create conrtrol importance is missing
+[33m4da222c4[m Style
+[33md4280b11[m Add control importance
+[33m4ede969b[m Remove unused import
+[33mfb6c5dbf[m Fix vendor risk tier always show same color
+[33m759c5083[m Update support button link
+[33mc89c5e9e[m Logout redirect to homepage
+[33mebc8dd51[m Fix logout http error
+[33m1dab503b[m Fix people selector stale state
+[33m5883c4df[m Show risk tier on vendor list
+[33mf2a53de8[m Remove policy badges
+[33m3fc73ada[m Hide next/prev button when no pages are availables
+[33me12ca740[m Remove avatar on framework list
+[33mb6d32445[m Use textarea instead of input for task description
+[33mcaedc2e3[m Remove organization plan
+[33mb4f9862c[m Remove hardcoded nav user links
+[33mc06b4365[m Enable pg_statement
+[33md3ca8cc6[m Fix graphql playground url
+[33m9a7da091[m Fix missing tls	config
+[33m3e0c748f[m Add smtp tls support
+[33m9e950b1b[m Add SMTP auth support
+[33m1f9c5aea[m Fix tenant not found when creating new organinzation
+[33m3762d561[m Add timeout to mailer send
+[33m1a6e68f1[m Add email confirmation
+[33m0e44d399[m Fix dev node router extension detection issue
+[33mcd5e3ef4[m Add statelesstoken pkg
+[33m01af3812[m Enforce allowed tenant in each request
+[33m7c8beb74[m Fix duplicated in key in context
+[33m9edb5f31[m Add mailer system
+[33m9688f51b[m Style
+[33mdf279506[m Fix signup session already expired
+[33m80350853[m Fix duplicated ctx key
+[33m08eb17d9[m Fix signup redirect
+[33ma6f8673b[m Fix update policies
+[33m33f72bce[m Fix vendor update failed
+[33m8a094f1b[m Fix update session failed
+[33m9640e426[m Refactor probo service
+[33mb41f417a[m Fix unauthenticate user not redirect to login page
+[33mcc1c843d[m Refactor session loading management
+[33m019f76ec[m Refactor authentication handler
+[33m1f4675f6[m Rename session and user tables
+[33m5bdc474a[m Move coredata outside probo service
+[33m3c1a0c9d[m Fix broken user manager migration
+[33m51fb5c95[m Update gqlgen code
+[33m9ea6cb90[m Fix update task
+[33mc2bf3a42[m Simplify database schema
+[33m1070bba6[m Fix people creation redirect to a not found page
+[33m7d80557d[m Fix missing sql argument
+[33m12020659[m Fix missing tenant_id argument in sql query
+[33m7fe07744[m Reduce the size of the tenant id
+[33m58eda95d[m Rewrite the global id system to include tenant id
+[33m06bab506[m Update golang dependencies
+[33mb2b1305a[m Fix bootstrap organization failed
+[33ma4611f54[m Force scope usage even for insert
+[33mdc2cac93[m Remove unused omitempty
+[33m5bbca075[m Update contributing intructions
+[33mf74cb3b7[m Fix docker image build on github action
+[33mbe3aea85[m Style
+[33m0072a559[m Refactor CI
+[33mc46166ab[m Fix Clock is defined but never used
+[33m2b262a42[m Remove unused file
+[33m0b3bd6fd[m Fix missing aws config
+[33m3bd4762e[m Remove CORS configuration by default
+[33m6ca70e4d[m Enable typecheck before build console
+[33m92826c40[m Fix malformed filename
+[33m123a538d[m Embded frontend inside go binary
+[33m2c82dbad[m Update kit pg client
+[33m15fca043[m Update pg client
+[33m93801e1d[m Add support of postgresql TLS configuration
+[33m4d1305f1[m Fix panic on configuration load
+[33mbedab896[m Add icon on nav sub items
+[33md0773661[m nav skeletons
+[33maa0fca8f[m sidebar shell + skeleton
+[33ma388c8cb[m app sidebar UI polishing
+[33mdbc7711f[m Redirect to /frameworks
+[33m9f8f50c4[m Remove framework timeline
+[33m65f22451[m Fix migration organization ref
+[33mb539abf5[m Fix migration error
+[33md4723024[m Use signed cookie
+[33m13153e8f[m Add cookie signer helpers
+[33m8e097749[m Sign session cookie to avoid tapping
+[33m95260618[m Add data to session and floating duration
+[33m8bd61599[m Add link to people
+[33m9c8291b8[m Fix broken link
+[33m2eb9f4f2[m Add delete policy
+[33mb214b093[m Add policy owner
+[33mde4e91ca[m Fix unexpected any
+[33mc69b988b[m Add policy review date
+[33m79c69b68[m Improve policy overview style
+[33mf253a15a[m Improve policies list UI
+[33m552e4ecc[m Fix record version not uptodate in the store
+[33mbb6c4b50[m Style
+[33mf99eb679[m Fix eslint errors
+[33mfdab9de3[m Fix missing lexical dependencies
+[33m3c39aa86[m Add policy visual editor
+[33m31247435[m Add policies
+[33meda7044a[m Reduce docker build context
+[33m2b14b4e6[m Style
+[33meef87f39[m Rewrite esbuild postcss plugin
+[33m69d947b6[m Fix build script lint errors
+[33m45066a00[m Upgrade from tailwind v3 to v4
+[33mcf12d396[m Replace pgx.NamedArgs to pgx.StrictNamedArgs
+[33m75c28135[m Style
+[33mbb463be8[m Refactor sql row can using collectable rows
+[33m67edb378[m Add missing license headers
+[33m10b9ded4[m Add delete evidence
+[33m3fb04c99[m Style
+[33m5e079f8c[m Fix missing aria-describedby
+[33m29f23e3f[m Add evidence preview modal
+[33m6a5d82f3[m Update go.mod
+[33m312885eb[m Add filename field to Evidence type
+[33m436151b0[m Fix relay connection handling for evidence lists
+[33m5646286f[m Add evidences list below each task
+[33m3b69e894[m Add drag and drop support
+[33m05160a16[m Style
+[33mf2e3a2fb[m Fix control overview breadcrumb show framework name twice
+[33m8d8149e6[m Fix missing values for control SQL insert
+[33mc9253f3a[m Add evidence attachments upload
+[33mb36b6ed3[m Add original filename to evidence
+[33m66b47611[m Configure s3 client when probod start
+[33m521fc207[m Add awsconfig helper
+[33mdced14bf[m Update generated file
+[33mf12fec6e[m Add missing mutation type import
+[33m367cf02e[m Add proper custom scalar type definitions
+[33m7329039b[m Simplify file upload processing logic
+[33mcfabe3ee[m Add file upload for task evidence
+[33mfc5a97cb[m Add support for file uploads in Relay Environment
+[33m9f03583e[m Add multipart form transport support
+[33m2f274aab[m Fix SQL syntax error when insert evidence state transition
+[33m124b8db6[m Fix SQL syntax error on evidence insert
+[33mad19ef5b[m Fix task not found when create evidence
+[33mf69f44d0[m Fix typecheck issues
+[33m38c6394d[m Fix lint issues
+[33mcf2e88f0[m Style
+[33m40ee6080[m Add update control
+[33m52de0387[m Style
+[33m4bb7c116[m Refactor update payload
+[33mc946e510[m Add update framework
+[33mc54febad[m Add create control and framework
+[33m63b59646[m Fix any typescript type
+[33m664e2cdd[m Refactor user render
+[33ma68fcc23[m Style
+[33m6be112e3[m Add delete task
+[33meaaab569[m Add task creation
+[33m58fddfc2[m Add update task state
+[33m0882a65e[m Add lint to github action steps
+[33m04c2b73b[m Rename TeamSwitcher comp
+[33mdef17c6a[m Allow organization creation on signup
+[33mbdf4273d[m Fix 404 never rendered
+[33ma63fa528[m Remove unused links
+[33maef26916[m Fix eslint type props
+[33m73247c1e[m Style
+[33m992410fd[m Fix eslint errors
+[33mc3629700[m Fix unused eslint error
+[33mc6cff715[m Migrate current organization from in memory to url state
+[33m50aeed78[m Remove google sso button
+[33m56f3c8ae[m Active menu item follow react router state
+[33m9bc966b3[m Style
+[33mb8eb0198[m Add create organization
+[33m3ee3b37d[m Add missing fullname for signup
+[33maf23a3e6[m Fix type errors
+[33m818a6564[m Style
+[33m0c176674[m Add multi-tenant system
+[33m29ce55e8[m Fix sql syntax error migration
+[33me9ae77a4[m Add login/register logic
+[33m49c3807b[m Introduce viewer object
+[33m42fec1bc[m Update README.md
+[33m3396d613[m Update README.md
+[33mb4b9593a[m Update README
+[33mbe442352[m Fix link type error when no url
+[33m6898e760[m Change "Add a people" button style
+[33mdaa408e5[m Change menu organization
+[33mf79e6121[m Update framework list style
+[33m4d288d9d[m Fix framework list box too small
+[33md2bffc20[m Style
+[33m22a6bbd2[m Remove duplicated css directive
+[33m09a48b0e[m Fix missing breadcrump route match
+[33mcc78b147[m Update people list style
+[33ma292fa80[m Update vendor list page style
+[33maa9c3db8[m Fix react router warning
+[33me63d778b[m Style
+[33m31a47cbc[m Fix page not chuncked
+[33m8d092fd1[m Fix typecheck
+[33m81b01f06[m Fix breadcrumb make UI blink
+[33m5ebe7a68[m Add control overview page
+[33mc44c4ba8[m Add control tooltip
+[33m1cee55b8[m Style
+[33m8d33fa94[m Fix breadcrump value
+[33mef774ce6[m Style
+[33m026d939f[m Fix connection id
+[33m23d0f233[m Refactor people list
+[33m1747e5ed[m Style
+[33mb7e9f4aa[m Use __id to retrive the connection id instead of explicit helper
+[33m50cc8e6b[m Fix delete vendor does not update the UI
+[33m3cce6ea2[m Use dedicated pagination hook
+[33madb1dbbb[m Refactor people pagination
+[33mb27f6975[m Migrate pagination from page to scroll one
+[33md9c76878[m Refactor create vendor mutation to use connection update
+[33mbb854343[m Style
+[33mdc2680d3[m Improve create people mutation name
+[33m010c6054[m Use more defined node name for organization
+[33mc510627b[m Change type name
+[33me2ddbf9f[m Make UI refreshing without invalidate all the cache
+[33m52db2d5f[m Improve framework list style
+[33mf347e600[m Align create people style with the update people page
+[33mdb5cefff[m Add update people
+[33m4e6f711b[m Fix save button still visible after update
+[33m2d5514e4[m Add update vendor logic
+[33mebdf1464[m Rename column
+[33m1ef8468d[m Add vendor privacy page
+[33m00c2206e[m Add term of service to vendor
+[33m88e6aae0[m Add description to vendor
+[33m6da223ed[m Add risk tier, criticality on vendors
+[33m53bceb54[m Style
+[33m86924823[m Fix import typo
+[33m133cd6ac[m Add people overview page
+[33mba73ffca[m Use name for breadcrump
+[33m23dad143[m Update compose.yaml
+[33m3d6cec43[m Update tempo.yaml
+[33m2595a4ec[m Style
+[33mdea502f5[m Update comp to use cat
+[33m72d4b097[m Add control categories
+[33mbd7fb977[m Update README
+[33m87308a80[m Update README
+[33mcec6e128[m Update contributing
+[33m1b25601a[m Style
+[33m31e65065[m Refactor enum type
+[33mde0d41c6[m Add people kind support
+[33m5864e092[m Add create people
+[33m29258e65[m Add delete people
+[33m5b5321fa[m Style
+[33mfe95902c[m Add delete vendor action
+[33m32e6391c[m Fix loadQuery type
+[33m1c3ce533[m Fix content not updated when mutation succeed
+[33m66e31a43[m Remove useless safe accessor
+[33ma6d4fce3[m Add more sample data
+[33m61737c98[m Fix autocomplete data
+[33m6044f68b[m Add pagination for people
+[33m65fb783e[m Update default page size
+[33m743ec499[m Fix pagination
+[33mbbc037ad[m Fix node version
+[33m94fc6a5f[m Add production config
+[33m4409b350[m Fix missing node_modules
+[33me73ac4b3[m Fix ga console target
+[33mbf997629[m Add github action for @probo/console
+[33mddda589f[m Add typecheck script
+[33m2e2dfa1c[m Add helmet title
+[33ma01af3ed[m Add pagination for vendor list
+[33m000997b8[m Add settings page query
+[33m627f5581[m Fix page reload on breadcrumb link
+[33m84736a21[m Add create vendor action
+[33m06dcbb80[m Fix useParams type
+[33mcfcfdd6c[m Fix type error
+[33mb2fc11ec[m Fix fuse type error
+[33m1482a1d3[m Bump esbuild in the npm_and_yarn group across 1 directory
+[33m2b0ae7c3[m Add settings page
+[33m33c4d3de[m Style
+[33mab53c40b[m Fix error boundary state never reset
+[33ma3056fab[m Rename frameworks page
+[33mb6ad7c92[m Rename peoples page
+[33m8291217b[m Rename vendor list page comp
+[33m604868fd[m Add vendor overview
+[33me144547b[m Add missing comp
+[33ma6318133[m Add error page
+[33m9455a0a0[m Update style error boundary
+[33m2c7449ef[m Add vendor search
+[33m725d24dc[m Fix query type
+[33m7123a9dc[m Rename comp
+[33mc9351b17[m Rename framework page
+[33m8ac4929f[m Add framewor overview page
+[33m91e23268[m Add frameworks page
+[33m6c95643b[m Style
+[33m001455cb[m Style
+[33m08d71050[m Add dynamic breadcrumb
+[33m9281352c[m Add favicon assets
+[33mfc679590[m Update rel icon config
+[33m13cf2f7d[m Add style for vendor page
+[33m56b6339b[m Add bage ui comp
+[33m08499d49[m Style for people page
+[33m133b5a54[m Use react router link
+[33m1dbad225[m Style
+[33me165bfe8[m Update sidebar query
+[33m8de462b5[m Add vendors page
+[33maa53264d[m Add peoples page
+[33mb10f4899[m Add console layout
+[33me8c19902[m Fix shdcn tailwind config path
+[33mdea03a18[m Configure shdcn
+[33m30ccabe1[m Update go.mod
+[33m3db79a1f[m Update README.md
+[33m39431353[m Fix permission name
+[33m16929ea7[m Fix github action syntax
+[33mcf182656[m Reduce github action permissions
+[33m8fbfa582[m Add people kind
+[33m31a6c7c4[m Add create evidence
+[33mc983677d[m Add create vendor
+[33m784775fd[m Add create people
+[33m1142bf9b[m Add create task
+[33m2723d345[m Fix control object without state
+[33mace78da3[m Add intial state when create control
+[33m3859cb71[m Update home query
+[33mc1ebd841[m Add create control
+[33mec75411a[m Call sql quert
+[33mac41883a[m Fix sql query
+[33m923f79d6[m Add delete framework
+[33mbeab525b[m Add create framework sdk call
+[33m89fce182[m Add login logic
+[33meafc4c99[m Update coredata user
+[33m4614c31e[m Add way to hash password
+[33m41b957f2[m Update usrmgr schema
+[33m0e9746bb[m Bootstrap user manager
+[33m7dfa3363[m Style
+[33m3fcf5e43[m Move gid and page pkg
+[33md64350ea[m Style
+[33m96089343[m Fix too many SSE conn open in dev mode
+[33m6dbb2910[m Ignore node_modules in docker context
+[33m028c1afe[m Update make clean target
+[33m84823f65[m Add @probo/console make target
+[33mb3dcfc6b[m Add react setup
+[33m1bcf32c3[m Add typescript config package
+[33m62e0fd3f[m Bootstrap npm monorepo
+[33m6d254379[m Add mimetype and size
+[33m3dd6310c[m Add evidence node query support
+[33mcd6a3886[m Add task node query support
+[33mddfd3928[m Add control node query support
+[33mc03be763[m Add framework node query support
+[33m940bc597[m Fix framework load by id sql error
+[33m98696d6b[m Add vendor node query support
+[33m5291cdb3[m Add people node query support
+[33m14380aa6[m Add evidence state history
+[33m9c0c5afa[m Add evidence state
+[33m925e91b9[m Add mimetype and size
+[33mdfaf516d[m Fix duplicated tasks
+[33m31f750cf[m Add state history for task state
+[33m48d6f3c7[m Fix people scan error
+[33maf814bf8[m Style
+[33ma054fae3[m Add state to task
+[33m51f87c75[m Style
+[33m95649a08[m Add people data model
+[33m2b42da72[m Fix missing node impl
+[33mf91b9548[m Fix id type
+[33m5594e4a4[m Remove useless pointer
+[33m720a3695[m Add vendor data model
+[33m3a5535a7[m Add minio compose config
+[33ma4b497ce[m Add evidence coredata object
+[33me955b4a5[m Add name and description for task
+[33m0c55cafd[m Fix wrong type
+[33mab38e90f[m Add CHANGELOG
+[33m97e8e91d[m Change tasks can be linked to many controls
+[33m4c8d0ea6[m Update go.mod
+[33m9a191d7e[m Add control state transitions graphql resolver
+[33m66315438[m Add ControlState type
+[33m422c96a2[m Add control state
+[33m96355bb9[m Add task graphql encoding
+[33m4c612753[m Add control graphql encoding
+[33me63fc433[m Add framework graphql encoding
+[33m3562b028[m Fix docker image name
+[33m7e484c4e[m Fix docker registry permissions
+[33m9902cf2a[m Disable multi platform build
+[33me2148350[m Fix github action worker name
+[33m450551e1[m Fix job name
+[33m1a550403[m Fix github action syntax
+[33m3416950f[m Add docker build workflow
+[33m048ea4f1[m Add dockerfile
+[33m991afde9[m Add organization graphql encoding
+[33mb91c0c6f[m Use base64 encoding everywhere
+[33m529d6e64[m Add psql target
+[33m31c90b6b[m Add missing license header
+[33m84572c57[m Fix SQL organization where clause
+[33m4b46a78a[m Update dependencies
+[33m64a3072a[m Add migrations system
+[33m6a378a8a[m Add node resolver
+[33md17a29a7[m Remove useless transport
+[33m35546232[m Add missing license header
+[33mf6e1e802[m Move to string to GID
+[33me6035cd7[m Inject probo to resolver
+[33m7ab7fd2d[m Add api server muxer
+[33mbaa038fa[m Style
+[33m0b5ad004[m Introduce global id
+[33m4c952409[m Add go fmt target
+[33md49e18b1[m Style
+[33mb4acae18[m Introduce multi tenant system
+[33m5639b83f[m Add licence header
+[33m5479aa75[m Fix organization scan
+[33m025aa09c[m Fix column id for cursor
+[33m94847a8a[m Modify cursor key to use uuid
+[33m25e97e25[m Add github action for make build
+[33ma64cf4e5[m Configure gitattribute
+[33mf5854c7a[m Style
+[33m86b48da2[m Add task resolver
+[33med91482e[m Fix too many args
+[33m5bfc19f3[m Fix printf fmt string
+[33m072a1b83[m Remove useless pointer
+[33md1531c1f[m Add control resolver
+[33m5c0100f8[m Fix func name
+[33me161b89a[m Fix func name
+[33mbd85afa2[m Fix ghost err
+[33m4a4e1607[m Fix close row
+[33m29f8583f[m Fix wrong order by
+[33m8bb19111[m Add framework resolver impl
+[33mb749c127[m Bootstrap coredata object
+[33m09044268[m Bootstrap graphql api schema
+[33m74be91f4[m Add http server
+[33m8d86eacf[m Add postgresql connection
+[33mb5ddb7d8[m Add docker and compose config
+[33m8983a0d7[m Bootstrap probod deamon
+[33m51699570[m Add go.mod
+[33m18f28f1f[m Typo
+[33md76d8bf9[m Style
+[33m965212ae[m Update README
+[33mb67e15c6[m Add keep and transparency
+[33m7789989b[m Add share soc2
+[33m8fae3957[m Add control index links
+[33m63a9b64a[m Fix formatting
+[33m6733b775[m Add control index
+[33mb4f10dc0[m Add categories descriptions
+[33m26fa0d6b[m STyle
+[33m758e05fe[m Fix link
+[33m5625301d[m Add incident controls
+[33mcf9451db[m Add monitoring controls
+[33m8802e093[m Add data controls
+[33m69d006c7[m Add network controls
+[33m3f3bcc48[m Add COR.INF controls
+[33mc0a45a8c[m Style
+[33mbf93f5af[m Add access controls
+[33m15c6902c[m Remap categories
+[33m77b6a273[m Add titles and necessity
+[33m6f255701[m Remap phy.rea to phy.fac
+[33m0e9eb5a4[m Style
+[33m7c81887d[m Add securtiy responsabilities control
+[33m42f2f6e0[m Add performance review control
+[33m20dbe9b5[m Fix tag
+[33mffcf4179[m Add anon report control
+[33m74874935[m Add train your employees on security
+[33m4235bf06[m Style
+[33m6647df51[m Rename data into templates
+[33m4e054428[m Add link to CONTRIBUTING
+[33m3eb0f168[m Add CONTRUBUTING rules
+[33mccd2513f[m Add DCO
+[33mebf48644[m Add CoC
+[33md6b5cb1f[m Style
+[33m620b530a[m Add evidence
+[33mf919c3dd[m Add real estate control
+[33m4599f85e[m Update README.md
+[33m850748ee[m Rename security file
+[33m8b467e4e[m Add SECURITY.txt
+[33mcbf060bf[m Run fmt
+[33meb4520fb[m Style
+[33mcc6efed4[m Add ACC.IDM
+[33m501fd4cd[m Update title
+[33m359b76eb[m Add discord link
+[33m66030ebc[m Update README
+[33mdafd70cb[m Add LICENSE
+[33m541773f7[m Add README
+[33m70ccadba[m Style
+[33m98841ae7[m Style
+[33me650db05[m Update filename
+[33m4fffc80a[m Style
+[33m74cf5f4c[m Fix format do not format all files
+[33mdf5ecf23[m Add hardware device controls
+[33mf8685461[m Add github action
+[33m17d4f300[m Add fmt as all target deps
+[33m9f21618b[m Add make targets
+[33m99d32ca4[m Style
+[33m3d923033[m Add email firewall control
+[33m9ce42756[m Simplify control category
+[33mc4efa6c3[m Add SDLC control
+[33m523cf4db[m Add missing steps
+[33m02aee195[m Rename files
+[33m5fb544f7[m Add dependency vulnerability alerts
+[33m50091ec1[m Style
+[33md4b4e6c6[m Update id and category
+[33m17c9d81d[m Add code scanning
+[33mb5a903b5[m Add codebase pull request review
+[33me529e22d[m Add DMARC control
+[33md2cb4e4a[m Remove risk assessment
+[33ma2960f94[m Add SPF control
+[33m1e62caa7[m Fix YAML indent
+[33m84628fb4[m Style
+[33m195f919a[m Add DKIM control
