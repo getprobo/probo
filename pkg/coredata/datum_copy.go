@@ -14,37 +14,38 @@
 
 package coredata
 
-const (
-	OrganizationEntityType uint16 = iota
-	FrameworkEntityType
-	MeasureEntityType
-	TaskEntityType
-	EvidenceEntityType
-	ConnectorEntityType
-	VendorRiskAssessmentEntityType
-	VendorEntityType
-	PeopleEntityType
-	VendorComplianceReportEntityType
-	DocumentEntityType
-	UserEntityType
-	SessionEntityType
-	EmailEntityType
-	ControlEntityType
-	RiskEntityType
-	DocumentVersionEntityType
-	DocumentVersionSignatureEntityType
-	AssetEntityType
-	DatumEntityType
-	AuditEntityType
-	ReportEntityType
-	TrustCenterEntityType
-	TrustCenterAccessEntityType
-	VendorBusinessAssociateAgreementEntityType
-	FileEntityType
-	VendorContactEntityType
-	VendorDataPrivacyAgreementEntityType
-	NonconformityRegistryEntityType
-	ComplianceRegistryEntityType
-	VendorServiceEntityType
-	SnapshotEntityType
-)
+type datumCopy struct {
+	data     Data
+	scope    Scoper
+	position int
+}
+
+func (c *datumCopy) Next() bool {
+	return c.position < len(c.data)
+}
+
+func (c *datumCopy) Values() ([]interface{}, error) {
+	if c.position >= len(c.data) {
+		return nil, nil
+	}
+
+	datum := c.data[c.position]
+	c.position++
+
+	return []any{
+		datum.ID,
+		c.scope.GetTenantID(),
+		datum.Name,
+		datum.OwnerID,
+		datum.OrganizationID,
+		datum.DataClassification,
+		datum.SnapshotID,
+		datum.OriginalID,
+		datum.CreatedAt,
+		datum.UpdatedAt,
+	}, nil
+}
+
+func (c *datumCopy) Err() error {
+	return nil
+}

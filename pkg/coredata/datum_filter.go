@@ -14,37 +14,47 @@
 
 package coredata
 
-const (
-	OrganizationEntityType uint16 = iota
-	FrameworkEntityType
-	MeasureEntityType
-	TaskEntityType
-	EvidenceEntityType
-	ConnectorEntityType
-	VendorRiskAssessmentEntityType
-	VendorEntityType
-	PeopleEntityType
-	VendorComplianceReportEntityType
-	DocumentEntityType
-	UserEntityType
-	SessionEntityType
-	EmailEntityType
-	ControlEntityType
-	RiskEntityType
-	DocumentVersionEntityType
-	DocumentVersionSignatureEntityType
-	AssetEntityType
-	DatumEntityType
-	AuditEntityType
-	ReportEntityType
-	TrustCenterEntityType
-	TrustCenterAccessEntityType
-	VendorBusinessAssociateAgreementEntityType
-	FileEntityType
-	VendorContactEntityType
-	VendorDataPrivacyAgreementEntityType
-	NonconformityRegistryEntityType
-	ComplianceRegistryEntityType
-	VendorServiceEntityType
-	SnapshotEntityType
+import (
+	"github.com/getprobo/probo/pkg/gid"
+	"github.com/jackc/pgx/v5"
 )
+
+type (
+	DatumFilter struct {
+		snapshotID **gid.GID
+	}
+)
+
+func NewDatumFilter() *DatumFilter {
+	return &DatumFilter{
+		snapshotID: nil,
+	}
+}
+
+func NewDatumFilterBySnapshotID(snapshotID **gid.GID) *DatumFilter {
+	return &DatumFilter{
+		snapshotID: snapshotID,
+	}
+}
+
+func (f *DatumFilter) SQLArguments() pgx.NamedArgs {
+	args := pgx.NamedArgs{}
+
+	if f.snapshotID != nil && *f.snapshotID != nil {
+		args["filter_snapshot_id"] = **f.snapshotID
+	}
+
+	return args
+}
+
+func (f *DatumFilter) SQLFragment() string {
+	if f.snapshotID == nil {
+		return "TRUE"
+	}
+
+	if *f.snapshotID == nil {
+		return "snapshot_id IS NULL"
+	} else {
+		return "snapshot_id = @filter_snapshot_id"
+	}
+}

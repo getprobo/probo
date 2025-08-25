@@ -3,6 +3,7 @@ import {
   type PreloadedQuery,
   usePreloadedQuery,
 } from "react-relay";
+import { useParams } from "react-router";
 import {
   datumNodeQuery,
   useDeleteDatum,
@@ -25,7 +26,8 @@ import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
-import type { DatumGraphNodeQuery } from "/hooks/graph/__generated__/DatumGraphNodeQuery.graphql.ts";
+import { SnapshotBanner } from "/components/SnapshotBanner";
+import type { DatumGraphNodeQuery } from "/hooks/graph/__generated__/DatumGraphNodeQuery.graphql";
 
 const updateDatumSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -39,17 +41,26 @@ type Props = {
 };
 
 export default function DatumDetailsPage(props: Props) {
-  const datum = usePreloadedQuery(datumNodeQuery, props.queryRef);
-  const datumEntry = datum.node;
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
+
+  const queryData = usePreloadedQuery<DatumGraphNodeQuery>(
+    datumNodeQuery,
+    props.queryRef
+  );
+
+  const datumEntry = queryData.node;
+
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+
   const deleteDatum = useDeleteDatum(
     datumEntry,
     ConnectionHandler.getConnectionID(organizationId, "DataPage_data"),
   );
 
-  const vendors = datumEntry?.vendors?.edges.map((edge) => edge.node) ?? [];
-  const vendorIds = vendors.map((vendor) => vendor.id);
+  const vendors = datumEntry?.vendors?.edges.map(edge => edge.node) ?? [];
+  const vendorIds = vendors.map(vendor => vendor.id);
 
   const { control, formState, handleSubmit, register, reset } =
     useFormWithSchema(updateDatumSchema, {
@@ -64,7 +75,7 @@ export default function DatumDetailsPage(props: Props) {
   const updateDatum = useUpdateDatum();
 
   const onSubmit = handleSubmit(async (formData) => {
-    if (!datumEntry.id) {
+    if (!datumEntry?.id) {
       alert("id is missing from data");
       return;
     }
@@ -79,44 +90,59 @@ export default function DatumDetailsPage(props: Props) {
     }
   });
 
+  const breadcrumbDataUrl = isSnapshotMode
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/data`
+    : `/organizations/${organizationId}/data`;
+
+  const breadcrumbItems = [
+    {
+      label: __("Data"),
+      to: breadcrumbDataUrl,
+    },
+    {
+      label: datumEntry?.name || "",
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          {
-            label: __("Data"),
-            to: `/organizations/${organizationId}/data`,
-          },
-          {
-            label: datumEntry?.name ?? "",
-          },
-        ]}
-      />
+      {isSnapshotMode && snapshotId && (
+        <SnapshotBanner snapshotId={snapshotId} />
+      )}
+      <Breadcrumb items={breadcrumbItems} />
 
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
           <div className="text-2xl">{datumEntry?.name}</div>
           <Badge variant="info">{datumEntry?.dataClassification}</Badge>
         </div>
-        <ActionDropdown variant="secondary">
-          <DropdownItem
-            variant="danger"
-            icon={IconTrashCan}
-            onClick={deleteDatum}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+        {!isSnapshotMode && (
+          <ActionDropdown variant="secondary">
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={deleteDatum}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6 max-w-2xl">
-        <Field label={__("Name")} {...register("name")} type="text" />
+        <Field
+          label={__("Name")}
+          {...register("name")}
+          type="text"
+          disabled={isSnapshotMode}
+        />
 
         <ControlledField
           control={control}
           name="dataClassification"
           type="select"
           label={__("Classification")}
+          disabled={isSnapshotMode}
         >
           <Option value="PUBLIC">{__("Public")}</Option>
           <Option value="INTERNAL">{__("Internal")}</Option>
@@ -129,6 +155,7 @@ export default function DatumDetailsPage(props: Props) {
           control={control}
           name="ownerId"
           label={__("Owner")}
+          disabled={isSnapshotMode}
         />
 
         <VendorsMultiSelectField
@@ -136,15 +163,19 @@ export default function DatumDetailsPage(props: Props) {
           control={control}
           name="vendorIds"
           label={__("Vendors")}
+          disabled={isSnapshotMode}
+          selectedVendors={vendors}
         />
 
-        <div className="flex justify-end">
-          {formState.isDirty && (
-            <Button type="submit" disabled={formState.isSubmitting}>
-              {formState.isSubmitting ? __("Updating...") : __("Update")}
-            </Button>
-          )}
-        </div>
+        {!isSnapshotMode && (
+          <div className="flex justify-end">
+            {formState.isDirty && (
+              <Button type="submit" disabled={formState.isSubmitting}>
+                {formState.isSubmitting ? __("Updating...") : __("Update")}
+              </Button>
+            )}
+          </div>
+        )}
       </form>
     </div>
   );

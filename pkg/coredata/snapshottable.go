@@ -14,37 +14,23 @@
 
 package coredata
 
-const (
-	OrganizationEntityType uint16 = iota
-	FrameworkEntityType
-	MeasureEntityType
-	TaskEntityType
-	EvidenceEntityType
-	ConnectorEntityType
-	VendorRiskAssessmentEntityType
-	VendorEntityType
-	PeopleEntityType
-	VendorComplianceReportEntityType
-	DocumentEntityType
-	UserEntityType
-	SessionEntityType
-	EmailEntityType
-	ControlEntityType
-	RiskEntityType
-	DocumentVersionEntityType
-	DocumentVersionSignatureEntityType
-	AssetEntityType
-	DatumEntityType
-	AuditEntityType
-	ReportEntityType
-	TrustCenterEntityType
-	TrustCenterAccessEntityType
-	VendorBusinessAssociateAgreementEntityType
-	FileEntityType
-	VendorContactEntityType
-	VendorDataPrivacyAgreementEntityType
-	NonconformityRegistryEntityType
-	ComplianceRegistryEntityType
-	VendorServiceEntityType
-	SnapshotEntityType
+import (
+	"context"
+	"fmt"
+
+	"github.com/getprobo/probo/pkg/gid"
+	"go.gearno.de/kit/pg"
 )
+
+type Snapshottable interface {
+	Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+}
+
+func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {
+	switch snapshotType {
+	case SnapshotsTypeData:
+		return Data{}, nil
+	default:
+		return nil, fmt.Errorf("unsupported snapshot type: %s", snapshotType)
+	}
+}

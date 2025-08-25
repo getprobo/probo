@@ -430,6 +430,17 @@ type CreateRiskPayload struct {
 	RiskEdge *RiskEdge `json:"riskEdge"`
 }
 
+type CreateSnapshotInput struct {
+	OrganizationID gid.GID                `json:"organizationId"`
+	Name           string                 `json:"name"`
+	Description    *string                `json:"description,omitempty"`
+	Type           coredata.SnapshotsType `json:"type"`
+}
+
+type CreateSnapshotPayload struct {
+	SnapshotEdge *SnapshotEdge `json:"snapshotEdge"`
+}
+
 type CreateTaskInput struct {
 	OrganizationID gid.GID        `json:"organizationId"`
 	MeasureID      *gid.GID       `json:"measureId,omitempty"`
@@ -535,6 +546,10 @@ func (this Datum) GetID() gid.GID { return this.ID }
 type DatumEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Datum         `json:"node"`
+}
+
+type DatumFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
 type DeleteAssetInput struct {
@@ -705,6 +720,14 @@ type DeleteRiskMeasureMappingPayload struct {
 
 type DeleteRiskPayload struct {
 	DeletedRiskID gid.GID `json:"deletedRiskId"`
+}
+
+type DeleteSnapshotInput struct {
+	SnapshotID gid.GID `json:"snapshotId"`
+}
+
+type DeleteSnapshotPayload struct {
+	DeletedSnapshotID gid.GID `json:"deletedSnapshotId"`
 }
 
 type DeleteTaskInput struct {
@@ -1039,6 +1062,7 @@ type Organization struct {
 	Audits                  *AuditConnection                 `json:"audits"`
 	NonconformityRegistries *NonconformityRegistryConnection `json:"nonconformityRegistries"`
 	ComplianceRegistries    *ComplianceRegistryConnection    `json:"complianceRegistries"`
+	Snapshots               *SnapshotConnection              `json:"snapshots"`
 	TrustCenter             *TrustCenter                     `json:"trustCenter,omitempty"`
 	CreatedAt               time.Time                        `json:"createdAt"`
 	UpdatedAt               time.Time                        `json:"updatedAt"`
@@ -1199,6 +1223,23 @@ type SendSigningNotificationsPayload struct {
 type Session struct {
 	ID        gid.GID   `json:"id"`
 	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+type Snapshot struct {
+	ID           gid.GID                `json:"id"`
+	Organization *Organization          `json:"organization"`
+	Name         string                 `json:"name"`
+	Description  *string                `json:"description,omitempty"`
+	Type         coredata.SnapshotsType `json:"type"`
+	CreatedAt    time.Time              `json:"createdAt"`
+}
+
+func (Snapshot) IsNode()             {}
+func (this Snapshot) GetID() gid.GID { return this.ID }
+
+type SnapshotEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Snapshot      `json:"node"`
 }
 
 type Task struct {

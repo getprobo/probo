@@ -26,10 +26,11 @@ import (
 
 type (
 	DatumVendor struct {
-		DatumID   gid.GID      `db:"datum_id"`
-		VendorID  gid.GID      `db:"vendor_id"`
-		TenantID  gid.TenantID `db:"tenant_id"`
-		CreatedAt time.Time    `db:"created_at"`
+		DatumID    gid.GID      `db:"datum_id"`
+		VendorID   gid.GID      `db:"vendor_id"`
+		SnapshotID *gid.GID     `db:"snapshot_id"`
+		TenantID   gid.TenantID `db:"tenant_id"`
+		CreatedAt  time.Time    `db:"created_at"`
 	}
 
 	DatumVendors []*DatumVendor
@@ -108,6 +109,78 @@ FROM vendor_ids
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert data vendors: %w", err)
+	}
+
+	return nil
+}
+
+func (dv *DatumVendors) LoadByDatumIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	datumIDs []gid.GID,
+) error {
+	if len(datumIDs) == 0 {
+		return nil
+	}
+
+	q := `
+SELECT
+	datum_id,
+	vendor_id,
+	tenant_id,
+	snapshot_id,
+	created_at
+FROM
+	data_vendors
+WHERE
+	tenant_id = @tenant_id
+	AND datum_id = ANY(@datum_ids::text[])
+ORDER BY datum_id, vendor_id
+`
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id": scope.GetTenantID(),
+		"datum_ids": datumIDs,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query datum vendors: %w", err)
+	}
+
+	datumVendors, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DatumVendor])
+	if err != nil {
+		return fmt.Errorf("cannot collect datum vendors: %w", err)
+	}
+
+	*dv = datumVendors
+
+	return nil
+}
+
+func (dv DatumVendors) BulkInsert(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	columnNames := []string{
+		"tenant_id",
+		"datum_id",
+		"vendor_id",
+		"snapshot_id",
+		"created_at",
+	}
+
+	copyFromSource := &datumVendorCopy{
+		datumVendors: dv,
+		scope:        scope,
+		position:     0,
+	}
+
+	_, err := conn.CopyFrom(ctx, pgx.Identifier{"data_vendors"}, columnNames, copyFromSource)
+	if err != nil {
+		return fmt.Errorf("cannot bulk insert datum vendors: %w", err)
 	}
 
 	return nil

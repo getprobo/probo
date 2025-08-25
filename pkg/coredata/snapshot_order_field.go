@@ -14,37 +14,38 @@
 
 package coredata
 
-const (
-	OrganizationEntityType uint16 = iota
-	FrameworkEntityType
-	MeasureEntityType
-	TaskEntityType
-	EvidenceEntityType
-	ConnectorEntityType
-	VendorRiskAssessmentEntityType
-	VendorEntityType
-	PeopleEntityType
-	VendorComplianceReportEntityType
-	DocumentEntityType
-	UserEntityType
-	SessionEntityType
-	EmailEntityType
-	ControlEntityType
-	RiskEntityType
-	DocumentVersionEntityType
-	DocumentVersionSignatureEntityType
-	AssetEntityType
-	DatumEntityType
-	AuditEntityType
-	ReportEntityType
-	TrustCenterEntityType
-	TrustCenterAccessEntityType
-	VendorBusinessAssociateAgreementEntityType
-	FileEntityType
-	VendorContactEntityType
-	VendorDataPrivacyAgreementEntityType
-	NonconformityRegistryEntityType
-	ComplianceRegistryEntityType
-	VendorServiceEntityType
-	SnapshotEntityType
+import (
+	"fmt"
 )
+
+type SnapshotOrderField string
+
+const (
+	SnapshotOrderFieldCreatedAt SnapshotOrderField = "CREATED_AT"
+	SnapshotOrderFieldName      SnapshotOrderField = "NAME"
+	SnapshotOrderFieldType      SnapshotOrderField = "TYPE"
+)
+
+func (p SnapshotOrderField) Column() string {
+	return string(p)
+}
+
+func (p SnapshotOrderField) String() string {
+	return string(p)
+}
+
+func (p SnapshotOrderField) MarshalText() ([]byte, error) {
+	return []byte(p.String()), nil
+}
+
+func (p *SnapshotOrderField) UnmarshalText(text []byte) error {
+	val := string(text)
+	switch val {
+	case string(SnapshotOrderFieldCreatedAt),
+		string(SnapshotOrderFieldName),
+		string(SnapshotOrderFieldType):
+		*p = SnapshotOrderField(val)
+		return nil
+	}
+	return fmt.Errorf("invalid SnapshotOrderField value: %q", val)
+}

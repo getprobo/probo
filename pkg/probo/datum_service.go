@@ -115,6 +115,7 @@ func (s DatumService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.DatumOrderField],
+	filter *coredata.DatumFilter,
 ) (*page.Page[*coredata.Datum, coredata.DatumOrderField], error) {
 	var data coredata.Data
 
@@ -127,6 +128,7 @@ func (s DatumService) ListForOrganizationID(
 				s.svc.scope,
 				organizationID,
 				cursor,
+				filter,
 			)
 		},
 	)

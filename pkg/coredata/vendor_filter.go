@@ -15,12 +15,14 @@
 package coredata
 
 import (
+	"github.com/getprobo/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 )
 
 type (
 	VendorFilter struct {
 		showOnTrustCenter *bool
+		snapshotID        **gid.GID
 	}
 )
 
@@ -35,20 +37,51 @@ func NewVendorTrustCenterFilter() *VendorFilter {
 	}
 }
 
-func (f *VendorFilter) SQLArguments() pgx.NamedArgs {
-	args := pgx.NamedArgs{}
+func NewVendorFilterBySnapshotID(snapshotID **gid.GID) *VendorFilter {
+	return &VendorFilter{
+		snapshotID: snapshotID,
+	}
+}
+
+func (f *VendorFilter) SQLArguments() pgx.StrictNamedArgs {
+	args := pgx.StrictNamedArgs{}
 
 	if f.showOnTrustCenter != nil {
 		args["show_on_trust_center"] = *f.showOnTrustCenter
+	} else {
+		args["show_on_trust_center"] = nil
+	}
+
+	if f.snapshotID == nil {
+		args["has_snapshot_filter"] = false
+		args["filter_snapshot_id"] = nil
+	} else if *f.snapshotID == nil {
+		args["has_snapshot_filter"] = true
+		args["filter_snapshot_id"] = nil
+	} else {
+		args["has_snapshot_filter"] = true
+		args["filter_snapshot_id"] = **f.snapshotID
 	}
 
 	return args
 }
 
 func (f *VendorFilter) SQLFragment() string {
-	if f.showOnTrustCenter != nil {
-		return "show_on_trust_center = @show_on_trust_center"
-	}
-
-	return "TRUE"
+	return `
+(
+	CASE
+		WHEN @show_on_trust_center::boolean IS NOT NULL THEN
+			show_on_trust_center = @show_on_trust_center::boolean
+		ELSE TRUE
+	END
+	AND
+	CASE
+		WHEN @has_snapshot_filter::boolean = false THEN TRUE
+		WHEN @has_snapshot_filter::boolean = true AND @filter_snapshot_id::text IS NOT NULL THEN
+			snapshot_id = @filter_snapshot_id::text
+		WHEN @has_snapshot_filter::boolean = true AND @filter_snapshot_id::text IS NULL THEN
+			snapshot_id IS NULL
+		ELSE TRUE
+	END
+)`
 }

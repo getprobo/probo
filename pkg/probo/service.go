@@ -84,6 +84,7 @@ type (
 		TrustCenterAccesses               *TrustCenterAccessService
 		NonconformityRegistries           *NonconformityRegistryService
 		ComplianceRegistries              *ComplianceRegistryService
+		Snapshots                         *SnapshotService
 	}
 )
 
@@ -179,5 +180,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 	tenantService.NonconformityRegistries = &NonconformityRegistryService{svc: tenantService}
 	tenantService.ComplianceRegistries = &ComplianceRegistryService{svc: tenantService}
+	tenantService.Snapshots = &SnapshotService{svc: tenantService}
 	return tenantService
 }

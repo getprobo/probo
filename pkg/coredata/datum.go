@@ -33,11 +33,15 @@ type (
 		OrganizationID     gid.GID            `db:"organization_id"`
 		OwnerID            gid.GID            `db:"owner_id"`
 		DataClassification DataClassification `db:"data_classification"`
+		SnapshotID         *gid.GID           `db:"snapshot_id"`
+		OriginalID         *gid.GID           `db:"original_id"`
 		CreatedAt          time.Time          `db:"created_at"`
 		UpdatedAt          time.Time          `db:"updated_at"`
 	}
 
 	Data []*Datum
+
+	idMap map[gid.GID]gid.GID
 )
 
 func (d *Datum) CursorKey(field DatumOrderField) page.CursorKey {
@@ -66,6 +70,8 @@ SELECT
 	owner_id,
 	organization_id,
 	data_classification,
+	snapshot_id,
+	original_id,
 	created_at,
 	updated_at
 FROM
@@ -108,6 +114,8 @@ SELECT
 	owner_id,
 	organization_id,
 	data_classification,
+	snapshot_id,
+	original_id,
 	created_at,
 	updated_at
 FROM
@@ -176,6 +184,7 @@ func (d *Data) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[DatumOrderField],
+	filter *DatumFilter,
 ) error {
 	q := `
 SELECT
@@ -184,6 +193,8 @@ SELECT
 	organization_id,
 	owner_id,
 	data_classification,
+	snapshot_id,
+	original_id,
 	created_at,
 	updated_at
 FROM
@@ -192,12 +203,14 @@ WHERE
 	%s
 	AND organization_id = @organization_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -215,6 +228,38 @@ WHERE
 	return nil
 }
 
+func (d Data) BulkInsert(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	columnNames := []string{
+		"id",
+		"tenant_id",
+		"name",
+		"owner_id",
+		"organization_id",
+		"data_classification",
+		"snapshot_id",
+		"original_id",
+		"created_at",
+		"updated_at",
+	}
+
+	copyFromSource := &datumCopy{
+		data:     d,
+		scope:    scope,
+		position: 0,
+	}
+
+	_, err := conn.CopyFrom(ctx, pgx.Identifier{"data"}, columnNames, copyFromSource)
+	if err != nil {
+		return fmt.Errorf("cannot bulk insert data: %w", err)
+	}
+
+	return nil
+}
+
 func (d *Datum) Insert(
 	ctx context.Context,
 	conn pg.Conn,
@@ -228,6 +273,8 @@ INSERT INTO data (
 	owner_id,
 	organization_id,
 	data_classification,
+	snapshot_id,
+	original_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -237,6 +284,8 @@ INSERT INTO data (
 	@owner_id,
 	@organization_id,
 	@data_classification,
+	@snapshot_id,
+	@original_id,
 	@created_at,
 	@updated_at
 )
@@ -249,6 +298,8 @@ INSERT INTO data (
 		"owner_id":            d.OwnerID,
 		"organization_id":     d.OrganizationID,
 		"data_classification": d.DataClassification,
+		"snapshot_id":         d.SnapshotID,
+		"original_id":         d.OriginalID,
 		"created_at":          d.CreatedAt,
 		"updated_at":          d.UpdatedAt,
 	}
@@ -276,12 +327,15 @@ SET
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 RETURNING
 	id,
 	name,
 	owner_id,
 	organization_id,
 	data_classification,
+	snapshot_id,
+	original_id,
 	created_at,
 	updated_at
 `
@@ -322,6 +376,7 @@ DELETE FROM data
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -332,6 +387,175 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete data: %w", err)
+	}
+
+	return nil
+}
+
+func (d Data) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+	currentDatumIDs, dataIDMap, err := d.snapshotData(
+		ctx,
+		conn,
+		scope,
+		organizationID,
+		snapshotID,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot snapshot data: %w", err)
+	}
+
+	vendorIDMap, err := d.snapshotVendors(ctx, conn, scope, currentDatumIDs, snapshotID)
+	if err != nil {
+		return fmt.Errorf("cannot snapshot vendors: %w", err)
+	}
+
+	if err := d.snapshotDatumVendors(
+		ctx,
+		conn,
+		scope,
+		currentDatumIDs,
+		snapshotID,
+		dataIDMap,
+		vendorIDMap,
+	); err != nil {
+		return fmt.Errorf("cannot snapshot datum vendors: %w", err)
+	}
+
+	return nil
+}
+
+func (d Data) snapshotData(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) ([]gid.GID, idMap, error) {
+	var nilSnapshotID *gid.GID = nil
+	filter := NewDatumFilterBySnapshotID(&nilSnapshotID)
+	maxRows := 1000 // Use batch in the future
+
+	cursor := page.NewCursor(maxRows, nil, page.Head, page.OrderBy[DatumOrderField]{
+		Field:     DatumOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	})
+
+	currentData := Data{}
+	if err := currentData.LoadByOrganizationID(ctx, conn, scope, organizationID, cursor, filter); err != nil {
+		return nil, nil, fmt.Errorf("cannot load data without snapshot_id: %w", err)
+	}
+
+	var currentDatumIDs []gid.GID
+	var snapshotData Data
+	dataIDMap := make(idMap)
+
+	for _, currentDatum := range currentData {
+		currentDatumIDs = append(currentDatumIDs, currentDatum.ID)
+		snapshotDatumID := gid.New(scope.GetTenantID(), DatumEntityType)
+		dataIDMap[currentDatum.ID] = snapshotDatumID
+
+		snapshotDatum := &Datum{
+			ID:                 snapshotDatumID,
+			SnapshotID:         &snapshotID,
+			OriginalID:         &currentDatum.ID,
+			Name:               currentDatum.Name,
+			OrganizationID:     currentDatum.OrganizationID,
+			OwnerID:            currentDatum.OwnerID,
+			DataClassification: currentDatum.DataClassification,
+			CreatedAt:          currentDatum.CreatedAt,
+			UpdatedAt:          currentDatum.UpdatedAt,
+		}
+
+		snapshotData = append(snapshotData, snapshotDatum)
+	}
+
+	if err := snapshotData.BulkInsert(ctx, conn, scope); err != nil {
+		return nil, nil, fmt.Errorf("cannot bulk insert data copies: %w", err)
+	}
+
+	return currentDatumIDs, dataIDMap, nil
+}
+
+func (d Data) snapshotVendors(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	currentDatumIDs []gid.GID,
+	snapshotID gid.GID,
+) (idMap, error) {
+	var currentVendors Vendors
+	if err := currentVendors.LoadByDatumIDs(ctx, conn, scope, currentDatumIDs); err != nil {
+		return nil, fmt.Errorf("cannot load vendors by datum IDs: %w", err)
+	}
+
+	vendorIDMap := make(idMap)
+	var snapshotVendors Vendors
+
+	for _, currentVendor := range currentVendors {
+		snapshotVendorID := gid.New(scope.GetTenantID(), VendorEntityType)
+		vendorIDMap[currentVendor.ID] = snapshotVendorID
+
+		snapshotVendor := &Vendor{
+			ID:                            snapshotVendorID,
+			TenantID:                      currentVendor.TenantID,
+			OriginalID:                    &currentVendor.ID,
+			OrganizationID:                currentVendor.OrganizationID,
+			Name:                          currentVendor.Name,
+			Description:                   currentVendor.Description,
+			Category:                      currentVendor.Category,
+			HeadquarterAddress:            currentVendor.HeadquarterAddress,
+			LegalName:                     currentVendor.LegalName,
+			WebsiteURL:                    currentVendor.WebsiteURL,
+			PrivacyPolicyURL:              currentVendor.PrivacyPolicyURL,
+			ServiceLevelAgreementURL:      currentVendor.ServiceLevelAgreementURL,
+			DataProcessingAgreementURL:    currentVendor.DataProcessingAgreementURL,
+			BusinessAssociateAgreementURL: currentVendor.BusinessAssociateAgreementURL,
+			SubprocessorsListURL:          currentVendor.SubprocessorsListURL,
+			Certifications:                currentVendor.Certifications,
+			BusinessOwnerID:               currentVendor.BusinessOwnerID,
+			SecurityOwnerID:               currentVendor.SecurityOwnerID,
+			StatusPageURL:                 currentVendor.StatusPageURL,
+			TermsOfServiceURL:             currentVendor.TermsOfServiceURL,
+			SecurityPageURL:               currentVendor.SecurityPageURL,
+			TrustPageURL:                  currentVendor.TrustPageURL,
+			ShowOnTrustCenter:             currentVendor.ShowOnTrustCenter,
+			SnapshotID:                    &snapshotID,
+			CreatedAt:                     currentVendor.CreatedAt,
+			UpdatedAt:                     currentVendor.UpdatedAt,
+		}
+
+		snapshotVendors = append(snapshotVendors, snapshotVendor)
+	}
+
+	if err := snapshotVendors.BulkInsert(ctx, conn, scope); err != nil {
+		return nil, fmt.Errorf("cannot bulk insert vendor snapshots: %w", err)
+	}
+
+	return vendorIDMap, nil
+}
+
+func (d Data) snapshotDatumVendors(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	currentDatumIDs []gid.GID,
+	snapshotID gid.GID,
+	dataIDMap idMap,
+	vendorIDMap idMap,
+) error {
+	var datumVendors DatumVendors
+	if err := datumVendors.LoadByDatumIDs(ctx, conn, scope, currentDatumIDs); err != nil {
+		return fmt.Errorf("cannot load datum vendors: %w", err)
+	}
+
+	for _, datumVendor := range datumVendors {
+		datumVendor.DatumID = dataIDMap[datumVendor.DatumID]
+		datumVendor.VendorID = vendorIDMap[datumVendor.VendorID]
+		datumVendor.SnapshotID = &snapshotID
+	}
+
+	if err := datumVendors.BulkInsert(ctx, conn, scope); err != nil {
+		return fmt.Errorf("cannot bulk insert datum vendors: %w", err)
 	}
 
 	return nil
