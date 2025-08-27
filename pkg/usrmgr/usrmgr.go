@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/mail"
 	"net/url"
 	"strings"
 	"time"
@@ -251,7 +252,7 @@ func (s Service) SignUp(
 		return nil, nil, &ErrSignupDisabled{}
 	}
 
-	if !strings.Contains(email, "@") {
+	if _, err := mail.ParseAddress(email); err != nil {
 		return nil, nil, &ErrInvalidEmail{email}
 	}
 
