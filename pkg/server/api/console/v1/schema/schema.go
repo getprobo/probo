@@ -71,6 +71,8 @@ type ResolverRoot interface {
 	NonconformityRegistryConnection() NonconformityRegistryConnectionResolver
 	Organization() OrganizationResolver
 	PeopleConnection() PeopleConnectionResolver
+	ProcessingActivityRegistry() ProcessingActivityRegistryResolver
+	ProcessingActivityRegistryConnection() ProcessingActivityRegistryConnectionResolver
 	Query() QueryResolver
 	Report() ReportResolver
 	Risk() RiskResolver
@@ -130,19 +132,20 @@ type ComplexityRoot struct {
 	}
 
 	Audit struct {
-		Controls          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
-		CreatedAt         func(childComplexity int) int
-		Framework         func(childComplexity int) int
-		ID                func(childComplexity int) int
-		Name              func(childComplexity int) int
-		Organization      func(childComplexity int) int
-		Report            func(childComplexity int) int
-		ReportURL         func(childComplexity int) int
-		ShowOnTrustCenter func(childComplexity int) int
-		State             func(childComplexity int) int
-		UpdatedAt         func(childComplexity int) int
-		ValidFrom         func(childComplexity int) int
-		ValidUntil        func(childComplexity int) int
+		Controls                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
+		CreatedAt                    func(childComplexity int) int
+		Framework                    func(childComplexity int) int
+		ID                           func(childComplexity int) int
+		Name                         func(childComplexity int) int
+		Organization                 func(childComplexity int) int
+		ProcessingActivityRegistries func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) int
+		Report                       func(childComplexity int) int
+		ReportURL                    func(childComplexity int) int
+		ShowOnTrustCenter            func(childComplexity int) int
+		State                        func(childComplexity int) int
+		UpdatedAt                    func(childComplexity int) int
+		ValidFrom                    func(childComplexity int) int
+		ValidUntil                   func(childComplexity int) int
 	}
 
 	AuditConnection struct {
@@ -350,6 +353,10 @@ type ComplexityRoot struct {
 		PeopleEdge func(childComplexity int) int
 	}
 
+	CreateProcessingActivityRegistryPayload struct {
+		ProcessingActivityRegistryEdge func(childComplexity int) int
+	}
+
 	CreateRiskDocumentMappingPayload struct {
 		DocumentEdge func(childComplexity int) int
 		RiskEdge     func(childComplexity int) int
@@ -492,6 +499,10 @@ type ComplexityRoot struct {
 
 	DeletePeoplePayload struct {
 		DeletedPeopleID func(childComplexity int) int
+	}
+
+	DeleteProcessingActivityRegistryPayload struct {
+		DeletedProcessingActivityRegistryID func(childComplexity int) int
 	}
 
 	DeleteRiskDocumentMappingPayload struct {
@@ -743,6 +754,7 @@ type ComplexityRoot struct {
 		CreateNonconformityRegistry            func(childComplexity int, input types.CreateNonconformityRegistryInput) int
 		CreateOrganization                     func(childComplexity int, input types.CreateOrganizationInput) int
 		CreatePeople                           func(childComplexity int, input types.CreatePeopleInput) int
+		CreateProcessingActivityRegistry       func(childComplexity int, input types.CreateProcessingActivityRegistryInput) int
 		CreateRisk                             func(childComplexity int, input types.CreateRiskInput) int
 		CreateRiskDocumentMapping              func(childComplexity int, input types.CreateRiskDocumentMappingInput) int
 		CreateRiskMeasureMapping               func(childComplexity int, input types.CreateRiskMeasureMappingInput) int
@@ -772,6 +784,7 @@ type ComplexityRoot struct {
 		DeleteNonconformityRegistry            func(childComplexity int, input types.DeleteNonconformityRegistryInput) int
 		DeleteOrganization                     func(childComplexity int, input types.DeleteOrganizationInput) int
 		DeletePeople                           func(childComplexity int, input types.DeletePeopleInput) int
+		DeleteProcessingActivityRegistry       func(childComplexity int, input types.DeleteProcessingActivityRegistryInput) int
 		DeleteRisk                             func(childComplexity int, input types.DeleteRiskInput) int
 		DeleteRiskDocumentMapping              func(childComplexity int, input types.DeleteRiskDocumentMappingInput) int
 		DeleteRiskMeasureMapping               func(childComplexity int, input types.DeleteRiskMeasureMappingInput) int
@@ -810,6 +823,7 @@ type ComplexityRoot struct {
 		UpdateNonconformityRegistry            func(childComplexity int, input types.UpdateNonconformityRegistryInput) int
 		UpdateOrganization                     func(childComplexity int, input types.UpdateOrganizationInput) int
 		UpdatePeople                           func(childComplexity int, input types.UpdatePeopleInput) int
+		UpdateProcessingActivityRegistry       func(childComplexity int, input types.UpdateProcessingActivityRegistryInput) int
 		UpdateRisk                             func(childComplexity int, input types.UpdateRiskInput) int
 		UpdateTask                             func(childComplexity int, input types.UpdateTaskInput) int
 		UpdateTrustCenter                      func(childComplexity int, input types.UpdateTrustCenterInput) int
@@ -872,6 +886,7 @@ type ComplexityRoot struct {
 		Name                           func(childComplexity int) int
 		NonconformityRegistries        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy) int
 		Peoples                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
+		ProcessingActivityRegistries   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) int
 		Risks                          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
 		Snapshots                      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
 		Tasks                          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
@@ -922,15 +937,48 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	ProcessingActivityRegistry struct {
+		Audit                          func(childComplexity int) int
+		ConsentEvidenceLink            func(childComplexity int) int
+		CreatedAt                      func(childComplexity int) int
+		DataProtectionImpactAssessment func(childComplexity int) int
+		DataSubjectCategory            func(childComplexity int) int
+		ID                             func(childComplexity int) int
+		InternationalTransfers         func(childComplexity int) int
+		LawfulBasis                    func(childComplexity int) int
+		Location                       func(childComplexity int) int
+		Name                           func(childComplexity int) int
+		Organization                   func(childComplexity int) int
+		PersonalDataCategory           func(childComplexity int) int
+		Purpose                        func(childComplexity int) int
+		Recipients                     func(childComplexity int) int
+		RetentionPeriod                func(childComplexity int) int
+		SecurityMeasures               func(childComplexity int) int
+		SpecialOrCriminalData          func(childComplexity int) int
+		TransferImpactAssessment       func(childComplexity int) int
+		TransferSafeguards             func(childComplexity int) int
+		UpdatedAt                      func(childComplexity int) int
+	}
+
+	ProcessingActivityRegistryConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	ProcessingActivityRegistryEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	PublishDocumentVersionPayload struct {
 		Document        func(childComplexity int) int
 		DocumentVersion func(childComplexity int) int
 	}
 
 	Query struct {
-		Node         func(childComplexity int, id gid.GID) int
-		TrustCenters func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.TrustCenterFilter) int
-		Viewer       func(childComplexity int) int
+		Node   func(childComplexity int, id gid.GID) int
+		Viewer func(childComplexity int) int
 	}
 
 	RemoveUserPayload struct {
@@ -1138,6 +1186,10 @@ type ComplexityRoot struct {
 
 	UpdatePeoplePayload struct {
 		People func(childComplexity int) int
+	}
+
+	UpdateProcessingActivityRegistryPayload struct {
+		ProcessingActivityRegistry func(childComplexity int) int
 	}
 
 	UpdateRiskPayload struct {
@@ -1397,6 +1449,7 @@ type AuditResolver interface {
 	ReportURL(ctx context.Context, obj *types.Audit) (*string, error)
 
 	Controls(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
+	ProcessingActivityRegistries(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) (*types.ProcessingActivityRegistryConnection, error)
 }
 type AuditConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error)
@@ -1591,6 +1644,9 @@ type MutationResolver interface {
 	CreateContinualImprovementRegistry(ctx context.Context, input types.CreateContinualImprovementRegistryInput) (*types.CreateContinualImprovementRegistryPayload, error)
 	UpdateContinualImprovementRegistry(ctx context.Context, input types.UpdateContinualImprovementRegistryInput) (*types.UpdateContinualImprovementRegistryPayload, error)
 	DeleteContinualImprovementRegistry(ctx context.Context, input types.DeleteContinualImprovementRegistryInput) (*types.DeleteContinualImprovementRegistryPayload, error)
+	CreateProcessingActivityRegistry(ctx context.Context, input types.CreateProcessingActivityRegistryInput) (*types.CreateProcessingActivityRegistryPayload, error)
+	UpdateProcessingActivityRegistry(ctx context.Context, input types.UpdateProcessingActivityRegistryInput) (*types.UpdateProcessingActivityRegistryPayload, error)
+	DeleteProcessingActivityRegistry(ctx context.Context, input types.DeleteProcessingActivityRegistryInput) (*types.DeleteProcessingActivityRegistryPayload, error)
 	CreateSnapshot(ctx context.Context, input types.CreateSnapshotInput) (*types.CreateSnapshotPayload, error)
 	DeleteSnapshot(ctx context.Context, input types.DeleteSnapshotInput) (*types.DeleteSnapshotPayload, error)
 }
@@ -1622,16 +1678,23 @@ type OrganizationResolver interface {
 	NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy) (*types.NonconformityRegistryConnection, error)
 	ComplianceRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy) (*types.ComplianceRegistryConnection, error)
 	ContinualImprovementRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy) (*types.ContinualImprovementRegistryConnection, error)
+	ProcessingActivityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) (*types.ProcessingActivityRegistryConnection, error)
 	Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
 }
 type PeopleConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error)
 }
+type ProcessingActivityRegistryResolver interface {
+	Organization(ctx context.Context, obj *types.ProcessingActivityRegistry) (*types.Organization, error)
+	Audit(ctx context.Context, obj *types.ProcessingActivityRegistry) (*types.Audit, error)
+}
+type ProcessingActivityRegistryConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.ProcessingActivityRegistryConnection) (int, error)
+}
 type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
 	Viewer(ctx context.Context) (*types.Viewer, error)
-	TrustCenters(ctx context.Context, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.TrustCenterFilter) (*types.TrustCenterConnection, error)
 }
 type ReportResolver interface {
 	DownloadURL(ctx context.Context, obj *types.Report) (*string, error)
@@ -1910,6 +1973,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Audit.Organization(childComplexity), true
+
+	case "Audit.processingActivityRegistries":
+		if e.complexity.Audit.ProcessingActivityRegistries == nil {
+			break
+		}
+
+		args, err := ec.field_Audit_processingActivityRegistries_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Audit.ProcessingActivityRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityRegistryOrderBy)), true
 
 	case "Audit.report":
 		if e.complexity.Audit.Report == nil {
@@ -2659,6 +2734,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreatePeoplePayload.PeopleEdge(childComplexity), true
 
+	case "CreateProcessingActivityRegistryPayload.processingActivityRegistryEdge":
+		if e.complexity.CreateProcessingActivityRegistryPayload.ProcessingActivityRegistryEdge == nil {
+			break
+		}
+
+		return e.complexity.CreateProcessingActivityRegistryPayload.ProcessingActivityRegistryEdge(childComplexity), true
+
 	case "CreateRiskDocumentMappingPayload.documentEdge":
 		if e.complexity.CreateRiskDocumentMappingPayload.DocumentEdge == nil {
 			break
@@ -2999,6 +3081,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeletePeoplePayload.DeletedPeopleID(childComplexity), true
+
+	case "DeleteProcessingActivityRegistryPayload.deletedProcessingActivityRegistryId":
+		if e.complexity.DeleteProcessingActivityRegistryPayload.DeletedProcessingActivityRegistryID == nil {
+			break
+		}
+
+		return e.complexity.DeleteProcessingActivityRegistryPayload.DeletedProcessingActivityRegistryID(childComplexity), true
 
 	case "DeleteRiskDocumentMappingPayload.deletedDocumentId":
 		if e.complexity.DeleteRiskDocumentMappingPayload.DeletedDocumentID == nil {
@@ -4114,6 +4203,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreatePeople(childComplexity, args["input"].(types.CreatePeopleInput)), true
 
+	case "Mutation.createProcessingActivityRegistry":
+		if e.complexity.Mutation.CreateProcessingActivityRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createProcessingActivityRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateProcessingActivityRegistry(childComplexity, args["input"].(types.CreateProcessingActivityRegistryInput)), true
+
 	case "Mutation.createRisk":
 		if e.complexity.Mutation.CreateRisk == nil {
 			break
@@ -4461,6 +4562,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeletePeople(childComplexity, args["input"].(types.DeletePeopleInput)), true
+
+	case "Mutation.deleteProcessingActivityRegistry":
+		if e.complexity.Mutation.DeleteProcessingActivityRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteProcessingActivityRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteProcessingActivityRegistry(childComplexity, args["input"].(types.DeleteProcessingActivityRegistryInput)), true
 
 	case "Mutation.deleteRisk":
 		if e.complexity.Mutation.DeleteRisk == nil {
@@ -4917,6 +5030,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdatePeople(childComplexity, args["input"].(types.UpdatePeopleInput)), true
+
+	case "Mutation.updateProcessingActivityRegistry":
+		if e.complexity.Mutation.UpdateProcessingActivityRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateProcessingActivityRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateProcessingActivityRegistry(childComplexity, args["input"].(types.UpdateProcessingActivityRegistryInput)), true
 
 	case "Mutation.updateRisk":
 		if e.complexity.Mutation.UpdateRisk == nil {
@@ -5403,6 +5528,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Organization.Peoples(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.PeopleOrderBy), args["filter"].(*types.PeopleFilter)), true
 
+	case "Organization.processingActivityRegistries":
+		if e.complexity.Organization.ProcessingActivityRegistries == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_processingActivityRegistries_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.ProcessingActivityRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityRegistryOrderBy)), true
+
 	case "Organization.risks":
 		if e.complexity.Organization.Risks == nil {
 			break
@@ -5638,6 +5775,181 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.PeopleEdge.Node(childComplexity), true
 
+	case "ProcessingActivityRegistry.audit":
+		if e.complexity.ProcessingActivityRegistry.Audit == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.Audit(childComplexity), true
+
+	case "ProcessingActivityRegistry.consentEvidenceLink":
+		if e.complexity.ProcessingActivityRegistry.ConsentEvidenceLink == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.ConsentEvidenceLink(childComplexity), true
+
+	case "ProcessingActivityRegistry.createdAt":
+		if e.complexity.ProcessingActivityRegistry.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.CreatedAt(childComplexity), true
+
+	case "ProcessingActivityRegistry.dataProtectionImpactAssessment":
+		if e.complexity.ProcessingActivityRegistry.DataProtectionImpactAssessment == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.DataProtectionImpactAssessment(childComplexity), true
+
+	case "ProcessingActivityRegistry.dataSubjectCategory":
+		if e.complexity.ProcessingActivityRegistry.DataSubjectCategory == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.DataSubjectCategory(childComplexity), true
+
+	case "ProcessingActivityRegistry.id":
+		if e.complexity.ProcessingActivityRegistry.ID == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.ID(childComplexity), true
+
+	case "ProcessingActivityRegistry.internationalTransfers":
+		if e.complexity.ProcessingActivityRegistry.InternationalTransfers == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.InternationalTransfers(childComplexity), true
+
+	case "ProcessingActivityRegistry.lawfulBasis":
+		if e.complexity.ProcessingActivityRegistry.LawfulBasis == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.LawfulBasis(childComplexity), true
+
+	case "ProcessingActivityRegistry.location":
+		if e.complexity.ProcessingActivityRegistry.Location == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.Location(childComplexity), true
+
+	case "ProcessingActivityRegistry.name":
+		if e.complexity.ProcessingActivityRegistry.Name == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.Name(childComplexity), true
+
+	case "ProcessingActivityRegistry.organization":
+		if e.complexity.ProcessingActivityRegistry.Organization == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.Organization(childComplexity), true
+
+	case "ProcessingActivityRegistry.personalDataCategory":
+		if e.complexity.ProcessingActivityRegistry.PersonalDataCategory == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.PersonalDataCategory(childComplexity), true
+
+	case "ProcessingActivityRegistry.purpose":
+		if e.complexity.ProcessingActivityRegistry.Purpose == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.Purpose(childComplexity), true
+
+	case "ProcessingActivityRegistry.recipients":
+		if e.complexity.ProcessingActivityRegistry.Recipients == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.Recipients(childComplexity), true
+
+	case "ProcessingActivityRegistry.retentionPeriod":
+		if e.complexity.ProcessingActivityRegistry.RetentionPeriod == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.RetentionPeriod(childComplexity), true
+
+	case "ProcessingActivityRegistry.securityMeasures":
+		if e.complexity.ProcessingActivityRegistry.SecurityMeasures == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.SecurityMeasures(childComplexity), true
+
+	case "ProcessingActivityRegistry.specialOrCriminalData":
+		if e.complexity.ProcessingActivityRegistry.SpecialOrCriminalData == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.SpecialOrCriminalData(childComplexity), true
+
+	case "ProcessingActivityRegistry.transferImpactAssessment":
+		if e.complexity.ProcessingActivityRegistry.TransferImpactAssessment == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.TransferImpactAssessment(childComplexity), true
+
+	case "ProcessingActivityRegistry.transferSafeguards":
+		if e.complexity.ProcessingActivityRegistry.TransferSafeguards == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.TransferSafeguards(childComplexity), true
+
+	case "ProcessingActivityRegistry.updatedAt":
+		if e.complexity.ProcessingActivityRegistry.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.UpdatedAt(childComplexity), true
+
+	case "ProcessingActivityRegistryConnection.edges":
+		if e.complexity.ProcessingActivityRegistryConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistryConnection.Edges(childComplexity), true
+
+	case "ProcessingActivityRegistryConnection.pageInfo":
+		if e.complexity.ProcessingActivityRegistryConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistryConnection.PageInfo(childComplexity), true
+
+	case "ProcessingActivityRegistryConnection.totalCount":
+		if e.complexity.ProcessingActivityRegistryConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistryConnection.TotalCount(childComplexity), true
+
+	case "ProcessingActivityRegistryEdge.cursor":
+		if e.complexity.ProcessingActivityRegistryEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistryEdge.Cursor(childComplexity), true
+
+	case "ProcessingActivityRegistryEdge.node":
+		if e.complexity.ProcessingActivityRegistryEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistryEdge.Node(childComplexity), true
+
 	case "PublishDocumentVersionPayload.document":
 		if e.complexity.PublishDocumentVersionPayload.Document == nil {
 			break
@@ -5663,18 +5975,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.Node(childComplexity, args["id"].(gid.GID)), true
-
-	case "Query.trustCenters":
-		if e.complexity.Query.TrustCenters == nil {
-			break
-		}
-
-		args, err := ec.field_Query_trustCenters_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.TrustCenters(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["filter"].(*types.TrustCenterFilter)), true
 
 	case "Query.viewer":
 		if e.complexity.Query.Viewer == nil {
@@ -6426,6 +6726,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UpdatePeoplePayload.People(childComplexity), true
+
+	case "UpdateProcessingActivityRegistryPayload.processingActivityRegistry":
+		if e.complexity.UpdateProcessingActivityRegistryPayload.ProcessingActivityRegistry == nil {
+			break
+		}
+
+		return e.complexity.UpdateProcessingActivityRegistryPayload.ProcessingActivityRegistry(childComplexity), true
 
 	case "UpdateRiskPayload.risk":
 		if e.complexity.UpdateRiskPayload.Risk == nil {
@@ -7399,6 +7706,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateNonconformityRegistryInput,
 		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreatePeopleInput,
+		ec.unmarshalInputCreateProcessingActivityRegistryInput,
 		ec.unmarshalInputCreateRiskDocumentMappingInput,
 		ec.unmarshalInputCreateRiskInput,
 		ec.unmarshalInputCreateRiskMeasureMappingInput,
@@ -7430,6 +7738,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteNonconformityRegistryInput,
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeletePeopleInput,
+		ec.unmarshalInputDeleteProcessingActivityRegistryInput,
 		ec.unmarshalInputDeleteRiskDocumentMappingInput,
 		ec.unmarshalInputDeleteRiskInput,
 		ec.unmarshalInputDeleteRiskMeasureMappingInput,
@@ -7463,6 +7772,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputOrganizationOrder,
 		ec.unmarshalInputPeopleFilter,
 		ec.unmarshalInputPeopleOrder,
+		ec.unmarshalInputProcessingActivityRegistryOrder,
 		ec.unmarshalInputPublishDocumentVersionInput,
 		ec.unmarshalInputRemoveUserInput,
 		ec.unmarshalInputRequestEvidenceInput,
@@ -7473,7 +7783,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputSnapshotOrder,
 		ec.unmarshalInputTaskOrder,
 		ec.unmarshalInputTrustCenterAccessOrder,
-		ec.unmarshalInputTrustCenterFilter,
 		ec.unmarshalInputUnassignTaskInput,
 		ec.unmarshalInputUpdateAssetInput,
 		ec.unmarshalInputUpdateAuditInput,
@@ -7488,6 +7797,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateNonconformityRegistryInput,
 		ec.unmarshalInputUpdateOrganizationInput,
 		ec.unmarshalInputUpdatePeopleInput,
+		ec.unmarshalInputUpdateProcessingActivityRegistryInput,
 		ec.unmarshalInputUpdateRiskInput,
 		ec.unmarshalInputUpdateTaskInput,
 		ec.unmarshalInputUpdateTrustCenterAccessInput,
@@ -7820,6 +8130,102 @@ enum ContinualImprovementRegistriesPriority
   HIGH
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesPriorityHigh"
+    )
+}
+
+enum ProcessingActivityRegistrySpecialOrCriminalData
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalData") {
+  YES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalDataYes"
+    )
+  NO
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalDataNo"
+    )
+  POSSIBLE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalDataPossible"
+    )
+}
+
+enum ProcessingActivityRegistryLawfulBasis
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasis") {
+  LEGITIMATE_INTEREST
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisLegitimateInterest"
+    )
+  CONSENT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisConsent"
+    )
+  CONTRACTUAL_NECESSITY
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisContractualNecessity"
+    )
+  LEGAL_OBLIGATION
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisLegalObligation"
+    )
+  VITAL_INTERESTS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisVitalInterests"
+    )
+  PUBLIC_TASK
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisPublicTask"
+    )
+}
+
+enum ProcessingActivityRegistryTransferSafeguards
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguards") {
+  STANDARD_CONTRACTUAL_CLAUSES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsStandardContractualClauses"
+    )
+  BINDING_CORPORATE_RULES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsBindingCorporateRules"
+    )
+  ADEQUACY_DECISION
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsAdequacyDecision"
+    )
+  DEROGATIONS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsDerogations"
+    )
+  CODES_OF_CONDUCT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsCodesOfConduct"
+    )
+  CERTIFICATION_MECHANISMS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsCertificationMechanisms"
+    )
+}
+
+enum ProcessingActivityRegistryDataProtectionImpactAssessment
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryDataProtectionImpactAssessment") {
+  NEEDED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNeeded"
+    )
+  NOT_NEEDED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNotNeeded"
+    )
+}
+
+enum ProcessingActivityRegistryTransferImpactAssessment
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferImpactAssessment") {
+  NEEDED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferImpactAssessmentNeeded"
+    )
+  NOT_NEEDED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferImpactAssessmentNotNeeded"
     )
 }
 
@@ -8342,6 +8748,18 @@ enum ContinualImprovementRegistriesOrderField
     )
 }
 
+enum ProcessingActivityRegistryOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderFieldCreatedAt"
+    )
+  NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderFieldName"
+    )
+}
+
 enum TrustCenterAccessOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField") {
   CREATED_AT
@@ -8499,6 +8917,14 @@ input ContinualImprovementRegistriesOrder
   field: ContinualImprovementRegistriesOrderField!
 }
 
+input ProcessingActivityRegistryOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityRegistryOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: ProcessingActivityRegistryOrderField!
+}
+
 input TrustCenterAccessOrder
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterAccessOrderBy"
@@ -8592,10 +9018,6 @@ input PeopleFilter {
 
 input OrganizationFilter {
   trustCenterSlug: String
-}
-
-input TrustCenterFilter {
-  slug: String
 }
 
 input DatumFilter {
@@ -8758,6 +9180,14 @@ type Organization implements Node {
     before: CursorKey
     orderBy: ContinualImprovementRegistriesOrder
   ): ContinualImprovementRegistryConnection! @goField(forceResolver: true)
+
+  processingActivityRegistries(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProcessingActivityRegistryOrder
+  ): ProcessingActivityRegistryConnection! @goField(forceResolver: true)
 
   snapshots(
     first: Int
@@ -9179,6 +9609,14 @@ type Audit implements Node {
     filter: ControlFilter
   ): ControlConnection! @goField(forceResolver: true)
 
+  processingActivityRegistries(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProcessingActivityRegistryOrder
+  ): ProcessingActivityRegistryConnection! @goField(forceResolver: true)
+
   showOnTrustCenter: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -9230,6 +9668,29 @@ type ContinualImprovementRegistry implements Node {
   targetDate: Datetime
   status: ContinualImprovementRegistriesStatus!
   priority: ContinualImprovementRegistriesPriority!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type ProcessingActivityRegistry implements Node {
+  id: ID!
+  organization: Organization! @goField(forceResolver: true)
+  audit: Audit! @goField(forceResolver: true)
+  name: String!
+  purpose: String
+  dataSubjectCategory: String
+  personalDataCategory: String
+  specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData!
+  consentEvidenceLink: String
+  lawfulBasis: ProcessingActivityRegistryLawfulBasis!
+  recipients: String
+  location: String
+  internationalTransfers: Boolean!
+  transferSafeguards: ProcessingActivityRegistryTransferSafeguards
+  retentionPeriod: String
+  securityMeasures: String
+  dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment!
+  transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -9589,6 +10050,20 @@ type ContinualImprovementRegistryEdge {
   node: ContinualImprovementRegistry!
 }
 
+type ProcessingActivityRegistryConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityRegistryConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [ProcessingActivityRegistryEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProcessingActivityRegistryEdge {
+  cursor: CursorKey!
+  node: ProcessingActivityRegistry!
+}
+
 type SnapshotConnection
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.SnapshotConnection"
@@ -9607,13 +10082,6 @@ type SnapshotEdge {
 type Query {
   node(id: ID!): Node!
   viewer: Viewer!
-  trustCenters(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    filter: TrustCenterFilter
-  ): TrustCenterConnection! @goField(forceResolver: true)
 }
 
 type Mutation {
@@ -9870,6 +10338,17 @@ type Mutation {
   deleteContinualImprovementRegistry(
     input: DeleteContinualImprovementRegistryInput!
   ): DeleteContinualImprovementRegistryPayload!
+
+  # Processing Activity Registry mutations
+  createProcessingActivityRegistry(
+    input: CreateProcessingActivityRegistryInput!
+  ): CreateProcessingActivityRegistryPayload!
+  updateProcessingActivityRegistry(
+    input: UpdateProcessingActivityRegistryInput!
+  ): UpdateProcessingActivityRegistryPayload!
+  deleteProcessingActivityRegistry(
+    input: DeleteProcessingActivityRegistryInput!
+  ): DeleteProcessingActivityRegistryPayload!
 
   # Snapshot mutations
   createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
@@ -10467,6 +10946,50 @@ input DeleteContinualImprovementRegistryInput {
   continualImprovementRegistryId: ID!
 }
 
+input CreateProcessingActivityRegistryInput {
+  organizationId: ID!
+  auditId: ID!
+  name: String!
+  purpose: String
+  dataSubjectCategory: String
+  personalDataCategory: String
+  specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData!
+  consentEvidenceLink: String
+  lawfulBasis: ProcessingActivityRegistryLawfulBasis!
+  recipients: String
+  location: String
+  internationalTransfers: Boolean!
+  transferSafeguards: ProcessingActivityRegistryTransferSafeguards
+  retentionPeriod: String
+  securityMeasures: String
+  dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment!
+  transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment!
+}
+
+input UpdateProcessingActivityRegistryInput {
+  id: ID!
+  auditId: ID
+  name: String
+  purpose: String
+  dataSubjectCategory: String
+  personalDataCategory: String
+  specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData
+  consentEvidenceLink: String
+  lawfulBasis: ProcessingActivityRegistryLawfulBasis
+  recipients: String
+  location: String
+  internationalTransfers: Boolean
+  transferSafeguards: ProcessingActivityRegistryTransferSafeguards
+  retentionPeriod: String
+  securityMeasures: String
+  dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment
+  transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment
+}
+
+input DeleteProcessingActivityRegistryInput {
+  processingActivityRegistryId: ID!
+}
+
 input CreateSnapshotInput {
   organizationId: ID!
   name: String!
@@ -10494,8 +11017,6 @@ type DeleteOrganizationPayload {
 type UpdateTrustCenterPayload {
   trustCenter: TrustCenter!
 }
-
-
 
 type CreateTrustCenterAccessPayload {
   trustCenterAccessEdge: TrustCenterAccessEdge!
@@ -11210,6 +11731,18 @@ type DeleteContinualImprovementRegistryPayload {
   deletedContinualImprovementRegistryId: ID!
 }
 
+type CreateProcessingActivityRegistryPayload {
+  processingActivityRegistryEdge: ProcessingActivityRegistryEdge!
+}
+
+type UpdateProcessingActivityRegistryPayload {
+  processingActivityRegistry: ProcessingActivityRegistry!
+}
+
+type DeleteProcessingActivityRegistryPayload {
+  deletedProcessingActivityRegistryId: ID!
+}
+
 type CreateSnapshotPayload {
   snapshotEdge: SnapshotEdge!
 }
@@ -11430,6 +11963,101 @@ func (ec *executionContext) field_Audit_controls_argsFilter(
 	}
 
 	var zeroVal *types.ControlFilter
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Audit_processingActivityRegistries_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Audit_processingActivityRegistries_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Audit_processingActivityRegistries_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Audit_processingActivityRegistries_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Audit_processingActivityRegistries_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Audit_processingActivityRegistries_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+func (ec *executionContext) field_Audit_processingActivityRegistries_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Audit_processingActivityRegistries_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Audit_processingActivityRegistries_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Audit_processingActivityRegistries_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Audit_processingActivityRegistries_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.ProcessingActivityRegistryOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalOProcessingActivityRegistryOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.ProcessingActivityRegistryOrderBy
 	return zeroVal, nil
 }
 
@@ -13323,6 +13951,29 @@ func (ec *executionContext) field_Mutation_createPeople_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_createProcessingActivityRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_createProcessingActivityRegistry_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_createProcessingActivityRegistry_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.CreateProcessingActivityRegistryInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNCreateProcessingActivityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityRegistryInput(ctx, tmp)
+	}
+
+	var zeroVal types.CreateProcessingActivityRegistryInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_createRiskDocumentMapping_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -13987,6 +14638,29 @@ func (ec *executionContext) field_Mutation_deletePeople_argsInput(
 	}
 
 	var zeroVal types.DeletePeopleInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteProcessingActivityRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteProcessingActivityRegistry_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteProcessingActivityRegistry_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.DeleteProcessingActivityRegistryInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNDeleteProcessingActivityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityRegistryInput(ctx, tmp)
+	}
+
+	var zeroVal types.DeleteProcessingActivityRegistryInput
 	return zeroVal, nil
 }
 
@@ -14861,6 +15535,29 @@ func (ec *executionContext) field_Mutation_updatePeople_argsInput(
 	}
 
 	var zeroVal types.UpdatePeopleInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateProcessingActivityRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_updateProcessingActivityRegistry_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateProcessingActivityRegistry_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.UpdateProcessingActivityRegistryInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateProcessingActivityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityRegistryInput(ctx, tmp)
+	}
+
+	var zeroVal types.UpdateProcessingActivityRegistryInput
 	return zeroVal, nil
 }
 
@@ -16439,6 +17136,101 @@ func (ec *executionContext) field_Organization_peoples_argsFilter(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Organization_processingActivityRegistries_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Organization_processingActivityRegistries_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Organization_processingActivityRegistries_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Organization_processingActivityRegistries_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Organization_processingActivityRegistries_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Organization_processingActivityRegistries_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+func (ec *executionContext) field_Organization_processingActivityRegistries_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_processingActivityRegistries_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_processingActivityRegistries_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_processingActivityRegistries_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_processingActivityRegistries_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.ProcessingActivityRegistryOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalOProcessingActivityRegistryOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.ProcessingActivityRegistryOrderBy
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Organization_risks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -16975,101 +17767,6 @@ func (ec *executionContext) field_Query_node_argsID(
 	}
 
 	var zeroVal gid.GID
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_trustCenters_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Query_trustCenters_argsFirst(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg0
-	arg1, err := ec.field_Query_trustCenters_argsAfter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := ec.field_Query_trustCenters_argsLast(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg2
-	arg3, err := ec.field_Query_trustCenters_argsBefore(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg3
-	arg4, err := ec.field_Query_trustCenters_argsFilter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["filter"] = arg4
-	return args, nil
-}
-func (ec *executionContext) field_Query_trustCenters_argsFirst(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-	if tmp, ok := rawArgs["first"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_trustCenters_argsAfter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_trustCenters_argsLast(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-	if tmp, ok := rawArgs["last"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_trustCenters_argsBefore(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Query_trustCenters_argsFilter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*types.TrustCenterFilter, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
-	if tmp, ok := rawArgs["filter"]; ok {
-		return ec.unmarshalOTrustCenterFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterFilter(ctx, tmp)
-	}
-
-	var zeroVal *types.TrustCenterFilter
 	return zeroVal, nil
 }
 
@@ -18905,6 +19602,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -19500,6 +20199,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -19858,6 +20559,69 @@ func (ec *executionContext) fieldContext_Audit_controls(ctx context.Context, fie
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Audit_controls_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Audit_processingActivityRegistries(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Audit().ProcessingActivityRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityRegistryOrderBy))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.ProcessingActivityRegistryConnection)
+	fc.Result = res
+	return ec.marshalNProcessingActivityRegistryConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Audit_processingActivityRegistries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Audit",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_ProcessingActivityRegistryConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_ProcessingActivityRegistryConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ProcessingActivityRegistryConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityRegistryConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Audit_processingActivityRegistries_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -20247,6 +21011,8 @@ func (ec *executionContext) fieldContext_AuditEdge_node(_ context.Context, field
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -20575,6 +21341,8 @@ func (ec *executionContext) fieldContext_ComplianceRegistry_organization(_ conte
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -20775,6 +21543,8 @@ func (ec *executionContext) fieldContext_ComplianceRegistry_audit(_ context.Cont
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -22048,6 +22818,8 @@ func (ec *executionContext) fieldContext_ContinualImprovementRegistry_organizati
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -22207,6 +22979,8 @@ func (ec *executionContext) fieldContext_ContinualImprovementRegistry_audit(_ co
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -24881,6 +25655,56 @@ func (ec *executionContext) fieldContext_CreatePeoplePayload_peopleEdge(_ contex
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateProcessingActivityRegistryPayload_processingActivityRegistryEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateProcessingActivityRegistryPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateProcessingActivityRegistryPayload_processingActivityRegistryEdge(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProcessingActivityRegistryEdge, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.ProcessingActivityRegistryEdge)
+	fc.Result = res
+	return ec.marshalNProcessingActivityRegistryEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateProcessingActivityRegistryPayload_processingActivityRegistryEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateProcessingActivityRegistryPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ProcessingActivityRegistryEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ProcessingActivityRegistryEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityRegistryEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateRiskDocumentMappingPayload_riskEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateRiskDocumentMappingPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreateRiskDocumentMappingPayload_riskEdge(ctx, field)
 	if err != nil {
@@ -25819,6 +26643,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -26323,6 +27149,8 @@ func (ec *executionContext) fieldContext_DeleteAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -27206,6 +28034,50 @@ func (ec *executionContext) _DeletePeoplePayload_deletedPeopleId(ctx context.Con
 func (ec *executionContext) fieldContext_DeletePeoplePayload_deletedPeopleId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeletePeoplePayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteProcessingActivityRegistryPayload_deletedProcessingActivityRegistryId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteProcessingActivityRegistryPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteProcessingActivityRegistryPayload_deletedProcessingActivityRegistryId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedProcessingActivityRegistryID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteProcessingActivityRegistryPayload_deletedProcessingActivityRegistryId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteProcessingActivityRegistryPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -28236,6 +29108,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -31405,6 +32279,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -39032,6 +39908,183 @@ func (ec *executionContext) fieldContext_Mutation_deleteContinualImprovementRegi
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createProcessingActivityRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createProcessingActivityRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateProcessingActivityRegistry(rctx, fc.Args["input"].(types.CreateProcessingActivityRegistryInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.CreateProcessingActivityRegistryPayload)
+	fc.Result = res
+	return ec.marshalNCreateProcessingActivityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityRegistryPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createProcessingActivityRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "processingActivityRegistryEdge":
+				return ec.fieldContext_CreateProcessingActivityRegistryPayload_processingActivityRegistryEdge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateProcessingActivityRegistryPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createProcessingActivityRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateProcessingActivityRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateProcessingActivityRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateProcessingActivityRegistry(rctx, fc.Args["input"].(types.UpdateProcessingActivityRegistryInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.UpdateProcessingActivityRegistryPayload)
+	fc.Result = res
+	return ec.marshalNUpdateProcessingActivityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityRegistryPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateProcessingActivityRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "processingActivityRegistry":
+				return ec.fieldContext_UpdateProcessingActivityRegistryPayload_processingActivityRegistry(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateProcessingActivityRegistryPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateProcessingActivityRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteProcessingActivityRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteProcessingActivityRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteProcessingActivityRegistry(rctx, fc.Args["input"].(types.DeleteProcessingActivityRegistryInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DeleteProcessingActivityRegistryPayload)
+	fc.Result = res
+	return ec.marshalNDeleteProcessingActivityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityRegistryPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteProcessingActivityRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedProcessingActivityRegistryId":
+				return ec.fieldContext_DeleteProcessingActivityRegistryPayload_deletedProcessingActivityRegistryId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteProcessingActivityRegistryPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteProcessingActivityRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createSnapshot(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createSnapshot(ctx, field)
 	if err != nil {
@@ -39271,6 +40324,8 @@ func (ec *executionContext) fieldContext_NonconformityRegistry_organization(_ co
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -39430,6 +40485,8 @@ func (ec *executionContext) fieldContext_NonconformityRegistry_audit(_ context.C
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -41248,6 +42305,69 @@ func (ec *executionContext) fieldContext_Organization_continualImprovementRegist
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_processingActivityRegistries(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Organization().ProcessingActivityRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityRegistryOrderBy))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.ProcessingActivityRegistryConnection)
+	fc.Result = res
+	return ec.marshalNProcessingActivityRegistryConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_processingActivityRegistries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_ProcessingActivityRegistryConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_ProcessingActivityRegistryConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_ProcessingActivityRegistryConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityRegistryConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_processingActivityRegistries_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_snapshots(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Organization_snapshots(ctx, field)
 	if err != nil {
@@ -41681,6 +42801,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -42555,6 +43677,1217 @@ func (ec *executionContext) fieldContext_PeopleEdge_node(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _ProcessingActivityRegistry_id(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_organization(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_organization(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ProcessingActivityRegistry().Organization(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Organization)
+	fc.Result = res
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "users":
+				return ec.fieldContext_Organization_users(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
+			case "complianceRegistries":
+				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
+			case "continualImprovementRegistries":
+				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_audit(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_audit(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ProcessingActivityRegistry().Audit(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Audit)
+	fc.Result = res
+	return ec.marshalNAudit2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_audit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Audit_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Audit_name(ctx, field)
+			case "organization":
+				return ec.fieldContext_Audit_organization(ctx, field)
+			case "framework":
+				return ec.fieldContext_Audit_framework(ctx, field)
+			case "validFrom":
+				return ec.fieldContext_Audit_validFrom(ctx, field)
+			case "validUntil":
+				return ec.fieldContext_Audit_validUntil(ctx, field)
+			case "report":
+				return ec.fieldContext_Audit_report(ctx, field)
+			case "reportUrl":
+				return ec.fieldContext_Audit_reportUrl(ctx, field)
+			case "state":
+				return ec.fieldContext_Audit_state(ctx, field)
+			case "controls":
+				return ec.fieldContext_Audit_controls(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
+			case "showOnTrustCenter":
+				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Audit_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Audit_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_name(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_purpose(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_purpose(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Purpose, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_purpose(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_dataSubjectCategory(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_dataSubjectCategory(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DataSubjectCategory, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_dataSubjectCategory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_personalDataCategory(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_personalDataCategory(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PersonalDataCategory, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_personalDataCategory(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_specialOrCriminalData(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_specialOrCriminalData(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SpecialOrCriminalData, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.ProcessingActivityRegistrySpecialOrCriminalData)
+	fc.Result = res
+	return ec.marshalNProcessingActivityRegistrySpecialOrCriminalData2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_specialOrCriminalData(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ProcessingActivityRegistrySpecialOrCriminalData does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_consentEvidenceLink(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_consentEvidenceLink(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ConsentEvidenceLink, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_consentEvidenceLink(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_lawfulBasis(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_lawfulBasis(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LawfulBasis, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.ProcessingActivityRegistryLawfulBasis)
+	fc.Result = res
+	return ec.marshalNProcessingActivityRegistryLawfulBasis2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_lawfulBasis(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ProcessingActivityRegistryLawfulBasis does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_recipients(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_recipients(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Recipients, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_recipients(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_location(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_location(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Location, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_location(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_internationalTransfers(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_internationalTransfers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InternationalTransfers, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_internationalTransfers(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_transferSafeguards(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_transferSafeguards(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TransferSafeguards, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*coredata.ProcessingActivityRegistryTransferSafeguards)
+	fc.Result = res
+	return ec.marshalOProcessingActivityRegistryTransferSafeguards2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferSafeguards(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_transferSafeguards(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ProcessingActivityRegistryTransferSafeguards does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_retentionPeriod(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_retentionPeriod(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RetentionPeriod, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_retentionPeriod(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_securityMeasures(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_securityMeasures(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecurityMeasures, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_securityMeasures(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_dataProtectionImpactAssessment(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_dataProtectionImpactAssessment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DataProtectionImpactAssessment, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.ProcessingActivityRegistryDataProtectionImpactAssessment)
+	fc.Result = res
+	return ec.marshalNProcessingActivityRegistryDataProtectionImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_dataProtectionImpactAssessment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ProcessingActivityRegistryDataProtectionImpactAssessment does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_transferImpactAssessment(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_transferImpactAssessment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TransferImpactAssessment, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.ProcessingActivityRegistryTransferImpactAssessment)
+	fc.Result = res
+	return ec.marshalNProcessingActivityRegistryTransferImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_transferImpactAssessment(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ProcessingActivityRegistryTransferImpactAssessment does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistryConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistryConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistryConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ProcessingActivityRegistryConnection().TotalCount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistryConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistryConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistryConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistryConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistryConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.ProcessingActivityRegistryEdge)
+	fc.Result = res
+	return ec.marshalNProcessingActivityRegistryEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistryConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistryConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ProcessingActivityRegistryEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ProcessingActivityRegistryEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityRegistryEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistryConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistryConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistryConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(types.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistryConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistryConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistryEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistryEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistryEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(page.CursorKey)
+	fc.Result = res
+	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistryEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistryEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistryEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistryEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistryEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.ProcessingActivityRegistry)
+	fc.Result = res
+	return ec.marshalNProcessingActivityRegistry2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistryEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistryEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivityRegistry_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivityRegistry_organization(ctx, field)
+			case "audit":
+				return ec.fieldContext_ProcessingActivityRegistry_audit(ctx, field)
+			case "name":
+				return ec.fieldContext_ProcessingActivityRegistry_name(ctx, field)
+			case "purpose":
+				return ec.fieldContext_ProcessingActivityRegistry_purpose(ctx, field)
+			case "dataSubjectCategory":
+				return ec.fieldContext_ProcessingActivityRegistry_dataSubjectCategory(ctx, field)
+			case "personalDataCategory":
+				return ec.fieldContext_ProcessingActivityRegistry_personalDataCategory(ctx, field)
+			case "specialOrCriminalData":
+				return ec.fieldContext_ProcessingActivityRegistry_specialOrCriminalData(ctx, field)
+			case "consentEvidenceLink":
+				return ec.fieldContext_ProcessingActivityRegistry_consentEvidenceLink(ctx, field)
+			case "lawfulBasis":
+				return ec.fieldContext_ProcessingActivityRegistry_lawfulBasis(ctx, field)
+			case "recipients":
+				return ec.fieldContext_ProcessingActivityRegistry_recipients(ctx, field)
+			case "location":
+				return ec.fieldContext_ProcessingActivityRegistry_location(ctx, field)
+			case "internationalTransfers":
+				return ec.fieldContext_ProcessingActivityRegistry_internationalTransfers(ctx, field)
+			case "transferSafeguards":
+				return ec.fieldContext_ProcessingActivityRegistry_transferSafeguards(ctx, field)
+			case "retentionPeriod":
+				return ec.fieldContext_ProcessingActivityRegistry_retentionPeriod(ctx, field)
+			case "securityMeasures":
+				return ec.fieldContext_ProcessingActivityRegistry_securityMeasures(ctx, field)
+			case "dataProtectionImpactAssessment":
+				return ec.fieldContext_ProcessingActivityRegistry_dataProtectionImpactAssessment(ctx, field)
+			case "transferImpactAssessment":
+				return ec.fieldContext_ProcessingActivityRegistry_transferImpactAssessment(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivityRegistry_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivityRegistry_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityRegistry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _PublishDocumentVersionPayload_documentVersion(ctx context.Context, field graphql.CollectedField, obj *types.PublishDocumentVersionPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_PublishDocumentVersionPayload_documentVersion(ctx, field)
 	if err != nil {
@@ -42800,67 +45133,6 @@ func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field g
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_trustCenters(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_trustCenters(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().TrustCenters(rctx, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["filter"].(*types.TrustCenterFilter))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.TrustCenterConnection)
-	fc.Result = res
-	return ec.marshalNTrustCenterConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterConnection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_trustCenters(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "edges":
-				return ec.fieldContext_TrustCenterConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_TrustCenterConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TrustCenterConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_trustCenters_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -44157,6 +46429,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -44978,6 +47252,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -45879,6 +48155,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -46669,6 +48947,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -47620,6 +49900,8 @@ func (ec *executionContext) fieldContext_UpdateAuditPayload_audit(_ context.Cont
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -48334,6 +50616,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -48410,6 +50694,92 @@ func (ec *executionContext) fieldContext_UpdatePeoplePayload_people(_ context.Co
 				return ec.fieldContext_People_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UpdateProcessingActivityRegistryPayload_processingActivityRegistry(ctx context.Context, field graphql.CollectedField, obj *types.UpdateProcessingActivityRegistryPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateProcessingActivityRegistryPayload_processingActivityRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProcessingActivityRegistry, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.ProcessingActivityRegistry)
+	fc.Result = res
+	return ec.marshalNProcessingActivityRegistry2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateProcessingActivityRegistryPayload_processingActivityRegistry(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateProcessingActivityRegistryPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ProcessingActivityRegistry_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_ProcessingActivityRegistry_organization(ctx, field)
+			case "audit":
+				return ec.fieldContext_ProcessingActivityRegistry_audit(ctx, field)
+			case "name":
+				return ec.fieldContext_ProcessingActivityRegistry_name(ctx, field)
+			case "purpose":
+				return ec.fieldContext_ProcessingActivityRegistry_purpose(ctx, field)
+			case "dataSubjectCategory":
+				return ec.fieldContext_ProcessingActivityRegistry_dataSubjectCategory(ctx, field)
+			case "personalDataCategory":
+				return ec.fieldContext_ProcessingActivityRegistry_personalDataCategory(ctx, field)
+			case "specialOrCriminalData":
+				return ec.fieldContext_ProcessingActivityRegistry_specialOrCriminalData(ctx, field)
+			case "consentEvidenceLink":
+				return ec.fieldContext_ProcessingActivityRegistry_consentEvidenceLink(ctx, field)
+			case "lawfulBasis":
+				return ec.fieldContext_ProcessingActivityRegistry_lawfulBasis(ctx, field)
+			case "recipients":
+				return ec.fieldContext_ProcessingActivityRegistry_recipients(ctx, field)
+			case "location":
+				return ec.fieldContext_ProcessingActivityRegistry_location(ctx, field)
+			case "internationalTransfers":
+				return ec.fieldContext_ProcessingActivityRegistry_internationalTransfers(ctx, field)
+			case "transferSafeguards":
+				return ec.fieldContext_ProcessingActivityRegistry_transferSafeguards(ctx, field)
+			case "retentionPeriod":
+				return ec.fieldContext_ProcessingActivityRegistry_retentionPeriod(ctx, field)
+			case "securityMeasures":
+				return ec.fieldContext_ProcessingActivityRegistry_securityMeasures(ctx, field)
+			case "dataProtectionImpactAssessment":
+				return ec.fieldContext_ProcessingActivityRegistry_dataProtectionImpactAssessment(ctx, field)
+			case "transferImpactAssessment":
+				return ec.fieldContext_ProcessingActivityRegistry_transferImpactAssessment(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_ProcessingActivityRegistry_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_ProcessingActivityRegistry_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityRegistry", field.Name)
 		},
 	}
 	return fc, nil
@@ -49098,6 +51468,8 @@ func (ec *executionContext) fieldContext_UploadAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -50139,6 +52511,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
@@ -58595,6 +60969,145 @@ func (ec *executionContext) unmarshalInputCreatePeopleInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateProcessingActivityRegistryInput(ctx context.Context, obj any) (types.CreateProcessingActivityRegistryInput, error) {
+	var it types.CreateProcessingActivityRegistryInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "auditId", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "auditId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("auditId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AuditID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "purpose":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("purpose"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Purpose = data
+		case "dataSubjectCategory":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSubjectCategory"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataSubjectCategory = data
+		case "personalDataCategory":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("personalDataCategory"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PersonalDataCategory = data
+		case "specialOrCriminalData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("specialOrCriminalData"))
+			data, err := ec.unmarshalNProcessingActivityRegistrySpecialOrCriminalData2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SpecialOrCriminalData = data
+		case "consentEvidenceLink":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("consentEvidenceLink"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConsentEvidenceLink = data
+		case "lawfulBasis":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lawfulBasis"))
+			data, err := ec.unmarshalNProcessingActivityRegistryLawfulBasis2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LawfulBasis = data
+		case "recipients":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipients"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Recipients = data
+		case "location":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Location = data
+		case "internationalTransfers":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("internationalTransfers"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.InternationalTransfers = data
+		case "transferSafeguards":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transferSafeguards"))
+			data, err := ec.unmarshalOProcessingActivityRegistryTransferSafeguards2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferSafeguards(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TransferSafeguards = data
+		case "retentionPeriod":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("retentionPeriod"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RetentionPeriod = data
+		case "securityMeasures":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("securityMeasures"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SecurityMeasures = data
+		case "dataProtectionImpactAssessment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataProtectionImpactAssessment"))
+			data, err := ec.unmarshalNProcessingActivityRegistryDataProtectionImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataProtectionImpactAssessment = data
+		case "transferImpactAssessment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transferImpactAssessment"))
+			data, err := ec.unmarshalNProcessingActivityRegistryTransferImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TransferImpactAssessment = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateRiskDocumentMappingInput(ctx context.Context, obj any) (types.CreateRiskDocumentMappingInput, error) {
 	var it types.CreateRiskDocumentMappingInput
 	asMap := map[string]any{}
@@ -59852,6 +62365,33 @@ func (ec *executionContext) unmarshalInputDeletePeopleInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteProcessingActivityRegistryInput(ctx context.Context, obj any) (types.DeleteProcessingActivityRegistryInput, error) {
+	var it types.DeleteProcessingActivityRegistryInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"processingActivityRegistryId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "processingActivityRegistryId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("processingActivityRegistryId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProcessingActivityRegistryID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteRiskDocumentMappingInput(ctx context.Context, obj any) (types.DeleteRiskDocumentMappingInput, error) {
 	var it types.DeleteRiskDocumentMappingInput
 	asMap := map[string]any{}
@@ -60869,6 +63409,40 @@ func (ec *executionContext) unmarshalInputPeopleOrder(ctx context.Context, obj a
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputProcessingActivityRegistryOrder(ctx context.Context, obj any) (types.ProcessingActivityRegistryOrderBy, error) {
+	var it types.ProcessingActivityRegistryOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNProcessingActivityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPublishDocumentVersionInput(ctx context.Context, obj any) (types.PublishDocumentVersionInput, error) {
 	var it types.PublishDocumentVersionInput
 	asMap := map[string]any{}
@@ -61203,33 +63777,6 @@ func (ec *executionContext) unmarshalInputTrustCenterAccessOrder(ctx context.Con
 				return it, err
 			}
 			it.Field = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputTrustCenterFilter(ctx context.Context, obj any) (types.TrustCenterFilter, error) {
-	var it types.TrustCenterFilter
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"slug"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "slug":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Slug = data
 		}
 	}
 
@@ -62112,6 +64659,145 @@ func (ec *executionContext) unmarshalInputUpdatePeopleInput(ctx context.Context,
 				return it, err
 			}
 			it.ContractEndDate = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateProcessingActivityRegistryInput(ctx context.Context, obj any) (types.UpdateProcessingActivityRegistryInput, error) {
+	var it types.UpdateProcessingActivityRegistryInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "auditId", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "auditId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("auditId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AuditID = data
+		case "name":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "purpose":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("purpose"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Purpose = data
+		case "dataSubjectCategory":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSubjectCategory"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataSubjectCategory = data
+		case "personalDataCategory":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("personalDataCategory"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.PersonalDataCategory = data
+		case "specialOrCriminalData":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("specialOrCriminalData"))
+			data, err := ec.unmarshalOProcessingActivityRegistrySpecialOrCriminalData2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SpecialOrCriminalData = data
+		case "consentEvidenceLink":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("consentEvidenceLink"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ConsentEvidenceLink = data
+		case "lawfulBasis":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lawfulBasis"))
+			data, err := ec.unmarshalOProcessingActivityRegistryLawfulBasis2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.LawfulBasis = data
+		case "recipients":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("recipients"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Recipients = data
+		case "location":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Location = data
+		case "internationalTransfers":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("internationalTransfers"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.InternationalTransfers = data
+		case "transferSafeguards":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transferSafeguards"))
+			data, err := ec.unmarshalOProcessingActivityRegistryTransferSafeguards2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferSafeguards(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TransferSafeguards = data
+		case "retentionPeriod":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("retentionPeriod"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.RetentionPeriod = data
+		case "securityMeasures":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("securityMeasures"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SecurityMeasures = data
+		case "dataProtectionImpactAssessment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataProtectionImpactAssessment"))
+			data, err := ec.unmarshalOProcessingActivityRegistryDataProtectionImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DataProtectionImpactAssessment = data
+		case "transferImpactAssessment":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transferImpactAssessment"))
+			data, err := ec.unmarshalOProcessingActivityRegistryTransferImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TransferImpactAssessment = data
 		}
 	}
 
@@ -63288,6 +65974,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Report(ctx, sel, obj)
+	case types.ProcessingActivityRegistry:
+		return ec._ProcessingActivityRegistry(ctx, sel, &obj)
+	case *types.ProcessingActivityRegistry:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._ProcessingActivityRegistry(ctx, sel, obj)
 	case types.People:
 		return ec._People(ctx, sel, &obj)
 	case *types.People:
@@ -63999,6 +66692,42 @@ func (ec *executionContext) _Audit(ctx context.Context, sel ast.SelectionSet, ob
 					}
 				}()
 				res = ec._Audit_controls(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "processingActivityRegistries":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Audit_processingActivityRegistries(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -66204,6 +68933,45 @@ func (ec *executionContext) _CreatePeoplePayload(ctx context.Context, sel ast.Se
 	return out
 }
 
+var createProcessingActivityRegistryPayloadImplementors = []string{"CreateProcessingActivityRegistryPayload"}
+
+func (ec *executionContext) _CreateProcessingActivityRegistryPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateProcessingActivityRegistryPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createProcessingActivityRegistryPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateProcessingActivityRegistryPayload")
+		case "processingActivityRegistryEdge":
+			out.Values[i] = ec._CreateProcessingActivityRegistryPayload_processingActivityRegistryEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var createRiskDocumentMappingPayloadImplementors = []string{"CreateRiskDocumentMappingPayload"}
 
 func (ec *executionContext) _CreateRiskDocumentMappingPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateRiskDocumentMappingPayload) graphql.Marshaler {
@@ -67630,6 +70398,45 @@ func (ec *executionContext) _DeletePeoplePayload(ctx context.Context, sel ast.Se
 			out.Values[i] = graphql.MarshalString("DeletePeoplePayload")
 		case "deletedPeopleId":
 			out.Values[i] = ec._DeletePeoplePayload_deletedPeopleId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteProcessingActivityRegistryPayloadImplementors = []string{"DeleteProcessingActivityRegistryPayload"}
+
+func (ec *executionContext) _DeleteProcessingActivityRegistryPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteProcessingActivityRegistryPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteProcessingActivityRegistryPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteProcessingActivityRegistryPayload")
+		case "deletedProcessingActivityRegistryId":
+			out.Values[i] = ec._DeleteProcessingActivityRegistryPayload_deletedProcessingActivityRegistryId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -70947,6 +73754,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createProcessingActivityRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createProcessingActivityRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateProcessingActivityRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateProcessingActivityRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteProcessingActivityRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteProcessingActivityRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createSnapshot":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createSnapshot(ctx, field)
@@ -71920,6 +74748,42 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "processingActivityRegistries":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_processingActivityRegistries(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "snapshots":
 			field := field
 
@@ -72357,6 +75221,299 @@ func (ec *executionContext) _PeopleEdge(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var processingActivityRegistryImplementors = []string{"ProcessingActivityRegistry", "Node"}
+
+func (ec *executionContext) _ProcessingActivityRegistry(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityRegistry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityRegistryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProcessingActivityRegistry")
+		case "id":
+			out.Values[i] = ec._ProcessingActivityRegistry_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivityRegistry_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "audit":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivityRegistry_audit(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "name":
+			out.Values[i] = ec._ProcessingActivityRegistry_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "purpose":
+			out.Values[i] = ec._ProcessingActivityRegistry_purpose(ctx, field, obj)
+		case "dataSubjectCategory":
+			out.Values[i] = ec._ProcessingActivityRegistry_dataSubjectCategory(ctx, field, obj)
+		case "personalDataCategory":
+			out.Values[i] = ec._ProcessingActivityRegistry_personalDataCategory(ctx, field, obj)
+		case "specialOrCriminalData":
+			out.Values[i] = ec._ProcessingActivityRegistry_specialOrCriminalData(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "consentEvidenceLink":
+			out.Values[i] = ec._ProcessingActivityRegistry_consentEvidenceLink(ctx, field, obj)
+		case "lawfulBasis":
+			out.Values[i] = ec._ProcessingActivityRegistry_lawfulBasis(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "recipients":
+			out.Values[i] = ec._ProcessingActivityRegistry_recipients(ctx, field, obj)
+		case "location":
+			out.Values[i] = ec._ProcessingActivityRegistry_location(ctx, field, obj)
+		case "internationalTransfers":
+			out.Values[i] = ec._ProcessingActivityRegistry_internationalTransfers(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "transferSafeguards":
+			out.Values[i] = ec._ProcessingActivityRegistry_transferSafeguards(ctx, field, obj)
+		case "retentionPeriod":
+			out.Values[i] = ec._ProcessingActivityRegistry_retentionPeriod(ctx, field, obj)
+		case "securityMeasures":
+			out.Values[i] = ec._ProcessingActivityRegistry_securityMeasures(ctx, field, obj)
+		case "dataProtectionImpactAssessment":
+			out.Values[i] = ec._ProcessingActivityRegistry_dataProtectionImpactAssessment(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "transferImpactAssessment":
+			out.Values[i] = ec._ProcessingActivityRegistry_transferImpactAssessment(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._ProcessingActivityRegistry_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._ProcessingActivityRegistry_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var processingActivityRegistryConnectionImplementors = []string{"ProcessingActivityRegistryConnection"}
+
+func (ec *executionContext) _ProcessingActivityRegistryConnection(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityRegistryConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityRegistryConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProcessingActivityRegistryConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivityRegistryConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._ProcessingActivityRegistryConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._ProcessingActivityRegistryConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var processingActivityRegistryEdgeImplementors = []string{"ProcessingActivityRegistryEdge"}
+
+func (ec *executionContext) _ProcessingActivityRegistryEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ProcessingActivityRegistryEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, processingActivityRegistryEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProcessingActivityRegistryEdge")
+		case "cursor":
+			out.Values[i] = ec._ProcessingActivityRegistryEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._ProcessingActivityRegistryEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var publishDocumentVersionPayloadImplementors = []string{"PublishDocumentVersionPayload"}
 
 func (ec *executionContext) _PublishDocumentVersionPayload(ctx context.Context, sel ast.SelectionSet, obj *types.PublishDocumentVersionPayload) graphql.Marshaler {
@@ -72452,28 +75609,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_viewer(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx,
-					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "trustCenters":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_trustCenters(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -74697,6 +77832,45 @@ func (ec *executionContext) _UpdatePeoplePayload(ctx context.Context, sel ast.Se
 			out.Values[i] = graphql.MarshalString("UpdatePeoplePayload")
 		case "people":
 			out.Values[i] = ec._UpdatePeoplePayload_people(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateProcessingActivityRegistryPayloadImplementors = []string{"UpdateProcessingActivityRegistryPayload"}
+
+func (ec *executionContext) _UpdateProcessingActivityRegistryPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateProcessingActivityRegistryPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateProcessingActivityRegistryPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateProcessingActivityRegistryPayload")
+		case "processingActivityRegistry":
+			out.Values[i] = ec._UpdateProcessingActivityRegistryPayload_processingActivityRegistry(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -78845,6 +82019,25 @@ func (ec *executionContext) marshalNCreatePeoplePayload2ᚖgithubᚗcomᚋgetpro
 	return ec._CreatePeoplePayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCreateProcessingActivityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityRegistryInput(ctx context.Context, v any) (types.CreateProcessingActivityRegistryInput, error) {
+	res, err := ec.unmarshalInputCreateProcessingActivityRegistryInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateProcessingActivityRegistryPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateProcessingActivityRegistryPayload) graphql.Marshaler {
+	return ec._CreateProcessingActivityRegistryPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateProcessingActivityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateProcessingActivityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateProcessingActivityRegistryPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateProcessingActivityRegistryPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateRiskDocumentMappingInput(ctx context.Context, v any) (types.CreateRiskDocumentMappingInput, error) {
 	res, err := ec.unmarshalInputCreateRiskDocumentMappingInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -79630,6 +82823,25 @@ func (ec *executionContext) marshalNDeletePeoplePayload2ᚖgithubᚗcomᚋgetpro
 		return graphql.Null
 	}
 	return ec._DeletePeoplePayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteProcessingActivityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityRegistryInput(ctx context.Context, v any) (types.DeleteProcessingActivityRegistryInput, error) {
+	res, err := ec.unmarshalInputDeleteProcessingActivityRegistryInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteProcessingActivityRegistryPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteProcessingActivityRegistryPayload) graphql.Marshaler {
+	return ec._DeleteProcessingActivityRegistryPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteProcessingActivityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteProcessingActivityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteProcessingActivityRegistryPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteProcessingActivityRegistryPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteRiskDocumentMappingInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteRiskDocumentMappingInput(ctx context.Context, v any) (types.DeleteRiskDocumentMappingInput, error) {
@@ -81316,6 +84528,234 @@ var (
 	}
 )
 
+func (ec *executionContext) marshalNProcessingActivityRegistry2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistry(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityRegistry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProcessingActivityRegistry(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProcessingActivityRegistryConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryConnection(ctx context.Context, sel ast.SelectionSet, v types.ProcessingActivityRegistryConnection) graphql.Marshaler {
+	return ec._ProcessingActivityRegistryConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProcessingActivityRegistryConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryConnection(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityRegistryConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProcessingActivityRegistryConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNProcessingActivityRegistryDataProtectionImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment(ctx context.Context, v any) (coredata.ProcessingActivityRegistryDataProtectionImpactAssessment, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNProcessingActivityRegistryDataProtectionImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNProcessingActivityRegistryDataProtectionImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivityRegistryDataProtectionImpactAssessment) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNProcessingActivityRegistryDataProtectionImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNProcessingActivityRegistryDataProtectionImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment = map[string]coredata.ProcessingActivityRegistryDataProtectionImpactAssessment{
+		"NEEDED":     coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNeeded,
+		"NOT_NEEDED": coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNotNeeded,
+	}
+	marshalNProcessingActivityRegistryDataProtectionImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment = map[coredata.ProcessingActivityRegistryDataProtectionImpactAssessment]string{
+		coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNeeded:    "NEEDED",
+		coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNotNeeded: "NOT_NEEDED",
+	}
+)
+
+func (ec *executionContext) marshalNProcessingActivityRegistryEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ProcessingActivityRegistryEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProcessingActivityRegistryEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProcessingActivityRegistryEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryEdge(ctx context.Context, sel ast.SelectionSet, v *types.ProcessingActivityRegistryEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProcessingActivityRegistryEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNProcessingActivityRegistryLawfulBasis2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis(ctx context.Context, v any) (coredata.ProcessingActivityRegistryLawfulBasis, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNProcessingActivityRegistryLawfulBasis2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNProcessingActivityRegistryLawfulBasis2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivityRegistryLawfulBasis) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNProcessingActivityRegistryLawfulBasis2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNProcessingActivityRegistryLawfulBasis2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis = map[string]coredata.ProcessingActivityRegistryLawfulBasis{
+		"LEGITIMATE_INTEREST":   coredata.ProcessingActivityRegistryLawfulBasisLegitimateInterest,
+		"CONSENT":               coredata.ProcessingActivityRegistryLawfulBasisConsent,
+		"CONTRACTUAL_NECESSITY": coredata.ProcessingActivityRegistryLawfulBasisContractualNecessity,
+		"LEGAL_OBLIGATION":      coredata.ProcessingActivityRegistryLawfulBasisLegalObligation,
+		"VITAL_INTERESTS":       coredata.ProcessingActivityRegistryLawfulBasisVitalInterests,
+		"PUBLIC_TASK":           coredata.ProcessingActivityRegistryLawfulBasisPublicTask,
+	}
+	marshalNProcessingActivityRegistryLawfulBasis2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis = map[coredata.ProcessingActivityRegistryLawfulBasis]string{
+		coredata.ProcessingActivityRegistryLawfulBasisLegitimateInterest:   "LEGITIMATE_INTEREST",
+		coredata.ProcessingActivityRegistryLawfulBasisConsent:              "CONSENT",
+		coredata.ProcessingActivityRegistryLawfulBasisContractualNecessity: "CONTRACTUAL_NECESSITY",
+		coredata.ProcessingActivityRegistryLawfulBasisLegalObligation:      "LEGAL_OBLIGATION",
+		coredata.ProcessingActivityRegistryLawfulBasisVitalInterests:       "VITAL_INTERESTS",
+		coredata.ProcessingActivityRegistryLawfulBasisPublicTask:           "PUBLIC_TASK",
+	}
+)
+
+func (ec *executionContext) unmarshalNProcessingActivityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryOrderField(ctx context.Context, v any) (coredata.ProcessingActivityRegistryOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNProcessingActivityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNProcessingActivityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivityRegistryOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNProcessingActivityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNProcessingActivityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryOrderField = map[string]coredata.ProcessingActivityRegistryOrderField{
+		"CREATED_AT": coredata.ProcessingActivityRegistryOrderFieldCreatedAt,
+		"NAME":       coredata.ProcessingActivityRegistryOrderFieldName,
+	}
+	marshalNProcessingActivityRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryOrderField = map[coredata.ProcessingActivityRegistryOrderField]string{
+		coredata.ProcessingActivityRegistryOrderFieldCreatedAt: "CREATED_AT",
+		coredata.ProcessingActivityRegistryOrderFieldName:      "NAME",
+	}
+)
+
+func (ec *executionContext) unmarshalNProcessingActivityRegistrySpecialOrCriminalData2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData(ctx context.Context, v any) (coredata.ProcessingActivityRegistrySpecialOrCriminalData, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNProcessingActivityRegistrySpecialOrCriminalData2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNProcessingActivityRegistrySpecialOrCriminalData2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivityRegistrySpecialOrCriminalData) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNProcessingActivityRegistrySpecialOrCriminalData2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNProcessingActivityRegistrySpecialOrCriminalData2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData = map[string]coredata.ProcessingActivityRegistrySpecialOrCriminalData{
+		"YES":      coredata.ProcessingActivityRegistrySpecialOrCriminalDataYes,
+		"NO":       coredata.ProcessingActivityRegistrySpecialOrCriminalDataNo,
+		"POSSIBLE": coredata.ProcessingActivityRegistrySpecialOrCriminalDataPossible,
+	}
+	marshalNProcessingActivityRegistrySpecialOrCriminalData2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData = map[coredata.ProcessingActivityRegistrySpecialOrCriminalData]string{
+		coredata.ProcessingActivityRegistrySpecialOrCriminalDataYes:      "YES",
+		coredata.ProcessingActivityRegistrySpecialOrCriminalDataNo:       "NO",
+		coredata.ProcessingActivityRegistrySpecialOrCriminalDataPossible: "POSSIBLE",
+	}
+)
+
+func (ec *executionContext) unmarshalNProcessingActivityRegistryTransferImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment(ctx context.Context, v any) (coredata.ProcessingActivityRegistryTransferImpactAssessment, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNProcessingActivityRegistryTransferImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNProcessingActivityRegistryTransferImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivityRegistryTransferImpactAssessment) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNProcessingActivityRegistryTransferImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNProcessingActivityRegistryTransferImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment = map[string]coredata.ProcessingActivityRegistryTransferImpactAssessment{
+		"NEEDED":     coredata.ProcessingActivityRegistryTransferImpactAssessmentNeeded,
+		"NOT_NEEDED": coredata.ProcessingActivityRegistryTransferImpactAssessmentNotNeeded,
+	}
+	marshalNProcessingActivityRegistryTransferImpactAssessment2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment = map[coredata.ProcessingActivityRegistryTransferImpactAssessment]string{
+		coredata.ProcessingActivityRegistryTransferImpactAssessmentNeeded:    "NEEDED",
+		coredata.ProcessingActivityRegistryTransferImpactAssessmentNotNeeded: "NOT_NEEDED",
+	}
+)
+
 func (ec *executionContext) unmarshalNPublishDocumentVersionInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPublishDocumentVersionInput(ctx context.Context, v any) (types.PublishDocumentVersionInput, error) {
 	res, err := ec.unmarshalInputPublishDocumentVersionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -81986,20 +85426,6 @@ var (
 	}
 )
 
-func (ec *executionContext) marshalNTrustCenterConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterConnection(ctx context.Context, sel ast.SelectionSet, v types.TrustCenterConnection) graphql.Marshaler {
-	return ec._TrustCenterConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNTrustCenterConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterConnection(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._TrustCenterConnection(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNTrustCenterEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.TrustCenterEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -82318,6 +85744,25 @@ func (ec *executionContext) marshalNUpdatePeoplePayload2ᚖgithubᚗcomᚋgetpro
 		return graphql.Null
 	}
 	return ec._UpdatePeoplePayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateProcessingActivityRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityRegistryInput(ctx context.Context, v any) (types.UpdateProcessingActivityRegistryInput, error) {
+	res, err := ec.unmarshalInputUpdateProcessingActivityRegistryInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateProcessingActivityRegistryPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateProcessingActivityRegistryPayload) graphql.Marshaler {
+	return ec._UpdateProcessingActivityRegistryPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateProcessingActivityRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateProcessingActivityRegistryPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateProcessingActivityRegistryPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateProcessingActivityRegistryPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateRiskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateRiskInput(ctx context.Context, v any) (types.UpdateRiskInput, error) {
@@ -84392,6 +87837,182 @@ func (ec *executionContext) unmarshalOPeopleOrder2ᚖgithubᚗcomᚋgetproboᚋp
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalOProcessingActivityRegistryDataProtectionImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment(ctx context.Context, v any) (*coredata.ProcessingActivityRegistryDataProtectionImpactAssessment, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOProcessingActivityRegistryDataProtectionImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOProcessingActivityRegistryDataProtectionImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivityRegistryDataProtectionImpactAssessment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOProcessingActivityRegistryDataProtectionImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment[*v])
+	return res
+}
+
+var (
+	unmarshalOProcessingActivityRegistryDataProtectionImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment = map[string]coredata.ProcessingActivityRegistryDataProtectionImpactAssessment{
+		"NEEDED":     coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNeeded,
+		"NOT_NEEDED": coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNotNeeded,
+	}
+	marshalOProcessingActivityRegistryDataProtectionImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryDataProtectionImpactAssessment = map[coredata.ProcessingActivityRegistryDataProtectionImpactAssessment]string{
+		coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNeeded:    "NEEDED",
+		coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNotNeeded: "NOT_NEEDED",
+	}
+)
+
+func (ec *executionContext) unmarshalOProcessingActivityRegistryLawfulBasis2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis(ctx context.Context, v any) (*coredata.ProcessingActivityRegistryLawfulBasis, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOProcessingActivityRegistryLawfulBasis2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOProcessingActivityRegistryLawfulBasis2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivityRegistryLawfulBasis) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOProcessingActivityRegistryLawfulBasis2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis[*v])
+	return res
+}
+
+var (
+	unmarshalOProcessingActivityRegistryLawfulBasis2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis = map[string]coredata.ProcessingActivityRegistryLawfulBasis{
+		"LEGITIMATE_INTEREST":   coredata.ProcessingActivityRegistryLawfulBasisLegitimateInterest,
+		"CONSENT":               coredata.ProcessingActivityRegistryLawfulBasisConsent,
+		"CONTRACTUAL_NECESSITY": coredata.ProcessingActivityRegistryLawfulBasisContractualNecessity,
+		"LEGAL_OBLIGATION":      coredata.ProcessingActivityRegistryLawfulBasisLegalObligation,
+		"VITAL_INTERESTS":       coredata.ProcessingActivityRegistryLawfulBasisVitalInterests,
+		"PUBLIC_TASK":           coredata.ProcessingActivityRegistryLawfulBasisPublicTask,
+	}
+	marshalOProcessingActivityRegistryLawfulBasis2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis = map[coredata.ProcessingActivityRegistryLawfulBasis]string{
+		coredata.ProcessingActivityRegistryLawfulBasisLegitimateInterest:   "LEGITIMATE_INTEREST",
+		coredata.ProcessingActivityRegistryLawfulBasisConsent:              "CONSENT",
+		coredata.ProcessingActivityRegistryLawfulBasisContractualNecessity: "CONTRACTUAL_NECESSITY",
+		coredata.ProcessingActivityRegistryLawfulBasisLegalObligation:      "LEGAL_OBLIGATION",
+		coredata.ProcessingActivityRegistryLawfulBasisVitalInterests:       "VITAL_INTERESTS",
+		coredata.ProcessingActivityRegistryLawfulBasisPublicTask:           "PUBLIC_TASK",
+	}
+)
+
+func (ec *executionContext) unmarshalOProcessingActivityRegistryOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryOrderBy(ctx context.Context, v any) (*types.ProcessingActivityRegistryOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputProcessingActivityRegistryOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOProcessingActivityRegistrySpecialOrCriminalData2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData(ctx context.Context, v any) (*coredata.ProcessingActivityRegistrySpecialOrCriminalData, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOProcessingActivityRegistrySpecialOrCriminalData2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOProcessingActivityRegistrySpecialOrCriminalData2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivityRegistrySpecialOrCriminalData) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOProcessingActivityRegistrySpecialOrCriminalData2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData[*v])
+	return res
+}
+
+var (
+	unmarshalOProcessingActivityRegistrySpecialOrCriminalData2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData = map[string]coredata.ProcessingActivityRegistrySpecialOrCriminalData{
+		"YES":      coredata.ProcessingActivityRegistrySpecialOrCriminalDataYes,
+		"NO":       coredata.ProcessingActivityRegistrySpecialOrCriminalDataNo,
+		"POSSIBLE": coredata.ProcessingActivityRegistrySpecialOrCriminalDataPossible,
+	}
+	marshalOProcessingActivityRegistrySpecialOrCriminalData2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistrySpecialOrCriminalData = map[coredata.ProcessingActivityRegistrySpecialOrCriminalData]string{
+		coredata.ProcessingActivityRegistrySpecialOrCriminalDataYes:      "YES",
+		coredata.ProcessingActivityRegistrySpecialOrCriminalDataNo:       "NO",
+		coredata.ProcessingActivityRegistrySpecialOrCriminalDataPossible: "POSSIBLE",
+	}
+)
+
+func (ec *executionContext) unmarshalOProcessingActivityRegistryTransferImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment(ctx context.Context, v any) (*coredata.ProcessingActivityRegistryTransferImpactAssessment, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOProcessingActivityRegistryTransferImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOProcessingActivityRegistryTransferImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivityRegistryTransferImpactAssessment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOProcessingActivityRegistryTransferImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment[*v])
+	return res
+}
+
+var (
+	unmarshalOProcessingActivityRegistryTransferImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment = map[string]coredata.ProcessingActivityRegistryTransferImpactAssessment{
+		"NEEDED":     coredata.ProcessingActivityRegistryTransferImpactAssessmentNeeded,
+		"NOT_NEEDED": coredata.ProcessingActivityRegistryTransferImpactAssessmentNotNeeded,
+	}
+	marshalOProcessingActivityRegistryTransferImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferImpactAssessment = map[coredata.ProcessingActivityRegistryTransferImpactAssessment]string{
+		coredata.ProcessingActivityRegistryTransferImpactAssessmentNeeded:    "NEEDED",
+		coredata.ProcessingActivityRegistryTransferImpactAssessmentNotNeeded: "NOT_NEEDED",
+	}
+)
+
+func (ec *executionContext) unmarshalOProcessingActivityRegistryTransferSafeguards2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferSafeguards(ctx context.Context, v any) (*coredata.ProcessingActivityRegistryTransferSafeguards, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOProcessingActivityRegistryTransferSafeguards2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferSafeguards[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOProcessingActivityRegistryTransferSafeguards2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferSafeguards(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivityRegistryTransferSafeguards) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOProcessingActivityRegistryTransferSafeguards2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferSafeguards[*v])
+	return res
+}
+
+var (
+	unmarshalOProcessingActivityRegistryTransferSafeguards2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferSafeguards = map[string]coredata.ProcessingActivityRegistryTransferSafeguards{
+		"STANDARD_CONTRACTUAL_CLAUSES": coredata.ProcessingActivityRegistryTransferSafeguardsStandardContractualClauses,
+		"BINDING_CORPORATE_RULES":      coredata.ProcessingActivityRegistryTransferSafeguardsBindingCorporateRules,
+		"ADEQUACY_DECISION":            coredata.ProcessingActivityRegistryTransferSafeguardsAdequacyDecision,
+		"DEROGATIONS":                  coredata.ProcessingActivityRegistryTransferSafeguardsDerogations,
+		"CODES_OF_CONDUCT":             coredata.ProcessingActivityRegistryTransferSafeguardsCodesOfConduct,
+		"CERTIFICATION_MECHANISMS":     coredata.ProcessingActivityRegistryTransferSafeguardsCertificationMechanisms,
+	}
+	marshalOProcessingActivityRegistryTransferSafeguards2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryTransferSafeguards = map[coredata.ProcessingActivityRegistryTransferSafeguards]string{
+		coredata.ProcessingActivityRegistryTransferSafeguardsStandardContractualClauses: "STANDARD_CONTRACTUAL_CLAUSES",
+		coredata.ProcessingActivityRegistryTransferSafeguardsBindingCorporateRules:      "BINDING_CORPORATE_RULES",
+		coredata.ProcessingActivityRegistryTransferSafeguardsAdequacyDecision:           "ADEQUACY_DECISION",
+		coredata.ProcessingActivityRegistryTransferSafeguardsDerogations:                "DEROGATIONS",
+		coredata.ProcessingActivityRegistryTransferSafeguardsCodesOfConduct:             "CODES_OF_CONDUCT",
+		coredata.ProcessingActivityRegistryTransferSafeguardsCertificationMechanisms:    "CERTIFICATION_MECHANISMS",
+	}
+)
+
 func (ec *executionContext) marshalOReport2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐReport(ctx context.Context, sel ast.SelectionSet, v *types.Report) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -84568,14 +88189,6 @@ func (ec *executionContext) unmarshalOTrustCenterAccessOrder2ᚖgithubᚗcomᚋg
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputTrustCenterAccessOrder(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOTrustCenterFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterFilter(ctx context.Context, v any) (*types.TrustCenterFilter, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputTrustCenterFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

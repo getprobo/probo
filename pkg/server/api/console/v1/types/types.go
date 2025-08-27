@@ -57,19 +57,20 @@ type AssignTaskPayload struct {
 }
 
 type Audit struct {
-	ID                gid.GID             `json:"id"`
-	Name              *string             `json:"name,omitempty"`
-	Organization      *Organization       `json:"organization"`
-	Framework         *Framework          `json:"framework"`
-	ValidFrom         *time.Time          `json:"validFrom,omitempty"`
-	ValidUntil        *time.Time          `json:"validUntil,omitempty"`
-	Report            *Report             `json:"report,omitempty"`
-	ReportURL         *string             `json:"reportUrl,omitempty"`
-	State             coredata.AuditState `json:"state"`
-	Controls          *ControlConnection  `json:"controls"`
-	ShowOnTrustCenter bool                `json:"showOnTrustCenter"`
-	CreatedAt         time.Time           `json:"createdAt"`
-	UpdatedAt         time.Time           `json:"updatedAt"`
+	ID                           gid.GID                               `json:"id"`
+	Name                         *string                               `json:"name,omitempty"`
+	Organization                 *Organization                         `json:"organization"`
+	Framework                    *Framework                            `json:"framework"`
+	ValidFrom                    *time.Time                            `json:"validFrom,omitempty"`
+	ValidUntil                   *time.Time                            `json:"validUntil,omitempty"`
+	Report                       *Report                               `json:"report,omitempty"`
+	ReportURL                    *string                               `json:"reportUrl,omitempty"`
+	State                        coredata.AuditState                   `json:"state"`
+	Controls                     *ControlConnection                    `json:"controls"`
+	ProcessingActivityRegistries *ProcessingActivityRegistryConnection `json:"processingActivityRegistries"`
+	ShowOnTrustCenter            bool                                  `json:"showOnTrustCenter"`
+	CreatedAt                    time.Time                             `json:"createdAt"`
+	UpdatedAt                    time.Time                             `json:"updatedAt"`
 }
 
 func (Audit) IsNode()             {}
@@ -442,6 +443,30 @@ type CreatePeoplePayload struct {
 	PeopleEdge *PeopleEdge `json:"peopleEdge"`
 }
 
+type CreateProcessingActivityRegistryInput struct {
+	OrganizationID                 gid.GID                                                           `json:"organizationId"`
+	AuditID                        gid.GID                                                           `json:"auditId"`
+	Name                           string                                                            `json:"name"`
+	Purpose                        *string                                                           `json:"purpose,omitempty"`
+	DataSubjectCategory            *string                                                           `json:"dataSubjectCategory,omitempty"`
+	PersonalDataCategory           *string                                                           `json:"personalDataCategory,omitempty"`
+	SpecialOrCriminalData          coredata.ProcessingActivityRegistrySpecialOrCriminalData          `json:"specialOrCriminalData"`
+	ConsentEvidenceLink            *string                                                           `json:"consentEvidenceLink,omitempty"`
+	LawfulBasis                    coredata.ProcessingActivityRegistryLawfulBasis                    `json:"lawfulBasis"`
+	Recipients                     *string                                                           `json:"recipients,omitempty"`
+	Location                       *string                                                           `json:"location,omitempty"`
+	InternationalTransfers         bool                                                              `json:"internationalTransfers"`
+	TransferSafeguards             *coredata.ProcessingActivityRegistryTransferSafeguards            `json:"transferSafeguards,omitempty"`
+	RetentionPeriod                *string                                                           `json:"retentionPeriod,omitempty"`
+	SecurityMeasures               *string                                                           `json:"securityMeasures,omitempty"`
+	DataProtectionImpactAssessment coredata.ProcessingActivityRegistryDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
+	TransferImpactAssessment       coredata.ProcessingActivityRegistryTransferImpactAssessment       `json:"transferImpactAssessment"`
+}
+
+type CreateProcessingActivityRegistryPayload struct {
+	ProcessingActivityRegistryEdge *ProcessingActivityRegistryEdge `json:"processingActivityRegistryEdge"`
+}
+
 type CreateRiskDocumentMappingInput struct {
 	RiskID     gid.GID `json:"riskId"`
 	DocumentID gid.GID `json:"documentId"`
@@ -760,6 +785,14 @@ type DeletePeopleInput struct {
 
 type DeletePeoplePayload struct {
 	DeletedPeopleID gid.GID `json:"deletedPeopleId"`
+}
+
+type DeleteProcessingActivityRegistryInput struct {
+	ProcessingActivityRegistryID gid.GID `json:"processingActivityRegistryId"`
+}
+
+type DeleteProcessingActivityRegistryPayload struct {
+	DeletedProcessingActivityRegistryID gid.GID `json:"deletedProcessingActivityRegistryId"`
 }
 
 type DeleteRiskDocumentMappingInput struct {
@@ -1131,6 +1164,7 @@ type Organization struct {
 	NonconformityRegistries        *NonconformityRegistryConnection        `json:"nonconformityRegistries"`
 	ComplianceRegistries           *ComplianceRegistryConnection           `json:"complianceRegistries"`
 	ContinualImprovementRegistries *ContinualImprovementRegistryConnection `json:"continualImprovementRegistries"`
+	ProcessingActivityRegistries   *ProcessingActivityRegistryConnection   `json:"processingActivityRegistries"`
 	Snapshots                      *SnapshotConnection                     `json:"snapshots"`
 	TrustCenter                    *TrustCenter                            `json:"trustCenter,omitempty"`
 	CreatedAt                      time.Time                               `json:"createdAt"`
@@ -1189,6 +1223,37 @@ type PeopleEdge struct {
 
 type PeopleFilter struct {
 	ExcludeContractEnded *bool `json:"excludeContractEnded,omitempty"`
+}
+
+type ProcessingActivityRegistry struct {
+	ID                             gid.GID                                                           `json:"id"`
+	Organization                   *Organization                                                     `json:"organization"`
+	Audit                          *Audit                                                            `json:"audit"`
+	Name                           string                                                            `json:"name"`
+	Purpose                        *string                                                           `json:"purpose,omitempty"`
+	DataSubjectCategory            *string                                                           `json:"dataSubjectCategory,omitempty"`
+	PersonalDataCategory           *string                                                           `json:"personalDataCategory,omitempty"`
+	SpecialOrCriminalData          coredata.ProcessingActivityRegistrySpecialOrCriminalData          `json:"specialOrCriminalData"`
+	ConsentEvidenceLink            *string                                                           `json:"consentEvidenceLink,omitempty"`
+	LawfulBasis                    coredata.ProcessingActivityRegistryLawfulBasis                    `json:"lawfulBasis"`
+	Recipients                     *string                                                           `json:"recipients,omitempty"`
+	Location                       *string                                                           `json:"location,omitempty"`
+	InternationalTransfers         bool                                                              `json:"internationalTransfers"`
+	TransferSafeguards             *coredata.ProcessingActivityRegistryTransferSafeguards            `json:"transferSafeguards,omitempty"`
+	RetentionPeriod                *string                                                           `json:"retentionPeriod,omitempty"`
+	SecurityMeasures               *string                                                           `json:"securityMeasures,omitempty"`
+	DataProtectionImpactAssessment coredata.ProcessingActivityRegistryDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
+	TransferImpactAssessment       coredata.ProcessingActivityRegistryTransferImpactAssessment       `json:"transferImpactAssessment"`
+	CreatedAt                      time.Time                                                         `json:"createdAt"`
+	UpdatedAt                      time.Time                                                         `json:"updatedAt"`
+}
+
+func (ProcessingActivityRegistry) IsNode()             {}
+func (this ProcessingActivityRegistry) GetID() gid.GID { return this.ID }
+
+type ProcessingActivityRegistryEdge struct {
+	Cursor page.CursorKey              `json:"cursor"`
+	Node   *ProcessingActivityRegistry `json:"node"`
 }
 
 type PublishDocumentVersionInput struct {
@@ -1380,10 +1445,6 @@ type TrustCenterEdge struct {
 	Node   *TrustCenter   `json:"node"`
 }
 
-type TrustCenterFilter struct {
-	Slug *string `json:"slug,omitempty"`
-}
-
 type UnassignTaskInput struct {
 	TaskID gid.GID `json:"taskId"`
 }
@@ -1566,6 +1627,30 @@ type UpdatePeopleInput struct {
 
 type UpdatePeoplePayload struct {
 	People *People `json:"people"`
+}
+
+type UpdateProcessingActivityRegistryInput struct {
+	ID                             gid.GID                                                            `json:"id"`
+	AuditID                        *gid.GID                                                           `json:"auditId,omitempty"`
+	Name                           *string                                                            `json:"name,omitempty"`
+	Purpose                        *string                                                            `json:"purpose,omitempty"`
+	DataSubjectCategory            *string                                                            `json:"dataSubjectCategory,omitempty"`
+	PersonalDataCategory           *string                                                            `json:"personalDataCategory,omitempty"`
+	SpecialOrCriminalData          *coredata.ProcessingActivityRegistrySpecialOrCriminalData          `json:"specialOrCriminalData,omitempty"`
+	ConsentEvidenceLink            *string                                                            `json:"consentEvidenceLink,omitempty"`
+	LawfulBasis                    *coredata.ProcessingActivityRegistryLawfulBasis                    `json:"lawfulBasis,omitempty"`
+	Recipients                     *string                                                            `json:"recipients,omitempty"`
+	Location                       *string                                                            `json:"location,omitempty"`
+	InternationalTransfers         *bool                                                              `json:"internationalTransfers,omitempty"`
+	TransferSafeguards             *coredata.ProcessingActivityRegistryTransferSafeguards             `json:"transferSafeguards,omitempty"`
+	RetentionPeriod                *string                                                            `json:"retentionPeriod,omitempty"`
+	SecurityMeasures               *string                                                            `json:"securityMeasures,omitempty"`
+	DataProtectionImpactAssessment *coredata.ProcessingActivityRegistryDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment,omitempty"`
+	TransferImpactAssessment       *coredata.ProcessingActivityRegistryTransferImpactAssessment       `json:"transferImpactAssessment,omitempty"`
+}
+
+type UpdateProcessingActivityRegistryPayload struct {
+	ProcessingActivityRegistry *ProcessingActivityRegistry `json:"processingActivityRegistry"`
 }
 
 type UpdateRiskInput struct {

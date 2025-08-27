@@ -209,6 +209,31 @@ func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *i
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
+// ProcessingActivityRegistries is the resolver for the processingActivityRegistries field.
+func (r *auditResolver) ProcessingActivityRegistries(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) (*types.ProcessingActivityRegistryConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ProcessingActivityRegistryOrderField]{
+		Field:     coredata.ProcessingActivityRegistryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ProcessingActivityRegistryOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.ProcessingActivityRegistries.ListForAuditID(ctx, obj.ID, cursor)
+	if err != nil {
+		return nil, fmt.Errorf("cannot list processing activity registries: %w", err)
+	}
+
+	return types.NewProcessingActivityRegistryConnection(page, r, obj.ID), nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
@@ -3184,6 +3209,86 @@ func (r *mutationResolver) DeleteContinualImprovementRegistry(ctx context.Contex
 	}, nil
 }
 
+// CreateProcessingActivityRegistry is the resolver for the createProcessingActivityRegistry field.
+func (r *mutationResolver) CreateProcessingActivityRegistry(ctx context.Context, input types.CreateProcessingActivityRegistryInput) (*types.CreateProcessingActivityRegistryPayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	req := probo.CreateProcessingActivityRegistryRequest{
+		OrganizationID:                 input.OrganizationID,
+		Name:                           input.Name,
+		Purpose:                        input.Purpose,
+		DataSubjectCategory:            input.DataSubjectCategory,
+		PersonalDataCategory:           input.PersonalDataCategory,
+		SpecialOrCriminalData:          input.SpecialOrCriminalData,
+		LawfulBasis:                    input.LawfulBasis,
+		Recipients:                     input.Recipients,
+		Location:                       input.Location,
+		InternationalTransfers:         input.InternationalTransfers,
+		TransferSafeguards:             input.TransferSafeguards,
+		RetentionPeriod:                input.RetentionPeriod,
+		SecurityMeasures:               input.SecurityMeasures,
+		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
+		TransferImpactAssessment:       input.TransferImpactAssessment,
+		AuditID:                        input.AuditID,
+	}
+
+	registry, err := prb.ProcessingActivityRegistries.Create(ctx, &req)
+	if err != nil {
+		panic(fmt.Errorf("cannot create processing activity registry: %w", err))
+	}
+
+	return &types.CreateProcessingActivityRegistryPayload{
+		ProcessingActivityRegistryEdge: types.NewProcessingActivityRegistryEdge(registry, coredata.ProcessingActivityRegistryOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateProcessingActivityRegistry is the resolver for the updateProcessingActivityRegistry field.
+func (r *mutationResolver) UpdateProcessingActivityRegistry(ctx context.Context, input types.UpdateProcessingActivityRegistryInput) (*types.UpdateProcessingActivityRegistryPayload, error) {
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	req := probo.UpdateProcessingActivityRegistryRequest{
+		ID:                             input.ID,
+		Name:                           input.Name,
+		Purpose:                        &input.Purpose,
+		DataSubjectCategory:            &input.DataSubjectCategory,
+		PersonalDataCategory:           &input.PersonalDataCategory,
+		SpecialOrCriminalData:          input.SpecialOrCriminalData,
+		LawfulBasis:                    input.LawfulBasis,
+		Recipients:                     &input.Recipients,
+		Location:                       &input.Location,
+		InternationalTransfers:         input.InternationalTransfers,
+		TransferSafeguards:             &input.TransferSafeguards,
+		RetentionPeriod:                &input.RetentionPeriod,
+		SecurityMeasures:               &input.SecurityMeasures,
+		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
+		TransferImpactAssessment:       input.TransferImpactAssessment,
+		AuditID:                        input.AuditID,
+	}
+
+	registry, err := prb.ProcessingActivityRegistries.Update(ctx, &req)
+	if err != nil {
+		panic(fmt.Errorf("cannot update processing activity registry: %w", err))
+	}
+
+	return &types.UpdateProcessingActivityRegistryPayload{
+		ProcessingActivityRegistry: types.NewProcessingActivityRegistry(registry),
+	}, nil
+}
+
+// DeleteProcessingActivityRegistry is the resolver for the deleteProcessingActivityRegistry field.
+func (r *mutationResolver) DeleteProcessingActivityRegistry(ctx context.Context, input types.DeleteProcessingActivityRegistryInput) (*types.DeleteProcessingActivityRegistryPayload, error) {
+	prb := r.ProboService(ctx, input.ProcessingActivityRegistryID.TenantID())
+
+	err := prb.ProcessingActivityRegistries.Delete(ctx, input.ProcessingActivityRegistryID)
+	if err != nil {
+		panic(fmt.Errorf("cannot delete processing activity registry: %w", err))
+	}
+
+	return &types.DeleteProcessingActivityRegistryPayload{
+		DeletedProcessingActivityRegistryID: input.ProcessingActivityRegistryID,
+	}, nil
+}
+
 // CreateSnapshot is the resolver for the createSnapshot field.
 func (r *mutationResolver) CreateSnapshot(ctx context.Context, input types.CreateSnapshotInput) (*types.CreateSnapshotPayload, error) {
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
@@ -3721,6 +3826,32 @@ func (r *organizationResolver) ContinualImprovementRegistries(ctx context.Contex
 	return types.NewContinualImprovementRegistryConnection(page, r, obj.ID), nil
 }
 
+// ProcessingActivityRegistries is the resolver for the processingActivityRegistries field.
+func (r *organizationResolver) ProcessingActivityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) (*types.ProcessingActivityRegistryConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ProcessingActivityRegistryOrderField]{
+		Field:     coredata.ProcessingActivityRegistryOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ProcessingActivityRegistryOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.ProcessingActivityRegistries.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization processing activity registries: %w", err))
+	}
+
+	return types.NewProcessingActivityRegistryConnection(page, r, obj.ID), nil
+}
+
 // Snapshots is the resolver for the snapshots field.
 func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -3767,6 +3898,62 @@ func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.Pe
 		count, err := prb.Peoples.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
 			return 0, fmt.Errorf("cannot count peoples: %w", err)
+		}
+		return count, nil
+	}
+
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+}
+
+// Organization is the resolver for the organization field.
+func (r *processingActivityRegistryResolver) Organization(ctx context.Context, obj *types.ProcessingActivityRegistry) (*types.Organization, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	processingActivityRegistry, err := prb.ProcessingActivityRegistries.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get processing activity registry: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, processingActivityRegistry.OrganizationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// Audit is the resolver for the audit field.
+func (r *processingActivityRegistryResolver) Audit(ctx context.Context, obj *types.ProcessingActivityRegistry) (*types.Audit, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	processingActivityRegistry, err := prb.ProcessingActivityRegistries.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get processing activity registry: %w", err))
+	}
+
+	audit, err := prb.Audits.Get(ctx, processingActivityRegistry.AuditID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get audit: %w", err)
+	}
+
+	return types.NewAudit(audit), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *processingActivityRegistryConnectionResolver) TotalCount(ctx context.Context, obj *types.ProcessingActivityRegistryConnection) (int, error) {
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		count, err := prb.ProcessingActivityRegistries.CountForOrganizationID(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count organization processing activity registries: %w", err))
+		}
+		return count, nil
+	case *auditResolver:
+		count, err := prb.ProcessingActivityRegistries.CountForAuditID(ctx, obj.ParentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot count audit processing activity registries: %w", err))
 		}
 		return count, nil
 	}
@@ -3919,6 +4106,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			panic(fmt.Errorf("cannot get report: %w", err))
 		}
 		return types.NewReport(report), nil
+	case coredata.ProcessingActivityRegistryEntityType:
+		processingActivityRegistry, err := prb.ProcessingActivityRegistries.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("cannot get processing activity registry: %w", err))
+		}
+		return types.NewProcessingActivityRegistry(processingActivityRegistry), nil
 	case coredata.SnapshotEntityType:
 		snapshot, err := prb.Snapshots.Get(ctx, id)
 		if err != nil {
@@ -3946,11 +4139,6 @@ func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 		ID:   session.ID,
 		User: types.NewUser(user),
 	}, nil
-}
-
-// TrustCenters is the resolver for the trustCenters field.
-func (r *queryResolver) TrustCenters(ctx context.Context, first *int, after *page.CursorKey, last *int, before *page.CursorKey, filter *types.TrustCenterFilter) (*types.TrustCenterConnection, error) {
-	return nil, fmt.Errorf("not implemented: TrustCenters - trustCenters")
 }
 
 // DownloadURL is the resolver for the downloadUrl field.
@@ -4822,6 +5010,16 @@ func (r *Resolver) PeopleConnection() schema.PeopleConnectionResolver {
 	return &peopleConnectionResolver{r}
 }
 
+// ProcessingActivityRegistry returns schema.ProcessingActivityRegistryResolver implementation.
+func (r *Resolver) ProcessingActivityRegistry() schema.ProcessingActivityRegistryResolver {
+	return &processingActivityRegistryResolver{r}
+}
+
+// ProcessingActivityRegistryConnection returns schema.ProcessingActivityRegistryConnectionResolver implementation.
+func (r *Resolver) ProcessingActivityRegistryConnection() schema.ProcessingActivityRegistryConnectionResolver {
+	return &processingActivityRegistryConnectionResolver{r}
+}
+
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 
@@ -4918,6 +5116,8 @@ type nonconformityRegistryResolver struct{ *Resolver }
 type nonconformityRegistryConnectionResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type peopleConnectionResolver struct{ *Resolver }
+type processingActivityRegistryResolver struct{ *Resolver }
+type processingActivityRegistryConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }

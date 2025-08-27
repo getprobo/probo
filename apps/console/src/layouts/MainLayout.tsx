@@ -19,6 +19,7 @@ import {
   IconBox,
   IconShield,
   IconRotateCw,
+  IconCircleProgress,
   Layout,
   SidebarItem,
   UserDropdown as UserDropdownRoot,
@@ -156,6 +157,11 @@ export function MainLayout() {
             label={__("Continual Improvement Registries")}
             icon={IconRotateCw}
             to={`${prefix}/continual-improvement-registries`}
+          />
+          <SidebarItem
+            label={__("Processing Activity Registries")}
+            icon={IconCircleProgress}
+            to={`${prefix}/processing-activity-registries`}
           />
           <SidebarItem
             label={__("Snapshots")}
