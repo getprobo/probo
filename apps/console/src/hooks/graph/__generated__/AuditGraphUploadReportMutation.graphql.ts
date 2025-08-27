@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<39001f4e110ade4633319d2e71f1377f>>
+ * @generated SignedSource<<338f694f68fa9860df6745f44e595bf1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,12 +20,13 @@ export type AuditGraphUploadReportMutation$data = {
   readonly uploadAuditReport: {
     readonly audit: {
       readonly id: string;
-      readonly report: {
+      readonly reports: ReadonlyArray<{
         readonly createdAt: any;
         readonly downloadUrl: string | null | undefined;
         readonly filename: string;
         readonly id: string;
-      } | null | undefined;
+        readonly size: number;
+      }>;
       readonly updatedAt: any;
     };
   };
@@ -79,8 +80,8 @@ v2 = [
             "args": null,
             "concreteType": "Report",
             "kind": "LinkedField",
-            "name": "report",
-            "plural": false,
+            "name": "reports",
+            "plural": true,
             "selections": [
               (v1/*: any*/),
               {
@@ -102,6 +103,13 @@ v2 = [
                 "args": null,
                 "kind": "ScalarField",
                 "name": "createdAt",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "size",
                 "storageKey": null
               }
             ],
@@ -139,16 +147,16 @@ return {
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "05229f6e6fb7e64ceaf93c4bb8f144e6",
+    "cacheID": "9208cdb19d5596960d0f9e802b8611b2",
     "id": null,
     "metadata": {},
     "name": "AuditGraphUploadReportMutation",
     "operationKind": "mutation",
-    "text": "mutation AuditGraphUploadReportMutation(\n  $input: UploadAuditReportInput!\n) {\n  uploadAuditReport(input: $input) {\n    audit {\n      id\n      report {\n        id\n        filename\n        downloadUrl\n        createdAt\n      }\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation AuditGraphUploadReportMutation(\n  $input: UploadAuditReportInput!\n) {\n  uploadAuditReport(input: $input) {\n    audit {\n      id\n      reports {\n        id\n        filename\n        downloadUrl\n        createdAt\n        size\n      }\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1acff19bbb4a2e0eeca934cc90040eda";
+(node as any).hash = "234794dc9feddf589c137bfbe725565d";
 
 export default node;

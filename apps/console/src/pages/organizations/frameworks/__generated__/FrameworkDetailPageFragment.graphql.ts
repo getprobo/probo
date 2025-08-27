@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c6e55821a322dceae5408ac3898cfa48>>
+ * @generated SignedSource<<7c40de0ad2ff5a5aecc52e43141b84ad>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type FrameworkDetailPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly description: string;
         readonly exclusionJustification: string | null | undefined;
         readonly id: string;
         readonly name: string;
@@ -51,6 +52,13 @@ v1 = {
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
+},
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "description",
+  "storageKey": null
 };
 return {
   "argumentDefinitions": [],
@@ -60,13 +68,7 @@ return {
   "selections": [
     (v0/*: any*/),
     (v1/*: any*/),
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "description",
-      "storageKey": null
-    },
+    (v2/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -126,6 +128,7 @@ return {
                   "storageKey": null
                 },
                 (v1/*: any*/),
+                (v2/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -167,6 +170,6 @@ return {
 };
 })();
 
-(node as any).hash = "c31fd5c0f675d2524f736d69c4ebebe3";
+(node as any).hash = "baec33e39e0c8c921a2391466355468f";
 
 export default node;

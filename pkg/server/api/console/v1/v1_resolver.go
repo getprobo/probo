@@ -147,41 +147,21 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 	return types.NewFramework(framework), nil
 }
 
-// Report is the resolver for the report field.
-func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
+// Reports is the resolver for the reports field.
+func (r *auditResolver) Reports(ctx context.Context, obj *types.Audit) ([]*types.Report, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	audit, err := prb.Audits.Get(ctx, obj.ID)
+	reports, err := prb.Audits.GetReports(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load audit: %w", err)
+		return nil, fmt.Errorf("cannot load audit reports: %w", err)
 	}
 
-	if audit.ReportID == nil {
-		return nil, nil
+	var result []*types.Report
+	for _, report := range reports {
+		result = append(result, types.NewReport(report))
 	}
 
-	report, err := prb.Reports.Get(ctx, *audit.ReportID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load report: %w", err)
-	}
-
-	return types.NewReport(report), nil
-}
-
-// ReportURL is the resolver for the reportUrl field.
-func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*string, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	if obj.Report == nil {
-		return nil, nil
-	}
-
-	url, err := prb.Audits.GenerateReportURL(ctx, obj.ID, 15*time.Minute)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate report URL: %w", err)
-	}
-
-	return url, nil
+	return result, nil
 }
 
 // Controls is the resolver for the controls field.
@@ -2952,7 +2932,12 @@ func (r *mutationResolver) UploadAuditReport(ctx context.Context, input types.Up
 func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.DeleteAuditReportInput) (*types.DeleteAuditReportPayload, error) {
 	prb := r.ProboService(ctx, input.AuditID.TenantID())
 
-	audit, err := prb.Audits.DeleteReport(ctx, input.AuditID)
+	req := probo.DeleteAuditReportRequest{
+		AuditID:  input.AuditID,
+		ReportID: input.ReportID,
+	}
+
+	audit, err := prb.Audits.DeleteReport(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot delete audit report: %w", err)
 	}

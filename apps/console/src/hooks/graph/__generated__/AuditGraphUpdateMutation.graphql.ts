@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4255866a0c7fe3c9c3416fe2603b5f63>>
+ * @generated SignedSource<<73e8f82e9fe691c0f2ce365aacd63a71>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -30,10 +30,10 @@ export type AuditGraphUpdateMutation$data = {
       };
       readonly id: string;
       readonly name: string | null | undefined;
-      readonly report: {
+      readonly reports: ReadonlyArray<{
         readonly filename: string;
         readonly id: string;
-      } | null | undefined;
+      }>;
       readonly state: AuditState;
       readonly updatedAt: any;
       readonly validFrom: any | null | undefined;
@@ -112,8 +112,8 @@ v3 = [
             "args": null,
             "concreteType": "Report",
             "kind": "LinkedField",
-            "name": "report",
-            "plural": false,
+            "name": "reports",
+            "plural": true,
             "selections": [
               (v1/*: any*/),
               {
@@ -178,16 +178,16 @@ return {
     "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "7257cd170b7441f3ce85966556e00ac3",
+    "cacheID": "d3ba6e0fba9c565c3795245ce94587fd",
     "id": null,
     "metadata": {},
     "name": "AuditGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation AuditGraphUpdateMutation(\n  $input: UpdateAuditInput!\n) {\n  updateAudit(input: $input) {\n    audit {\n      id\n      name\n      validFrom\n      validUntil\n      report {\n        id\n        filename\n      }\n      state\n      framework {\n        id\n        name\n      }\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation AuditGraphUpdateMutation(\n  $input: UpdateAuditInput!\n) {\n  updateAudit(input: $input) {\n    audit {\n      id\n      name\n      validFrom\n      validUntil\n      reports {\n        id\n        filename\n      }\n      state\n      framework {\n        id\n        name\n      }\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7fb5d28c8c5fdffddb1c8926e66965ec";
+(node as any).hash = "18d334ede02b78b2ce65d2e3a110cd77";
 
 export default node;

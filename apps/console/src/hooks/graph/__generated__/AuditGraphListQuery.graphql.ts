@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<145565eb150c67f2f1b3c70fe6f6e748>>
+ * @generated SignedSource<<b3c41b2911c13c75721d6e2816819fbf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -164,8 +164,8 @@ return {
                             "args": null,
                             "concreteType": "Report",
                             "kind": "LinkedField",
-                            "name": "report",
-                            "plural": false,
+                            "name": "reports",
+                            "plural": true,
                             "selections": [
                               (v3/*: any*/),
                               {
@@ -294,12 +294,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d96d2332efb5f43e2dcb09669173ad7e",
+    "cacheID": "cecff91a6026daeec88ec065dd703242",
     "id": null,
     "metadata": {},
     "name": "AuditGraphListQuery",
     "operationKind": "query",
-    "text": "query AuditGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...AuditsPageFragment\n    }\n    id\n  }\n}\n\nfragment AuditsPageFragment on Organization {\n  audits(first: 10) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AuditGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...AuditsPageFragment\n    }\n    id\n  }\n}\n\nfragment AuditsPageFragment on Organization {\n  audits(first: 10) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        reports {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

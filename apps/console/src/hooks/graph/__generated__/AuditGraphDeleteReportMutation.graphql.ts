@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<14b4821bc7eec6b85029d0aae3a3a271>>
+ * @generated SignedSource<<4e95ba3d22dec59dc31a1245cf6b9239>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type DeleteAuditReportInput = {
   auditId: string;
+  reportId: string;
 };
 export type AuditGraphDeleteReportMutation$variables = {
   input: DeleteAuditReportInput;
@@ -19,12 +20,13 @@ export type AuditGraphDeleteReportMutation$data = {
   readonly deleteAuditReport: {
     readonly audit: {
       readonly id: string;
-      readonly report: {
+      readonly reports: ReadonlyArray<{
         readonly createdAt: any;
         readonly downloadUrl: string | null | undefined;
         readonly filename: string;
         readonly id: string;
-      } | null | undefined;
+        readonly size: number;
+      }>;
       readonly updatedAt: any;
     };
   };
@@ -78,8 +80,8 @@ v2 = [
             "args": null,
             "concreteType": "Report",
             "kind": "LinkedField",
-            "name": "report",
-            "plural": false,
+            "name": "reports",
+            "plural": true,
             "selections": [
               (v1/*: any*/),
               {
@@ -101,6 +103,13 @@ v2 = [
                 "args": null,
                 "kind": "ScalarField",
                 "name": "createdAt",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "size",
                 "storageKey": null
               }
             ],
@@ -138,16 +147,16 @@ return {
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "ebceb2fd2a2ffae09bc1578e37dde7e0",
+    "cacheID": "42c70850249e0de8b687d966bf304ca2",
     "id": null,
     "metadata": {},
     "name": "AuditGraphDeleteReportMutation",
     "operationKind": "mutation",
-    "text": "mutation AuditGraphDeleteReportMutation(\n  $input: DeleteAuditReportInput!\n) {\n  deleteAuditReport(input: $input) {\n    audit {\n      id\n      report {\n        id\n        filename\n        downloadUrl\n        createdAt\n      }\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation AuditGraphDeleteReportMutation(\n  $input: DeleteAuditReportInput!\n) {\n  deleteAuditReport(input: $input) {\n    audit {\n      id\n      reports {\n        id\n        filename\n        downloadUrl\n        createdAt\n        size\n      }\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4b5e9537b35458eb3daa313ead9ba655";
+(node as any).hash = "dde614733e46cdf728dd0262476e48bd";
 
 export default node;

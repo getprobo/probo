@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a3c134dcea5981e6a45b623ec2905962>>
+ * @generated SignedSource<<8c9babd8565180782343ee6a2372a7b5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -33,10 +33,10 @@ export type AuditGraphCreateMutation$data = {
         };
         readonly id: string;
         readonly name: string | null | undefined;
-        readonly report: {
+        readonly reports: ReadonlyArray<{
           readonly filename: string;
           readonly id: string;
-        } | null | undefined;
+        }>;
         readonly state: AuditState;
         readonly validFrom: any | null | undefined;
         readonly validUntil: any | null | undefined;
@@ -118,8 +118,8 @@ v5 = {
           "args": null,
           "concreteType": "Report",
           "kind": "LinkedField",
-          "name": "report",
-          "plural": false,
+          "name": "reports",
+          "plural": true,
           "selections": [
             (v3/*: any*/),
             {
@@ -231,16 +231,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "04d44dfd419c2cde11b0138ca175203f",
+    "cacheID": "e5dfbf7fc8c3d6100c40be15f3ae1f9f",
     "id": null,
     "metadata": {},
     "name": "AuditGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation AuditGraphCreateMutation(\n  $input: CreateAuditInput!\n) {\n  createAudit(input: $input) {\n    auditEdge {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation AuditGraphCreateMutation(\n  $input: CreateAuditInput!\n) {\n  createAudit(input: $input) {\n    auditEdge {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        reports {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4d014b16e02353df354085a151ccfe06";
+(node as any).hash = "ebc50026bdb52dfe7b91ee685b4c1b50";
 
 export default node;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8c09163f7cf7b3953aed77791b0d3dd1>>
+ * @generated SignedSource<<a6d57256494093f98ac69e9ea825557a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,10 +23,10 @@ export type AuditsPageFragment$data = {
         };
         readonly id: string;
         readonly name: string | null | undefined;
-        readonly report: {
+        readonly reports: ReadonlyArray<{
           readonly filename: string;
           readonly id: string;
-        } | null | undefined;
+        }>;
         readonly state: AuditState;
         readonly validFrom: any | null | undefined;
         readonly validUntil: any | null | undefined;
@@ -174,8 +174,8 @@ return {
                   "args": null,
                   "concreteType": "Report",
                   "kind": "LinkedField",
-                  "name": "report",
-                  "plural": false,
+                  "name": "reports",
+                  "plural": true,
                   "selections": [
                     (v1/*: any*/),
                     {
@@ -296,6 +296,6 @@ return {
 };
 })();
 
-(node as any).hash = "be8d1f1d8015c16539886bc79c8026f7";
+(node as any).hash = "201ef1912735aed2042656818942951c";
 
 export default node;

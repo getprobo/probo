@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8901b5c750861080551542d26c2681d6>>
+ * @generated SignedSource<<ede422d4293262399e0e372e0e4c23d9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -52,6 +52,13 @@ v3 = {
   "args": null,
   "kind": "ScalarField",
   "name": "name",
+  "storageKey": null
+},
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "description",
   "storageKey": null
 };
 return {
@@ -116,13 +123,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v3/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "description",
-                "storageKey": null
-              },
+              (v4/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -183,6 +184,7 @@ return {
                             "storageKey": null
                           },
                           (v3/*: any*/),
+                          (v4/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -228,12 +230,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "29d6f638feb1bb633169abcfe083f5d2",
+    "cacheID": "52e2b1a70e61a4267382869e175ca7cd",
     "id": null,
     "metadata": {},
     "name": "FrameworkGraphNodeQuery",
     "operationKind": "query",
-    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  organization {\n    name\n    id\n  }\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        status\n        exclusionJustification\n      }\n    }\n  }\n}\n"
+    "text": "query FrameworkGraphNodeQuery(\n  $frameworkId: ID!\n) {\n  node(id: $frameworkId) {\n    __typename\n    ... on Framework {\n      id\n      name\n      ...FrameworkDetailPageFragment\n    }\n    id\n  }\n}\n\nfragment FrameworkDetailPageFragment on Framework {\n  id\n  name\n  description\n  organization {\n    name\n    id\n  }\n  controls(first: 250, orderBy: {field: SECTION_TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        sectionTitle\n        name\n        description\n        status\n        exclusionJustification\n      }\n    }\n  }\n}\n"
   }
 };
 })();

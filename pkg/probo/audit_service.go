@@ -59,7 +59,8 @@ type (
 	}
 
 	DeleteAuditReportRequest struct {
-		ID gid.GID
+		AuditID  gid.GID
+		ReportID gid.GID
 	}
 )
 
@@ -268,9 +269,17 @@ func (s AuditService) UploadReport(
 				return fmt.Errorf("cannot create report: %w", err)
 			}
 
-			audit.ReportID = &report.ID
-			audit.UpdatedAt = time.Now()
+			auditReport := &coredata.AuditReport{
+				AuditID:   req.AuditID,
+				ReportID:  report.ID,
+				CreatedAt: time.Now(),
+			}
 
+			if err := auditReport.Upsert(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot create audit report relationship: %w", err)
+			}
+
+			audit.UpdatedAt = time.Now()
 			if err := audit.Update(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot update audit: %w", err)
 			}
@@ -286,54 +295,69 @@ func (s AuditService) UploadReport(
 	return audit, nil
 }
 
-func (s AuditService) GenerateReportURL(
+func (s AuditService) GetReports(
 	ctx context.Context,
 	auditID gid.GID,
-	expiresIn time.Duration,
-) (*string, error) {
-	audit, err := s.Get(ctx, auditID)
+) ([]*coredata.Report, error) {
+	auditReports := &coredata.AuditReports{}
+	
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return auditReports.LoadByAuditID(ctx, conn, s.svc.scope, auditID)
+		},
+	)
+	
 	if err != nil {
-		return nil, fmt.Errorf("cannot get audit: %w", err)
+		return nil, fmt.Errorf("cannot load audit reports: %w", err)
 	}
 
-	if audit.ReportID == nil {
-		return nil, fmt.Errorf("audit has no report")
+	var reports []*coredata.Report
+	for _, auditReport := range *auditReports {
+		report := &coredata.Report{}
+		err := s.svc.pg.WithConn(
+			ctx,
+			func(conn pg.Conn) error {
+				return report.LoadByID(ctx, conn, s.svc.scope, auditReport.ReportID)
+			},
+		)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load report %s: %w", auditReport.ReportID, err)
+		}
+		reports = append(reports, report)
 	}
 
-	url, err := s.svc.Reports.GenerateDownloadURL(ctx, *audit.ReportID, expiresIn)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate report download URL: %w", err)
-	}
-
-	return url, nil
+	return reports, nil
 }
 
 func (s AuditService) DeleteReport(
 	ctx context.Context,
-	auditID gid.GID,
+	req DeleteAuditReportRequest,
 ) (*coredata.Audit, error) {
 	audit := &coredata.Audit{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
+			if err := audit.LoadByID(ctx, conn, s.svc.scope, req.AuditID); err != nil {
 				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
-			if audit.ReportID != nil {
-				report := &coredata.Report{ID: *audit.ReportID}
+			// Delete the report file
+			report := &coredata.Report{ID: req.ReportID}
+			if err := report.Delete(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot delete report: %w", err)
+			}
 
-				if err := report.Delete(ctx, conn, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot delete report: %w", err)
-				}
+			// Remove the audit-report relationship
+			auditReport := &coredata.AuditReport{}
+			if err := auditReport.Delete(ctx, conn, s.svc.scope, req.AuditID, req.ReportID); err != nil {
+				return fmt.Errorf("cannot delete audit report relationship: %w", err)
+			}
 
-				audit.ReportID = nil
-				audit.UpdatedAt = time.Now()
-
-				if err := audit.Update(ctx, conn, s.svc.scope); err != nil {
-					return fmt.Errorf("cannot update audit: %w", err)
-				}
+			audit.UpdatedAt = time.Now()
+			if err := audit.Update(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update audit: %w", err)
 			}
 
 			return nil

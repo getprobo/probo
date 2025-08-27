@@ -66,9 +66,10 @@ export function PublicTrustCenterAudits({
         </Thead>
         <Tbody>
           {audits.map((audit) => {
-            const hasReport = audit.report !== null;
-            const downloadUrl = audit.report?.downloadUrl;
-            const reportName = audit.report?.filename || __("Compliance Report");
+            const hasReport = audit.reports && audit.reports.length > 0;
+            const firstReport = audit.reports?.[0];
+            const downloadUrl = firstReport?.downloadUrl;
+            const reportName = firstReport?.filename || __("Compliance Report");
 
             return (
               <Tr key={audit.id}>

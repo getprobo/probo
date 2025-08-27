@@ -102,19 +102,19 @@ export default function AuditDetailsPage(props: Props) {
     }
   });
 
-  const handleDeleteReport = () => {
-    if (!auditEntry.report || !auditEntry.id) return;
+  const handleDeleteReport = (reportId: string, filename: string) => {
+    if (!auditEntry.id) return;
 
     confirm(
       async () => {
-        await deleteAuditReport({ auditId: auditEntry.id! });
+        await deleteAuditReport({ auditId: auditEntry.id!, reportId });
       },
       {
         message: sprintf(
           __(
             'This will permanently delete the audit report "%s". This action cannot be undone.'
           ),
-          auditEntry.report.filename
+          filename
         ),
       }
     );
@@ -193,74 +193,83 @@ export default function AuditDetailsPage(props: Props) {
 
         <Card padded className="mt-6">
           <div className="space-y-4">
-            <h3 className="text-lg font-medium">{__("Audit Report")}</h3>
+            <h3 className="text-lg font-medium">{__("Audit Reports")}</h3>
 
-                        {auditEntry.report ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-success-50 border border-success-200 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <IconArrowInbox className="text-success-600" size={20} />
-                    <div className="flex-1">
-                      <p className="font-medium text-success-900">
-                        {auditEntry.report.filename}
-                      </p>
-                      <div className="flex items-center gap-4 text-sm text-success-700">
-                        <span>
-                          {fileSize(__, auditEntry.report.size)}
-                        </span>
-                        <span>
-                          {__("Uploaded")} {dateFormat(auditEntry.report.createdAt)}
-                        </span>
+            {/* Existing reports */}
+            {auditEntry.reports && auditEntry.reports.length > 0 && (
+              <div className="space-y-3">
+                {auditEntry.reports.map((report) => (
+                  <div key={report.id} className="flex items-center justify-between p-4 bg-success-50 border border-success-200 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <IconArrowInbox className="text-success-600" size={20} />
+                      <div className="flex-1">
+                        <p className="font-medium text-success-900">
+                          {report.filename}
+                        </p>
+                        <div className="flex items-center gap-4 text-sm text-success-700">
+                          <span>
+                            {fileSize(__, report.size)}
+                          </span>
+                          <span>
+                            {__("Uploaded")} {dateFormat(report.createdAt)}
+                          </span>
+                        </div>
                       </div>
                     </div>
+                    <ActionDropdown>
+                      <DropdownItem
+                        onClick={() => {
+                          if (report.downloadUrl) {
+                            window.open(report.downloadUrl, '_blank');
+                          }
+                        }}
+                        icon={IconArrowInbox}
+                      >
+                        {__("Download")}
+                      </DropdownItem>
+                      <DropdownItem
+                        variant="danger"
+                        icon={IconTrashCan}
+                        onClick={() => handleDeleteReport(report.id, report.filename)}
+                      >
+                        {__("Delete")}
+                      </DropdownItem>
+                    </ActionDropdown>
                   </div>
-                  <ActionDropdown>
-                    <DropdownItem
-                      onClick={() => {
-                        if (auditEntry.report?.downloadUrl) {
-                          window.open(auditEntry.report.downloadUrl, '_blank');
-                        }
-                      }}
-                      icon={IconArrowInbox}
-                    >
-                      {__("Download")}
-                    </DropdownItem>
-                    <DropdownItem
-                      variant="danger"
-                      icon={IconTrashCan}
-                      onClick={handleDeleteReport}
-                    >
-                      {__("Delete")}
-                    </DropdownItem>
-                  </ActionDropdown>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <p className="text-neutral-600">
-                  {__("Upload the final audit report document (PDF recommended)")}
-                </p>
-                <Dropzone
-                  description={__("Only PDF, DOCX files up to 25MB are allowed")}
-                  isUploading={isUploading}
-                  onDrop={async (files) => {
-                    if (files.length > 0 && auditEntry.id) {
-                      await uploadAuditReport({
-                        auditId: auditEntry.id,
-                        file: files[0],
-                      });
-                      window.location.reload();
-                    }
-                  }}
-                  accept={{
-                    "application/pdf": [".pdf"],
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                      [".docx"],
-                  }}
-                  maxSize={25}
-                />
+                ))}
               </div>
             )}
+
+            {/* Upload section - always show */}
+            <div className="space-y-4">
+              <p className="text-neutral-600">
+                {auditEntry.reports && auditEntry.reports.length > 0
+                  ? __("Upload additional audit documents")
+                  : __("Upload audit report documents (PDF recommended)")}
+              </p>
+              <Dropzone
+                description={__("Only PDF, DOCX files up to 25MB are allowed.")}
+                isUploading={isUploading}
+                onDrop={async (files) => {
+                  if (files.length > 0 && auditEntry.id) {
+                    // Upload files one by one
+                    for (const file of files) {
+                      await uploadAuditReport({
+                        auditId: auditEntry.id,
+                        file: file,
+                      });
+                    }
+                    window.location.reload();
+                  }
+                }}
+                accept={{
+                  "application/pdf": [".pdf"],
+                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                    [".docx"],
+                }}
+                maxSize={25}
+              />
+            </div>
           </div>
         </Card>
       </div>

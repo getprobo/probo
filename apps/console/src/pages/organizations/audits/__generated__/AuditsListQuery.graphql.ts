@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0010416e8a5bda346d415bd80fd70dc8>>
+ * @generated SignedSource<<ed5f009e2933c4af8766174a55d75c14>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -225,8 +225,8 @@ return {
                             "args": null,
                             "concreteType": "Report",
                             "kind": "LinkedField",
-                            "name": "report",
-                            "plural": false,
+                            "name": "reports",
+                            "plural": true,
                             "selections": [
                               (v9/*: any*/),
                               {
@@ -355,16 +355,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9d185e504f8c34d5c3fd7211d4e8a2a2",
+    "cacheID": "25d034ed5794ca19a69b309d4e57cbaa",
     "id": null,
     "metadata": {},
     "name": "AuditsListQuery",
     "operationKind": "query",
-    "text": "query AuditsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AuditOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AuditsPageFragment_sdb03\n    id\n  }\n}\n\nfragment AuditsPageFragment_sdb03 on Organization {\n  audits(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        report {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AuditsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AuditOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AuditsPageFragment_sdb03\n    id\n  }\n}\n\nfragment AuditsPageFragment_sdb03 on Organization {\n  audits(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy) {\n    edges {\n      node {\n        id\n        name\n        validFrom\n        validUntil\n        reports {\n          id\n          filename\n        }\n        state\n        framework {\n          id\n          name\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "be8d1f1d8015c16539886bc79c8026f7";
+(node as any).hash = "201ef1912735aed2042656818942951c";
 
 export default node;

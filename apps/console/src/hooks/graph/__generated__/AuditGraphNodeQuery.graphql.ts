@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fc4103e0e8b03c1b6b8ea07c4adcf095>>
+ * @generated SignedSource<<15d573fedfdc60bfda9104a7067399f4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,15 +26,14 @@ export type AuditGraphNodeQuery$data = {
       readonly id: string;
       readonly name: string;
     };
-    readonly report?: {
+    readonly reports?: ReadonlyArray<{
       readonly createdAt: any;
       readonly downloadUrl: string | null | undefined;
       readonly filename: string;
       readonly id: string;
       readonly mimeType: string;
       readonly size: number;
-    } | null | undefined;
-    readonly reportUrl?: string | null | undefined;
+    }>;
     readonly state?: AuditState;
     readonly updatedAt?: any;
     readonly validFrom?: any | null | undefined;
@@ -101,8 +100,8 @@ v7 = {
   "args": null,
   "concreteType": "Report",
   "kind": "LinkedField",
-  "name": "report",
-  "plural": false,
+  "name": "reports",
+  "plural": true,
   "selections": [
     (v2/*: any*/),
     {
@@ -141,41 +140,34 @@ v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "reportUrl",
-  "storageKey": null
-},
-v9 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
   "name": "state",
   "storageKey": null
 },
-v10 = [
+v9 = [
   (v2/*: any*/),
   (v3/*: any*/)
 ],
-v11 = {
+v10 = {
   "alias": null,
   "args": null,
   "concreteType": "Framework",
   "kind": "LinkedField",
   "name": "framework",
   "plural": false,
-  "selections": (v10/*: any*/),
+  "selections": (v9/*: any*/),
   "storageKey": null
 },
-v12 = {
+v11 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
   "kind": "LinkedField",
   "name": "organization",
   "plural": false,
-  "selections": (v10/*: any*/),
+  "selections": (v9/*: any*/),
   "storageKey": null
 },
-v13 = {
+v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -206,11 +198,10 @@ return {
               (v5/*: any*/),
               (v7/*: any*/),
               (v8/*: any*/),
-              (v9/*: any*/),
+              (v10/*: any*/),
               (v11/*: any*/),
-              (v12/*: any*/),
               (v6/*: any*/),
-              (v13/*: any*/)
+              (v12/*: any*/)
             ],
             "type": "Audit",
             "abstractKey": null
@@ -252,11 +243,10 @@ return {
               (v5/*: any*/),
               (v7/*: any*/),
               (v8/*: any*/),
-              (v9/*: any*/),
+              (v10/*: any*/),
               (v11/*: any*/),
-              (v12/*: any*/),
               (v6/*: any*/),
-              (v13/*: any*/)
+              (v12/*: any*/)
             ],
             "type": "Audit",
             "abstractKey": null
@@ -267,16 +257,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "eede00ab53ccd396e92b7fe6c1f1c2a2",
+    "cacheID": "a933e3141764b41b606382ee79149720",
     "id": null,
     "metadata": {},
     "name": "AuditGraphNodeQuery",
     "operationKind": "query",
-    "text": "query AuditGraphNodeQuery(\n  $auditId: ID!\n) {\n  node(id: $auditId) {\n    __typename\n    ... on Audit {\n      id\n      name\n      validFrom\n      validUntil\n      report {\n        id\n        filename\n        mimeType\n        size\n        downloadUrl\n        createdAt\n      }\n      reportUrl\n      state\n      framework {\n        id\n        name\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query AuditGraphNodeQuery(\n  $auditId: ID!\n) {\n  node(id: $auditId) {\n    __typename\n    ... on Audit {\n      id\n      name\n      validFrom\n      validUntil\n      reports {\n        id\n        filename\n        mimeType\n        size\n        downloadUrl\n        createdAt\n      }\n      state\n      framework {\n        id\n        name\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c07896ae39a7d16b42c7ee4216dc28fa";
+(node as any).hash = "5ca22e478bf672b1e975f7d87e541a20";
 
 export default node;

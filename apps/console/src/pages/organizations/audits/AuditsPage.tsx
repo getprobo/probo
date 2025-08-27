@@ -56,7 +56,7 @@ const paginatedAuditsFragment = graphql`
           name
           validFrom
           validUntil
-          report {
+          reports {
             id
             filename
           }
@@ -156,12 +156,14 @@ function AuditRow({
       <Td>{dateFormat(entry.validFrom, { year: "numeric", month: "short", day: "numeric" }) || __("Not set")}</Td>
       <Td>{dateFormat(entry.validUntil, { year: "numeric", month: "short", day: "numeric" }) || __("Not set")}</Td>
       <Td>
-        {entry.report ? (
+        {entry.reports && entry.reports.length > 0 ? (
           <div className="flex flex-col">
-            <Badge variant="success">{__("Uploaded")}</Badge>
+            <Badge variant="success">
+              {entry.reports.length === 1 ? __("1 file") : __(`${entry.reports.length} files`)}
+            </Badge>
           </div>
         ) : (
-          <Badge variant="neutral">{__("Not uploaded")}</Badge>
+          <Badge variant="neutral">{__("No files")}</Badge>
         )}
       </Td>
       <Td noLink width={50} className="text-end">

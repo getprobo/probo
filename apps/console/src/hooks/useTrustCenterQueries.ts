@@ -13,11 +13,11 @@ export interface TrustCenterAudit {
   framework: {
     name: string;
   };
-  report: {
+  reports: {
     id: string;
     filename: string;
     downloadUrl: string | null;
-  } | null;
+  }[];
 }
 
 export interface TrustCenterVendor {
@@ -166,7 +166,7 @@ const TRUST_CENTER_QUERY = `
             framework {
               name
             }
-            report {
+            reports {
               id
               filename
               downloadUrl

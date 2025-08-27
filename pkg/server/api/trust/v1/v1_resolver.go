@@ -40,21 +40,17 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
 	trust := r.TrustService(ctx, obj.ID.TenantID())
 
-	audit, err := trust.Audits.Get(ctx, obj.ID)
+	reports, err := trust.Audits.GetReports(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load audit: %w", err)
+		return nil, fmt.Errorf("cannot load audit reports: %w", err)
 	}
 
-	if audit.ReportID == nil {
+	if len(reports) == 0 {
 		return nil, nil
 	}
 
-	report, err := trust.Reports.Get(ctx, *audit.ReportID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load report: %w", err)
-	}
-
-	return types.NewReport(report), nil
+	// Return the first report for backward compatibility
+	return types.NewReport(reports[0]), nil
 }
 
 // CreateTrustCenterAccess is the resolver for the createTrustCenterAccess field.

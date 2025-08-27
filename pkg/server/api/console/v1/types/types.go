@@ -68,8 +68,7 @@ type Audit struct {
 	Framework         *Framework          `json:"framework"`
 	ValidFrom         *time.Time          `json:"validFrom,omitempty"`
 	ValidUntil        *time.Time          `json:"validUntil,omitempty"`
-	Report            *Report             `json:"report,omitempty"`
-	ReportURL         *string             `json:"reportUrl,omitempty"`
+	Reports           []*Report           `json:"reports"`
 	State             coredata.AuditState `json:"state"`
 	Controls          *ControlConnection  `json:"controls"`
 	ShowOnTrustCenter bool                `json:"showOnTrustCenter"`
@@ -656,7 +655,8 @@ type DeleteAuditPayload struct {
 }
 
 type DeleteAuditReportInput struct {
-	AuditID gid.GID `json:"auditId"`
+	AuditID  gid.GID `json:"auditId"`
+	ReportID gid.GID `json:"reportId"`
 }
 
 type DeleteAuditReportPayload struct {

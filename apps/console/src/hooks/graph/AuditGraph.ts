@@ -23,7 +23,7 @@ export const auditNodeQuery = graphql`
         name
         validFrom
         validUntil
-        report {
+        reports {
           id
           filename
           mimeType
@@ -31,7 +31,6 @@ export const auditNodeQuery = graphql`
           downloadUrl
           createdAt
         }
-        reportUrl
         state
         framework {
           id
@@ -60,7 +59,7 @@ export const createAuditMutation = graphql`
           name
           validFrom
           validUntil
-          report {
+          reports {
             id
             filename
           }
@@ -84,7 +83,7 @@ export const updateAuditMutation = graphql`
         name
         validFrom
         validUntil
-        report {
+        reports {
           id
           filename
         }
@@ -209,11 +208,12 @@ export const uploadAuditReportMutation = graphql`
     uploadAuditReport(input: $input) {
       audit {
         id
-        report {
+        reports {
           id
           filename
           downloadUrl
           createdAt
+          size
         }
         updatedAt
       }
@@ -254,11 +254,12 @@ export const deleteAuditReportMutation = graphql`
     deleteAuditReport(input: $input) {
       audit {
         id
-        report {
+        reports {
           id
           filename
           downloadUrl
           createdAt
+          size
         }
         updatedAt
       }
@@ -273,11 +274,12 @@ export const useDeleteAuditReport = () => {
     errorMessage: __("Failed to delete audit report"),
   });
 
-  return (input: { auditId: string }) => {
+  return (input: { auditId: string; reportId: string }) => {
     return mutate({
       variables: {
         input: {
           auditId: input.auditId,
+          reportId: input.reportId,
         },
       },
     });

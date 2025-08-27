@@ -32,7 +32,6 @@ type (
 		Name              *string    `db:"name"`
 		OrganizationID    gid.GID    `db:"organization_id"`
 		FrameworkID       gid.GID    `db:"framework_id"`
-		ReportID          *gid.GID   `db:"report_id"`
 		ValidFrom         *time.Time `db:"valid_from"`
 		ValidUntil        *time.Time `db:"valid_until"`
 		State             AuditState `db:"state"`
@@ -71,7 +70,6 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
-	report_id,
 	valid_from,
 	valid_until,
 	state,
@@ -152,7 +150,6 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
-	report_id,
 	valid_from,
 	valid_until,
 	state,
@@ -202,7 +199,6 @@ INSERT INTO audits (
 	tenant_id,
 	organization_id,
 	framework_id,
-	report_id,
 	valid_from,
 	valid_until,
 	state,
@@ -215,7 +211,6 @@ INSERT INTO audits (
 	@tenant_id,
 	@organization_id,
 	@framework_id,
-	@report_id,
 	@valid_from,
 	@valid_until,
 	@state,
@@ -231,7 +226,6 @@ INSERT INTO audits (
 		"tenant_id":            scope.GetTenantID(),
 		"organization_id":      a.OrganizationID,
 		"framework_id":         a.FrameworkID,
-		"report_id":            a.ReportID,
 		"valid_from":           a.ValidFrom,
 		"valid_until":          a.ValidUntil,
 		"state":                a.State,
@@ -257,7 +251,6 @@ func (a *Audit) Update(
 UPDATE audits
 SET
 	name = @name,
-	report_id = @report_id,
 	valid_from = @valid_from,
 	valid_until = @valid_until,
 	state = @state,
@@ -273,7 +266,6 @@ WHERE
 	args := pgx.StrictNamedArgs{
 		"id":                   a.ID,
 		"name":                 a.Name,
-		"report_id":            a.ReportID,
 		"valid_from":           a.ValidFrom,
 		"valid_until":          a.ValidUntil,
 		"state":                a.State,
@@ -369,7 +361,6 @@ WITH audits_by_control AS (
 		a.name,
 		a.organization_id,
 		a.framework_id,
-		a.report_id,
 		a.valid_from,
 		a.valid_until,
 		a.state,
@@ -388,7 +379,6 @@ SELECT
 	name,
 	organization_id,
 	framework_id,
-	report_id,
 	valid_from,
 	valid_until,
 	state,
