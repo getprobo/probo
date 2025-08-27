@@ -1,0 +1,587 @@
+{
+  "id": "IEC 62443-4-2",
+  "name": "IEC 62443-4-2 Industrial Automation and Control Systems Security",
+  "description": "IEC 62443-4-2 provides technical security requirements for Industrial Automation and Control Systems (IACS) components. The standard defines cybersecurity requirements organized into 7 Fundamental Requirements (FR1-FR7) with Security Levels 1-3, covering identification/authentication, use control, system integrity, data confidentiality, restricted data flow, timely response to events, and resource availability.",
+  "controls": [
+    {
+      "id": "LCR-01-01",
+      "name": "Software Development - Binary protection during development, release and storage from unauthorized modification",
+      "description": "The binary SHALL be protected during development, release and storage from unauthorized modification."
+    },
+    {
+      "id": "LCR-01-02",
+      "name": "Software Development - Binary protection during development, release and storage from unauthorized access",
+      "description": "The binary SHALL be protected during development, release and storage from unauthorized access."
+    },
+    {
+      "id": "LCR-02-01",
+      "name": "Software Signing - Software signature for authenticity and integrity verification",
+      "description": "The software SHALL be signed in order for the Edge Server to be able to verify its authenticity and integrity."
+    },
+    {
+      "id": "LCR-02-02",
+      "name": "Software Signing - Cryptographically verified and established signing methods",
+      "description": "The signing method SHALL be based on verified and well established cryptographical methods."
+    },
+    {
+      "id": "LCR-02-03",
+      "name": "Software Signing - Private key protection against unauthorized access and modification",
+      "description": "The private key used for signing SHALL be protected against unauthorized access and modification."
+    },
+    {
+      "id": "LCR-02-04",
+      "name": "Software Signing - Public key protection against unauthorized modification",
+      "description": "The public key used for verification of signature SHALL be protected against unauthorized modification."
+    },
+    {
+      "id": "LCR-02-05",
+      "name": "Software Signing - Secure public key distribution",
+      "description": "The public key used for verification of signature SHALL be distributed in a secure manner."
+    },
+    {
+      "id": "LCR-03-01",
+      "name": "System Manufacturing - Secure installation of initial authenticator content and keys",
+      "description": "Initial authenticator content and keys SHALL be installed securely to ensure their confidentiality and integrity."
+    },
+    {
+      "id": "LCR-03-02",
+      "name": "System Manufacturing - Secure software installation to ensure integrity",
+      "description": "The software SHALL be installed in a secure way to ensure the integrity of the software."
+    },
+    {
+      "id": "LCR-03-03",
+      "name": "System Manufacturing - Secure software installation to ensure confidentiality",
+      "description": "The software SHOULD be installed in a secure way to ensure the confidentiality of the software in order to protect the intellectual property."
+    },
+    {
+      "id": "LCR-04-01",
+      "name": "Software Installation/Upgrade - Protection of update/upgrade packages against unauthorized access",
+      "description": "The software update/upgrade package SHOULD be protected against unauthorized access (end-to-end) to protect the intellectual property."
+    },
+    {
+      "id": "LCR-04-02",
+      "name": "Software Installation/Upgrade - Protection of update/upgrade packages against unauthorized modifications",
+      "description": "The software update/upgrade package SHALL be protected against unauthorized modifications (end-to-end) to ensure the integrity."
+    },
+    {
+      "id": "LCR-06-01",
+      "name": "System Maintenance - Authorized access to maintenance and diagnostics",
+      "description": "Only authorized people SHALL have access to maintenance and diagnostics on the Edge Server according to system policies."
+    },
+    {
+      "id": "LCR-06-02",
+      "name": "System Maintenance - Identification and authentication via DeLaval+ for maintenance",
+      "description": "Maintenance and diagnostics SHALL only be possible after identification and authentication via DeLaval+."
+    },
+    {
+      "id": "LCR-09-01",
+      "name": "Decommissioning - Application software deletion before decommissioning",
+      "description": "The application software SHOULD be deleted before decommissioning to protect the intellectual property."
+    },
+    {
+      "id": "LCR-09-02",
+      "name": "Decommissioning - Private key deletion before decommissioning",
+      "description": "The private keys used for authentication SHALL be deleted before decommissioning to prevent further access to the rest of the system which the Edge Server was integrated into."
+    },
+    {
+      "id": "CSR-01-01",
+      "name": "FR1 SL1 - Initial authenticators installation during manufacturing",
+      "description": "Initial authenticators for provisioning SHALL be installed during manufacturing of the Edge Server."
+    },
+    {
+      "id": "CSR-01-02",
+      "name": "FR1 SL1 - Initial authenticators replacement during provisioning",
+      "description": "The initial authenticators SHALL be replaced during provisioning and not be used for other authentication procedures other than provisioning."
+    },
+    {
+      "id": "CSR-01-03",
+      "name": "FR1 SL1 - Authenticators protection against unauthorized disclosure",
+      "description": "Authenticators SHALL be protected against unauthorized disclosure during storage, use and transport."
+    },
+    {
+      "id": "CSR-01-04",
+      "name": "FR1 SL1 - Authenticators protection against unauthorized modification",
+      "description": "Authenticators SHALL be protected against unauthorized modification during storage, use and transport."
+    },
+    {
+      "id": "CSR-01-05",
+      "name": "FR1 SL1 - Authenticator feedback obscuring during authentication",
+      "description": "The Edge Server SHALL obscure feedback of authenticator information during the authentication processes."
+    },
+    {
+      "id": "CSR-01-06",
+      "name": "FR1 SL1 - Configurable limit enforcement for consecutive invalid access attempts",
+      "description": "The Edge Server SHALL provide the capability to enforce a limit of a configurable number of consecutive invalid access attempts and deny access for a specified period of time or until unlocked by an administrator when this limit has been reached."
+    },
+    {
+      "id": "CSR-01-07",
+      "name": "FR1 SL2 - Component identification and authentication capability",
+      "description": "The Edge Server SHALL have the capability to identify and authenticate itself to other components before communication can be performed."
+    },
+    {
+      "id": "CSR-01-08",
+      "name": "FR1 SL2 - PKI operation according to best practices",
+      "description": "PKI (Public Key Infrastructure) SHALL be operated according to commonly accepted best practices."
+    },
+    {
+      "id": "CSR-01-09",
+      "name": "FR1 SL2 - Certificate signature validation",
+      "description": "The validity of the signature for a given certificate SHALL be validated."
+    },
+    {
+      "id": "CSR-01-10",
+      "name": "FR1 SL2 - Certificate chain validation",
+      "description": "The certificate chain for a given certificate SHALL be validated."
+    },
+    {
+      "id": "CSR-01-11",
+      "name": "FR1 SL2 - Certificate revocation status validation",
+      "description": "The revocation status for a given certificate SHALL be validated."
+    },
+    {
+      "id": "CSR-01-12",
+      "name": "FR1 SL2 - Internationally recognized algorithms and keys for public key authentication",
+      "description": "Algorithms and keys used for public key authentication SHALL be based on internationally recognized and proven security practices and recommendations."
+    },
+    {
+      "id": "CSR-01-13",
+      "name": "FR1 SL3 - Unique identification and authentication capability to any component",
+      "description": "The Edge Server SHALL have the capability to uniquely identify and authenticate itself to any other component."
+    },
+    {
+      "id": "CSR-01-14",
+      "name": "FR1 SL3 - Hardware-based authenticator protection",
+      "description": "The authenticators on which the Edge Server rely shall be protected via hardware mechanisms."
+    },
+    {
+      "id": "CSR-01-15",
+      "name": "FR1 SL3 - Hardware-based protection for long-lived private keys",
+      "description": "Long-lived private keys SHALL be protected via hardware mechanisms."
+    },
+    {
+      "id": "CSR-02-01",
+      "name": "FR2 SL1 - Authorization enforcement mechanism based on assigned responsibilities",
+      "description": "Authorization enforcement mechanism SHALL exist for all identified and authenticated users based on their assigned responsibilities."
+    },
+    {
+      "id": "CSR-02-02",
+      "name": "FR2 SL1 - Session lock after configurable inactivity period",
+      "description": "For all human user interface to the Edge Server SHALL a session lock be initiated after a configurable time period of inactivity to protect against further access."
+    },
+    {
+      "id": "CSR-02-03",
+      "name": "FR2 SL1 - Session lock maintenance until re-authentication",
+      "description": "The session lock SHALL remain in effect until the human user who owns the session, or another authorized human user, re-establishes access using appropriate identification and authentication procedure."
+    },
+    {
+      "id": "CSR-02-04",
+      "name": "FR2 SL1 - Audit record generation for security-relevant categories",
+      "description": "The Edge Server SHALL generate audit records relevant to security for the following categories: a) access control; b) request errors; c) control system events; d) backup and restore event; e) configuration changes; and f) audit log events. Individual audit records SHALL include: a) timestamp; b) source; c) category; d) type; e) event ID; and f) event result."
+    },
+    {
+      "id": "CSR-02-05",
+      "name": "FR2 SL1 - Audit record storage capacity allocation",
+      "description": "The Edge Server SHALL allocate audit record storage capacity according to commonly recognized recommendations for log management."
+    },
+    {
+      "id": "CSR-02-06",
+      "name": "FR2 SL1 - Protection against audit storage capacity failure",
+      "description": "The Edge Server SHALL provide mechanisms to protect against failure of the component when it reaches or exceeds the audit storage capacity."
+    },
+    {
+      "id": "CSR-02-07",
+      "name": "FR2 SL1 - Protection against loss of services during audit processing failure",
+      "description": "The Edge Server SHALL provide the capability to protect against the loss of essential services and functions in the event of an audit processing failure."
+    },
+    {
+      "id": "CSR-02-08",
+      "name": "FR2 SL1 - Appropriate actions in response to audit processing failure",
+      "description": "The Edge Server SHALL provide the capability to support appropriate actions in response to an audit processing failure according to commonly accepted industry practices and recommendations."
+    },
+    {
+      "id": "CSR-02-09",
+      "name": "FR2 SL1 - Timestamp creation capability for audit records",
+      "description": "The Edge Server SHALL provide the capability to create timestamps (including date and time) for use in audit records."
+    },
+    {
+      "id": "CSR-02-10",
+      "name": "FR2 SL1 - Human user action determination capability",
+      "description": "The Edge Server shall provide the capability to determine whether a given human user took a particular action. Control elements that are not able to support such capability shall be listed in component documents."
+    },
+    {
+      "id": "CSR-02-11",
+      "name": "FR2 SL2 - Authorization enforcement based on responsibilities and least privilege",
+      "description": "The Edge Server SHALL provide an authorization enforcement mechanism for all users based on their assigned responsibilities and least privilege."
+    },
+    {
+      "id": "CSR-02-12",
+      "name": "FR2 SL2 - Synchronized timestamp creation for audit records",
+      "description": "The Edge Server SHALL be capable of creating timestamps for audit records based on a synchronized system wide time source."
+    },
+    {
+      "id": "CSR-02-13",
+      "name": "FR2 SL2 - Protection against unauthorized use of physical diagnostic interfaces",
+      "description": "The Edge Server SHALL protect against unauthorized use of the physical factory diagnostic and test interface(s)."
+    },
+    {
+      "id": "CSR-02-14",
+      "name": "FR2 SL3 - Warning when audit storage reaches configurable threshold",
+      "description": "The Edge Server SHALL provide the capability to issue a warning when the allocated audit record storage reaches a configurable threshold."
+    },
+    {
+      "id": "CSR-03-01",
+      "name": "FR3 SL1 - Protection of transmitted information integrity",
+      "description": "The Edge Server SHALL provide the capability to protect the integrity of transmitted information."
+    },
+    {
+      "id": "CSR-03-02",
+      "name": "FR3 SL1 - Verification of received information integrity",
+      "description": "The Edge Server SHALL provide the capability to verify the integrity of received information."
+    },
+    {
+      "id": "CSR-03-03",
+      "name": "FR3 SL1 - Support for security functions verification",
+      "description": "The Edge Server SHALL provide the capability to support verification of the intended operation of security functions."
+    },
+    {
+      "id": "CSR-03-04",
+      "name": "FR3 SL1 - Integrity checks on software, configuration and information",
+      "description": "The Edge Server SHALL provide the capability to perform or support integrity checks on software, configuration and other information as well as the recording and reporting of the results of these checks or be integrated into a system that can perform or support integrity checks."
+    },
+    {
+      "id": "CSR-03-05",
+      "name": "FR3 SL1 - Error condition handling without providing exploitable information",
+      "description": "The Edge Server SHALL identify and handle error conditions in a manner that does not provide information that could be exploited by adversaries to attack the system."
+    },
+    {
+      "id": "CSR-03-06",
+      "name": "FR3 SL1 - Protection from malicious code",
+      "description": "The Edge Server SHALL be protected from malicious code."
+    },
+    {
+      "id": "CSR-03-07",
+      "name": "FR3 SL1 - Software, firmware and configuration integrity verification before execution",
+      "description": "The integrity of installed software, firmware and configuration data SHALL be verified before it is executed or used."
+    },
+    {
+      "id": "CSR-03-08",
+      "name": "FR3 SL1 - Protection of integrity check keys from unauthorized modifications",
+      "description": "The integrity of key(s) used for integrity- and authenticity checks of the software SHALL be protected from unauthorized modifications."
+    },
+    {
+      "id": "CSR-03-09",
+      "name": "FR3 SL1 - Support for component updates and upgrades",
+      "description": "The Edge Server SHALL support the ability to be updated and upgraded."
+    },
+    {
+      "id": "CSR-03-10",
+      "name": "FR3 SL2 - Verification of received information authenticity during communication",
+      "description": "The Edge Server SHALL verify the authenticity of received information during communication."
+    },
+    {
+      "id": "CSR-03-11",
+      "name": "FR3 SL2 - Authenticity check capability for receiving devices",
+      "description": "The Edge Server SHALL be able to provide the possibility for receiving devices to perform an authenticity check on messages."
+    },
+    {
+      "id": "CSR-03-12",
+      "name": "FR3 SL2 - Authenticity checks on software, configuration and information",
+      "description": "The edge Server SHALL provide the capability to perform or support authenticity checks on software, configuration and other information as well as the recording and reporting of the results of these checks or be integrated into a system that can perform or support authenticity checks."
+    },
+    {
+      "id": "CSR-03-13",
+      "name": "FR3 SL2 - Unique session identifier generation for each session",
+      "description": "The Edge Server SHALL generate a unique session identifier for each session and recognize only session identifiers that are system-generated."
+    },
+    {
+      "id": "CSR-03-14",
+      "name": "FR3 SL2 - Session identifier generation with accepted randomness sources",
+      "description": "The Edge Server SHALL generate unique session identifiers with commonly accepted sources of randomness."
+    },
+    {
+      "id": "CSR-03-15",
+      "name": "FR3 SL2 - Session identifier invalidation upon logout or termination",
+      "description": "The Edge Server SHALL invalidate session identifiers upon user logout or other session termination."
+    },
+    {
+      "id": "CSR-03-16",
+      "name": "FR3 SL2 - Protection of audit information and logs from unauthorized access",
+      "description": "The Edge Server SHALL protect audit information and audit logs from unauthorized access, modification and deletion."
+    },
+    {
+      "id": "CSR-03-17",
+      "name": "FR3 SL2 - Software update/upgrade authenticity and integrity validation",
+      "description": "The Edge Server SHALL validate the authenticity and integrity of any software update or upgrade prior to installation."
+    },
+    {
+      "id": "CSR-03-18",
+      "name": "FR3 SL2 - Product supplier roots of trust provisioning and protection",
+      "description": "The Edge Server SHALL provide the capability to provision and protect the confidentiality, integrity, and authenticity of product supplier keys and data to be used as one or more 'roots of trust' at the time of manufacture of the device."
+    },
+    {
+      "id": "CSR-03-19",
+      "name": "FR3 SL2 - Roots of trust verification for boot process components",
+      "description": "The Edge Server SHALL use the component's product supplier roots of trust to verity the authenticity of the firmware, software, and configuration data needed for the component's boot process prior to it being used in the boot process."
+    },
+    {
+      "id": "CSR-03-20",
+      "name": "FR3 SL3 - Automatic notification upon unauthorized change attempts",
+      "description": "The Edge Server SHALL be capable of automatically providing notification to a configurable entity upon discovery of an attempt to make an unauthorized change."
+    },
+    {
+      "id": "CSR-03-21",
+      "name": "FR3 SL3 - Unauthorized physical access attempt detection mechanism",
+      "description": "Mechanism to detect an attempt to make an unauthorized physical access SHALL be implemented."
+    },
+    {
+      "id": "CSR-03-22",
+      "name": "FR3 SL3 - Tampering notification logging in audit system",
+      "description": "All notifications of tampering SHALL be logged as part of the overall audit logging function."
+    },
+    {
+      "id": "CSR-04-01",
+      "name": "FR4 SL1 - Protection of information at rest confidentiality with explicit read authorization",
+      "description": "The Edge Server SHALL protect the confidentiality of information at rest for which explicit read authorization is supported."
+    },
+    {
+      "id": "CSR-04-02",
+      "name": "FR4 SL1 - Protection of confidential information in transit",
+      "description": "The Edge Server SHALL protect confidentiality information in transit."
+    },
+    {
+      "id": "CSR-04-03",
+      "name": "FR4 SL1 - Cryptographic security mechanisms according to international practices",
+      "description": "The Edge Server SHALL use cryptographic security mechanisms according to internationally recognized and proven security practices and recommendations."
+    },
+    {
+      "id": "CSR-04-04",
+      "name": "FR4 SL2 - Reference to decommissioning requirements LCR-09-01 and LCR-09-02",
+      "description": "See LCR-09-01 and LCR-09-02."
+    },
+    {
+      "id": "CSR-04-05",
+      "name": "FR4 SL3 - Protection against unauthorized information transfer via volatile shared memory",
+      "description": "The Edge Server SHALL provide the capability to protect against unauthorized and unintended information transfer via volatile shared memory resources."
+    },
+    {
+      "id": "CSR-04-06",
+      "name": "FR4 SL3 - Verification of information erasure occurrence",
+      "description": "The Edge Server SHALL verify that the erasure of information occurred."
+    },
+    {
+      "id": "CSR-05-01",
+      "name": "FR5 SL1 - Support for segmented network architecture",
+      "description": "The Edge Server SHALL support a segmented network to support the broader network architecture according to DeLaval Network Architecture."
+    },
+    {
+      "id": "CSR-05-02",
+      "name": "FR5 SL1 - Communication monitoring and control at zone boundaries",
+      "description": "The Edge Server SHALL provide the capability to monitor and control communications at zone boundaries to enforce the compartmentalization."
+    },
+    {
+      "id": "CSR-05-03",
+      "name": "FR5 SL2 - Network traffic denial by default, allow by exception capability",
+      "description": "The Edge Server SHALL provide the capability to deny network traffic by default and allow network traffic by exception (also termed deny all, permit by exception)."
+    },
+    {
+      "id": "CSR-05-04",
+      "name": "FR5 SL3 - Protection against communication through control system boundary (island mode)",
+      "description": "He Edge Server SHALL provide the capability to protect against any communication through the control system boundary (also termed island mode)."
+    },
+    {
+      "id": "CSR-05-05",
+      "name": "FR5 SL3 - Protection during boundary protection mechanism operational failure (fail close)",
+      "description": "The Edge Server SHALL provide the capability to protect against any communication through the control system boundary when there is an operational failure of the boundary protection mechanisms (also termed fail close)."
+    },
+    {
+      "id": "CSR-06-01",
+      "name": "FR6 SL1 - Read-only audit log access for authorized humans and tools",
+      "description": "The Edge Server SHALL provide the capability for authorized humans and/or tools to access audit logs on a read-only basis."
+    },
+    {
+      "id": "CSR-06-02",
+      "name": "FR6 SL2 - Continuous monitoring capability for security breach detection",
+      "description": "The Edge Server SHALL provide the capability to be continuously monitored using commonly accepted security industry practices and recommendations to detect, characterize and report security breaches in a timely manner."
+    },
+    {
+      "id": "CSR-06-03",
+      "name": "FR6 SL3 - Programmatic audit record access via Grafana",
+      "description": "The Edge Server SHALL provide programmatic access to audit records via Grafana."
+    },
+    {
+      "id": "CR-07-01",
+      "name": "FR7 SL1 - Essential function maintenance during degraded mode from DoS events",
+      "description": "The Edge Server SHALL maintain essential functions when operating in a degraded mode as the result of a DoS event."
+    },
+    {
+      "id": "CR-07-02",
+      "name": "FR7 SL1 - Resource usage limitation by security functions to protect against exhaustion",
+      "description": "The Edge Server SHALL provide the capability to limit the use of resources by security functions to protect against resource exhaustion."
+    },
+    {
+      "id": "CR-07-03",
+      "name": "FR7 SL1 - System-level backup operations without affecting normal operations",
+      "description": "The Edge Server SHALL perform backup operations on a system level in order to safeguard the component state (user- and system-level information). The backup process SHALL not affect the normal component operations."
+    },
+    {
+      "id": "CR-07-04",
+      "name": "FR7 SL1 - Recovery and reconstitution capability to known secure state",
+      "description": "The Edge Server SHALL provide the capability to be recovered and reconstituted to a known secure state after a disruption or failure."
+    },
+    {
+      "id": "CR-07-05",
+      "name": "FR7 SL1 - Network settings configuration according to recommended guidelines",
+      "description": "The Edge Server network settings SHALL be configured according to the recommended guidelines."
+    },
+    {
+      "id": "CR-07-06",
+      "name": "FR7 SL1 - Security settings configuration according to recommended guidelines",
+      "description": "The Edge Server security settings SHALL be configured according to the recommended guidelines."
+    },
+    {
+      "id": "CR-07-07",
+      "name": "FR7 SL1 - Interface to deployed network and security configuration settings",
+      "description": "The Edge Server SHALL provide an interface to the currently deployed network and security configuration settings in order to provide the possibility to verify them."
+    },
+    {
+      "id": "CR-07-08",
+      "name": "FR7 SL1 - Restriction of unused functions, protocols and services",
+      "description": "The Edge Server SHALL restrict unused functions, protocols and services."
+    },
+    {
+      "id": "CR-07-09",
+      "name": "FR7 SL1 - Restriction of unnecessary ports usage",
+      "description": "The Edge Server SHALL restrict the use of unnecessary ports."
+    },
+    {
+      "id": "CR-07-10",
+      "name": "FR7 SL2 - Mitigation capability for information/message flooding DoS events",
+      "description": "The Edge Server SHALL provide the capability to mitigate the effects of information and/or message flooding types of DoS events."
+    },
+    {
+      "id": "CR-07-11",
+      "name": "FR7 SL2 - Backed up information integrity validation prior to restore",
+      "description": "The Edge Server SHALL validate the integrity of backed up information prior to the initiation of a restore of that information."
+    },
+    {
+      "id": "CR-07-12",
+      "name": "FR7 SL2 - Backup data inclusion of integrity check enablement data",
+      "description": "The data used for backup SHALL include data to enable integrity checks by components before use."
+    },
+    {
+      "id": "CR-07-13",
+      "name": "FR7 SL2 - Product code, ID, software version and capability transmission for system inventory",
+      "description": "The Edge Server SHALL provide the capability to send its product code, ID, software version and capability for system inventory."
+    },
+    {
+      "id": "CR-07-14",
+      "name": "FR7 SL3 - Machine-readable security settings report generation capability",
+      "description": "The Edge Server SHALL provide the capability to generate a report listing the currently deployed security settings in a machine-readable format."
+    },
+    {
+      "id": "CSR-SHR-01",
+      "name": "Shared SL1 - Human user identification and authentication via DeLaval+",
+      "description": "All human users SHALL be identified and authenticated via DeLaval+ before access to the Edge Server is allowed."
+    },
+    {
+      "id": "CSR-SHR-02",
+      "name": "Shared SL1 - Account management by DeLaval+",
+      "description": "Management of all accounts and their identifiers used for access to the Edge Server SHALL be performed by DeLaval+."
+    },
+    {
+      "id": "CSR-SHR-03",
+      "name": "Shared SL1 - Authenticator management for human users by DeLaval+",
+      "description": "Management of authenticators for human user access to the Edge Server SHALL be performed by DeLaval+ including: a) Initial authenticator content; b) Recognition of change of default authenticators; c) Properly functioning with periodic authenticator changes/refresh operations; d) Protection of authenticators from unauthorized disclosure and modification when stored."
+    },
+    {
+      "id": "CSR-SHR-04",
+      "name": "Shared SL1 - Password strength enforcement according to international guidelines",
+      "description": "Passwords used for human user access to the Edge Server SHALL be enforced with configurable password strength according to internationally recognized and proven password guidelines."
+    },
+    {
+      "id": "CSR-SHR-05",
+      "name": "Shared SL1 - Authenticator information feedback obscuring during authentication",
+      "description": "During authentication of human users SHALL feedback of authenticator information during the authentication process be obscured."
+    },
+    {
+      "id": "CSR-SHR-06",
+      "name": "Shared SL1 - Configurable consecutive invalid access attempt limit enforcement",
+      "description": "During authentication of human users for access to the Edge Server SHALL the capability to enforce a limit of a configurable number of consecutive invalid access attempts during a configurable time period be provided."
+    },
+    {
+      "id": "CSR-SHR-07",
+      "name": "Shared SL1 - Access denial for specified period or until administrator unlock",
+      "description": "During authentication of human users for access to the Edge Server SHALL the capability to deny access for a specified period of time provided or until unlocked by an administrator."
+    },
+    {
+      "id": "CSR-SHR-08",
+      "name": "Shared SL1 - Session lock after configurable inactivity period for DeLaval cloud",
+      "description": "A session lock SHALL be initiated after a configurable time period of inactivity to protect against further access to DeLaval cloud."
+    },
+    {
+      "id": "CSR-SHR-09",
+      "name": "Shared SL1 - Session lock maintenance until re-authentication",
+      "description": "The session lock SHALL remain in effect until the human user who owns the session, or another authorized human user, re-establishes access using appropriate identification and authentication procedure."
+    },
+    {
+      "id": "CSR-SHR-10",
+      "name": "Shared SL1 - Transmitted information integrity assurance",
+      "description": "The integrity of transmitted information SHALL be ensured."
+    },
+    {
+      "id": "CSR-SHR-11",
+      "name": "Shared SL2 - Unique human user identification and authentication via DeLaval+",
+      "description": "All human users SHALL be uniquely identified and authenticated via DeLaval+ before access to the Edge Server is allowed."
+    },
+    {
+      "id": "CSR-SHR-12",
+      "name": "Shared SL2 - Authorized role provision for permissions to roles mapping",
+      "description": "An authorized role SHALL be provided to define and modify the mapping of permissions to roles for all human users. Roles should not be limited to fixed nested hierarchies in which a higher-level role is a super set of a lesser privileged role."
+    },
+    {
+      "id": "CSR-SHR-13",
+      "name": "Shared SL2 - System-wide time source for device synchronization",
+      "description": "The system that the Edge Server is integrating into SHALL have a system wide time source which all devices can synchronize against."
+    },
+    {
+      "id": "CSR-SHR-14",
+      "name": "Shared SL3 - Multifactor authentication for human users",
+      "description": "All human users SHALL be authenticated via multifactor authentication before access to the Edge Server is allowed."
+    },
+    {
+      "id": "CSR-SHR-15",
+      "name": "Shared SL3 - Authenticator reuse protection for configurable generations",
+      "description": "Capability to protect any human user from reusing an authenticator for a configurable number of generations SHALL be implemented."
+    },
+    {
+      "id": "CSR-SHR-16",
+      "name": "Shared SL3 - Minimum and maximum lifetime restriction enforcement for human users",
+      "description": "A minimum and maximum lifetime restriction for human users SHALL be enforced."
+    },
+    {
+      "id": "CSR-SHR-17",
+      "name": "Shared SL3 - Industry practices conformance for requirements CSR-SHR-12 and CSR-SHR-13",
+      "description": "Requirements CSR-SHR-12 and CSR-SHR-13 SHALL conform to commonly accepted industry practices."
+    },
+    {
+      "id": "CSR-SHR-18",
+      "name": "Shared SL3 - Password change prompt capability prior to expiration",
+      "description": "The capability to prompt a human user to change their password upon a configurable time prior to expiration SHOULD be implemented."
+    },
+    {
+      "id": "CSR-SHR-19",
+      "name": "Shared SL3 - Automatic notification of unauthorized changes to DeLaval cloud",
+      "description": "Automatic notification of unauthorized changes SHALL be sent to DeLaval cloud."
+    },
+    {
+      "id": "CSR-SHR-20",
+      "name": "Shared SL3 - Log fetching capability via Grafana",
+      "description": "Logs SHALL be capable to be fetched via Grafana."
+    },
+    {
+      "id": "CSR-SHR-21",
+      "name": "Shared SL3 - Automatic notification of unauthorized physical access attempts to DeLaval cloud",
+      "description": "Automatic notification upon discovery of an attempt to make an unauthorized physical access SHALL be sent to DeLaval cloud."
+    }
+  ]
+}

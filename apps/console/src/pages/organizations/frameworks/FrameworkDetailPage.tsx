@@ -46,6 +46,7 @@ const frameworkDetailFragment = graphql`
           id
           sectionTitle
           name
+          description
           status
           exclusionJustification
         }
@@ -161,6 +162,13 @@ export default function FrameworkDetailPage(props: Props) {
           </DropdownItem>
         </ActionDropdown>
       </PageHeader>
+      {framework.description && (
+        <div className="bg-secondary border border-border-low rounded-lg p-4 mb-6">
+          <div className="text-sm text-txt-secondary">
+            {framework.description}
+          </div>
+        </div>
+      )}
       <div className="text-lg font-semibold">
         {__("Requirement categories")}
       </div>

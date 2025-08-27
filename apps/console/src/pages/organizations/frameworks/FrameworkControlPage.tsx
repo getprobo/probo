@@ -246,7 +246,12 @@ export default function FrameworkControlPage({ queryRef }: Props) {
         </div>
       )}
       <div className={control.status === "EXCLUDED" ? "opacity-60" : ""}>
-        <div className="text-base mb-4">{control.name}</div>
+        <div className="text-base font-medium mb-2">{control.name}</div>
+        {control.description && (
+          <div className="text-sm text-txt-secondary mb-4 p-4 bg-secondary border border-border-low rounded-lg">
+            {control.description}
+          </div>
+        )}
         <div className="mb-4">
           <LinkedMeasuresCard
             variant="card"
