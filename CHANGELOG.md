@@ -38,7 +38,7 @@ All notable changes to this project will be documented in this file.
 ### Chore
 - Replace mailhog
 
-## [0.49.0]
+## [0.49.0] - 2025-08-20
 
 ### Added
 - Add nonconformity registries
@@ -46,13 +46,13 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - Fix trust center dark mode
 
-## [0.48.1]
+## [0.48.1] - 2025-08-14
 
 ### Fixed
 
 - Fix display of download buttons in the public trust center
 
-## [0.48.0]
+## [0.48.0] - 2025-08-14
 
 ### Added
 - Add baa to vendors
@@ -61,7 +61,7 @@ All notable changes to this project will be documented in this file.
 - Add name to audits
 - Add audits to controls
 
-## [0.47.0]
+## [0.47.0] - 2025-08-13
 
 ### Added
 - Add document draft deletion

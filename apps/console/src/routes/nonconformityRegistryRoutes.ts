@@ -7,7 +7,7 @@ import type { AppRoute } from "/routes";
 
 export const nonconformityRegistryRoutes= [
   {
-    path: "nonconformityRegistries",
+    path: "nonconformity-registries",
     fallback: PageSkeleton,
     queryLoader: ({ organizationId }: { organizationId: string }) =>
       loadQuery(relayEnvironment, nonconformityRegistriesQuery, { organizationId }),
@@ -16,7 +16,7 @@ export const nonconformityRegistryRoutes= [
     ),
   },
   {
-    path: "nonconformityRegistries/:registryId",
+    path: "nonconformity-registries/:registryId",
     fallback: PageSkeleton,
     queryLoader: (params: Record<string, string>) =>
       loadQuery(relayEnvironment, nonconformityRegistryNodeQuery, {

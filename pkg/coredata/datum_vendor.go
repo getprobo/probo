@@ -17,6 +17,7 @@ package coredata
 import (
 	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/getprobo/probo/pkg/gid"
@@ -26,10 +27,10 @@ import (
 
 type (
 	DatumVendor struct {
-		DatumID   gid.GID      `db:"datum_id"`
-		VendorID  gid.GID      `db:"vendor_id"`
-		TenantID  gid.TenantID `db:"tenant_id"`
-		CreatedAt time.Time    `db:"created_at"`
+		DatumID    gid.GID   `db:"datum_id"`
+		VendorID   gid.GID   `db:"vendor_id"`
+		SnapshotID *gid.GID  `db:"snapshot_id"`
+		CreatedAt  time.Time `db:"created_at"`
 	}
 
 	DatumVendors []*DatumVendor
@@ -108,6 +109,64 @@ FROM vendor_ids
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert data vendors: %w", err)
+	}
+
+	return nil
+}
+
+func (d DatumVendors) InsertDataSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	source_data AS (
+		SELECT id
+		FROM data
+		WHERE organization_id = @organization_id AND snapshot_id IS NULL
+	),
+	snapshot_data AS (
+		SELECT id, source_id
+		FROM data
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
+	),
+	snapshot_vendors AS (
+		SELECT id, source_id
+		FROM vendors
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
+	),
+	source_data_vendors AS (
+		SELECT datum_id, vendor_id, snapshot_id, created_at
+		FROM data_vendors
+		WHERE %s AND datum_id = ANY(SELECT id FROM source_data)
+	)
+INSERT INTO data_vendors (tenant_id, datum_id, vendor_id, snapshot_id, created_at)
+SELECT
+	@tenant_id,
+	sd.id,
+	sv.id,
+	@snapshot_id,
+	dv.created_at
+FROM source_data_vendors dv
+JOIN snapshot_data sd ON sd.source_id = dv.datum_id
+JOIN snapshot_vendors sv ON sv.source_id = dv.vendor_id
+`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":       scope.GetTenantID(),
+		"snapshot_id":     snapshotID,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert datum vendor snapshots: %w", err)
 	}
 
 	return nil

@@ -248,7 +248,6 @@ func (s FrameworkService) Import(
 			now := time.Now()
 			control := &coredata.Control{
 				ID:           controlID,
-				TenantID:     organizationID.TenantID(),
 				FrameworkID:  frameworkID,
 				SectionTitle: control.ID,
 				Name:         control.Name,

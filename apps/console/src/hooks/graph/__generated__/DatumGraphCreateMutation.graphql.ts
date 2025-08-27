@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<36898ed088182687925ddd9d0b08b66a>>
+ * @generated SignedSource<<43b67fe6155860e492f2a36543727d49>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -133,7 +133,7 @@ v5 = {
             {
               "kind": "Literal",
               "name": "first",
-              "value": 10
+              "value": 50
             }
           ],
           "concreteType": "VendorConnection",
@@ -173,7 +173,7 @@ v5 = {
               "storageKey": null
             }
           ],
-          "storageKey": "vendors(first:10)"
+          "storageKey": "vendors(first:50)"
         },
         {
           "alias": null,
@@ -254,16 +254,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "31d614c716382bedf677502633969fac",
+    "cacheID": "23ff315b0cc090bcaca7739d945d8d1b",
     "id": null,
     "metadata": {},
     "name": "DatumGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation DatumGraphCreateMutation(\n  $input: CreateDatumInput!\n) {\n  createDatum(input: $input) {\n    datumEdge {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 10) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation DatumGraphCreateMutation(\n  $input: CreateDatumInput!\n) {\n  createDatum(input: $input) {\n    datumEdge {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b99929d8e7d004f77b06510051ee2e04";
+(node as any).hash = "b148ef55d18d3a45c04b5072581f2285";
 
 export default node;

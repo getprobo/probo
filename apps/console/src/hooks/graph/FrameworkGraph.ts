@@ -130,6 +130,16 @@ export const frameworkControlNodeQuery = graphql`
             }
           }
         }
+        snapshots(first: 100)
+          @connection(key: "FrameworkGraphControl_snapshots") {
+          __id
+          edges {
+            node {
+              id
+              ...LinkedSnapshotsCardFragment
+            }
+          }
+        }
       }
     }
   }

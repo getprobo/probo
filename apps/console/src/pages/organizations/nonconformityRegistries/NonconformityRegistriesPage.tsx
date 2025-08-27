@@ -225,7 +225,7 @@ function RegistryRow({
   };
 
   return (
-    <Tr to={`/organizations/${organizationId}/nonconformityRegistries/${registry.id}`}>
+    <Tr to={`/organizations/${organizationId}/nonconformity-registries/${registry.id}`}>
       <Td>
         <span className="font-mono text-sm">{registry.referenceId}</span>
       </Td>

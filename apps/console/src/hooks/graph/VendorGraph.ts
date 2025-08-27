@@ -188,9 +188,13 @@ const vendorsSelectQuery = graphql`
 `;
 
 export function useVendors(organizationId: string) {
-  const data = useLazyLoadQuery<VendorGraphSelectQuery>(vendorsSelectQuery, {
-    organizationId: organizationId,
-  });
+  const data = useLazyLoadQuery<VendorGraphSelectQuery>(
+    vendorsSelectQuery,
+    {
+      organizationId: organizationId,
+    },
+    { fetchPolicy: "network-only" }
+  );
   return useMemo(() => {
     return data.organization?.vendors?.edges.map((edge) => edge.node) ?? [];
   }, [data]);

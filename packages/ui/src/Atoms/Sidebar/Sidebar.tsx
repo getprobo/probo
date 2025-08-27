@@ -17,7 +17,7 @@ export function Sidebar({ children }: PropsWithChildren) {
             <aside
                 className={clsx(
                     "border-r border-border-solid relative pt-16 flex-none",
-                    open ? "px-4 w-[270px]" : "px-2",
+                    open ? "px-4 w-[330px]" : "px-2",
                 )}
             >
                 {children}

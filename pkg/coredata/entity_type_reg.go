@@ -46,4 +46,6 @@ const (
 	NonconformityRegistryEntityType
 	ComplianceRegistryEntityType
 	VendorServiceEntityType
+	SnapshotEntityType
+	ContinualImprovementRegistryEntityType
 )

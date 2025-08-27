@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4894c4387072fb7ac2f379ab04b4168a>>
+ * @generated SignedSource<<8364d9457b59a3ef50b508ab55991638>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,7 +22,8 @@ export type DataListQuery$variables = {
   first?: number | null | undefined;
   id: string;
   last?: number | null | undefined;
-  orderBy?: DatumOrder | null | undefined;
+  order?: DatumOrder | null | undefined;
+  snapshotId?: string | null | undefined;
 };
 export type DataListQuery$data = {
   readonly node: {
@@ -63,57 +64,78 @@ v4 = {
 v5 = {
   "defaultValue": null,
   "kind": "LocalArgument",
-  "name": "orderBy"
+  "name": "order"
 },
-v6 = [
+v6 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "snapshotId"
+},
+v7 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "id"
   }
 ],
-v7 = [
-  {
-    "kind": "Variable",
-    "name": "after",
-    "variableName": "after"
-  },
-  {
-    "kind": "Variable",
-    "name": "before",
-    "variableName": "before"
-  },
-  {
-    "kind": "Variable",
-    "name": "first",
-    "variableName": "first"
-  },
-  {
-    "kind": "Variable",
-    "name": "last",
-    "variableName": "last"
-  },
-  {
-    "kind": "Variable",
-    "name": "orderBy",
-    "variableName": "orderBy"
-  }
-],
 v8 = {
+  "kind": "Variable",
+  "name": "after",
+  "variableName": "after"
+},
+v9 = {
+  "kind": "Variable",
+  "name": "before",
+  "variableName": "before"
+},
+v10 = {
+  "kind": "Variable",
+  "name": "first",
+  "variableName": "first"
+},
+v11 = {
+  "kind": "Variable",
+  "name": "last",
+  "variableName": "last"
+},
+v12 = {
+  "kind": "Variable",
+  "name": "snapshotId",
+  "variableName": "snapshotId"
+},
+v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v9 = {
+v14 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v10 = {
+v15 = [
+  (v8/*: any*/),
+  (v9/*: any*/),
+  {
+    "fields": [
+      (v12/*: any*/)
+    ],
+    "kind": "ObjectValue",
+    "name": "filter"
+  },
+  (v10/*: any*/),
+  (v11/*: any*/),
+  {
+    "kind": "Variable",
+    "name": "orderBy",
+    "variableName": "order"
+  }
+],
+v16 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -128,7 +150,8 @@ return {
       (v2/*: any*/),
       (v3/*: any*/),
       (v4/*: any*/),
-      (v5/*: any*/)
+      (v5/*: any*/),
+      (v6/*: any*/)
     ],
     "kind": "Fragment",
     "metadata": null,
@@ -136,14 +159,25 @@ return {
     "selections": [
       {
         "alias": null,
-        "args": (v6/*: any*/),
+        "args": (v7/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
           {
-            "args": (v7/*: any*/),
+            "args": [
+              (v8/*: any*/),
+              (v9/*: any*/),
+              (v10/*: any*/),
+              (v11/*: any*/),
+              {
+                "kind": "Variable",
+                "name": "order",
+                "variableName": "order"
+              },
+              (v12/*: any*/)
+            ],
             "kind": "FragmentSpread",
             "name": "DataPageFragment"
           }
@@ -162,6 +196,7 @@ return {
       (v2/*: any*/),
       (v4/*: any*/),
       (v5/*: any*/),
+      (v6/*: any*/),
       (v3/*: any*/)
     ],
     "kind": "Operation",
@@ -169,20 +204,20 @@ return {
     "selections": [
       {
         "alias": null,
-        "args": (v6/*: any*/),
+        "args": (v7/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v8/*: any*/),
-          (v9/*: any*/),
+          (v13/*: any*/),
+          (v14/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v7/*: any*/),
+                "args": (v15/*: any*/),
                 "concreteType": "DatumConnection",
                 "kind": "LinkedField",
                 "name": "data",
@@ -204,8 +239,8 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v9/*: any*/),
-                          (v10/*: any*/),
+                          (v14/*: any*/),
+                          (v16/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -228,7 +263,7 @@ return {
                                 "name": "fullName",
                                 "storageKey": null
                               },
-                              (v9/*: any*/)
+                              (v14/*: any*/)
                             ],
                             "storageKey": null
                           },
@@ -262,8 +297,8 @@ return {
                                     "name": "node",
                                     "plural": false,
                                     "selections": [
-                                      (v9/*: any*/),
-                                      (v10/*: any*/),
+                                      (v14/*: any*/),
+                                      (v16/*: any*/),
                                       {
                                         "alias": null,
                                         "args": null,
@@ -287,7 +322,7 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
-                          (v8/*: any*/)
+                          (v13/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -357,9 +392,10 @@ return {
               },
               {
                 "alias": null,
-                "args": (v7/*: any*/),
+                "args": (v15/*: any*/),
                 "filters": [
-                  "orderBy"
+                  "orderBy",
+                  "filter"
                 ],
                 "handle": "connection",
                 "key": "DataPage_data",
@@ -376,16 +412,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d6742fb1de534407018aeb39ca1438d5",
+    "cacheID": "dbca2ff147e8b1e367a266fcf016b184",
     "id": null,
     "metadata": {},
     "name": "DataListQuery",
     "operationKind": "query",
-    "text": "query DataListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: DatumOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DataPageFragment_sdb03\n    id\n  }\n}\n\nfragment DataPageFragment_sdb03 on Organization {\n  data(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy) {\n    edges {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          fullName\n          id\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query DataListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $order: DatumOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DataPageFragment_25MC8O\n    id\n  }\n}\n\nfragment DataPageFragment_25MC8O on Organization {\n  data(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        name\n        dataClassification\n        owner {\n          fullName\n          id\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a797d00b7f2cac2876322b23aa781efa";
+(node as any).hash = "a60d9b34a83df89eb59ffcd359903ce8";
 
 export default node;

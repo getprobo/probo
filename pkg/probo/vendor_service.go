@@ -120,6 +120,7 @@ func (s VendorService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.VendorOrderField],
+	filter *coredata.VendorFilter,
 ) (*page.Page[*coredata.Vendor, coredata.VendorOrderField], error) {
 	var vendors coredata.Vendors
 	organization := &coredata.Organization{}
@@ -131,7 +132,6 @@ func (s VendorService) ListForOrganizationID(
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			filter := coredata.NewVendorFilter()
 			return vendors.LoadByOrganizationID(
 				ctx,
 				conn,

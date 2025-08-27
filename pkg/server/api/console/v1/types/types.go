@@ -167,6 +167,29 @@ type ConnectorOrder struct {
 	Direction page.OrderDirection          `json:"direction"`
 }
 
+type ContinualImprovementRegistry struct {
+	ID           gid.GID                                         `json:"id"`
+	Organization *Organization                                   `json:"organization"`
+	ReferenceID  string                                          `json:"referenceId"`
+	Description  *string                                         `json:"description,omitempty"`
+	Audit        *Audit                                          `json:"audit"`
+	Source       *string                                         `json:"source,omitempty"`
+	Owner        *People                                         `json:"owner"`
+	TargetDate   *time.Time                                      `json:"targetDate,omitempty"`
+	Status       coredata.ContinualImprovementRegistriesStatus   `json:"status"`
+	Priority     coredata.ContinualImprovementRegistriesPriority `json:"priority"`
+	CreatedAt    time.Time                                       `json:"createdAt"`
+	UpdatedAt    time.Time                                       `json:"updatedAt"`
+}
+
+func (ContinualImprovementRegistry) IsNode()             {}
+func (this ContinualImprovementRegistry) GetID() gid.GID { return this.ID }
+
+type ContinualImprovementRegistryEdge struct {
+	Cursor page.CursorKey                `json:"cursor"`
+	Node   *ContinualImprovementRegistry `json:"node"`
+}
+
 type Control struct {
 	ID                     gid.GID                `json:"id"`
 	SectionTitle           string                 `json:"sectionTitle"`
@@ -178,6 +201,7 @@ type Control struct {
 	Measures               *MeasureConnection     `json:"measures"`
 	Documents              *DocumentConnection    `json:"documents"`
 	Audits                 *AuditConnection       `json:"audits"`
+	Snapshots              *SnapshotConnection    `json:"snapshots"`
 	CreatedAt              time.Time              `json:"createdAt"`
 	UpdatedAt              time.Time              `json:"updatedAt"`
 }
@@ -241,6 +265,22 @@ type CreateComplianceRegistryPayload struct {
 	ComplianceRegistryEdge *ComplianceRegistryEdge `json:"complianceRegistryEdge"`
 }
 
+type CreateContinualImprovementRegistryInput struct {
+	OrganizationID gid.GID                                         `json:"organizationId"`
+	ReferenceID    string                                          `json:"referenceId"`
+	Description    *string                                         `json:"description,omitempty"`
+	AuditID        gid.GID                                         `json:"auditId"`
+	Source         *string                                         `json:"source,omitempty"`
+	OwnerID        gid.GID                                         `json:"ownerId"`
+	TargetDate     *time.Time                                      `json:"targetDate,omitempty"`
+	Status         coredata.ContinualImprovementRegistriesStatus   `json:"status"`
+	Priority       coredata.ContinualImprovementRegistriesPriority `json:"priority"`
+}
+
+type CreateContinualImprovementRegistryPayload struct {
+	ContinualImprovementRegistryEdge *ContinualImprovementRegistryEdge `json:"continualImprovementRegistryEdge"`
+}
+
 type CreateControlAuditMappingInput struct {
 	ControlID gid.GID `json:"controlId"`
 	AuditID   gid.GID `json:"auditId"`
@@ -282,6 +322,16 @@ type CreateControlMeasureMappingPayload struct {
 
 type CreateControlPayload struct {
 	ControlEdge *ControlEdge `json:"controlEdge"`
+}
+
+type CreateControlSnapshotMappingInput struct {
+	ControlID  gid.GID `json:"controlId"`
+	SnapshotID gid.GID `json:"snapshotId"`
+}
+
+type CreateControlSnapshotMappingPayload struct {
+	ControlEdge  *ControlEdge  `json:"controlEdge"`
+	SnapshotEdge *SnapshotEdge `json:"snapshotEdge"`
 }
 
 type CreateDatumInput struct {
@@ -430,6 +480,17 @@ type CreateRiskPayload struct {
 	RiskEdge *RiskEdge `json:"riskEdge"`
 }
 
+type CreateSnapshotInput struct {
+	OrganizationID gid.GID                `json:"organizationId"`
+	Name           string                 `json:"name"`
+	Description    *string                `json:"description,omitempty"`
+	Type           coredata.SnapshotsType `json:"type"`
+}
+
+type CreateSnapshotPayload struct {
+	SnapshotEdge *SnapshotEdge `json:"snapshotEdge"`
+}
+
 type CreateTaskInput struct {
 	OrganizationID gid.GID        `json:"organizationId"`
 	MeasureID      *gid.GID       `json:"measureId,omitempty"`
@@ -448,6 +509,7 @@ type CreateTrustCenterAccessInput struct {
 	TrustCenterID gid.GID `json:"trustCenterId"`
 	Email         string  `json:"email"`
 	Name          string  `json:"name"`
+	Active        bool    `json:"active"`
 }
 
 type CreateTrustCenterAccessPayload struct {
@@ -536,6 +598,10 @@ type DatumEdge struct {
 	Node   *Datum         `json:"node"`
 }
 
+type DatumFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
 type DeleteAssetInput struct {
 	AssetID gid.GID `json:"assetId"`
 }
@@ -566,6 +632,14 @@ type DeleteComplianceRegistryInput struct {
 
 type DeleteComplianceRegistryPayload struct {
 	DeletedComplianceRegistryID gid.GID `json:"deletedComplianceRegistryId"`
+}
+
+type DeleteContinualImprovementRegistryInput struct {
+	ContinualImprovementRegistryID gid.GID `json:"continualImprovementRegistryId"`
+}
+
+type DeleteContinualImprovementRegistryPayload struct {
+	DeletedContinualImprovementRegistryID gid.GID `json:"deletedContinualImprovementRegistryId"`
 }
 
 type DeleteControlAuditMappingInput struct {
@@ -604,6 +678,16 @@ type DeleteControlMeasureMappingPayload struct {
 
 type DeleteControlPayload struct {
 	DeletedControlID gid.GID `json:"deletedControlId"`
+}
+
+type DeleteControlSnapshotMappingInput struct {
+	ControlID  gid.GID `json:"controlId"`
+	SnapshotID gid.GID `json:"snapshotId"`
+}
+
+type DeleteControlSnapshotMappingPayload struct {
+	DeletedControlID  gid.GID `json:"deletedControlId"`
+	DeletedSnapshotID gid.GID `json:"deletedSnapshotId"`
 }
 
 type DeleteDatumInput struct {
@@ -706,6 +790,14 @@ type DeleteRiskPayload struct {
 	DeletedRiskID gid.GID `json:"deletedRiskId"`
 }
 
+type DeleteSnapshotInput struct {
+	SnapshotID gid.GID `json:"snapshotId"`
+}
+
+type DeleteSnapshotPayload struct {
+	DeletedSnapshotID gid.GID `json:"deletedSnapshotId"`
+}
+
 type DeleteTaskInput struct {
 	TaskID gid.GID `json:"taskId"`
 }
@@ -715,7 +807,7 @@ type DeleteTaskPayload struct {
 }
 
 type DeleteTrustCenterAccessInput struct {
-	AccessID gid.GID `json:"accessId"`
+	ID gid.GID `json:"id"`
 }
 
 type DeleteTrustCenterAccessPayload struct {
@@ -1020,27 +1112,29 @@ type NonconformityRegistryEdge struct {
 }
 
 type Organization struct {
-	ID                      gid.GID                          `json:"id"`
-	Name                    string                           `json:"name"`
-	LogoURL                 *string                          `json:"logoUrl,omitempty"`
-	Users                   *UserConnection                  `json:"users"`
-	Connectors              *ConnectorConnection             `json:"connectors"`
-	Frameworks              *FrameworkConnection             `json:"frameworks"`
-	Controls                *ControlConnection               `json:"controls"`
-	Vendors                 *VendorConnection                `json:"vendors"`
-	Peoples                 *PeopleConnection                `json:"peoples"`
-	Documents               *DocumentConnection              `json:"documents"`
-	Measures                *MeasureConnection               `json:"measures"`
-	Risks                   *RiskConnection                  `json:"risks"`
-	Tasks                   *TaskConnection                  `json:"tasks"`
-	Assets                  *AssetConnection                 `json:"assets"`
-	Data                    *DatumConnection                 `json:"data"`
-	Audits                  *AuditConnection                 `json:"audits"`
-	NonconformityRegistries *NonconformityRegistryConnection `json:"nonconformityRegistries"`
-	ComplianceRegistries    *ComplianceRegistryConnection    `json:"complianceRegistries"`
-	TrustCenter             *TrustCenter                     `json:"trustCenter,omitempty"`
-	CreatedAt               time.Time                        `json:"createdAt"`
-	UpdatedAt               time.Time                        `json:"updatedAt"`
+	ID                             gid.GID                                 `json:"id"`
+	Name                           string                                  `json:"name"`
+	LogoURL                        *string                                 `json:"logoUrl,omitempty"`
+	Users                          *UserConnection                         `json:"users"`
+	Connectors                     *ConnectorConnection                    `json:"connectors"`
+	Frameworks                     *FrameworkConnection                    `json:"frameworks"`
+	Controls                       *ControlConnection                      `json:"controls"`
+	Vendors                        *VendorConnection                       `json:"vendors"`
+	Peoples                        *PeopleConnection                       `json:"peoples"`
+	Documents                      *DocumentConnection                     `json:"documents"`
+	Measures                       *MeasureConnection                      `json:"measures"`
+	Risks                          *RiskConnection                         `json:"risks"`
+	Tasks                          *TaskConnection                         `json:"tasks"`
+	Assets                         *AssetConnection                        `json:"assets"`
+	Data                           *DatumConnection                        `json:"data"`
+	Audits                         *AuditConnection                        `json:"audits"`
+	NonconformityRegistries        *NonconformityRegistryConnection        `json:"nonconformityRegistries"`
+	ComplianceRegistries           *ComplianceRegistryConnection           `json:"complianceRegistries"`
+	ContinualImprovementRegistries *ContinualImprovementRegistryConnection `json:"continualImprovementRegistries"`
+	Snapshots                      *SnapshotConnection                     `json:"snapshots"`
+	TrustCenter                    *TrustCenter                            `json:"trustCenter,omitempty"`
+	CreatedAt                      time.Time                               `json:"createdAt"`
+	UpdatedAt                      time.Time                               `json:"updatedAt"`
 }
 
 func (Organization) IsNode()             {}
@@ -1200,6 +1294,24 @@ type Session struct {
 	ExpiresAt time.Time `json:"expiresAt"`
 }
 
+type Snapshot struct {
+	ID           gid.GID                `json:"id"`
+	Organization *Organization          `json:"organization"`
+	Name         string                 `json:"name"`
+	Description  *string                `json:"description,omitempty"`
+	Type         coredata.SnapshotsType `json:"type"`
+	Controls     *ControlConnection     `json:"controls"`
+	CreatedAt    time.Time              `json:"createdAt"`
+}
+
+func (Snapshot) IsNode()             {}
+func (this Snapshot) GetID() gid.GID { return this.ID }
+
+type SnapshotEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Snapshot      `json:"node"`
+}
+
 type Task struct {
 	ID           gid.GID             `json:"id"`
 	Name         string              `json:"name"`
@@ -1240,6 +1352,7 @@ type TrustCenterAccess struct {
 	ID        gid.GID   `json:"id"`
 	Email     string    `json:"email"`
 	Name      string    `json:"name"`
+	Active    bool      `json:"active"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -1324,6 +1437,22 @@ type UpdateComplianceRegistryInput struct {
 
 type UpdateComplianceRegistryPayload struct {
 	ComplianceRegistry *ComplianceRegistry `json:"complianceRegistry"`
+}
+
+type UpdateContinualImprovementRegistryInput struct {
+	ID          gid.GID                                          `json:"id"`
+	ReferenceID *string                                          `json:"referenceId,omitempty"`
+	Description *string                                          `json:"description,omitempty"`
+	AuditID     *gid.GID                                         `json:"auditId,omitempty"`
+	Source      *string                                          `json:"source,omitempty"`
+	OwnerID     *gid.GID                                         `json:"ownerId,omitempty"`
+	TargetDate  *time.Time                                       `json:"targetDate,omitempty"`
+	Status      *coredata.ContinualImprovementRegistriesStatus   `json:"status,omitempty"`
+	Priority    *coredata.ContinualImprovementRegistriesPriority `json:"priority,omitempty"`
+}
+
+type UpdateContinualImprovementRegistryPayload struct {
+	ContinualImprovementRegistry *ContinualImprovementRegistry `json:"continualImprovementRegistry"`
 }
 
 type UpdateControlInput struct {
@@ -1468,6 +1597,16 @@ type UpdateTaskInput struct {
 
 type UpdateTaskPayload struct {
 	Task *Task `json:"task"`
+}
+
+type UpdateTrustCenterAccessInput struct {
+	ID     gid.GID `json:"id"`
+	Name   *string `json:"name,omitempty"`
+	Active *bool   `json:"active,omitempty"`
+}
+
+type UpdateTrustCenterAccessPayload struct {
+	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
 }
 
 type UpdateTrustCenterInput struct {

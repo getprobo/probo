@@ -30,7 +30,6 @@ type (
 	Control struct {
 		ID                     gid.GID       `db:"id"`
 		SectionTitle           string        `db:"section_title"`
-		TenantID               gid.TenantID  `db:"tenant_id"`
 		FrameworkID            gid.GID       `db:"framework_id"`
 		Name                   string        `db:"name"`
 		Description            string        `db:"description"`
@@ -137,7 +136,6 @@ SELECT
 	id,
 	section_title,
 	framework_id,
-	tenant_id,
 	name,
 	description,
 	status,
@@ -247,7 +245,6 @@ SELECT
 	id,
 	section_title,
 	framework_id,
-    tenant_id,
 	name,
 	description,
 	status,
@@ -369,7 +366,6 @@ SELECT
 	id,
 	section_title,
 	framework_id,
-    tenant_id,
 	name,
 	description,
 	status,
@@ -449,7 +445,6 @@ SELECT
     id,
     section_title,
     framework_id,
-    tenant_id,
     name,
     description,
     status,
@@ -562,7 +557,6 @@ SELECT
 	id,
 	section_title,
 	framework_id,
-	tenant_id,
 	name,
 	description,
 	status,
@@ -609,7 +603,6 @@ SELECT
     id,
     section_title,
     framework_id,
-    tenant_id,
     name,
     description,
     status,
@@ -654,11 +647,10 @@ SELECT
     id,
     section_title,
     framework_id,
-    tenant_id,
     name,
     description,
     status,
-exclusion_justification,
+    exclusion_justification,
     created_at,
     updated_at
 FROM
@@ -777,7 +769,6 @@ WHERE %s
 RETURNING
     id,
     framework_id,
-    tenant_id,
     name,
     description,
 	section_title,
@@ -903,7 +894,6 @@ SELECT
 	id,
 	section_title,
 	framework_id,
-    tenant_id,
 	name,
 	description,
 	status,
@@ -919,6 +909,116 @@ WHERE %s
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.NamedArgs{"audit_id": auditID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query controls: %w", err)
+	}
+
+	controls, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Control])
+	if err != nil {
+		return fmt.Errorf("cannot collect controls: %w", err)
+	}
+
+	*c = controls
+
+	return nil
+}
+
+func (c *Controls) CountBySnapshotID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	snapshotID gid.GID,
+	filter *ControlFilter,
+) (int, error) {
+	q := `
+WITH ctrl AS (
+	SELECT
+		c.id,
+		c.tenant_id,
+		c.search_vector
+	FROM
+		controls c
+	INNER JOIN
+		controls_snapshots cs ON c.id = cs.control_id
+	WHERE
+		cs.snapshot_id = @snapshot_id
+)
+SELECT
+	COUNT(id)
+FROM
+	ctrl
+WHERE %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.NamedArgs{"snapshot_id": snapshotID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (c *Controls) LoadBySnapshotID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	snapshotID gid.GID,
+	cursor *page.Cursor[ControlOrderField],
+	filter *ControlFilter,
+) error {
+	q := `
+WITH ctrl AS (
+	SELECT
+		c.id,
+		c.section_title,
+		c.framework_id,
+		c.tenant_id,
+		c.name,
+		c.description,
+		c.status,
+		c.exclusion_justification,
+		c.created_at,
+		c.updated_at,
+		c.search_vector
+	FROM
+		controls c
+	INNER JOIN
+		controls_snapshots cs ON c.id = cs.control_id
+	WHERE
+		cs.snapshot_id = @snapshot_id
+)
+SELECT
+	id,
+	section_title,
+	framework_id,
+	name,
+	description,
+	status,
+	exclusion_justification,
+	created_at,
+	updated_at
+FROM
+	ctrl
+WHERE %s
+	AND %s
+	AND %s
+`
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.NamedArgs{"snapshot_id": snapshotID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())

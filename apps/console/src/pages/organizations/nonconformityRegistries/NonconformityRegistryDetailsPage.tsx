@@ -125,7 +125,7 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
         items={[
           {
             label: __("Nonconformity Registries"),
-            to: `/organizations/${organizationId}/nonconformityRegistries`,
+            to: `/organizations/${organizationId}/nonconformity-registries`,
           },
           {
             label: registry.referenceId || __("Unknown Nonconformity Registry"),

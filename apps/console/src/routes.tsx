@@ -31,6 +31,8 @@ import { auditRoutes } from "./routes/auditRoutes.ts";
 import { trustCenterRoutes } from "./routes/trustCenterRoutes.ts";
 import { nonconformityRegistryRoutes } from "./routes/nonconformityRegistryRoutes.ts";
 import { complianceRegistryRoutes } from "./routes/complianceRegistryRoutes.ts";
+import { snapshotsRoutes } from "./routes/snapshotsRoutes.ts";
+import { continualImprovementRegistryRoutes } from "./routes/continualImprovementRegistryRoutes.ts";
 import { lazy } from "@probo/react-lazy";
 
 export type AppRoute = Omit<RouteObject, "Component" | "children"> & {
@@ -112,7 +114,7 @@ const routes = [
     path: "/trust/:slug",
     ErrorBoundary: ErrorBoundary,
     fallback: PageSkeleton,
-    Component: lazy(() => import("./pages/PublicTrustCenterPage")),
+    Component: lazy(() => import("./trust/pages/PublicTrustCenterPage")),
   },
   {
     path: "/trust/:slug/access",
@@ -153,6 +155,8 @@ const routes = [
       ...auditRoutes,
       ...nonconformityRegistryRoutes,
       ...complianceRegistryRoutes,
+      ...snapshotsRoutes,
+      ...continualImprovementRegistryRoutes,
       ...trustCenterRoutes,
       {
         path: "*",

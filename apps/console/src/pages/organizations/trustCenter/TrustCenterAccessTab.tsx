@@ -1,13 +1,34 @@
-import { Button, Card, Dialog, DialogContent, DialogFooter, Field, Input, Spinner, Table, Tbody, Td, Th, Thead, Tr, useDialogRef, useToast, IconTrashCan } from "@probo/ui";
+import {
+  Button,
+  Card,
+  Checkbox,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  Field,
+  Spinner,
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  useDialogRef,
+  IconTrashCan,
+  IconPencil,
+} from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
 import { useState, useCallback } from "react";
+import z from "zod";
 import {
   useTrustCenterAccesses,
   createTrustCenterAccessMutation,
+  updateTrustCenterAccessMutation,
   deleteTrustCenterAccessMutation
 } from "/hooks/graph/TrustCenterAccessGraph";
-import { useMutation } from "react-relay";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 type ContextType = {
   organization: {
@@ -20,20 +41,50 @@ type ContextType = {
 
 export default function TrustCenterAccessTab() {
   const { __ } = useTranslate();
-  const { toast } = useToast();
   const { organization } = useOutletContext<ContextType>();
 
-  const [createInvitation, isCreating] = useMutation(createTrustCenterAccessMutation);
-  const [deleteInvitation, isDeleting] = useMutation(deleteTrustCenterAccessMutation);
+  const inviteSchema = z.object({
+    name: z.string().min(1, __("Name is required")).min(2, __("Name must be at least 2 characters long")),
+    email: z.string().min(1, __("Email is required")).email(__("Please enter a valid email address")),
+  });
+
+  const editSchema = z.object({
+    name: z.string().min(1, __("Name is required")).min(2, __("Name must be at least 2 characters long")),
+  });
+
+  const [createInvitation, isCreating] = useMutationWithToasts(createTrustCenterAccessMutation, {
+    successMessage: __("Access invitation sent successfully"),
+    errorMessage: __("Failed to send invitation. Please try again."),
+  });
+  const [updateInvitation, isUpdating] = useMutationWithToasts(updateTrustCenterAccessMutation, {
+    successMessage: __("Access updated successfully"),
+    errorMessage: __("Failed to update access. Please try again."),
+  });
+  const [deleteInvitation, isDeleting] = useMutationWithToasts(deleteTrustCenterAccessMutation, {
+    successMessage: __("Access deleted successfully"),
+    errorMessage: __("Failed to delete access. Please try again."),
+  });
 
   const dialogRef = useDialogRef();
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+  const editDialogRef = useDialogRef();
+  const [editingAccess, setEditingAccess] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const inviteForm = useFormWithSchema(inviteSchema, {
+    defaultValues: { name: "", email: "" },
+  });
+
+  const editForm = useFormWithSchema(editSchema, {
+    defaultValues: { name: "" },
+  });
 
   type AccessType = {
     id: string;
     email: string;
     name: string;
+    active: boolean;
     createdAt: Date;
     };
 
@@ -43,105 +94,78 @@ export default function TrustCenterAccessTab() {
     id: edge.node.id,
     email: edge.node.email,
     name: edge.node.name,
+    active: edge.node.active,
     createdAt: new Date(edge.node.createdAt)
   })) ?? [];
 
-  const handleInvite = useCallback(async () => {
+  const handleInvite = inviteForm.handleSubmit(async (data) => {
     if (!organization.trustCenter?.id) {
-      toast({
-        title: __("Error"),
-        description: __("Trust center not found"),
-        variant: "error",
-      });
-      return;
-    }
-
-    if (!email.trim() || !name.trim()) {
-      toast({
-        title: __("Error"),
-        description: __("Email and name are required"),
-        variant: "error",
-      });
       return;
     }
 
     const connectionId = trustCenterData?.node?.accesses?.__id;
 
-    try {
-      createInvitation({
-        variables: {
-          input: {
-            trustCenterId: organization.trustCenter.id,
-            email: email.trim(),
-            name: name.trim(),
-          },
-          connections: connectionId ? [connectionId] : [],
-        },
-        onCompleted: (_, errors) => {
-          if (errors && errors.length > 0) {
-            toast({
-              title: __("Error"),
-              description: errors[0]?.message || __("Failed to send invitation"),
-              variant: "error",
-            });
-            return;
-          }
-
-          if (dialogRef.current) {
-            dialogRef.current.close();
-          }
-          setEmail("");
-          setName("");
-
-          toast({
-            title: __("Success"),
-            description: __("Access invitation sent successfully"),
-            variant: "success",
-          });
-        },
-        onError: (error) => {
-          toast({
-            title: __("Error"),
-            description: error.message || __("Failed to send invitation. Please try again."),
-            variant: "error",
-          });
-        },
-      });
-    } catch (error) {
-      toast({
-        title: __("Error"),
-        description: __("An unexpected error occurred. Please try again."),
-        variant: "error",
-      });
-    }
-  }, [organization.trustCenter?.id, email, name, trustCenterData, createInvitation, toast, __, dialogRef]);
-
-  const handleDelete = useCallback(async (accessId: string) => {
-    const connectionId = trustCenterData?.node?.accesses?.__id;
-
-    deleteInvitation({
+    await createInvitation({
       variables: {
         input: {
-          accessId,
+          trustCenterId: organization.trustCenter.id,
+          email: data.email.trim(),
+          name: data.name.trim(),
+          active: true,
         },
         connections: connectionId ? [connectionId] : [],
       },
-      onCompleted: () => {
-        toast({
-          title: __("Success"),
-          description: __("Access deleted successfully"),
-          variant: "success",
-        });
-      },
-      onError: (error) => {
-        toast({
-          title: __("Error"),
-          description: error.message,
-          variant: "error",
-        });
+      onSuccess: () => {
+        dialogRef.current?.close();
+        inviteForm.reset();
       },
     });
-  }, [deleteInvitation, toast, __, trustCenterData]);
+  });
+
+  const handleDelete = useCallback(async (id: string) => {
+    const connectionId = trustCenterData?.node?.accesses?.__id;
+
+    await deleteInvitation({
+      variables: {
+        input: { id },
+        connections: connectionId ? [connectionId] : [],
+      },
+    });
+  }, [deleteInvitation, trustCenterData]);
+
+  const handleToggleActive = useCallback(async (id: string, active: boolean) => {
+    await updateInvitation({
+      variables: {
+        input: { id, active },
+      },
+      successMessage: active ? __("Access activated") : __("Access deactivated"),
+    });
+  }, [updateInvitation, __]);
+
+  const handleEditAccess = useCallback((access: AccessType) => {
+    setEditingAccess({ id: access.id, name: access.name });
+    editForm.reset({ name: access.name });
+    editDialogRef.current?.open();
+  }, [editDialogRef, editForm]);
+
+  const handleUpdateName = editForm.handleSubmit(async (data) => {
+    if (!editingAccess) return;
+
+    await updateInvitation({
+      variables: {
+        input: {
+          id: editingAccess.id,
+          name: data.name.trim(),
+        },
+      },
+      successMessage: __("Name updated successfully"),
+      onSuccess: () => {
+        editDialogRef.current?.close();
+        setEditingAccess(null);
+        editForm.reset();
+      },
+    });
+  });
 
   return (
     <div className="space-y-4">
@@ -153,7 +177,10 @@ export default function TrustCenterAccessTab() {
           </p>
         </div>
         {organization.trustCenter?.id && (
-          <Button onClick={() => dialogRef.current?.open()}>
+          <Button onClick={() => {
+            inviteForm.reset();
+            dialogRef.current?.open();
+          }}>
             {__("Invite")}
           </Button>
         )}
@@ -175,6 +202,7 @@ export default function TrustCenterAccessTab() {
                 <Th>{__("Name")}</Th>
                 <Th>{__("Email")}</Th>
                 <Th>{__("Date")}</Th>
+                <Th>{__("Active")}</Th>
                 <Th></Th>
               </Tr>
             </Thead>
@@ -186,8 +214,20 @@ export default function TrustCenterAccessTab() {
                   <Td>
                     {access.createdAt.toLocaleDateString()}
                   </Td>
-                  <Td noLink width={120} className="text-end">
+                  <Td>
+                    <Checkbox
+                      checked={access.active}
+                      onChange={(active) => handleToggleActive(access.id, active)}
+                    />
+                  </Td>
+                  <Td noLink width={160} className="text-end">
                     <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="secondary"
+                        onClick={() => handleEditAccess(access)}
+                        disabled={isUpdating}
+                        icon={IconPencil}
+                      />
                       <Button
                         variant="secondary"
                         onClick={() => handleDelete(access.id)}
@@ -207,35 +247,65 @@ export default function TrustCenterAccessTab() {
         ref={dialogRef}
         title={__("Invite External Access")}
       >
-        <DialogContent padded className="space-y-4">
-          <p className="text-txt-secondary text-sm">
-            {__("Send a 7-day access token to an external person to view your trust center")}
-          </p>
+        <form onSubmit={handleInvite}>
+          <DialogContent padded className="space-y-4">
+            <p className="text-txt-secondary text-sm">
+              {__("Send a 7-day access token to an external person to view your trust center")}
+            </p>
 
-          <Field label={__("Full Name")} required>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+            <Field
+              label={__("Full Name")}
+              required
+              error={inviteForm.formState.errors.name?.message}
+              {...inviteForm.register("name")}
               placeholder={__("John Doe")}
             />
-          </Field>
 
-          <Field label={__("Email Address")} required>
-            <Input
+            <Field
+              label={__("Email Address")}
+              required
+              error={inviteForm.formState.errors.email?.message}
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              {...inviteForm.register("email")}
               placeholder={__("john@example.com")}
             />
-          </Field>
-        </DialogContent>
+          </DialogContent>
 
-        <DialogFooter>
-          <Button onClick={handleInvite} disabled={isCreating}>
-            {isCreating && <Spinner />}
-            {__("Send Invitation")}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button type="submit" disabled={isCreating}>
+              {isCreating && <Spinner />}
+              {__("Send Invitation")}
+            </Button>
+          </DialogFooter>
+        </form>
+      </Dialog>
+
+      <Dialog
+        ref={editDialogRef}
+        title={__("Edit Access Name")}
+      >
+        <form onSubmit={handleUpdateName}>
+          <DialogContent padded className="space-y-4">
+            <p className="text-txt-secondary text-sm">
+              {__("Update the display name for this access invitation")}
+            </p>
+
+            <Field
+              label={__("Full Name")}
+              required
+              error={editForm.formState.errors.name?.message}
+              {...editForm.register("name")}
+              placeholder={__("John Doe")}
+            />
+          </DialogContent>
+
+          <DialogFooter>
+            <Button type="submit" disabled={isUpdating}>
+              {isUpdating && <Spinner />}
+              {__("Update Name")}
+            </Button>
+          </DialogFooter>
+        </form>
       </Dialog>
     </div>
   );

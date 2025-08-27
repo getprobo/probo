@@ -27,12 +27,14 @@ type Props = {
   children: React.ReactNode;
   connection: string;
   organizationId: string;
+  onCreated?: () => void;
 };
 
 export function CreateDatumDialog({
   children,
   connection,
   organizationId,
+  onCreated,
 }: Props) {
   const { __ } = useTranslate();
   const { control, handleSubmit, register, formState, reset } =
@@ -55,6 +57,7 @@ export function CreateDatumDialog({
       });
       ref.current?.close();
       reset();
+      onCreated?.();
     } catch (error) {
       console.error("Failed to create datum:", error);
     }

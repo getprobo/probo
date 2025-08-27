@@ -221,7 +221,7 @@ function RegistryRow({
   };
 
   return (
-    <Tr to={`/organizations/${organizationId}/complianceRegistries/${registry.id}`}>
+    <Tr to={`/organizations/${organizationId}/compliance-registries/${registry.id}`}>
       <Td>
         <span className="font-mono text-sm">{registry.referenceId}</span>
       </Td>
@@ -233,11 +233,11 @@ function RegistryRow({
         </Badge>
       </Td>
       <Td>
-          {registry.audit?.name
-            ? `${registry.audit.framework.name} - ${registry.audit.name}`
-            : registry.audit?.framework.name || "-"
-          }
-        </Td>
+        {registry.audit.name
+          ? `${registry.audit.framework.name} - ${registry.audit.name}`
+          : registry.audit.framework.name
+        }
+      </Td>
       <Td>{registry.owner?.fullName || "-"}</Td>
       <Td>
         {registry.dueDate ? (

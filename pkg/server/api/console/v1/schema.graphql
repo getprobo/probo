@@ -183,6 +183,38 @@ enum ComplianceRegistryStatus
     )
 }
 
+enum ContinualImprovementRegistriesStatus
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesStatus") {
+  OPEN
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesStatusOpen"
+    )
+  IN_PROGRESS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesStatusInProgress"
+    )
+  CLOSED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesStatusClosed"
+    )
+}
+
+enum ContinualImprovementRegistriesPriority
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesPriority") {
+  LOW
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesPriorityLow"
+    )
+  MEDIUM
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesPriorityMedium"
+    )
+  HIGH
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesPriorityHigh"
+    )
+}
+
 # Order Field Enums
 enum UserOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.UserOrderField") {
@@ -678,11 +710,79 @@ enum ComplianceRegistryOrderField
     )
 }
 
+enum ContinualImprovementRegistriesOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderFieldCreatedAt"
+    )
+  REFERENCE_ID
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderFieldReferenceId"
+    )
+  TARGET_DATE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderFieldTargetDate"
+    )
+  STATUS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderFieldStatus"
+    )
+  PRIORITY
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderFieldPriority"
+    )
+}
+
 enum TrustCenterAccessOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField") {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderFieldCreatedAt"
+    )
+}
+
+enum SnapshotsType
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.SnapshotsType") {
+  RISKS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeRisks"
+    )
+  VENDORS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeVendors"
+    )
+  ASSETS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeAssets"
+    )
+  DATA
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeData"
+    )
+  NON_CONFORMITY_REGISTRIES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeNonConformityRegistries"
+    )
+  COMPLIANCE_REGISTRIES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeComplianceRegistries"
+    )
+}
+
+enum SnapshotOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.SnapshotOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotOrderFieldCreatedAt"
+    )
+  NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotOrderFieldName"
+    )
+  TYPE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotOrderFieldType"
     )
 }
 
@@ -783,6 +883,14 @@ input ComplianceRegistryOrder
   field: ComplianceRegistryOrderField!
 }
 
+input ContinualImprovementRegistriesOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ContinualImprovementRegistriesOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: ContinualImprovementRegistriesOrderField!
+}
+
 input TrustCenterAccessOrder
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterAccessOrderBy"
@@ -841,6 +949,14 @@ input DocumentVersionOrder
   field: DocumentVersionOrderField!
 }
 
+input SnapshotOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.SnapshotOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: SnapshotOrderField!
+}
+
 input DocumentVersionFilter {
   status: DocumentStatus
 }
@@ -872,6 +988,10 @@ input OrganizationFilter {
 
 input TrustCenterFilter {
   slug: String
+}
+
+input DatumFilter {
+  snapshotId: ID
 }
 
 # Core Types
@@ -996,6 +1116,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: DatumOrder
+    filter: DatumFilter
   ): DatumConnection! @goField(forceResolver: true)
 
   audits(
@@ -1021,6 +1142,22 @@ type Organization implements Node {
     before: CursorKey
     orderBy: ComplianceRegistryOrder
   ): ComplianceRegistryConnection! @goField(forceResolver: true)
+
+  continualImprovementRegistries(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ContinualImprovementRegistriesOrder
+  ): ContinualImprovementRegistryConnection! @goField(forceResolver: true)
+
+  snapshots(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: SnapshotOrder
+  ): SnapshotConnection! @goField(forceResolver: true)
 
   trustCenter: TrustCenter @goField(forceResolver: true)
 
@@ -1234,6 +1371,14 @@ type Control implements Node {
     before: CursorKey
     orderBy: AuditOrder
   ): AuditConnection! @goField(forceResolver: true)
+
+  snapshots(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: SnapshotOrder
+  ): SnapshotConnection! @goField(forceResolver: true)
 
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -1466,6 +1611,40 @@ type ComplianceRegistry implements Node {
   updatedAt: Datetime!
 }
 
+type ContinualImprovementRegistry implements Node {
+  id: ID!
+  organization: Organization! @goField(forceResolver: true)
+  referenceId: String!
+  description: String
+  audit: Audit! @goField(forceResolver: true)
+  source: String
+  owner: People! @goField(forceResolver: true)
+  targetDate: Datetime
+  status: ContinualImprovementRegistriesStatus!
+  priority: ContinualImprovementRegistriesPriority!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type Snapshot implements Node {
+  id: ID!
+  organization: Organization! @goField(forceResolver: true)
+  name: String!
+  description: String
+  type: SnapshotsType!
+
+  controls(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ControlOrder
+    filter: ControlFilter
+  ): ControlConnection! @goField(forceResolver: true)
+
+  createdAt: Datetime!
+}
+
 type Report implements Node {
   id: ID!
   objectKey: String!
@@ -1521,6 +1700,7 @@ type TrustCenterAccess implements Node {
   id: ID!
   email: String!
   name: String!
+  active: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -1787,6 +1967,34 @@ type ComplianceRegistryEdge {
   node: ComplianceRegistry!
 }
 
+type ContinualImprovementRegistryConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ContinualImprovementRegistryConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [ContinualImprovementRegistryEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ContinualImprovementRegistryEdge {
+  cursor: CursorKey!
+  node: ContinualImprovementRegistry!
+}
+
+type SnapshotConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.SnapshotConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [SnapshotEdge!]!
+  pageInfo: PageInfo!
+}
+
+type SnapshotEdge {
+  cursor: CursorKey!
+  node: Snapshot!
+}
+
 # Root Types
 type Query {
   node(id: ID!): Node!
@@ -1820,6 +2028,10 @@ type Mutation {
   createTrustCenterAccess(
     input: CreateTrustCenterAccessInput!
   ): CreateTrustCenterAccessPayload!
+
+  updateTrustCenterAccess(
+    input: UpdateTrustCenterAccessInput!
+  ): UpdateTrustCenterAccessPayload!
 
   deleteTrustCenterAccess(
     input: DeleteTrustCenterAccessInput!
@@ -1889,6 +2101,12 @@ type Mutation {
   deleteControlAuditMapping(
     input: DeleteControlAuditMappingInput!
   ): DeleteControlAuditMappingPayload!
+  createControlSnapshotMapping(
+    input: CreateControlSnapshotMappingInput!
+  ): CreateControlSnapshotMappingPayload!
+  deleteControlSnapshotMapping(
+    input: DeleteControlSnapshotMappingInput!
+  ): DeleteControlSnapshotMappingPayload!
 
   # Task mutations
   createTask(input: CreateTaskInput!): CreateTaskPayload!
@@ -2033,6 +2251,21 @@ type Mutation {
   deleteComplianceRegistry(
     input: DeleteComplianceRegistryInput!
   ): DeleteComplianceRegistryPayload!
+
+  # Continual Improvement Registry mutations
+  createContinualImprovementRegistry(
+    input: CreateContinualImprovementRegistryInput!
+  ): CreateContinualImprovementRegistryPayload!
+  updateContinualImprovementRegistry(
+    input: UpdateContinualImprovementRegistryInput!
+  ): UpdateContinualImprovementRegistryPayload!
+  deleteContinualImprovementRegistry(
+    input: DeleteContinualImprovementRegistryInput!
+  ): DeleteContinualImprovementRegistryPayload!
+
+  # Snapshot mutations
+  createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
+  deleteSnapshot(input: DeleteSnapshotInput!): DeleteSnapshotPayload!
 }
 
 # Input Types
@@ -2068,10 +2301,17 @@ input CreateTrustCenterAccessInput {
   trustCenterId: ID!
   email: String!
   name: String!
+  active: Boolean!
+}
+
+input UpdateTrustCenterAccessInput {
+  id: ID!
+  name: String
+  active: Boolean
 }
 
 input DeleteTrustCenterAccessInput {
-  accessId: ID!
+  id: ID!
 }
 
 input CreateVendorInput {
@@ -2290,6 +2530,16 @@ input CreateControlAuditMappingInput {
 input DeleteControlAuditMappingInput {
   controlId: ID!
   auditId: ID!
+}
+
+input CreateControlSnapshotMappingInput {
+  controlId: ID!
+  snapshotId: ID!
+}
+
+input DeleteControlSnapshotMappingInput {
+  controlId: ID!
+  snapshotId: ID!
 }
 
 input CreateRiskInput {
@@ -2581,6 +2831,45 @@ input DeleteComplianceRegistryInput {
   complianceRegistryId: ID!
 }
 
+input CreateContinualImprovementRegistryInput {
+  organizationId: ID!
+  referenceId: String!
+  description: String
+  auditId: ID!
+  source: String
+  ownerId: ID!
+  targetDate: Datetime
+  status: ContinualImprovementRegistriesStatus!
+  priority: ContinualImprovementRegistriesPriority!
+}
+
+input UpdateContinualImprovementRegistryInput {
+  id: ID!
+  referenceId: String
+  description: String
+  auditId: ID
+  source: String
+  ownerId: ID
+  targetDate: Datetime
+  status: ContinualImprovementRegistriesStatus
+  priority: ContinualImprovementRegistriesPriority
+}
+
+input DeleteContinualImprovementRegistryInput {
+  continualImprovementRegistryId: ID!
+}
+
+input CreateSnapshotInput {
+  organizationId: ID!
+  name: String!
+  description: String
+  type: SnapshotsType!
+}
+
+input DeleteSnapshotInput {
+  snapshotId: ID!
+}
+
 # Payload Types
 type CreateOrganizationPayload {
   organizationEdge: OrganizationEdge!
@@ -2602,6 +2891,10 @@ type UpdateTrustCenterPayload {
 
 type CreateTrustCenterAccessPayload {
   trustCenterAccessEdge: TrustCenterAccessEdge!
+}
+
+type UpdateTrustCenterAccessPayload {
+  trustCenterAccess: TrustCenterAccess!
 }
 
 type DeleteTrustCenterAccessPayload {
@@ -2744,6 +3037,16 @@ type CreateControlAuditMappingPayload {
 type DeleteControlAuditMappingPayload {
   deletedControlId: ID!
   deletedAuditId: ID!
+}
+
+type CreateControlSnapshotMappingPayload {
+  controlEdge: ControlEdge!
+  snapshotEdge: SnapshotEdge!
+}
+
+type DeleteControlSnapshotMappingPayload {
+  deletedControlId: ID!
+  deletedSnapshotId: ID!
 }
 
 type CreateRiskPayload {
@@ -3285,4 +3588,24 @@ type UpdateComplianceRegistryPayload {
 
 type DeleteComplianceRegistryPayload {
   deletedComplianceRegistryId: ID!
+}
+
+type CreateContinualImprovementRegistryPayload {
+  continualImprovementRegistryEdge: ContinualImprovementRegistryEdge!
+}
+
+type UpdateContinualImprovementRegistryPayload {
+  continualImprovementRegistry: ContinualImprovementRegistry!
+}
+
+type DeleteContinualImprovementRegistryPayload {
+  deletedContinualImprovementRegistryId: ID!
+}
+
+type CreateSnapshotPayload {
+  snapshotEdge: SnapshotEdge!
+}
+
+type DeleteSnapshotPayload {
+  deletedSnapshotId: ID!
 }

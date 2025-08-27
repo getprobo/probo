@@ -5,6 +5,7 @@ import {
   IconBank,
   IconBook,
   IconCircleQuestionmark,
+  IconClock,
   IconCrossLargeX,
   IconFire3,
   IconGroup1,
@@ -17,6 +18,7 @@ import {
   IconListStack,
   IconBox,
   IconShield,
+  IconRotateCw,
   Layout,
   SidebarItem,
   UserDropdown as UserDropdownRoot,
@@ -143,12 +145,22 @@ export function MainLayout() {
           <SidebarItem
             label={__("Nonconformity Registries")}
             icon={IconCrossLargeX}
-            to={`${prefix}/nonconformityRegistries`}
+            to={`${prefix}/nonconformity-registries`}
           />
           <SidebarItem
             label={__("Compliance Registries")}
             icon={IconBook}
-            to={`${prefix}/complianceRegistries`}
+            to={`${prefix}/compliance-registries`}
+          />
+           <SidebarItem
+            label={__("Continual Improvement Registries")}
+            icon={IconRotateCw}
+            to={`${prefix}/continual-improvement-registries`}
+          />
+          <SidebarItem
+            label={__("Snapshots")}
+            icon={IconClock}
+            to={`${prefix}/snapshots`}
           />
           <SidebarItem
             label={__("Trust Center")}

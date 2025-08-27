@@ -5,6 +5,7 @@
   "eagerEsModules": true,
   "noFutureProofEnums": true,
   "excludes": [
-    "**/PublicTrustCenterGraph.ts"
+    "**/PublicTrustCenterGraph.ts",
+    "**/trust/**"
   ]
 }

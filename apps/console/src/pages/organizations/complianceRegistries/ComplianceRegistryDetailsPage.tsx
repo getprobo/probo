@@ -133,7 +133,7 @@ export default function ComplianceRegistryDetailsPage(props: Props) {
         <div>
                      <Breadcrumb
              items={[
-               { label: __("Compliance Registries"), to: "../complianceRegistries" },
+               { label: __("Compliance Registries"), to: "../compliance-registries" },
                { label: registry.referenceId! },
              ]}
            />

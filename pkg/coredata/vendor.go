@@ -50,6 +50,8 @@ type (
 		SecurityPageURL               *string        `db:"security_page_url"`
 		TrustPageURL                  *string        `db:"trust_page_url"`
 		ShowOnTrustCenter             bool           `db:"show_on_trust_center"`
+		SnapshotID                    *gid.GID       `db:"snapshot_id"`
+		SourceID                      *gid.GID       `db:"source_id"`
 		CreatedAt                     time.Time      `db:"created_at"`
 		UpdatedAt                     time.Time      `db:"updated_at"`
 	}
@@ -100,6 +102,8 @@ SELECT
     security_page_url,
     trust_page_url,
     show_on_trust_center,
+    snapshot_id,
+    source_id,
     created_at,
     updated_at
 FROM
@@ -161,6 +165,8 @@ INSERT INTO
         security_page_url,
         trust_page_url,
         show_on_trust_center,
+        snapshot_id,
+        source_id,
         created_at,
         updated_at
     )
@@ -187,6 +193,8 @@ VALUES (
     @security_page_url,
     @trust_page_url,
     @show_on_trust_center,
+    @snapshot_id,
+    @source_id,
     @created_at,
     @updated_at
 )
@@ -215,6 +223,8 @@ VALUES (
 		"security_page_url":                v.SecurityPageURL,
 		"trust_page_url":                   v.TrustPageURL,
 		"show_on_trust_center":             v.ShowOnTrustCenter,
+		"snapshot_id":                      v.SnapshotID,
+		"source_id":                        v.SourceID,
 		"created_at":                       v.CreatedAt,
 		"updated_at":                       v.UpdatedAt,
 	}
@@ -304,6 +314,8 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -504,6 +516,8 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
+		v.snapshot_id,
+		v.source_id,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -536,6 +550,8 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -635,6 +651,8 @@ WITH vend AS (
 		v.security_page_url,
 		v.trust_page_url,
 		v.show_on_trust_center,
+		v.snapshot_id,
+		v.source_id,
 		v.created_at,
 		v.updated_at
 	FROM
@@ -667,6 +685,8 @@ SELECT
 	security_page_url,
 	trust_page_url,
 	show_on_trust_center,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -691,6 +711,106 @@ WHERE %s
 	}
 
 	*vs = vendors
+
+	return nil
+}
+
+func (d Vendors) InsertDataSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	source_data AS (
+		SELECT id
+		FROM data
+		WHERE organization_id = @organization_id AND snapshot_id IS NULL
+	),
+	source_data_vendors AS (
+		SELECT datum_id, vendor_id, snapshot_id, created_at
+		FROM data_vendors
+		WHERE datum_id = ANY(SELECT id FROM source_data)
+	),
+	source_vendors AS (
+		SELECT *
+		FROM vendors
+		WHERE %s AND id = ANY(SELECT vendor_id FROM source_data_vendors)
+	)
+INSERT INTO vendors (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	business_owner_id,
+	security_owner_id,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	show_on_trust_center,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_entity_type),
+	@snapshot_id,
+	v.id,
+	v.organization_id,
+	v.name,
+	v.description,
+	v.category,
+	v.headquarter_address,
+	v.legal_name,
+	v.website_url,
+	v.privacy_policy_url,
+	v.service_level_agreement_url,
+	v.data_processing_agreement_url,
+	v.business_associate_agreement_url,
+	v.subprocessors_list_url,
+	v.certifications,
+	v.business_owner_id,
+	v.security_owner_id,
+	v.status_page_url,
+	v.terms_of_service_url,
+	v.security_page_url,
+	v.trust_page_url,
+	v.show_on_trust_center,
+	v.created_at,
+	v.updated_at
+FROM source_vendors v
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":          scope.GetTenantID(),
+		"snapshot_id":        snapshotID,
+		"organization_id":    organizationID,
+		"vendor_entity_type": VendorEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert vendor snapshots: %w", err)
+	}
 
 	return nil
 }

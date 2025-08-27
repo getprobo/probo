@@ -21,6 +21,7 @@ import {
   usePreloadedQuery,
   type PreloadedQuery,
 } from "react-relay";
+import { useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateDatumDialog } from "./dialogs/CreateDatumDialog";
 import { useDeleteDatum, dataQuery } from "../../../hooks/graph/DatumGraph";
@@ -28,27 +29,31 @@ import type { DatumGraphListQuery } from "/hooks/graph/__generated__/DatumGraphL
 import { faviconUrl } from "@probo/helpers";
 import type { NodeOf } from "/types";
 import type {
-  DataPageFragment$data,
   DataPageFragment$key,
+  DataPageFragment$data
 } from "./__generated__/DataPageFragment.graphql";
+import type { DataListQuery } from "./__generated__/DataListQuery.graphql";
 import { SortableTable } from "/components/SortableTable";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 
 const paginatedDataFragment = graphql`
   fragment DataPageFragment on Organization
   @refetchable(queryName: "DataListQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 10 }
-    orderBy: { type: "DatumOrder", defaultValue: null }
+    order: { type: "DatumOrder", defaultValue: null }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
+    snapshotId: { type: "ID", defaultValue: null }
   ) {
     data(
       first: $first
       after: $after
       last: $last
       before: $before
-      orderBy: $orderBy
+      orderBy: $order
+      filter: { snapshotId: $snapshotId }
     ) @connection(key: "DataPage_data") {
       __id
       edges {
@@ -84,34 +89,61 @@ type Props = {
 export default function DataPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
-  const data = usePreloadedQuery(dataQuery, props.queryRef);
-  const pagination = usePaginationFragment(
+  const queryData = usePreloadedQuery<DatumGraphListQuery>(
+    dataQuery,
+    props.queryRef
+  );
+
+  const data = queryData.node;
+
+  const pagination = usePaginationFragment<DataListQuery, DataPageFragment$key>(
     paginatedDataFragment,
-    data.node as DataPageFragment$key
+    data
   );
 
   const dataEntries = pagination.data.data.edges.map((edge) => edge.node);
   const connectionId = pagination.data.data.__id;
 
+  const refetch = ({ order }: { order: { direction: string; field: string } }) => {
+    pagination.refetch({
+      snapshotId,
+      order: {
+        direction: order.direction as "ASC" | "DESC",
+        field: order.field as "CREATED_AT" | "DATA_CLASSIFICATION" | "NAME"
+      }
+    });
+  };
+
   usePageTitle(__("Data"));
 
   return (
     <div className="space-y-6">
+      {isSnapshotMode && snapshotId && (
+        <SnapshotBanner snapshotId={snapshotId} />
+      )}
       <PageHeader
         title={__("Data")}
         description={__(
           "Manage your organization's data assets and their classifications."
         )}
       >
-        <CreateDatumDialog
-          connection={connectionId}
-          organizationId={organizationId}
-        >
-          <Button icon={IconPlusLarge}>{__("Add data")}</Button>
-        </CreateDatumDialog>
+        {!snapshotId && (
+          <CreateDatumDialog
+            connection={connectionId}
+            organizationId={organizationId}
+            onCreated={() => pagination.refetch({ snapshotId })}
+          >
+            <Button icon={IconPlusLarge}>{__("Add data")}</Button>
+          </CreateDatumDialog>
+        )}
       </PageHeader>
-      <SortableTable {...pagination}>
+      <SortableTable
+        {...pagination}
+        refetch={refetch}
+      >
         <Thead>
           <Tr>
             <Th>{__("Name")}</Th>
@@ -123,7 +155,7 @@ export default function DataPage(props: Props) {
         </Thead>
         <Tbody>
           {dataEntries.map((entry) => (
-            <DataRow key={entry.id} entry={entry} connectionId={connectionId} />
+            <DataRow key={entry.id} entry={entry} connectionId={connectionId} snapshotId={snapshotId} />
           ))}
         </Tbody>
       </SortableTable>
@@ -134,17 +166,23 @@ export default function DataPage(props: Props) {
 function DataRow({
   entry,
   connectionId,
+  snapshotId,
 }: {
   entry: DataEntry;
   connectionId: string;
+  snapshotId?: string;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const deleteDatum = useDeleteDatum(entry, connectionId);
   const vendors = entry.vendors?.edges.map((edge) => edge.node) ?? [];
 
+  const detailUrl = snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/data/${entry.id}`
+    : `/organizations/${organizationId}/data/${entry.id}`;
+
   return (
-    <Tr to={`/organizations/${organizationId}/data/${entry.id}`}>
+    <Tr to={detailUrl}>
       <Td>{entry.name}</Td>
       <Td>
         <Badge variant="info">{entry.dataClassification}</Badge>
@@ -178,15 +216,16 @@ function DataRow({
         )}
       </Td>
       <Td noLink width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            onClick={deleteDatum}
-            variant="danger"
-            icon={IconTrashCan}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+      {!snapshotId && (<ActionDropdown>
+            <DropdownItem
+              onClick={deleteDatum}
+              variant="danger"
+              icon={IconTrashCan}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
       </Td>
     </Tr>
   );

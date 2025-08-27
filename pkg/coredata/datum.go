@@ -33,11 +33,17 @@ type (
 		OrganizationID     gid.GID            `db:"organization_id"`
 		OwnerID            gid.GID            `db:"owner_id"`
 		DataClassification DataClassification `db:"data_classification"`
+		SnapshotID         *gid.GID           `db:"snapshot_id"`
+		SourceID           *gid.GID           `db:"source_id"`
 		CreatedAt          time.Time          `db:"created_at"`
 		UpdatedAt          time.Time          `db:"updated_at"`
 	}
 
 	Data []*Datum
+
+	DataSnapshotter interface {
+		InsertDataSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+	}
 )
 
 func (d *Datum) CursorKey(field DatumOrderField) page.CursorKey {
@@ -66,6 +72,8 @@ SELECT
 	owner_id,
 	organization_id,
 	data_classification,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -108,6 +116,8 @@ SELECT
 	owner_id,
 	organization_id,
 	data_classification,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -176,6 +186,7 @@ func (d *Data) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[DatumOrderField],
+	filter *DatumFilter,
 ) error {
 	q := `
 SELECT
@@ -184,6 +195,8 @@ SELECT
 	organization_id,
 	owner_id,
 	data_classification,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -192,12 +205,14 @@ WHERE
 	%s
 	AND organization_id = @organization_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -228,6 +243,8 @@ INSERT INTO data (
 	owner_id,
 	organization_id,
 	data_classification,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -237,6 +254,8 @@ INSERT INTO data (
 	@owner_id,
 	@organization_id,
 	@data_classification,
+	@snapshot_id,
+	@source_id,
 	@created_at,
 	@updated_at
 )
@@ -249,6 +268,8 @@ INSERT INTO data (
 		"owner_id":            d.OwnerID,
 		"organization_id":     d.OrganizationID,
 		"data_classification": d.DataClassification,
+		"snapshot_id":         d.SnapshotID,
+		"source_id":           d.SourceID,
 		"created_at":          d.CreatedAt,
 		"updated_at":          d.UpdatedAt,
 	}
@@ -276,12 +297,15 @@ SET
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 RETURNING
 	id,
 	name,
 	owner_id,
 	organization_id,
 	data_classification,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 `
@@ -322,6 +346,7 @@ DELETE FROM data
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -332,6 +357,76 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete data: %w", err)
+	}
+
+	return nil
+}
+
+func (d Data) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+	snapshotters := []DataSnapshotter{Data{}, Vendors{}, DatumVendors{}}
+
+	for _, snapshotter := range snapshotters {
+		if err := snapshotter.InsertDataSnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
+			return fmt.Errorf("cannot create data snapshots: (%T) %w", snapshotter, err)
+		}
+	}
+
+	return nil
+}
+
+func (d Data) InsertDataSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	source_data AS (
+		SELECT *
+		FROM data
+		WHERE %s AND organization_id = @organization_id AND snapshot_id IS NULL
+	)
+INSERT INTO data (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	name,
+	organization_id,
+	owner_id,
+	data_classification,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @datum_entity_type),
+	@snapshot_id,
+	d.id,
+	d.name,
+	d.organization_id,
+	d.owner_id,
+	d.data_classification,
+	d.created_at,
+	d.updated_at
+FROM source_data d
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":         scope.GetTenantID(),
+		"snapshot_id":       snapshotID,
+		"organization_id":   organizationID,
+		"datum_entity_type": DatumEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert data snapshots: %w", err)
 	}
 
 	return nil

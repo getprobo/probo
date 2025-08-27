@@ -597,6 +597,111 @@ func (s ControlService) ListForAuditID(
 	return page.NewPage([]*coredata.Control(controls), cursor), nil
 }
 
+func (s ControlService) CreateSnapshotMapping(
+	ctx context.Context,
+	controlID gid.GID,
+	snapshotID gid.GID,
+) (*coredata.Control, *coredata.Snapshot, error) {
+	controlSnapshot := &coredata.ControlSnapshot{
+		ControlID:  controlID,
+		SnapshotID: snapshotID,
+		CreatedAt:  time.Now(),
+	}
+
+	control := &coredata.Control{}
+	snapshot := &coredata.Snapshot{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+				return fmt.Errorf("cannot load control: %w", err)
+			}
+
+			if err := snapshot.LoadByID(ctx, conn, s.svc.scope, snapshotID); err != nil {
+				return fmt.Errorf("cannot load snapshot: %w", err)
+			}
+
+			if err := controlSnapshot.Upsert(ctx, conn, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot create control snapshot mapping: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return control, snapshot, nil
+}
+
+func (s ControlService) DeleteSnapshotMapping(
+	ctx context.Context,
+	controlID gid.GID,
+	snapshotID gid.GID,
+) (*coredata.Control, *coredata.Snapshot, error) {
+	control := &coredata.Control{}
+	snapshot := &coredata.Snapshot{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := control.LoadByID(ctx, conn, s.svc.scope, controlID); err != nil {
+				return fmt.Errorf("cannot load control: %w", err)
+			}
+
+			if err := snapshot.LoadByID(ctx, conn, s.svc.scope, snapshotID); err != nil {
+				return fmt.Errorf("cannot load snapshot: %w", err)
+			}
+
+			controlSnapshot := &coredata.ControlSnapshot{}
+			if err := controlSnapshot.Delete(ctx, conn, s.svc.scope, control.ID, snapshot.ID); err != nil {
+				return fmt.Errorf("cannot delete control snapshot mapping: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot delete control snapshot mapping: %w", err)
+	}
+
+	return control, snapshot, nil
+}
+
+func (s ControlService) ListForSnapshotID(
+	ctx context.Context,
+	snapshotID gid.GID,
+	cursor *page.Cursor[coredata.ControlOrderField],
+	filter *coredata.ControlFilter,
+) (*page.Page[*coredata.Control, coredata.ControlOrderField], error) {
+	var controls coredata.Controls
+	snapshot := &coredata.Snapshot{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := snapshot.LoadByID(ctx, conn, s.svc.scope, snapshotID); err != nil {
+				return fmt.Errorf("cannot load snapshot: %w", err)
+			}
+			if err := controls.LoadBySnapshotID(ctx, conn, s.svc.scope, snapshotID, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load controls: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage([]*coredata.Control(controls), cursor), nil
+}
+
 func (s ControlService) Create(
 	ctx context.Context,
 	req CreateControlRequest,
@@ -607,7 +712,6 @@ func (s ControlService) Create(
 	control := &coredata.Control{
 		ID:                     gid.New(s.svc.scope.GetTenantID(), coredata.ControlEntityType),
 		FrameworkID:            req.FrameworkID,
-		TenantID:               s.svc.scope.GetTenantID(),
 		Name:                   req.Name,
 		Description:            req.Description,
 		SectionTitle:           req.SectionTitle,

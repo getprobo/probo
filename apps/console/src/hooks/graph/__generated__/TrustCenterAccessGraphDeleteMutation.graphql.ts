@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<509cd7c9db3cbf15931c386b13a13987>>
+ * @generated SignedSource<<ed4ab6c79b848843012fc091a7eb325c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type DeleteTrustCenterAccessInput = {
-  accessId: string;
+  id: string;
 };
 export type TrustCenterAccessGraphDeleteMutation$variables = {
   connections: ReadonlyArray<string>;

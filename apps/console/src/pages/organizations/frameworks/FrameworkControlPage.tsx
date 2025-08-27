@@ -18,6 +18,7 @@ import { useNavigate, useOutletContext } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
 import { LinkedAuditsCard } from "/components/audits/LinkedAuditsCard";
+import { LinkedSnapshotsCard } from "/components/snapshots/LinkedSnapshotsCard";
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 import { promisifyMutation } from "@probo/helpers";
 import type { FrameworkGraphControlNodeQuery } from "/hooks/graph/__generated__/FrameworkGraphControlNodeQuery.graphql";
@@ -105,6 +106,33 @@ const detachAuditMutation = graphql`
   }
 `;
 
+const attachSnapshotMutation = graphql`
+  mutation FrameworkControlPageAttachSnapshotMutation(
+    $input: CreateControlSnapshotMappingInput!
+    $connections: [ID!]!
+  ) {
+    createControlSnapshotMapping(input: $input) {
+      snapshotEdge @prependEdge(connections: $connections) {
+        node {
+          id
+          ...LinkedSnapshotsCardFragment
+        }
+      }
+    }
+  }
+`;
+
+const detachSnapshotMutation = graphql`
+  mutation FrameworkControlPageDetachSnapshotMutation(
+    $input: DeleteControlSnapshotMappingInput!
+    $connections: [ID!]!
+  ) {
+    deleteControlSnapshotMapping(input: $input) {
+      deletedSnapshotId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
 const deleteControlMutation = graphql`
   mutation FrameworkControlPageDeleteControlMutation(
     $input: DeleteControlInput!
@@ -148,6 +176,8 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   );
   const [detachAudit, isDetachingAudit] = useMutation(detachAuditMutation);
   const [attachAudit, isAttachingAudit] = useMutation(attachAuditMutation);
+  const [detachSnapshot, isDetachingSnapshot] = useMutation(detachSnapshotMutation);
+  const [attachSnapshot, isAttachingSnapshot] = useMutation(attachSnapshotMutation);
   const [deleteControl] = useMutation(deleteControlMutation);
 
   const onDelete = () => {
@@ -216,34 +246,51 @@ export default function FrameworkControlPage({ queryRef }: Props) {
         </div>
       )}
       <div className={control.status === "EXCLUDED" ? "opacity-60" : ""}>
-        <div className="text-base">{control.name}</div>
-        <LinkedMeasuresCard
-          variant="card"
-          measures={control.measures?.edges.map((edge) => edge.node) ?? []}
-          params={{ controlId: control.id }}
-          connectionId={control.measures?.__id!}
-          onAttach={attachMeasure}
-          onDetach={detachMeasure}
-          disabled={isAttachingMeasure || isDetachingMeasure}
-        />
-        <LinkedDocumentsCard
-          variant="card"
-          documents={control.documents?.edges.map((edge) => edge.node) ?? []}
-          params={{ controlId: control.id }}
-          connectionId={control.documents?.__id!}
-          onAttach={attachDocument}
-          onDetach={detachDocument}
-          disabled={isAttachingDocument || isDetachingDocument}
-        />
-        <LinkedAuditsCard
-          variant="card"
-          audits={control.audits?.edges.map((edge) => edge.node) ?? []}
-          params={{ controlId: control.id }}
-          connectionId={control.audits?.__id!}
-          onAttach={attachAudit}
-          onDetach={detachAudit}
-          disabled={isAttachingAudit || isDetachingAudit}
-        />
+        <div className="text-base mb-4">{control.name}</div>
+        <div className="mb-4">
+          <LinkedMeasuresCard
+            variant="card"
+            measures={control.measures?.edges.map((edge) => edge.node) ?? []}
+            params={{ controlId: control.id }}
+            connectionId={control.measures?.__id!}
+            onAttach={attachMeasure}
+            onDetach={detachMeasure}
+            disabled={isAttachingMeasure || isDetachingMeasure}
+          />
+        </div>
+        <div className="mb-4">
+          <LinkedDocumentsCard
+            variant="card"
+            documents={control.documents?.edges.map((edge) => edge.node) ?? []}
+            params={{ controlId: control.id }}
+            connectionId={control.documents?.__id!}
+            onAttach={attachDocument}
+            onDetach={detachDocument}
+            disabled={isAttachingDocument || isDetachingDocument}
+          />
+        </div>
+        <div className="mb-4">
+          <LinkedAuditsCard
+            variant="card"
+            audits={control.audits?.edges.map((edge) => edge.node) ?? []}
+            params={{ controlId: control.id }}
+            connectionId={control.audits?.__id!}
+            onAttach={attachAudit}
+            onDetach={detachAudit}
+            disabled={isAttachingAudit || isDetachingAudit}
+          />
+        </div>
+        <div className="mb-4">
+          <LinkedSnapshotsCard
+            variant="card"
+            snapshots={control.snapshots?.edges.map((edge) => edge.node) ?? []}
+            params={{ controlId: control.id }}
+            connectionId={control.snapshots?.__id!}
+            onAttach={attachSnapshot}
+            onDetach={detachSnapshot}
+            disabled={isAttachingSnapshot || isDetachingSnapshot}
+          />
+        </div>
       </div>
     </div>
   );
