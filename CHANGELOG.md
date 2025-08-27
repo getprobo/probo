@@ -2,7 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.50.0]
+## Unreleased
+
+### Fixed
+
+- Probo instance allow crawling bot to index.
+
+## [0.52.0] - 2025-08-27
+
+### Added
+- Add data snapshot
+
+## [0.51.1] - 2025-08-23
+
+### Fixed
+- Fix query loops in public trust center
+- Fix button display when disconected in public trust center
+
+## [0.51.0] - 2025-08-22
+
+### Added
+- Add trust center access requests
+
+## [0.50.1] - 2025-08-21
+
+### Fixed
+- Fix authentification token error
+
+## [0.50.0] - 2025-08-21
 
 ### Added
 - Add compliance registries

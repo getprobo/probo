@@ -5,11 +5,9 @@ import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { usePageTitle } from "@probo/hooks";
 import { buildEndpoint } from "/providers/RelayProviders";
-import { useEffect } from "react";
 
 const schema = z
   .object({
-    token: z.string(),
     password: z.string().min(8),
     confirmPassword: z.string().min(8),
   })
@@ -22,11 +20,10 @@ export default function ResetPasswordPage() {
   const { __ } = useTranslate();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { register, handleSubmit, formState, setValue } = useFormWithSchema(
+  const { register, handleSubmit, formState } = useFormWithSchema(
     schema,
     {
       defaultValues: {
-        token: "",
         password: "",
         confirmPassword: "",
       },
@@ -34,6 +31,18 @@ export default function ResetPasswordPage() {
   );
 
   const onSubmit = handleSubmit(async (data) => {
+    const searchParams = new URLSearchParams(location.search);
+    const token = searchParams.get("token");
+
+    if (!token) {
+      toast({
+        title: __("Reset failed"),
+        description: __("Invalid or missing reset token"),
+        variant: "error",
+      });
+      return;
+    }
+
     const response = await fetch(
       buildEndpoint("/api/console/v1/auth/reset-password"),
       {
@@ -43,7 +52,7 @@ export default function ResetPasswordPage() {
         },
         credentials: "include",
         body: JSON.stringify({
-          token: data.token,
+          token: token,
           password: data.password,
         }),
       }
@@ -70,15 +79,6 @@ export default function ResetPasswordPage() {
 
   usePageTitle(__("Reset password"));
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const urlToken = searchParams.get("token");
-
-    if (urlToken) {
-      setValue("token", urlToken);
-    }
-  }, [location.search, setValue]);
-
   return (
     <div className="space-y-6 w-full max-w-md mx-auto">
       <div className="space-y-2 text-center">
@@ -89,16 +89,6 @@ export default function ResetPasswordPage() {
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        <Field
-          label={__("Token")}
-          type="text"
-          hidden
-          placeholder={__("Enter your token")}
-          {...register("token")}
-          required
-          error={formState.errors.token?.message}
-        />
-
         <Field
           label={__("New Password")}
           type="password"
