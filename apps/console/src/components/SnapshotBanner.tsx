@@ -37,7 +37,7 @@ export function SnapshotBanner({ snapshotId }: Props) {
           <span className="font-medium text-warning-800">{__("Snapshot")} {snapshot.name}</span>
         </div>
         <p className="text-sm text-warning-700">
-          {__("You are viewing a snapshot of data from")} {dateFormat(snapshot.createdAt, { year: "numeric", month: "short", day: "numeric" })}
+          {__("You are viewing a snapshot from")} {dateFormat(snapshot.createdAt, { year: "numeric", month: "short", day: "numeric" })}
         </p>
       </div>
     </div>

@@ -26,6 +26,8 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { ControlledField } from "/components/form/ControlledField";
+import { SnapshotBanner } from "/components/SnapshotBanner";
+import { useParams } from "react-router";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { AuditSelectField } from "/components/form/AuditSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
@@ -58,10 +60,16 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
   const registry = data.node;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
   const deleteRegistry = useDeleteNonconformityRegistry(
     { id: registry.id!, referenceId: registry.referenceId! },
-    ConnectionHandler.getConnectionID(organizationId, RegistriesConnectionKey)
+    ConnectionHandler.getConnectionID(
+      organizationId,
+      RegistriesConnectionKey,
+      { filter: { snapshotId: snapshotId || null } }
+    )
   );
 
   const { control, formState, handleSubmit, register, reset } = useFormWithSchema(
@@ -119,13 +127,20 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
 
   const statusOptions = getNonconformityRegistryStatusOptions(__);
 
+  const breadcrumbNonconformityRegistriesUrl = isSnapshotMode
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/nonconformity-registries`
+    : `/organizations/${organizationId}/nonconformity-registries`;
+
   return (
     <div className="space-y-6">
+      {isSnapshotMode && (
+        <SnapshotBanner snapshotId={snapshotId!} />
+      )}
       <Breadcrumb
         items={[
           {
             label: __("Nonconformity Registries"),
-            to: `/organizations/${organizationId}/nonconformity-registries`,
+            to: breadcrumbNonconformityRegistriesUrl,
           },
           {
             label: registry.referenceId || __("Unknown Nonconformity Registry"),
@@ -142,15 +157,17 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
             {getStatusLabel(registry.status || "OPEN")}
           </Badge>
         </div>
-        <ActionDropdown variant="secondary">
-          <DropdownItem
-            variant="danger"
-            icon={IconTrashCan}
-            onClick={deleteRegistry}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+        {!isSnapshotMode && (
+          <ActionDropdown variant="secondary">
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={deleteRegistry}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
       </div>
 
       <div className="max-w-4xl">
@@ -164,6 +181,7 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
               <Input
                 {...register("referenceId")}
                 placeholder={__("Enter reference ID")}
+                disabled={isSnapshotMode}
               />
             </Field>
 
@@ -174,6 +192,7 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
               label={__("Audit")}
               error={formState.errors.auditId?.message}
               required
+              disabled={isSnapshotMode}
             />
 
             <Field label={__("Description")}>
@@ -181,6 +200,7 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
                 {...register("description")}
                 placeholder={__("Enter description")}
                 rows={3}
+                disabled={isSnapshotMode}
               />
             </Field>
 
@@ -191,6 +211,7 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
                 type="select"
                 label={__("Status")}
                 required
+                disabled={isSnapshotMode}
               >
                 {statusOptions.map((option) => (
                   <Option key={option.value} value={option.value}>
@@ -206,16 +227,17 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
                 label={__("Owner")}
                 error={formState.errors.ownerId?.message}
                 required
+                disabled={isSnapshotMode}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label={__("Date Identified")}>
-                <Input {...register("dateIdentified")} type="date" />
+                <Input {...register("dateIdentified")} type="date" disabled={isSnapshotMode} />
               </Field>
 
               <Field label={__("Due Date")}>
-                <Input {...register("dueDate")} type="date" />
+                <Input {...register("dueDate")} type="date" disabled={isSnapshotMode} />
               </Field>
             </div>
 
@@ -228,6 +250,7 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
                 {...register("rootCause")}
                 placeholder={__("Enter root cause")}
                 rows={3}
+                disabled={isSnapshotMode}
               />
             </Field>
 
@@ -236,6 +259,7 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
                 {...register("correctiveAction")}
                 placeholder={__("Enter corrective action")}
                 rows={3}
+                disabled={isSnapshotMode}
               />
             </Field>
 
@@ -244,11 +268,12 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
                 {...register("effectivenessCheck")}
                 placeholder={__("Enter effectiveness check details")}
                 rows={3}
+                disabled={isSnapshotMode}
               />
             </Field>
 
             <div className="flex justify-end">
-              {formState.isDirty && (
+              {formState.isDirty && !isSnapshotMode && (
                 <Button type="submit" disabled={formState.isSubmitting}>
                   {formState.isSubmitting ? __("Updating...") : __("Update")}
                 </Button>

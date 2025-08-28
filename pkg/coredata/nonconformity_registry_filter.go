@@ -15,24 +15,46 @@
 package coredata
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/getprobo/probo/pkg/gid"
-	"go.gearno.de/kit/pg"
+	"github.com/jackc/pgx/v5"
 )
 
-type Snapshottable interface {
-	Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+type (
+	NonconformityRegistryFilter struct {
+		snapshotID **gid.GID
+	}
+)
+
+func NewNonconformityRegistryFilter() *NonconformityRegistryFilter {
+	return &NonconformityRegistryFilter{
+		snapshotID: nil,
+	}
 }
 
-func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {
-	switch snapshotType {
-	case SnapshotsTypeData:
-		return Data{}, nil
-	case SnapshotsTypeNonConformityRegistries:
-		return NonconformityRegistries{}, nil
-	default:
-		return nil, fmt.Errorf("unsupported snapshot type: %s", snapshotType)
+func NewNonconformityRegistryFilterBySnapshotID(snapshotID **gid.GID) *NonconformityRegistryFilter {
+	return &NonconformityRegistryFilter{
+		snapshotID: snapshotID,
+	}
+}
+
+func (f *NonconformityRegistryFilter) SQLArguments() pgx.NamedArgs {
+	args := pgx.NamedArgs{}
+
+	if f.snapshotID != nil && *f.snapshotID != nil {
+		args["filter_snapshot_id"] = **f.snapshotID
+	}
+
+	return args
+}
+
+func (f *NonconformityRegistryFilter) SQLFragment() string {
+	if f.snapshotID == nil {
+		return "TRUE"
+	}
+
+	if *f.snapshotID == nil {
+		return "snapshot_id IS NULL"
+	} else {
+		return "snapshot_id = @filter_snapshot_id"
 	}
 }

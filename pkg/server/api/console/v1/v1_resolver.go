@@ -3313,7 +3313,12 @@ func (r *nonconformityRegistryConnectionResolver) TotalCount(ctx context.Context
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.NonconformityRegistries.CountForOrganizationID(ctx, obj.ParentID)
+		nonconformityRegistryFilter := coredata.NewNonconformityRegistryFilterBySnapshotID(nil)
+		if obj.Filter != nil {
+			nonconformityRegistryFilter = coredata.NewNonconformityRegistryFilterBySnapshotID(&obj.Filter.SnapshotID)
+		}
+
+		count, err := prb.NonconformityRegistries.CountForOrganizationID(ctx, obj.ParentID, nonconformityRegistryFilter)
 		if err != nil {
 			return 0, fmt.Errorf("cannot count nonconformity registries: %w", err)
 		}
@@ -3686,7 +3691,7 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 }
 
 // NonconformityRegistries is the resolver for the nonconformityRegistries field.
-func (r *organizationResolver) NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy) (*types.NonconformityRegistryConnection, error) {
+func (r *organizationResolver) NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy, filter *types.NonconformityRegistryFilter) (*types.NonconformityRegistryConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.NonconformityRegistryOrderField]{
@@ -3702,12 +3707,17 @@ func (r *organizationResolver) NonconformityRegistries(ctx context.Context, obj 
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.NonconformityRegistries.ListForOrganizationID(ctx, obj.ID, cursor)
+	nonconformityRegistryFilter := coredata.NewNonconformityRegistryFilterBySnapshotID(nil)
+	if filter != nil {
+		nonconformityRegistryFilter = coredata.NewNonconformityRegistryFilterBySnapshotID(&filter.SnapshotID)
+	}
+
+	page, err := prb.NonconformityRegistries.ListForOrganizationID(ctx, obj.ID, cursor, nonconformityRegistryFilter)
 	if err != nil {
 		return nil, fmt.Errorf("cannot list organization nonconformity registries: %w", err)
 	}
 
-	return types.NewNonconformityRegistryConnection(page, r, obj.ID), nil
+	return types.NewNonconformityRegistryConnection(page, r, obj.ID, filter), nil
 }
 
 // ComplianceRegistries is the resolver for the complianceRegistries field.

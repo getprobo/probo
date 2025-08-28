@@ -42,7 +42,7 @@ const snapshotCreateMutation = graphql`
 const snapshotSchema = z.object({
   name: z.string().min(2, { message: "Name is required" }),
   description: z.string().optional(),
-  type: z.enum(["DATA"]),
+  type: z.enum(["DATA", "NONCONFORMITY_REGISTRIES"]),
 });
 
 type Props = {

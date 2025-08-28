@@ -1138,6 +1138,10 @@ type NonconformityRegistryEdge struct {
 	Node   *NonconformityRegistry `json:"node"`
 }
 
+type NonconformityRegistryFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
 type Organization struct {
 	ID                             gid.GID                                 `json:"id"`
 	Name                           string                                  `json:"name"`

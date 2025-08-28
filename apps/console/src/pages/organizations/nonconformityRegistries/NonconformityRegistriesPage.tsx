@@ -29,6 +29,8 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateNonconformityRegistryDialog } from "./dialogs/CreateNonconformityRegistryDialog";
 import { deleteNonconformityRegistryMutation, RegistriesConnectionKey } from "../../../hooks/graph/NonconformityRegistryGraph";
 import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel } from "@probo/helpers";
+import { SnapshotBanner } from "/components/SnapshotBanner";
+import { useParams } from "react-router";
 import type { NonconformityRegistriesPageQuery } from "./__generated__/NonconformityRegistriesPageQuery.graphql";
 import type {
   NonconformityRegistriesPageFragment$key,
@@ -47,10 +49,15 @@ const nonconformityRegistriesPageFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 10 }
     after: { type: "CursorKey" }
+    snapshotId: { type: "ID", defaultValue: null }
   ) {
     id
-    nonconformityRegistries(first: $first, after: $after)
-      @connection(key: "RegistriesPage_nonconformityRegistries") {
+    nonconformityRegistries(
+      first: $first
+      after: $after
+      filter: { snapshotId: $snapshotId }
+    )
+      @connection(key: "RegistriesPage_nonconformityRegistries", filters: ["filter"]) {
       __id
       totalCount
       edges {
@@ -91,15 +98,17 @@ const nonconformityRegistriesPageFragment = graphql`
 export default function NonconformityRegistriesPage({ queryRef }: NonconformityRegistriesPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
   usePageTitle(__("Nonconformity Registries"));
 
   const organization = usePreloadedQuery(
     graphql`
-      query NonconformityRegistriesPageQuery($organizationId: ID!) {
+      query NonconformityRegistriesPageQuery($organizationId: ID!, $snapshotId: ID) {
         node(id: $organizationId) {
           ... on Organization {
-            ...NonconformityRegistriesPageFragment
+            ...NonconformityRegistriesPageFragment @arguments(snapshotId: $snapshotId)
           }
         }
       }
@@ -112,20 +121,29 @@ export default function NonconformityRegistriesPage({ queryRef }: NonconformityR
     organization.node as NonconformityRegistriesPageFragment$key
   );
 
-  const connectionId = ConnectionHandler.getConnectionID(organizationId, RegistriesConnectionKey);
+  const connectionId = ConnectionHandler.getConnectionID(
+    organizationId,
+    RegistriesConnectionKey,
+    { filter: { snapshotId: snapshotId || null } }
+  );
   const registries: NonconformityRegistry[] = registriesData?.nonconformityRegistries?.edges?.map((edge) => edge.node) ?? [];
 
   return (
     <div className="space-y-6">
+      {isSnapshotMode && (
+        <SnapshotBanner snapshotId={snapshotId!} />
+      )}
       <PageHeader
         title={__("Nonconformity Registries")}
         description={__(
           "Manage your organization's non conformity registries."
         )}
       >
-        <CreateNonconformityRegistryDialog organizationId={organizationId} connection={connectionId}>
-          <Button icon={IconPlusLarge}>{__("Add nonconformity registry")}</Button>
-        </CreateNonconformityRegistryDialog>
+        {!isSnapshotMode && (
+          <CreateNonconformityRegistryDialog organizationId={organizationId} connection={connectionId}>
+            <Button icon={IconPlusLarge}>{__("Add nonconformity registry")}</Button>
+          </CreateNonconformityRegistryDialog>
+        )}
       </PageHeader>
 
       {registries.length === 0 ? (
@@ -150,7 +168,7 @@ export default function NonconformityRegistriesPage({ queryRef }: NonconformityR
                 <Th>{__("Audit")}</Th>
                 <Th>{__("Owner")}</Th>
                 <Th>{__("Due Date")}</Th>
-                <Th>{__("Actions")}</Th>
+                {!isSnapshotMode && (<Th>{__("Actions")}</Th>)}
               </Tr>
             </Thead>
             <Tbody>
@@ -159,6 +177,8 @@ export default function NonconformityRegistriesPage({ queryRef }: NonconformityR
                   key={registry.id}
                   registry={registry}
                   connectionId={connectionId}
+                  isSnapshotMode={isSnapshotMode}
+                  snapshotId={snapshotId}
                 />
               ))}
             </Tbody>
@@ -186,9 +206,13 @@ export default function NonconformityRegistriesPage({ queryRef }: NonconformityR
 function RegistryRow({
   registry,
   connectionId,
+  isSnapshotMode,
+  snapshotId,
 }: {
   registry: NonconformityRegistry;
   connectionId: string;
+  isSnapshotMode: boolean;
+  snapshotId?: string;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
@@ -198,6 +222,10 @@ function RegistryRow({
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
+
+  const registryDetailUrl = isSnapshotMode
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/nonconformity-registries/${registry.id}`
+    : `/organizations/${organizationId}/nonconformity-registries/${registry.id}`;
 
   const handleDeleteRegistry = (registry: NonconformityRegistry) => {
     if (!connectionId) return;
@@ -225,7 +253,7 @@ function RegistryRow({
   };
 
   return (
-    <Tr to={`/organizations/${organizationId}/nonconformity-registries/${registry.id}`}>
+    <Tr to={registryDetailUrl}>
       <Td>
         <span className="font-mono text-sm">{registry.referenceId}</span>
       </Td>
@@ -257,17 +285,18 @@ function RegistryRow({
           <span className="text-txt-tertiary">{__("No due date")}</span>
         )}
       </Td>
-      <Td noLink width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            icon={IconTrashCan}
-            variant="danger"
-            onSelect={() => handleDeleteRegistry(registry)}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
-      </Td>
+      {!isSnapshotMode && (<Td noLink width={50} className="text-end">
+          <ActionDropdown>
+            <DropdownItem
+              icon={IconTrashCan}
+              variant="danger"
+              onSelect={() => handleDeleteRegistry(registry)}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        </Td>
+      )}
     </Tr>
   );
 }

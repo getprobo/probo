@@ -30,6 +30,8 @@ type (
 	NonconformityRegistry struct {
 		ID                 gid.GID                     `db:"id"`
 		OrganizationID     gid.GID                     `db:"organization_id"`
+		SnapshotID         *gid.GID                    `db:"snapshot_id"`
+		SourceID           *gid.GID                    `db:"source_id"`
 		ReferenceID        string                      `db:"reference_id"`
 		Description        *string                     `db:"description"`
 		AuditID            gid.GID                     `db:"audit_id"`
@@ -74,6 +76,8 @@ func (nr *NonconformityRegistry) LoadByID(
 SELECT
 	id,
 	organization_id,
+	snapshot_id,
+	source_id,
 	reference_id,
 	description,
 	audit_id,
@@ -119,6 +123,7 @@ func (nrs *NonconformityRegistries) CountByOrganizationID(
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *NonconformityRegistryFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -128,12 +133,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -152,11 +159,14 @@ func (nrs *NonconformityRegistries) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[NonconformityRegistryOrderField],
+	filter *NonconformityRegistryFilter,
 ) error {
 	q := `
 SELECT
 	id,
 	organization_id,
+	snapshot_id,
+	source_id,
 	reference_id,
 	description,
 	audit_id,
@@ -175,12 +185,14 @@ WHERE
 	%s
 	AND organization_id = @organization_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -287,6 +299,7 @@ SET
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -324,7 +337,7 @@ func (nr *NonconformityRegistry) Delete(
 DELETE FROM nonconformity_registries
 WHERE
 	%s
-	AND id = @id
+	AND id = @id AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -335,6 +348,67 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete nonconformity registry: %w", err)
+	}
+
+	return nil
+}
+
+func (nrs NonconformityRegistries) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+	query := `
+INSERT INTO nonconformity_registries (
+	id,
+	tenant_id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	reference_id,
+	description,
+	audit_id,
+	date_identified,
+	root_cause,
+	corrective_action,
+	owner_id,
+	due_date,
+	status,
+	effectiveness_check,
+	created_at,
+	updated_at
+)
+SELECT
+	generate_gid(decode_base64_unpadded(@tenant_id), @nonconformity_registry_entity_type),
+	@tenant_id,
+	@snapshot_id,
+	r.id,
+	r.organization_id,
+	r.reference_id,
+	r.description,
+	r.audit_id,
+	r.date_identified,
+	r.root_cause,
+	r.corrective_action,
+	r.owner_id,
+	r.due_date,
+	r.status,
+	r.effectiveness_check,
+	r.created_at,
+	r.updated_at
+FROM nonconformity_registries r
+WHERE %s AND r.organization_id = @organization_id AND r.snapshot_id IS NULL
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":                          scope.GetTenantID(),
+		"snapshot_id":                        snapshotID,
+		"organization_id":                    organizationID,
+		"nonconformity_registry_entity_type": NonconformityRegistryEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert data snapshots: %w", err)
 	}
 
 	return nil

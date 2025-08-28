@@ -1106,6 +1106,10 @@ input DatumFilter {
   snapshotId: ID
 }
 
+input NonconformityRegistryFilter {
+  snapshotId: ID
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -1245,6 +1249,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: NonconformityRegistryOrder
+    filter: NonconformityRegistryFilter
   ): NonconformityRegistryConnection! @goField(forceResolver: true)
 
   complianceRegistries(

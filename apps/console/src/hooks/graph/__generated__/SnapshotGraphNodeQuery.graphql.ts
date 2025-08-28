@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5bcc9f9b743d01fc99fd749b970dccd3>>
+ * @generated SignedSource<<a490e7800ce4b387ced38d07b3e42bca>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type SnapshotsType = "ASSETS" | "COMPLIANCE_REGISTRIES" | "DATA" | "NON_CONFORMITY_REGISTRIES" | "RISKS" | "VENDORS";
+export type SnapshotsType = "ASSETS" | "COMPLIANCE_REGISTRIES" | "DATA" | "NONCONFORMITY_REGISTRIES" | "RISKS" | "VENDORS";
 export type SnapshotGraphNodeQuery$variables = {
   snapshotId: string;
 };

@@ -30,6 +30,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *NonconformityRegistryFilter
 	}
 )
 
@@ -37,6 +38,7 @@ func NewNonconformityRegistryConnection(
 	p *page.Page[*coredata.NonconformityRegistry, coredata.NonconformityRegistryOrderField],
 	parentType any,
 	parentID gid.GID,
+	filter *NonconformityRegistryFilter,
 ) *NonconformityRegistryConnection {
 	edges := make([]*NonconformityRegistryEdge, len(p.Data))
 	for i, registry := range p.Data {
@@ -49,6 +51,7 @@ func NewNonconformityRegistryConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filter:   filter,
 	}
 }
 

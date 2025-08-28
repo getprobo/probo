@@ -881,7 +881,7 @@ type ComplexityRoot struct {
 		LogoURL                        func(childComplexity int) int
 		Measures                       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
 		Name                           func(childComplexity int) int
-		NonconformityRegistries        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy) int
+		NonconformityRegistries        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy, filter *types.NonconformityRegistryFilter) int
 		Peoples                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
 		ProcessingActivityRegistries   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) int
 		Risks                          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
@@ -1666,7 +1666,7 @@ type OrganizationResolver interface {
 	Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) (*types.AssetConnection, error)
 	Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) (*types.DatumConnection, error)
 	Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error)
-	NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy) (*types.NonconformityRegistryConnection, error)
+	NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy, filter *types.NonconformityRegistryFilter) (*types.NonconformityRegistryConnection, error)
 	ComplianceRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy) (*types.ComplianceRegistryConnection, error)
 	ContinualImprovementRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy) (*types.ContinualImprovementRegistryConnection, error)
 	ProcessingActivityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) (*types.ProcessingActivityRegistryConnection, error)
@@ -5478,7 +5478,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.NonconformityRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.NonconformityRegistryOrderBy)), true
+		return e.complexity.Organization.NonconformityRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.NonconformityRegistryOrderBy), args["filter"].(*types.NonconformityRegistryFilter)), true
 
 	case "Organization.peoples":
 		if e.complexity.Organization.Peoples == nil {
@@ -7724,6 +7724,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputInviteUserInput,
 		ec.unmarshalInputMeasureFilter,
 		ec.unmarshalInputMeasureOrder,
+		ec.unmarshalInputNonconformityRegistryFilter,
 		ec.unmarshalInputNonconformityRegistryOrder,
 		ec.unmarshalInputOrganizationFilter,
 		ec.unmarshalInputOrganizationOrder,
@@ -8981,6 +8982,10 @@ input DatumFilter {
   snapshotId: ID
 }
 
+input NonconformityRegistryFilter {
+  snapshotId: ID
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -9120,6 +9125,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: NonconformityRegistryOrder
+    filter: NonconformityRegistryFilter
   ): NonconformityRegistryConnection! @goField(forceResolver: true)
 
   complianceRegistries(
@@ -16801,6 +16807,11 @@ func (ec *executionContext) field_Organization_nonconformityRegistries_args(ctx 
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	arg5, err := ec.field_Organization_nonconformityRegistries_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
 	return args, nil
 }
 func (ec *executionContext) field_Organization_nonconformityRegistries_argsFirst(
@@ -16865,6 +16876,19 @@ func (ec *executionContext) field_Organization_nonconformityRegistries_argsOrder
 	}
 
 	var zeroVal *types.NonconformityRegistryOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_nonconformityRegistries_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.NonconformityRegistryFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalONonconformityRegistryFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.NonconformityRegistryFilter
 	return zeroVal, nil
 }
 
@@ -41754,7 +41778,7 @@ func (ec *executionContext) _Organization_nonconformityRegistries(ctx context.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organization().NonconformityRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.NonconformityRegistryOrderBy))
+		return ec.resolvers.Organization().NonconformityRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.NonconformityRegistryOrderBy), fc.Args["filter"].(*types.NonconformityRegistryFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -62764,6 +62788,33 @@ func (ec *executionContext) unmarshalInputMeasureOrder(ctx context.Context, obj 
 				return it, err
 			}
 			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputNonconformityRegistryFilter(ctx context.Context, obj any) (types.NonconformityRegistryFilter, error) {
+	var it types.NonconformityRegistryFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
 		}
 	}
 
@@ -87077,6 +87128,14 @@ var (
 		coredata.MeasureStateImplemented:   "IMPLEMENTED",
 	}
 )
+
+func (ec *executionContext) unmarshalONonconformityRegistryFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryFilter(ctx context.Context, v any) (*types.NonconformityRegistryFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputNonconformityRegistryFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
 
 func (ec *executionContext) unmarshalONonconformityRegistryOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐNonconformityRegistryOrderBy(ctx context.Context, v any) (*types.NonconformityRegistryOrderBy, error) {
 	if v == nil {
