@@ -22,6 +22,7 @@ export const nonconformityRegistryNodeQuery = graphql`
     node(id: $nonconformityRegistryId) {
       ... on NonconformityRegistry {
         id
+        snapshotId
         referenceId
         description
         dateIdentified

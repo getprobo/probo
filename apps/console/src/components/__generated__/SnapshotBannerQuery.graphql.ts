@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a11c48ca33ac17dd7eaf6eeca4a0c20d>>
+ * @generated SignedSource<<3c8b528580116deec511c979e209cfc3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type SnapshotsType = "ASSETS" | "COMPLIANCE_REGISTRIES" | "DATA" | "NONCONFORMITY_REGISTRIES" | "RISKS" | "VENDORS";
 export type SnapshotBannerQuery$variables = {
   snapshotId: string;
 };
@@ -17,6 +18,7 @@ export type SnapshotBannerQuery$data = {
     readonly createdAt?: any;
     readonly id?: string;
     readonly name?: string;
+    readonly type?: SnapshotsType;
   };
 };
 export type SnapshotBannerQuery = {
@@ -57,6 +59,13 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
+  "name": "type",
+  "storageKey": null
+},
+v5 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 };
@@ -80,7 +89,8 @@ return {
             "selections": [
               (v2/*: any*/),
               (v3/*: any*/),
-              (v4/*: any*/)
+              (v4/*: any*/),
+              (v5/*: any*/)
             ],
             "type": "Snapshot",
             "abstractKey": null
@@ -118,7 +128,8 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v3/*: any*/),
-              (v4/*: any*/)
+              (v4/*: any*/),
+              (v5/*: any*/)
             ],
             "type": "Snapshot",
             "abstractKey": null
@@ -129,16 +140,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8f21371ececf96444bb6b00e52783573",
+    "cacheID": "7e026c7c030cd116b4794260934c394f",
     "id": null,
     "metadata": {},
     "name": "SnapshotBannerQuery",
     "operationKind": "query",
-    "text": "query SnapshotBannerQuery(\n  $snapshotId: ID!\n) {\n  node(id: $snapshotId) {\n    __typename\n    ... on Snapshot {\n      id\n      name\n      createdAt\n    }\n    id\n  }\n}\n"
+    "text": "query SnapshotBannerQuery(\n  $snapshotId: ID!\n) {\n  node(id: $snapshotId) {\n    __typename\n    ... on Snapshot {\n      id\n      name\n      type\n      createdAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1602d5b6c0ae4a3122998e4d3419af05";
+(node as any).hash = "e50a4bb5133d8e918b8b2b9d2a42f1d1";
 
 export default node;

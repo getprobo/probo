@@ -15,7 +15,7 @@ export { certificationCategoryLabel, certifications } from "./certifications";
 export { availableFrameworks } from "./frameworks";
 export { getDocumentTypeLabel, documentTypes } from "./documents";
 export { getAssetTypeVariant, getCriticityVariant } from "./assets";
-export { getSnapshotTypeLabel, getSnapshotTypeUrlPath, snapshotTypes } from "./snapshots";
+export { getSnapshotTypeLabel, getSnapshotTypeUrlPath, snapshotTypes, validateSnapshotConsistency } from "./snapshots";
 export { getAuditStateLabel, getAuditStateVariant, auditStates } from "./audits";
 export { getStatusVariant, getStatusLabel, getNonconformityRegistryStatusOptions, getComplianceRegistryStatusOptions, registryStatuses } from "./registryStatus";
 export { promisifyMutation } from "./relay";

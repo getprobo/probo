@@ -56,6 +56,7 @@ func NewDatum(d *coredata.Datum) *Datum {
 	return &Datum{
 		ID:                 d.ID,
 		Name:               d.Name,
+		SnapshotID:         d.SnapshotID,
 		DataClassification: d.DataClassification,
 		CreatedAt:          d.CreatedAt,
 		UpdatedAt:          d.UpdatedAt,

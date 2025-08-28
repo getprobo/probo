@@ -59,6 +59,7 @@ func NewNonconformityRegistry(nr *coredata.NonconformityRegistry) *Nonconformity
 	return &NonconformityRegistry{
 		ID:                 nr.ID,
 		ReferenceID:        nr.ReferenceID,
+		SnapshotID:         nr.SnapshotID,
 		Description:        nr.Description,
 		DateIdentified:     nr.DateIdentified,
 		RootCause:          nr.RootCause,

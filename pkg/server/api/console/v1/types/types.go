@@ -600,6 +600,7 @@ type CreateVendorServicePayload struct {
 
 type Datum struct {
 	ID                 gid.GID                     `json:"id"`
+	SnapshotID         *gid.GID                    `json:"snapshotId,omitempty"`
 	Name               string                      `json:"name"`
 	DataClassification coredata.DataClassification `json:"dataClassification"`
 	Owner              *People                     `json:"owner"`
@@ -1115,6 +1116,7 @@ type Mutation struct {
 
 type NonconformityRegistry struct {
 	ID                 gid.GID                              `json:"id"`
+	SnapshotID         *gid.GID                             `json:"snapshotId,omitempty"`
 	Organization       *Organization                        `json:"organization"`
 	ReferenceID        string                               `json:"referenceId"`
 	Description        *string                              `json:"description,omitempty"`

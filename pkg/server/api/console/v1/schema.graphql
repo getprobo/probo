@@ -1703,6 +1703,7 @@ type Audit implements Node {
 
 type NonconformityRegistry implements Node {
   id: ID!
+  snapshotId: ID
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   description: String
@@ -3689,6 +3690,7 @@ type DeleteAssetPayload {
 
 type Datum implements Node {
   id: ID!
+  snapshotId: ID
   name: String!
   dataClassification: DataClassification!
   owner: People! @goField(forceResolver: true)

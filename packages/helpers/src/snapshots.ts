@@ -38,3 +38,16 @@ export function getSnapshotTypeUrlPath(type?: string): string {
       return "";
   }
 }
+
+export interface SnapshotableResource {
+  snapshotId?: string | null | undefined;
+}
+
+export function validateSnapshotConsistency(
+  resource: SnapshotableResource | null | undefined,
+  urlSnapshotId?: string | null | undefined
+): void {
+  if (resource && resource.snapshotId !== (urlSnapshotId ?? null)) {
+    throw new Error("PAGE_NOT_FOUND");
+  }
+}

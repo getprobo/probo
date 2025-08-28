@@ -403,6 +403,7 @@ type ComplexityRoot struct {
 		Name               func(childComplexity int) int
 		Organization       func(childComplexity int) int
 		Owner              func(childComplexity int) int
+		SnapshotID         func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 		Vendors            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
 	}
@@ -851,6 +852,7 @@ type ComplexityRoot struct {
 		Owner              func(childComplexity int) int
 		ReferenceID        func(childComplexity int) int
 		RootCause          func(childComplexity int) int
+		SnapshotID         func(childComplexity int) int
 		Status             func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 	}
@@ -2830,6 +2832,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Datum.Owner(childComplexity), true
+
+	case "Datum.snapshotId":
+		if e.complexity.Datum.SnapshotID == nil {
+			break
+		}
+
+		return e.complexity.Datum.SnapshotID(childComplexity), true
 
 	case "Datum.updatedAt":
 		if e.complexity.Datum.UpdatedAt == nil {
@@ -5270,6 +5279,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.NonconformityRegistry.RootCause(childComplexity), true
+
+	case "NonconformityRegistry.snapshotId":
+		if e.complexity.NonconformityRegistry.SnapshotID == nil {
+			break
+		}
+
+		return e.complexity.NonconformityRegistry.SnapshotID(childComplexity), true
 
 	case "NonconformityRegistry.status":
 		if e.complexity.NonconformityRegistry.Status == nil {
@@ -9579,6 +9595,7 @@ type Audit implements Node {
 
 type NonconformityRegistry implements Node {
   id: ID!
+  snapshotId: ID
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   description: String
@@ -11565,6 +11582,7 @@ type DeleteAssetPayload {
 
 type Datum implements Node {
   id: ID!
+  snapshotId: ID
   name: String!
   dataClassification: DataClassification!
   owner: People! @goField(forceResolver: true)
@@ -26001,6 +26019,47 @@ func (ec *executionContext) fieldContext_Datum_id(_ context.Context, field graph
 	return fc, nil
 }
 
+func (ec *executionContext) _Datum_snapshotId(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Datum_snapshotId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SnapshotID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*gid.GID)
+	fc.Result = res
+	return ec.marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Datum_snapshotId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Datum",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Datum_name(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Datum_name(ctx, field)
 	if err != nil {
@@ -26633,6 +26692,8 @@ func (ec *executionContext) fieldContext_DatumEdge_node(_ context.Context, field
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Datum_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Datum_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Datum_name(ctx, field)
 			case "dataClassification":
@@ -39897,6 +39958,47 @@ func (ec *executionContext) fieldContext_NonconformityRegistry_id(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _NonconformityRegistry_snapshotId(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NonconformityRegistry_snapshotId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SnapshotID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*gid.GID)
+	fc.Result = res
+	return ec.marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NonconformityRegistry_snapshotId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NonconformityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _NonconformityRegistry_organization(ctx context.Context, field graphql.CollectedField, obj *types.NonconformityRegistry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NonconformityRegistry_organization(ctx, field)
 	if err != nil {
@@ -40787,6 +40889,8 @@ func (ec *executionContext) fieldContext_NonconformityRegistryEdge_node(_ contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_NonconformityRegistry_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_NonconformityRegistry_snapshotId(ctx, field)
 			case "organization":
 				return ec.fieldContext_NonconformityRegistry_organization(ctx, field)
 			case "referenceId":
@@ -49740,6 +49844,8 @@ func (ec *executionContext) fieldContext_UpdateDatumPayload_datum(_ context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Datum_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Datum_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Datum_name(ctx, field)
 			case "dataClassification":
@@ -50072,6 +50178,8 @@ func (ec *executionContext) fieldContext_UpdateNonconformityRegistryPayload_nonc
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_NonconformityRegistry_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_NonconformityRegistry_snapshotId(ctx, field)
 			case "organization":
 				return ec.fieldContext_NonconformityRegistry_organization(ctx, field)
 			case "referenceId":
@@ -68827,6 +68935,8 @@ func (ec *executionContext) _Datum(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "snapshotId":
+			out.Values[i] = ec._Datum_snapshotId(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._Datum_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -73267,6 +73377,8 @@ func (ec *executionContext) _NonconformityRegistry(ctx context.Context, sel ast.
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "snapshotId":
+			out.Values[i] = ec._NonconformityRegistry_snapshotId(ctx, field, obj)
 		case "organization":
 			field := field
 

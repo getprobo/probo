@@ -32,7 +32,7 @@ import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { AuditSelectField } from "/components/form/AuditSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
-import { getStatusVariant, getStatusLabel, formatDatetime, getNonconformityRegistryStatusOptions } from "@probo/helpers";
+import { getStatusVariant, getStatusLabel, formatDatetime, getNonconformityRegistryStatusOptions, validateSnapshotConsistency } from "@probo/helpers";
 import type { NonconformityRegistryGraphNodeQuery } from "/hooks/graph/__generated__/NonconformityRegistryGraphNodeQuery.graphql";
 
 const updateRegistrySchema = z.object({
@@ -62,6 +62,8 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
+
+  validateSnapshotConsistency(registry, snapshotId);
 
   const deleteRegistry = useDeleteNonconformityRegistry(
     { id: registry.id!, referenceId: registry.referenceId! },
