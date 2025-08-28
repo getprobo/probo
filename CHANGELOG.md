@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Add processing activity registries
 - Add continual improvement registries
+- Add noncoformity registry snapshots
 
 ### Fixed
 
