@@ -17,4 +17,10 @@ export const availableFrameworks = [
         logo: "/logos/hipaa.png",
         description: "Health Insurance Portability and Accountability Act",
     },
+    {
+        id: "ISO62443",
+        name: "IEC 62443-4-2 Industrial Automation and Control Systems Security",
+        logo: "/logos/iso62443.png",
+        description: "Industrial Automation Security Framework",
+    },
 ];
