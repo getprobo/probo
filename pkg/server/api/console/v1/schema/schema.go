@@ -8743,7 +8743,7 @@ enum SnapshotsType
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeData"
     )
-  NON_CONFORMITY_REGISTRIES
+  NONCONFORMITY_REGISTRIES
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeNonConformityRegistries"
     )
@@ -84478,19 +84478,19 @@ func (ec *executionContext) marshalNSnapshotsType2githubᚗcomᚋgetproboᚋprob
 
 var (
 	unmarshalNSnapshotsType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐSnapshotsType = map[string]coredata.SnapshotsType{
-		"RISKS":                     coredata.SnapshotsTypeRisks,
-		"VENDORS":                   coredata.SnapshotsTypeVendors,
-		"ASSETS":                    coredata.SnapshotsTypeAssets,
-		"DATA":                      coredata.SnapshotsTypeData,
-		"NON_CONFORMITY_REGISTRIES": coredata.SnapshotsTypeNonConformityRegistries,
-		"COMPLIANCE_REGISTRIES":     coredata.SnapshotsTypeComplianceRegistries,
+		"RISKS":                    coredata.SnapshotsTypeRisks,
+		"VENDORS":                  coredata.SnapshotsTypeVendors,
+		"ASSETS":                   coredata.SnapshotsTypeAssets,
+		"DATA":                     coredata.SnapshotsTypeData,
+		"NONCONFORMITY_REGISTRIES": coredata.SnapshotsTypeNonConformityRegistries,
+		"COMPLIANCE_REGISTRIES":    coredata.SnapshotsTypeComplianceRegistries,
 	}
 	marshalNSnapshotsType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐSnapshotsType = map[coredata.SnapshotsType]string{
 		coredata.SnapshotsTypeRisks:                   "RISKS",
 		coredata.SnapshotsTypeVendors:                 "VENDORS",
 		coredata.SnapshotsTypeAssets:                  "ASSETS",
 		coredata.SnapshotsTypeData:                    "DATA",
-		coredata.SnapshotsTypeNonConformityRegistries: "NON_CONFORMITY_REGISTRIES",
+		coredata.SnapshotsTypeNonConformityRegistries: "NONCONFORMITY_REGISTRIES",
 		coredata.SnapshotsTypeComplianceRegistries:    "COMPLIANCE_REGISTRIES",
 	}
 )

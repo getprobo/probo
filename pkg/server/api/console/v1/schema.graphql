@@ -868,7 +868,7 @@ enum SnapshotsType
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeData"
     )
-  NON_CONFORMITY_REGISTRIES
+  NONCONFORMITY_REGISTRIES
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeNonConformityRegistries"
     )

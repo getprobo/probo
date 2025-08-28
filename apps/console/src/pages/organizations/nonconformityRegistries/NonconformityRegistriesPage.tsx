@@ -132,10 +132,10 @@ export default function NonconformityRegistriesPage({ queryRef }: NonconformityR
         <Card padded>
           <div className="text-center py-12">
             <h3 className="text-lg font-semibold mb-2">
-              {__("No non conformity registry entries yet")}
+              {__("No nonconformity registry entries yet")}
             </h3>
             <p className="text-txt-tertiary mb-4">
-              {__("Create your first non conformity registry entry to get started.")}
+              {__("Create your first nonconformity registry entry to get started.")}
             </p>
           </div>
         </Card>

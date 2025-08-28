@@ -28,7 +28,7 @@ const (
 	SnapshotsTypeVendors                 SnapshotsType = "VENDORS"
 	SnapshotsTypeAssets                  SnapshotsType = "ASSETS"
 	SnapshotsTypeData                    SnapshotsType = "DATA"
-	SnapshotsTypeNonConformityRegistries SnapshotsType = "NON_CONFORMITY_REGISTRIES"
+	SnapshotsTypeNonConformityRegistries SnapshotsType = "NONCONFORMITY_REGISTRIES"
 	SnapshotsTypeComplianceRegistries    SnapshotsType = "COMPLIANCE_REGISTRIES"
 )
 
