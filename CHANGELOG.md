@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Add processing activity registries
+- Add continual improvement registries
+
 ### Fixed
 
 - Probo instance allow crawling bot to index.
