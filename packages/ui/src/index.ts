@@ -11,6 +11,7 @@ export {
 export * from "./Atoms/Icons";
 export { Logo } from "./Atoms/Logo/Logo";
 export { SidebarItem } from "./Atoms/Sidebar/SidebarItem";
+export { SidebarCategory } from "./Atoms/Sidebar/SidebarCategory";
 export { Button } from "./Atoms/Button/Button";
 export { Card } from "./Atoms/Card/Card";
 export { Breadcrumb } from "./Atoms/Breadcrumb/Breadcrumb";

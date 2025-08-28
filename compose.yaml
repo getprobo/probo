@@ -21,7 +21,7 @@ services:
     command: |
       -c 'mkdir -p /var/lib/minio/probod && minio server --json --console-address :9001 /var/lib/minio'
     ports:
-      - "9000:9000"
+      - "9002:9000"
       - "9001:9001"
     volumes:
       - "minio-data:/var/lib/minio:rw"
@@ -78,7 +78,7 @@ services:
   mailpit:
     image: "axllent/mailpit:latest"
     ports:
-      - "1025:1025" # SMTP server
+      - "1026:1025" # SMTP server
       - "8025:8025" # Web UI
     environment:
       - "MP_DISABLE_VERSION_CHECK=true"
@@ -90,7 +90,7 @@ services:
   chrome:
     image: "chromedp/headless-shell:140.0.7259.2"
     ports:
-      - "9222:9222"
+      - "9223:9222"
     command:
       - "--headless"
       - "--disable-gpu"

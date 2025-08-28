@@ -929,7 +929,6 @@ enum ProcessingActivityRegistryOrderField
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderFieldName"
     )
 }
-
 enum TrustCenterAccessOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField") {
   CREATED_AT
@@ -1110,7 +1109,6 @@ input ProcessingActivityRegistryOrder
   direction: OrderDirection!
   field: ProcessingActivityRegistryOrderField!
 }
-
 input TrustCenterAccessOrder
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterAccessOrderBy"
@@ -1394,6 +1392,13 @@ type Organization implements Node {
     orderBy: ContinualImprovementRegistriesOrder
     filter: ContinualImprovementRegistryFilter = { snapshotId: null }
   ): ContinualImprovementRegistryConnection! @goField(forceResolver: true)
+  incidentRegistries(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: IncidentRegistryOrder
+  ): IncidentRegistryConnection! @goField(forceResolver: true)
 
   incidentRegistries(
     first: Int
