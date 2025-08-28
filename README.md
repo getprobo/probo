@@ -1,17 +1,16 @@
 <div align="center">
-<h1>Probo - Open Source Compliance</h1>
+<h1>CSRO_tool - Open Source Compliance</h1>
 
-![probo banner](.github/cover_v3.png)
+![CSRO_tool banner](.github/cover_v3.png)
 
-[![Discord](https://img.shields.io/discord/1326589224811757568?color=7289da&label=Discord&logo=discord&logoColor=ffffff)](https://discord.gg/8qfdJYfvpY)
 [![GitHub License](https://img.shields.io/github/license/getprobo/probo)](LICENSE)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/getprobo/probo/make.yaml)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/mserotiuk/probo/make.yaml)
 
 </div>
 
-Probo is an open-source compliance platform built for startups that helps you
+CSRO_tool is an open-source compliance platform built for startups that helps you
 achieve SOC-2 compliance quickly and efficiently. Unlike traditional solutions,
-Probo is designed to be accessible, transparent, and community-driven.
+CSRO_tool is designed to be accessible, transparent, and community-driven.
 
 ## ✨ Features
 
@@ -39,55 +38,9 @@ Probo is designed to be accessible, transparent, and community-driven.
   - Pay for the services you need only.
   - No hidden fees or forced costs.
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Go 1.21+
-- Node.js 22+
-- Docker
-
-### Quick Start
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/getprobo/probo.git
-   cd probo
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   # Install Go dependencies
-   go mod download
-
-   # Install Node.js dependencies
-   npm ci
-   ```
-
-3. Start the development environment:
-
-   ```bash
-   # Start infrastructure services
-   make stack-up
-
-   # Build the project
-   make build
-
-   # Start the application using development settings
-   bin/probod -cfg-file cfg/dev.yaml
-   ```
-
-The application will be available at:
-
-- Application: http://localhost:8080
-
-For detailed setup instructions, see our [Contributing Guide](CONTRIBUTING.md).
-
 ## 🏗️ Current Status
 
-Probo is in early development, focusing on building a solid foundation for
+CSRO_tool is in early development, focusing on building a solid foundation for
 compliance management. Here's our current focus:
 
 ### Under Development (V0)
@@ -132,20 +85,7 @@ compliance management. Here's our current focus:
 - Loki - Log aggregation
 - Tempo - Distributed tracing
 
-## 🤝 Contributing
-
-We love contributions from our community! There are many ways to contribute:
-
-- 🌟 Star the repository to show your support
-- 🐛 [Report bugs](https://github.com/getprobo/probo/issues/new)
-- 💡 [Request features](https://github.com/getprobo/probo/issues/new)
-- 🔧 Submit pull requests
-- 📖 Improve documentation
-
-Please read our [Contributing Guide](CONTRIBUTING.md) before making a pull
-request.
-
-## 🌟 Why Probo?
+## 🌟 Why CSRO_tool?
 
 1. **Accessible Compliance**: Traditional solutions are often behind expensive
    paywalls. We believe security measures should be accessible to all.
@@ -156,19 +96,6 @@ request.
 3. **Community-Driven**: As an open-source project, we believe the entire
    ecosystem should benefit from improvements and innovations.
 
-## 📚 Documentation
-
-- 📖 [Official Documentation](coming soon)
-- 💬 [Discord Community](https://discord.gg/8qfdJYfvpY)
-- 📝 [Blog](https://www.getprobo.com/blog)
-
-## 🌐 Community & Support
-
-- Join our [Discord community](https://discord.gg/8qfdJYfvpY)
-- Follow us on [Twitter](https://twitter.com/getprobo)
-- Connect on [LinkedIn](https://www.linkedin.com/company/getprobo)
-- Visit our [website](https://www.getprobo.com)
-
 ## 📄 License
 
-Probo is [MIT licensed](LICENSE).
+CSRO_tool is [MIT licensed](LICENSE).
