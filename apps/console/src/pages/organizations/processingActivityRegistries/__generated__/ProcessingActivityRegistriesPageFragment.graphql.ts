@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a05ed8b664f858ac30c3bf5d71ba20ea>>
+ * @generated SignedSource<<f2595590d945925932f5093a2c76dd1b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,14 +17,6 @@ export type ProcessingActivityRegistriesPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly audit: {
-          readonly framework: {
-            readonly id: string;
-            readonly name: string;
-          };
-          readonly id: string;
-          readonly name: string | null | undefined;
-        };
         readonly createdAt: any;
         readonly dataSubjectCategory: string | null | undefined;
         readonly id: string;
@@ -61,13 +53,6 @@ v1 = {
   "args": null,
   "kind": "ScalarField",
   "name": "id",
-  "storageKey": null
-},
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
   "storageKey": null
 };
 return {
@@ -147,7 +132,13 @@ return {
               "plural": false,
               "selections": [
                 (v1/*: any*/),
-                (v2/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "name",
+                  "storageKey": null
+                },
                 {
                   "alias": null,
                   "args": null,
@@ -188,32 +179,6 @@ return {
                   "args": null,
                   "kind": "ScalarField",
                   "name": "internationalTransfers",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "concreteType": "Audit",
-                  "kind": "LinkedField",
-                  "name": "audit",
-                  "plural": false,
-                  "selections": [
-                    (v1/*: any*/),
-                    (v2/*: any*/),
-                    {
-                      "alias": null,
-                      "args": null,
-                      "concreteType": "Framework",
-                      "kind": "LinkedField",
-                      "name": "framework",
-                      "plural": false,
-                      "selections": [
-                        (v1/*: any*/),
-                        (v2/*: any*/)
-                      ],
-                      "storageKey": null
-                    }
-                  ],
                   "storageKey": null
                 },
                 {
@@ -296,6 +261,6 @@ return {
 };
 })();
 
-(node as any).hash = "7e63a0911396373ab39811be65844b89";
+(node as any).hash = "25222b5244115092f96c424d8a52a5db";
 
 export default node;

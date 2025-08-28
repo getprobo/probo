@@ -36,7 +36,6 @@ CREATE TABLE processing_activity_registries (
     id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
     organization_id TEXT NOT NULL,
-    audit_id TEXT NOT NULL,
     name TEXT NOT NULL,
     purpose TEXT,
     data_subject_category TEXT,
@@ -58,12 +57,6 @@ CREATE TABLE processing_activity_registries (
     CONSTRAINT processing_activity_registries_organization_id_fkey
         FOREIGN KEY (organization_id)
         REFERENCES organizations(id)
-        ON UPDATE CASCADE
-        ON DELETE CASCADE,
-
-    CONSTRAINT processing_activity_registries_audit_id_fkey
-        FOREIGN KEY (audit_id)
-        REFERENCES audits(id)
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );

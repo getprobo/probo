@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<388195a5e7e9e9a1a167ad7cb298c935>>
+ * @generated SignedSource<<312905201e0a72d96dd29afeed17dee1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,14 +18,6 @@ export type ComplianceRegistriesPageFragment$data = {
       readonly node: {
         readonly actionsToBeImplemented: string | null | undefined;
         readonly area: string | null | undefined;
-        readonly audit: {
-          readonly framework: {
-            readonly id: string;
-            readonly name: string;
-          };
-          readonly id: string;
-          readonly name: string | null | undefined;
-        };
         readonly createdAt: any;
         readonly dueDate: any | null | undefined;
         readonly id: string;
@@ -67,13 +59,6 @@ v1 = {
   "args": null,
   "kind": "ScalarField",
   "name": "id",
-  "storageKey": null
-},
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
   "storageKey": null
 };
 return {
@@ -219,32 +204,6 @@ return {
                 {
                   "alias": null,
                   "args": null,
-                  "concreteType": "Audit",
-                  "kind": "LinkedField",
-                  "name": "audit",
-                  "plural": false,
-                  "selections": [
-                    (v1/*: any*/),
-                    (v2/*: any*/),
-                    {
-                      "alias": null,
-                      "args": null,
-                      "concreteType": "Framework",
-                      "kind": "LinkedField",
-                      "name": "framework",
-                      "plural": false,
-                      "selections": [
-                        (v1/*: any*/),
-                        (v2/*: any*/)
-                      ],
-                      "storageKey": null
-                    }
-                  ],
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
                   "concreteType": "People",
                   "kind": "LinkedField",
                   "name": "owner",
@@ -341,6 +300,6 @@ return {
 };
 })();
 
-(node as any).hash = "c85f1b770b00186cc074726ee8766698";
+(node as any).hash = "b6b97d09ba132cbc1ffb006c23a33589";
 
 export default node;

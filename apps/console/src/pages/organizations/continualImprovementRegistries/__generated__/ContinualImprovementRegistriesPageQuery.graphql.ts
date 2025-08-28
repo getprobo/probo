@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a226745b4849f8d82a412528166f860f>>
+ * @generated SignedSource<<ab460337b0bf2fc7b9af31b90c613e7a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -58,14 +58,7 @@ v4 = [
     "name": "first",
     "value": 10
   }
-],
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-};
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -196,32 +189,6 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "concreteType": "Audit",
-                            "kind": "LinkedField",
-                            "name": "audit",
-                            "plural": false,
-                            "selections": [
-                              (v3/*: any*/),
-                              (v5/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "concreteType": "Framework",
-                                "kind": "LinkedField",
-                                "name": "framework",
-                                "plural": false,
-                                "selections": [
-                                  (v3/*: any*/),
-                                  (v5/*: any*/)
-                                ],
-                                "storageKey": null
-                              }
-                            ],
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
                             "concreteType": "People",
                             "kind": "LinkedField",
                             "name": "owner",
@@ -325,12 +292,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "734faf62cb9f84c554159d0cc35a9eda",
+    "cacheID": "aefda1aa296696b978edb452106544c5",
     "id": null,
     "metadata": {},
     "name": "ContinualImprovementRegistriesPageQuery",
     "operationKind": "query",
-    "text": "query ContinualImprovementRegistriesPageQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ContinualImprovementRegistriesPageFragment\n    }\n    id\n  }\n}\n\nfragment ContinualImprovementRegistriesPageFragment on Organization {\n  id\n  continualImprovementRegistries(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ContinualImprovementRegistriesPageQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ContinualImprovementRegistriesPageFragment\n    }\n    id\n  }\n}\n\nfragment ContinualImprovementRegistriesPageFragment on Organization {\n  id\n  continualImprovementRegistries(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();

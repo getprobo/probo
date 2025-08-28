@@ -35,7 +35,6 @@ type (
 		ReferenceID            string
 		Area                   *string
 		Source                 *string
-		AuditID                gid.GID
 		Requirement            *string
 		ActionsToBeImplemented *string
 		Regulator              *string
@@ -50,7 +49,6 @@ type (
 		ReferenceID            *string
 		Area                   **string
 		Source                 **string
-		AuditID                *gid.GID
 		Requirement            **string
 		ActionsToBeImplemented **string
 		Regulator              **string
@@ -97,7 +95,6 @@ func (s *ComplianceRegistryService) Create(
 		ReferenceID:            req.ReferenceID,
 		Area:                   req.Area,
 		Source:                 req.Source,
-		AuditID:                req.AuditID,
 		Requirement:            req.Requirement,
 		ActionsToBeImplemented: req.ActionsToBeImplemented,
 		Regulator:              req.Regulator,
@@ -115,11 +112,6 @@ func (s *ComplianceRegistryService) Create(
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			audit := &coredata.Audit{}
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, req.AuditID); err != nil {
-				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
 			owner := &coredata.People{}
@@ -165,14 +157,6 @@ func (s *ComplianceRegistryService) Update(
 
 			if req.Source != nil {
 				registry.Source = *req.Source
-			}
-
-			if req.AuditID != nil {
-				audit := &coredata.Audit{}
-				if err := audit.LoadByID(ctx, conn, s.svc.scope, *req.AuditID); err != nil {
-					return fmt.Errorf("cannot load audit: %w", err)
-				}
-				registry.AuditID = *req.AuditID
 			}
 
 			if req.Requirement != nil {

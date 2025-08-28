@@ -63,14 +63,6 @@ const processingActivityRegistriesPageFragment = graphql`
           lawfulBasis
           location
           internationalTransfers
-          audit {
-            id
-            name
-            framework {
-              id
-              name
-            }
-          }
           createdAt
           updatedAt
         }
@@ -145,7 +137,6 @@ export default function ProcessingActivityRegistriesPage({ queryRef }: Processin
                 <Th>{__("Lawful Basis")}</Th>
                 <Th>{__("Location")}</Th>
                 <Th>{__("International Transfers")}</Th>
-                <Th>{__("Audit")}</Th>
                 <Th>{__("Actions")}</Th>
               </Tr>
             </Thead>
@@ -239,12 +230,6 @@ function RegistryRow({
         <Badge variant={registry.internationalTransfers ? "warning" : "success"}>
           {registry.internationalTransfers ? __("Yes") : __("No")}
         </Badge>
-      </Td>
-      <Td>
-        {registry.audit.name
-          ? `${registry.audit.framework.name} - ${registry.audit.name}`
-          : registry.audit.framework.name
-        }
       </Td>
       <Td noLink width={50} className="text-end">
         <ActionDropdown>

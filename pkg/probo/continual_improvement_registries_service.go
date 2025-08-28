@@ -34,7 +34,6 @@ type (
 		OrganizationID gid.GID
 		ReferenceID    string
 		Description    *string
-		AuditID        gid.GID
 		Source         *string
 		OwnerID        gid.GID
 		TargetDate     *time.Time
@@ -46,7 +45,6 @@ type (
 		ID          gid.GID
 		ReferenceID *string
 		Description **string
-		AuditID     *gid.GID
 		Source      **string
 		OwnerID     *gid.GID
 		TargetDate  **time.Time
@@ -90,7 +88,6 @@ func (s *ContinualImprovementRegistriesService) Create(
 		OrganizationID: req.OrganizationID,
 		ReferenceID:    req.ReferenceID,
 		Description:    req.Description,
-		AuditID:        req.AuditID,
 		Source:         req.Source,
 		OwnerID:        req.OwnerID,
 		TargetDate:     req.TargetDate,
@@ -106,11 +103,6 @@ func (s *ContinualImprovementRegistriesService) Create(
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			audit := &coredata.Audit{}
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, req.AuditID); err != nil {
-				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
 			owner := &coredata.People{}
@@ -152,14 +144,6 @@ func (s *ContinualImprovementRegistriesService) Update(
 
 			if req.Description != nil {
 				registry.Description = *req.Description
-			}
-
-			if req.AuditID != nil {
-				audit := &coredata.Audit{}
-				if err := audit.LoadByID(ctx, conn, s.svc.scope, *req.AuditID); err != nil {
-					return fmt.Errorf("cannot load audit: %w", err)
-				}
-				registry.AuditID = *req.AuditID
 			}
 
 			if req.Source != nil {

@@ -57,20 +57,19 @@ type AssignTaskPayload struct {
 }
 
 type Audit struct {
-	ID                           gid.GID                               `json:"id"`
-	Name                         *string                               `json:"name,omitempty"`
-	Organization                 *Organization                         `json:"organization"`
-	Framework                    *Framework                            `json:"framework"`
-	ValidFrom                    *time.Time                            `json:"validFrom,omitempty"`
-	ValidUntil                   *time.Time                            `json:"validUntil,omitempty"`
-	Report                       *Report                               `json:"report,omitempty"`
-	ReportURL                    *string                               `json:"reportUrl,omitempty"`
-	State                        coredata.AuditState                   `json:"state"`
-	Controls                     *ControlConnection                    `json:"controls"`
-	ProcessingActivityRegistries *ProcessingActivityRegistryConnection `json:"processingActivityRegistries"`
-	ShowOnTrustCenter            bool                                  `json:"showOnTrustCenter"`
-	CreatedAt                    time.Time                             `json:"createdAt"`
-	UpdatedAt                    time.Time                             `json:"updatedAt"`
+	ID                gid.GID             `json:"id"`
+	Name              *string             `json:"name,omitempty"`
+	Organization      *Organization       `json:"organization"`
+	Framework         *Framework          `json:"framework"`
+	ValidFrom         *time.Time          `json:"validFrom,omitempty"`
+	ValidUntil        *time.Time          `json:"validUntil,omitempty"`
+	Report            *Report             `json:"report,omitempty"`
+	ReportURL         *string             `json:"reportUrl,omitempty"`
+	State             coredata.AuditState `json:"state"`
+	Controls          *ControlConnection  `json:"controls"`
+	ShowOnTrustCenter bool                `json:"showOnTrustCenter"`
+	CreatedAt         time.Time           `json:"createdAt"`
+	UpdatedAt         time.Time           `json:"updatedAt"`
 }
 
 func (Audit) IsNode()             {}
@@ -114,7 +113,6 @@ type ComplianceRegistry struct {
 	ReferenceID            string                            `json:"referenceId"`
 	Area                   *string                           `json:"area,omitempty"`
 	Source                 *string                           `json:"source,omitempty"`
-	Audit                  *Audit                            `json:"audit"`
 	Requirement            *string                           `json:"requirement,omitempty"`
 	ActionsToBeImplemented *string                           `json:"actionsToBeImplemented,omitempty"`
 	Regulator              *string                           `json:"regulator,omitempty"`
@@ -173,7 +171,6 @@ type ContinualImprovementRegistry struct {
 	Organization *Organization                                   `json:"organization"`
 	ReferenceID  string                                          `json:"referenceId"`
 	Description  *string                                         `json:"description,omitempty"`
-	Audit        *Audit                                          `json:"audit"`
 	Source       *string                                         `json:"source,omitempty"`
 	Owner        *People                                         `json:"owner"`
 	TargetDate   *time.Time                                      `json:"targetDate,omitempty"`
@@ -252,7 +249,6 @@ type CreateComplianceRegistryInput struct {
 	ReferenceID            string                            `json:"referenceId"`
 	Area                   *string                           `json:"area,omitempty"`
 	Source                 *string                           `json:"source,omitempty"`
-	AuditID                gid.GID                           `json:"auditId"`
 	Requirement            *string                           `json:"requirement,omitempty"`
 	ActionsToBeImplemented *string                           `json:"actionsToBeImplemented,omitempty"`
 	Regulator              *string                           `json:"regulator,omitempty"`
@@ -270,7 +266,6 @@ type CreateContinualImprovementRegistryInput struct {
 	OrganizationID gid.GID                                         `json:"organizationId"`
 	ReferenceID    string                                          `json:"referenceId"`
 	Description    *string                                         `json:"description,omitempty"`
-	AuditID        gid.GID                                         `json:"auditId"`
 	Source         *string                                         `json:"source,omitempty"`
 	OwnerID        gid.GID                                         `json:"ownerId"`
 	TargetDate     *time.Time                                      `json:"targetDate,omitempty"`
@@ -445,7 +440,6 @@ type CreatePeoplePayload struct {
 
 type CreateProcessingActivityRegistryInput struct {
 	OrganizationID                 gid.GID                                                           `json:"organizationId"`
-	AuditID                        gid.GID                                                           `json:"auditId"`
 	Name                           string                                                            `json:"name"`
 	Purpose                        *string                                                           `json:"purpose,omitempty"`
 	DataSubjectCategory            *string                                                           `json:"dataSubjectCategory,omitempty"`
@@ -1228,7 +1222,6 @@ type PeopleFilter struct {
 type ProcessingActivityRegistry struct {
 	ID                             gid.GID                                                           `json:"id"`
 	Organization                   *Organization                                                     `json:"organization"`
-	Audit                          *Audit                                                            `json:"audit"`
 	Name                           string                                                            `json:"name"`
 	Purpose                        *string                                                           `json:"purpose,omitempty"`
 	DataSubjectCategory            *string                                                           `json:"dataSubjectCategory,omitempty"`
@@ -1486,7 +1479,6 @@ type UpdateComplianceRegistryInput struct {
 	ReferenceID            *string                            `json:"referenceId,omitempty"`
 	Area                   *string                            `json:"area,omitempty"`
 	Source                 *string                            `json:"source,omitempty"`
-	AuditID                *gid.GID                           `json:"auditId,omitempty"`
 	Requirement            *string                            `json:"requirement,omitempty"`
 	ActionsToBeImplemented *string                            `json:"actionsToBeImplemented,omitempty"`
 	Regulator              *string                            `json:"regulator,omitempty"`
@@ -1504,7 +1496,6 @@ type UpdateContinualImprovementRegistryInput struct {
 	ID          gid.GID                                          `json:"id"`
 	ReferenceID *string                                          `json:"referenceId,omitempty"`
 	Description *string                                          `json:"description,omitempty"`
-	AuditID     *gid.GID                                         `json:"auditId,omitempty"`
 	Source      *string                                          `json:"source,omitempty"`
 	OwnerID     *gid.GID                                         `json:"ownerId,omitempty"`
 	TargetDate  *time.Time                                       `json:"targetDate,omitempty"`
@@ -1631,7 +1622,6 @@ type UpdatePeoplePayload struct {
 
 type UpdateProcessingActivityRegistryInput struct {
 	ID                             gid.GID                                                            `json:"id"`
-	AuditID                        *gid.GID                                                           `json:"auditId,omitempty"`
 	Name                           *string                                                            `json:"name,omitempty"`
 	Purpose                        *string                                                            `json:"purpose,omitempty"`
 	DataSubjectCategory            *string                                                            `json:"dataSubjectCategory,omitempty"`

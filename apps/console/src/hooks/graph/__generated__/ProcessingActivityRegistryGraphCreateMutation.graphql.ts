@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8372cc0960f7642aa8619dbc091dc4de>>
+ * @generated SignedSource<<0eb58c6c3650563cef060921b0d7f65c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,6 @@ export type ProcessingActivityRegistrySpecialOrCriminalData = "NO" | "POSSIBLE" 
 export type ProcessingActivityRegistryTransferImpactAssessment = "NEEDED" | "NOT_NEEDED";
 export type ProcessingActivityRegistryTransferSafeguards = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
 export type CreateProcessingActivityRegistryInput = {
-  auditId: string;
   consentEvidenceLink?: string | null | undefined;
   dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment;
   dataSubjectCategory?: string | null | undefined;
@@ -31,7 +30,7 @@ export type CreateProcessingActivityRegistryInput = {
   securityMeasures?: string | null | undefined;
   specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData;
   transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment;
-  transferSafeguards: ProcessingActivityRegistryTransferSafeguards;
+  transferSafeguards?: ProcessingActivityRegistryTransferSafeguards | null | undefined;
 };
 export type ProcessingActivityRegistryGraphCreateMutation$variables = {
   connections: ReadonlyArray<string>;
@@ -41,13 +40,6 @@ export type ProcessingActivityRegistryGraphCreateMutation$data = {
   readonly createProcessingActivityRegistry: {
     readonly processingActivityRegistryEdge: {
       readonly node: {
-        readonly audit: {
-          readonly framework: {
-            readonly name: string;
-          };
-          readonly id: string;
-          readonly name: string | null | undefined;
-        };
         readonly consentEvidenceLink: string | null | undefined;
         readonly createdAt: any;
         readonly dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment;
@@ -64,7 +56,7 @@ export type ProcessingActivityRegistryGraphCreateMutation$data = {
         readonly securityMeasures: string | null | undefined;
         readonly specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData;
         readonly transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment;
-        readonly transferSafeguards: ProcessingActivityRegistryTransferSafeguards;
+        readonly transferSafeguards: ProcessingActivityRegistryTransferSafeguards | null | undefined;
       };
     };
   };
@@ -95,120 +87,142 @@ v2 = [
 v3 = {
   "alias": null,
   "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-},
-v4 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "purpose",
-  "storageKey": null
-},
-v6 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "dataSubjectCategory",
-  "storageKey": null
-},
-v7 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "personalDataCategory",
-  "storageKey": null
-},
-v8 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "specialOrCriminalData",
-  "storageKey": null
-},
-v9 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "consentEvidenceLink",
-  "storageKey": null
-},
-v10 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "lawfulBasis",
-  "storageKey": null
-},
-v11 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "recipients",
-  "storageKey": null
-},
-v12 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "location",
-  "storageKey": null
-},
-v13 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "internationalTransfers",
-  "storageKey": null
-},
-v14 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "transferSafeguards",
-  "storageKey": null
-},
-v15 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "retentionPeriod",
-  "storageKey": null
-},
-v16 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "securityMeasures",
-  "storageKey": null
-},
-v17 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "dataProtectionImpactAssessment",
-  "storageKey": null
-},
-v18 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "transferImpactAssessment",
-  "storageKey": null
-},
-v19 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "createdAt",
+  "concreteType": "ProcessingActivityRegistryEdge",
+  "kind": "LinkedField",
+  "name": "processingActivityRegistryEdge",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "ProcessingActivityRegistry",
+      "kind": "LinkedField",
+      "name": "node",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "id",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "name",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "purpose",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "dataSubjectCategory",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "personalDataCategory",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "specialOrCriminalData",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "consentEvidenceLink",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "lawfulBasis",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "recipients",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "location",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "internationalTransfers",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "transferSafeguards",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "retentionPeriod",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "securityMeasures",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "dataProtectionImpactAssessment",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "transferImpactAssessment",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "createdAt",
+          "storageKey": null
+        }
+      ],
+      "storageKey": null
+    }
+  ],
   "storageKey": null
 };
 return {
@@ -229,70 +243,7 @@ return {
         "name": "createProcessingActivityRegistry",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "ProcessingActivityRegistryEdge",
-            "kind": "LinkedField",
-            "name": "processingActivityRegistryEdge",
-            "plural": false,
-            "selections": [
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "ProcessingActivityRegistry",
-                "kind": "LinkedField",
-                "name": "node",
-                "plural": false,
-                "selections": [
-                  (v3/*: any*/),
-                  (v4/*: any*/),
-                  (v5/*: any*/),
-                  (v6/*: any*/),
-                  (v7/*: any*/),
-                  (v8/*: any*/),
-                  (v9/*: any*/),
-                  (v10/*: any*/),
-                  (v11/*: any*/),
-                  (v12/*: any*/),
-                  (v13/*: any*/),
-                  (v14/*: any*/),
-                  (v15/*: any*/),
-                  (v16/*: any*/),
-                  (v17/*: any*/),
-                  (v18/*: any*/),
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "Audit",
-                    "kind": "LinkedField",
-                    "name": "audit",
-                    "plural": false,
-                    "selections": [
-                      (v3/*: any*/),
-                      (v4/*: any*/),
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "Framework",
-                        "kind": "LinkedField",
-                        "name": "framework",
-                        "plural": false,
-                        "selections": [
-                          (v4/*: any*/)
-                        ],
-                        "storageKey": null
-                      }
-                    ],
-                    "storageKey": null
-                  },
-                  (v19/*: any*/)
-                ],
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
-          }
+          (v3/*: any*/)
         ],
         "storageKey": null
       }
@@ -317,71 +268,7 @@ return {
         "name": "createProcessingActivityRegistry",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "ProcessingActivityRegistryEdge",
-            "kind": "LinkedField",
-            "name": "processingActivityRegistryEdge",
-            "plural": false,
-            "selections": [
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "ProcessingActivityRegistry",
-                "kind": "LinkedField",
-                "name": "node",
-                "plural": false,
-                "selections": [
-                  (v3/*: any*/),
-                  (v4/*: any*/),
-                  (v5/*: any*/),
-                  (v6/*: any*/),
-                  (v7/*: any*/),
-                  (v8/*: any*/),
-                  (v9/*: any*/),
-                  (v10/*: any*/),
-                  (v11/*: any*/),
-                  (v12/*: any*/),
-                  (v13/*: any*/),
-                  (v14/*: any*/),
-                  (v15/*: any*/),
-                  (v16/*: any*/),
-                  (v17/*: any*/),
-                  (v18/*: any*/),
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "Audit",
-                    "kind": "LinkedField",
-                    "name": "audit",
-                    "plural": false,
-                    "selections": [
-                      (v3/*: any*/),
-                      (v4/*: any*/),
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "Framework",
-                        "kind": "LinkedField",
-                        "name": "framework",
-                        "plural": false,
-                        "selections": [
-                          (v4/*: any*/),
-                          (v3/*: any*/)
-                        ],
-                        "storageKey": null
-                      }
-                    ],
-                    "storageKey": null
-                  },
-                  (v19/*: any*/)
-                ],
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
-          },
+          (v3/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -404,16 +291,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9942999c0282d64a6250774f8a26f1f9",
+    "cacheID": "22dc5c717c1e1de0a4bc8399a8e4f2eb",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityRegistryGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation ProcessingActivityRegistryGraphCreateMutation(\n  $input: CreateProcessingActivityRegistryInput!\n) {\n  createProcessingActivityRegistry(input: $input) {\n    processingActivityRegistryEdge {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        specialOrCriminalData\n        consentEvidenceLink\n        lawfulBasis\n        recipients\n        location\n        internationalTransfers\n        transferSafeguards\n        retentionPeriod\n        securityMeasures\n        dataProtectionImpactAssessment\n        transferImpactAssessment\n        audit {\n          id\n          name\n          framework {\n            name\n            id\n          }\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation ProcessingActivityRegistryGraphCreateMutation(\n  $input: CreateProcessingActivityRegistryInput!\n) {\n  createProcessingActivityRegistry(input: $input) {\n    processingActivityRegistryEdge {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        specialOrCriminalData\n        consentEvidenceLink\n        lawfulBasis\n        recipients\n        location\n        internationalTransfers\n        transferSafeguards\n        retentionPeriod\n        securityMeasures\n        dataProtectionImpactAssessment\n        transferImpactAssessment\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7563c6519bb6f538e3c211322a5a638f";
+(node as any).hash = "000dcbeea412bc2b3863a37f58135df3";
 
 export default node;

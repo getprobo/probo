@@ -30,7 +30,6 @@ type (
 	ProcessingActivityRegistry struct {
 		ID                             gid.GID                                                  `db:"id"`
 		OrganizationID                 gid.GID                                                  `db:"organization_id"`
-		AuditID                        gid.GID                                                  `db:"audit_id"`
 		Name                           string                                                   `db:"name"`
 		Purpose                        *string                                                  `db:"purpose"`
 		DataSubjectCategory            *string                                                  `db:"data_subject_category"`
@@ -74,7 +73,6 @@ func (p *ProcessingActivityRegistry) LoadByID(
 SELECT
 	id,
 	organization_id,
-	audit_id,
 	name,
 	purpose,
 	data_subject_category,
@@ -163,7 +161,6 @@ func (p *ProcessingActivityRegistries) LoadByOrganizationID(
 SELECT
 	id,
 	organization_id,
-	audit_id,
 	name,
 	purpose,
 	data_subject_category,
@@ -210,96 +207,6 @@ WHERE
 	return nil
 }
 
-func (p *ProcessingActivityRegistries) CountByAuditID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	auditID gid.GID,
-) (int, error) {
-	q := `
-SELECT
-	COUNT(id)
-FROM
-	processing_activity_registries
-WHERE
-	%s
-	AND audit_id = @audit_id
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"audit_id": auditID}
-	maps.Copy(args, scope.SQLArguments())
-
-	row := conn.QueryRow(ctx, q, args)
-
-	var count int
-	err := row.Scan(&count)
-	if err != nil {
-		return 0, fmt.Errorf("cannot count processing activity registries: %w", err)
-	}
-
-	return count, nil
-}
-
-func (p *ProcessingActivityRegistries) LoadByAuditID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	auditID gid.GID,
-	cursor *page.Cursor[ProcessingActivityRegistryOrderField],
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	audit_id,
-	name,
-	purpose,
-	data_subject_category,
-	personal_data_category,
-	special_or_criminal_data,
-	consent_evidence_link,
-	lawful_basis,
-	recipients,
-	location,
-	international_transfers,
-	transfer_safeguards,
-	retention_period,
-	security_measures,
-	data_protection_impact_assessment,
-	transfer_impact_assessment,
-	created_at,
-	updated_at
-FROM
-	processing_activity_registries
-WHERE
-	%s
-	AND audit_id = @audit_id
-	AND %s
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"audit_id": auditID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query processing activity registries: %w", err)
-	}
-
-	processingActivityRegistries, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[ProcessingActivityRegistry])
-	if err != nil {
-		return fmt.Errorf("cannot collect processing activity registries: %w", err)
-	}
-
-	*p = processingActivityRegistries
-
-	return nil
-}
-
 func (p *ProcessingActivityRegistry) Insert(
 	ctx context.Context,
 	conn pg.Conn,
@@ -310,7 +217,6 @@ INSERT INTO processing_activity_registries (
 	id,
 	tenant_id,
 	organization_id,
-	audit_id,
 	name,
 	purpose,
 	data_subject_category,
@@ -332,7 +238,6 @@ INSERT INTO processing_activity_registries (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@audit_id,
 	@name,
 	@purpose,
 	@data_subject_category,
@@ -357,7 +262,6 @@ INSERT INTO processing_activity_registries (
 		"id":                                p.ID,
 		"tenant_id":                         scope.GetTenantID(),
 		"organization_id":                   p.OrganizationID,
-		"audit_id":                          p.AuditID,
 		"name":                              p.Name,
 		"purpose":                           p.Purpose,
 		"data_subject_category":             p.DataSubjectCategory,
@@ -395,7 +299,6 @@ UPDATE processing_activity_registries
 SET
 	name = @name,
 	purpose = @purpose,
-	audit_id = @audit_id,
 	data_subject_category = @data_subject_category,
 	personal_data_category = @personal_data_category,
 	special_or_criminal_data = @special_or_criminal_data,
@@ -421,7 +324,6 @@ WHERE
 		"id":                                p.ID,
 		"name":                              p.Name,
 		"purpose":                           p.Purpose,
-		"audit_id":                          p.AuditID,
 		"data_subject_category":             p.DataSubjectCategory,
 		"personal_data_category":            p.PersonalDataCategory,
 		"special_or_criminal_data":          p.SpecialOrCriminalData,

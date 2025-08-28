@@ -19,7 +19,6 @@ import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useCreateContinualImprovementRegistry } from "../../../../hooks/graph/ContinualImprovementRegistryGraph";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { AuditSelectField } from "/components/form/AuditSelectField";
 import { Controller } from "react-hook-form";
 import { formatDatetime } from "@probo/helpers";
 
@@ -27,7 +26,6 @@ const schema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),
   description: z.string().optional(),
   source: z.string().optional(),
-  auditId: z.string().min(1, "Audit is required"),
   ownerId: z.string().min(1, "Owner is required"),
   targetDate: z.string().optional(),
   status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED"]),
@@ -58,7 +56,6 @@ export function CreateContinualImprovementRegistryDialog({
       referenceId: "",
       description: "",
       source: "",
-      auditId: "",
       ownerId: "",
       targetDate: "",
       status: "OPEN" as const,
@@ -73,7 +70,6 @@ export function CreateContinualImprovementRegistryDialog({
         referenceId: formData.referenceId,
         description: formData.description || undefined,
         source: formData.source || undefined,
-        auditId: formData.auditId,
         ownerId: formData.ownerId,
         targetDate: formatDatetime(formData.targetDate),
         status: formData.status,
@@ -123,15 +119,6 @@ export function CreateContinualImprovementRegistryDialog({
             {...register("referenceId")}
             placeholder="CI-001"
             error={formState.errors.referenceId?.message}
-            required
-          />
-
-          <AuditSelectField
-            organizationId={organizationId}
-            control={control}
-            name="auditId"
-            label={__("Audit")}
-            error={formState.errors.auditId?.message}
             required
           />
 

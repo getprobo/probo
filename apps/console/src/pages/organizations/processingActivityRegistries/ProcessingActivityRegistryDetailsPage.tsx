@@ -24,7 +24,6 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { AuditSelectField } from "/components/form/AuditSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import z from "zod";
@@ -54,7 +53,6 @@ const updateRegistrySchema = z.object({
   securityMeasures: z.string().optional(),
   dataProtectionImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
   transferImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
-  auditId: z.string().min(1, "Audit is required"),
 });
 
 type Props = {
@@ -100,7 +98,6 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
         securityMeasures: registry.securityMeasures || "",
         dataProtectionImpactAssessment: registry.dataProtectionImpactAssessment || "NOT_NEEDED" as const,
         transferImpactAssessment: registry.transferImpactAssessment || "NOT_NEEDED" as const,
-        auditId: registry.audit?.id || "",
       },
     }
   );
@@ -109,7 +106,6 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
     try {
       await updateRegistry({
         id: registry.id!,
-        auditId: formData.auditId || undefined,
         name: formData.name,
         purpose: formData.purpose || undefined,
         dataSubjectCategory: formData.dataSubjectCategory || undefined,
@@ -172,15 +168,6 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                   label={__("Name")}
                   {...register("name")}
                   error={formState.errors.name?.message}
-                  required
-                />
-
-                <AuditSelectField
-                  organizationId={organizationId}
-                  control={control}
-                  name="auditId"
-                  label={__("Audit")}
-                  error={formState.errors.auditId?.message}
                   required
                 />
 

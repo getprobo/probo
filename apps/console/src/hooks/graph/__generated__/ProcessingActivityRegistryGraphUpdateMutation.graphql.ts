@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<945fa4ed1c5bab25f39047b601307e03>>
+ * @generated SignedSource<<86ea716b0545bec9ee5eabbc2bf35b74>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,7 +15,6 @@ export type ProcessingActivityRegistrySpecialOrCriminalData = "NO" | "POSSIBLE" 
 export type ProcessingActivityRegistryTransferImpactAssessment = "NEEDED" | "NOT_NEEDED";
 export type ProcessingActivityRegistryTransferSafeguards = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
 export type UpdateProcessingActivityRegistryInput = {
-  auditId?: string | null | undefined;
   consentEvidenceLink?: string | null | undefined;
   dataProtectionImpactAssessment?: ProcessingActivityRegistryDataProtectionImpactAssessment | null | undefined;
   dataSubjectCategory?: string | null | undefined;
@@ -39,14 +38,6 @@ export type ProcessingActivityRegistryGraphUpdateMutation$variables = {
 export type ProcessingActivityRegistryGraphUpdateMutation$data = {
   readonly updateProcessingActivityRegistry: {
     readonly processingActivityRegistry: {
-      readonly audit: {
-        readonly framework: {
-          readonly id: string;
-          readonly name: string;
-        };
-        readonly id: string;
-        readonly name: string | null | undefined;
-      };
       readonly consentEvidenceLink: string | null | undefined;
       readonly dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment;
       readonly dataSubjectCategory: string | null | undefined;
@@ -62,7 +53,7 @@ export type ProcessingActivityRegistryGraphUpdateMutation$data = {
       readonly securityMeasures: string | null | undefined;
       readonly specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData;
       readonly transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment;
-      readonly transferSafeguards: ProcessingActivityRegistryTransferSafeguards;
+      readonly transferSafeguards: ProcessingActivityRegistryTransferSafeguards | null | undefined;
       readonly updatedAt: any;
     };
   };
@@ -80,21 +71,7 @@ var v0 = [
     "name": "input"
   }
 ],
-v1 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-},
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v3 = [
+v1 = [
   {
     "alias": null,
     "args": [
@@ -117,8 +94,20 @@ v3 = [
         "name": "processingActivityRegistry",
         "plural": false,
         "selections": [
-          (v1/*: any*/),
-          (v2/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "id",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "name",
+            "storageKey": null
+          },
           {
             "alias": null,
             "args": null,
@@ -220,32 +209,6 @@ v3 = [
           {
             "alias": null,
             "args": null,
-            "concreteType": "Audit",
-            "kind": "LinkedField",
-            "name": "audit",
-            "plural": false,
-            "selections": [
-              (v1/*: any*/),
-              (v2/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "Framework",
-                "kind": "LinkedField",
-                "name": "framework",
-                "plural": false,
-                "selections": [
-                  (v1/*: any*/),
-                  (v2/*: any*/)
-                ],
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
             "kind": "ScalarField",
             "name": "updatedAt",
             "storageKey": null
@@ -263,7 +226,7 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "ProcessingActivityRegistryGraphUpdateMutation",
-    "selections": (v3/*: any*/),
+    "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
   },
@@ -272,19 +235,19 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "ProcessingActivityRegistryGraphUpdateMutation",
-    "selections": (v3/*: any*/)
+    "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "40f01e772e5377add784e6c455b173a9",
+    "cacheID": "d4baf575ac4c35aab308228550cc6474",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityRegistryGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation ProcessingActivityRegistryGraphUpdateMutation(\n  $input: UpdateProcessingActivityRegistryInput!\n) {\n  updateProcessingActivityRegistry(input: $input) {\n    processingActivityRegistry {\n      id\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      audit {\n        id\n        name\n        framework {\n          id\n          name\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation ProcessingActivityRegistryGraphUpdateMutation(\n  $input: UpdateProcessingActivityRegistryInput!\n) {\n  updateProcessingActivityRegistry(input: $input) {\n    processingActivityRegistry {\n      id\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0833d096c755275a5255d98276922c04";
+(node as any).hash = "2a6f14684cad524d383d66421354d6c7";
 
 export default node;

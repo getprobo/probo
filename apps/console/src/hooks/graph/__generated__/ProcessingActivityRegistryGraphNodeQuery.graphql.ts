@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<681e1d8f8073e0efd781bdf322b893ab>>
+ * @generated SignedSource<<e44cc513f256fbae2b03229efc8bd938>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,14 +19,6 @@ export type ProcessingActivityRegistryGraphNodeQuery$variables = {
 };
 export type ProcessingActivityRegistryGraphNodeQuery$data = {
   readonly node: {
-    readonly audit?: {
-      readonly framework: {
-        readonly id: string;
-        readonly name: string;
-      };
-      readonly id: string;
-      readonly name: string | null | undefined;
-    };
     readonly consentEvidenceLink?: string | null | undefined;
     readonly createdAt?: any;
     readonly dataProtectionImpactAssessment?: ProcessingActivityRegistryDataProtectionImpactAssessment;
@@ -47,7 +39,7 @@ export type ProcessingActivityRegistryGraphNodeQuery$data = {
     readonly securityMeasures?: string | null | undefined;
     readonly specialOrCriminalData?: ProcessingActivityRegistrySpecialOrCriminalData;
     readonly transferImpactAssessment?: ProcessingActivityRegistryTransferImpactAssessment;
-    readonly transferSafeguards?: ProcessingActivityRegistryTransferSafeguards;
+    readonly transferSafeguards?: ProcessingActivityRegistryTransferSafeguards | null | undefined;
     readonly updatedAt?: any;
   };
 };
@@ -183,51 +175,27 @@ v17 = {
   "name": "transferImpactAssessment",
   "storageKey": null
 },
-v18 = [
-  (v2/*: any*/),
-  (v3/*: any*/)
-],
-v19 = {
-  "alias": null,
-  "args": null,
-  "concreteType": "Audit",
-  "kind": "LinkedField",
-  "name": "audit",
-  "plural": false,
-  "selections": [
-    (v2/*: any*/),
-    (v3/*: any*/),
-    {
-      "alias": null,
-      "args": null,
-      "concreteType": "Framework",
-      "kind": "LinkedField",
-      "name": "framework",
-      "plural": false,
-      "selections": (v18/*: any*/),
-      "storageKey": null
-    }
-  ],
-  "storageKey": null
-},
-v20 = {
+v18 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
   "kind": "LinkedField",
   "name": "organization",
   "plural": false,
-  "selections": (v18/*: any*/),
+  "selections": [
+    (v2/*: any*/),
+    (v3/*: any*/)
+  ],
   "storageKey": null
 },
-v21 = {
+v19 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v22 = {
+v20 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -268,10 +236,9 @@ return {
               (v15/*: any*/),
               (v16/*: any*/),
               (v17/*: any*/),
+              (v18/*: any*/),
               (v19/*: any*/),
-              (v20/*: any*/),
-              (v21/*: any*/),
-              (v22/*: any*/)
+              (v20/*: any*/)
             ],
             "type": "ProcessingActivityRegistry",
             "abstractKey": null
@@ -323,10 +290,9 @@ return {
               (v15/*: any*/),
               (v16/*: any*/),
               (v17/*: any*/),
+              (v18/*: any*/),
               (v19/*: any*/),
-              (v20/*: any*/),
-              (v21/*: any*/),
-              (v22/*: any*/)
+              (v20/*: any*/)
             ],
             "type": "ProcessingActivityRegistry",
             "abstractKey": null
@@ -337,16 +303,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "74eed9b882f3bf3b11af0c15f65ef870",
+    "cacheID": "4a2a061717de77346b788a94d5c6b4ef",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityRegistryGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityRegistryGraphNodeQuery(\n  $processingActivityRegistryId: ID!\n) {\n  node(id: $processingActivityRegistryId) {\n    __typename\n    ... on ProcessingActivityRegistry {\n      id\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      audit {\n        id\n        name\n        framework {\n          id\n          name\n        }\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ProcessingActivityRegistryGraphNodeQuery(\n  $processingActivityRegistryId: ID!\n) {\n  node(id: $processingActivityRegistryId) {\n    __typename\n    ... on ProcessingActivityRegistry {\n      id\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "979f4b05c845c90dd6359d24821e44fd";
+(node as any).hash = "80aa43b56a3258a77b0d1c6c0c9b950d";
 
 export default node;

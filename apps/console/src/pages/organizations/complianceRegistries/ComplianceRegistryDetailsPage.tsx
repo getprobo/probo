@@ -27,7 +27,6 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { AuditSelectField } from "/components/form/AuditSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import z from "zod";
@@ -45,7 +44,6 @@ const updateRegistrySchema = z.object({
   dueDate: z.string().optional(),
   status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED"]),
   ownerId: z.string().min(1, "Owner is required"),
-  auditId: z.string().min(1, "Audit is required"),
 });
 
 type Props = {
@@ -91,7 +89,6 @@ export default function ComplianceRegistryDetailsPage(props: Props) {
           : "",
         status: registry.status || "OPEN",
         ownerId: registry.owner?.id || "",
-        auditId: registry.audit?.id || "",
       },
     }
   );
@@ -110,7 +107,7 @@ export default function ComplianceRegistryDetailsPage(props: Props) {
         dueDate: formatDatetime(formData.dueDate),
         status: formData.status,
         ownerId: formData.ownerId,
-        auditId: formData.auditId,
+
       });
 
       toast({
@@ -165,20 +162,7 @@ export default function ComplianceRegistryDetailsPage(props: Props) {
             />
           </Field>
 
-          <Controller
-            name="auditId"
-            control={control}
-            render={() => (
-              <AuditSelectField
-                organizationId={organizationId}
-                control={control}
-                name="auditId"
-                label={__("Audit")}
-                error={formState.errors.auditId?.message}
-                required
-              />
-            )}
-          />
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field

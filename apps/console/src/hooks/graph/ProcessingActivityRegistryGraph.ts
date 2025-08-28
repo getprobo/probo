@@ -37,14 +37,6 @@ export const processingActivityRegistryNodeQuery = graphql`
         securityMeasures
         dataProtectionImpactAssessment
         transferImpactAssessment
-        audit {
-          id
-          name
-          framework {
-            id
-            name
-          }
-        }
         organization {
           id
           name
@@ -80,13 +72,6 @@ export const createProcessingActivityRegistryMutation = graphql`
           securityMeasures
           dataProtectionImpactAssessment
           transferImpactAssessment
-          audit {
-            id
-            name
-            framework {
-              name
-            }
-          }
           createdAt
         }
       }
@@ -114,14 +99,6 @@ export const updateProcessingActivityRegistryMutation = graphql`
         securityMeasures
         dataProtectionImpactAssessment
         transferImpactAssessment
-        audit {
-          id
-          name
-          framework {
-            id
-            name
-          }
-        }
         updatedAt
       }
     }
@@ -179,7 +156,6 @@ export const useCreateProcessingActivityRegistry = (connectionId?: string) => {
 
   return (input: {
     organizationId: string;
-    auditId: string;
     name: string;
     purpose?: string;
     dataSubjectCategory?: string;
@@ -202,15 +178,11 @@ export const useCreateProcessingActivityRegistry = (connectionId?: string) => {
     if (!input.name) {
       return alert(__("Failed to create processing activity registry entry: name is required"));
     }
-    if (!input.auditId) {
-      return alert(__("Failed to create processing activity registry entry: audit is required"));
-    }
 
     return promisifyMutation(mutate)({
       variables: {
         input: {
           organizationId: input.organizationId,
-          auditId: input.auditId,
           name: input.name,
           purpose: input.purpose,
           dataSubjectCategory: input.dataSubjectCategory,
@@ -239,7 +211,6 @@ export const useUpdateProcessingActivityRegistry = () => {
 
   return (input: {
     id: string;
-    auditId?: string;
     name?: string;
     purpose?: string;
     dataSubjectCategory?: string;

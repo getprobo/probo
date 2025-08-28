@@ -33,7 +33,6 @@ type (
 		ReferenceID            string                   `db:"reference_id"`
 		Area                   *string                  `db:"area"`
 		Source                 *string                  `db:"source"`
-		AuditID                gid.GID                  `db:"audit_id"`
 		Requirement            *string                  `db:"requirement"`
 		ActionsToBeImplemented *string                  `db:"actions_to_be_implemented"`
 		Regulator              *string                  `db:"regulator"`
@@ -78,7 +77,6 @@ SELECT
 	reference_id,
 	area,
 	source,
-	audit_id,
 	requirement,
 	actions_to_be_implemented,
 	regulator,
@@ -162,7 +160,6 @@ SELECT
 	reference_id,
 	area,
 	source,
-	audit_id,
 	requirement,
 	actions_to_be_implemented,
 	regulator,
@@ -214,7 +211,6 @@ INSERT INTO compliance_registries (
 	reference_id,
 	area,
 	source,
-	audit_id,
 	requirement,
 	actions_to_be_implemented,
 	regulator,
@@ -231,7 +227,6 @@ INSERT INTO compliance_registries (
 	@reference_id,
 	@area,
 	@source,
-	@audit_id,
 	@requirement,
 	@actions_to_be_implemented,
 	@regulator,
@@ -251,7 +246,6 @@ INSERT INTO compliance_registries (
 		"reference_id":              cr.ReferenceID,
 		"area":                      cr.Area,
 		"source":                    cr.Source,
-		"audit_id":                  cr.AuditID,
 		"requirement":               cr.Requirement,
 		"actions_to_be_implemented": cr.ActionsToBeImplemented,
 		"regulator":                 cr.Regulator,
@@ -281,7 +275,6 @@ UPDATE compliance_registries SET
 	reference_id = @reference_id,
 	area = @area,
 	source = @source,
-	audit_id = @audit_id,
 	requirement = @requirement,
 	actions_to_be_implemented = @actions_to_be_implemented,
 	regulator = @regulator,
@@ -302,7 +295,6 @@ WHERE
 		"reference_id":              cr.ReferenceID,
 		"area":                      cr.Area,
 		"source":                    cr.Source,
-		"audit_id":                  cr.AuditID,
 		"requirement":               cr.Requirement,
 		"actions_to_be_implemented": cr.ActionsToBeImplemented,
 		"regulator":                 cr.Regulator,

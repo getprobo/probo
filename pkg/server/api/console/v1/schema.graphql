@@ -1691,14 +1691,6 @@ type Audit implements Node {
     filter: ControlFilter
   ): ControlConnection! @goField(forceResolver: true)
 
-  processingActivityRegistries(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: ProcessingActivityRegistryOrder
-  ): ProcessingActivityRegistryConnection! @goField(forceResolver: true)
-
   showOnTrustCenter: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -1727,7 +1719,6 @@ type ComplianceRegistry implements Node {
   referenceId: String!
   area: String
   source: String
-  audit: Audit! @goField(forceResolver: true)
   requirement: String
   actionsToBeImplemented: String
   regulator: String
@@ -1744,7 +1735,6 @@ type ContinualImprovementRegistry implements Node {
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   description: String
-  audit: Audit! @goField(forceResolver: true)
   source: String
   owner: People! @goField(forceResolver: true)
   targetDate: Datetime
@@ -1757,7 +1747,6 @@ type ContinualImprovementRegistry implements Node {
 type ProcessingActivityRegistry implements Node {
   id: ID!
   organization: Organization! @goField(forceResolver: true)
-  audit: Audit! @goField(forceResolver: true)
   name: String!
   purpose: String
   dataSubjectCategory: String
@@ -2971,7 +2960,6 @@ input CreateComplianceRegistryInput {
   referenceId: String!
   area: String
   source: String
-  auditId: ID!
   requirement: String
   actionsToBeImplemented: String
   regulator: String
@@ -2986,7 +2974,6 @@ input UpdateComplianceRegistryInput {
   referenceId: String
   area: String
   source: String
-  auditId: ID
   requirement: String
   actionsToBeImplemented: String
   regulator: String
@@ -3004,7 +2991,6 @@ input CreateContinualImprovementRegistryInput {
   organizationId: ID!
   referenceId: String!
   description: String
-  auditId: ID!
   source: String
   ownerId: ID!
   targetDate: Datetime
@@ -3016,7 +3002,6 @@ input UpdateContinualImprovementRegistryInput {
   id: ID!
   referenceId: String
   description: String
-  auditId: ID
   source: String
   ownerId: ID
   targetDate: Datetime
@@ -3030,7 +3015,6 @@ input DeleteContinualImprovementRegistryInput {
 
 input CreateProcessingActivityRegistryInput {
   organizationId: ID!
-  auditId: ID!
   name: String!
   purpose: String
   dataSubjectCategory: String
@@ -3050,7 +3034,6 @@ input CreateProcessingActivityRegistryInput {
 
 input UpdateProcessingActivityRegistryInput {
   id: ID!
-  auditId: ID
   name: String
   purpose: String
   dataSubjectCategory: String

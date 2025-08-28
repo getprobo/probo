@@ -27,7 +27,6 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { AuditSelectField } from "/components/form/AuditSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import z from "zod";
@@ -42,7 +41,6 @@ const updateRegistrySchema = z.object({
   status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED"]),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
   ownerId: z.string().min(1, "Owner is required"),
-  auditId: z.string().min(1, "Audit is required"),
 });
 
 type Props = {
@@ -82,7 +80,6 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
         status: registry.status || "OPEN",
         priority: registry.priority || "MEDIUM",
         ownerId: registry.owner?.id || "",
-        auditId: registry.audit?.id || "",
       },
     }
   );
@@ -98,7 +95,7 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
         status: formData.status,
         priority: formData.priority,
         ownerId: formData.ownerId,
-        auditId: formData.auditId,
+
       });
 
       toast({
@@ -165,14 +162,7 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
               required
             />
 
-            <AuditSelectField
-              organizationId={organizationId}
-              control={control}
-              name="auditId"
-              label={__("Audit")}
-              error={formState.errors.auditId?.message}
-              required
-            />
+
 
             <div>
               <Label>{__("Description")}</Label>

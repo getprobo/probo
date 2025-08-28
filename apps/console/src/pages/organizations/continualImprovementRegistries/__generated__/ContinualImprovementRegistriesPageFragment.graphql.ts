@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9fd7671cda5fa074c27aebb356782846>>
+ * @generated SignedSource<<ee61c51b37dbc7c5b31c298b91dd8b5b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,14 +17,6 @@ export type ContinualImprovementRegistriesPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly audit: {
-          readonly framework: {
-            readonly id: string;
-            readonly name: string;
-          };
-          readonly id: string;
-          readonly name: string | null | undefined;
-        };
         readonly createdAt: any;
         readonly description: string | null | undefined;
         readonly id: string;
@@ -65,13 +57,6 @@ v1 = {
   "args": null,
   "kind": "ScalarField",
   "name": "id",
-  "storageKey": null
-},
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
   "storageKey": null
 };
 return {
@@ -196,32 +181,6 @@ return {
                 {
                   "alias": null,
                   "args": null,
-                  "concreteType": "Audit",
-                  "kind": "LinkedField",
-                  "name": "audit",
-                  "plural": false,
-                  "selections": [
-                    (v1/*: any*/),
-                    (v2/*: any*/),
-                    {
-                      "alias": null,
-                      "args": null,
-                      "concreteType": "Framework",
-                      "kind": "LinkedField",
-                      "name": "framework",
-                      "plural": false,
-                      "selections": [
-                        (v1/*: any*/),
-                        (v2/*: any*/)
-                      ],
-                      "storageKey": null
-                    }
-                  ],
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
                   "concreteType": "People",
                   "kind": "LinkedField",
                   "name": "owner",
@@ -318,6 +277,6 @@ return {
 };
 })();
 
-(node as any).hash = "838609d0047346d2031f045e5227c9f0";
+(node as any).hash = "1532ac43a0b47d9cd63980861eaa7306";
 
 export default node;

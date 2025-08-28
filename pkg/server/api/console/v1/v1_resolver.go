@@ -209,31 +209,6 @@ func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *i
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
 }
 
-// ProcessingActivityRegistries is the resolver for the processingActivityRegistries field.
-func (r *auditResolver) ProcessingActivityRegistries(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) (*types.ProcessingActivityRegistryConnection, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	pageOrderBy := page.OrderBy[coredata.ProcessingActivityRegistryOrderField]{
-		Field:     coredata.ProcessingActivityRegistryOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ProcessingActivityRegistryOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := prb.ProcessingActivityRegistries.ListForAuditID(ctx, obj.ID, cursor)
-	if err != nil {
-		return nil, fmt.Errorf("cannot list processing activity registries: %w", err)
-	}
-
-	return types.NewProcessingActivityRegistryConnection(page, r, obj.ID), nil
-}
-
 // TotalCount is the resolver for the totalCount field.
 func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
@@ -260,23 +235,6 @@ func (r *complianceRegistryResolver) Organization(ctx context.Context, obj *type
 	}
 
 	return types.NewOrganization(organization), nil
-}
-
-// Audit is the resolver for the audit field.
-func (r *complianceRegistryResolver) Audit(ctx context.Context, obj *types.ComplianceRegistry) (*types.Audit, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	registry, err := prb.ComplianceRegistries.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get compliance registry: %w", err))
-	}
-
-	audit, err := prb.Audits.Get(ctx, registry.AuditID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get compliance registry audit: %w", err))
-	}
-
-	return types.NewAudit(audit), nil
 }
 
 // Owner is the resolver for the owner field.
@@ -327,23 +285,6 @@ func (r *continualImprovementRegistryResolver) Organization(ctx context.Context,
 	}
 
 	return types.NewOrganization(organization), nil
-}
-
-// Audit is the resolver for the audit field.
-func (r *continualImprovementRegistryResolver) Audit(ctx context.Context, obj *types.ContinualImprovementRegistry) (*types.Audit, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	registry, err := prb.ContinualImprovementRegistries.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get continual improvement registry: %w", err))
-	}
-
-	audit, err := prb.Audits.Get(ctx, registry.AuditID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get continual improvement registry audit: %w", err))
-	}
-
-	return types.NewAudit(audit), nil
 }
 
 // Owner is the resolver for the owner field.
@@ -3080,7 +3021,6 @@ func (r *mutationResolver) CreateComplianceRegistry(ctx context.Context, input t
 		ReferenceID:            input.ReferenceID,
 		Area:                   input.Area,
 		Source:                 input.Source,
-		AuditID:                input.AuditID,
 		Requirement:            input.Requirement,
 		ActionsToBeImplemented: input.ActionsToBeImplemented,
 		Regulator:              input.Regulator,
@@ -3109,7 +3049,6 @@ func (r *mutationResolver) UpdateComplianceRegistry(ctx context.Context, input t
 		ReferenceID:            input.ReferenceID,
 		Area:                   &input.Area,
 		Source:                 &input.Source,
-		AuditID:                input.AuditID,
 		Requirement:            &input.Requirement,
 		ActionsToBeImplemented: &input.ActionsToBeImplemented,
 		Regulator:              &input.Regulator,
@@ -3151,7 +3090,6 @@ func (r *mutationResolver) CreateContinualImprovementRegistry(ctx context.Contex
 		OrganizationID: input.OrganizationID,
 		ReferenceID:    input.ReferenceID,
 		Description:    input.Description,
-		AuditID:        input.AuditID,
 		Source:         input.Source,
 		OwnerID:        input.OwnerID,
 		TargetDate:     input.TargetDate,
@@ -3177,7 +3115,6 @@ func (r *mutationResolver) UpdateContinualImprovementRegistry(ctx context.Contex
 		ID:          input.ID,
 		ReferenceID: input.ReferenceID,
 		Description: &input.Description,
-		AuditID:     input.AuditID,
 		Source:      &input.Source,
 		OwnerID:     input.OwnerID,
 		TargetDate:  &input.TargetDate,
@@ -3229,7 +3166,6 @@ func (r *mutationResolver) CreateProcessingActivityRegistry(ctx context.Context,
 		SecurityMeasures:               input.SecurityMeasures,
 		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
 		TransferImpactAssessment:       input.TransferImpactAssessment,
-		AuditID:                        input.AuditID,
 	}
 
 	registry, err := prb.ProcessingActivityRegistries.Create(ctx, &req)
@@ -3262,7 +3198,6 @@ func (r *mutationResolver) UpdateProcessingActivityRegistry(ctx context.Context,
 		SecurityMeasures:               &input.SecurityMeasures,
 		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
 		TransferImpactAssessment:       input.TransferImpactAssessment,
-		AuditID:                        input.AuditID,
 	}
 
 	registry, err := prb.ProcessingActivityRegistries.Update(ctx, &req)
@@ -3922,23 +3857,6 @@ func (r *processingActivityRegistryResolver) Organization(ctx context.Context, o
 	return types.NewOrganization(organization), nil
 }
 
-// Audit is the resolver for the audit field.
-func (r *processingActivityRegistryResolver) Audit(ctx context.Context, obj *types.ProcessingActivityRegistry) (*types.Audit, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	processingActivityRegistry, err := prb.ProcessingActivityRegistries.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get processing activity registry: %w", err))
-	}
-
-	audit, err := prb.Audits.Get(ctx, processingActivityRegistry.AuditID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get audit: %w", err)
-	}
-
-	return types.NewAudit(audit), nil
-}
-
 // TotalCount is the resolver for the totalCount field.
 func (r *processingActivityRegistryConnectionResolver) TotalCount(ctx context.Context, obj *types.ProcessingActivityRegistryConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
@@ -3948,12 +3866,6 @@ func (r *processingActivityRegistryConnectionResolver) TotalCount(ctx context.Co
 		count, err := prb.ProcessingActivityRegistries.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
 			panic(fmt.Errorf("cannot count organization processing activity registries: %w", err))
-		}
-		return count, nil
-	case *auditResolver:
-		count, err := prb.ProcessingActivityRegistries.CountForAuditID(ctx, obj.ParentID)
-		if err != nil {
-			panic(fmt.Errorf("cannot count audit processing activity registries: %w", err))
 		}
 		return count, nil
 	}

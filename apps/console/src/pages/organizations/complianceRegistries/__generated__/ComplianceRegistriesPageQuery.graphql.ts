@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<45ac04d64bae14926f41dccda7ec5a25>>
+ * @generated SignedSource<<c6faaadb8a0f7d2b70fed9a5801f3580>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -58,14 +58,7 @@ v4 = [
     "name": "first",
     "value": 10
   }
-],
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-};
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -217,32 +210,6 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "concreteType": "Audit",
-                            "kind": "LinkedField",
-                            "name": "audit",
-                            "plural": false,
-                            "selections": [
-                              (v3/*: any*/),
-                              (v5/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "concreteType": "Framework",
-                                "kind": "LinkedField",
-                                "name": "framework",
-                                "plural": false,
-                                "selections": [
-                                  (v3/*: any*/),
-                                  (v5/*: any*/)
-                                ],
-                                "storageKey": null
-                              }
-                            ],
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
                             "concreteType": "People",
                             "kind": "LinkedField",
                             "name": "owner",
@@ -346,12 +313,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "fcc5d4d2cc4ca376314b334d7f36316f",
+    "cacheID": "e4fba5ed79a8d19c72d2814f1adf38c3",
     "id": null,
     "metadata": {},
     "name": "ComplianceRegistriesPageQuery",
     "operationKind": "query",
-    "text": "query ComplianceRegistriesPageQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ComplianceRegistriesPageFragment\n    }\n    id\n  }\n}\n\nfragment ComplianceRegistriesPageFragment on Organization {\n  id\n  complianceRegistries(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ComplianceRegistriesPageQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ComplianceRegistriesPageFragment\n    }\n    id\n  }\n}\n\nfragment ComplianceRegistriesPageFragment on Organization {\n  id\n  complianceRegistries(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();

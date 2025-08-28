@@ -32,7 +32,6 @@ type (
 		OrganizationID gid.GID                                `db:"organization_id"`
 		ReferenceID    string                                 `db:"reference_id"`
 		Description    *string                                `db:"description"`
-		AuditID        gid.GID                                `db:"audit_id"`
 		Source         *string                                `db:"source"`
 		OwnerID        gid.GID                                `db:"owner_id"`
 		TargetDate     *time.Time                             `db:"target_date"`
@@ -74,7 +73,6 @@ SELECT
 	organization_id,
 	reference_id,
 	description,
-	audit_id,
 	source,
 	owner_id,
 	target_date,
@@ -155,7 +153,6 @@ SELECT
 	organization_id,
 	reference_id,
 	description,
-	audit_id,
 	source,
 	owner_id,
 	target_date,
@@ -204,7 +201,6 @@ INSERT INTO continual_improvement_registries (
 	organization_id,
 	reference_id,
 	description,
-	audit_id,
 	source,
 	owner_id,
 	target_date,
@@ -218,7 +214,6 @@ INSERT INTO continual_improvement_registries (
 	@organization_id,
 	@reference_id,
 	@description,
-	@audit_id,
 	@source,
 	@owner_id,
 	@target_date,
@@ -235,7 +230,6 @@ INSERT INTO continual_improvement_registries (
 		"organization_id": cir.OrganizationID,
 		"reference_id":    cir.ReferenceID,
 		"description":     cir.Description,
-		"audit_id":        cir.AuditID,
 		"source":          cir.Source,
 		"owner_id":        cir.OwnerID,
 		"target_date":     cir.TargetDate,
@@ -262,7 +256,6 @@ func (cir *ContinualImprovementRegistry) Update(
 UPDATE continual_improvement_registries SET
 	reference_id = @reference_id,
 	description = @description,
-	audit_id = @audit_id,
 	source = @source,
 	owner_id = @owner_id,
 	target_date = @target_date,
@@ -280,7 +273,6 @@ WHERE
 		"id":           cir.ID,
 		"reference_id": cir.ReferenceID,
 		"description":  cir.Description,
-		"audit_id":     cir.AuditID,
 		"source":       cir.Source,
 		"owner_id":     cir.OwnerID,
 		"target_date":  cir.TargetDate,

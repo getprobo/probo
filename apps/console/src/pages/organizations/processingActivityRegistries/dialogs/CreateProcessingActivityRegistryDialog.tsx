@@ -17,7 +17,6 @@ import { useTranslate } from "@probo/i18n";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useCreateProcessingActivityRegistry } from "../../../../hooks/graph/ProcessingActivityRegistryGraph";
-import { AuditSelectField } from "/components/form/AuditSelectField";
 import { Controller } from "react-hook-form";
 import {
   SpecialOrCriminalDataOptions,
@@ -43,7 +42,6 @@ const schema = z.object({
   securityMeasures: z.string().optional(),
   dataProtectionImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
   transferImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
-  auditId: z.string().min(1, "Audit is required"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -82,7 +80,6 @@ export function CreateProcessingActivityRegistryDialog({
       securityMeasures: "",
       dataProtectionImpactAssessment: "NOT_NEEDED" as const,
       transferImpactAssessment: "NOT_NEEDED" as const,
-      auditId: "",
     },
   });
 
@@ -105,7 +102,6 @@ export function CreateProcessingActivityRegistryDialog({
         securityMeasures: formData.securityMeasures || undefined,
         dataProtectionImpactAssessment: formData.dataProtectionImpactAssessment || undefined,
         transferImpactAssessment: formData.transferImpactAssessment || undefined,
-        auditId: formData.auditId,
       });
 
       toast({
@@ -141,15 +137,6 @@ export function CreateProcessingActivityRegistryDialog({
                 {...register("name")}
                 placeholder={__("Processing activity name")}
                 error={formState.errors.name?.message}
-                required
-              />
-
-              <AuditSelectField
-                organizationId={organizationId}
-                control={control}
-                name="auditId"
-                label={__("Audit")}
-                error={formState.errors.auditId?.message}
                 required
               />
 

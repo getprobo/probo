@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a3f34af85b45563725a110a4e6b6cbfb>>
+ * @generated SignedSource<<4cd5e6a5205e9438408c95bba2378cde>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ export type ComplianceRegistryStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
 export type CreateComplianceRegistryInput = {
   actionsToBeImplemented?: string | null | undefined;
   area?: string | null | undefined;
-  auditId: string;
   dueDate?: any | null | undefined;
   lastReviewDate?: any | null | undefined;
   organizationId: string;
@@ -34,13 +33,6 @@ export type ComplianceRegistryGraphCreateMutation$data = {
       readonly node: {
         readonly actionsToBeImplemented: string | null | undefined;
         readonly area: string | null | undefined;
-        readonly audit: {
-          readonly framework: {
-            readonly name: string;
-          };
-          readonly id: string;
-          readonly name: string | null | undefined;
-        };
         readonly createdAt: any;
         readonly dueDate: any | null | undefined;
         readonly id: string;
@@ -91,97 +83,113 @@ v3 = {
 v4 = {
   "alias": null,
   "args": null,
-  "kind": "ScalarField",
-  "name": "referenceId",
-  "storageKey": null
-},
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "area",
-  "storageKey": null
-},
-v6 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "source",
-  "storageKey": null
-},
-v7 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "requirement",
-  "storageKey": null
-},
-v8 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "actionsToBeImplemented",
-  "storageKey": null
-},
-v9 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "regulator",
-  "storageKey": null
-},
-v10 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "lastReviewDate",
-  "storageKey": null
-},
-v11 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "dueDate",
-  "storageKey": null
-},
-v12 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "status",
-  "storageKey": null
-},
-v13 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v14 = {
-  "alias": null,
-  "args": null,
-  "concreteType": "People",
+  "concreteType": "ComplianceRegistryEdge",
   "kind": "LinkedField",
-  "name": "owner",
+  "name": "complianceRegistryEdge",
   "plural": false,
   "selections": [
-    (v3/*: any*/),
     {
       "alias": null,
       "args": null,
-      "kind": "ScalarField",
-      "name": "fullName",
+      "concreteType": "ComplianceRegistry",
+      "kind": "LinkedField",
+      "name": "node",
+      "plural": false,
+      "selections": [
+        (v3/*: any*/),
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "referenceId",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "area",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "source",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "requirement",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "actionsToBeImplemented",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "regulator",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "lastReviewDate",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "dueDate",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "status",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "People",
+          "kind": "LinkedField",
+          "name": "owner",
+          "plural": false,
+          "selections": [
+            (v3/*: any*/),
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "fullName",
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "createdAt",
+          "storageKey": null
+        }
+      ],
       "storageKey": null
     }
   ],
-  "storageKey": null
-},
-v15 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "createdAt",
   "storageKey": null
 };
 return {
@@ -202,65 +210,7 @@ return {
         "name": "createComplianceRegistry",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "ComplianceRegistryEdge",
-            "kind": "LinkedField",
-            "name": "complianceRegistryEdge",
-            "plural": false,
-            "selections": [
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "ComplianceRegistry",
-                "kind": "LinkedField",
-                "name": "node",
-                "plural": false,
-                "selections": [
-                  (v3/*: any*/),
-                  (v4/*: any*/),
-                  (v5/*: any*/),
-                  (v6/*: any*/),
-                  (v7/*: any*/),
-                  (v8/*: any*/),
-                  (v9/*: any*/),
-                  (v10/*: any*/),
-                  (v11/*: any*/),
-                  (v12/*: any*/),
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "Audit",
-                    "kind": "LinkedField",
-                    "name": "audit",
-                    "plural": false,
-                    "selections": [
-                      (v3/*: any*/),
-                      (v13/*: any*/),
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "Framework",
-                        "kind": "LinkedField",
-                        "name": "framework",
-                        "plural": false,
-                        "selections": [
-                          (v13/*: any*/)
-                        ],
-                        "storageKey": null
-                      }
-                    ],
-                    "storageKey": null
-                  },
-                  (v14/*: any*/),
-                  (v15/*: any*/)
-                ],
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
-          }
+          (v4/*: any*/)
         ],
         "storageKey": null
       }
@@ -285,66 +235,7 @@ return {
         "name": "createComplianceRegistry",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "ComplianceRegistryEdge",
-            "kind": "LinkedField",
-            "name": "complianceRegistryEdge",
-            "plural": false,
-            "selections": [
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "ComplianceRegistry",
-                "kind": "LinkedField",
-                "name": "node",
-                "plural": false,
-                "selections": [
-                  (v3/*: any*/),
-                  (v4/*: any*/),
-                  (v5/*: any*/),
-                  (v6/*: any*/),
-                  (v7/*: any*/),
-                  (v8/*: any*/),
-                  (v9/*: any*/),
-                  (v10/*: any*/),
-                  (v11/*: any*/),
-                  (v12/*: any*/),
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "Audit",
-                    "kind": "LinkedField",
-                    "name": "audit",
-                    "plural": false,
-                    "selections": [
-                      (v3/*: any*/),
-                      (v13/*: any*/),
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "Framework",
-                        "kind": "LinkedField",
-                        "name": "framework",
-                        "plural": false,
-                        "selections": [
-                          (v13/*: any*/),
-                          (v3/*: any*/)
-                        ],
-                        "storageKey": null
-                      }
-                    ],
-                    "storageKey": null
-                  },
-                  (v14/*: any*/),
-                  (v15/*: any*/)
-                ],
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
-          },
+          (v4/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -367,16 +258,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "68c793eb099ce3e917992b3f8c22d551",
+    "cacheID": "01d9290d9f4bb8162a0d18ab3c72bdaf",
     "id": null,
     "metadata": {},
     "name": "ComplianceRegistryGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation ComplianceRegistryGraphCreateMutation(\n  $input: CreateComplianceRegistryInput!\n) {\n  createComplianceRegistry(input: $input) {\n    complianceRegistryEdge {\n      node {\n        id\n        referenceId\n        area\n        source\n        requirement\n        actionsToBeImplemented\n        regulator\n        lastReviewDate\n        dueDate\n        status\n        audit {\n          id\n          name\n          framework {\n            name\n            id\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation ComplianceRegistryGraphCreateMutation(\n  $input: CreateComplianceRegistryInput!\n) {\n  createComplianceRegistry(input: $input) {\n    complianceRegistryEdge {\n      node {\n        id\n        referenceId\n        area\n        source\n        requirement\n        actionsToBeImplemented\n        regulator\n        lastReviewDate\n        dueDate\n        status\n        owner {\n          id\n          fullName\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "50e1966d2f9cc1ed347a77f8f024125c";
+(node as any).hash = "c203076113948b2c59dddad5577e1c13";
 
 export default node;

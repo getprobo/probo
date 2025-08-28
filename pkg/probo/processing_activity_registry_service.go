@@ -32,7 +32,6 @@ type ProcessingActivityRegistryService struct {
 type (
 	CreateProcessingActivityRegistryRequest struct {
 		OrganizationID                 gid.GID
-		AuditID                        gid.GID
 		Name                           string
 		Purpose                        *string
 		DataSubjectCategory            *string
@@ -52,7 +51,6 @@ type (
 
 	UpdateProcessingActivityRegistryRequest struct {
 		ID                             gid.GID
-		AuditID                        *gid.GID
 		Name                           *string
 		Purpose                        **string
 		DataSubjectCategory            **string
@@ -100,7 +98,6 @@ func (s *ProcessingActivityRegistryService) Create(
 	processingActivityRegistry := &coredata.ProcessingActivityRegistry{
 		ID:                             gid.New(s.svc.scope.GetTenantID(), coredata.ProcessingActivityRegistryEntityType),
 		OrganizationID:                 req.OrganizationID,
-		AuditID:                        req.AuditID,
 		Name:                           req.Name,
 		Purpose:                        req.Purpose,
 		DataSubjectCategory:            req.DataSubjectCategory,
@@ -126,11 +123,6 @@ func (s *ProcessingActivityRegistryService) Create(
 			organization := &coredata.Organization{}
 			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
-			}
-
-			audit := &coredata.Audit{}
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, req.AuditID); err != nil {
-				return fmt.Errorf("cannot load audit: %w", err)
 			}
 
 			if err := processingActivityRegistry.Insert(ctx, conn, s.svc.scope); err != nil {
@@ -159,14 +151,6 @@ func (s *ProcessingActivityRegistryService) Update(
 		func(conn pg.Conn) error {
 			if err := processingActivityRegistry.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load processing activity registry: %w", err)
-			}
-
-			if req.AuditID != nil {
-				audit := &coredata.Audit{}
-				if err := audit.LoadByID(ctx, conn, s.svc.scope, *req.AuditID); err != nil {
-					return fmt.Errorf("cannot load audit: %w", err)
-				}
-				processingActivityRegistry.AuditID = audit.ID
 			}
 
 			if req.Name != nil {
@@ -286,63 +270,6 @@ func (s ProcessingActivityRegistryService) CountForOrganizationID(
 		func(conn pg.Conn) (err error) {
 			processingActivityRegistries := coredata.ProcessingActivityRegistries{}
 			count, err = processingActivityRegistries.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
-			if err != nil {
-				return fmt.Errorf("cannot count processing activity registries: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return count, nil
-}
-
-func (s ProcessingActivityRegistryService) ListForAuditID(
-	ctx context.Context,
-	auditID gid.GID,
-	cursor *page.Cursor[coredata.ProcessingActivityRegistryOrderField],
-) (*page.Page[*coredata.ProcessingActivityRegistry, coredata.ProcessingActivityRegistryOrderField], error) {
-	var processingActivityRegistries coredata.ProcessingActivityRegistries
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			audit := &coredata.Audit{}
-			if err := audit.LoadByID(ctx, conn, s.svc.scope, auditID); err != nil {
-				return fmt.Errorf("cannot load audit: %w", err)
-			}
-
-			err := processingActivityRegistries.LoadByAuditID(ctx, conn, s.svc.scope, audit.ID, cursor)
-			if err != nil {
-				return fmt.Errorf("cannot load processing activity registries: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(processingActivityRegistries, cursor), nil
-}
-
-func (s ProcessingActivityRegistryService) CountForAuditID(
-	ctx context.Context,
-	auditID gid.GID,
-) (int, error) {
-	var count int
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) (err error) {
-			processingActivityRegistries := coredata.ProcessingActivityRegistries{}
-			count, err = processingActivityRegistries.CountByAuditID(ctx, conn, s.svc.scope, auditID)
 			if err != nil {
 				return fmt.Errorf("cannot count processing activity registries: %w", err)
 			}

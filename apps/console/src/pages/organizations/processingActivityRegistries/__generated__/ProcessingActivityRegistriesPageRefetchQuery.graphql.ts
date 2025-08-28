@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<eae0517caf3cfcc45963a0cc7bcd4dca>>
+ * @generated SignedSource<<3ad73dde5a41f4370035f6156fc1f38b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -74,13 +74,6 @@ v4 = {
   "args": null,
   "kind": "ScalarField",
   "name": "id",
-  "storageKey": null
-},
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
   "storageKey": null
 };
 return {
@@ -161,7 +154,13 @@ return {
                         "plural": false,
                         "selections": [
                           (v4/*: any*/),
-                          (v5/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "name",
+                            "storageKey": null
+                          },
                           {
                             "alias": null,
                             "args": null,
@@ -202,32 +201,6 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "internationalTransfers",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "concreteType": "Audit",
-                            "kind": "LinkedField",
-                            "name": "audit",
-                            "plural": false,
-                            "selections": [
-                              (v4/*: any*/),
-                              (v5/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "concreteType": "Framework",
-                                "kind": "LinkedField",
-                                "name": "framework",
-                                "plural": false,
-                                "selections": [
-                                  (v4/*: any*/),
-                                  (v5/*: any*/)
-                                ],
-                                "storageKey": null
-                              }
-                            ],
                             "storageKey": null
                           },
                           {
@@ -317,16 +290,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "352606982d18141d1e790715a3554f8c",
+    "cacheID": "1d359fcdec190d343db1cef8c01c7672",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityRegistriesPageRefetchQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityRegistriesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivityRegistriesPageFragment_2HEEH6\n    id\n  }\n}\n\nfragment ProcessingActivityRegistriesPageFragment_2HEEH6 on Organization {\n  id\n  processingActivityRegistries(first: $first, after: $after) {\n    totalCount\n    edges {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ProcessingActivityRegistriesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ProcessingActivityRegistriesPageFragment_2HEEH6\n    id\n  }\n}\n\nfragment ProcessingActivityRegistriesPageFragment_2HEEH6 on Organization {\n  id\n  processingActivityRegistries(first: $first, after: $after) {\n    totalCount\n    edges {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7e63a0911396373ab39811be65844b89";
+(node as any).hash = "25222b5244115092f96c424d8a52a5db";
 
 export default node;

@@ -132,20 +132,19 @@ type ComplexityRoot struct {
 	}
 
 	Audit struct {
-		Controls                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
-		CreatedAt                    func(childComplexity int) int
-		Framework                    func(childComplexity int) int
-		ID                           func(childComplexity int) int
-		Name                         func(childComplexity int) int
-		Organization                 func(childComplexity int) int
-		ProcessingActivityRegistries func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) int
-		Report                       func(childComplexity int) int
-		ReportURL                    func(childComplexity int) int
-		ShowOnTrustCenter            func(childComplexity int) int
-		State                        func(childComplexity int) int
-		UpdatedAt                    func(childComplexity int) int
-		ValidFrom                    func(childComplexity int) int
-		ValidUntil                   func(childComplexity int) int
+		Controls          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
+		CreatedAt         func(childComplexity int) int
+		Framework         func(childComplexity int) int
+		ID                func(childComplexity int) int
+		Name              func(childComplexity int) int
+		Organization      func(childComplexity int) int
+		Report            func(childComplexity int) int
+		ReportURL         func(childComplexity int) int
+		ShowOnTrustCenter func(childComplexity int) int
+		State             func(childComplexity int) int
+		UpdatedAt         func(childComplexity int) int
+		ValidFrom         func(childComplexity int) int
+		ValidUntil        func(childComplexity int) int
 	}
 
 	AuditConnection struct {
@@ -175,7 +174,6 @@ type ComplexityRoot struct {
 	ComplianceRegistry struct {
 		ActionsToBeImplemented func(childComplexity int) int
 		Area                   func(childComplexity int) int
-		Audit                  func(childComplexity int) int
 		CreatedAt              func(childComplexity int) int
 		DueDate                func(childComplexity int) int
 		ID                     func(childComplexity int) int
@@ -224,7 +222,6 @@ type ComplexityRoot struct {
 	}
 
 	ContinualImprovementRegistry struct {
-		Audit        func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
 		Description  func(childComplexity int) int
 		ID           func(childComplexity int) int
@@ -938,7 +935,6 @@ type ComplexityRoot struct {
 	}
 
 	ProcessingActivityRegistry struct {
-		Audit                          func(childComplexity int) int
 		ConsentEvidenceLink            func(childComplexity int) int
 		CreatedAt                      func(childComplexity int) int
 		DataProtectionImpactAssessment func(childComplexity int) int
@@ -1449,15 +1445,12 @@ type AuditResolver interface {
 	ReportURL(ctx context.Context, obj *types.Audit) (*string, error)
 
 	Controls(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
-	ProcessingActivityRegistries(ctx context.Context, obj *types.Audit, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) (*types.ProcessingActivityRegistryConnection, error)
 }
 type AuditConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.AuditConnection) (int, error)
 }
 type ComplianceRegistryResolver interface {
 	Organization(ctx context.Context, obj *types.ComplianceRegistry) (*types.Organization, error)
-
-	Audit(ctx context.Context, obj *types.ComplianceRegistry) (*types.Audit, error)
 
 	Owner(ctx context.Context, obj *types.ComplianceRegistry) (*types.People, error)
 }
@@ -1466,8 +1459,6 @@ type ComplianceRegistryConnectionResolver interface {
 }
 type ContinualImprovementRegistryResolver interface {
 	Organization(ctx context.Context, obj *types.ContinualImprovementRegistry) (*types.Organization, error)
-
-	Audit(ctx context.Context, obj *types.ContinualImprovementRegistry) (*types.Audit, error)
 
 	Owner(ctx context.Context, obj *types.ContinualImprovementRegistry) (*types.People, error)
 }
@@ -1687,7 +1678,6 @@ type PeopleConnectionResolver interface {
 }
 type ProcessingActivityRegistryResolver interface {
 	Organization(ctx context.Context, obj *types.ProcessingActivityRegistry) (*types.Organization, error)
-	Audit(ctx context.Context, obj *types.ProcessingActivityRegistry) (*types.Audit, error)
 }
 type ProcessingActivityRegistryConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.ProcessingActivityRegistryConnection) (int, error)
@@ -1974,18 +1964,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Audit.Organization(childComplexity), true
 
-	case "Audit.processingActivityRegistries":
-		if e.complexity.Audit.ProcessingActivityRegistries == nil {
-			break
-		}
-
-		args, err := ec.field_Audit_processingActivityRegistries_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Audit.ProcessingActivityRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityRegistryOrderBy)), true
-
 	case "Audit.report":
 		if e.complexity.Audit.Report == nil {
 			break
@@ -2111,13 +2089,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ComplianceRegistry.Area(childComplexity), true
-
-	case "ComplianceRegistry.audit":
-		if e.complexity.ComplianceRegistry.Audit == nil {
-			break
-		}
-
-		return e.complexity.ComplianceRegistry.Audit(childComplexity), true
 
 	case "ComplianceRegistry.createdAt":
 		if e.complexity.ComplianceRegistry.CreatedAt == nil {
@@ -2307,13 +2278,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ConnectorEdge.Node(childComplexity), true
-
-	case "ContinualImprovementRegistry.audit":
-		if e.complexity.ContinualImprovementRegistry.Audit == nil {
-			break
-		}
-
-		return e.complexity.ContinualImprovementRegistry.Audit(childComplexity), true
 
 	case "ContinualImprovementRegistry.createdAt":
 		if e.complexity.ContinualImprovementRegistry.CreatedAt == nil {
@@ -5774,13 +5738,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.PeopleEdge.Node(childComplexity), true
-
-	case "ProcessingActivityRegistry.audit":
-		if e.complexity.ProcessingActivityRegistry.Audit == nil {
-			break
-		}
-
-		return e.complexity.ProcessingActivityRegistry.Audit(childComplexity), true
 
 	case "ProcessingActivityRegistry.consentEvidenceLink":
 		if e.complexity.ProcessingActivityRegistry.ConsentEvidenceLink == nil {
@@ -9609,14 +9566,6 @@ type Audit implements Node {
     filter: ControlFilter
   ): ControlConnection! @goField(forceResolver: true)
 
-  processingActivityRegistries(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: ProcessingActivityRegistryOrder
-  ): ProcessingActivityRegistryConnection! @goField(forceResolver: true)
-
   showOnTrustCenter: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -9645,7 +9594,6 @@ type ComplianceRegistry implements Node {
   referenceId: String!
   area: String
   source: String
-  audit: Audit! @goField(forceResolver: true)
   requirement: String
   actionsToBeImplemented: String
   regulator: String
@@ -9662,7 +9610,6 @@ type ContinualImprovementRegistry implements Node {
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   description: String
-  audit: Audit! @goField(forceResolver: true)
   source: String
   owner: People! @goField(forceResolver: true)
   targetDate: Datetime
@@ -9675,7 +9622,6 @@ type ContinualImprovementRegistry implements Node {
 type ProcessingActivityRegistry implements Node {
   id: ID!
   organization: Organization! @goField(forceResolver: true)
-  audit: Audit! @goField(forceResolver: true)
   name: String!
   purpose: String
   dataSubjectCategory: String
@@ -10889,7 +10835,6 @@ input CreateComplianceRegistryInput {
   referenceId: String!
   area: String
   source: String
-  auditId: ID!
   requirement: String
   actionsToBeImplemented: String
   regulator: String
@@ -10904,7 +10849,6 @@ input UpdateComplianceRegistryInput {
   referenceId: String
   area: String
   source: String
-  auditId: ID
   requirement: String
   actionsToBeImplemented: String
   regulator: String
@@ -10922,7 +10866,6 @@ input CreateContinualImprovementRegistryInput {
   organizationId: ID!
   referenceId: String!
   description: String
-  auditId: ID!
   source: String
   ownerId: ID!
   targetDate: Datetime
@@ -10934,7 +10877,6 @@ input UpdateContinualImprovementRegistryInput {
   id: ID!
   referenceId: String
   description: String
-  auditId: ID
   source: String
   ownerId: ID
   targetDate: Datetime
@@ -10948,7 +10890,6 @@ input DeleteContinualImprovementRegistryInput {
 
 input CreateProcessingActivityRegistryInput {
   organizationId: ID!
-  auditId: ID!
   name: String!
   purpose: String
   dataSubjectCategory: String
@@ -10968,7 +10909,6 @@ input CreateProcessingActivityRegistryInput {
 
 input UpdateProcessingActivityRegistryInput {
   id: ID!
-  auditId: ID
   name: String
   purpose: String
   dataSubjectCategory: String
@@ -11963,101 +11903,6 @@ func (ec *executionContext) field_Audit_controls_argsFilter(
 	}
 
 	var zeroVal *types.ControlFilter
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Audit_processingActivityRegistries_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Audit_processingActivityRegistries_argsFirst(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg0
-	arg1, err := ec.field_Audit_processingActivityRegistries_argsAfter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := ec.field_Audit_processingActivityRegistries_argsLast(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg2
-	arg3, err := ec.field_Audit_processingActivityRegistries_argsBefore(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg3
-	arg4, err := ec.field_Audit_processingActivityRegistries_argsOrderBy(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["orderBy"] = arg4
-	return args, nil
-}
-func (ec *executionContext) field_Audit_processingActivityRegistries_argsFirst(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-	if tmp, ok := rawArgs["first"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Audit_processingActivityRegistries_argsAfter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Audit_processingActivityRegistries_argsLast(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-	if tmp, ok := rawArgs["last"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Audit_processingActivityRegistries_argsBefore(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Audit_processingActivityRegistries_argsOrderBy(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*types.ProcessingActivityRegistryOrderBy, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
-	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOProcessingActivityRegistryOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryOrderBy(ctx, tmp)
-	}
-
-	var zeroVal *types.ProcessingActivityRegistryOrderBy
 	return zeroVal, nil
 }
 
@@ -20565,69 +20410,6 @@ func (ec *executionContext) fieldContext_Audit_controls(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Audit_processingActivityRegistries(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Audit().ProcessingActivityRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityRegistryOrderBy))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.ProcessingActivityRegistryConnection)
-	fc.Result = res
-	return ec.marshalNProcessingActivityRegistryConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryConnection(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Audit_processingActivityRegistries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Audit",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "totalCount":
-				return ec.fieldContext_ProcessingActivityRegistryConnection_totalCount(ctx, field)
-			case "edges":
-				return ec.fieldContext_ProcessingActivityRegistryConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_ProcessingActivityRegistryConnection_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ProcessingActivityRegistryConnection", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Audit_processingActivityRegistries_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Audit_showOnTrustCenter(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 	if err != nil {
@@ -21011,8 +20793,6 @@ func (ec *executionContext) fieldContext_AuditEdge_node(_ context.Context, field
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
-			case "processingActivityRegistries":
-				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -21479,80 +21259,6 @@ func (ec *executionContext) fieldContext_ComplianceRegistry_source(_ context.Con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ComplianceRegistry_audit(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ComplianceRegistry_audit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ComplianceRegistry().Audit(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.Audit)
-	fc.Result = res
-	return ec.marshalNAudit2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ComplianceRegistry_audit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ComplianceRegistry",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Audit_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Audit_name(ctx, field)
-			case "organization":
-				return ec.fieldContext_Audit_organization(ctx, field)
-			case "framework":
-				return ec.fieldContext_Audit_framework(ctx, field)
-			case "validFrom":
-				return ec.fieldContext_Audit_validFrom(ctx, field)
-			case "validUntil":
-				return ec.fieldContext_Audit_validUntil(ctx, field)
-			case "report":
-				return ec.fieldContext_Audit_report(ctx, field)
-			case "reportUrl":
-				return ec.fieldContext_Audit_reportUrl(ctx, field)
-			case "state":
-				return ec.fieldContext_Audit_state(ctx, field)
-			case "controls":
-				return ec.fieldContext_Audit_controls(ctx, field)
-			case "processingActivityRegistries":
-				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Audit_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Audit_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
 		},
 	}
 	return fc, nil
@@ -22202,8 +21908,6 @@ func (ec *executionContext) fieldContext_ComplianceRegistryEdge_node(_ context.C
 				return ec.fieldContext_ComplianceRegistry_area(ctx, field)
 			case "source":
 				return ec.fieldContext_ComplianceRegistry_source(ctx, field)
-			case "audit":
-				return ec.fieldContext_ComplianceRegistry_audit(ctx, field)
 			case "requirement":
 				return ec.fieldContext_ComplianceRegistry_requirement(ctx, field)
 			case "actionsToBeImplemented":
@@ -22920,80 +22624,6 @@ func (ec *executionContext) fieldContext_ContinualImprovementRegistry_descriptio
 	return fc, nil
 }
 
-func (ec *executionContext) _ContinualImprovementRegistry_audit(ctx context.Context, field graphql.CollectedField, obj *types.ContinualImprovementRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ContinualImprovementRegistry_audit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ContinualImprovementRegistry().Audit(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.Audit)
-	fc.Result = res
-	return ec.marshalNAudit2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ContinualImprovementRegistry_audit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ContinualImprovementRegistry",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Audit_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Audit_name(ctx, field)
-			case "organization":
-				return ec.fieldContext_Audit_organization(ctx, field)
-			case "framework":
-				return ec.fieldContext_Audit_framework(ctx, field)
-			case "validFrom":
-				return ec.fieldContext_Audit_validFrom(ctx, field)
-			case "validUntil":
-				return ec.fieldContext_Audit_validUntil(ctx, field)
-			case "report":
-				return ec.fieldContext_Audit_report(ctx, field)
-			case "reportUrl":
-				return ec.fieldContext_Audit_reportUrl(ctx, field)
-			case "state":
-				return ec.fieldContext_Audit_state(ctx, field)
-			case "controls":
-				return ec.fieldContext_Audit_controls(ctx, field)
-			case "processingActivityRegistries":
-				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Audit_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Audit_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ContinualImprovementRegistry_source(ctx context.Context, field graphql.CollectedField, obj *types.ContinualImprovementRegistry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ContinualImprovementRegistry_source(ctx, field)
 	if err != nil {
@@ -23557,8 +23187,6 @@ func (ec *executionContext) fieldContext_ContinualImprovementRegistryEdge_node(_
 				return ec.fieldContext_ContinualImprovementRegistry_referenceId(ctx, field)
 			case "description":
 				return ec.fieldContext_ContinualImprovementRegistry_description(ctx, field)
-			case "audit":
-				return ec.fieldContext_ContinualImprovementRegistry_audit(ctx, field)
 			case "source":
 				return ec.fieldContext_ContinualImprovementRegistry_source(ctx, field)
 			case "owner":
@@ -27149,8 +26777,6 @@ func (ec *executionContext) fieldContext_DeleteAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
-			case "processingActivityRegistries":
-				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -40485,8 +40111,6 @@ func (ec *executionContext) fieldContext_NonconformityRegistry_audit(_ context.C
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
-			case "processingActivityRegistries":
-				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -43815,80 +43439,6 @@ func (ec *executionContext) fieldContext_ProcessingActivityRegistry_organization
 	return fc, nil
 }
 
-func (ec *executionContext) _ProcessingActivityRegistry_audit(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ProcessingActivityRegistry_audit(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.ProcessingActivityRegistry().Audit(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.Audit)
-	fc.Result = res
-	return ec.marshalNAudit2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAudit(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ProcessingActivityRegistry_audit(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ProcessingActivityRegistry",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Audit_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Audit_name(ctx, field)
-			case "organization":
-				return ec.fieldContext_Audit_organization(ctx, field)
-			case "framework":
-				return ec.fieldContext_Audit_framework(ctx, field)
-			case "validFrom":
-				return ec.fieldContext_Audit_validFrom(ctx, field)
-			case "validUntil":
-				return ec.fieldContext_Audit_validUntil(ctx, field)
-			case "report":
-				return ec.fieldContext_Audit_report(ctx, field)
-			case "reportUrl":
-				return ec.fieldContext_Audit_reportUrl(ctx, field)
-			case "state":
-				return ec.fieldContext_Audit_state(ctx, field)
-			case "controls":
-				return ec.fieldContext_Audit_controls(ctx, field)
-			case "processingActivityRegistries":
-				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Audit_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Audit_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ProcessingActivityRegistry_name(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ProcessingActivityRegistry_name(ctx, field)
 	if err != nil {
@@ -44845,8 +44395,6 @@ func (ec *executionContext) fieldContext_ProcessingActivityRegistryEdge_node(_ c
 				return ec.fieldContext_ProcessingActivityRegistry_id(ctx, field)
 			case "organization":
 				return ec.fieldContext_ProcessingActivityRegistry_organization(ctx, field)
-			case "audit":
-				return ec.fieldContext_ProcessingActivityRegistry_audit(ctx, field)
 			case "name":
 				return ec.fieldContext_ProcessingActivityRegistry_name(ctx, field)
 			case "purpose":
@@ -49900,8 +49448,6 @@ func (ec *executionContext) fieldContext_UpdateAuditPayload_audit(_ context.Cont
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
-			case "processingActivityRegistries":
-				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -49964,8 +49510,6 @@ func (ec *executionContext) fieldContext_UpdateComplianceRegistryPayload_complia
 				return ec.fieldContext_ComplianceRegistry_area(ctx, field)
 			case "source":
 				return ec.fieldContext_ComplianceRegistry_source(ctx, field)
-			case "audit":
-				return ec.fieldContext_ComplianceRegistry_audit(ctx, field)
 			case "requirement":
 				return ec.fieldContext_ComplianceRegistry_requirement(ctx, field)
 			case "actionsToBeImplemented":
@@ -50038,8 +49582,6 @@ func (ec *executionContext) fieldContext_UpdateContinualImprovementRegistryPaylo
 				return ec.fieldContext_ContinualImprovementRegistry_referenceId(ctx, field)
 			case "description":
 				return ec.fieldContext_ContinualImprovementRegistry_description(ctx, field)
-			case "audit":
-				return ec.fieldContext_ContinualImprovementRegistry_audit(ctx, field)
 			case "source":
 				return ec.fieldContext_ContinualImprovementRegistry_source(ctx, field)
 			case "owner":
@@ -50742,8 +50284,6 @@ func (ec *executionContext) fieldContext_UpdateProcessingActivityRegistryPayload
 				return ec.fieldContext_ProcessingActivityRegistry_id(ctx, field)
 			case "organization":
 				return ec.fieldContext_ProcessingActivityRegistry_organization(ctx, field)
-			case "audit":
-				return ec.fieldContext_ProcessingActivityRegistry_audit(ctx, field)
 			case "name":
 				return ec.fieldContext_ProcessingActivityRegistry_name(ctx, field)
 			case "purpose":
@@ -51468,8 +51008,6 @@ func (ec *executionContext) fieldContext_UploadAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
-			case "processingActivityRegistries":
-				return ec.fieldContext_Audit_processingActivityRegistries(ctx, field)
 			case "showOnTrustCenter":
 				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
 			case "createdAt":
@@ -60103,7 +59641,7 @@ func (ec *executionContext) unmarshalInputCreateComplianceRegistryInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "referenceId", "area", "source", "auditId", "requirement", "actionsToBeImplemented", "regulator", "ownerId", "lastReviewDate", "dueDate", "status"}
+	fieldsInOrder := [...]string{"organizationId", "referenceId", "area", "source", "requirement", "actionsToBeImplemented", "regulator", "ownerId", "lastReviewDate", "dueDate", "status"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -60138,13 +59676,6 @@ func (ec *executionContext) unmarshalInputCreateComplianceRegistryInput(ctx cont
 				return it, err
 			}
 			it.Source = data
-		case "auditId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("auditId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AuditID = data
 		case "requirement":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requirement"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -60207,7 +59738,7 @@ func (ec *executionContext) unmarshalInputCreateContinualImprovementRegistryInpu
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "referenceId", "description", "auditId", "source", "ownerId", "targetDate", "status", "priority"}
+	fieldsInOrder := [...]string{"organizationId", "referenceId", "description", "source", "ownerId", "targetDate", "status", "priority"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -60235,13 +59766,6 @@ func (ec *executionContext) unmarshalInputCreateContinualImprovementRegistryInpu
 				return it, err
 			}
 			it.Description = data
-		case "auditId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("auditId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AuditID = data
 		case "source":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -60976,7 +60500,7 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityRegistryInput(
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "auditId", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment"}
+	fieldsInOrder := [...]string{"organizationId", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -60990,13 +60514,6 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityRegistryInput(
 				return it, err
 			}
 			it.OrganizationID = data
-		case "auditId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("auditId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AuditID = data
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
@@ -63955,7 +63472,7 @@ func (ec *executionContext) unmarshalInputUpdateComplianceRegistryInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "referenceId", "area", "source", "auditId", "requirement", "actionsToBeImplemented", "regulator", "ownerId", "lastReviewDate", "dueDate", "status"}
+	fieldsInOrder := [...]string{"id", "referenceId", "area", "source", "requirement", "actionsToBeImplemented", "regulator", "ownerId", "lastReviewDate", "dueDate", "status"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63990,13 +63507,6 @@ func (ec *executionContext) unmarshalInputUpdateComplianceRegistryInput(ctx cont
 				return it, err
 			}
 			it.Source = data
-		case "auditId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("auditId"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AuditID = data
 		case "requirement":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requirement"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -64059,7 +63569,7 @@ func (ec *executionContext) unmarshalInputUpdateContinualImprovementRegistryInpu
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "referenceId", "description", "auditId", "source", "ownerId", "targetDate", "status", "priority"}
+	fieldsInOrder := [...]string{"id", "referenceId", "description", "source", "ownerId", "targetDate", "status", "priority"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -64087,13 +63597,6 @@ func (ec *executionContext) unmarshalInputUpdateContinualImprovementRegistryInpu
 				return it, err
 			}
 			it.Description = data
-		case "auditId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("auditId"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AuditID = data
 		case "source":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -64672,7 +64175,7 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityRegistryInput(
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "auditId", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment"}
+	fieldsInOrder := [...]string{"id", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -64686,13 +64189,6 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityRegistryInput(
 				return it, err
 			}
 			it.ID = data
-		case "auditId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("auditId"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AuditID = data
 		case "name":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -66718,42 +66214,6 @@ func (ec *executionContext) _Audit(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "processingActivityRegistries":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Audit_processingActivityRegistries(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "showOnTrustCenter":
 			out.Values[i] = ec._Audit_showOnTrustCenter(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -67099,42 +66559,6 @@ func (ec *executionContext) _ComplianceRegistry(ctx context.Context, sel ast.Sel
 			out.Values[i] = ec._ComplianceRegistry_area(ctx, field, obj)
 		case "source":
 			out.Values[i] = ec._ComplianceRegistry_source(ctx, field, obj)
-		case "audit":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ComplianceRegistry_audit(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "requirement":
 			out.Values[i] = ec._ComplianceRegistry_requirement(ctx, field, obj)
 		case "actionsToBeImplemented":
@@ -67588,42 +67012,6 @@ func (ec *executionContext) _ContinualImprovementRegistry(ctx context.Context, s
 			}
 		case "description":
 			out.Values[i] = ec._ContinualImprovementRegistry_description(ctx, field, obj)
-		case "audit":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ContinualImprovementRegistry_audit(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "source":
 			out.Values[i] = ec._ContinualImprovementRegistry_source(ctx, field, obj)
 		case "owner":
@@ -75247,42 +74635,6 @@ func (ec *executionContext) _ProcessingActivityRegistry(ctx context.Context, sel
 					}
 				}()
 				res = ec._ProcessingActivityRegistry_organization(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "audit":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._ProcessingActivityRegistry_audit(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}

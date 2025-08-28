@@ -61,14 +61,6 @@ const continualImprovementRegistriesPageFragment = graphql`
           targetDate
           status
           priority
-          audit {
-            id
-            name
-            framework {
-              id
-              name
-            }
-          }
           owner {
             id
             fullName
@@ -145,7 +137,6 @@ export default function ContinualImprovementRegistriesPage({ queryRef }: Continu
                 <Th>{__("Description")}</Th>
                 <Th>{__("Status")}</Th>
                 <Th>{__("Priority")}</Th>
-                <Th>{__("Audit")}</Th>
                 <Th>{__("Owner")}</Th>
                 <Th>{__("Target Date")}</Th>
                 <Th>{__("Actions")}</Th>
@@ -243,12 +234,6 @@ function RegistryRow({
         <Badge variant={registry.priority === "HIGH" ? "danger" : registry.priority === "MEDIUM" ? "warning" : "success"}>
           {registry.priority === "HIGH" ? __("High") : registry.priority === "MEDIUM" ? __("Medium") : __("Low")}
         </Badge>
-      </Td>
-      <Td>
-        {registry.audit.name
-          ? `${registry.audit.framework.name} - ${registry.audit.name}`
-          : registry.audit.framework.name
-        }
       </Td>
       <Td>{registry.owner?.fullName || "-"}</Td>
       <Td>

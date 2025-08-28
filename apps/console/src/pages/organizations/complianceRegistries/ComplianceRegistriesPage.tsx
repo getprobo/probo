@@ -64,14 +64,6 @@ const complianceRegistriesPageFragment = graphql`
           dueDate
           actionsToBeImplemented
           regulator
-          audit {
-            id
-            name
-            framework {
-              id
-              name
-            }
-          }
           owner {
             id
             fullName
@@ -148,7 +140,6 @@ export default function ComplianceRegistriesPage({ queryRef }: ComplianceRegistr
                 <Th>{__("Area")}</Th>
                 <Th>{__("Source")}</Th>
                 <Th>{__("Status")}</Th>
-                <Th>{__("Audit")}</Th>
                 <Th>{__("Owner")}</Th>
                 <Th>{__("Due Date")}</Th>
                 <Th>{__("Actions")}</Th>
@@ -231,12 +222,6 @@ function RegistryRow({
         <Badge variant={getStatusVariant(registry.status || "OPEN")}>
           {getStatusLabel(registry.status || "OPEN")}
         </Badge>
-      </Td>
-      <Td>
-        {registry.audit.name
-          ? `${registry.audit.framework.name} - ${registry.audit.name}`
-          : registry.audit.framework.name
-        }
       </Td>
       <Td>{registry.owner?.fullName || "-"}</Td>
       <Td>

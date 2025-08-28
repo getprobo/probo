@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4af375f7d8057aa29a6fcfe47854e707>>
+ * @generated SignedSource<<71dfd7c0d78070061957215363022475>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -58,14 +58,7 @@ v4 = [
     "name": "first",
     "value": 10
   }
-],
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-};
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -151,7 +144,13 @@ return {
                         "plural": false,
                         "selections": [
                           (v3/*: any*/),
-                          (v5/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "name",
+                            "storageKey": null
+                          },
                           {
                             "alias": null,
                             "args": null,
@@ -192,32 +191,6 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "internationalTransfers",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "concreteType": "Audit",
-                            "kind": "LinkedField",
-                            "name": "audit",
-                            "plural": false,
-                            "selections": [
-                              (v3/*: any*/),
-                              (v5/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "concreteType": "Framework",
-                                "kind": "LinkedField",
-                                "name": "framework",
-                                "plural": false,
-                                "selections": [
-                                  (v3/*: any*/),
-                                  (v5/*: any*/)
-                                ],
-                                "storageKey": null
-                              }
-                            ],
                             "storageKey": null
                           },
                           {
@@ -307,12 +280,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9fe4ad1f3cd0dbd50f63b9dd93a95df8",
+    "cacheID": "331d1a749711d7a519fbdc5a721d2cec",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityRegistriesPageQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityRegistriesPageQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ProcessingActivityRegistriesPageFragment\n    }\n    id\n  }\n}\n\nfragment ProcessingActivityRegistriesPageFragment on Organization {\n  id\n  processingActivityRegistries(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ProcessingActivityRegistriesPageQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ProcessingActivityRegistriesPageFragment\n    }\n    id\n  }\n}\n\nfragment ProcessingActivityRegistriesPageFragment on Organization {\n  id\n  processingActivityRegistries(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
