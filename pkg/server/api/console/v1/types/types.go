@@ -174,6 +174,8 @@ type ConnectorOrder struct {
 
 type ContinualImprovementRegistry struct {
 	ID           gid.GID                                         `json:"id"`
+	SnapshotID   *gid.GID                                        `json:"snapshotId,omitempty"`
+	SourceID     *gid.GID                                        `json:"sourceId,omitempty"`
 	Organization *Organization                                   `json:"organization"`
 	ReferenceID  string                                          `json:"referenceId"`
 	Description  *string                                         `json:"description,omitempty"`
@@ -192,6 +194,10 @@ func (this ContinualImprovementRegistry) GetID() gid.GID { return this.ID }
 type ContinualImprovementRegistryEdge struct {
 	Cursor page.CursorKey                `json:"cursor"`
 	Node   *ContinualImprovementRegistry `json:"node"`
+}
+
+type ContinualImprovementRegistryFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
 type Control struct {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ee61c51b37dbc7c5b31c298b91dd8b5b>>
+ * @generated SignedSource<<a7cefedfe9ee9d485354882888556f20>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -26,7 +26,9 @@ export type ContinualImprovementRegistriesPageFragment$data = {
         };
         readonly priority: ContinualImprovementRegistriesPriority;
         readonly referenceId: string;
+        readonly snapshotId: string | null | undefined;
         readonly source: string | null | undefined;
+        readonly sourceId: string | null | undefined;
         readonly status: ContinualImprovementRegistriesStatus;
         readonly targetDate: any | null | undefined;
         readonly updatedAt: any;
@@ -70,6 +72,11 @@ return {
       "defaultValue": 10,
       "kind": "LocalArgument",
       "name": "first"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "snapshotId"
     }
   ],
   "kind": "Fragment",
@@ -106,7 +113,19 @@ return {
     (v1/*: any*/),
     {
       "alias": "continualImprovementRegistries",
-      "args": null,
+      "args": [
+        {
+          "fields": [
+            {
+              "kind": "Variable",
+              "name": "snapshotId",
+              "variableName": "snapshotId"
+            }
+          ],
+          "kind": "ObjectValue",
+          "name": "filter"
+        }
+      ],
       "concreteType": "ContinualImprovementRegistryConnection",
       "kind": "LinkedField",
       "name": "__ContinualImprovementRegistriesPage_continualImprovementRegistries_connection",
@@ -136,6 +155,20 @@ return {
               "plural": false,
               "selections": [
                 (v1/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "snapshotId",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "sourceId",
+                  "storageKey": null
+                },
                 {
                   "alias": null,
                   "args": null,
@@ -277,6 +310,6 @@ return {
 };
 })();
 
-(node as any).hash = "1532ac43a0b47d9cd63980861eaa7306";
+(node as any).hash = "9e11628f65527ac1ff8974faa1855280";
 
 export default node;

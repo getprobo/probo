@@ -8,10 +8,10 @@ import { useMutationWithToasts } from "../useMutationWithToasts";
 export const ContinualImprovementRegistriesConnectionKey = "ContinualImprovementRegistriesPage_continualImprovementRegistries";
 
 export const continualImprovementRegistriesQuery = graphql`
-  query ContinualImprovementRegistryGraphListQuery($organizationId: ID!) {
+  query ContinualImprovementRegistryGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
-        ...ContinualImprovementRegistriesPageFragment
+        ...ContinualImprovementRegistriesPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
   }
@@ -22,6 +22,8 @@ export const continualImprovementRegistryNodeQuery = graphql`
     node(id: $continualImprovementRegistryId) {
       ... on ContinualImprovementRegistry {
         id
+        snapshotId
+        sourceId
         referenceId
         description
         source

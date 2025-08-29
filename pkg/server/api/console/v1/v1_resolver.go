@@ -315,7 +315,12 @@ func (r *continualImprovementRegistryConnectionResolver) TotalCount(ctx context.
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.ContinualImprovementRegistries.CountByOrganizationID(ctx, obj.ParentID)
+		continualImprovementRegistryFilter := coredata.NewContinualImprovementRegistryFilter(nil)
+		if obj.Filter != nil {
+			continualImprovementRegistryFilter = coredata.NewContinualImprovementRegistryFilter(&obj.Filter.SnapshotID)
+		}
+
+		count, err := prb.ContinualImprovementRegistries.CountByOrganizationID(ctx, obj.ParentID, continualImprovementRegistryFilter)
 		if err != nil {
 			panic(fmt.Errorf("cannot count continual improvement registries: %w", err))
 		}
@@ -3756,7 +3761,7 @@ func (r *organizationResolver) ComplianceRegistries(ctx context.Context, obj *ty
 }
 
 // ContinualImprovementRegistries is the resolver for the continualImprovementRegistries field.
-func (r *organizationResolver) ContinualImprovementRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy) (*types.ContinualImprovementRegistryConnection, error) {
+func (r *organizationResolver) ContinualImprovementRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy, filter *types.ContinualImprovementRegistryFilter) (*types.ContinualImprovementRegistryConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ContinualImprovementRegistriesOrderField]{
@@ -3773,12 +3778,17 @@ func (r *organizationResolver) ContinualImprovementRegistries(ctx context.Contex
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ContinualImprovementRegistries.ListForOrganizationID(ctx, obj.ID, cursor)
+	continualImprovementRegistryFilter := coredata.NewContinualImprovementRegistryFilter(nil)
+	if filter != nil {
+		continualImprovementRegistryFilter = coredata.NewContinualImprovementRegistryFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.ContinualImprovementRegistries.ListForOrganizationID(ctx, obj.ID, cursor, continualImprovementRegistryFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization continual improvement registries: %w", err))
 	}
 
-	return types.NewContinualImprovementRegistryConnection(page, r, obj.ID), nil
+	return types.NewContinualImprovementRegistryConnection(page, r, obj.ID, filter), nil
 }
 
 // ProcessingActivityRegistries is the resolver for the processingActivityRegistries field.

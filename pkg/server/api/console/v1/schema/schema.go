@@ -231,7 +231,9 @@ type ComplexityRoot struct {
 		Owner        func(childComplexity int) int
 		Priority     func(childComplexity int) int
 		ReferenceID  func(childComplexity int) int
+		SnapshotID   func(childComplexity int) int
 		Source       func(childComplexity int) int
+		SourceID     func(childComplexity int) int
 		Status       func(childComplexity int) int
 		TargetDate   func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
@@ -875,7 +877,7 @@ type ComplexityRoot struct {
 		Audits                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
 		ComplianceRegistries           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy, filter *types.ComplianceRegistryFilter) int
 		Connectors                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
-		ContinualImprovementRegistries func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy) int
+		ContinualImprovementRegistries func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy, filter *types.ContinualImprovementRegistryFilter) int
 		Controls                       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
 		CreatedAt                      func(childComplexity int) int
 		Data                           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) int
@@ -1672,7 +1674,7 @@ type OrganizationResolver interface {
 	Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error)
 	NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy, filter *types.NonconformityRegistryFilter) (*types.NonconformityRegistryConnection, error)
 	ComplianceRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy, filter *types.ComplianceRegistryFilter) (*types.ComplianceRegistryConnection, error)
-	ContinualImprovementRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy) (*types.ContinualImprovementRegistryConnection, error)
+	ContinualImprovementRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy, filter *types.ContinualImprovementRegistryFilter) (*types.ContinualImprovementRegistryConnection, error)
 	ProcessingActivityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) (*types.ProcessingActivityRegistryConnection, error)
 	Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
@@ -2346,12 +2348,26 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ContinualImprovementRegistry.ReferenceID(childComplexity), true
 
+	case "ContinualImprovementRegistry.snapshotId":
+		if e.complexity.ContinualImprovementRegistry.SnapshotID == nil {
+			break
+		}
+
+		return e.complexity.ContinualImprovementRegistry.SnapshotID(childComplexity), true
+
 	case "ContinualImprovementRegistry.source":
 		if e.complexity.ContinualImprovementRegistry.Source == nil {
 			break
 		}
 
 		return e.complexity.ContinualImprovementRegistry.Source(childComplexity), true
+
+	case "ContinualImprovementRegistry.sourceId":
+		if e.complexity.ContinualImprovementRegistry.SourceID == nil {
+			break
+		}
+
+		return e.complexity.ContinualImprovementRegistry.SourceID(childComplexity), true
 
 	case "ContinualImprovementRegistry.status":
 		if e.complexity.ContinualImprovementRegistry.Status == nil {
@@ -5410,7 +5426,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.ContinualImprovementRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ContinualImprovementRegistriesOrderBy)), true
+		return e.complexity.Organization.ContinualImprovementRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ContinualImprovementRegistriesOrderBy), args["filter"].(*types.ContinualImprovementRegistryFilter)), true
 
 	case "Organization.controls":
 		if e.complexity.Organization.Controls == nil {
@@ -7676,6 +7692,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputConfirmEmailInput,
 		ec.unmarshalInputConnectorOrder,
 		ec.unmarshalInputContinualImprovementRegistriesOrder,
+		ec.unmarshalInputContinualImprovementRegistryFilter,
 		ec.unmarshalInputControlFilter,
 		ec.unmarshalInputControlOrder,
 		ec.unmarshalInputCreateAssetInput,
@@ -8785,6 +8802,10 @@ enum SnapshotsType
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeComplianceRegistries"
     )
+  CONTINUAL_IMPROVEMENT_REGISTRIES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeContinualImprovementRegistries"
+    )
 }
 
 enum SnapshotOrderField
@@ -9023,6 +9044,10 @@ input ComplianceRegistryFilter {
   snapshotId: ID
 }
 
+input ContinualImprovementRegistryFilter {
+  snapshotId: ID
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -9180,6 +9205,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ContinualImprovementRegistriesOrder
+    filter: ContinualImprovementRegistryFilter
   ): ContinualImprovementRegistryConnection! @goField(forceResolver: true)
 
   processingActivityRegistries(
@@ -9654,6 +9680,8 @@ type ComplianceRegistry implements Node {
 
 type ContinualImprovementRegistry implements Node {
   id: ID!
+  snapshotId: ID
+  sourceId: ID
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   description: String
@@ -16225,6 +16253,11 @@ func (ec *executionContext) field_Organization_continualImprovementRegistries_ar
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	arg5, err := ec.field_Organization_continualImprovementRegistries_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
 	return args, nil
 }
 func (ec *executionContext) field_Organization_continualImprovementRegistries_argsFirst(
@@ -16289,6 +16322,19 @@ func (ec *executionContext) field_Organization_continualImprovementRegistries_ar
 	}
 
 	var zeroVal *types.ContinualImprovementRegistriesOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_continualImprovementRegistries_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.ContinualImprovementRegistryFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalOContinualImprovementRegistryFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐContinualImprovementRegistryFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.ContinualImprovementRegistryFilter
 	return zeroVal, nil
 }
 
@@ -22615,6 +22661,88 @@ func (ec *executionContext) fieldContext_ContinualImprovementRegistry_id(_ conte
 	return fc, nil
 }
 
+func (ec *executionContext) _ContinualImprovementRegistry_snapshotId(ctx context.Context, field graphql.CollectedField, obj *types.ContinualImprovementRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ContinualImprovementRegistry_snapshotId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SnapshotID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*gid.GID)
+	fc.Result = res
+	return ec.marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ContinualImprovementRegistry_snapshotId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ContinualImprovementRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ContinualImprovementRegistry_sourceId(ctx context.Context, field graphql.CollectedField, obj *types.ContinualImprovementRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ContinualImprovementRegistry_sourceId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SourceID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*gid.GID)
+	fc.Result = res
+	return ec.marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ContinualImprovementRegistry_sourceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ContinualImprovementRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ContinualImprovementRegistry_organization(ctx context.Context, field graphql.CollectedField, obj *types.ContinualImprovementRegistry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ContinualImprovementRegistry_organization(ctx, field)
 	if err != nil {
@@ -23351,6 +23479,10 @@ func (ec *executionContext) fieldContext_ContinualImprovementRegistryEdge_node(_
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_ContinualImprovementRegistry_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_ContinualImprovementRegistry_snapshotId(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_ContinualImprovementRegistry_sourceId(ctx, field)
 			case "organization":
 				return ec.fieldContext_ContinualImprovementRegistry_organization(ctx, field)
 			case "referenceId":
@@ -42136,7 +42268,7 @@ func (ec *executionContext) _Organization_continualImprovementRegistries(ctx con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organization().ContinualImprovementRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ContinualImprovementRegistriesOrderBy))
+		return ec.resolvers.Organization().ContinualImprovementRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ContinualImprovementRegistriesOrderBy), fc.Args["filter"].(*types.ContinualImprovementRegistryFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -49836,6 +49968,10 @@ func (ec *executionContext) fieldContext_UpdateContinualImprovementRegistryPaylo
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_ContinualImprovementRegistry_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_ContinualImprovementRegistry_snapshotId(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_ContinualImprovementRegistry_sourceId(ctx, field)
 			case "organization":
 				return ec.fieldContext_ContinualImprovementRegistry_organization(ctx, field)
 			case "referenceId":
@@ -59722,6 +59858,33 @@ func (ec *executionContext) unmarshalInputContinualImprovementRegistriesOrder(ct
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputContinualImprovementRegistryFilter(ctx context.Context, obj any) (types.ContinualImprovementRegistryFilter, error) {
+	var it types.ContinualImprovementRegistryFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputControlFilter(ctx context.Context, obj any) (types.ControlFilter, error) {
 	var it types.ControlFilter
 	asMap := map[string]any{}
@@ -67291,6 +67454,10 @@ func (ec *executionContext) _ContinualImprovementRegistry(ctx context.Context, s
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "snapshotId":
+			out.Values[i] = ec._ContinualImprovementRegistry_snapshotId(ctx, field, obj)
+		case "sourceId":
+			out.Values[i] = ec._ContinualImprovementRegistry_sourceId(ctx, field, obj)
 		case "organization":
 			field := field
 
@@ -84804,20 +84971,22 @@ func (ec *executionContext) marshalNSnapshotsType2githubᚗcomᚋgetproboᚋprob
 
 var (
 	unmarshalNSnapshotsType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐSnapshotsType = map[string]coredata.SnapshotsType{
-		"RISKS":                    coredata.SnapshotsTypeRisks,
-		"VENDORS":                  coredata.SnapshotsTypeVendors,
-		"ASSETS":                   coredata.SnapshotsTypeAssets,
-		"DATA":                     coredata.SnapshotsTypeData,
-		"NONCONFORMITY_REGISTRIES": coredata.SnapshotsTypeNonConformityRegistries,
-		"COMPLIANCE_REGISTRIES":    coredata.SnapshotsTypeComplianceRegistries,
+		"RISKS":                            coredata.SnapshotsTypeRisks,
+		"VENDORS":                          coredata.SnapshotsTypeVendors,
+		"ASSETS":                           coredata.SnapshotsTypeAssets,
+		"DATA":                             coredata.SnapshotsTypeData,
+		"NONCONFORMITY_REGISTRIES":         coredata.SnapshotsTypeNonConformityRegistries,
+		"COMPLIANCE_REGISTRIES":            coredata.SnapshotsTypeComplianceRegistries,
+		"CONTINUAL_IMPROVEMENT_REGISTRIES": coredata.SnapshotsTypeContinualImprovementRegistries,
 	}
 	marshalNSnapshotsType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐSnapshotsType = map[coredata.SnapshotsType]string{
-		coredata.SnapshotsTypeRisks:                   "RISKS",
-		coredata.SnapshotsTypeVendors:                 "VENDORS",
-		coredata.SnapshotsTypeAssets:                  "ASSETS",
-		coredata.SnapshotsTypeData:                    "DATA",
-		coredata.SnapshotsTypeNonConformityRegistries: "NONCONFORMITY_REGISTRIES",
-		coredata.SnapshotsTypeComplianceRegistries:    "COMPLIANCE_REGISTRIES",
+		coredata.SnapshotsTypeRisks:                          "RISKS",
+		coredata.SnapshotsTypeVendors:                        "VENDORS",
+		coredata.SnapshotsTypeAssets:                         "ASSETS",
+		coredata.SnapshotsTypeData:                           "DATA",
+		coredata.SnapshotsTypeNonConformityRegistries:        "NONCONFORMITY_REGISTRIES",
+		coredata.SnapshotsTypeComplianceRegistries:           "COMPLIANCE_REGISTRIES",
+		coredata.SnapshotsTypeContinualImprovementRegistries: "CONTINUAL_IMPROVEMENT_REGISTRIES",
 	}
 )
 
@@ -86982,6 +87151,14 @@ var (
 		coredata.ContinualImprovementRegistriesStatusClosed:     "CLOSED",
 	}
 )
+
+func (ec *executionContext) unmarshalOContinualImprovementRegistryFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐContinualImprovementRegistryFilter(ctx context.Context, v any) (*types.ContinualImprovementRegistryFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputContinualImprovementRegistryFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
 
 func (ec *executionContext) unmarshalOControlFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐControlFilter(ctx context.Context, v any) (*types.ControlFilter, error) {
 	if v == nil {

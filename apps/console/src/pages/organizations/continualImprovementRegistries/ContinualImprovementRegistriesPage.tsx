@@ -26,9 +26,11 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { useParams } from "react-router";
 import { CreateContinualImprovementRegistryDialog } from "./dialogs/CreateContinualImprovementRegistryDialog";
 import { deleteContinualImprovementRegistryMutation, ContinualImprovementRegistriesConnectionKey } from "../../../hooks/graph/ContinualImprovementRegistryGraph";
 import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel } from "@probo/helpers";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
 import type { ContinualImprovementRegistriesPageQuery } from "./__generated__/ContinualImprovementRegistriesPageQuery.graphql";
 import type {
@@ -46,15 +48,22 @@ const continualImprovementRegistriesPageFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 10 }
     after: { type: "CursorKey" }
+    snapshotId: { type: "ID", defaultValue: null }
   ) {
     id
-    continualImprovementRegistries(first: $first, after: $after)
-      @connection(key: "ContinualImprovementRegistriesPage_continualImprovementRegistries") {
+    continualImprovementRegistries(
+      first: $first
+      after: $after
+      filter: { snapshotId: $snapshotId }
+    )
+      @connection(key: "ContinualImprovementRegistriesPage_continualImprovementRegistries", filters: ["filter"]) {
       __id
       totalCount
       edges {
         node {
           id
+          snapshotId
+          sourceId
           referenceId
           description
           source
@@ -80,15 +89,17 @@ const continualImprovementRegistriesPageFragment = graphql`
 export default function ContinualImprovementRegistriesPage({ queryRef }: ContinualImprovementRegistriesPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
   usePageTitle(__("Continual Improvement Registries"));
 
   const organization = usePreloadedQuery(
     graphql`
-      query ContinualImprovementRegistriesPageQuery($organizationId: ID!) {
+      query ContinualImprovementRegistriesPageQuery($organizationId: ID!, $snapshotId: ID) {
         node(id: $organizationId) {
           ... on Organization {
-            ...ContinualImprovementRegistriesPageFragment
+            ...ContinualImprovementRegistriesPageFragment @arguments(snapshotId: $snapshotId)
           }
         }
       }
@@ -111,21 +122,27 @@ export default function ContinualImprovementRegistriesPage({ queryRef }: Continu
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
-    ContinualImprovementRegistriesConnectionKey
+    ContinualImprovementRegistriesConnectionKey,
+    { filter: { snapshotId: snapshotId || null } }
   );
   const registries = data?.continualImprovementRegistries?.edges?.map((edge) => edge.node) ?? [];
 
   return (
     <div className="space-y-6">
+      {isSnapshotMode && snapshotId && (
+        <SnapshotBanner snapshotId={snapshotId} />
+      )}
       <PageHeader title={__("Continual Improvement Registries")} description={__("Manage your continual improvement registry entries")}>
-        <CreateContinualImprovementRegistryDialog
-          organizationId={organizationId}
-          connectionId={connectionId}
-        >
-          <Button icon={IconPlusLarge}>
-            {__("Add continual improvement registry")}
-          </Button>
-        </CreateContinualImprovementRegistryDialog>
+        {!isSnapshotMode && (
+          <CreateContinualImprovementRegistryDialog
+            organizationId={organizationId}
+            connectionId={connectionId}
+          >
+            <Button icon={IconPlusLarge}>
+              {__("Add continual improvement registry")}
+            </Button>
+          </CreateContinualImprovementRegistryDialog>
+        )}
       </PageHeader>
 
       {registries.length > 0 ? (
@@ -139,7 +156,7 @@ export default function ContinualImprovementRegistriesPage({ queryRef }: Continu
                 <Th>{__("Priority")}</Th>
                 <Th>{__("Owner")}</Th>
                 <Th>{__("Target Date")}</Th>
-                <Th>{__("Actions")}</Th>
+                {!isSnapshotMode && <Th>{__("Actions")}</Th>}
               </Tr>
             </Thead>
             <Tbody>
@@ -148,6 +165,7 @@ export default function ContinualImprovementRegistriesPage({ queryRef }: Continu
                   key={registry.id}
                   registry={registry}
                   connectionId={connectionId}
+                  snapshotId={snapshotId}
                 />
               ))}
             </Tbody>
@@ -184,14 +202,17 @@ export default function ContinualImprovementRegistriesPage({ queryRef }: Continu
 function RegistryRow({
   registry,
   connectionId,
+  snapshotId,
 }: {
   registry: NodeOf<NonNullable<ContinualImprovementRegistriesPageFragment$data['continualImprovementRegistries']>>;
   connectionId: string;
+  snapshotId?: string;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const [deleteRegistry] = useMutation(deleteContinualImprovementRegistryMutation);
   const confirm = useConfirm();
+  const isSnapshotMode = Boolean(snapshotId);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -219,8 +240,12 @@ function RegistryRow({
     );
   };
 
+  const detailsUrl = isSnapshotMode
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/continual-improvement-registries/${registry.id}`
+    : `/organizations/${organizationId}/continual-improvement-registries/${registry.id}`;
+
   return (
-    <Tr to={`/organizations/${organizationId}/continual-improvement-registries/${registry.id}`}>
+    <Tr to={detailsUrl}>
       <Td>
         <span className="font-mono text-sm">{registry.referenceId}</span>
       </Td>
@@ -245,17 +270,19 @@ function RegistryRow({
           <span className="text-txt-tertiary">{__("No target date")}</span>
         )}
       </Td>
-      <Td noLink width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            icon={IconTrashCan}
-            variant="danger"
-            onSelect={handleDelete}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
-      </Td>
+      {!isSnapshotMode && (
+        <Td noLink width={50} className="text-end">
+          <ActionDropdown>
+            <DropdownItem
+              icon={IconTrashCan}
+              variant="danger"
+              onSelect={handleDelete}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        </Td>
+      )}
     </Tr>
   );
 }

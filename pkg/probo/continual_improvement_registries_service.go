@@ -213,6 +213,7 @@ func (s *ContinualImprovementRegistriesService) Delete(
 func (s ContinualImprovementRegistriesService) CountByOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
+	filter *coredata.ContinualImprovementRegistryFilter,
 ) (int, error) {
 	var count int
 
@@ -220,7 +221,7 @@ func (s ContinualImprovementRegistriesService) CountByOrganizationID(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			registries := coredata.ContinualImprovementRegistries{}
-			count, err = registries.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = registries.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count continual improvement registries: %w", err)
 			}
@@ -240,13 +241,14 @@ func (s ContinualImprovementRegistriesService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ContinualImprovementRegistriesOrderField],
+	filter *coredata.ContinualImprovementRegistryFilter,
 ) (*page.Page[*coredata.ContinualImprovementRegistry, coredata.ContinualImprovementRegistriesOrderField], error) {
 	var registries coredata.ContinualImprovementRegistries
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := registries.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
+			err := registries.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load continual improvement registries: %w", err)
 			}

@@ -37,6 +37,8 @@ type (
 		TargetDate     *time.Time                             `db:"target_date"`
 		Status         ContinualImprovementRegistriesStatus   `db:"status"`
 		Priority       ContinualImprovementRegistriesPriority `db:"priority"`
+		SnapshotID     *gid.GID                               `db:"snapshot_id"`
+		SourceID       *gid.GID                               `db:"source_id"`
 		CreatedAt      time.Time                              `db:"created_at"`
 		UpdatedAt      time.Time                              `db:"updated_at"`
 	}
@@ -78,6 +80,8 @@ SELECT
 	target_date,
 	status,
 	priority,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -113,6 +117,7 @@ func (cirs *ContinualImprovementRegistries) CountByOrganizationID(
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *ContinualImprovementRegistryFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -122,12 +127,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -146,6 +153,7 @@ func (cirs *ContinualImprovementRegistries) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ContinualImprovementRegistriesOrderField],
+	filter *ContinualImprovementRegistryFilter,
 ) error {
 	q := `
 SELECT
@@ -158,6 +166,8 @@ SELECT
 	target_date,
 	status,
 	priority,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -166,12 +176,14 @@ WHERE
 	%s
 	AND organization_id = @organization_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -310,6 +322,61 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete continual improvement registry: %w", err)
+	}
+
+	return nil
+}
+
+func (cirs ContinualImprovementRegistries) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+	query := `
+INSERT INTO continual_improvement_registries (
+	id,
+	tenant_id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	reference_id,
+	description,
+	source,
+	owner_id,
+	target_date,
+	status,
+	priority,
+	created_at,
+	updated_at
+)
+SELECT
+	generate_gid(decode_base64_unpadded(@tenant_id), @continual_improvement_registry_entity_type),
+	@tenant_id,
+	@snapshot_id,
+	r.id,
+	r.organization_id,
+	r.reference_id,
+	r.description,
+	r.source,
+	r.owner_id,
+	r.target_date,
+	r.status,
+	r.priority,
+	r.created_at,
+	r.updated_at
+FROM continual_improvement_registries r
+WHERE %s AND r.organization_id = @organization_id AND r.snapshot_id IS NULL
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":       scope.GetTenantID(),
+		"snapshot_id":     snapshotID,
+		"organization_id": organizationID,
+		"continual_improvement_registry_entity_type": ContinualImprovementRegistryEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert continual improvement registry snapshots: %w", err)
 	}
 
 	return nil

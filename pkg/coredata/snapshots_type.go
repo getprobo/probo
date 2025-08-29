@@ -24,12 +24,13 @@ type (
 )
 
 const (
-	SnapshotsTypeRisks                   SnapshotsType = "RISKS"
-	SnapshotsTypeVendors                 SnapshotsType = "VENDORS"
-	SnapshotsTypeAssets                  SnapshotsType = "ASSETS"
-	SnapshotsTypeData                    SnapshotsType = "DATA"
-	SnapshotsTypeNonConformityRegistries SnapshotsType = "NONCONFORMITY_REGISTRIES"
-	SnapshotsTypeComplianceRegistries    SnapshotsType = "COMPLIANCE_REGISTRIES"
+	SnapshotsTypeRisks                          SnapshotsType = "RISKS"
+	SnapshotsTypeVendors                        SnapshotsType = "VENDORS"
+	SnapshotsTypeAssets                         SnapshotsType = "ASSETS"
+	SnapshotsTypeData                           SnapshotsType = "DATA"
+	SnapshotsTypeNonConformityRegistries        SnapshotsType = "NONCONFORMITY_REGISTRIES"
+	SnapshotsTypeComplianceRegistries           SnapshotsType = "COMPLIANCE_REGISTRIES"
+	SnapshotsTypeContinualImprovementRegistries SnapshotsType = "CONTINUAL_IMPROVEMENT_REGISTRIES"
 )
 
 func (st SnapshotsType) String() string {
@@ -60,6 +61,8 @@ func (st *SnapshotsType) Scan(value any) error {
 		*st = SnapshotsTypeNonConformityRegistries
 	case SnapshotsTypeComplianceRegistries.String():
 		*st = SnapshotsTypeComplianceRegistries
+	case SnapshotsTypeContinualImprovementRegistries.String():
+		*st = SnapshotsTypeContinualImprovementRegistries
 	default:
 		return fmt.Errorf("invalid SnapshotsType value: %q", s)
 	}

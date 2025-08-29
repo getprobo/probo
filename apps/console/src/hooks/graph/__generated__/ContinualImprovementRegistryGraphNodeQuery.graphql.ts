@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d8054e9d19ae22b3af4b79fb3b88f5af>>
+ * @generated SignedSource<<9992eeb0b74e7015c5f4d3520a87a402>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -29,7 +29,9 @@ export type ContinualImprovementRegistryGraphNodeQuery$data = {
     };
     readonly priority?: ContinualImprovementRegistriesPriority;
     readonly referenceId?: string;
+    readonly snapshotId?: string | null | undefined;
     readonly source?: string | null | undefined;
+    readonly sourceId?: string | null | undefined;
     readonly status?: ContinualImprovementRegistriesStatus;
     readonly targetDate?: any | null | undefined;
     readonly updatedAt?: any;
@@ -66,45 +68,59 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "referenceId",
+  "name": "snapshotId",
   "storageKey": null
 },
 v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "description",
+  "name": "sourceId",
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "source",
+  "name": "referenceId",
   "storageKey": null
 },
 v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "targetDate",
+  "name": "description",
   "storageKey": null
 },
 v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "status",
+  "name": "source",
   "storageKey": null
 },
 v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "priority",
+  "name": "targetDate",
   "storageKey": null
 },
 v9 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "status",
+  "storageKey": null
+},
+v10 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "priority",
+  "storageKey": null
+},
+v11 = {
   "alias": null,
   "args": null,
   "concreteType": "People",
@@ -123,7 +139,7 @@ v9 = {
   ],
   "storageKey": null
 },
-v10 = {
+v12 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
@@ -142,14 +158,14 @@ v10 = {
   ],
   "storageKey": null
 },
-v11 = {
+v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v12 = {
+v14 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -184,7 +200,9 @@ return {
               (v9/*: any*/),
               (v10/*: any*/),
               (v11/*: any*/),
-              (v12/*: any*/)
+              (v12/*: any*/),
+              (v13/*: any*/),
+              (v14/*: any*/)
             ],
             "type": "ContinualImprovementRegistry",
             "abstractKey": null
@@ -230,7 +248,9 @@ return {
               (v9/*: any*/),
               (v10/*: any*/),
               (v11/*: any*/),
-              (v12/*: any*/)
+              (v12/*: any*/),
+              (v13/*: any*/),
+              (v14/*: any*/)
             ],
             "type": "ContinualImprovementRegistry",
             "abstractKey": null
@@ -241,16 +261,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "cdf6a776528b7eb148caaa696e7c348c",
+    "cacheID": "dc67877ad1fe94bfeb50490a9ca6692b",
     "id": null,
     "metadata": {},
     "name": "ContinualImprovementRegistryGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ContinualImprovementRegistryGraphNodeQuery(\n  $continualImprovementRegistryId: ID!\n) {\n  node(id: $continualImprovementRegistryId) {\n    __typename\n    ... on ContinualImprovementRegistry {\n      id\n      referenceId\n      description\n      source\n      targetDate\n      status\n      priority\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ContinualImprovementRegistryGraphNodeQuery(\n  $continualImprovementRegistryId: ID!\n) {\n  node(id: $continualImprovementRegistryId) {\n    __typename\n    ... on ContinualImprovementRegistry {\n      id\n      snapshotId\n      sourceId\n      referenceId\n      description\n      source\n      targetDate\n      status\n      priority\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1b5811e2cd314786117ef60841743dc5";
+(node as any).hash = "659dd712ecf01765f6d5ef0f9d7d2a08";
 
 export default node;

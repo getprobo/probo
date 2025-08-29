@@ -4,6 +4,7 @@ export const snapshotTypes = [
   "DATA",
   "NONCONFORMITY_REGISTRIES",
   "COMPLIANCE_REGISTRIES",
+  "CONTINUAL_IMPROVEMENT_REGISTRIES",
 ] as const;
 
 export function getSnapshotTypeLabel(__: Translator, type: string | null | undefined) {
@@ -24,6 +25,8 @@ export function getSnapshotTypeLabel(__: Translator, type: string | null | undef
       return __("Nonconformity Registries");
     case "COMPLIANCE_REGISTRIES":
       return __("Compliance Registries");
+    case "CONTINUAL_IMPROVEMENT_REGISTRIES":
+      return __("Continual Improvement Registries");
     default:
       return __("Unknown");
   }
@@ -37,6 +40,8 @@ export function getSnapshotTypeUrlPath(type?: string): string {
       return "/nonconformity-registries";
     case "COMPLIANCE_REGISTRIES":
       return "/compliance-registries";
+    case "CONTINUAL_IMPROVEMENT_REGISTRIES":
+      return "/continual-improvement-registries";
     default:
       return "";
   }

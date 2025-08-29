@@ -876,6 +876,10 @@ enum SnapshotsType
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeComplianceRegistries"
     )
+  CONTINUAL_IMPROVEMENT_REGISTRIES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeContinualImprovementRegistries"
+    )
 }
 
 enum SnapshotOrderField
@@ -1114,6 +1118,10 @@ input ComplianceRegistryFilter {
   snapshotId: ID
 }
 
+input ContinualImprovementRegistryFilter {
+  snapshotId: ID
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -1271,6 +1279,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ContinualImprovementRegistriesOrder
+    filter: ContinualImprovementRegistryFilter
   ): ContinualImprovementRegistryConnection! @goField(forceResolver: true)
 
   processingActivityRegistries(
@@ -1745,6 +1754,8 @@ type ComplianceRegistry implements Node {
 
 type ContinualImprovementRegistry implements Node {
   id: ID!
+  snapshotId: ID
+  sourceId: ID
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   description: String

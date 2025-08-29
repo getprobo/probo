@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<09a183f301bdb0deae825495f9fdd438>>
+ * @generated SignedSource<<95ba9ae06f433c92486e63832eb9166d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type ContinualImprovementRegistryGraphListQuery$variables = {
   organizationId: string;
+  snapshotId?: string | null | undefined;
 };
 export type ContinualImprovementRegistryGraphListQuery$data = {
   readonly node: {
@@ -29,6 +30,11 @@ var v0 = [
     "defaultValue": null,
     "kind": "LocalArgument",
     "name": "organizationId"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "snapshotId"
   }
 ],
 v1 = [
@@ -38,21 +44,33 @@ v1 = [
     "variableName": "organizationId"
   }
 ],
-v2 = {
+v2 = [
+  {
+    "kind": "Variable",
+    "name": "snapshotId",
+    "variableName": "snapshotId"
+  }
+],
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v4 = [
+v5 = [
+  {
+    "fields": (v2/*: any*/),
+    "kind": "ObjectValue",
+    "name": "filter"
+  },
   {
     "kind": "Literal",
     "name": "first",
@@ -78,7 +96,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
-                "args": null,
+                "args": (v2/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "ContinualImprovementRegistriesPageFragment"
               }
@@ -107,14 +125,14 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
           (v3/*: any*/),
+          (v4/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "ContinualImprovementRegistryConnection",
                 "kind": "LinkedField",
                 "name": "continualImprovementRegistries",
@@ -143,7 +161,21 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
+                          (v4/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "snapshotId",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "sourceId",
+                            "storageKey": null
+                          },
                           {
                             "alias": null,
                             "args": null,
@@ -194,7 +226,7 @@ return {
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v3/*: any*/),
+                              (v4/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -219,7 +251,7 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
-                          (v2/*: any*/)
+                          (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -271,12 +303,14 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "continualImprovementRegistries(first:10)"
+                "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
-                "filters": null,
+                "args": (v5/*: any*/),
+                "filters": [
+                  "filter"
+                ],
                 "handle": "connection",
                 "key": "ContinualImprovementRegistriesPage_continualImprovementRegistries",
                 "kind": "LinkedHandle",
@@ -292,16 +326,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "248942c6d0d46f56e8c55fd3eb1e8888",
+    "cacheID": "b629619a1e2a00d3e58ae908977124b0",
     "id": null,
     "metadata": {},
     "name": "ContinualImprovementRegistryGraphListQuery",
     "operationKind": "query",
-    "text": "query ContinualImprovementRegistryGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ContinualImprovementRegistriesPageFragment\n    }\n    id\n  }\n}\n\nfragment ContinualImprovementRegistriesPageFragment on Organization {\n  id\n  continualImprovementRegistries(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ContinualImprovementRegistryGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ContinualImprovementRegistriesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ContinualImprovementRegistriesPageFragment_3iomuz on Organization {\n  id\n  continualImprovementRegistries(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1098fc11629892073fbe6d7561b229e3";
+(node as any).hash = "46857b16d3bdb52307eacf7c4e607d2f";
 
 export default node;
