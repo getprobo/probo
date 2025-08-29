@@ -558,7 +558,12 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.Data.CountForOrganizationID(ctx, obj.ParentID)
+		datumFilter := coredata.NewDatumFilter(nil)
+		if obj.Filter != nil {
+			datumFilter = coredata.NewDatumFilter(&obj.Filter.SnapshotID)
+		}
+
+		count, err := prb.Data.CountForOrganizationID(ctx, obj.ParentID, datumFilter)
 		if err != nil {
 			return 0, fmt.Errorf("cannot count data: %w", err)
 		}
@@ -3672,7 +3677,7 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 		panic(fmt.Errorf("cannot list organization data: %w", err))
 	}
 
-	return types.NewDataConnection(page, r, obj.ID), nil
+	return types.NewDataConnection(page, r, obj.ID, filter), nil
 }
 
 // Audits is the resolver for the audits field.

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<17f6d8607b6d2a1b575e1251019b8375>>
+ * @generated SignedSource<<9619ee8f74aea67be931f8c40a8815c8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -143,11 +143,6 @@ return {
           ],
           "kind": "ObjectValue",
           "name": "filter"
-        },
-        {
-          "kind": "Variable",
-          "name": "orderBy",
-          "variableName": "order"
         }
       ],
       "concreteType": "DatumConnection",
@@ -334,6 +329,6 @@ return {
 };
 })();
 
-(node as any).hash = "a60d9b34a83df89eb59ffcd359903ce8";
+(node as any).hash = "5d3069a0d856613ccb854033b5b1f14e";
 
 export default node;

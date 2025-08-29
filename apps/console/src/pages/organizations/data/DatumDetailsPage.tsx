@@ -59,7 +59,11 @@ export default function DatumDetailsPage(props: Props) {
 
   const deleteDatum = useDeleteDatum(
     datumEntry,
-    ConnectionHandler.getConnectionID(organizationId, "DataPage_data"),
+    ConnectionHandler.getConnectionID(
+      organizationId,
+      "DataPage_data",
+      { filter: { snapshotId: snapshotId || null } }
+    ),
   );
 
   const vendors = datumEntry?.vendors?.edges.map(edge => edge.node) ?? [];

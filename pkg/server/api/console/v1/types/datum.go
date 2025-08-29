@@ -30,6 +30,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *DatumFilter
 	}
 )
 
@@ -37,6 +38,7 @@ func NewDataConnection(
 	p *page.Page[*coredata.Datum, coredata.DatumOrderField],
 	parentType any,
 	parentID gid.GID,
+	filter *DatumFilter,
 ) *DatumConnection {
 	edges := make([]*DatumEdge, len(p.Data))
 	for i, datum := range p.Data {
@@ -49,6 +51,7 @@ func NewDataConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filter:   filter,
 	}
 }
 
