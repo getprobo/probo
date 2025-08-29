@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Add compliance registry snapshots
 - Add continual improvement snapshots
+- Add processing activity registry snapshots
+- Add assets snapshots
 
 ## [0.53.0] - 2025-08-29
 
