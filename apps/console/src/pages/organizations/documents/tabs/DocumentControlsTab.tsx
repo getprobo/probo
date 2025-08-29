@@ -1,8 +1,9 @@
 import { LinkedControlsCard } from "/components/controls/LinkedControlsCard";
 import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
-import { useMutation, useRefetchableFragment } from "react-relay";
+import { useRefetchableFragment } from "react-relay";
 import type { DocumentControlsTabFragment$key } from "./__generated__/DocumentControlsTabFragment.graphql";
+import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement.ts";
 
 export const controlsFragment = graphql`
   fragment DocumentControlsTabFragment on Document
@@ -68,8 +69,24 @@ export default function DocumentControlsTab() {
   }>();
   const [data, refetch] = useRefetchableFragment(controlsFragment, document);
   const controls = data.controls.edges.map((edge) => edge.node);
-  const [detachControl, isDetaching] = useMutation(detachControlMutation);
-  const [attachControl, isAttaching] = useMutation(attachControlMutation);
+  const incrementOptions = {
+    id: data.id,
+    node: "controls(first:0)",
+  };
+  const [detachControl, isDetaching] = useMutationWithIncrement(
+    detachControlMutation,
+    {
+      ...incrementOptions,
+      value: -1,
+    },
+  );
+  const [attachControl, isAttaching] = useMutationWithIncrement(
+    attachControlMutation,
+    {
+      ...incrementOptions,
+      value: 1,
+    },
+  );
   const isLoading = isDetaching || isAttaching;
   return (
     <LinkedControlsCard
