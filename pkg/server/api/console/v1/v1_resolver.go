@@ -98,7 +98,12 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.Assets.CountForOrganizationID(ctx, obj.ParentID)
+		assetFilter := coredata.NewAssetFilter(nil)
+		if obj.Filter != nil {
+			assetFilter = coredata.NewAssetFilter(&obj.Filter.SnapshotID)
+		}
+
+		count, err := prb.Assets.CountForOrganizationID(ctx, obj.ParentID, assetFilter)
 		if err != nil {
 			return 0, fmt.Errorf("cannot count assets: %w", err)
 		}
@@ -3626,7 +3631,7 @@ func (r *organizationResolver) Tasks(ctx context.Context, obj *types.Organizatio
 }
 
 // Assets is the resolver for the assets field.
-func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) (*types.AssetConnection, error) {
+func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy, filter *types.AssetFilter) (*types.AssetConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.AssetOrderField]{
@@ -3642,12 +3647,17 @@ func (r *organizationResolver) Assets(ctx context.Context, obj *types.Organizati
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Assets.ListForOrganizationID(ctx, obj.ID, cursor)
+	assetFilter := coredata.NewAssetFilter(nil)
+	if filter != nil {
+		assetFilter = coredata.NewAssetFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.Assets.ListForOrganizationID(ctx, obj.ID, cursor, assetFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization assets: %w", err))
 	}
 
-	return types.NewAssetConnection(page, r, obj.ID), nil
+	return types.NewAssetConnection(page, r, obj.ID, filter), nil
 }
 
 // Assets is the resolver for the assets field.

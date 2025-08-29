@@ -1130,6 +1130,10 @@ input ProcessingActivityRegistryFilter {
   snapshotId: ID
 }
 
+input AssetFilter {
+  snapshotId: ID
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -1244,6 +1248,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: AssetOrder
+    filter: AssetFilter
   ): AssetConnection! @goField(forceResolver: true)
 
   data(
@@ -3639,6 +3644,7 @@ type AssessVendorPayload {
 
 type Asset implements Node {
   id: ID!
+  snapshotId: ID
   name: String!
   amount: Int!
   owner: People! @goField(forceResolver: true)

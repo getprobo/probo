@@ -29,6 +29,8 @@ import (
 type (
 	Asset struct {
 		ID              gid.GID        `db:"id"`
+		SnapshotID      *gid.GID       `db:"snapshot_id"`
+		SourceID        *gid.GID       `db:"source_id"`
 		Name            string         `db:"name"`
 		Amount          int            `db:"amount"`
 		OwnerID         gid.GID        `db:"owner_id"`
@@ -65,6 +67,8 @@ func (a *Asset) LoadByID(
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	name,
 	organization_id,
 	owner_id,
@@ -110,6 +114,8 @@ func (a *Asset) LoadByOwnerID(
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	name,
 	organization_id,
 	owner_id,
@@ -152,6 +158,7 @@ func (a *Assets) CountByOrganizationID(
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *AssetFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -161,12 +168,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -184,10 +193,13 @@ func (a *Assets) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[AssetOrderField],
+	filter *AssetFilter,
 ) error {
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	name,
 	organization_id,
 	owner_id,
@@ -203,12 +215,14 @@ WHERE
 	%s
 	AND organization_id = @organization_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -299,8 +313,11 @@ SET
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 RETURNING
 	id,
+	snapshot_id,
+	source_id,
 	name,
 	organization_id,
 	owner_id,
@@ -351,6 +368,7 @@ DELETE FROM assets
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -361,6 +379,82 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete asset: %w", err)
+	}
+
+	return nil
+}
+
+func (assets Assets) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+	snapshotters := []AssetSnapshotter{Assets{}, Vendors{}, AssetVendors{}}
+
+	for _, snapshotter := range snapshotters {
+		if err := snapshotter.InsertAssetSnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
+			return fmt.Errorf("cannot create asset snapshots: (%T) %w", snapshotter, err)
+		}
+	}
+
+	return nil
+}
+
+func (assets Assets) InsertAssetSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	source_assets AS (
+		SELECT *
+		FROM assets
+		WHERE %s AND organization_id = @organization_id AND snapshot_id IS NULL
+	)
+INSERT INTO assets (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	name,
+	organization_id,
+	owner_id,
+	amount,
+	criticity,
+	asset_type,
+	data_types_stored,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @asset_entity_type),
+	@snapshot_id,
+	a.id,
+	a.name,
+	a.organization_id,
+	a.owner_id,
+	a.amount,
+	a.criticity,
+	a.asset_type,
+	a.data_types_stored,
+	a.created_at,
+	a.updated_at
+FROM source_assets a
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":         scope.GetTenantID(),
+		"snapshot_id":       snapshotID,
+		"organization_id":   organizationID,
+		"asset_entity_type": AssetEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert asset snapshots: %w", err)
 	}
 
 	return nil

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ead1e328f3bc8ddc8f4c98cee6838ee9>>
+ * @generated SignedSource<<6bc692e9d9ab5b78611dc2a326227761>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -37,6 +37,7 @@ export type AssetGraphUpdateMutation$data = {
         readonly fullName: string;
         readonly id: string;
       };
+      readonly snapshotId: string | null | undefined;
       readonly updatedAt: any;
       readonly vendors: {
         readonly edges: ReadonlyArray<{
@@ -101,6 +102,13 @@ v3 = [
         "plural": false,
         "selections": [
           (v1/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "snapshotId",
+            "storageKey": null
+          },
           (v2/*: any*/),
           {
             "alias": null,
@@ -229,16 +237,16 @@ return {
     "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "f5e4ccc38f842f4965c32676ae407012",
+    "cacheID": "1447ea6f965bbd6fcdba1ebc72e2d23f",
     "id": null,
     "metadata": {},
     "name": "AssetGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation AssetGraphUpdateMutation(\n  $input: UpdateAssetInput!\n) {\n  updateAsset(input: $input) {\n    asset {\n      id\n      name\n      amount\n      criticity\n      assetType\n      dataTypesStored\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n          }\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation AssetGraphUpdateMutation(\n  $input: UpdateAssetInput!\n) {\n  updateAsset(input: $input) {\n    asset {\n      id\n      snapshotId\n      name\n      amount\n      criticity\n      assetType\n      dataTypesStored\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n          }\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "257fa8f1a9996808403fa65a06b61ba2";
+(node as any).hash = "21b0c94b6245eb849e6118a58fb97490";
 
 export default node;

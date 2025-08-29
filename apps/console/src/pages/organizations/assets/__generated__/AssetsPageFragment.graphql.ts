@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8bacf647a39e3c33616be7e9159928df>>
+ * @generated SignedSource<<663b14d82ccaeebe2dda8dc256fddfc5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -28,6 +28,7 @@ export type AssetsPageFragment$data = {
           readonly fullName: string;
           readonly id: string;
         };
+        readonly snapshotId: string | null | undefined;
         readonly vendors: {
           readonly edges: ReadonlyArray<{
             readonly node: {
@@ -94,6 +95,11 @@ return {
       "defaultValue": null,
       "kind": "LocalArgument",
       "name": "orderBy"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "snapshotId"
     }
   ],
   "kind": "Fragment",
@@ -134,9 +140,15 @@ return {
       "alias": "assets",
       "args": [
         {
-          "kind": "Variable",
-          "name": "orderBy",
-          "variableName": "orderBy"
+          "fields": [
+            {
+              "kind": "Variable",
+              "name": "snapshotId",
+              "variableName": "snapshotId"
+            }
+          ],
+          "kind": "ObjectValue",
+          "name": "filter"
         }
       ],
       "concreteType": "AssetConnection",
@@ -161,6 +173,13 @@ return {
               "plural": false,
               "selections": [
                 (v1/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "snapshotId",
+                  "storageKey": null
+                },
                 (v2/*: any*/),
                 {
                   "alias": null,
@@ -345,6 +364,6 @@ return {
 };
 })();
 
-(node as any).hash = "e25e58aa9cf789614d280313c6059d5e";
+(node as any).hash = "4bc1af55d208f3c773c49b753a76aa5c";
 
 export default node;
