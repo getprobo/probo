@@ -22,6 +22,7 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { useParams } from "react-router";
 import { CreateAssetDialog } from "./dialogs/CreateAssetDialog";
 import { useDeleteAsset, assetsQuery } from "../../../hooks/graph/AssetGraph";
 import type { AssetGraphListQuery } from "/hooks/graph/__generated__/AssetGraphListQuery.graphql";
@@ -33,6 +34,7 @@ import type {
   AssetsPageFragment$key,
 } from "./__generated__/AssetsPageFragment.graphql";
 import { SortableTable } from "/components/SortableTable";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 
 const paginatedAssetsFragment = graphql`
   fragment AssetsPageFragment on Organization
@@ -43,6 +45,7 @@ const paginatedAssetsFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
+    snapshotId: { type: "ID", defaultValue: null }
   ) {
     assets(
       first: $first
@@ -50,11 +53,13 @@ const paginatedAssetsFragment = graphql`
       last: $last
       before: $before
       orderBy: $orderBy
-    ) @connection(key: "AssetsPage_assets") {
+      filter: { snapshotId: $snapshotId }
+    ) @connection(key: "AssetsPage_assets", filters: ["filter"]) {
       __id
       edges {
         node {
           id
+          snapshotId
           name
           amount
           criticity
@@ -89,6 +94,8 @@ type Props = {
 export default function AssetsPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
   const data = usePreloadedQuery(assetsQuery, props.queryRef);
   const pagination = usePaginationFragment(
@@ -102,18 +109,21 @@ export default function AssetsPage(props: Props) {
 
   return (
     <div className="space-y-6">
+      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
       <PageHeader
         title={__("Assets")}
         description={__(
           "Manage your organization's assets and their classifications."
         )}
       >
-        <CreateAssetDialog
-          connection={connectionId}
-          organizationId={organizationId}
-        >
-          <Button icon={IconPlusLarge}>{__("Add asset")}</Button>
-        </CreateAssetDialog>
+        {!isSnapshotMode && (
+          <CreateAssetDialog
+            connection={connectionId}
+            organizationId={organizationId}
+          >
+            <Button icon={IconPlusLarge}>{__("Add asset")}</Button>
+          </CreateAssetDialog>
+        )}
       </PageHeader>
       <SortableTable {...pagination}>
         <Thead>
@@ -150,11 +160,17 @@ function AssetRow({
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
   const deleteAsset = useDeleteAsset(entry, connectionId);
   const vendors = entry.vendors?.edges.map((edge) => edge.node) ?? [];
 
+  const assetUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets/${entry.id}`
+    : `/organizations/${organizationId}/assets/${entry.id}`;
+
   return (
-    <Tr to={`/organizations/${organizationId}/assets/${entry.id}`}>
+    <Tr to={assetUrl}>
       <Td>{entry.name}</Td>
       <Td>
         <Badge variant={getAssetTypeVariant(entry.assetType)}>
@@ -196,15 +212,17 @@ function AssetRow({
         )}
       </Td>
       <Td noLink width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            onClick={deleteAsset}
-            variant="danger"
-            icon={IconTrashCan}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+        {!isSnapshotMode && (
+          <ActionDropdown>
+            <DropdownItem
+              onClick={deleteAsset}
+              variant="danger"
+              icon={IconTrashCan}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
       </Td>
     </Tr>
   );

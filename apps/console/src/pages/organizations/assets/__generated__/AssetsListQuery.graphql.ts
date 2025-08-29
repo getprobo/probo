@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<305c2e15c19e7ead66752260c29d8794>>
+ * @generated SignedSource<<f2135bf85e1d0dffde8c1bcaa7940504>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,6 +23,7 @@ export type AssetsListQuery$variables = {
   id: string;
   last?: number | null | undefined;
   orderBy?: AssetOrder | null | undefined;
+  snapshotId?: string | null | undefined;
 };
 export type AssetsListQuery$data = {
   readonly node: {
@@ -65,55 +66,77 @@ v5 = {
   "kind": "LocalArgument",
   "name": "orderBy"
 },
-v6 = [
+v6 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "snapshotId"
+},
+v7 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "id"
   }
 ],
-v7 = [
-  {
-    "kind": "Variable",
-    "name": "after",
-    "variableName": "after"
-  },
-  {
-    "kind": "Variable",
-    "name": "before",
-    "variableName": "before"
-  },
-  {
-    "kind": "Variable",
-    "name": "first",
-    "variableName": "first"
-  },
-  {
-    "kind": "Variable",
-    "name": "last",
-    "variableName": "last"
-  },
-  {
-    "kind": "Variable",
-    "name": "orderBy",
-    "variableName": "orderBy"
-  }
-],
 v8 = {
+  "kind": "Variable",
+  "name": "after",
+  "variableName": "after"
+},
+v9 = {
+  "kind": "Variable",
+  "name": "before",
+  "variableName": "before"
+},
+v10 = {
+  "kind": "Variable",
+  "name": "first",
+  "variableName": "first"
+},
+v11 = {
+  "kind": "Variable",
+  "name": "last",
+  "variableName": "last"
+},
+v12 = {
+  "kind": "Variable",
+  "name": "orderBy",
+  "variableName": "orderBy"
+},
+v13 = {
+  "kind": "Variable",
+  "name": "snapshotId",
+  "variableName": "snapshotId"
+},
+v14 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v9 = {
+v15 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v10 = {
+v16 = [
+  (v8/*: any*/),
+  (v9/*: any*/),
+  {
+    "fields": [
+      (v13/*: any*/)
+    ],
+    "kind": "ObjectValue",
+    "name": "filter"
+  },
+  (v10/*: any*/),
+  (v11/*: any*/),
+  (v12/*: any*/)
+],
+v17 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -128,7 +151,8 @@ return {
       (v2/*: any*/),
       (v3/*: any*/),
       (v4/*: any*/),
-      (v5/*: any*/)
+      (v5/*: any*/),
+      (v6/*: any*/)
     ],
     "kind": "Fragment",
     "metadata": null,
@@ -136,14 +160,21 @@ return {
     "selections": [
       {
         "alias": null,
-        "args": (v6/*: any*/),
+        "args": (v7/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
           {
-            "args": (v7/*: any*/),
+            "args": [
+              (v8/*: any*/),
+              (v9/*: any*/),
+              (v10/*: any*/),
+              (v11/*: any*/),
+              (v12/*: any*/),
+              (v13/*: any*/)
+            ],
             "kind": "FragmentSpread",
             "name": "AssetsPageFragment"
           }
@@ -162,6 +193,7 @@ return {
       (v2/*: any*/),
       (v4/*: any*/),
       (v5/*: any*/),
+      (v6/*: any*/),
       (v3/*: any*/)
     ],
     "kind": "Operation",
@@ -169,20 +201,20 @@ return {
     "selections": [
       {
         "alias": null,
-        "args": (v6/*: any*/),
+        "args": (v7/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v8/*: any*/),
-          (v9/*: any*/),
+          (v14/*: any*/),
+          (v15/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v7/*: any*/),
+                "args": (v16/*: any*/),
                 "concreteType": "AssetConnection",
                 "kind": "LinkedField",
                 "name": "assets",
@@ -204,8 +236,15 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v9/*: any*/),
-                          (v10/*: any*/),
+                          (v15/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "snapshotId",
+                            "storageKey": null
+                          },
+                          (v17/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -242,7 +281,7 @@ return {
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v9/*: any*/),
+                              (v15/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -283,8 +322,8 @@ return {
                                     "name": "node",
                                     "plural": false,
                                     "selections": [
-                                      (v9/*: any*/),
-                                      (v10/*: any*/),
+                                      (v15/*: any*/),
+                                      (v17/*: any*/),
                                       {
                                         "alias": null,
                                         "args": null,
@@ -308,7 +347,7 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
-                          (v8/*: any*/)
+                          (v14/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -378,9 +417,9 @@ return {
               },
               {
                 "alias": null,
-                "args": (v7/*: any*/),
+                "args": (v16/*: any*/),
                 "filters": [
-                  "orderBy"
+                  "filter"
                 ],
                 "handle": "connection",
                 "key": "AssetsPage_assets",
@@ -397,16 +436,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d712227ae7c1c1a4151005092f7eeaf9",
+    "cacheID": "2eab5fe4d402f48ac4dcd8220284ea41",
     "id": null,
     "metadata": {},
     "name": "AssetsListQuery",
     "operationKind": "query",
-    "text": "query AssetsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AssetOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AssetsPageFragment_sdb03\n    id\n  }\n}\n\nfragment AssetsPageFragment_sdb03 on Organization {\n  assets(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy) {\n    edges {\n      node {\n        id\n        name\n        amount\n        criticity\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AssetsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AssetOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AssetsPageFragment_38J9tm\n    id\n  }\n}\n\nfragment AssetsPageFragment_38J9tm on Organization {\n  assets(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        criticity\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e25e58aa9cf789614d280313c6059d5e";
+(node as any).hash = "4bc1af55d208f3c773c49b753a76aa5c";
 
 export default node;

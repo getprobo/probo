@@ -112,6 +112,7 @@ type ComplexityRoot struct {
 		Name            func(childComplexity int) int
 		Organization    func(childComplexity int) int
 		Owner           func(childComplexity int) int
+		SnapshotID      func(childComplexity int) int
 		UpdatedAt       func(childComplexity int) int
 		Vendors         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
 	}
@@ -873,7 +874,7 @@ type ComplexityRoot struct {
 	}
 
 	Organization struct {
-		Assets                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) int
+		Assets                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy, filter *types.AssetFilter) int
 		Audits                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
 		ComplianceRegistries           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy, filter *types.ComplianceRegistryFilter) int
 		Connectors                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
@@ -1671,7 +1672,7 @@ type OrganizationResolver interface {
 	Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error)
 	Risks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) (*types.RiskConnection, error)
 	Tasks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error)
-	Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) (*types.AssetConnection, error)
+	Assets(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy, filter *types.AssetFilter) (*types.AssetConnection, error)
 	Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) (*types.DatumConnection, error)
 	Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error)
 	NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy, filter *types.NonconformityRegistryFilter) (*types.NonconformityRegistryConnection, error)
@@ -1863,6 +1864,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Asset.Owner(childComplexity), true
+
+	case "Asset.snapshotId":
+		if e.complexity.Asset.SnapshotID == nil {
+			break
+		}
+
+		return e.complexity.Asset.SnapshotID(childComplexity), true
 
 	case "Asset.updatedAt":
 		if e.complexity.Asset.UpdatedAt == nil {
@@ -5380,7 +5388,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.Assets(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AssetOrderBy)), true
+		return e.complexity.Organization.Assets(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AssetOrderBy), args["filter"].(*types.AssetFilter)), true
 
 	case "Organization.audits":
 		if e.complexity.Organization.Audits == nil {
@@ -7697,6 +7705,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAssessVendorInput,
+		ec.unmarshalInputAssetFilter,
 		ec.unmarshalInputAssetOrder,
 		ec.unmarshalInputAssignTaskInput,
 		ec.unmarshalInputAuditOrder,
@@ -9073,6 +9082,10 @@ input ProcessingActivityRegistryFilter {
   snapshotId: ID
 }
 
+input AssetFilter {
+  snapshotId: ID
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -9187,6 +9200,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: AssetOrder
+    filter: AssetFilter
   ): AssetConnection! @goField(forceResolver: true)
 
   data(
@@ -11582,6 +11596,7 @@ type AssessVendorPayload {
 
 type Asset implements Node {
   id: ID!
+  snapshotId: ID
   name: String!
   amount: Int!
   owner: People! @goField(forceResolver: true)
@@ -15883,6 +15898,11 @@ func (ec *executionContext) field_Organization_assets_args(ctx context.Context, 
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	arg5, err := ec.field_Organization_assets_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
 	return args, nil
 }
 func (ec *executionContext) field_Organization_assets_argsFirst(
@@ -15947,6 +15967,19 @@ func (ec *executionContext) field_Organization_assets_argsOrderBy(
 	}
 
 	var zeroVal *types.AssetOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_assets_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.AssetFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalOAssetFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAssetFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.AssetFilter
 	return zeroVal, nil
 }
 
@@ -19197,6 +19230,47 @@ func (ec *executionContext) fieldContext_Asset_id(_ context.Context, field graph
 	return fc, nil
 }
 
+func (ec *executionContext) _Asset_snapshotId(ctx context.Context, field graphql.CollectedField, obj *types.Asset) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Asset_snapshotId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SnapshotID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*gid.GID)
+	fc.Result = res
+	return ec.marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Asset_snapshotId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Asset",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Asset_name(ctx context.Context, field graphql.CollectedField, obj *types.Asset) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Asset_name(ctx, field)
 	if err != nil {
@@ -19961,6 +20035,8 @@ func (ec *executionContext) fieldContext_AssetEdge_node(_ context.Context, field
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Asset_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Asset_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Asset_name(ctx, field)
 			case "amount":
@@ -41999,7 +42075,7 @@ func (ec *executionContext) _Organization_assets(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organization().Assets(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.AssetOrderBy))
+		return ec.resolvers.Organization().Assets(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.AssetOrderBy), fc.Args["filter"].(*types.AssetFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -49882,6 +49958,8 @@ func (ec *executionContext) fieldContext_UpdateAssetPayload_asset(_ context.Cont
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Asset_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Asset_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Asset_name(ctx, field)
 			case "amount":
@@ -59641,6 +59719,33 @@ func (ec *executionContext) unmarshalInputAssessVendorInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAssetFilter(ctx context.Context, obj any) (types.AssetFilter, error) {
+	var it types.AssetFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAssetOrder(ctx context.Context, obj any) (types.AssetOrderBy, error) {
 	var it types.AssetOrderBy
 	asMap := map[string]any{}
@@ -66297,6 +66402,8 @@ func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "snapshotId":
+			out.Values[i] = ec._Asset_snapshotId(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._Asset_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -87079,6 +87186,14 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalOAssetFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAssetFilter(ctx context.Context, v any) (*types.AssetFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAssetFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOAssetOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAssetOrderBy(ctx context.Context, v any) (*types.AssetOrderBy, error) {

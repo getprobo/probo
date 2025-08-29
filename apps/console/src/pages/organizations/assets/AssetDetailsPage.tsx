@@ -20,12 +20,14 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { useParams } from "react-router";
 import { ControlledField } from "/components/form/ControlledField";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
-import { getAssetTypeVariant, getCriticityVariant } from "@probo/helpers";
+import { getAssetTypeVariant, getCriticityVariant, validateSnapshotConsistency } from "@probo/helpers";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 
 const updateAssetSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -46,10 +48,21 @@ export default function AssetDetailsPage(props: Props) {
   const assetEntry = asset.node;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const deleteAsset = useDeleteAsset(
-    assetEntry,
-    ConnectionHandler.getConnectionID(organizationId, "AssetsPage_assets")
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
+
+  if (!assetEntry) {
+    return <div>{__("Asset not found")}</div>;
+  }
+
+  validateSnapshotConsistency(assetEntry, snapshotId);
+
+  const connectionId = ConnectionHandler.getConnectionID(
+    organizationId,
+    "AssetsPage_assets",
+    { filter: { snapshotId: snapshotId || null } }
   );
+  const deleteAsset = useDeleteAsset(assetEntry, connectionId);
 
   const vendors = assetEntry?.vendors?.edges.map((edge: any) => edge.node) ?? [];
   const vendorIds = vendors.map((vendor: any) => vendor.id);
@@ -80,13 +93,18 @@ export default function AssetDetailsPage(props: Props) {
     }
   });
 
+  const breadcrumbAssetsUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/assets`
+    : `/organizations/${organizationId}/assets`;
+
   return (
     <div className="space-y-6">
+      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
       <Breadcrumb
         items={[
           {
             label: __("Assets"),
-            to: `/organizations/${organizationId}/assets`,
+            to: breadcrumbAssetsUrl,
           },
           {
             label: assetEntry?.name ?? "",
@@ -104,15 +122,17 @@ export default function AssetDetailsPage(props: Props) {
             {assetEntry?.criticity}
           </Badge>
         </div>
-        <ActionDropdown variant="secondary">
-          <DropdownItem
-            variant="danger"
-            icon={IconTrashCan}
-            onClick={deleteAsset}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+        {!isSnapshotMode && (
+          <ActionDropdown variant="secondary">
+            <DropdownItem
+              variant="danger"
+              icon={IconTrashCan}
+              onClick={deleteAsset}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6 max-w-2xl">
@@ -120,12 +140,14 @@ export default function AssetDetailsPage(props: Props) {
           label={__("Name")}
           {...register("name")}
           type="text"
+          disabled={isSnapshotMode}
         />
 
         <Field
           label={__("Amount")}
           {...register("amount", { valueAsNumber: true })}
           type="number"
+          disabled={isSnapshotMode}
         />
 
         <ControlledField
@@ -133,6 +155,7 @@ export default function AssetDetailsPage(props: Props) {
           name="criticity"
           type="select"
           label={__("Criticity")}
+          disabled={isSnapshotMode}
         >
           <Option value="LOW">{__("Low")}</Option>
           <Option value="MEDIUM">{__("Medium")}</Option>
@@ -144,6 +167,7 @@ export default function AssetDetailsPage(props: Props) {
           name="assetType"
           type="select"
           label={__("Asset Type")}
+          disabled={isSnapshotMode}
         >
           <Option value="VIRTUAL">{__("Virtual")}</Option>
           <Option value="PHYSICAL">{__("Physical")}</Option>
@@ -153,6 +177,7 @@ export default function AssetDetailsPage(props: Props) {
           label={__("Data Types Stored")}
           {...register("dataTypesStored")}
           type="text"
+          disabled={isSnapshotMode}
         />
 
         <PeopleSelectField
@@ -160,6 +185,7 @@ export default function AssetDetailsPage(props: Props) {
           control={control}
           name="ownerId"
           label={__("Owner")}
+          disabled={isSnapshotMode}
         />
 
         <VendorsMultiSelectField
@@ -167,10 +193,11 @@ export default function AssetDetailsPage(props: Props) {
           control={control}
           name="vendorIds"
           label={__("Vendors")}
+          disabled={isSnapshotMode}
         />
 
         <div className="flex justify-end">
-          {formState.isDirty && (
+          {formState.isDirty && !isSnapshotMode && (
             <Button type="submit" disabled={formState.isSubmitting}>
               {formState.isSubmitting ? __("Updating...") : __("Update")}
             </Button>

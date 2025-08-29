@@ -27,6 +27,7 @@ type AssessVendorPayload struct {
 
 type Asset struct {
 	ID              gid.GID                 `json:"id"`
+	SnapshotID      *gid.GID                `json:"snapshotId,omitempty"`
 	Name            string                  `json:"name"`
 	Amount          int                     `json:"amount"`
 	Owner           *People                 `json:"owner"`
@@ -45,6 +46,10 @@ func (this Asset) GetID() gid.GID { return this.ID }
 type AssetEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Asset         `json:"node"`
+}
+
+type AssetFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
 type AssignTaskInput struct {
