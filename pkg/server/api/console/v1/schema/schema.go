@@ -9200,7 +9200,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: AssetOrder
-    filter: AssetFilter
+    filter: AssetFilter = { snapshotId: null }
   ): AssetConnection! @goField(forceResolver: true)
 
   data(
@@ -9209,7 +9209,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: DatumOrder
-    filter: DatumFilter
+    filter: DatumFilter = { snapshotId: null }
   ): DatumConnection! @goField(forceResolver: true)
 
   audits(
@@ -9226,7 +9226,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: NonconformityRegistryOrder
-    filter: NonconformityRegistryFilter
+    filter: NonconformityRegistryFilter = { snapshotId: null }
   ): NonconformityRegistryConnection! @goField(forceResolver: true)
 
   complianceRegistries(
@@ -9235,7 +9235,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ComplianceRegistryOrder
-    filter: ComplianceRegistryFilter
+    filter: ComplianceRegistryFilter = { snapshotId: null }
   ): ComplianceRegistryConnection! @goField(forceResolver: true)
 
   continualImprovementRegistries(
@@ -9244,7 +9244,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ContinualImprovementRegistriesOrder
-    filter: ContinualImprovementRegistryFilter
+    filter: ContinualImprovementRegistryFilter = { snapshotId: null }
   ): ContinualImprovementRegistryConnection! @goField(forceResolver: true)
 
   processingActivityRegistries(
@@ -9253,7 +9253,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ProcessingActivityRegistryOrder
-    filter: ProcessingActivityRegistryFilter
+    filter: ProcessingActivityRegistryFilter = { snapshotId: null }
   ): ProcessingActivityRegistryConnection! @goField(forceResolver: true)
 
   snapshots(

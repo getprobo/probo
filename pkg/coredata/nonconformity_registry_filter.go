@@ -27,7 +27,7 @@ type (
 
 func NewNonconformityRegistryFilter(snapshotID **gid.GID) *NonconformityRegistryFilter {
 	return &NonconformityRegistryFilter{
-		snapshotID: nil,
+		snapshotID: snapshotID,
 	}
 }
 
