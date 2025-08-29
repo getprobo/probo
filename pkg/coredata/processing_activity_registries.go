@@ -29,6 +29,8 @@ import (
 type (
 	ProcessingActivityRegistry struct {
 		ID                             gid.GID                                                  `db:"id"`
+		SnapshotID                     *gid.GID                                                 `db:"snapshot_id"`
+		SourceID                       *gid.GID                                                 `db:"source_id"`
 		OrganizationID                 gid.GID                                                  `db:"organization_id"`
 		Name                           string                                                   `db:"name"`
 		Purpose                        *string                                                  `db:"purpose"`
@@ -72,6 +74,8 @@ func (p *ProcessingActivityRegistry) LoadByID(
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -123,6 +127,7 @@ func (p *ProcessingActivityRegistries) CountByOrganizationID(
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *ProcessingActivityRegistryFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -132,12 +137,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -156,10 +163,13 @@ func (p *ProcessingActivityRegistries) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ProcessingActivityRegistryOrderField],
+	filter *ProcessingActivityRegistryFilter,
 ) error {
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -184,12 +194,14 @@ WHERE
 	%s
 	AND organization_id = @organization_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -216,6 +228,8 @@ func (p *ProcessingActivityRegistry) Insert(
 INSERT INTO processing_activity_registries (
 	id,
 	tenant_id,
+	snapshot_id,
+	source_id,
 	organization_id,
 	name,
 	purpose,
@@ -237,6 +251,8 @@ INSERT INTO processing_activity_registries (
 ) VALUES (
 	@id,
 	@tenant_id,
+	@snapshot_id,
+	@source_id,
 	@organization_id,
 	@name,
 	@purpose,
@@ -261,6 +277,8 @@ INSERT INTO processing_activity_registries (
 	args := pgx.StrictNamedArgs{
 		"id":                                p.ID,
 		"tenant_id":                         scope.GetTenantID(),
+		"snapshot_id":                       p.SnapshotID,
+		"source_id":                         p.SourceID,
 		"organization_id":                   p.OrganizationID,
 		"name":                              p.Name,
 		"purpose":                           p.Purpose,
@@ -316,6 +334,7 @@ SET
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -359,6 +378,7 @@ DELETE FROM processing_activity_registries
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -369,6 +389,77 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete processing activity registry: %w", err)
+	}
+
+	return nil
+}
+
+func (pars ProcessingActivityRegistries) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+	query := `
+INSERT INTO processing_activity_registries (
+	id,
+	tenant_id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	name,
+	purpose,
+	data_subject_category,
+	personal_data_category,
+	special_or_criminal_data,
+	consent_evidence_link,
+	lawful_basis,
+	recipients,
+	location,
+	international_transfers,
+	transfer_safeguards,
+	retention_period,
+	security_measures,
+	data_protection_impact_assessment,
+	transfer_impact_assessment,
+	created_at,
+	updated_at
+)
+SELECT
+	generate_gid(decode_base64_unpadded(@tenant_id), @processing_activity_registry_entity_type),
+	@tenant_id,
+	@snapshot_id,
+	par.id,
+	par.organization_id,
+	par.name,
+	par.purpose,
+	par.data_subject_category,
+	par.personal_data_category,
+	par.special_or_criminal_data,
+	par.consent_evidence_link,
+	par.lawful_basis,
+	par.recipients,
+	par.location,
+	par.international_transfers,
+	par.transfer_safeguards,
+	par.retention_period,
+	par.security_measures,
+	par.data_protection_impact_assessment,
+	par.transfer_impact_assessment,
+	par.created_at,
+	par.updated_at
+FROM processing_activity_registries par
+WHERE %s AND par.organization_id = @organization_id AND par.snapshot_id IS NULL
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":       scope.GetTenantID(),
+		"snapshot_id":     snapshotID,
+		"organization_id": organizationID,
+		"processing_activity_registry_entity_type": ProcessingActivityRegistryEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert processing activity registry snapshots: %w", err)
 	}
 
 	return nil

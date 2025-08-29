@@ -1239,6 +1239,8 @@ type PeopleFilter struct {
 
 type ProcessingActivityRegistry struct {
 	ID                             gid.GID                                                           `json:"id"`
+	SnapshotID                     *gid.GID                                                          `json:"snapshotId,omitempty"`
+	SourceID                       *gid.GID                                                          `json:"sourceId,omitempty"`
 	Organization                   *Organization                                                     `json:"organization"`
 	Name                           string                                                            `json:"name"`
 	Purpose                        *string                                                           `json:"purpose,omitempty"`
@@ -1265,6 +1267,10 @@ func (this ProcessingActivityRegistry) GetID() gid.GID { return this.ID }
 type ProcessingActivityRegistryEdge struct {
 	Cursor page.CursorKey              `json:"cursor"`
 	Node   *ProcessingActivityRegistry `json:"node"`
+}
+
+type ProcessingActivityRegistryFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
 type PublishDocumentVersionInput struct {

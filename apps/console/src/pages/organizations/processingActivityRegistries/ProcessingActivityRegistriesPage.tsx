@@ -27,9 +27,11 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { useParams } from "react-router";
 import { CreateProcessingActivityRegistryDialog } from "./dialogs/CreateProcessingActivityRegistryDialog";
 import { deleteProcessingActivityRegistryMutation, ProcessingActivityRegistriesConnectionKey } from "../../../hooks/graph/ProcessingActivityRegistryGraph";
 import { sprintf, promisifyMutation } from "@probo/helpers";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
 import type { ProcessingActivityRegistriesPageQuery } from "./__generated__/ProcessingActivityRegistriesPageQuery.graphql";
 import type {
@@ -47,15 +49,22 @@ const processingActivityRegistriesPageFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 10 }
     after: { type: "CursorKey" }
+    snapshotId: { type: "ID", defaultValue: null }
   ) {
     id
-    processingActivityRegistries(first: $first, after: $after)
-      @connection(key: "ProcessingActivityRegistriesPage_processingActivityRegistries") {
+    processingActivityRegistries(
+      first: $first
+      after: $after
+      filter: { snapshotId: $snapshotId }
+    )
+      @connection(key: "ProcessingActivityRegistriesPage_processingActivityRegistries", filters: ["filter"]) {
       __id
       totalCount
       edges {
         node {
           id
+          snapshotId
+          sourceId
           name
           purpose
           dataSubjectCategory
@@ -78,15 +87,18 @@ const processingActivityRegistriesPageFragment = graphql`
 export default function ProcessingActivityRegistriesPage({ queryRef }: ProcessingActivityRegistriesPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
+
 
   usePageTitle(__("Processing Activity Registries"));
 
   const organization = usePreloadedQuery(
     graphql`
-      query ProcessingActivityRegistriesPageQuery($organizationId: ID!) {
+      query ProcessingActivityRegistriesPageQuery($organizationId: ID!, $snapshotId: ID) {
         node(id: $organizationId) {
           ... on Organization {
-            ...ProcessingActivityRegistriesPageFragment
+            ...ProcessingActivityRegistriesPageFragment @arguments(snapshotId: $snapshotId)
           }
         }
       }
@@ -109,21 +121,27 @@ export default function ProcessingActivityRegistriesPage({ queryRef }: Processin
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
-    ProcessingActivityRegistriesConnectionKey
+    ProcessingActivityRegistriesConnectionKey,
+    { filter: { snapshotId: snapshotId || null } }
   );
   const registries = data?.processingActivityRegistries?.edges?.map((edge) => edge.node) ?? [];
 
   return (
     <div className="space-y-6">
+      {isSnapshotMode && snapshotId && (
+        <SnapshotBanner snapshotId={snapshotId} />
+      )}
       <PageHeader title={__("Processing Activity Registries")} description={__("Manage your processing activity registry entries under GDPR")}>
-        <CreateProcessingActivityRegistryDialog
-          organizationId={organizationId}
-          connectionId={connectionId}
-        >
-          <Button icon={IconPlusLarge}>
-            {__("Add processing activity registry")}
-          </Button>
-        </CreateProcessingActivityRegistryDialog>
+        {!isSnapshotMode && (
+          <CreateProcessingActivityRegistryDialog
+            organizationId={organizationId}
+            connectionId={connectionId}
+          >
+            <Button icon={IconPlusLarge}>
+              {__("Add processing activity registry")}
+            </Button>
+          </CreateProcessingActivityRegistryDialog>
+        )}
       </PageHeader>
 
       {registries.length > 0 ? (
@@ -137,7 +155,7 @@ export default function ProcessingActivityRegistriesPage({ queryRef }: Processin
                 <Th>{__("Lawful Basis")}</Th>
                 <Th>{__("Location")}</Th>
                 <Th>{__("International Transfers")}</Th>
-                <Th>{__("Actions")}</Th>
+                {!isSnapshotMode && <Th>{__("Actions")}</Th>}
               </Tr>
             </Thead>
             <Tbody>
@@ -188,6 +206,8 @@ function RegistryRow({
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
   const [deleteRegistry] = useMutation(deleteProcessingActivityRegistryMutation);
   const confirm = useConfirm();
 
@@ -213,8 +233,12 @@ function RegistryRow({
     );
   };
 
+  const registryUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activity-registries/${registry.id}`
+    : `/organizations/${organizationId}/processing-activity-registries/${registry.id}`;
+
   return (
-    <Tr to={`/organizations/${organizationId}/processing-activity-registries/${registry.id}`}>
+    <Tr to={registryUrl}>
       <Td>
         <span className="font-semibold">{registry.name}</span>
       </Td>
@@ -231,17 +255,19 @@ function RegistryRow({
           {registry.internationalTransfers ? __("Yes") : __("No")}
         </Badge>
       </Td>
-      <Td noLink width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            icon={IconTrashCan}
-            variant="danger"
-            onSelect={handleDelete}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
-      </Td>
+      {!isSnapshotMode && (
+        <Td noLink width={50} className="text-end">
+          <ActionDropdown>
+            <DropdownItem
+              icon={IconTrashCan}
+              variant="danger"
+              onSelect={handleDelete}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        </Td>
+      )}
     </Tr>
   );
 }

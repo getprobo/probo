@@ -31,6 +31,7 @@ const (
 	SnapshotsTypeNonConformityRegistries        SnapshotsType = "NONCONFORMITY_REGISTRIES"
 	SnapshotsTypeComplianceRegistries           SnapshotsType = "COMPLIANCE_REGISTRIES"
 	SnapshotsTypeContinualImprovementRegistries SnapshotsType = "CONTINUAL_IMPROVEMENT_REGISTRIES"
+	SnapshotsTypeProcessingActivityRegistries   SnapshotsType = "PROCESSING_ACTIVITY_REGISTRIES"
 )
 
 func (st SnapshotsType) String() string {
@@ -63,6 +64,8 @@ func (st *SnapshotsType) Scan(value any) error {
 		*st = SnapshotsTypeComplianceRegistries
 	case SnapshotsTypeContinualImprovementRegistries.String():
 		*st = SnapshotsTypeContinualImprovementRegistries
+	case SnapshotsTypeProcessingActivityRegistries.String():
+		*st = SnapshotsTypeProcessingActivityRegistries
 	default:
 		return fmt.Errorf("invalid SnapshotsType value: %q", s)
 	}

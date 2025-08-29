@@ -889,7 +889,7 @@ type ComplexityRoot struct {
 		Name                           func(childComplexity int) int
 		NonconformityRegistries        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy, filter *types.NonconformityRegistryFilter) int
 		Peoples                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
-		ProcessingActivityRegistries   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) int
+		ProcessingActivityRegistries   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy, filter *types.ProcessingActivityRegistryFilter) int
 		Risks                          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
 		Snapshots                      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
 		Tasks                          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
@@ -956,6 +956,8 @@ type ComplexityRoot struct {
 		Recipients                     func(childComplexity int) int
 		RetentionPeriod                func(childComplexity int) int
 		SecurityMeasures               func(childComplexity int) int
+		SnapshotID                     func(childComplexity int) int
+		SourceID                       func(childComplexity int) int
 		SpecialOrCriminalData          func(childComplexity int) int
 		TransferImpactAssessment       func(childComplexity int) int
 		TransferSafeguards             func(childComplexity int) int
@@ -1675,7 +1677,7 @@ type OrganizationResolver interface {
 	NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy, filter *types.NonconformityRegistryFilter) (*types.NonconformityRegistryConnection, error)
 	ComplianceRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy, filter *types.ComplianceRegistryFilter) (*types.ComplianceRegistryConnection, error)
 	ContinualImprovementRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy, filter *types.ContinualImprovementRegistryFilter) (*types.ContinualImprovementRegistryConnection, error)
-	ProcessingActivityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) (*types.ProcessingActivityRegistryConnection, error)
+	ProcessingActivityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy, filter *types.ProcessingActivityRegistryFilter) (*types.ProcessingActivityRegistryConnection, error)
 	Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
 }
@@ -5550,7 +5552,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.ProcessingActivityRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityRegistryOrderBy)), true
+		return e.complexity.Organization.ProcessingActivityRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ProcessingActivityRegistryOrderBy), args["filter"].(*types.ProcessingActivityRegistryFilter)), true
 
 	case "Organization.risks":
 		if e.complexity.Organization.Risks == nil {
@@ -5891,6 +5893,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ProcessingActivityRegistry.SecurityMeasures(childComplexity), true
+
+	case "ProcessingActivityRegistry.snapshotId":
+		if e.complexity.ProcessingActivityRegistry.SnapshotID == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.SnapshotID(childComplexity), true
+
+	case "ProcessingActivityRegistry.sourceId":
+		if e.complexity.ProcessingActivityRegistry.SourceID == nil {
+			break
+		}
+
+		return e.complexity.ProcessingActivityRegistry.SourceID(childComplexity), true
 
 	case "ProcessingActivityRegistry.specialOrCriminalData":
 		if e.complexity.ProcessingActivityRegistry.SpecialOrCriminalData == nil {
@@ -7780,6 +7796,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputOrganizationOrder,
 		ec.unmarshalInputPeopleFilter,
 		ec.unmarshalInputPeopleOrder,
+		ec.unmarshalInputProcessingActivityRegistryFilter,
 		ec.unmarshalInputProcessingActivityRegistryOrder,
 		ec.unmarshalInputPublishDocumentVersionInput,
 		ec.unmarshalInputRemoveUserInput,
@@ -8806,6 +8823,10 @@ enum SnapshotsType
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeContinualImprovementRegistries"
     )
+  PROCESSING_ACTIVITY_REGISTRIES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeProcessingActivityRegistries"
+    )
 }
 
 enum SnapshotOrderField
@@ -9048,6 +9069,10 @@ input ContinualImprovementRegistryFilter {
   snapshotId: ID
 }
 
+input ProcessingActivityRegistryFilter {
+  snapshotId: ID
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -9214,6 +9239,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ProcessingActivityRegistryOrder
+    filter: ProcessingActivityRegistryFilter
   ): ProcessingActivityRegistryConnection! @goField(forceResolver: true)
 
   snapshots(
@@ -9696,6 +9722,8 @@ type ContinualImprovementRegistry implements Node {
 
 type ProcessingActivityRegistry implements Node {
   id: ID!
+  snapshotId: ID
+  sourceId: ID
   organization: Organization! @goField(forceResolver: true)
   name: String!
   purpose: String
@@ -17139,6 +17167,11 @@ func (ec *executionContext) field_Organization_processingActivityRegistries_args
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	arg5, err := ec.field_Organization_processingActivityRegistries_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
 	return args, nil
 }
 func (ec *executionContext) field_Organization_processingActivityRegistries_argsFirst(
@@ -17203,6 +17236,19 @@ func (ec *executionContext) field_Organization_processingActivityRegistries_args
 	}
 
 	var zeroVal *types.ProcessingActivityRegistryOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_processingActivityRegistries_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.ProcessingActivityRegistryFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalOProcessingActivityRegistryFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.ProcessingActivityRegistryFilter
 	return zeroVal, nil
 }
 
@@ -42331,7 +42377,7 @@ func (ec *executionContext) _Organization_processingActivityRegistries(ctx conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organization().ProcessingActivityRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityRegistryOrderBy))
+		return ec.resolvers.Organization().ProcessingActivityRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ProcessingActivityRegistryOrderBy), fc.Args["filter"].(*types.ProcessingActivityRegistryFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -43733,6 +43779,88 @@ func (ec *executionContext) fieldContext_ProcessingActivityRegistry_id(_ context
 	return fc, nil
 }
 
+func (ec *executionContext) _ProcessingActivityRegistry_snapshotId(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_snapshotId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SnapshotID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*gid.GID)
+	fc.Result = res
+	return ec.marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_snapshotId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProcessingActivityRegistry_sourceId(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivityRegistry_sourceId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SourceID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*gid.GID)
+	fc.Result = res
+	return ec.marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivityRegistry_sourceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivityRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ProcessingActivityRegistry_organization(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivityRegistry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ProcessingActivityRegistry_organization(ctx, field)
 	if err != nil {
@@ -44781,6 +44909,10 @@ func (ec *executionContext) fieldContext_ProcessingActivityRegistryEdge_node(_ c
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_ProcessingActivityRegistry_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_ProcessingActivityRegistry_snapshotId(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_ProcessingActivityRegistry_sourceId(ctx, field)
 			case "organization":
 				return ec.fieldContext_ProcessingActivityRegistry_organization(ctx, field)
 			case "name":
@@ -50682,6 +50814,10 @@ func (ec *executionContext) fieldContext_UpdateProcessingActivityRegistryPayload
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_ProcessingActivityRegistry_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_ProcessingActivityRegistry_snapshotId(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_ProcessingActivityRegistry_sourceId(ctx, field)
 			case "organization":
 				return ec.fieldContext_ProcessingActivityRegistry_organization(ctx, field)
 			case "name":
@@ -63407,6 +63543,33 @@ func (ec *executionContext) unmarshalInputPeopleOrder(ctx context.Context, obj a
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputProcessingActivityRegistryFilter(ctx context.Context, obj any) (types.ProcessingActivityRegistryFilter, error) {
+	var it types.ProcessingActivityRegistryFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputProcessingActivityRegistryOrder(ctx context.Context, obj any) (types.ProcessingActivityRegistryOrderBy, error) {
 	var it types.ProcessingActivityRegistryOrderBy
 	asMap := map[string]any{}
@@ -75118,6 +75281,10 @@ func (ec *executionContext) _ProcessingActivityRegistry(ctx context.Context, sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "snapshotId":
+			out.Values[i] = ec._ProcessingActivityRegistry_snapshotId(ctx, field, obj)
+		case "sourceId":
+			out.Values[i] = ec._ProcessingActivityRegistry_sourceId(ctx, field, obj)
 		case "organization":
 			field := field
 
@@ -84978,6 +85145,7 @@ var (
 		"NONCONFORMITY_REGISTRIES":         coredata.SnapshotsTypeNonConformityRegistries,
 		"COMPLIANCE_REGISTRIES":            coredata.SnapshotsTypeComplianceRegistries,
 		"CONTINUAL_IMPROVEMENT_REGISTRIES": coredata.SnapshotsTypeContinualImprovementRegistries,
+		"PROCESSING_ACTIVITY_REGISTRIES":   coredata.SnapshotsTypeProcessingActivityRegistries,
 	}
 	marshalNSnapshotsType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐSnapshotsType = map[coredata.SnapshotsType]string{
 		coredata.SnapshotsTypeRisks:                          "RISKS",
@@ -84987,6 +85155,7 @@ var (
 		coredata.SnapshotsTypeNonConformityRegistries:        "NONCONFORMITY_REGISTRIES",
 		coredata.SnapshotsTypeComplianceRegistries:           "COMPLIANCE_REGISTRIES",
 		coredata.SnapshotsTypeContinualImprovementRegistries: "CONTINUAL_IMPROVEMENT_REGISTRIES",
+		coredata.SnapshotsTypeProcessingActivityRegistries:   "PROCESSING_ACTIVITY_REGISTRIES",
 	}
 )
 
@@ -87737,6 +87906,14 @@ var (
 		coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNotNeeded: "NOT_NEEDED",
 	}
 )
+
+func (ec *executionContext) unmarshalOProcessingActivityRegistryFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐProcessingActivityRegistryFilter(ctx context.Context, v any) (*types.ProcessingActivityRegistryFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputProcessingActivityRegistryFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
 
 func (ec *executionContext) unmarshalOProcessingActivityRegistryLawfulBasis2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityRegistryLawfulBasis(ctx context.Context, v any) (*coredata.ProcessingActivityRegistryLawfulBasis, error) {
 	if v == nil {

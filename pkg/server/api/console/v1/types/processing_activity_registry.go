@@ -30,6 +30,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *ProcessingActivityRegistryFilter
 	}
 )
 
@@ -37,6 +38,7 @@ func NewProcessingActivityRegistryConnection(
 	p *page.Page[*coredata.ProcessingActivityRegistry, coredata.ProcessingActivityRegistryOrderField],
 	parentType any,
 	parentID gid.GID,
+	filter *ProcessingActivityRegistryFilter,
 ) *ProcessingActivityRegistryConnection {
 	edges := make([]*ProcessingActivityRegistryEdge, len(p.Data))
 	for i, registry := range p.Data {
@@ -49,12 +51,14 @@ func NewProcessingActivityRegistryConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filter:   filter,
 	}
 }
 
 func NewProcessingActivityRegistry(par *coredata.ProcessingActivityRegistry) *ProcessingActivityRegistry {
 	return &ProcessingActivityRegistry{
 		ID:                             par.ID,
+		SnapshotID:                     par.SnapshotID,
 		Name:                           par.Name,
 		Purpose:                        par.Purpose,
 		DataSubjectCategory:            par.DataSubjectCategory,

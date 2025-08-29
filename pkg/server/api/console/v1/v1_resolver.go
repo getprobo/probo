@@ -3797,7 +3797,7 @@ func (r *organizationResolver) ContinualImprovementRegistries(ctx context.Contex
 }
 
 // ProcessingActivityRegistries is the resolver for the processingActivityRegistries field.
-func (r *organizationResolver) ProcessingActivityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) (*types.ProcessingActivityRegistryConnection, error) {
+func (r *organizationResolver) ProcessingActivityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy, filter *types.ProcessingActivityRegistryFilter) (*types.ProcessingActivityRegistryConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ProcessingActivityRegistryOrderField]{
@@ -3814,12 +3814,17 @@ func (r *organizationResolver) ProcessingActivityRegistries(ctx context.Context,
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ProcessingActivityRegistries.ListForOrganizationID(ctx, obj.ID, cursor)
+	processingActivityRegistryFilter := coredata.NewProcessingActivityRegistryFilter(nil)
+	if filter != nil {
+		processingActivityRegistryFilter = coredata.NewProcessingActivityRegistryFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.ProcessingActivityRegistries.ListForOrganizationID(ctx, obj.ID, cursor, processingActivityRegistryFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization processing activity registries: %w", err))
 	}
 
-	return types.NewProcessingActivityRegistryConnection(page, r, obj.ID), nil
+	return types.NewProcessingActivityRegistryConnection(page, r, obj.ID, filter), nil
 }
 
 // Snapshots is the resolver for the snapshots field.
@@ -3898,7 +3903,12 @@ func (r *processingActivityRegistryConnectionResolver) TotalCount(ctx context.Co
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.ProcessingActivityRegistries.CountForOrganizationID(ctx, obj.ParentID)
+		processingActivityRegistryFilter := coredata.NewProcessingActivityRegistryFilter(nil)
+		if obj.Filter != nil {
+			processingActivityRegistryFilter = coredata.NewProcessingActivityRegistryFilter(&obj.Filter.SnapshotID)
+		}
+
+		count, err := prb.ProcessingActivityRegistries.CountForOrganizationID(ctx, obj.ParentID, processingActivityRegistryFilter)
 		if err != nil {
 			panic(fmt.Errorf("cannot count organization processing activity registries: %w", err))
 		}

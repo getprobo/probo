@@ -24,9 +24,12 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { useParams } from "react-router";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import z from "zod";
+import { validateSnapshotConsistency } from "@probo/helpers";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import {
   SpecialOrCriminalDataOptions,
   LawfulBasisOptions,
@@ -65,16 +68,21 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
   if (!registry) {
     return <div>{__("Processing activity registry entry not found")}</div>;
   }
 
+  validateSnapshotConsistency(registry, snapshotId);
+
   const updateRegistry = useUpdateProcessingActivityRegistry();
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
-    ProcessingActivityRegistriesConnectionKey
+    ProcessingActivityRegistriesConnectionKey,
+    { filter: { snapshotId: snapshotId || null } }
   );
 
   const deleteRegistry = useDeleteProcessingActivityRegistry({ id: registry.id!, name: registry.name! }, connectionId);
@@ -137,20 +145,29 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
     }
   });
 
+  const breadcrumbRegistriesUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/processing-activity-registries`
+    : `/organizations/${organizationId}/processing-activity-registries`;
+
   return (
     <div className="space-y-6">
+      {isSnapshotMode && snapshotId && (
+        <SnapshotBanner snapshotId={snapshotId} />
+      )}
       <div className="flex items-center justify-between">
         <Breadcrumb
           items={[
-            { label: __("Processing Activity Registries"), to: "../processing-activity-registries" },
+            { label: __("Processing Activity Registries"), to: breadcrumbRegistriesUrl },
             { label: registry.name! },
           ]}
         />
-        <ActionDropdown>
-          <DropdownItem onClick={deleteRegistry} variant="danger">
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+        {!isSnapshotMode && (
+          <ActionDropdown>
+            <DropdownItem onClick={deleteRegistry} variant="danger">
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
       </div>
 
       <Card>
@@ -169,6 +186,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                   {...register("name")}
                   error={formState.errors.name?.message}
                   required
+                  disabled={isSnapshotMode}
                 />
 
                 <div>
@@ -177,6 +195,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                     {...register("purpose")}
                     placeholder={__("Describe the purpose of processing")}
                     rows={3}
+                    disabled={isSnapshotMode}
                   />
                 </div>
 
@@ -184,12 +203,14 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                   label={__("Data Subject Category")}
                   {...register("dataSubjectCategory")}
                   placeholder={__("e.g., employees, customers, prospects")}
+                  disabled={isSnapshotMode}
                 />
 
                 <Field
                   label={__("Personal Data Category")}
                   {...register("personalDataCategory")}
                   placeholder={__("e.g., contact details, financial data")}
+                  disabled={isSnapshotMode}
                 />
 
                 <div>
@@ -204,6 +225,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                         onValueChange={field.onChange}
                         value={field.value}
                         className="w-full"
+                        disabled={isSnapshotMode}
                       >
                         <SpecialOrCriminalDataOptions />
                       </Select>
@@ -218,6 +240,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                   label={__("Consent Evidence Link")}
                   {...register("consentEvidenceLink")}
                   placeholder={__("Link to consent evidence if applicable")}
+                  disabled={isSnapshotMode}
                 />
 
                 <div>
@@ -232,6 +255,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                         onValueChange={field.onChange}
                         value={field.value}
                         className="w-full"
+                        disabled={isSnapshotMode}
                       >
                         <LawfulBasisOptions />
                       </Select>
@@ -248,28 +272,31 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                   label={__("Recipients")}
                   {...register("recipients")}
                   placeholder={__("Who receives the data")}
+                  disabled={isSnapshotMode}
                 />
 
                 <Field
                   label={__("Location")}
                   {...register("location")}
                   placeholder={__("Where is the data processed")}
+                  disabled={isSnapshotMode}
                 />
 
                 <Controller
                   control={control}
                   name="internationalTransfers"
                   render={({ field }) => (
-                                         <div>
-                       <Label>{__("International Transfers")}</Label>
-                       <div className="mt-2 flex items-center gap-2">
-                         <Checkbox
-                           checked={field.value}
-                           onChange={field.onChange}
-                         />
-                         <span>{__("Data is transferred internationally")}</span>
-                       </div>
-                     </div>
+                    <div>
+                      <Label>{__("International Transfers")}</Label>
+                      <div className="mt-2 flex items-center gap-2">
+                        <Checkbox
+                          checked={field.value}
+                          onChange={field.onChange}
+                          disabled={isSnapshotMode}
+                        />
+                        <span>{__("Data is transferred internationally")}</span>
+                      </div>
+                    </div>
                   )}
                 />
 
@@ -285,6 +312,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                         onValueChange={field.onChange}
                         value={field.value}
                         className="w-full"
+                        disabled={isSnapshotMode}
                       >
                         <TransferSafeguardsOptions />
                       </Select>
@@ -299,6 +327,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                   label={__("Retention Period")}
                   {...register("retentionPeriod")}
                   placeholder={__("How long is data retained")}
+                  disabled={isSnapshotMode}
                 />
 
                 <div>
@@ -307,6 +336,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                     {...register("securityMeasures")}
                     placeholder={__("Technical and organizational measures")}
                     rows={3}
+                    disabled={isSnapshotMode}
                   />
                 </div>
 
@@ -322,6 +352,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                         onValueChange={field.onChange}
                         value={field.value}
                         className="w-full"
+                        disabled={isSnapshotMode}
                       >
                         <DataProtectionImpactAssessmentOptions />
                       </Select>
@@ -344,6 +375,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
                         onValueChange={field.onChange}
                         value={field.value}
                         className="w-full"
+                        disabled={isSnapshotMode}
                       >
                         <TransferImpactAssessmentOptions />
                       </Select>
@@ -356,15 +388,17 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
               </div>
             </div>
 
-            <div className="flex justify-end pt-4">
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={formState.isSubmitting}
-              >
-                {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
-              </Button>
-            </div>
+            {!isSnapshotMode && (
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={formState.isSubmitting}
+                >
+                  {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
+                </Button>
+              </div>
+            )}
           </form>
         </div>
       </Card>

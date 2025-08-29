@@ -8,10 +8,10 @@ import { useMutationWithToasts } from "../useMutationWithToasts";
 export const ProcessingActivityRegistriesConnectionKey = "ProcessingActivityRegistriesPage_processingActivityRegistries";
 
 export const processingActivityRegistriesQuery = graphql`
-  query ProcessingActivityRegistryGraphListQuery($organizationId: ID!) {
+  query ProcessingActivityRegistryGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
-        ...ProcessingActivityRegistriesPageFragment
+        ...ProcessingActivityRegistriesPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
   }
@@ -22,6 +22,7 @@ export const processingActivityRegistryNodeQuery = graphql`
     node(id: $processingActivityRegistryId) {
       ... on ProcessingActivityRegistry {
         id
+        snapshotId
         name
         purpose
         dataSubjectCategory

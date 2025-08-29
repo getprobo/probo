@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e44cc513f256fbae2b03229efc8bd938>>
+ * @generated SignedSource<<4453e7e28a9c546de765219f287f129a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -37,6 +37,8 @@ export type ProcessingActivityRegistryGraphNodeQuery$data = {
     readonly recipients?: string | null | undefined;
     readonly retentionPeriod?: string | null | undefined;
     readonly securityMeasures?: string | null | undefined;
+    readonly snapshotId?: string | null | undefined;
+    readonly sourceId?: string | null | undefined;
     readonly specialOrCriminalData?: ProcessingActivityRegistrySpecialOrCriminalData;
     readonly transferImpactAssessment?: ProcessingActivityRegistryTransferImpactAssessment;
     readonly transferSafeguards?: ProcessingActivityRegistryTransferSafeguards | null | undefined;
@@ -74,108 +76,122 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "name",
+  "name": "snapshotId",
   "storageKey": null
 },
 v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "purpose",
+  "name": "sourceId",
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "dataSubjectCategory",
+  "name": "name",
   "storageKey": null
 },
 v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "personalDataCategory",
+  "name": "purpose",
   "storageKey": null
 },
 v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "specialOrCriminalData",
+  "name": "dataSubjectCategory",
   "storageKey": null
 },
 v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "consentEvidenceLink",
+  "name": "personalDataCategory",
   "storageKey": null
 },
 v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "lawfulBasis",
+  "name": "specialOrCriminalData",
   "storageKey": null
 },
 v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "recipients",
+  "name": "consentEvidenceLink",
   "storageKey": null
 },
 v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "location",
+  "name": "lawfulBasis",
   "storageKey": null
 },
 v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "internationalTransfers",
+  "name": "recipients",
   "storageKey": null
 },
 v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "transferSafeguards",
+  "name": "location",
   "storageKey": null
 },
 v14 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "retentionPeriod",
+  "name": "internationalTransfers",
   "storageKey": null
 },
 v15 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "securityMeasures",
+  "name": "transferSafeguards",
   "storageKey": null
 },
 v16 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "dataProtectionImpactAssessment",
+  "name": "retentionPeriod",
   "storageKey": null
 },
 v17 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "transferImpactAssessment",
+  "name": "securityMeasures",
   "storageKey": null
 },
 v18 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "dataProtectionImpactAssessment",
+  "storageKey": null
+},
+v19 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "transferImpactAssessment",
+  "storageKey": null
+},
+v20 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
@@ -184,18 +200,18 @@ v18 = {
   "plural": false,
   "selections": [
     (v2/*: any*/),
-    (v3/*: any*/)
+    (v5/*: any*/)
   ],
   "storageKey": null
 },
-v19 = {
+v21 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v20 = {
+v22 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -238,7 +254,9 @@ return {
               (v17/*: any*/),
               (v18/*: any*/),
               (v19/*: any*/),
-              (v20/*: any*/)
+              (v20/*: any*/),
+              (v21/*: any*/),
+              (v22/*: any*/)
             ],
             "type": "ProcessingActivityRegistry",
             "abstractKey": null
@@ -292,7 +310,9 @@ return {
               (v17/*: any*/),
               (v18/*: any*/),
               (v19/*: any*/),
-              (v20/*: any*/)
+              (v20/*: any*/),
+              (v21/*: any*/),
+              (v22/*: any*/)
             ],
             "type": "ProcessingActivityRegistry",
             "abstractKey": null
@@ -303,16 +323,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4a2a061717de77346b788a94d5c6b4ef",
+    "cacheID": "b8a3edd61ea5d94cc3594f40f181d27f",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityRegistryGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityRegistryGraphNodeQuery(\n  $processingActivityRegistryId: ID!\n) {\n  node(id: $processingActivityRegistryId) {\n    __typename\n    ... on ProcessingActivityRegistry {\n      id\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ProcessingActivityRegistryGraphNodeQuery(\n  $processingActivityRegistryId: ID!\n) {\n  node(id: $processingActivityRegistryId) {\n    __typename\n    ... on ProcessingActivityRegistry {\n      id\n      snapshotId\n      sourceId\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "80aa43b56a3258a77b0d1c6c0c9b950d";
+(node as any).hash = "6714c1965f54321530f73a5b7ef86fa6";
 
 export default node;

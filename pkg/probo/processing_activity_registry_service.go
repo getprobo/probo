@@ -237,13 +237,14 @@ func (s ProcessingActivityRegistryService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ProcessingActivityRegistryOrderField],
+	filter *coredata.ProcessingActivityRegistryFilter,
 ) (*page.Page[*coredata.ProcessingActivityRegistry, coredata.ProcessingActivityRegistryOrderField], error) {
 	var processingActivityRegistries coredata.ProcessingActivityRegistries
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := processingActivityRegistries.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
+			err := processingActivityRegistries.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load processing activity registries: %w", err)
 			}
@@ -262,6 +263,7 @@ func (s ProcessingActivityRegistryService) ListForOrganizationID(
 func (s ProcessingActivityRegistryService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
+	filter *coredata.ProcessingActivityRegistryFilter,
 ) (int, error) {
 	var count int
 
@@ -269,7 +271,7 @@ func (s ProcessingActivityRegistryService) CountForOrganizationID(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			processingActivityRegistries := coredata.ProcessingActivityRegistries{}
-			count, err = processingActivityRegistries.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = processingActivityRegistries.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count processing activity registries: %w", err)
 			}

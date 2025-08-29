@@ -15,30 +15,40 @@
 package coredata
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/getprobo/probo/pkg/gid"
-	"go.gearno.de/kit/pg"
+	"github.com/jackc/pgx/v5"
 )
 
-type Snapshottable interface {
-	Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+type (
+	ProcessingActivityRegistryFilter struct {
+		snapshotID **gid.GID
+	}
+)
+
+func NewProcessingActivityRegistryFilter(snapshotID **gid.GID) *ProcessingActivityRegistryFilter {
+	return &ProcessingActivityRegistryFilter{
+		snapshotID: snapshotID,
+	}
 }
 
-func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {
-	switch snapshotType {
-	case SnapshotsTypeData:
-		return Data{}, nil
-	case SnapshotsTypeNonConformityRegistries:
-		return NonconformityRegistries{}, nil
-	case SnapshotsTypeComplianceRegistries:
-		return ComplianceRegistries{}, nil
-	case SnapshotsTypeContinualImprovementRegistries:
-		return ContinualImprovementRegistries{}, nil
-	case SnapshotsTypeProcessingActivityRegistries:
-		return ProcessingActivityRegistries{}, nil
-	default:
-		return nil, fmt.Errorf("unsupported snapshot type: %s", snapshotType)
+func (f *ProcessingActivityRegistryFilter) SQLArguments() pgx.NamedArgs {
+	args := pgx.NamedArgs{}
+
+	if f.snapshotID != nil && *f.snapshotID != nil {
+		args["filter_snapshot_id"] = **f.snapshotID
+	}
+
+	return args
+}
+
+func (f *ProcessingActivityRegistryFilter) SQLFragment() string {
+	if f.snapshotID == nil {
+		return "TRUE"
+	}
+
+	if *f.snapshotID == nil {
+		return "snapshot_id IS NULL"
+	} else {
+		return "snapshot_id = @filter_snapshot_id"
 	}
 }

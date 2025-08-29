@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<71dfd7c0d78070061957215363022475>>
+ * @generated SignedSource<<e77ebb6a609b6122e9c6927f4e00acc4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type ProcessingActivityRegistriesPageQuery$variables = {
   organizationId: string;
+  snapshotId?: string | null | undefined;
 };
 export type ProcessingActivityRegistriesPageQuery$data = {
   readonly node: {
@@ -29,6 +30,11 @@ var v0 = [
     "defaultValue": null,
     "kind": "LocalArgument",
     "name": "organizationId"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "snapshotId"
   }
 ],
 v1 = [
@@ -38,21 +44,33 @@ v1 = [
     "variableName": "organizationId"
   }
 ],
-v2 = {
+v2 = [
+  {
+    "kind": "Variable",
+    "name": "snapshotId",
+    "variableName": "snapshotId"
+  }
+],
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v4 = [
+v5 = [
+  {
+    "fields": (v2/*: any*/),
+    "kind": "ObjectValue",
+    "name": "filter"
+  },
   {
     "kind": "Literal",
     "name": "first",
@@ -78,7 +96,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
-                "args": null,
+                "args": (v2/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "ProcessingActivityRegistriesPageFragment"
               }
@@ -107,14 +125,14 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
           (v3/*: any*/),
+          (v4/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "ProcessingActivityRegistryConnection",
                 "kind": "LinkedField",
                 "name": "processingActivityRegistries",
@@ -143,7 +161,21 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
+                          (v4/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "snapshotId",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "sourceId",
+                            "storageKey": null
+                          },
                           {
                             "alias": null,
                             "args": null,
@@ -207,7 +239,7 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
-                          (v2/*: any*/)
+                          (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -259,12 +291,14 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "processingActivityRegistries(first:10)"
+                "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
-                "filters": null,
+                "args": (v5/*: any*/),
+                "filters": [
+                  "filter"
+                ],
                 "handle": "connection",
                 "key": "ProcessingActivityRegistriesPage_processingActivityRegistries",
                 "kind": "LinkedHandle",
@@ -280,16 +314,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "331d1a749711d7a519fbdc5a721d2cec",
+    "cacheID": "2b5cf834c7b4f34bb4a8e74705d1e530",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityRegistriesPageQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityRegistriesPageQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ProcessingActivityRegistriesPageFragment\n    }\n    id\n  }\n}\n\nfragment ProcessingActivityRegistriesPageFragment on Organization {\n  id\n  processingActivityRegistries(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ProcessingActivityRegistriesPageQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ProcessingActivityRegistriesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ProcessingActivityRegistriesPageFragment_3iomuz on Organization {\n  id\n  processingActivityRegistries(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        lawfulBasis\n        location\n        internationalTransfers\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2d99b77d24e6583cb93580fdbf47ffb3";
+(node as any).hash = "a4030e6ab7ce0351b431ce90d0440135";
 
 export default node;
