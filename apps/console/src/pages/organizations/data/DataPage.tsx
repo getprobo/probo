@@ -54,7 +54,7 @@ const paginatedDataFragment = graphql`
       before: $before
       orderBy: $order
       filter: { snapshotId: $snapshotId }
-    ) @connection(key: "DataPage_data") {
+    ) @connection(key: "DataPage_data", filters: ["filter"]) {
       __id
       edges {
         node {

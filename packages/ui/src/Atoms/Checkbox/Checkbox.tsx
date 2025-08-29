@@ -5,6 +5,7 @@ import { IconCheckmark1 } from "../Icons";
 type Props = {
     checked: boolean;
     onChange: (checked: boolean) => void;
+    disabled?: boolean;
 };
 
 const checkbox = tv({
@@ -16,19 +17,23 @@ const checkbox = tv({
         checked: {
             true: "bg-accent text-invert",
         },
+        disabled: {
+            true: "opacity-50 cursor-not-allowed",
+        },
     },
 });
 
-export function Checkbox({ checked, onChange }: Props) {
+export function Checkbox({ checked, onChange, disabled = false }: Props) {
     const [isFocused, setFocus] = useState(false);
     return (
-        <div className={checkbox({ isFocused, checked })}>
+        <div className={checkbox({ isFocused, checked, disabled })}>
             <input
                 className="absolute inset-0 opacity-0"
                 type="checkbox"
                 checked={checked}
-                onChange={(e) => onChange(e.target.checked)}
-                onFocus={() => setFocus(true)}
+                disabled={disabled}
+                onChange={(e) => !disabled && onChange(e.target.checked)}
+                onFocus={() => !disabled && setFocus(true)}
                 onBlur={() => setFocus(false)}
             />
             {checked && <IconCheckmark1 size={12} />}

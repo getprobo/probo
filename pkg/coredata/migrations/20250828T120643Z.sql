@@ -1,0 +1,5 @@
+ALTER TABLE compliance_registries DROP CONSTRAINT compliance_registries_audit_id_fkey;
+ALTER TABLE compliance_registries DROP COLUMN audit_id;
+
+ALTER TABLE continual_improvement_registries DROP CONSTRAINT continual_improvement_registries_audit_id_fkey;
+ALTER TABLE continual_improvement_registries DROP COLUMN audit_id;

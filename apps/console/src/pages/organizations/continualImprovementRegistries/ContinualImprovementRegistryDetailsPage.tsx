@@ -25,13 +25,14 @@ import {
   Label,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { AuditSelectField } from "/components/form/AuditSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import z from "zod";
-import { getStatusVariant, getStatusLabel, formatDatetime } from "@probo/helpers";
+import { getStatusVariant, getStatusLabel, formatDatetime, validateSnapshotConsistency } from "@probo/helpers";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ContinualImprovementRegistryGraphNodeQuery } from "/hooks/graph/__generated__/ContinualImprovementRegistryGraphNodeQuery.graphql";
 
 const updateRegistrySchema = z.object({
@@ -42,7 +43,6 @@ const updateRegistrySchema = z.object({
   status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED"]),
   priority: z.enum(["LOW", "MEDIUM", "HIGH"]),
   ownerId: z.string().min(1, "Owner is required"),
-  auditId: z.string().min(1, "Audit is required"),
 });
 
 type Props = {
@@ -55,16 +55,21 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
   const { __ } = useTranslate();
   const { toast } = useToast();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
   if (!registry) {
     return <div>{__("Continual improvement registry entry not found")}</div>;
   }
 
+  validateSnapshotConsistency(registry, snapshotId);
+
   const updateRegistry = useUpdateContinualImprovementRegistry();
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
-    ContinualImprovementRegistriesConnectionKey
+    ContinualImprovementRegistriesConnectionKey,
+    { filter: { snapshotId: snapshotId || null } }
   );
 
   const deleteRegistry = useDeleteContinualImprovementRegistry({ id: registry.id!, referenceId: registry.referenceId! }, connectionId);
@@ -82,7 +87,6 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
         status: registry.status || "OPEN",
         priority: registry.priority || "MEDIUM",
         ownerId: registry.owner?.id || "",
-        auditId: registry.audit?.id || "",
       },
     }
   );
@@ -98,7 +102,7 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
         status: formData.status,
         priority: formData.priority,
         ownerId: formData.ownerId,
-        auditId: formData.auditId,
+
       });
 
       toast({
@@ -127,20 +131,29 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
     { value: "HIGH", label: __("High") },
   ];
 
+  const breadcrumbRegistriesUrl = isSnapshotMode
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/continual-improvement-registries`
+    : `/organizations/${organizationId}/continual-improvement-registries`;
+
   return (
     <div className="space-y-6">
+      {isSnapshotMode && snapshotId && (
+        <SnapshotBanner snapshotId={snapshotId} />
+      )}
       <div className="flex items-center justify-between">
         <Breadcrumb
           items={[
-            { label: __("Continual Improvement Registries"), to: "../continual-improvement-registries" },
+            { label: __("Continual Improvement Registries"), to: breadcrumbRegistriesUrl },
             { label: registry.referenceId! },
           ]}
         />
-        <ActionDropdown>
-          <DropdownItem onClick={deleteRegistry} variant="danger">
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+        {!isSnapshotMode && (
+          <ActionDropdown>
+            <DropdownItem onClick={deleteRegistry} variant="danger">
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
       </div>
 
       <Card>
@@ -162,17 +175,11 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
               label={__("Reference ID")}
               {...register("referenceId")}
               error={formState.errors.referenceId?.message}
+              readOnly={isSnapshotMode}
               required
             />
 
-            <AuditSelectField
-              organizationId={organizationId}
-              control={control}
-              name="auditId"
-              label={__("Audit")}
-              error={formState.errors.auditId?.message}
-              required
-            />
+
 
             <div>
               <Label>{__("Description")}</Label>
@@ -180,6 +187,7 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
                 {...register("description")}
                 placeholder={__("Enter description")}
                 rows={3}
+                readOnly={isSnapshotMode}
               />
               {formState.errors.description?.message && (
                 <div className="text-red-500 text-sm mt-1">
@@ -193,6 +201,7 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
                 label={__("Source")}
                 {...register("source")}
                 error={formState.errors.source?.message}
+                readOnly={isSnapshotMode}
               />
 
               <div>
@@ -200,6 +209,7 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
                 <Input
                   type="date"
                   {...register("targetDate")}
+                  readOnly={isSnapshotMode}
                 />
                 {formState.errors.targetDate?.message && (
                   <div className="text-red-500 text-sm mt-1">
@@ -215,6 +225,7 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
               name="ownerId"
               label={__("Owner")}
               error={formState.errors.ownerId?.message}
+              disabled={isSnapshotMode}
               required
             />
 
@@ -228,6 +239,7 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
+                      disabled={isSnapshotMode}
                     >
                       {statusOptions.map((option) => (
                         <Option key={option.value} value={option.value}>
@@ -253,6 +265,7 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
+                      disabled={isSnapshotMode}
                     >
                       {priorityOptions.map((option) => (
                         <Option key={option.value} value={option.value}>
@@ -270,15 +283,17 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
               />
             </div>
 
-            <div className="flex justify-end pt-4">
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={formState.isSubmitting}
-              >
-                {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
-              </Button>
-            </div>
+            {!isSnapshotMode && (
+              <div className="flex justify-end pt-4">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={formState.isSubmitting}
+                >
+                  {formState.isSubmitting ? __("Saving...") : __("Save Changes")}
+                </Button>
+              </div>
+            )}
           </form>
         </div>
       </Card>

@@ -8,10 +8,10 @@ import { useMutationWithToasts } from "../useMutationWithToasts";
 export const ComplianceRegistriesConnectionKey = "ComplianceRegistriesPage_complianceRegistries";
 
 export const complianceRegistriesQuery = graphql`
-  query ComplianceRegistryGraphListQuery($organizationId: ID!) {
+  query ComplianceRegistryGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
-        ...ComplianceRegistriesPageFragment
+        ...ComplianceRegistriesPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
   }
@@ -22,6 +22,8 @@ export const complianceRegistryNodeQuery = graphql`
     node(id: $complianceRegistryId) {
       ... on ComplianceRegistry {
         id
+        snapshotId
+        sourceId
         referenceId
         area
         source
@@ -31,14 +33,6 @@ export const complianceRegistryNodeQuery = graphql`
         lastReviewDate
         dueDate
         status
-        audit {
-          id
-          name
-          framework {
-            id
-            name
-          }
-        }
         owner {
           id
           fullName
@@ -72,13 +66,6 @@ export const createComplianceRegistryMutation = graphql`
           lastReviewDate
           dueDate
           status
-          audit {
-            id
-            name
-            framework {
-              name
-            }
-          }
           owner {
             id
             fullName
@@ -107,14 +94,6 @@ export const updateComplianceRegistryMutation = graphql`
         owner {
           id
           fullName
-        }
-        audit {
-          id
-          name
-          framework {
-            id
-            name
-          }
         }
         updatedAt
       }
@@ -176,7 +155,6 @@ export const useCreateComplianceRegistry = (connectionId: string) => {
     referenceId: string;
     area?: string;
     source?: string;
-    auditId: string;
     requirement?: string;
     actionsToBeImplemented?: string;
     regulator?: string;
@@ -191,9 +169,6 @@ export const useCreateComplianceRegistry = (connectionId: string) => {
     if (!input.referenceId) {
       return alert(__("Failed to create compliance registry entry: reference ID is required"));
     }
-    if (!input.auditId) {
-      return alert(__("Failed to create compliance registry entry: audit is required"));
-    }
     if (!input.ownerId) {
       return alert(__("Failed to create compliance registry entry: owner is required"));
     }
@@ -205,7 +180,6 @@ export const useCreateComplianceRegistry = (connectionId: string) => {
           referenceId: input.referenceId,
           area: input.area,
           source: input.source,
-          auditId: input.auditId,
           requirement: input.requirement,
           actionsToBeImplemented: input.actionsToBeImplemented,
           regulator: input.regulator,
@@ -229,7 +203,6 @@ export const useUpdateComplianceRegistry = () => {
     referenceId?: string;
     area?: string;
     source?: string;
-    auditId?: string;
     requirement?: string;
     actionsToBeImplemented?: string;
     regulator?: string;

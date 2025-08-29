@@ -25,13 +25,7 @@ type (
 	}
 )
 
-func NewDatumFilter() *DatumFilter {
-	return &DatumFilter{
-		snapshotID: nil,
-	}
-}
-
-func NewDatumFilterBySnapshotID(snapshotID **gid.GID) *DatumFilter {
+func NewDatumFilter(snapshotID **gid.GID) *DatumFilter {
 	return &DatumFilter{
 		snapshotID: snapshotID,
 	}

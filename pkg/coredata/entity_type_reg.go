@@ -48,4 +48,5 @@ const (
 	VendorServiceEntityType
 	SnapshotEntityType
 	ContinualImprovementRegistryEntityType
+	ProcessingActivityRegistryEntityType
 )

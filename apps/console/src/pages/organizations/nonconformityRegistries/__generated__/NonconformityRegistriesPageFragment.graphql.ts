@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b883180c6334c3e1c4f7bd44785a0033>>
+ * @generated SignedSource<<fede190bc1e89813ce1034cf93d5ae95>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -86,6 +86,11 @@ return {
       "defaultValue": 10,
       "kind": "LocalArgument",
       "name": "first"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "snapshotId"
     }
   ],
   "kind": "Fragment",
@@ -122,7 +127,19 @@ return {
     (v1/*: any*/),
     {
       "alias": "nonconformityRegistries",
-      "args": null,
+      "args": [
+        {
+          "fields": [
+            {
+              "kind": "Variable",
+              "name": "snapshotId",
+              "variableName": "snapshotId"
+            }
+          ],
+          "kind": "ObjectValue",
+          "name": "filter"
+        }
+      ],
       "concreteType": "NonconformityRegistryConnection",
       "kind": "LinkedField",
       "name": "__RegistriesPage_nonconformityRegistries_connection",
@@ -333,6 +350,6 @@ return {
 };
 })();
 
-(node as any).hash = "34c06ec98cb50738cf479e6bd7cdc83e";
+(node as any).hash = "ebde2010138ec4b17adb214f7bd24ac6";
 
 export default node;

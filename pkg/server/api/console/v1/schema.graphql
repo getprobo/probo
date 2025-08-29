@@ -215,6 +215,102 @@ enum ContinualImprovementRegistriesPriority
     )
 }
 
+enum ProcessingActivityRegistrySpecialOrCriminalData
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalData") {
+  YES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalDataYes"
+    )
+  NO
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalDataNo"
+    )
+  POSSIBLE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalDataPossible"
+    )
+}
+
+enum ProcessingActivityRegistryLawfulBasis
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasis") {
+  LEGITIMATE_INTEREST
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisLegitimateInterest"
+    )
+  CONSENT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisConsent"
+    )
+  CONTRACTUAL_NECESSITY
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisContractualNecessity"
+    )
+  LEGAL_OBLIGATION
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisLegalObligation"
+    )
+  VITAL_INTERESTS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisVitalInterests"
+    )
+  PUBLIC_TASK
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisPublicTask"
+    )
+}
+
+enum ProcessingActivityRegistryTransferSafeguards
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguards") {
+  STANDARD_CONTRACTUAL_CLAUSES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsStandardContractualClauses"
+    )
+  BINDING_CORPORATE_RULES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsBindingCorporateRules"
+    )
+  ADEQUACY_DECISION
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsAdequacyDecision"
+    )
+  DEROGATIONS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsDerogations"
+    )
+  CODES_OF_CONDUCT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsCodesOfConduct"
+    )
+  CERTIFICATION_MECHANISMS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsCertificationMechanisms"
+    )
+}
+
+enum ProcessingActivityRegistryDataProtectionImpactAssessment
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryDataProtectionImpactAssessment") {
+  NEEDED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNeeded"
+    )
+  NOT_NEEDED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNotNeeded"
+    )
+}
+
+enum ProcessingActivityRegistryTransferImpactAssessment
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferImpactAssessment") {
+  NEEDED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferImpactAssessmentNeeded"
+    )
+  NOT_NEEDED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferImpactAssessmentNotNeeded"
+    )
+}
+
 # Order Field Enums
 enum UserOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.UserOrderField") {
@@ -734,6 +830,18 @@ enum ContinualImprovementRegistriesOrderField
     )
 }
 
+enum ProcessingActivityRegistryOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderFieldCreatedAt"
+    )
+  NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderFieldName"
+    )
+}
+
 enum TrustCenterAccessOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField") {
   CREATED_AT
@@ -760,13 +868,21 @@ enum SnapshotsType
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeData"
     )
-  NON_CONFORMITY_REGISTRIES
+  NONCONFORMITY_REGISTRIES
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeNonConformityRegistries"
     )
   COMPLIANCE_REGISTRIES
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeComplianceRegistries"
+    )
+  CONTINUAL_IMPROVEMENT_REGISTRIES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeContinualImprovementRegistries"
+    )
+  PROCESSING_ACTIVITY_REGISTRIES
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeProcessingActivityRegistries"
     )
 }
 
@@ -891,6 +1007,14 @@ input ContinualImprovementRegistriesOrder
   field: ContinualImprovementRegistriesOrderField!
 }
 
+input ProcessingActivityRegistryOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityRegistryOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: ProcessingActivityRegistryOrderField!
+}
+
 input TrustCenterAccessOrder
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterAccessOrderBy"
@@ -986,11 +1110,23 @@ input OrganizationFilter {
   trustCenterSlug: String
 }
 
-input TrustCenterFilter {
-  slug: String
+input DatumFilter {
+  snapshotId: ID
 }
 
-input DatumFilter {
+input NonconformityRegistryFilter {
+  snapshotId: ID
+}
+
+input ComplianceRegistryFilter {
+  snapshotId: ID
+}
+
+input ContinualImprovementRegistryFilter {
+  snapshotId: ID
+}
+
+input ProcessingActivityRegistryFilter {
   snapshotId: ID
 }
 
@@ -1133,6 +1269,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: NonconformityRegistryOrder
+    filter: NonconformityRegistryFilter
   ): NonconformityRegistryConnection! @goField(forceResolver: true)
 
   complianceRegistries(
@@ -1141,6 +1278,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ComplianceRegistryOrder
+    filter: ComplianceRegistryFilter
   ): ComplianceRegistryConnection! @goField(forceResolver: true)
 
   continualImprovementRegistries(
@@ -1149,7 +1287,17 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ContinualImprovementRegistriesOrder
+    filter: ContinualImprovementRegistryFilter
   ): ContinualImprovementRegistryConnection! @goField(forceResolver: true)
+
+  processingActivityRegistries(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ProcessingActivityRegistryOrder
+    filter: ProcessingActivityRegistryFilter
+  ): ProcessingActivityRegistryConnection! @goField(forceResolver: true)
 
   snapshots(
     first: Int
@@ -1578,6 +1726,7 @@ type Audit implements Node {
 
 type NonconformityRegistry implements Node {
   id: ID!
+  snapshotId: ID
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   description: String
@@ -1595,11 +1744,12 @@ type NonconformityRegistry implements Node {
 
 type ComplianceRegistry implements Node {
   id: ID!
+  snapshotId: ID
+  sourceId: ID
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   area: String
   source: String
-  audit: Audit! @goField(forceResolver: true)
   requirement: String
   actionsToBeImplemented: String
   regulator: String
@@ -1613,15 +1763,40 @@ type ComplianceRegistry implements Node {
 
 type ContinualImprovementRegistry implements Node {
   id: ID!
+  snapshotId: ID
+  sourceId: ID
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   description: String
-  audit: Audit! @goField(forceResolver: true)
   source: String
   owner: People! @goField(forceResolver: true)
   targetDate: Datetime
   status: ContinualImprovementRegistriesStatus!
   priority: ContinualImprovementRegistriesPriority!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type ProcessingActivityRegistry implements Node {
+  id: ID!
+  snapshotId: ID
+  sourceId: ID
+  organization: Organization! @goField(forceResolver: true)
+  name: String!
+  purpose: String
+  dataSubjectCategory: String
+  personalDataCategory: String
+  specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData!
+  consentEvidenceLink: String
+  lawfulBasis: ProcessingActivityRegistryLawfulBasis!
+  recipients: String
+  location: String
+  internationalTransfers: Boolean!
+  transferSafeguards: ProcessingActivityRegistryTransferSafeguards
+  retentionPeriod: String
+  securityMeasures: String
+  dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment!
+  transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -1981,6 +2156,20 @@ type ContinualImprovementRegistryEdge {
   node: ContinualImprovementRegistry!
 }
 
+type ProcessingActivityRegistryConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityRegistryConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [ProcessingActivityRegistryEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ProcessingActivityRegistryEdge {
+  cursor: CursorKey!
+  node: ProcessingActivityRegistry!
+}
+
 type SnapshotConnection
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.SnapshotConnection"
@@ -1999,13 +2188,6 @@ type SnapshotEdge {
 type Query {
   node(id: ID!): Node!
   viewer: Viewer!
-  trustCenters(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    filter: TrustCenterFilter
-  ): TrustCenterConnection! @goField(forceResolver: true)
 }
 
 type Mutation {
@@ -2262,6 +2444,17 @@ type Mutation {
   deleteContinualImprovementRegistry(
     input: DeleteContinualImprovementRegistryInput!
   ): DeleteContinualImprovementRegistryPayload!
+
+  # Processing Activity Registry mutations
+  createProcessingActivityRegistry(
+    input: CreateProcessingActivityRegistryInput!
+  ): CreateProcessingActivityRegistryPayload!
+  updateProcessingActivityRegistry(
+    input: UpdateProcessingActivityRegistryInput!
+  ): UpdateProcessingActivityRegistryPayload!
+  deleteProcessingActivityRegistry(
+    input: DeleteProcessingActivityRegistryInput!
+  ): DeleteProcessingActivityRegistryPayload!
 
   # Snapshot mutations
   createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
@@ -2802,7 +2995,6 @@ input CreateComplianceRegistryInput {
   referenceId: String!
   area: String
   source: String
-  auditId: ID!
   requirement: String
   actionsToBeImplemented: String
   regulator: String
@@ -2817,7 +3009,6 @@ input UpdateComplianceRegistryInput {
   referenceId: String
   area: String
   source: String
-  auditId: ID
   requirement: String
   actionsToBeImplemented: String
   regulator: String
@@ -2835,7 +3026,6 @@ input CreateContinualImprovementRegistryInput {
   organizationId: ID!
   referenceId: String!
   description: String
-  auditId: ID!
   source: String
   ownerId: ID!
   targetDate: Datetime
@@ -2847,7 +3037,6 @@ input UpdateContinualImprovementRegistryInput {
   id: ID!
   referenceId: String
   description: String
-  auditId: ID
   source: String
   ownerId: ID
   targetDate: Datetime
@@ -2857,6 +3046,48 @@ input UpdateContinualImprovementRegistryInput {
 
 input DeleteContinualImprovementRegistryInput {
   continualImprovementRegistryId: ID!
+}
+
+input CreateProcessingActivityRegistryInput {
+  organizationId: ID!
+  name: String!
+  purpose: String
+  dataSubjectCategory: String
+  personalDataCategory: String
+  specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData!
+  consentEvidenceLink: String
+  lawfulBasis: ProcessingActivityRegistryLawfulBasis!
+  recipients: String
+  location: String
+  internationalTransfers: Boolean!
+  transferSafeguards: ProcessingActivityRegistryTransferSafeguards
+  retentionPeriod: String
+  securityMeasures: String
+  dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment!
+  transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment!
+}
+
+input UpdateProcessingActivityRegistryInput {
+  id: ID!
+  name: String
+  purpose: String
+  dataSubjectCategory: String
+  personalDataCategory: String
+  specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData
+  consentEvidenceLink: String
+  lawfulBasis: ProcessingActivityRegistryLawfulBasis
+  recipients: String
+  location: String
+  internationalTransfers: Boolean
+  transferSafeguards: ProcessingActivityRegistryTransferSafeguards
+  retentionPeriod: String
+  securityMeasures: String
+  dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment
+  transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment
+}
+
+input DeleteProcessingActivityRegistryInput {
+  processingActivityRegistryId: ID!
 }
 
 input CreateSnapshotInput {
@@ -2886,8 +3117,6 @@ type DeleteOrganizationPayload {
 type UpdateTrustCenterPayload {
   trustCenter: TrustCenter!
 }
-
-
 
 type CreateTrustCenterAccessPayload {
   trustCenterAccessEdge: TrustCenterAccessEdge!
@@ -3490,6 +3719,7 @@ type DeleteAssetPayload {
 
 type Datum implements Node {
   id: ID!
+  snapshotId: ID
   name: String!
   dataClassification: DataClassification!
   owner: People! @goField(forceResolver: true)
@@ -3600,6 +3830,18 @@ type UpdateContinualImprovementRegistryPayload {
 
 type DeleteContinualImprovementRegistryPayload {
   deletedContinualImprovementRegistryId: ID!
+}
+
+type CreateProcessingActivityRegistryPayload {
+  processingActivityRegistryEdge: ProcessingActivityRegistryEdge!
+}
+
+type UpdateProcessingActivityRegistryPayload {
+  processingActivityRegistry: ProcessingActivityRegistry!
+}
+
+type DeleteProcessingActivityRegistryPayload {
+  deletedProcessingActivityRegistryId: ID!
 }
 
 type CreateSnapshotPayload {

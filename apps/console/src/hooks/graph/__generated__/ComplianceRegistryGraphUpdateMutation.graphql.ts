@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e0af427b5ec1a1056bee3859d5c06a8a>>
+ * @generated SignedSource<<833c870a75dfe52e076fd57045cf1acd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ export type ComplianceRegistryStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
 export type UpdateComplianceRegistryInput = {
   actionsToBeImplemented?: string | null | undefined;
   area?: string | null | undefined;
-  auditId?: string | null | undefined;
   dueDate?: any | null | undefined;
   id: string;
   lastReviewDate?: any | null | undefined;
@@ -32,14 +31,6 @@ export type ComplianceRegistryGraphUpdateMutation$data = {
     readonly complianceRegistry: {
       readonly actionsToBeImplemented: string | null | undefined;
       readonly area: string | null | undefined;
-      readonly audit: {
-        readonly framework: {
-          readonly id: string;
-          readonly name: string;
-        };
-        readonly id: string;
-        readonly name: string | null | undefined;
-      };
       readonly dueDate: any | null | undefined;
       readonly id: string;
       readonly lastReviewDate: any | null | undefined;
@@ -76,14 +67,7 @@ v1 = {
   "name": "id",
   "storageKey": null
 },
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v3 = [
+v2 = [
   {
     "alias": null,
     "args": [
@@ -192,32 +176,6 @@ v3 = [
           {
             "alias": null,
             "args": null,
-            "concreteType": "Audit",
-            "kind": "LinkedField",
-            "name": "audit",
-            "plural": false,
-            "selections": [
-              (v1/*: any*/),
-              (v2/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "Framework",
-                "kind": "LinkedField",
-                "name": "framework",
-                "plural": false,
-                "selections": [
-                  (v1/*: any*/),
-                  (v2/*: any*/)
-                ],
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
             "kind": "ScalarField",
             "name": "updatedAt",
             "storageKey": null
@@ -235,7 +193,7 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "ComplianceRegistryGraphUpdateMutation",
-    "selections": (v3/*: any*/),
+    "selections": (v2/*: any*/),
     "type": "Mutation",
     "abstractKey": null
   },
@@ -244,19 +202,19 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "ComplianceRegistryGraphUpdateMutation",
-    "selections": (v3/*: any*/)
+    "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "4a4f7e9273f36c87a7e48b5373f69bc2",
+    "cacheID": "d6a24a6f7a42eceab325fb186e1bf7fa",
     "id": null,
     "metadata": {},
     "name": "ComplianceRegistryGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation ComplianceRegistryGraphUpdateMutation(\n  $input: UpdateComplianceRegistryInput!\n) {\n  updateComplianceRegistry(input: $input) {\n    complianceRegistry {\n      id\n      referenceId\n      area\n      source\n      requirement\n      actionsToBeImplemented\n      regulator\n      lastReviewDate\n      dueDate\n      status\n      owner {\n        id\n        fullName\n      }\n      audit {\n        id\n        name\n        framework {\n          id\n          name\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation ComplianceRegistryGraphUpdateMutation(\n  $input: UpdateComplianceRegistryInput!\n) {\n  updateComplianceRegistry(input: $input) {\n    complianceRegistry {\n      id\n      referenceId\n      area\n      source\n      requirement\n      actionsToBeImplemented\n      regulator\n      lastReviewDate\n      dueDate\n      status\n      owner {\n        id\n        fullName\n      }\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c4d17f11888dd8a4769b471797c25b95";
+(node as any).hash = "607857e9f72cf13338ea52813c035e06";
 
 export default node;

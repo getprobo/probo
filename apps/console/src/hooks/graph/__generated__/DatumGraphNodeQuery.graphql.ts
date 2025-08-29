@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ff7246a675948a19ab124dbf6095b3bb>>
+ * @generated SignedSource<<5cfbdbc980894977800a18064306f2c1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -27,6 +27,7 @@ export type DatumGraphNodeQuery$data = {
       readonly fullName: string;
       readonly id: string;
     };
+    readonly snapshotId?: string | null | undefined;
     readonly updatedAt?: any;
     readonly vendors?: {
       readonly edges: ReadonlyArray<{
@@ -71,17 +72,24 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "name",
+  "name": "snapshotId",
   "storageKey": null
 },
 v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "dataClassification",
+  "name": "name",
   "storageKey": null
 },
 v5 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "dataClassification",
+  "storageKey": null
+},
+v6 = {
   "alias": null,
   "args": null,
   "concreteType": "People",
@@ -100,7 +108,7 @@ v5 = {
   ],
   "storageKey": null
 },
-v6 = {
+v7 = {
   "alias": null,
   "args": [
     {
@@ -131,7 +139,7 @@ v6 = {
           "plural": false,
           "selections": [
             (v2/*: any*/),
-            (v3/*: any*/),
+            (v4/*: any*/),
             {
               "alias": null,
               "args": null,
@@ -155,7 +163,7 @@ v6 = {
   ],
   "storageKey": "vendors(first:50)"
 },
-v7 = {
+v8 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
@@ -167,14 +175,14 @@ v7 = {
   ],
   "storageKey": null
 },
-v8 = {
+v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v9 = {
+v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -206,7 +214,8 @@ return {
               (v6/*: any*/),
               (v7/*: any*/),
               (v8/*: any*/),
-              (v9/*: any*/)
+              (v9/*: any*/),
+              (v10/*: any*/)
             ],
             "type": "Datum",
             "abstractKey": null
@@ -249,7 +258,8 @@ return {
               (v6/*: any*/),
               (v7/*: any*/),
               (v8/*: any*/),
-              (v9/*: any*/)
+              (v9/*: any*/),
+              (v10/*: any*/)
             ],
             "type": "Datum",
             "abstractKey": null
@@ -260,16 +270,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7dcd0ba0b57e917592a333f2368f65c4",
+    "cacheID": "6ed49a3413c0214dc95da9a422e484b4",
     "id": null,
     "metadata": {},
     "name": "DatumGraphNodeQuery",
     "operationKind": "query",
-    "text": "query DatumGraphNodeQuery(\n  $dataId: ID!\n) {\n  node(id: $dataId) {\n    __typename\n    ... on Datum {\n      id\n      name\n      dataClassification\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      organization {\n        id\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query DatumGraphNodeQuery(\n  $dataId: ID!\n) {\n  node(id: $dataId) {\n    __typename\n    ... on Datum {\n      id\n      snapshotId\n      name\n      dataClassification\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      organization {\n        id\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c8a8fc6a37cce32b83f53379317d8f67";
+(node as any).hash = "2f4df20b67f8b21eda5f510f250abda1";
 
 export default node;

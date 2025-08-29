@@ -9,14 +9,40 @@ export const nonconformityRegistryRoutes= [
   {
     path: "nonconformity-registries",
     fallback: PageSkeleton,
-    queryLoader: ({ organizationId }: { organizationId: string }) =>
-      loadQuery(relayEnvironment, nonconformityRegistriesQuery, { organizationId }),
+    queryLoader: (params: Record<string, string>) =>
+      loadQuery(relayEnvironment, nonconformityRegistriesQuery, {
+        organizationId: params.organizationId,
+        snapshotId: null
+      }),
+    Component: lazy(
+      () => import("/pages/organizations/nonconformityRegistries/NonconformityRegistriesPage")
+    ),
+  },
+  {
+    path: "snapshots/:snapshotId/nonconformity-registries",
+    fallback: PageSkeleton,
+    queryLoader: (params: Record<string, string>) =>
+      loadQuery(relayEnvironment, nonconformityRegistriesQuery, {
+        organizationId: params.organizationId,
+        snapshotId: params.snapshotId
+      }),
     Component: lazy(
       () => import("/pages/organizations/nonconformityRegistries/NonconformityRegistriesPage")
     ),
   },
   {
     path: "nonconformity-registries/:registryId",
+    fallback: PageSkeleton,
+    queryLoader: (params: Record<string, string>) =>
+      loadQuery(relayEnvironment, nonconformityRegistryNodeQuery, {
+        nonconformityRegistryId: params.registryId
+      }),
+    Component: lazy(
+      () => import("/pages/organizations/nonconformityRegistries/NonconformityRegistryDetailsPage")
+    ),
+  },
+  {
+    path: "snapshots/:snapshotId/nonconformity-registries/:registryId",
     fallback: PageSkeleton,
     queryLoader: (params: Record<string, string>) =>
       loadQuery(relayEnvironment, nonconformityRegistryNodeQuery, {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8364d9457b59a3ef50b508ab55991638>>
+ * @generated SignedSource<<2000fd2ccfcf4b832c51ff71b0326fef>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -394,7 +394,6 @@ return {
                 "alias": null,
                 "args": (v15/*: any*/),
                 "filters": [
-                  "orderBy",
                   "filter"
                 ],
                 "handle": "connection",
@@ -422,6 +421,6 @@ return {
 };
 })();
 
-(node as any).hash = "a60d9b34a83df89eb59ffcd359903ce8";
+(node as any).hash = "5d3069a0d856613ccb854033b5b1f14e";
 
 export default node;

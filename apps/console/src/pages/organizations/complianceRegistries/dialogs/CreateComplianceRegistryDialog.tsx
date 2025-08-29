@@ -19,7 +19,6 @@ import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useCreateComplianceRegistry } from "../../../../hooks/graph/ComplianceRegistryGraph";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
-import { AuditSelectField } from "/components/form/AuditSelectField";
 import { Controller } from "react-hook-form";
 import { formatDatetime, getComplianceRegistryStatusOptions } from "@probo/helpers";
 
@@ -27,7 +26,6 @@ const schema = z.object({
   referenceId: z.string().min(1, "Reference ID is required"),
   area: z.string().optional(),
   source: z.string().optional(),
-  auditId: z.string().min(1, "Audit is required"),
   requirement: z.string().optional(),
   actionsToBeImplemented: z.string().optional(),
   regulator: z.string().optional(),
@@ -62,7 +60,6 @@ export function CreateComplianceRegistryDialog({
       referenceId: "",
       area: "",
       source: "",
-      auditId: "",
       requirement: "",
       actionsToBeImplemented: "",
       regulator: "",
@@ -80,7 +77,6 @@ export function CreateComplianceRegistryDialog({
         referenceId: formData.referenceId,
         area: formData.area || undefined,
         source: formData.source || undefined,
-        auditId: formData.auditId,
         requirement: formData.requirement || undefined,
         actionsToBeImplemented: formData.actionsToBeImplemented || undefined,
         regulator: formData.regulator || undefined,
@@ -121,15 +117,6 @@ export function CreateComplianceRegistryDialog({
             {...register("referenceId")}
             placeholder="CR-001"
             error={formState.errors.referenceId?.message}
-            required
-          />
-
-          <AuditSelectField
-            organizationId={organizationId}
-            control={control}
-            name="auditId"
-            label={__("Audit")}
-            error={formState.errors.auditId?.message}
             required
           />
 

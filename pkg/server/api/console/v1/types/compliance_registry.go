@@ -30,6 +30,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *ComplianceRegistryFilter
 	}
 )
 
@@ -37,6 +38,7 @@ func NewComplianceRegistryConnection(
 	p *page.Page[*coredata.ComplianceRegistry, coredata.ComplianceRegistryOrderField],
 	parentType any,
 	parentID gid.GID,
+	filter *ComplianceRegistryFilter,
 ) *ComplianceRegistryConnection {
 	edges := make([]*ComplianceRegistryEdge, len(p.Data))
 	for i, registry := range p.Data {
@@ -49,12 +51,15 @@ func NewComplianceRegistryConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filter:   filter,
 	}
 }
 
 func NewComplianceRegistry(cr *coredata.ComplianceRegistry) *ComplianceRegistry {
 	return &ComplianceRegistry{
 		ID:                     cr.ID,
+		SnapshotID:             cr.SnapshotID,
+		SourceID:               cr.SourceID,
 		ReferenceID:            cr.ReferenceID,
 		Area:                   cr.Area,
 		Source:                 cr.Source,
