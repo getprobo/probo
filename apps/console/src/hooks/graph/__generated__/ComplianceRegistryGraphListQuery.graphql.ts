@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fa68dc3f1afe9ab6d98e189eff649e04>>
+ * @generated SignedSource<<41975a1dcc769268a6255ea703ff26fe>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type ComplianceRegistryGraphListQuery$variables = {
   organizationId: string;
+  snapshotId?: string | null | undefined;
 };
 export type ComplianceRegistryGraphListQuery$data = {
   readonly node: {
@@ -29,6 +30,11 @@ var v0 = [
     "defaultValue": null,
     "kind": "LocalArgument",
     "name": "organizationId"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "snapshotId"
   }
 ],
 v1 = [
@@ -38,21 +44,33 @@ v1 = [
     "variableName": "organizationId"
   }
 ],
-v2 = {
+v2 = [
+  {
+    "kind": "Variable",
+    "name": "snapshotId",
+    "variableName": "snapshotId"
+  }
+],
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v4 = [
+v5 = [
+  {
+    "fields": (v2/*: any*/),
+    "kind": "ObjectValue",
+    "name": "filter"
+  },
   {
     "kind": "Literal",
     "name": "first",
@@ -78,7 +96,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
-                "args": null,
+                "args": (v2/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "ComplianceRegistriesPageFragment"
               }
@@ -107,14 +125,14 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
           (v3/*: any*/),
+          (v4/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "ComplianceRegistryConnection",
                 "kind": "LinkedField",
                 "name": "complianceRegistries",
@@ -143,7 +161,21 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
+                          (v4/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "snapshotId",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "sourceId",
+                            "storageKey": null
+                          },
                           {
                             "alias": null,
                             "args": null,
@@ -215,7 +247,7 @@ return {
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v3/*: any*/),
+                              (v4/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -240,7 +272,7 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
-                          (v2/*: any*/)
+                          (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -292,12 +324,14 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "complianceRegistries(first:10)"
+                "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
-                "filters": null,
+                "args": (v5/*: any*/),
+                "filters": [
+                  "filter"
+                ],
                 "handle": "connection",
                 "key": "ComplianceRegistriesPage_complianceRegistries",
                 "kind": "LinkedHandle",
@@ -313,16 +347,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2852dc9732086326e7770650cbd00ad1",
+    "cacheID": "d578089841a93f60ae9ba5bc6e9175b0",
     "id": null,
     "metadata": {},
     "name": "ComplianceRegistryGraphListQuery",
     "operationKind": "query",
-    "text": "query ComplianceRegistryGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ComplianceRegistriesPageFragment\n    }\n    id\n  }\n}\n\nfragment ComplianceRegistriesPageFragment on Organization {\n  id\n  complianceRegistries(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ComplianceRegistryGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ComplianceRegistriesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ComplianceRegistriesPageFragment_3iomuz on Organization {\n  id\n  complianceRegistries(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        referenceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "363434c78eb3e27ac52b6da13c7432a1";
+(node as any).hash = "2c50dd58eb2d72e49bce300726f35a34";
 
 export default node;

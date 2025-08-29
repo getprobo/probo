@@ -40,6 +40,8 @@ type (
 		LastReviewDate         *time.Time               `db:"last_review_date"`
 		DueDate                *time.Time               `db:"due_date"`
 		Status                 ComplianceRegistryStatus `db:"status"`
+		SnapshotID             *gid.GID                 `db:"snapshot_id"`
+		SourceID               *gid.GID                 `db:"source_id"`
 		CreatedAt              time.Time                `db:"created_at"`
 		UpdatedAt              time.Time                `db:"updated_at"`
 	}
@@ -74,6 +76,8 @@ func (cr *ComplianceRegistry) LoadByID(
 SELECT
 	id,
 	organization_id,
+	snapshot_id,
+	source_id,
 	reference_id,
 	area,
 	source,
@@ -119,6 +123,7 @@ func (crs *ComplianceRegistries) CountByOrganizationID(
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *ComplianceRegistryFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -128,12 +133,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 
@@ -152,6 +159,7 @@ func (crs *ComplianceRegistries) LoadByOrganizationID(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ComplianceRegistryOrderField],
+	filter *ComplianceRegistryFilter,
 ) error {
 	q := `
 SELECT
@@ -167,6 +175,8 @@ SELECT
 	last_review_date,
 	due_date,
 	status,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -175,12 +185,14 @@ WHERE
 	%s
 	AND organization_id = @organization_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -218,6 +230,8 @@ INSERT INTO compliance_registries (
 	last_review_date,
 	due_date,
 	status,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -234,6 +248,8 @@ INSERT INTO compliance_registries (
 	@last_review_date,
 	@due_date,
 	@status,
+	@snapshot_id,
+	@source_id,
 	@created_at,
 	@updated_at
 )
@@ -253,6 +269,8 @@ INSERT INTO compliance_registries (
 		"last_review_date":          cr.LastReviewDate,
 		"due_date":                  cr.DueDate,
 		"status":                    cr.Status,
+		"snapshot_id":               cr.SnapshotID,
+		"source_id":                 cr.SourceID,
 		"created_at":                cr.CreatedAt,
 		"updated_at":                cr.UpdatedAt,
 	}
@@ -286,6 +304,7 @@ UPDATE compliance_registries SET
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -324,6 +343,7 @@ DELETE FROM compliance_registries
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -334,6 +354,67 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete compliance registry: %w", err)
+	}
+
+	return nil
+}
+
+func (crs ComplianceRegistries) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+	query := `
+INSERT INTO compliance_registries (
+	id,
+	tenant_id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	reference_id,
+	area,
+	source,
+	requirement,
+	actions_to_be_implemented,
+	regulator,
+	owner_id,
+	last_review_date,
+	due_date,
+	status,
+	created_at,
+	updated_at
+)
+SELECT
+	generate_gid(decode_base64_unpadded(@tenant_id), @compliance_registry_entity_type),
+	@tenant_id,
+	@snapshot_id,
+	r.id,
+	r.organization_id,
+	r.reference_id,
+	r.area,
+	r.source,
+	r.requirement,
+	r.actions_to_be_implemented,
+	r.regulator,
+	r.owner_id,
+	r.last_review_date,
+	r.due_date,
+	r.status,
+	r.created_at,
+	r.updated_at
+FROM compliance_registries r
+WHERE %s AND r.organization_id = @organization_id AND r.snapshot_id IS NULL
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":                       scope.GetTenantID(),
+		"snapshot_id":                     snapshotID,
+		"organization_id":                 organizationID,
+		"compliance_registry_entity_type": ComplianceRegistryEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert compliance registry snapshots: %w", err)
 	}
 
 	return nil

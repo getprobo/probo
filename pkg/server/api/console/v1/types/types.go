@@ -109,6 +109,8 @@ type CancelSignatureRequestPayload struct {
 
 type ComplianceRegistry struct {
 	ID                     gid.GID                           `json:"id"`
+	SnapshotID             *gid.GID                          `json:"snapshotId,omitempty"`
+	SourceID               *gid.GID                          `json:"sourceId,omitempty"`
 	Organization           *Organization                     `json:"organization"`
 	ReferenceID            string                            `json:"referenceId"`
 	Area                   *string                           `json:"area,omitempty"`
@@ -130,6 +132,10 @@ func (this ComplianceRegistry) GetID() gid.GID { return this.ID }
 type ComplianceRegistryEdge struct {
 	Cursor page.CursorKey      `json:"cursor"`
 	Node   *ComplianceRegistry `json:"node"`
+}
+
+type ComplianceRegistryFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
 type ConfirmEmailInput struct {

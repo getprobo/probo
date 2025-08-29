@@ -24,10 +24,12 @@ import {
   useMutation,
   type PreloadedQuery,
 } from "react-relay";
+import { useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateComplianceRegistryDialog } from "./dialogs/CreateComplianceRegistryDialog";
 import { deleteComplianceRegistryMutation } from "../../../hooks/graph/ComplianceRegistryGraph";
 import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel } from "@probo/helpers";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ComplianceRegistriesPageQuery } from "./__generated__/ComplianceRegistriesPageQuery.graphql";
 import type {
   ComplianceRegistriesPageFragment$key,
@@ -46,15 +48,22 @@ const complianceRegistriesPageFragment = graphql`
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 10 }
     after: { type: "CursorKey" }
+    snapshotId: { type: "ID", defaultValue: null }
   ) {
     id
-    complianceRegistries(first: $first, after: $after)
-      @connection(key: "ComplianceRegistriesPage_complianceRegistries") {
+    complianceRegistries(
+      first: $first
+      after: $after
+      filter: { snapshotId: $snapshotId }
+    )
+      @connection(key: "ComplianceRegistriesPage_complianceRegistries", filters: ["filter"]) {
       __id
       totalCount
       edges {
         node {
           id
+          snapshotId
+          sourceId
           referenceId
           area
           source
@@ -83,15 +92,17 @@ const complianceRegistriesPageFragment = graphql`
 export default function ComplianceRegistriesPage({ queryRef }: ComplianceRegistriesPageProps) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
   usePageTitle(__("Compliance Registries"));
 
   const organization = usePreloadedQuery(
     graphql`
-      query ComplianceRegistriesPageQuery($organizationId: ID!) {
+      query ComplianceRegistriesPageQuery($organizationId: ID!, $snapshotId: ID) {
         node(id: $organizationId) {
           ... on Organization {
-            ...ComplianceRegistriesPageFragment
+            ...ComplianceRegistriesPageFragment @arguments(snapshotId: $snapshotId)
           }
         }
       }
@@ -109,15 +120,20 @@ export default function ComplianceRegistriesPage({ queryRef }: ComplianceRegistr
 
   return (
     <div className="space-y-6">
+      {isSnapshotMode && snapshotId && (
+        <SnapshotBanner snapshotId={snapshotId} />
+      )}
       <PageHeader
         title={__("Compliance Registries")}
         description={__(
           "Manage your organization's compliance registry entries."
         )}
       >
-        <CreateComplianceRegistryDialog organizationId={organizationId} connection={connectionId}>
-          <Button icon={IconPlusLarge}>{__("Add compliance registry")}</Button>
-        </CreateComplianceRegistryDialog>
+        {!snapshotId && (
+          <CreateComplianceRegistryDialog organizationId={organizationId} connection={connectionId}>
+            <Button icon={IconPlusLarge}>{__("Add compliance registry")}</Button>
+          </CreateComplianceRegistryDialog>
+        )}
       </PageHeader>
 
       {registries.length === 0 ? (
@@ -151,6 +167,7 @@ export default function ComplianceRegistriesPage({ queryRef }: ComplianceRegistr
                   key={registry.id}
                   registry={registry}
                   connectionId={connectionId}
+                  snapshotId={snapshotId}
                 />
               ))}
             </Tbody>
@@ -176,14 +193,17 @@ export default function ComplianceRegistriesPage({ queryRef }: ComplianceRegistr
 function RegistryRow({
   registry,
   connectionId,
+  snapshotId,
 }: {
   registry: ComplianceRegistry;
   connectionId: string;
+  snapshotId?: string;
 }) {
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
   const [deleteRegistry] = useMutation(deleteComplianceRegistryMutation);
   const confirm = useConfirm();
+  const isSnapshotMode = Boolean(snapshotId);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -211,8 +231,12 @@ function RegistryRow({
     );
   };
 
+  const detailsUrl = isSnapshotMode
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/compliance-registries/${registry.id}`
+    : `/organizations/${organizationId}/compliance-registries/${registry.id}`;
+
   return (
-    <Tr to={`/organizations/${organizationId}/compliance-registries/${registry.id}`}>
+    <Tr to={detailsUrl}>
       <Td>
         <span className="font-mono text-sm">{registry.referenceId}</span>
       </Td>
@@ -234,15 +258,17 @@ function RegistryRow({
         )}
       </Td>
       <Td noLink width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            icon={IconTrashCan}
-            variant="danger"
-            onSelect={handleDelete}
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+        {!isSnapshotMode && (
+          <ActionDropdown>
+            <DropdownItem
+              icon={IconTrashCan}
+              variant="danger"
+              onSelect={handleDelete}
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        )}
       </Td>
     </Tr>
   );

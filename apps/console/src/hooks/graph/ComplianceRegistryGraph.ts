@@ -8,10 +8,10 @@ import { useMutationWithToasts } from "../useMutationWithToasts";
 export const ComplianceRegistriesConnectionKey = "ComplianceRegistriesPage_complianceRegistries";
 
 export const complianceRegistriesQuery = graphql`
-  query ComplianceRegistryGraphListQuery($organizationId: ID!) {
+  query ComplianceRegistryGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
-        ...ComplianceRegistriesPageFragment
+        ...ComplianceRegistriesPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
   }
@@ -22,6 +22,8 @@ export const complianceRegistryNodeQuery = graphql`
     node(id: $complianceRegistryId) {
       ... on ComplianceRegistry {
         id
+        snapshotId
+        sourceId
         referenceId
         area
         source

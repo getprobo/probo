@@ -260,7 +260,12 @@ func (r *complianceRegistryConnectionResolver) TotalCount(ctx context.Context, o
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		count, err := prb.ComplianceRegistries.CountByOrganizationID(ctx, obj.ParentID)
+		complianceRegistryFilter := coredata.NewComplianceRegistryFilter(nil)
+		if obj.Filter != nil {
+			complianceRegistryFilter = coredata.NewComplianceRegistryFilter(&obj.Filter.SnapshotID)
+		}
+
+		count, err := prb.ComplianceRegistries.CountForOrganizationID(ctx, obj.ParentID, complianceRegistryFilter)
 		if err != nil {
 			panic(fmt.Errorf("cannot count compliance registries: %w", err))
 		}
@@ -3313,9 +3318,9 @@ func (r *nonconformityRegistryConnectionResolver) TotalCount(ctx context.Context
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		nonconformityRegistryFilter := coredata.NewNonconformityRegistryFilterBySnapshotID(nil)
+		nonconformityRegistryFilter := coredata.NewNonconformityRegistryFilter(nil)
 		if obj.Filter != nil {
-			nonconformityRegistryFilter = coredata.NewNonconformityRegistryFilterBySnapshotID(&obj.Filter.SnapshotID)
+			nonconformityRegistryFilter = coredata.NewNonconformityRegistryFilter(&obj.Filter.SnapshotID)
 		}
 
 		count, err := prb.NonconformityRegistries.CountForOrganizationID(ctx, obj.ParentID, nonconformityRegistryFilter)
@@ -3455,7 +3460,7 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 	var nilSnapshotID *gid.GID = nil
-	vendorFilter := coredata.NewVendorFilterBySnapshotID(&nilSnapshotID)
+	vendorFilter := coredata.NewVendorFilter(&nilSnapshotID, nil)
 
 	page, err := prb.Vendors.ListForOrganizationID(ctx, obj.ID, cursor, vendorFilter)
 	if err != nil {
@@ -3652,9 +3657,9 @@ func (r *organizationResolver) Data(ctx context.Context, obj *types.Organization
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	datumFilter := coredata.NewDatumFilterBySnapshotID(nil)
+	datumFilter := coredata.NewDatumFilter(nil)
 	if filter != nil {
-		datumFilter = coredata.NewDatumFilterBySnapshotID(&filter.SnapshotID)
+		datumFilter = coredata.NewDatumFilter(&filter.SnapshotID)
 	}
 
 	page, err := prb.Data.ListForOrganizationID(ctx, obj.ID, cursor, datumFilter)
@@ -3707,9 +3712,9 @@ func (r *organizationResolver) NonconformityRegistries(ctx context.Context, obj 
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	nonconformityRegistryFilter := coredata.NewNonconformityRegistryFilterBySnapshotID(nil)
+	nonconformityRegistryFilter := coredata.NewNonconformityRegistryFilter(nil)
 	if filter != nil {
-		nonconformityRegistryFilter = coredata.NewNonconformityRegistryFilterBySnapshotID(&filter.SnapshotID)
+		nonconformityRegistryFilter = coredata.NewNonconformityRegistryFilter(&filter.SnapshotID)
 	}
 
 	page, err := prb.NonconformityRegistries.ListForOrganizationID(ctx, obj.ID, cursor, nonconformityRegistryFilter)
@@ -3721,7 +3726,7 @@ func (r *organizationResolver) NonconformityRegistries(ctx context.Context, obj 
 }
 
 // ComplianceRegistries is the resolver for the complianceRegistries field.
-func (r *organizationResolver) ComplianceRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy) (*types.ComplianceRegistryConnection, error) {
+func (r *organizationResolver) ComplianceRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy, filter *types.ComplianceRegistryFilter) (*types.ComplianceRegistryConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.ComplianceRegistryOrderField]{
@@ -3737,12 +3742,17 @@ func (r *organizationResolver) ComplianceRegistries(ctx context.Context, obj *ty
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.ComplianceRegistries.ListForOrganizationID(ctx, obj.ID, cursor)
+	complianceRegistryFilter := coredata.NewComplianceRegistryFilter(nil)
+	if filter != nil {
+		complianceRegistryFilter = coredata.NewComplianceRegistryFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.ComplianceRegistries.ListForOrganizationID(ctx, obj.ID, cursor, complianceRegistryFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list organization compliance registries: %w", err))
 	}
 
-	return types.NewComplianceRegistryConnection(page, r, obj.ID), nil
+	return types.NewComplianceRegistryConnection(page, r, obj.ID, filter), nil
 }
 
 // ContinualImprovementRegistries is the resolver for the continualImprovementRegistries field.

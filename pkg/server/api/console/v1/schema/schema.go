@@ -183,7 +183,9 @@ type ComplexityRoot struct {
 		ReferenceID            func(childComplexity int) int
 		Regulator              func(childComplexity int) int
 		Requirement            func(childComplexity int) int
+		SnapshotID             func(childComplexity int) int
 		Source                 func(childComplexity int) int
+		SourceID               func(childComplexity int) int
 		Status                 func(childComplexity int) int
 		UpdatedAt              func(childComplexity int) int
 	}
@@ -871,7 +873,7 @@ type ComplexityRoot struct {
 	Organization struct {
 		Assets                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy) int
 		Audits                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
-		ComplianceRegistries           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy) int
+		ComplianceRegistries           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy, filter *types.ComplianceRegistryFilter) int
 		Connectors                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
 		ContinualImprovementRegistries func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy) int
 		Controls                       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
@@ -1669,7 +1671,7 @@ type OrganizationResolver interface {
 	Data(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) (*types.DatumConnection, error)
 	Audits(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) (*types.AuditConnection, error)
 	NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy, filter *types.NonconformityRegistryFilter) (*types.NonconformityRegistryConnection, error)
-	ComplianceRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy) (*types.ComplianceRegistryConnection, error)
+	ComplianceRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy, filter *types.ComplianceRegistryFilter) (*types.ComplianceRegistryConnection, error)
 	ContinualImprovementRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy) (*types.ContinualImprovementRegistryConnection, error)
 	ProcessingActivityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy) (*types.ProcessingActivityRegistryConnection, error)
 	Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error)
@@ -2155,12 +2157,26 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ComplianceRegistry.Requirement(childComplexity), true
 
+	case "ComplianceRegistry.snapshotId":
+		if e.complexity.ComplianceRegistry.SnapshotID == nil {
+			break
+		}
+
+		return e.complexity.ComplianceRegistry.SnapshotID(childComplexity), true
+
 	case "ComplianceRegistry.source":
 		if e.complexity.ComplianceRegistry.Source == nil {
 			break
 		}
 
 		return e.complexity.ComplianceRegistry.Source(childComplexity), true
+
+	case "ComplianceRegistry.sourceId":
+		if e.complexity.ComplianceRegistry.SourceID == nil {
+			break
+		}
+
+		return e.complexity.ComplianceRegistry.SourceID(childComplexity), true
 
 	case "ComplianceRegistry.status":
 		if e.complexity.ComplianceRegistry.Status == nil {
@@ -5370,7 +5386,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.ComplianceRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ComplianceRegistryOrderBy)), true
+		return e.complexity.Organization.ComplianceRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ComplianceRegistryOrderBy), args["filter"].(*types.ComplianceRegistryFilter)), true
 
 	case "Organization.connectors":
 		if e.complexity.Organization.Connectors == nil {
@@ -7655,6 +7671,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBulkPublishDocumentVersionsInput,
 		ec.unmarshalInputBulkRequestSignaturesInput,
 		ec.unmarshalInputCancelSignatureRequestInput,
+		ec.unmarshalInputComplianceRegistryFilter,
 		ec.unmarshalInputComplianceRegistryOrder,
 		ec.unmarshalInputConfirmEmailInput,
 		ec.unmarshalInputConnectorOrder,
@@ -9002,6 +9019,10 @@ input NonconformityRegistryFilter {
   snapshotId: ID
 }
 
+input ComplianceRegistryFilter {
+  snapshotId: ID
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -9150,6 +9171,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ComplianceRegistryOrder
+    filter: ComplianceRegistryFilter
   ): ComplianceRegistryConnection! @goField(forceResolver: true)
 
   continualImprovementRegistries(
@@ -9613,6 +9635,8 @@ type NonconformityRegistry implements Node {
 
 type ComplianceRegistry implements Node {
   id: ID!
+  snapshotId: ID
+  sourceId: ID
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   area: String
@@ -15993,6 +16017,11 @@ func (ec *executionContext) field_Organization_complianceRegistries_args(ctx con
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	arg5, err := ec.field_Organization_complianceRegistries_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
 	return args, nil
 }
 func (ec *executionContext) field_Organization_complianceRegistries_argsFirst(
@@ -16057,6 +16086,19 @@ func (ec *executionContext) field_Organization_complianceRegistries_argsOrderBy(
 	}
 
 	var zeroVal *types.ComplianceRegistryOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_complianceRegistries_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.ComplianceRegistryFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalOComplianceRegistryFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceRegistryFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.ComplianceRegistryFilter
 	return zeroVal, nil
 }
 
@@ -21086,6 +21128,88 @@ func (ec *executionContext) fieldContext_ComplianceRegistry_id(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _ComplianceRegistry_snapshotId(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ComplianceRegistry_snapshotId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SnapshotID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*gid.GID)
+	fc.Result = res
+	return ec.marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ComplianceRegistry_snapshotId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ComplianceRegistry_sourceId(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ComplianceRegistry_sourceId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SourceID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*gid.GID)
+	fc.Result = res
+	return ec.marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ComplianceRegistry_sourceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ComplianceRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ComplianceRegistry_organization(ctx context.Context, field graphql.CollectedField, obj *types.ComplianceRegistry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ComplianceRegistry_organization(ctx, field)
 	if err != nil {
@@ -21942,6 +22066,10 @@ func (ec *executionContext) fieldContext_ComplianceRegistryEdge_node(_ context.C
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_ComplianceRegistry_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_ComplianceRegistry_snapshotId(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_ComplianceRegistry_sourceId(ctx, field)
 			case "organization":
 				return ec.fieldContext_ComplianceRegistry_organization(ctx, field)
 			case "referenceId":
@@ -41945,7 +42073,7 @@ func (ec *executionContext) _Organization_complianceRegistries(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organization().ComplianceRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ComplianceRegistryOrderBy))
+		return ec.resolvers.Organization().ComplianceRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ComplianceRegistryOrderBy), fc.Args["filter"].(*types.ComplianceRegistryFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -49630,6 +49758,10 @@ func (ec *executionContext) fieldContext_UpdateComplianceRegistryPayload_complia
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_ComplianceRegistry_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_ComplianceRegistry_snapshotId(ctx, field)
+			case "sourceId":
+				return ec.fieldContext_ComplianceRegistry_sourceId(ctx, field)
 			case "organization":
 				return ec.fieldContext_ComplianceRegistry_organization(ctx, field)
 			case "referenceId":
@@ -59434,6 +59566,33 @@ func (ec *executionContext) unmarshalInputCancelSignatureRequestInput(ctx contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputComplianceRegistryFilter(ctx context.Context, obj any) (types.ComplianceRegistryFilter, error) {
+	var it types.ComplianceRegistryFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputComplianceRegistryOrder(ctx context.Context, obj any) (types.ComplianceRegistryOrderBy, error) {
 	var it types.ComplianceRegistryOrderBy
 	asMap := map[string]any{}
@@ -66673,6 +66832,10 @@ func (ec *executionContext) _ComplianceRegistry(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "snapshotId":
+			out.Values[i] = ec._ComplianceRegistry_snapshotId(ctx, field, obj)
+		case "sourceId":
+			out.Values[i] = ec._ComplianceRegistry_sourceId(ctx, field, obj)
 		case "organization":
 			field := field
 
@@ -86690,6 +86853,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOComplianceRegistryFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceRegistryFilter(ctx context.Context, v any) (*types.ComplianceRegistryFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputComplianceRegistryFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOComplianceRegistryOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐComplianceRegistryOrderBy(ctx context.Context, v any) (*types.ComplianceRegistryOrderBy, error) {

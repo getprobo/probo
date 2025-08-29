@@ -20,18 +20,18 @@ import (
 )
 
 type (
-	NonconformityRegistryFilter struct {
+	ComplianceRegistryFilter struct {
 		snapshotID **gid.GID
 	}
 )
 
-func NewNonconformityRegistryFilter(snapshotID **gid.GID) *NonconformityRegistryFilter {
-	return &NonconformityRegistryFilter{
-		snapshotID: nil,
+func NewComplianceRegistryFilter(snapshotID **gid.GID) *ComplianceRegistryFilter {
+	return &ComplianceRegistryFilter{
+		snapshotID: snapshotID,
 	}
 }
 
-func (f *NonconformityRegistryFilter) SQLArguments() pgx.NamedArgs {
+func (f *ComplianceRegistryFilter) SQLArguments() pgx.NamedArgs {
 	args := pgx.NamedArgs{}
 
 	if f.snapshotID != nil && *f.snapshotID != nil {
@@ -41,7 +41,7 @@ func (f *NonconformityRegistryFilter) SQLArguments() pgx.NamedArgs {
 	return args
 }
 
-func (f *NonconformityRegistryFilter) SQLFragment() string {
+func (f *ComplianceRegistryFilter) SQLFragment() string {
 	if f.snapshotID == nil {
 		return "TRUE"
 	}

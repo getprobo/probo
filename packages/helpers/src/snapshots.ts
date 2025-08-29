@@ -3,6 +3,7 @@ type Translator = (s: string) => string;
 export const snapshotTypes = [
   "DATA",
   "NONCONFORMITY_REGISTRIES",
+  "COMPLIANCE_REGISTRIES",
 ] as const;
 
 export function getSnapshotTypeLabel(__: Translator, type: string | null | undefined) {
@@ -34,6 +35,8 @@ export function getSnapshotTypeUrlPath(type?: string): string {
       return "/data";
     case "NONCONFORMITY_REGISTRIES":
       return "/nonconformity-registries";
+    case "COMPLIANCE_REGISTRIES":
+      return "/compliance-registries";
     default:
       return "";
   }

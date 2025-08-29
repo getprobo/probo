@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f3d37c53737c5f0f3bd062eb2b682898>>
+ * @generated SignedSource<<ec60b0715df426d6819f03f6e1597fef>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -32,7 +32,9 @@ export type ComplianceRegistryGraphNodeQuery$data = {
     readonly referenceId?: string;
     readonly regulator?: string | null | undefined;
     readonly requirement?: string | null | undefined;
+    readonly snapshotId?: string | null | undefined;
     readonly source?: string | null | undefined;
+    readonly sourceId?: string | null | undefined;
     readonly status?: ComplianceRegistryStatus;
     readonly updatedAt?: any;
   };
@@ -68,66 +70,80 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "referenceId",
+  "name": "snapshotId",
   "storageKey": null
 },
 v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "area",
+  "name": "sourceId",
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "source",
+  "name": "referenceId",
   "storageKey": null
 },
 v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "requirement",
+  "name": "area",
   "storageKey": null
 },
 v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "actionsToBeImplemented",
+  "name": "source",
   "storageKey": null
 },
 v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "regulator",
+  "name": "requirement",
   "storageKey": null
 },
 v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "lastReviewDate",
+  "name": "actionsToBeImplemented",
   "storageKey": null
 },
 v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "dueDate",
+  "name": "regulator",
   "storageKey": null
 },
 v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "status",
+  "name": "lastReviewDate",
   "storageKey": null
 },
 v12 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "dueDate",
+  "storageKey": null
+},
+v13 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "status",
+  "storageKey": null
+},
+v14 = {
   "alias": null,
   "args": null,
   "concreteType": "People",
@@ -146,7 +162,7 @@ v12 = {
   ],
   "storageKey": null
 },
-v13 = {
+v15 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
@@ -165,14 +181,14 @@ v13 = {
   ],
   "storageKey": null
 },
-v14 = {
+v16 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v15 = {
+v17 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -210,7 +226,9 @@ return {
               (v12/*: any*/),
               (v13/*: any*/),
               (v14/*: any*/),
-              (v15/*: any*/)
+              (v15/*: any*/),
+              (v16/*: any*/),
+              (v17/*: any*/)
             ],
             "type": "ComplianceRegistry",
             "abstractKey": null
@@ -259,7 +277,9 @@ return {
               (v12/*: any*/),
               (v13/*: any*/),
               (v14/*: any*/),
-              (v15/*: any*/)
+              (v15/*: any*/),
+              (v16/*: any*/),
+              (v17/*: any*/)
             ],
             "type": "ComplianceRegistry",
             "abstractKey": null
@@ -270,16 +290,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4b91258de0711b2821a26bef89b60b02",
+    "cacheID": "2c4649d3258530fd79420bc2ed8fd14a",
     "id": null,
     "metadata": {},
     "name": "ComplianceRegistryGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ComplianceRegistryGraphNodeQuery(\n  $complianceRegistryId: ID!\n) {\n  node(id: $complianceRegistryId) {\n    __typename\n    ... on ComplianceRegistry {\n      id\n      referenceId\n      area\n      source\n      requirement\n      actionsToBeImplemented\n      regulator\n      lastReviewDate\n      dueDate\n      status\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ComplianceRegistryGraphNodeQuery(\n  $complianceRegistryId: ID!\n) {\n  node(id: $complianceRegistryId) {\n    __typename\n    ... on ComplianceRegistry {\n      id\n      snapshotId\n      sourceId\n      referenceId\n      area\n      source\n      requirement\n      actionsToBeImplemented\n      regulator\n      lastReviewDate\n      dueDate\n      status\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1b3352776a5b514b7545111aeb780148";
+(node as any).hash = "b290ce12f57b586e64bac227777bc294";
 
 export default node;

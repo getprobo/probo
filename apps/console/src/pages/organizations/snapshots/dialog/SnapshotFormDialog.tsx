@@ -19,6 +19,7 @@ import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { ControlledField } from "/components/form/ControlledField";
 import { SnapshotTypeOptions } from "/components/form/SnapshotTypeOptions";
+import { snapshotTypes } from "@probo/helpers";
 
 const snapshotCreateMutation = graphql`
   mutation SnapshotFormDialogCreateMutation(
@@ -42,7 +43,7 @@ const snapshotCreateMutation = graphql`
 const snapshotSchema = z.object({
   name: z.string().min(2, { message: "Name is required" }),
   description: z.string().optional(),
-  type: z.enum(["DATA", "NONCONFORMITY_REGISTRIES"]),
+  type: z.enum(snapshotTypes),
 });
 
 type Props = {

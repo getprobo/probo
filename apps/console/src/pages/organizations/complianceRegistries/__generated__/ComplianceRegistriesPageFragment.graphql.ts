@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<312905201e0a72d96dd29afeed17dee1>>
+ * @generated SignedSource<<db8b4530d56ae89fa8e332555a85eb33>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -29,7 +29,9 @@ export type ComplianceRegistriesPageFragment$data = {
         readonly referenceId: string;
         readonly regulator: string | null | undefined;
         readonly requirement: string | null | undefined;
+        readonly snapshotId: string | null | undefined;
         readonly source: string | null | undefined;
+        readonly sourceId: string | null | undefined;
         readonly status: ComplianceRegistryStatus;
         readonly updatedAt: any;
       };
@@ -72,6 +74,11 @@ return {
       "defaultValue": 10,
       "kind": "LocalArgument",
       "name": "first"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "snapshotId"
     }
   ],
   "kind": "Fragment",
@@ -108,7 +115,19 @@ return {
     (v1/*: any*/),
     {
       "alias": "complianceRegistries",
-      "args": null,
+      "args": [
+        {
+          "fields": [
+            {
+              "kind": "Variable",
+              "name": "snapshotId",
+              "variableName": "snapshotId"
+            }
+          ],
+          "kind": "ObjectValue",
+          "name": "filter"
+        }
+      ],
       "concreteType": "ComplianceRegistryConnection",
       "kind": "LinkedField",
       "name": "__ComplianceRegistriesPage_complianceRegistries_connection",
@@ -138,6 +157,20 @@ return {
               "plural": false,
               "selections": [
                 (v1/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "snapshotId",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "sourceId",
+                  "storageKey": null
+                },
                 {
                   "alias": null,
                   "args": null,
@@ -300,6 +333,6 @@ return {
 };
 })();
 
-(node as any).hash = "b6b97d09ba132cbc1ffb006c23a33589";
+(node as any).hash = "b22ac157b9ba89ab14fe8363e56957ef";
 
 export default node;

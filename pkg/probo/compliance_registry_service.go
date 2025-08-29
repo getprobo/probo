@@ -231,9 +231,10 @@ func (s *ComplianceRegistryService) Delete(
 	return err
 }
 
-func (s ComplianceRegistryService) CountByOrganizationID(
+func (s ComplianceRegistryService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
+	filter *coredata.ComplianceRegistryFilter,
 ) (int, error) {
 	var count int
 
@@ -241,7 +242,7 @@ func (s ComplianceRegistryService) CountByOrganizationID(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			registries := coredata.ComplianceRegistries{}
-			count, err = registries.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = registries.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count compliance registries: %w", err)
 			}
@@ -261,13 +262,14 @@ func (s ComplianceRegistryService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ComplianceRegistryOrderField],
+	filter *coredata.ComplianceRegistryFilter,
 ) (*page.Page[*coredata.ComplianceRegistry, coredata.ComplianceRegistryOrderField], error) {
 	var registries coredata.ComplianceRegistries
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := registries.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
+			err := registries.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load compliance registries: %w", err)
 			}

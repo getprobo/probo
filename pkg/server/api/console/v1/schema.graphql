@@ -1110,6 +1110,10 @@ input NonconformityRegistryFilter {
   snapshotId: ID
 }
 
+input ComplianceRegistryFilter {
+  snapshotId: ID
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -1258,6 +1262,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: ComplianceRegistryOrder
+    filter: ComplianceRegistryFilter
   ): ComplianceRegistryConnection! @goField(forceResolver: true)
 
   continualImprovementRegistries(
@@ -1721,6 +1726,8 @@ type NonconformityRegistry implements Node {
 
 type ComplianceRegistry implements Node {
   id: ID!
+  snapshotId: ID
+  sourceId: ID
   organization: Organization! @goField(forceResolver: true)
   referenceId: String!
   area: String
