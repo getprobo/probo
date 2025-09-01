@@ -1398,14 +1398,6 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: IncidentRegistryOrder
-  ): IncidentRegistryConnection! @goField(forceResolver: true)
-
-  incidentRegistries(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: IncidentRegistryOrder
     filter: IncidentRegistryFilter = { snapshotId: null }
   ): IncidentRegistryConnection! @goField(forceResolver: true)
 
