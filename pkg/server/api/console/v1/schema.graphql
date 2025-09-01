@@ -2440,6 +2440,7 @@ type Mutation {
   deleteTask(input: DeleteTaskInput!): DeleteTaskPayload!
   assignTask(input: AssignTaskInput!): AssignTaskPayload!
   unassignTask(input: UnassignTaskInput!): UnassignTaskPayload!
+  importTasks(input: ImportTasksInput!): ImportTasksPayload!
 
   # Risk mutations
   createRisk(input: CreateRiskInput!): CreateRiskPayload!
@@ -2848,6 +2849,10 @@ input AssignTaskInput {
 
 input UnassignTaskInput {
   taskId: ID!
+}
+input ImportTasksInput {
+  organizationId: ID!
+  file: Upload!
 }
 
 input CreateControlMeasureMappingInput {
@@ -3426,6 +3431,17 @@ type AssignTaskPayload {
 
 type UnassignTaskPayload {
   task: Task!
+}
+type TaskImportResult {
+  rowNumber: Int!
+  success: Boolean!
+  task: Task
+  error: String
+}
+type ImportTasksPayload {
+  importResults: [TaskImportResult!]!
+  successCount: Int!
+  errorCount: Int!
 }
 
 type CreateControlMeasureMappingPayload {

@@ -1,4 +1,4 @@
-import { Button, IconPlusLarge, PageHeader } from "@probo/ui";
+import { Button, IconPlusLarge, IconUpload, PageHeader } from "@probo/ui";
 import {
   usePreloadedQuery,
   useRefetchableFragment,
@@ -12,6 +12,7 @@ import { tasksQuery } from "/hooks/graph/TaskGraph";
 import { usePageTitle } from "@probo/hooks";
 import TasksCard from "/components/tasks/TasksCard";
 import TaskFormDialog from "/components/tasks/TaskFormDialog";
+import TaskImportDialog from "/components/tasks/TaskImportDialog";
 
 const tasksFragment = graphql`
   fragment TasksPageFragment on Organization
@@ -76,9 +77,16 @@ export default function TasksPage({ queryRef }: Props) {
           "Track your assigned compliance tasks and keep progress on track."
         )}
       >
-        <TaskFormDialog connection={connectionId}>
-          <Button icon={IconPlusLarge}>{__("New task")}</Button>
-        </TaskFormDialog>
+        <div className="flex gap-2">
+          <TaskImportDialog>
+            <Button variant="secondary" icon={IconUpload}>
+              {__("Import CSV")}
+            </Button>
+          </TaskImportDialog>
+          <TaskFormDialog connection={connectionId}>
+            <Button icon={IconPlusLarge}>{__("New task")}</Button>
+          </TaskFormDialog>
+        </div>
       </PageHeader>
       <TasksCard connectionId={connectionId} tasks={tasks ?? []} />
     </div>

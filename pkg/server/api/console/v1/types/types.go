@@ -1119,6 +1119,17 @@ type ImportMeasurePayload struct {
 	MeasureEdges []*MeasureEdge `json:"measureEdges"`
 }
 
+type ImportTasksInput struct {
+	OrganizationID gid.GID        `json:"organizationId"`
+	File           graphql.Upload `json:"file"`
+}
+
+type ImportTasksPayload struct {
+	ImportResults []*TaskImportResult `json:"importResults"`
+	SuccessCount  int                 `json:"successCount"`
+	ErrorCount    int                 `json:"errorCount"`
+}
+
 type IncidentRegistry struct {
 	ID           gid.GID                           `json:"id"`
 	Organization *Organization                     `json:"organization"`
@@ -1478,6 +1489,13 @@ func (this Task) GetID() gid.GID { return this.ID }
 type TaskEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Task          `json:"node"`
+}
+
+type TaskImportResult struct {
+	RowNumber int     `json:"rowNumber"`
+	Success   bool    `json:"success"`
+	Task      *Task   `json:"task,omitempty"`
+	Error     *string `json:"error,omitempty"`
 }
 
 type TrustCenter struct {

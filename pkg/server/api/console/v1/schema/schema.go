@@ -713,6 +713,12 @@ type ComplexityRoot struct {
 		MeasureEdges func(childComplexity int) int
 	}
 
+	ImportTasksPayload struct {
+		ErrorCount    func(childComplexity int) int
+		ImportResults func(childComplexity int) int
+		SuccessCount  func(childComplexity int) int
+	}
+
 	IncidentRegistry struct {
 		Category     func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
@@ -846,6 +852,7 @@ type ComplexityRoot struct {
 		GenerateFrameworkStateOfApplicability  func(childComplexity int, input types.GenerateFrameworkStateOfApplicabilityInput) int
 		ImportFramework                        func(childComplexity int, input types.ImportFrameworkInput) int
 		ImportMeasure                          func(childComplexity int, input types.ImportMeasureInput) int
+		ImportTasks                            func(childComplexity int, input types.ImportTasksInput) int
 		InviteUser                             func(childComplexity int, input types.InviteUserInput) int
 		PublishDocumentVersion                 func(childComplexity int, input types.PublishDocumentVersionInput) int
 		RemoveUser                             func(childComplexity int, input types.RemoveUserInput) int
@@ -1138,6 +1145,13 @@ type ComplexityRoot struct {
 	TaskEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
+	}
+
+	TaskImportResult struct {
+		Error     func(childComplexity int) int
+		RowNumber func(childComplexity int) int
+		Success   func(childComplexity int) int
+		Task      func(childComplexity int) int
 	}
 
 	TrustCenter struct {
@@ -1641,6 +1655,7 @@ type MutationResolver interface {
 	DeleteTask(ctx context.Context, input types.DeleteTaskInput) (*types.DeleteTaskPayload, error)
 	AssignTask(ctx context.Context, input types.AssignTaskInput) (*types.AssignTaskPayload, error)
 	UnassignTask(ctx context.Context, input types.UnassignTaskInput) (*types.UnassignTaskPayload, error)
+	ImportTasks(ctx context.Context, input types.ImportTasksInput) (*types.ImportTasksPayload, error)
 	CreateRisk(ctx context.Context, input types.CreateRiskInput) (*types.CreateRiskPayload, error)
 	UpdateRisk(ctx context.Context, input types.UpdateRiskInput) (*types.UpdateRiskPayload, error)
 	DeleteRisk(ctx context.Context, input types.DeleteRiskInput) (*types.DeleteRiskPayload, error)
@@ -3867,6 +3882,27 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ImportMeasurePayload.MeasureEdges(childComplexity), true
 
+	case "ImportTasksPayload.errorCount":
+		if e.complexity.ImportTasksPayload.ErrorCount == nil {
+			break
+		}
+
+		return e.complexity.ImportTasksPayload.ErrorCount(childComplexity), true
+
+	case "ImportTasksPayload.importResults":
+		if e.complexity.ImportTasksPayload.ImportResults == nil {
+			break
+		}
+
+		return e.complexity.ImportTasksPayload.ImportResults(childComplexity), true
+
+	case "ImportTasksPayload.successCount":
+		if e.complexity.ImportTasksPayload.SuccessCount == nil {
+			break
+		}
+
+		return e.complexity.ImportTasksPayload.SuccessCount(childComplexity), true
+
 	case "IncidentRegistry.category":
 		if e.complexity.IncidentRegistry.Category == nil {
 			break
@@ -5033,6 +5069,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ImportMeasure(childComplexity, args["input"].(types.ImportMeasureInput)), true
+
+	case "Mutation.importTasks":
+		if e.complexity.Mutation.ImportTasks == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_importTasks_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ImportTasks(childComplexity, args["input"].(types.ImportTasksInput)), true
 
 	case "Mutation.inviteUser":
 		if e.complexity.Mutation.InviteUser == nil {
@@ -6758,6 +6806,34 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TaskEdge.Node(childComplexity), true
 
+	case "TaskImportResult.error":
+		if e.complexity.TaskImportResult.Error == nil {
+			break
+		}
+
+		return e.complexity.TaskImportResult.Error(childComplexity), true
+
+	case "TaskImportResult.rowNumber":
+		if e.complexity.TaskImportResult.RowNumber == nil {
+			break
+		}
+
+		return e.complexity.TaskImportResult.RowNumber(childComplexity), true
+
+	case "TaskImportResult.success":
+		if e.complexity.TaskImportResult.Success == nil {
+			break
+		}
+
+		return e.complexity.TaskImportResult.Success(childComplexity), true
+
+	case "TaskImportResult.task":
+		if e.complexity.TaskImportResult.Task == nil {
+			break
+		}
+
+		return e.complexity.TaskImportResult.Task(childComplexity), true
+
 	case "TrustCenter.accesses":
 		if e.complexity.TrustCenter.Accesses == nil {
 			break
@@ -8057,6 +8133,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGenerateFrameworkStateOfApplicabilityInput,
 		ec.unmarshalInputImportFrameworkInput,
 		ec.unmarshalInputImportMeasureInput,
+		ec.unmarshalInputImportTasksInput,
 		ec.unmarshalInputIncidentRegistryFilter,
 		ec.unmarshalInputIncidentRegistryOrder,
 		ec.unmarshalInputInviteUserInput,
@@ -10656,6 +10733,7 @@ type Mutation {
   deleteTask(input: DeleteTaskInput!): DeleteTaskPayload!
   assignTask(input: AssignTaskInput!): AssignTaskPayload!
   unassignTask(input: UnassignTaskInput!): UnassignTaskPayload!
+  importTasks(input: ImportTasksInput!): ImportTasksPayload!
 
   # Risk mutations
   createRisk(input: CreateRiskInput!): CreateRiskPayload!
@@ -11064,6 +11142,10 @@ input AssignTaskInput {
 
 input UnassignTaskInput {
   taskId: ID!
+}
+input ImportTasksInput {
+  organizationId: ID!
+  file: Upload!
 }
 
 input CreateControlMeasureMappingInput {
@@ -11642,6 +11724,17 @@ type AssignTaskPayload {
 
 type UnassignTaskPayload {
   task: Task!
+}
+type TaskImportResult {
+  rowNumber: Int!
+  success: Boolean!
+  task: Task
+  error: String
+}
+type ImportTasksPayload {
+  importResults: [TaskImportResult!]!
+  successCount: Int!
+  errorCount: Int!
 }
 
 type CreateControlMeasureMappingPayload {
@@ -15546,6 +15639,29 @@ func (ec *executionContext) field_Mutation_importMeasure_argsInput(
 	}
 
 	var zeroVal types.ImportMeasureInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_importTasks_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_importTasks_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_importTasks_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.ImportTasksInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNImportTasksInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportTasksInput(ctx, tmp)
+	}
+
+	var zeroVal types.ImportTasksInput
 	return zeroVal, nil
 }
 
@@ -33739,6 +33855,148 @@ func (ec *executionContext) fieldContext_ImportMeasurePayload_measureEdges(_ con
 	return fc, nil
 }
 
+func (ec *executionContext) _ImportTasksPayload_importResults(ctx context.Context, field graphql.CollectedField, obj *types.ImportTasksPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImportTasksPayload_importResults(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ImportResults, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.TaskImportResult)
+	fc.Result = res
+	return ec.marshalNTaskImportResult2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTaskImportResultᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImportTasksPayload_importResults(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImportTasksPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "rowNumber":
+				return ec.fieldContext_TaskImportResult_rowNumber(ctx, field)
+			case "success":
+				return ec.fieldContext_TaskImportResult_success(ctx, field)
+			case "task":
+				return ec.fieldContext_TaskImportResult_task(ctx, field)
+			case "error":
+				return ec.fieldContext_TaskImportResult_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TaskImportResult", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImportTasksPayload_successCount(ctx context.Context, field graphql.CollectedField, obj *types.ImportTasksPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImportTasksPayload_successCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SuccessCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImportTasksPayload_successCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImportTasksPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ImportTasksPayload_errorCount(ctx context.Context, field graphql.CollectedField, obj *types.ImportTasksPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ImportTasksPayload_errorCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ErrorCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ImportTasksPayload_errorCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ImportTasksPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _IncidentRegistry_id(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_IncidentRegistry_id(ctx, field)
 	if err != nil {
@@ -38373,6 +38631,69 @@ func (ec *executionContext) fieldContext_Mutation_unassignTask(ctx context.Conte
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_unassignTask_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_importTasks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_importTasks(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ImportTasks(rctx, fc.Args["input"].(types.ImportTasksInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.ImportTasksPayload)
+	fc.Result = res
+	return ec.marshalNImportTasksPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportTasksPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_importTasks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "importResults":
+				return ec.fieldContext_ImportTasksPayload_importResults(ctx, field)
+			case "successCount":
+				return ec.fieldContext_ImportTasksPayload_successCount(ctx, field)
+			case "errorCount":
+				return ec.fieldContext_ImportTasksPayload_errorCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ImportTasksPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_importTasks_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -50735,6 +51056,202 @@ func (ec *executionContext) fieldContext_TaskEdge_node(_ context.Context, field 
 				return ec.fieldContext_Task_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Task", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TaskImportResult_rowNumber(ctx context.Context, field graphql.CollectedField, obj *types.TaskImportResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TaskImportResult_rowNumber(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RowNumber, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TaskImportResult_rowNumber(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TaskImportResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TaskImportResult_success(ctx context.Context, field graphql.CollectedField, obj *types.TaskImportResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TaskImportResult_success(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Success, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TaskImportResult_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TaskImportResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TaskImportResult_task(ctx context.Context, field graphql.CollectedField, obj *types.TaskImportResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TaskImportResult_task(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Task, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*types.Task)
+	fc.Result = res
+	return ec.marshalOTask2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTask(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TaskImportResult_task(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TaskImportResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Task_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Task_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Task_description(ctx, field)
+			case "state":
+				return ec.fieldContext_Task_state(ctx, field)
+			case "timeEstimate":
+				return ec.fieldContext_Task_timeEstimate(ctx, field)
+			case "deadline":
+				return ec.fieldContext_Task_deadline(ctx, field)
+			case "assignedTo":
+				return ec.fieldContext_Task_assignedTo(ctx, field)
+			case "organization":
+				return ec.fieldContext_Task_organization(ctx, field)
+			case "measure":
+				return ec.fieldContext_Task_measure(ctx, field)
+			case "evidences":
+				return ec.fieldContext_Task_evidences(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Task_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Task_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Task", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TaskImportResult_error(ctx context.Context, field graphql.CollectedField, obj *types.TaskImportResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TaskImportResult_error(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Error, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TaskImportResult_error(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TaskImportResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -65525,6 +66042,40 @@ func (ec *executionContext) unmarshalInputImportMeasureInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputImportTasksInput(ctx context.Context, obj any) (types.ImportTasksInput, error) {
+	var it types.ImportTasksInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "file"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "file":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+			data, err := ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.File = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputIncidentRegistryFilter(ctx context.Context, obj any) (types.IncidentRegistryFilter, error) {
 	var it types.IncidentRegistryFilter
 	asMap := map[string]any{}
@@ -75169,6 +75720,55 @@ func (ec *executionContext) _ImportMeasurePayload(ctx context.Context, sel ast.S
 	return out
 }
 
+var importTasksPayloadImplementors = []string{"ImportTasksPayload"}
+
+func (ec *executionContext) _ImportTasksPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ImportTasksPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, importTasksPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ImportTasksPayload")
+		case "importResults":
+			out.Values[i] = ec._ImportTasksPayload_importResults(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "successCount":
+			out.Values[i] = ec._ImportTasksPayload_successCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "errorCount":
+			out.Values[i] = ec._ImportTasksPayload_errorCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var incidentRegistryImplementors = []string{"IncidentRegistry", "Node"}
 
 func (ec *executionContext) _IncidentRegistry(ctx context.Context, sel ast.SelectionSet, obj *types.IncidentRegistry) graphql.Marshaler {
@@ -76169,6 +76769,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "unassignTask":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_unassignTask(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "importTasks":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_importTasks(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -79756,6 +80363,54 @@ func (ec *executionContext) _TaskEdge(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var taskImportResultImplementors = []string{"TaskImportResult"}
+
+func (ec *executionContext) _TaskImportResult(ctx context.Context, sel ast.SelectionSet, obj *types.TaskImportResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, taskImportResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TaskImportResult")
+		case "rowNumber":
+			out.Values[i] = ec._TaskImportResult_rowNumber(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "success":
+			out.Values[i] = ec._TaskImportResult_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "task":
+			out.Values[i] = ec._TaskImportResult_task(ctx, field, obj)
+		case "error":
+			out.Values[i] = ec._TaskImportResult_error(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -86820,6 +87475,25 @@ func (ec *executionContext) marshalNImportMeasurePayload2ᚖgithubᚗcomᚋgetpr
 	return ec._ImportMeasurePayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNImportTasksInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportTasksInput(ctx context.Context, v any) (types.ImportTasksInput, error) {
+	res, err := ec.unmarshalInputImportTasksInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNImportTasksPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportTasksPayload(ctx context.Context, sel ast.SelectionSet, v types.ImportTasksPayload) graphql.Marshaler {
+	return ec._ImportTasksPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNImportTasksPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐImportTasksPayload(ctx context.Context, sel ast.SelectionSet, v *types.ImportTasksPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ImportTasksPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNIncidentRegistry2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistry(ctx context.Context, sel ast.SelectionSet, v *types.IncidentRegistry) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -88448,6 +89122,60 @@ func (ec *executionContext) marshalNTaskEdge2ᚖgithubᚗcomᚋgetproboᚋprobo�
 		return graphql.Null
 	}
 	return ec._TaskEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTaskImportResult2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTaskImportResultᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.TaskImportResult) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTaskImportResult2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTaskImportResult(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTaskImportResult2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTaskImportResult(ctx context.Context, sel ast.SelectionSet, v *types.TaskImportResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._TaskImportResult(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTaskOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTaskOrderField(ctx context.Context, v any) (coredata.TaskOrderField, error) {

@@ -7,9 +7,13 @@ package console_v1
 import (
 	"context"
 	"encoding/base64"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
@@ -2008,6 +2012,231 @@ func (r *mutationResolver) UnassignTask(ctx context.Context, input types.Unassig
 
 	return &types.UnassignTaskPayload{
 		Task: types.NewTask(task),
+	}, nil
+}
+
+// Helper function to convert string to *string
+func stringPtr(s string) *string {
+	return &s
+}
+
+func (r *mutationResolver) parseAndCreateTasks(ctx context.Context, prb *probo.TenantService, file io.Reader, organizationID gid.GID) ([]*types.TaskImportResult, error) {
+	reader := csv.NewReader(file)
+	
+	// Read header
+	headers, err := reader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("cannot read CSV header: %w", err)
+	}
+
+	// Create header map for easy lookup
+	headerMap := make(map[string]int)
+	for i, header := range headers {
+		headerMap[strings.ToLower(strings.TrimSpace(header))] = i
+	}
+
+	// Check for required 'name' column
+	if _, exists := headerMap["name"]; !exists {
+		return nil, fmt.Errorf("required column 'name' not found in CSV")
+	}
+
+	var results []*types.TaskImportResult
+	rowNumber := 1 // Start from 1, as header is row 0
+
+	// Read and process each data row
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("cannot read CSV record at row %d: %w", rowNumber+1, err)
+		}
+
+		rowNumber++
+		result := r.createTaskFromRecord(ctx, prb, record, headerMap, organizationID, rowNumber)
+		results = append(results, result)
+	}
+
+	return results, nil
+}
+
+func (r *mutationResolver) createTaskFromRecord(ctx context.Context, prb *probo.TenantService, record []string, headerMap map[string]int, organizationID gid.GID, rowNumber int) *types.TaskImportResult {
+	// Extract name (required)
+	nameIdx, exists := headerMap["name"]
+	if !exists || nameIdx >= len(record) {
+		return &types.TaskImportResult{
+			RowNumber: rowNumber,
+			Success:   false,
+			Task:      nil,
+			Error:     stringPtr("name column is required"),
+		}
+	}
+	name := strings.TrimSpace(record[nameIdx])
+	if name == "" {
+		return &types.TaskImportResult{
+			RowNumber: rowNumber,
+			Success:   false,
+			Task:      nil,
+			Error:     stringPtr("name cannot be empty"),
+		}
+	}
+
+	// Extract description (optional)
+	description := ""
+	if descIdx, exists := headerMap["description"]; exists && descIdx < len(record) {
+		description = strings.TrimSpace(record[descIdx])
+	}
+
+	// Extract measureId (optional)
+	var measureID *gid.GID
+	if measureIdx, exists := headerMap["measureid"]; exists && measureIdx < len(record) {
+		measureIDStr := strings.TrimSpace(record[measureIdx])
+		if measureIDStr != "" {
+			parsedMeasureID, err := gid.ParseGID(measureIDStr)
+			if err != nil {
+				return &types.TaskImportResult{
+					RowNumber: rowNumber,
+					Success:   false,
+					Task:      nil,
+					Error:     stringPtr(fmt.Sprintf("invalid measureId: %v", err)),
+				}
+			}
+			measureID = &parsedMeasureID
+		}
+	}
+
+	// Extract assignedTo (optional)
+	var assignedToID *gid.GID
+	if assignedIdx, exists := headerMap["assignedto"]; exists && assignedIdx < len(record) {
+		assignedStr := strings.TrimSpace(record[assignedIdx])
+		if assignedStr != "" {
+			// Try to parse as GID first
+			if parsedID, err := gid.ParseGID(assignedStr); err == nil {
+				assignedToID = &parsedID
+			} else {
+				// For now, skip assignment if it's not a valid GID
+				// TODO: Look up person by email/username and get their GID
+				assignedToID = nil
+			}
+		}
+	}
+
+	// Extract deadline (optional)
+	var deadline *time.Time
+	if deadlineIdx, exists := headerMap["deadline"]; exists && deadlineIdx < len(record) {
+		deadlineStr := strings.TrimSpace(record[deadlineIdx])
+		if deadlineStr != "" {
+			if parsedDeadline, err := time.Parse(time.RFC3339, deadlineStr); err == nil {
+				deadline = &parsedDeadline
+			} else if parsedDeadline, err := time.Parse("2006-01-02", deadlineStr); err == nil {
+				deadline = &parsedDeadline
+			} else {
+				return &types.TaskImportResult{
+					RowNumber: rowNumber,
+					Success:   false,
+					Task:      nil,
+					Error:     stringPtr(fmt.Sprintf("invalid deadline format (use ISO 8601 or YYYY-MM-DD): %v", err)),
+				}
+			}
+		}
+	}
+
+	// Extract timeEstimate (optional)
+	var timeEstimate *time.Duration
+	if timeIdx, exists := headerMap["timeestimate"]; exists && timeIdx < len(record) {
+		timeStr := strings.TrimSpace(record[timeIdx])
+		if timeStr != "" {
+			// Try parsing as minutes first
+			if minutes, err := strconv.Atoi(timeStr); err == nil {
+				duration := time.Duration(minutes) * time.Minute
+				timeEstimate = &duration
+			} else {
+				return &types.TaskImportResult{
+					RowNumber: rowNumber,
+					Success:   false,
+					Task:      nil,
+					Error:     stringPtr(fmt.Sprintf("invalid timeEstimate (must be minutes as integer): %v", err)),
+				}
+			}
+		}
+	}
+
+	// Check for required measureID
+	if measureID == nil {
+		return &types.TaskImportResult{
+			RowNumber: rowNumber,
+			Success:   false,
+			Task:      nil,
+			Error:     stringPtr("measureId is required - add a measureId column to your CSV with valid measure IDs"),
+		}
+	}
+
+	// Debug: Log what we're about to create
+	fmt.Printf("Creating task for row %d: name='%s', desc='%s', orgID=%s, measureID=%s, deadline=%v\n", 
+		rowNumber, name, description, organizationID, measureID.String(), deadline)
+	
+	// Create the task (without assignment first, like the normal flow)
+	task, err := prb.Tasks.Create(ctx, probo.CreateTaskRequest{
+		OrganizationID: organizationID,
+		MeasureID:      measureID,
+		Name:           name,
+		Description:    description,
+		TimeEstimate:   timeEstimate,
+		Deadline:       deadline,
+	})
+	if err != nil {
+		// Log the exact error for debugging
+		fmt.Printf("Task creation failed for row %d (name: %s): %v\n", rowNumber, name, err)
+		return &types.TaskImportResult{
+			RowNumber: rowNumber,
+			Success:   false,
+			Task:      nil,
+			Error:     stringPtr(fmt.Sprintf("failed to create task '%s': %v", name, err)),
+		}
+	}
+
+	// Assign the task if assignedToID is provided
+	if assignedToID != nil {
+		task, err = prb.Tasks.Assign(ctx, task.ID, *assignedToID)
+		if err != nil {
+			// Log the assignment error
+			fmt.Printf("Task assignment failed for row %d (name: %s): %v\n", rowNumber, name, err)
+			// Note: we don't return an error here since the task was created successfully
+		}
+	}
+
+	return &types.TaskImportResult{
+		RowNumber: rowNumber,
+		Success:   true,
+		Task:      types.NewTask(task),
+		Error:     nil, // This should be fine for successful tasks
+	}
+}
+
+// ImportTasks is the resolver for the importTasks field.
+func (r *mutationResolver) ImportTasks(ctx context.Context, input types.ImportTasksInput) (*types.ImportTasksPayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	results, err := r.parseAndCreateTasks(ctx, prb, input.File.File, input.OrganizationID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot import tasks: %w", err)
+	}
+
+	successCount := 0
+	errorCount := 0
+	for _, result := range results {
+		if result.Success {
+			successCount++
+		} else {
+			errorCount++
+		}
+	}
+
+	return &types.ImportTasksPayload{
+		ImportResults: results,
+		SuccessCount:  successCount,
+		ErrorCount:    errorCount,
 	}, nil
 }
 
@@ -5144,7 +5373,8 @@ type viewerResolver struct{ *Resolver }
 //    it when you're done.
 //  - You have helper methods in this file. Move them out to keep these resolver files clean.
 /*
-	func (r *organizationResolver) IncidentRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.IncidentRegistryOrderBy) (*types.IncidentRegistryConnection, error) {
+func (r *organizationResolver) IncidentRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.IncidentRegistryOrderBy) (*types.IncidentRegistryConnection, error) {
 	panic(fmt.Errorf("not implemented: IncidentRegistries - incidentRegistries"))
+}
 }
 */
