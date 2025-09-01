@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- Fix document deletion and update errors
+
 ## [0.54.0] - 2025-09-01
 
 ### Added
