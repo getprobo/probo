@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fix document deletion and update errors
+- Remove signature block from trust center documents
 
 ## [0.54.0] - 2025-09-01
 
