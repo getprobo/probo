@@ -192,7 +192,8 @@ export function FrameworkControlDialog(props: Props) {
             <Option value="EXCLUDED">{__("Excluded")}</Option>
           </ControlledSelect>
           {showExclusionJustification && (
-            <Input
+            <Textarea
+              required
               id="exclusionJustification"
               variant="bordered"
               placeholder={__("Reason for exclusion")}
