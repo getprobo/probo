@@ -89,7 +89,9 @@ export default function DocumentsPage(props: Props) {
     organization as DocumentsPageListFragment$key
   );
 
-  const documents = pagination.data.documents.edges.map((edge) => edge.node);
+  const documents = pagination.data.documents.edges
+    .map((edge) => edge.node)
+    .filter(Boolean);
   const connectionId = pagination.data.documents.__id;
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
   const { list: selection, toggle, clear, reset } = useList<string>([]);
@@ -240,10 +242,15 @@ function DocumentRow({
     rowFragment,
     documentKey
   );
-  const lastVersion = document.versions.edges[0].node;
+  const lastVersion = document.versions.edges?.[0]?.node;
+
+  if (!lastVersion) {
+    return null;
+  }
+
   const isDraft = lastVersion.status === "DRAFT";
   const { __, dateFormat } = useTranslate();
-  const signatures = lastVersion.signatures?.edges?.map((edge) => edge.node) ?? [];
+  const signatures = lastVersion.signatures?.edges?.map((edge) => edge?.node)?.filter(Boolean) ?? [];
   const signedCount = signatures.filter(
     (signature) => signature.state === "SIGNED"
   ).length;
@@ -294,8 +301,8 @@ function DocumentRow({
       <Td>{getDocumentTypeLabel(__, document.documentType)}</Td>
       <Td>
         <div className="flex gap-2 items-center">
-          <Avatar name={document.owner.fullName} />
-          {document.owner.fullName}
+          <Avatar name={document.owner?.fullName ?? ""} />
+          {document.owner?.fullName}
         </div>
       </Td>
       <Td>
