@@ -897,7 +897,7 @@ type ComplexityRoot struct {
 		TrustCenter                    func(childComplexity int) int
 		UpdatedAt                      func(childComplexity int) int
 		Users                          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.UserOrderBy) int
-		Vendors                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
+		Vendors                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) int
 	}
 
 	OrganizationConnection struct {
@@ -1300,6 +1300,7 @@ type ComplexityRoot struct {
 		ServiceLevelAgreementURL      func(childComplexity int) int
 		Services                      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorServiceOrderBy) int
 		ShowOnTrustCenter             func(childComplexity int) int
+		SnapshotID                    func(childComplexity int) int
 		StatusPageURL                 func(childComplexity int) int
 		SubprocessorsListURL          func(childComplexity int) int
 		TermsOfServiceURL             func(childComplexity int) int
@@ -1666,7 +1667,7 @@ type OrganizationResolver interface {
 	Connectors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) (*types.ConnectorConnection, error)
 	Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error)
 	Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
-	Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
+	Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error)
 	Peoples(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) (*types.PeopleConnection, error)
 	Documents(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) (*types.DocumentConnection, error)
 	Measures(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) (*types.MeasureConnection, error)
@@ -5634,7 +5635,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.Vendors(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.VendorOrderBy)), true
+		return e.complexity.Organization.Vendors(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.VendorOrderBy), args["filter"].(*types.VendorFilter)), true
 
 	case "OrganizationConnection.edges":
 		if e.complexity.OrganizationConnection.Edges == nil {
@@ -7124,6 +7125,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Vendor.ShowOnTrustCenter(childComplexity), true
 
+	case "Vendor.snapshotId":
+		if e.complexity.Vendor.SnapshotID == nil {
+			break
+		}
+
+		return e.complexity.Vendor.SnapshotID(childComplexity), true
+
 	case "Vendor.statusPageUrl":
 		if e.complexity.Vendor.StatusPageURL == nil {
 			break
@@ -7850,6 +7858,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUserOrder,
 		ec.unmarshalInputVendorComplianceReportOrder,
 		ec.unmarshalInputVendorContactOrder,
+		ec.unmarshalInputVendorFilter,
 		ec.unmarshalInputVendorOrder,
 		ec.unmarshalInputVendorRiskAssessmentOrder,
 		ec.unmarshalInputVendorServiceOrder,
@@ -9086,6 +9095,10 @@ input AssetFilter {
   snapshotId: ID
 }
 
+input VendorFilter {
+  snapshotId: ID
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -9148,6 +9161,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: VendorOrder
+    filter: VendorFilter = { snapshotId: null }
   ): VendorConnection! @goField(forceResolver: true)
 
   peoples(
@@ -9303,6 +9317,7 @@ type People implements Node {
 
 type Vendor implements Node {
   id: ID!
+  snapshotId: ID
   name: String!
   category: VendorCategory!
   description: String
@@ -17711,6 +17726,11 @@ func (ec *executionContext) field_Organization_vendors_args(ctx context.Context,
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	arg5, err := ec.field_Organization_vendors_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
 	return args, nil
 }
 func (ec *executionContext) field_Organization_vendors_argsFirst(
@@ -17775,6 +17795,19 @@ func (ec *executionContext) field_Organization_vendors_argsOrderBy(
 	}
 
 	var zeroVal *types.VendorOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_vendors_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.VendorFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalOVendorFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVendorFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.VendorFilter
 	return zeroVal, nil
 }
 
@@ -19123,6 +19156,8 @@ func (ec *executionContext) fieldContext_AssessVendorPayload_vendor(_ context.Co
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Vendor_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Vendor_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Vendor_name(ctx, field)
 			case "category":
@@ -41697,7 +41732,7 @@ func (ec *executionContext) _Organization_vendors(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organization().Vendors(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.VendorOrderBy))
+		return ec.resolvers.Organization().Vendors(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.VendorOrderBy), fc.Args["filter"].(*types.VendorFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -51442,6 +51477,8 @@ func (ec *executionContext) fieldContext_UpdateVendorPayload_vendor(_ context.Co
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Vendor_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Vendor_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Vendor_name(ctx, field)
 			case "category":
@@ -52445,6 +52482,47 @@ func (ec *executionContext) _Vendor_id(ctx context.Context, field graphql.Collec
 }
 
 func (ec *executionContext) fieldContext_Vendor_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vendor",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Vendor_snapshotId(ctx context.Context, field graphql.CollectedField, obj *types.Vendor) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vendor_snapshotId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SnapshotID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*gid.GID)
+	fc.Result = res
+	return ec.marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vendor_snapshotId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Vendor",
 		Field:      field,
@@ -53925,6 +54003,8 @@ func (ec *executionContext) fieldContext_VendorBusinessAssociateAgreement_vendor
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Vendor_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Vendor_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Vendor_name(ctx, field)
 			case "category":
@@ -54375,6 +54455,8 @@ func (ec *executionContext) fieldContext_VendorComplianceReport_vendor(_ context
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Vendor_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Vendor_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Vendor_name(ctx, field)
 			case "category":
@@ -55188,6 +55270,8 @@ func (ec *executionContext) fieldContext_VendorContact_vendor(_ context.Context,
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Vendor_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Vendor_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Vendor_name(ctx, field)
 			case "category":
@@ -55798,6 +55882,8 @@ func (ec *executionContext) fieldContext_VendorDataPrivacyAgreement_vendor(_ con
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Vendor_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Vendor_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Vendor_name(ctx, field)
 			case "category":
@@ -56248,6 +56334,8 @@ func (ec *executionContext) fieldContext_VendorEdge_node(_ context.Context, fiel
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Vendor_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Vendor_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Vendor_name(ctx, field)
 			case "category":
@@ -56396,6 +56484,8 @@ func (ec *executionContext) fieldContext_VendorRiskAssessment_vendor(_ context.C
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Vendor_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Vendor_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Vendor_name(ctx, field)
 			case "category":
@@ -57129,6 +57219,8 @@ func (ec *executionContext) fieldContext_VendorService_vendor(_ context.Context,
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Vendor_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Vendor_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Vendor_name(ctx, field)
 			case "category":
@@ -66005,6 +66097,33 @@ func (ec *executionContext) unmarshalInputVendorContactOrder(ctx context.Context
 				return it, err
 			}
 			it.Field = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputVendorFilter(ctx context.Context, obj any) (types.VendorFilter, error) {
+	var it types.VendorFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
 		}
 	}
 
@@ -78797,6 +78916,8 @@ func (ec *executionContext) _Vendor(ctx context.Context, sel ast.SelectionSet, o
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "snapshotId":
+			out.Values[i] = ec._Vendor_snapshotId(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._Vendor_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -88479,6 +88600,14 @@ func (ec *executionContext) marshalOVendorDataPrivacyAgreement2ᚖgithubᚗcom�
 		return graphql.Null
 	}
 	return ec._VendorDataPrivacyAgreement(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOVendorFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVendorFilter(ctx context.Context, v any) (*types.VendorFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputVendorFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOVendorOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVendorOrderBy(ctx context.Context, v any) (*types.VendorOrderBy, error) {

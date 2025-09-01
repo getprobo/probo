@@ -10,6 +10,7 @@ type Props = {
   name: string;
   label?: string;
   error?: string;
+  optional?: boolean;
 } & ComponentProps<typeof Field>;
 
 export function PeopleSelectField({
@@ -27,6 +28,7 @@ export function PeopleSelectField({
           control={control}
           name={props.name}
           disabled={props.disabled}
+          optional={props.optional}
         />
       </Suspense>
     </Field>
@@ -34,7 +36,7 @@ export function PeopleSelectField({
 }
 
 function PeopleSelectWithQuery(
-  props: Pick<Props, "organizationId" | "control" | "name" | "disabled">
+  props: Pick<Props, "organizationId" | "control" | "name" | "disabled" | "optional">
 ) {
   const { __ } = useTranslate();
   const { name, organizationId, control } = props;
@@ -51,12 +53,15 @@ function PeopleSelectWithQuery(
             id={name}
             variant="editor"
             placeholder={__("Select an owner")}
-            onValueChange={field.onChange}
+            onValueChange={(value) => field.onChange(value === "__NONE__" ? null : value)}
             key={people?.length.toString() ?? "0"}
             {...field}
             className="w-full"
-            value={field.value ?? ""}
+            value={field.value ?? (props.optional ? "__NONE__" : "")}
           >
+            {props.optional && (
+              <Option value="__NONE__">{__("None")}</Option>
+            )}
             {people?.map((p) => (
               <Option key={p.id} value={p.id} className="flex gap-2">
                 <Avatar name={p.fullName} />

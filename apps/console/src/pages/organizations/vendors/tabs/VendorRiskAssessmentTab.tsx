@@ -1,4 +1,4 @@
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 import type { VendorRiskAssessmentTabFragment$key } from "./__generated__/VendorRiskAssessmentTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
@@ -82,6 +82,8 @@ export default function VendorRiskAssessmentTab() {
   );
   const assessments = data.riskAssessments.edges.map((edge) => edge.node);
   const { __ } = useTranslate();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   usePageTitle(vendor.name + " - " + __("Risk Assessments"));
@@ -90,15 +92,17 @@ export default function VendorRiskAssessmentTab() {
     return (
       <div className="text-center text-sm py-6 text-txt-secondary flex flex-col items-center gap-2">
         {__("No risk assessments found")}
-        <CreateRiskAssessmentDialog
-          vendorId={vendor.id}
-          connection={data.riskAssessments.__id}
-          peopleId={peopleId}
-        >
-          <Button icon={IconPlusLarge} variant="secondary">
-            {__("Add Risk Assessment")}
-          </Button>
-        </CreateRiskAssessmentDialog>
+        {!isSnapshotMode && (
+          <CreateRiskAssessmentDialog
+            vendorId={vendor.id}
+            connection={data.riskAssessments.__id}
+            peopleId={peopleId}
+          >
+            <Button icon={IconPlusLarge} variant="secondary">
+              {__("Add Risk Assessment")}
+            </Button>
+          </CreateRiskAssessmentDialog>
+        )}
       </div>
     );
   }
@@ -117,15 +121,17 @@ export default function VendorRiskAssessmentTab() {
             </Tr>
           </Thead>
           <Tbody>
-            <CreateRiskAssessmentDialog
-              vendorId={vendor.id}
-              connection={data.riskAssessments.__id}
-              peopleId={peopleId}
-            >
-              <TrButton colspan={5} onClick={() => {}}>
-                {__("Add Risk Assessment")}
-              </TrButton>
-            </CreateRiskAssessmentDialog>
+            {!isSnapshotMode && (
+              <CreateRiskAssessmentDialog
+                vendorId={vendor.id}
+                connection={data.riskAssessments.__id}
+                peopleId={peopleId}
+              >
+                <TrButton colspan={5} onClick={() => {}}>
+                  {__("Add Risk Assessment")}
+                </TrButton>
+              </CreateRiskAssessmentDialog>
+            )}
             {assessments.map((assessment) => (
               <AssessmentRow
                 key={assessment.id}

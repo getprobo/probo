@@ -34,6 +34,8 @@ type (
 		ValidFrom      *time.Time `db:"valid_from"`
 		ValidUntil     *time.Time `db:"valid_until"`
 		FileID         gid.GID    `db:"file_id"`
+		SnapshotID     *gid.GID   `db:"snapshot_id"`
+		SourceID       *gid.GID   `db:"source_id"`
 		CreatedAt      time.Time  `db:"created_at"`
 		UpdatedAt      time.Time  `db:"updated_at"`
 	}
@@ -66,6 +68,8 @@ SELECT
 	valid_from,
 	valid_until,
 	file_id,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -110,6 +114,8 @@ SELECT
 	valid_from,
 	valid_until,
 	file_id,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -156,6 +162,7 @@ SET
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -192,6 +199,8 @@ INSERT INTO
 		valid_from,
 		valid_until,
 		file_id,
+		snapshot_id,
+		source_id,
 		created_at,
 		updated_at
 	)
@@ -203,6 +212,8 @@ VALUES (
 	@valid_from,
 	@valid_until,
 	@file_id,
+	@snapshot_id,
+	@source_id,
 	@created_at,
 	@updated_at
 )
@@ -211,6 +222,8 @@ ON CONFLICT (organization_id, vendor_id) DO UPDATE SET
 	valid_from = EXCLUDED.valid_from,
 	valid_until = EXCLUDED.valid_until,
 	file_id = EXCLUDED.file_id,
+	snapshot_id = EXCLUDED.snapshot_id,
+	source_id = EXCLUDED.source_id,
 	updated_at = EXCLUDED.updated_at
 `
 	args := pgx.StrictNamedArgs{
@@ -221,6 +234,8 @@ ON CONFLICT (organization_id, vendor_id) DO UPDATE SET
 		"valid_from":      vbaa.ValidFrom,
 		"valid_until":     vbaa.ValidUntil,
 		"file_id":         vbaa.FileID,
+		"snapshot_id":     vbaa.SnapshotID,
+		"source_id":       vbaa.SourceID,
 		"created_at":      vbaa.CreatedAt,
 		"updated_at":      vbaa.UpdatedAt,
 	}
@@ -241,6 +256,7 @@ FROM
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -265,6 +281,7 @@ FROM
 WHERE
 	%s
 	AND vendor_id = @vendor_id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -274,4 +291,66 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	return err
+}
+
+func (v VendorBusinessAssociateAgreements) InsertVendorSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	snapshot_vendors AS (
+		SELECT id, source_id
+		FROM vendors
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
+	)
+INSERT INTO vendor_business_associate_agreements (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	vendor_id,
+	valid_from,
+	valid_until,
+	file_id,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_business_associate_agreement_entity_type),
+	@snapshot_id,
+	vbaa.id,
+	vbaa.organization_id,
+	sv.id,
+	vbaa.valid_from,
+	vbaa.valid_until,
+	vbaa.file_id,
+	vbaa.created_at,
+	vbaa.updated_at
+FROM vendor_business_associate_agreements vbaa
+INNER JOIN snapshot_vendors sv ON sv.source_id = vbaa.vendor_id
+WHERE %s AND vbaa.snapshot_id IS NULL
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":       scope.GetTenantID(),
+		"snapshot_id":     snapshotID,
+		"organization_id": organizationID,
+		"vendor_business_associate_agreement_entity_type": VendorBusinessAssociateAgreementEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert vendor business associate agreement snapshots: %w", err)
+	}
+
+	return nil
 }

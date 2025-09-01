@@ -57,6 +57,10 @@ type (
 	}
 
 	Vendors []*Vendor
+
+	VendorSnapshotter interface {
+		InsertVendorSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+	}
 )
 
 func (v Vendor) CursorKey(orderBy VendorOrderField) page.CursorKey {
@@ -910,6 +914,109 @@ FROM source_vendors v
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert vendor snapshots for assets: %w", err)
+	}
+
+	return nil
+}
+
+func (v Vendors) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+	for _, snapshotter := range []VendorSnapshotter{
+		Vendors{},
+		VendorServices{},
+		VendorContacts{},
+		VendorRiskAssessments{},
+		VendorComplianceReports{},
+		VendorBusinessAssociateAgreements{},
+		VendorDataPrivacyAgreements{},
+	} {
+		if err := snapshotter.InsertVendorSnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
+			return fmt.Errorf("cannot create vendor snapshots: (%T) %w", snapshotter, err)
+		}
+	}
+
+	return nil
+}
+
+func (v Vendors) InsertVendorSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+INSERT INTO vendors (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	name,
+	description,
+	category,
+	headquarter_address,
+	legal_name,
+	website_url,
+	privacy_policy_url,
+	service_level_agreement_url,
+	data_processing_agreement_url,
+	business_associate_agreement_url,
+	subprocessors_list_url,
+	certifications,
+	business_owner_id,
+	security_owner_id,
+	status_page_url,
+	terms_of_service_url,
+	security_page_url,
+	trust_page_url,
+	show_on_trust_center,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_entity_type),
+	@snapshot_id,
+	v.id,
+	v.organization_id,
+	v.name,
+	v.description,
+	v.category,
+	v.headquarter_address,
+	v.legal_name,
+	v.website_url,
+	v.privacy_policy_url,
+	v.service_level_agreement_url,
+	v.data_processing_agreement_url,
+	v.business_associate_agreement_url,
+	v.subprocessors_list_url,
+	v.certifications,
+	v.business_owner_id,
+	v.security_owner_id,
+	v.status_page_url,
+	v.terms_of_service_url,
+	v.security_page_url,
+	v.trust_page_url,
+	v.show_on_trust_center,
+	v.created_at,
+	v.updated_at
+FROM vendors v
+WHERE %s AND organization_id = @organization_id AND snapshot_id IS NULL
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":          scope.GetTenantID(),
+		"snapshot_id":        snapshotID,
+		"organization_id":    organizationID,
+		"vendor_entity_type": VendorEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert vendor snapshots: %w", err)
 	}
 
 	return nil

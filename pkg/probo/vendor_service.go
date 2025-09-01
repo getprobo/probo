@@ -70,8 +70,8 @@ type (
 		SecurityPageURL               *string
 		TrustPageURL                  *string
 		StatusPageURL                 *string
-		BusinessOwnerID               *gid.GID
-		SecurityOwnerID               *gid.GID
+		BusinessOwnerID               **gid.GID
+		SecurityOwnerID               **gid.GID
 		ShowOnTrustCenter             *bool
 	}
 
@@ -303,19 +303,27 @@ func (s VendorService) Update(
 			}
 
 			if req.BusinessOwnerID != nil {
-				businessOwner := &coredata.People{}
-				if err := businessOwner.LoadByID(ctx, conn, s.svc.scope, *req.BusinessOwnerID); err != nil {
-					return fmt.Errorf("cannot load business owner: %w", err)
+				if *req.BusinessOwnerID != nil {
+					businessOwner := &coredata.People{}
+					if err := businessOwner.LoadByID(ctx, conn, s.svc.scope, **req.BusinessOwnerID); err != nil {
+						return fmt.Errorf("cannot load business owner: %w", err)
+					}
+					vendor.BusinessOwnerID = &businessOwner.ID
+				} else {
+					vendor.BusinessOwnerID = nil
 				}
-				vendor.BusinessOwnerID = &businessOwner.ID
 			}
 
 			if req.SecurityOwnerID != nil {
-				securityOwner := &coredata.People{}
-				if err := securityOwner.LoadByID(ctx, conn, s.svc.scope, *req.SecurityOwnerID); err != nil {
-					return fmt.Errorf("cannot load security owner: %w", err)
+				if *req.SecurityOwnerID != nil {
+					securityOwner := &coredata.People{}
+					if err := securityOwner.LoadByID(ctx, conn, s.svc.scope, **req.SecurityOwnerID); err != nil {
+						return fmt.Errorf("cannot load security owner: %w", err)
+					}
+					vendor.SecurityOwnerID = &securityOwner.ID
+				} else {
+					vendor.SecurityOwnerID = nil
 				}
-				vendor.SecurityOwnerID = &securityOwner.ID
 			}
 
 			vendor.UpdatedAt = time.Now()

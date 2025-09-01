@@ -1443,8 +1443,8 @@ func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateV
 		WebsiteURL:                    input.WebsiteURL,
 		Category:                      input.Category,
 		Certifications:                input.Certifications,
-		BusinessOwnerID:               input.BusinessOwnerID,
-		SecurityOwnerID:               input.SecurityOwnerID,
+		BusinessOwnerID:               &input.BusinessOwnerID,
+		SecurityOwnerID:               &input.SecurityOwnerID,
 		ShowOnTrustCenter:             input.ShowOnTrustCenter,
 	})
 	if err != nil {
@@ -3459,7 +3459,7 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 }
 
 // Vendors is the resolver for the vendors field.
-func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
+func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
@@ -3474,8 +3474,11 @@ func (r *organizationResolver) Vendors(ctx context.Context, obj *types.Organizat
 	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-	var nilSnapshotID *gid.GID = nil
-	vendorFilter := coredata.NewVendorFilter(&nilSnapshotID, nil)
+
+	var vendorFilter = coredata.NewVendorFilter(nil, nil)
+	if filter != nil {
+		vendorFilter = coredata.NewVendorFilter(&filter.SnapshotID, nil)
+	}
 
 	page, err := prb.Vendors.ListForOrganizationID(ctx, obj.ID, cursor, vendorFilter)
 	if err != nil {

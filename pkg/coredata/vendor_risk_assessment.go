@@ -39,6 +39,8 @@ type (
 		DataSensitivity DataSensitivity `db:"data_sensitivity"`
 		BusinessImpact  BusinessImpact  `db:"business_impact"`
 		Notes           *string         `db:"notes"`
+		SnapshotID      *gid.GID        `db:"snapshot_id"`
+		SourceID        *gid.GID        `db:"source_id"`
 		CreatedAt       time.Time       `db:"created_at"`
 		UpdatedAt       time.Time       `db:"updated_at"`
 	}
@@ -137,6 +139,8 @@ SELECT
     data_sensitivity,
     business_impact,
     notes,
+    snapshot_id,
+    source_id,
     created_at,
     updated_at
 FROM
@@ -187,6 +191,8 @@ SELECT
     data_sensitivity,
     business_impact,
     notes,
+    snapshot_id,
+    source_id,
     created_at,
     updated_at
 FROM
@@ -240,6 +246,8 @@ SELECT
     data_sensitivity,
     business_impact,
     notes,
+    snapshot_id,
+    source_id,
     created_at,
     updated_at
 FROM
@@ -267,6 +275,76 @@ WHERE
 	}
 
 	*r = assessments
+
+	return nil
+}
+
+func (v VendorRiskAssessments) InsertVendorSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	snapshot_vendors AS (
+		SELECT id, source_id
+		FROM vendors
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
+	)
+INSERT INTO vendor_risk_assessments (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	vendor_id,
+	assessed_at,
+	assessed_by,
+	approved_by,
+	approved_at,
+	expires_at,
+	data_sensitivity,
+	business_impact,
+	notes,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_risk_assessment_entity_type),
+	@snapshot_id,
+	vra.id,
+	sv.id,
+	vra.assessed_at,
+	vra.assessed_by,
+	vra.approved_by,
+	vra.approved_at,
+	vra.expires_at,
+	vra.data_sensitivity,
+	vra.business_impact,
+	vra.notes,
+	vra.created_at,
+	vra.updated_at
+FROM vendor_risk_assessments vra
+INNER JOIN snapshot_vendors sv ON sv.source_id = vra.vendor_id
+WHERE %s AND vra.snapshot_id IS NULL
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":                          scope.GetTenantID(),
+		"snapshot_id":                        snapshotID,
+		"organization_id":                    organizationID,
+		"vendor_risk_assessment_entity_type": VendorRiskAssessmentEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert vendor risk assessment snapshots: %w", err)
+	}
 
 	return nil
 }

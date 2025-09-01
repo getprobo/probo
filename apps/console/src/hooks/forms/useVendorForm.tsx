@@ -21,8 +21,8 @@ const schema = z.object({
   certifications: z.array(z.string()),
   securityPageUrl: z.string(),
   trustPageUrl: z.string(),
-  businessOwnerId: z.string(),
-  securityOwnerId: z.string(),
+  businessOwnerId: z.string().nullish(),
+  securityOwnerId: z.string().nullish(),
 });
 
 const vendorFormFragment = graphql`

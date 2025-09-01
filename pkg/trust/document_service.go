@@ -91,8 +91,6 @@ func (s *DocumentService) ExportPDF(
 	version := &coredata.DocumentVersion{}
 	owner := &coredata.People{}
 	publishedBy := &coredata.People{}
-	signatures := coredata.DocumentVersionSignatures{}
-	peopleMap := make(map[gid.GID]*coredata.People)
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -115,41 +113,8 @@ func (s *DocumentService) ExportPDF(
 				}
 			}
 
-			cursor := page.NewCursor(
-				100,
-				nil,
-				page.Head,
-				page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
-					Field:     coredata.DocumentVersionSignatureOrderFieldCreatedAt,
-					Direction: page.OrderDirectionAsc,
-				},
-			)
-
-			if err := signatures.LoadByDocumentVersionID(ctx, conn, s.svc.scope, version.ID, cursor); err != nil {
-				return fmt.Errorf("cannot load document version signatures: %w", err)
-			}
-
 			if err := owner.LoadByID(ctx, conn, s.svc.scope, document.OwnerID); err != nil {
 				return fmt.Errorf("cannot load document owner: %w", err)
-			}
-
-			// TODO: refactor this to use a single query
-			for _, sig := range signatures {
-				if _, ok := peopleMap[sig.SignedBy]; !ok {
-					people := &coredata.People{}
-					if err := people.LoadByID(ctx, conn, s.svc.scope, sig.SignedBy); err != nil {
-						return fmt.Errorf("cannot load people %q: %w", sig.SignedBy, err)
-					}
-					peopleMap[sig.SignedBy] = people
-				}
-
-				if _, ok := peopleMap[sig.RequestedBy]; !ok {
-					people := &coredata.People{}
-					if err := people.LoadByID(ctx, conn, s.svc.scope, sig.RequestedBy); err != nil {
-						return fmt.Errorf("cannot load people %q: %w", sig.RequestedBy, err)
-					}
-					peopleMap[sig.RequestedBy] = people
-				}
 			}
 
 			return nil
@@ -177,17 +142,6 @@ func (s *DocumentService) ExportPDF(
 		Description:    version.Changelog,
 		PublishedAt:    version.PublishedAt,
 		PublishedBy:    publishedBy.FullName,
-		Signatures:     make([]docgen.SignatureData, len(signatures)),
-	}
-
-	for i, sig := range signatures {
-		docData.Signatures[i] = docgen.SignatureData{
-			SignedBy:    peopleMap[sig.SignedBy].FullName,
-			SignedAt:    sig.SignedAt,
-			State:       sig.State,
-			RequestedAt: sig.RequestedAt,
-			RequestedBy: peopleMap[sig.RequestedBy].FullName,
-		}
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)

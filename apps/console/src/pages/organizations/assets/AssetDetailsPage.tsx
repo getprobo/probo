@@ -192,6 +192,7 @@ export default function AssetDetailsPage(props: Props) {
           organizationId={organizationId}
           control={control}
           name="vendorIds"
+          selectedVendors={vendors}
           label={__("Vendors")}
           disabled={isSnapshotMode}
         />

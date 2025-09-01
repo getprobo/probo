@@ -1,4 +1,4 @@
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 import type { VendorServicesTabFragment$key } from "./__generated__/VendorServicesTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
@@ -87,6 +87,8 @@ export default function VendorServicesTab() {
   const connectionId = data.services.__id;
   const services = data.services.edges.map((edge) => edge.node);
   const { __ } = useTranslate();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
   const [editingService, setEditingService] = useState<{
     id: string;
     name: string;
@@ -101,12 +103,14 @@ export default function VendorServicesTab() {
         title={__("Services")}
         description={__("Manage services provided by this vendor.")}
       >
-        <CreateServiceDialog
-          vendorId={vendor.id}
-          connectionId={connectionId}
-        >
-          <Button icon={IconPlusLarge}>{__("Add service")}</Button>
-        </CreateServiceDialog>
+        {!isSnapshotMode && (
+          <CreateServiceDialog
+            vendorId={vendor.id}
+            connectionId={connectionId}
+          >
+            <Button icon={IconPlusLarge}>{__("Add service")}</Button>
+          </CreateServiceDialog>
+        )}
       </PageHeader>
 
       <SortableTable refetch={refetch}>
@@ -114,7 +118,7 @@ export default function VendorServicesTab() {
           <Tr>
             <SortableTh field="NAME">{__("Name")}</SortableTh>
             <Th>{__("Description")}</Th>
-            <Th>{__("Actions")}</Th>
+            {!isSnapshotMode && <Th>{__("Actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -124,12 +128,13 @@ export default function VendorServicesTab() {
               serviceKey={service}
               connectionId={connectionId}
               onEdit={setEditingService}
+              isSnapshotMode={isSnapshotMode}
             />
           ))}
         </Tbody>
       </SortableTable>
 
-      {editingService && (
+      {editingService && !isSnapshotMode && (
         <EditServiceDialog
           serviceId={editingService.id}
           service={editingService}
@@ -148,6 +153,7 @@ type ServiceRowProps = {
     name: string;
     description?: string | null;
   }) => void;
+  isSnapshotMode: boolean;
 };
 
 function ServiceRow(props: ServiceRowProps) {
@@ -188,27 +194,29 @@ function ServiceRow(props: ServiceRowProps) {
     <Tr>
       <Td>{service.name}</Td>
       <Td>{service.description || __("—")}</Td>
-      <Td width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            icon={IconPencil}
-            onClick={() => props.onEdit({
-              id: service.id,
-              name: service.name,
-              description: service.description,
-            })}
-          >
-            {__("Edit")}
-          </DropdownItem>
-          <DropdownItem
-            icon={IconTrashCan}
-            onClick={handleDelete}
-            variant="danger"
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
-      </Td>
+      {!props.isSnapshotMode && (
+        <Td width={50} className="text-end">
+          <ActionDropdown>
+            <DropdownItem
+              icon={IconPencil}
+              onClick={() => props.onEdit({
+                id: service.id,
+                name: service.name,
+                description: service.description,
+              })}
+            >
+              {__("Edit")}
+            </DropdownItem>
+            <DropdownItem
+              icon={IconTrashCan}
+              onClick={handleDelete}
+              variant="danger"
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        </Td>
+      )}
     </Tr>
   );
 }

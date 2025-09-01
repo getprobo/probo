@@ -139,7 +139,6 @@ func (s VendorDataPrivacyAgreementService) Upload(
 
 			vendorDataPrivacyAgreement = &coredata.VendorDataPrivacyAgreement{
 				ID:             vendorDataPrivacyAgreementID,
-				TenantID:       s.svc.scope.GetTenantID(),
 				OrganizationID: vendor.OrganizationID,
 				VendorID:       vendorID,
 				ValidFrom:      req.ValidFrom,
@@ -303,14 +302,8 @@ func (s VendorDataPrivacyAgreementService) Delete(
 				return fmt.Errorf("cannot load vendor data privacy agreement: %w", err)
 			}
 
-			file := &coredata.File{ID: vendorDataPrivacyAgreement.FileID}
-
 			if err := vendorDataPrivacyAgreement.Delete(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot delete vendor data privacy agreement: %w", err)
-			}
-
-			if err := file.SoftDelete(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot soft delete file: %w", err)
 			}
 
 			return nil
@@ -330,14 +323,8 @@ func (s VendorDataPrivacyAgreementService) DeleteByVendorID(
 				return fmt.Errorf("cannot load vendor data privacy agreement: %w", err)
 			}
 
-			file := &coredata.File{ID: vendorDataPrivacyAgreement.FileID}
-
 			if err := vendorDataPrivacyAgreement.DeleteByVendorID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot delete vendor data privacy agreement: %w", err)
-			}
-
-			if err := file.SoftDelete(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot soft delete file: %w", err)
 			}
 
 			return nil

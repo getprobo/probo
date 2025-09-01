@@ -35,6 +35,8 @@ type (
 		ReportName string
 		FileKey    string
 		FileSize   int
+		SnapshotID *gid.GID
+		SourceID   *gid.GID
 		CreatedAt  time.Time
 		UpdatedAt  time.Time
 	}
@@ -69,6 +71,8 @@ SELECT
 	report_name,
 	file_key,
 	file_size,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -115,6 +119,8 @@ SELECT
 	report_name,
 	file_key,
 	file_size,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -206,6 +212,7 @@ FROM
 WHERE
 	%s
 	AND id = @id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -215,4 +222,68 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	return err
+}
+
+func (vcrs VendorComplianceReports) InsertVendorSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	snapshot_vendors AS (
+		SELECT id, source_id
+		FROM vendors
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
+	)
+INSERT INTO vendor_compliance_reports (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	vendor_id,
+	report_date,
+	valid_until,
+	report_name,
+	file_key,
+	file_size,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_compliance_report_entity_type),
+	@snapshot_id,
+	vcr.id,
+	sv.id,
+	vcr.report_date,
+	vcr.valid_until,
+	vcr.report_name,
+	vcr.file_key,
+	vcr.file_size,
+	vcr.created_at,
+	vcr.updated_at
+FROM vendor_compliance_reports vcr
+INNER JOIN snapshot_vendors sv ON sv.source_id = vcr.vendor_id
+WHERE %s AND vcr.snapshot_id IS NULL
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":                            scope.GetTenantID(),
+		"snapshot_id":                          snapshotID,
+		"organization_id":                      organizationID,
+		"vendor_compliance_report_entity_type": VendorComplianceReportEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert vendor compliance report snapshots: %w", err)
+	}
+
+	return nil
 }

@@ -33,6 +33,8 @@ type (
 		VendorID    gid.GID   `db:"vendor_id"`
 		Name        string    `db:"name"`
 		Description *string   `db:"description"`
+		SnapshotID  *gid.GID  `db:"snapshot_id"`
+		SourceID    *gid.GID  `db:"source_id"`
 		CreatedAt   time.Time `db:"created_at"`
 		UpdatedAt   time.Time `db:"updated_at"`
 	}
@@ -71,6 +73,8 @@ SELECT
 	vendor_id,
 	name,
 	description,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -119,6 +123,8 @@ SELECT
 	vendor_id,
 	name,
 	description,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -212,6 +218,7 @@ SET
 WHERE
 	%s
 	AND id = @vendor_service_id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -243,6 +250,7 @@ DELETE FROM
 WHERE
 	%s
 	AND id = @vendor_service_id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -253,6 +261,64 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete vendor service: %w", err)
+	}
+
+	return nil
+}
+
+func (vs VendorServices) InsertVendorSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	snapshot_vendors AS (
+		SELECT id, source_id
+		FROM vendors
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
+	)
+INSERT INTO vendor_services (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	vendor_id,
+	name,
+	description,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_service_entity_type),
+	@snapshot_id,
+	vs.id,
+	sv.id,
+	vs.name,
+	vs.description,
+	vs.created_at,
+	vs.updated_at
+FROM vendor_services vs
+INNER JOIN snapshot_vendors sv ON sv.source_id = vs.vendor_id
+WHERE %s AND vs.snapshot_id IS NULL
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":                  scope.GetTenantID(),
+		"snapshot_id":                snapshotID,
+		"organization_id":            organizationID,
+		"vendor_service_entity_type": VendorServiceEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert vendor service snapshots: %w", err)
 	}
 
 	return nil

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<93638f7eeb1634fc19aaaa95cae0c7b8>>
+ * @generated SignedSource<<b6975a3a740bdf7e2c9914fc64770638>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -31,6 +31,7 @@ export type VendorGraphPaginatedFragment$data = {
             };
           }>;
         };
+        readonly snapshotId: string | null | undefined;
         readonly updatedAt: any;
         readonly websiteUrl: string | null | undefined;
       };
@@ -82,6 +83,11 @@ return {
       "defaultValue": null,
       "kind": "LocalArgument",
       "name": "order"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "snapshotId"
     }
   ],
   "kind": "Fragment",
@@ -122,9 +128,15 @@ return {
       "alias": "vendors",
       "args": [
         {
-          "kind": "Variable",
-          "name": "orderBy",
-          "variableName": "order"
+          "fields": [
+            {
+              "kind": "Variable",
+              "name": "snapshotId",
+              "variableName": "snapshotId"
+            }
+          ],
+          "kind": "ObjectValue",
+          "name": "filter"
         }
       ],
       "concreteType": "VendorConnection",
@@ -149,6 +161,13 @@ return {
               "plural": false,
               "selections": [
                 (v1/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "snapshotId",
+                  "storageKey": null
+                },
                 {
                   "alias": null,
                   "args": null,
@@ -327,6 +346,6 @@ return {
 };
 })();
 
-(node as any).hash = "1d2bf7c29e77d60d0a955a62b98c85ab";
+(node as any).hash = "578772ed7c83ae174d43b0be95a02fd2";
 
 export default node;

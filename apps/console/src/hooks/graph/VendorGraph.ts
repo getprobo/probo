@@ -89,11 +89,11 @@ export const useDeleteVendor = (
 export const vendorConnectionKey = "VendorsPage_vendors";
 
 export const vendorsQuery = graphql`
-  query VendorGraphListQuery($organizationId: ID!) {
+  query VendorGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
         id
-        ...VendorGraphPaginatedFragment
+        ...VendorGraphPaginatedFragment @arguments(snapshotId: $snapshotId)
       }
     }
   }
@@ -108,6 +108,7 @@ export const paginatedVendorsFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
+    snapshotId: { type: "ID", defaultValue: null }
   ) {
     vendors(
       first: $first
@@ -115,11 +116,13 @@ export const paginatedVendorsFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "VendorsListQuery_vendors") {
+      filter: { snapshotId: $snapshotId }
+    ) @connection(key: "VendorsListQuery_vendors", filters: ["filter"]) {
       __id
       edges {
         node {
           id
+          snapshotId
           name
           websiteUrl
           updatedAt
@@ -148,6 +151,7 @@ export const vendorNodeQuery = graphql`
     node(id: $vendorId) {
       ... on Vendor {
         id
+        snapshotId
         name
         websiteUrl
         ...useVendorFormFragment
