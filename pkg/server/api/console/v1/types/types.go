@@ -1881,6 +1881,7 @@ type UserEdge struct {
 
 type Vendor struct {
 	ID                            gid.GID                           `json:"id"`
+	SnapshotID                    *gid.GID                          `json:"snapshotId,omitempty"`
 	Name                          string                            `json:"name"`
 	Category                      coredata.VendorCategory           `json:"category"`
 	Description                   *string                           `json:"description,omitempty"`
@@ -1996,6 +1997,10 @@ func (this VendorDataPrivacyAgreement) GetID() gid.GID { return this.ID }
 type VendorEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Vendor        `json:"node"`
+}
+
+type VendorFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
 type VendorRiskAssessment struct {

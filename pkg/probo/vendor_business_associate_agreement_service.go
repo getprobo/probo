@@ -302,14 +302,8 @@ func (s VendorBusinessAssociateAgreementService) Delete(
 				return fmt.Errorf("cannot load vendor business associate agreement: %w", err)
 			}
 
-			file := &coredata.File{ID: vendorBusinessAssociateAgreement.FileID}
-
 			if err := vendorBusinessAssociateAgreement.Delete(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot delete vendor business associate agreement: %w", err)
-			}
-
-			if err := file.SoftDelete(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot soft delete file: %w", err)
 			}
 
 			return nil
@@ -329,14 +323,8 @@ func (s VendorBusinessAssociateAgreementService) DeleteByVendorID(
 				return fmt.Errorf("cannot load vendor business associate agreement: %w", err)
 			}
 
-			file := &coredata.File{ID: vendorBusinessAssociateAgreement.FileID}
-
 			if err := vendorBusinessAssociateAgreement.DeleteByVendorID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot delete vendor business associate agreement: %w", err)
-			}
-
-			if err := file.SoftDelete(ctx, conn, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot soft delete file: %w", err)
 			}
 
 			return nil

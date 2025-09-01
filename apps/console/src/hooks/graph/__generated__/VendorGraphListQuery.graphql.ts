@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b748739bef19b5c39b7c352f35332865>>
+ * @generated SignedSource<<8b1614888dac560deff871232f91995d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type VendorGraphListQuery$variables = {
   organizationId: string;
+  snapshotId?: string | null | undefined;
 };
 export type VendorGraphListQuery$data = {
   readonly node: {
@@ -30,6 +31,11 @@ var v0 = [
     "defaultValue": null,
     "kind": "LocalArgument",
     "name": "organizationId"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "snapshotId"
   }
 ],
 v1 = [
@@ -46,14 +52,26 @@ v2 = {
   "name": "id",
   "storageKey": null
 },
-v3 = {
+v3 = [
+  {
+    "kind": "Variable",
+    "name": "snapshotId",
+    "variableName": "snapshotId"
+  }
+],
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = [
+v5 = [
+  {
+    "fields": (v3/*: any*/),
+    "kind": "ObjectValue",
+    "name": "filter"
+  },
   {
     "kind": "Literal",
     "name": "first",
@@ -80,7 +98,7 @@ return {
             "selections": [
               (v2/*: any*/),
               {
-                "args": null,
+                "args": (v3/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "VendorGraphPaginatedFragment"
               }
@@ -109,14 +127,14 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
+          (v4/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "VendorConnection",
                 "kind": "LinkedField",
                 "name": "vendors",
@@ -139,6 +157,13 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "snapshotId",
+                            "storageKey": null
+                          },
                           {
                             "alias": null,
                             "args": null,
@@ -236,7 +261,7 @@ return {
                             ],
                             "storageKey": "riskAssessments(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"ASSESSED_AT\"})"
                           },
-                          (v3/*: any*/)
+                          (v4/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -302,13 +327,13 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "vendors(first:50)"
+                "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "filters": [
-                  "orderBy"
+                  "filter"
                 ],
                 "handle": "connection",
                 "key": "VendorsListQuery_vendors",
@@ -325,16 +350,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e2eade63dcf3d7ea071463a2e5993293",
+    "cacheID": "4b19f6f4be47c38d8b68601ec95315a6",
     "id": null,
     "metadata": {},
     "name": "VendorGraphListQuery",
     "operationKind": "query",
-    "text": "query VendorGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...VendorGraphPaginatedFragment\n    }\n    id\n  }\n}\n\nfragment VendorGraphPaginatedFragment on Organization {\n  vendors(first: 50) {\n    edges {\n      node {\n        id\n        name\n        websiteUrl\n        updatedAt\n        riskAssessments(first: 1, orderBy: {direction: DESC, field: ASSESSED_AT}) {\n          edges {\n            node {\n              id\n              assessedAt\n              expiresAt\n              dataSensitivity\n              businessImpact\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query VendorGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...VendorGraphPaginatedFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment VendorGraphPaginatedFragment_3iomuz on Organization {\n  vendors(first: 50, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        websiteUrl\n        updatedAt\n        riskAssessments(first: 1, orderBy: {direction: DESC, field: ASSESSED_AT}) {\n          edges {\n            node {\n              id\n              assessedAt\n              expiresAt\n              dataSensitivity\n              businessImpact\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3bb12a4d7a49090154bb56951e69f4aa";
+(node as any).hash = "3034ee812f89d0596f3f6d3094c1dfc8";
 
 export default node;

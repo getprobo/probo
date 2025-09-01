@@ -1,4 +1,4 @@
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 import type { VendorComplianceTabFragment$key } from "./__generated__/VendorComplianceTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
@@ -98,6 +98,8 @@ export default function VendorComplianceTab() {
   const connectionId = data.complianceReports.__id;
   const reports = data.complianceReports.edges.map((edge) => edge.node);
   const { __ } = useTranslate();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
   usePageTitle(vendor.name + " - " + __("Compliance reports"));
 
@@ -125,15 +127,17 @@ export default function VendorComplianceTab() {
 
   return (
     <div className="space-y-6">
-      <Dropzone
-        description={__("Only PDF files up to 10MB are allowed")}
-        isUploading={isMutating}
-        onDrop={handleDrop}
-        accept={{
-          "application/pdf": [".pdf"],
-        }}
-        maxSize={10}
-      />
+      {!isSnapshotMode && (
+        <Dropzone
+          description={__("Only PDF files up to 10MB are allowed")}
+          isUploading={isMutating}
+          onDrop={handleDrop}
+          accept={{
+            "application/pdf": [".pdf"],
+          }}
+          maxSize={10}
+        />
+      )}
       <SortableTable refetch={refetch}>
         <Thead>
           <Tr>
@@ -141,7 +145,7 @@ export default function VendorComplianceTab() {
             <SortableTh field="REPORT_DATE">{__("Report date")}</SortableTh>
             <Th>{__("Valid until")}</Th>
             <Th>{__("File size")}</Th>
-            <Th>{__("Actions")}</Th>
+            {!isSnapshotMode && <Th>{__("Actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -150,6 +154,7 @@ export default function VendorComplianceTab() {
               key={report.id}
               reportKey={report}
               connectionId={connectionId}
+              isSnapshotMode={isSnapshotMode}
             />
           ))}
         </Tbody>
@@ -161,6 +166,7 @@ export default function VendorComplianceTab() {
 type ReportRowProps = {
   reportKey: VendorComplianceTabFragment_report$key;
   connectionId: string;
+  isSnapshotMode: boolean;
 };
 
 function ReportRow(props: ReportRowProps) {
@@ -204,17 +210,19 @@ function ReportRow(props: ReportRowProps) {
       <Td>{dateFormat(report.reportDate)}</Td>
       <Td>{dateFormat(report.validUntil)}</Td>
       <Td>{fileSize(__, report.fileSize)}</Td>
-      <Td width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            icon={IconTrashCan}
-            onClick={handleDelete}
-            variant="danger"
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
-      </Td>
+      {!props.isSnapshotMode && (
+        <Td width={50} className="text-end">
+          <ActionDropdown>
+            <DropdownItem
+              icon={IconTrashCan}
+              onClick={handleDelete}
+              variant="danger"
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        </Td>
+      )}
     </Tr>
   );
 }

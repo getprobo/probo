@@ -29,14 +29,16 @@ import (
 
 type (
 	VendorContact struct {
-		ID        gid.GID   `db:"id"`
-		VendorID  gid.GID   `db:"vendor_id"`
-		FullName  *string   `db:"full_name"`
-		Email     *string   `db:"email"`
-		Phone     *string   `db:"phone"`
-		Role      *string   `db:"role"`
-		CreatedAt time.Time `db:"created_at"`
-		UpdatedAt time.Time `db:"updated_at"`
+		ID         gid.GID   `db:"id"`
+		VendorID   gid.GID   `db:"vendor_id"`
+		FullName   *string   `db:"full_name"`
+		Email      *string   `db:"email"`
+		Phone      *string   `db:"phone"`
+		Role       *string   `db:"role"`
+		SnapshotID *gid.GID  `db:"snapshot_id"`
+		SourceID   *gid.GID  `db:"source_id"`
+		CreatedAt  time.Time `db:"created_at"`
+		UpdatedAt  time.Time `db:"updated_at"`
 	}
 
 	VendorContacts []*VendorContact
@@ -77,6 +79,8 @@ SELECT
 	email,
 	phone,
 	role,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -127,6 +131,8 @@ SELECT
 	email,
 	phone,
 	role,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -228,6 +234,7 @@ SET
 WHERE
 	%s
 	AND id = @vendor_contact_id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -261,6 +268,7 @@ DELETE FROM
 WHERE
 	%s
 	AND id = @vendor_contact_id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -271,6 +279,68 @@ WHERE
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot delete vendor contact: %w", err)
+	}
+
+	return nil
+}
+
+func (vc VendorContacts) InsertVendorSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	snapshot_vendors AS (
+		SELECT id, source_id
+		FROM vendors
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
+	)
+INSERT INTO vendor_contacts (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	vendor_id,
+	full_name,
+	email,
+	phone,
+	role,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @vendor_contact_entity_type),
+	@snapshot_id,
+	vc.id,
+	sv.id,
+	vc.full_name,
+	vc.email,
+	vc.phone,
+	vc.role,
+	vc.created_at,
+	vc.updated_at
+FROM vendor_contacts vc
+INNER JOIN snapshot_vendors sv ON sv.source_id = vc.vendor_id
+WHERE %s AND vc.snapshot_id IS NULL
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":                  scope.GetTenantID(),
+		"snapshot_id":                snapshotID,
+		"organization_id":            organizationID,
+		"vendor_contact_entity_type": VendorContactEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert vendor contact snapshots: %w", err)
 	}
 
 	return nil

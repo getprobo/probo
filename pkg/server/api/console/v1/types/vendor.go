@@ -80,6 +80,7 @@ func NewVendor(v *coredata.Vendor) *Vendor {
 		WebsiteURL:                    v.WebsiteURL,
 		Category:                      v.Category,
 		ShowOnTrustCenter:             v.ShowOnTrustCenter,
+		SnapshotID:                    v.SnapshotID,
 		UpdatedAt:                     v.UpdatedAt,
 		CreatedAt:                     v.CreatedAt,
 	}

@@ -21,6 +21,7 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
+import { useParams } from "react-router";
 import { faviconUrl } from "@probo/helpers";
 import type { NodeOf } from "/types";
 import { CreateVendorDialog } from "./dialogs/CreateVendorDialog";
@@ -35,6 +36,7 @@ import type {
   VendorGraphPaginatedFragment$key,
 } from "/hooks/graph/__generated__/VendorGraphPaginatedFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 
 type Vendor = NodeOf<VendorGraphPaginatedFragment$data["vendors"]>;
 
@@ -45,6 +47,8 @@ type Props = {
 export default function VendorsPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
   const data = usePreloadedQuery(vendorsQuery, props.queryRef);
   const pagination = usePaginationFragment(
@@ -59,18 +63,21 @@ export default function VendorsPage(props: Props) {
 
   return (
     <div className="space-y-6">
+      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
       <PageHeader
         title={__("Vendors")}
         description={__(
           "Vendors are third-party services that your company uses. Add them to keep track of their risk and compliance status."
         )}
       >
-        <CreateVendorDialog
-          connection={connectionId}
-          organizationId={organizationId}
-        >
-          <Button icon={IconPlusLarge}>{__("Add vendor")}</Button>
-        </CreateVendorDialog>
+        {!isSnapshotMode && (
+          <CreateVendorDialog
+            connection={connectionId}
+            organizationId={organizationId}
+          >
+            <Button icon={IconPlusLarge}>{__("Add vendor")}</Button>
+          </CreateVendorDialog>
+        )}
       </PageHeader>
       <SortableTable {...pagination}>
         <Thead>
@@ -106,14 +113,20 @@ function VendorRow({
   organizationId: string;
   connectionId: string;
 }) {
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
   const { __, dateFormat } = useTranslate();
   const latestAssessment = vendor.riskAssessments?.edges[0]?.node;
 
   const deleteVendor = useDeleteVendor(vendor, connectionId);
 
+  const vendorUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors/${vendor.id}/overview`
+    : `/organizations/${organizationId}/vendors/${vendor.id}/overview`;
+
   return (
     <>
-      <Tr to={`/organizations/${organizationId}/vendors/${vendor.id}/overview`}>
+      <Tr to={vendorUrl}>
         <Td>
           <div className="flex gap-2 items-center">
             <Avatar name={vendor.name} src={faviconUrl(vendor.websiteUrl)} />
@@ -136,15 +149,17 @@ function VendorRow({
           <RiskBadge level={latestAssessment?.businessImpact ?? "NONE"} />
         </Td>
         <Td noLink width={50} className="text-end">
-          <ActionDropdown>
-            <DropdownItem
-              onClick={deleteVendor}
-              variant="danger"
-              icon={IconTrashCan}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
+          {!isSnapshotMode && (
+            <ActionDropdown>
+              <DropdownItem
+                onClick={deleteVendor}
+                variant="danger"
+                icon={IconTrashCan}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          )}
         </Td>
       </Tr>
     </>

@@ -1,6 +1,6 @@
 import { useTranslate } from "@probo/i18n";
 import { useVendorForm } from "/hooks/forms/useVendorForm";
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 import { Button, Card, Field, Input, IconPlusLarge, IconTrashCan, IconPencil } from "@probo/ui";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { useOrganizationId } from "/hooks/useOrganizationId";
@@ -55,6 +55,8 @@ export default function VendorOverviewTab() {
 
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
   const {
     control,
@@ -98,7 +100,7 @@ export default function VendorOverviewTab() {
   usePageTitle(vendor.name + " - " + __("Overview"));
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-12">
+    <form onSubmit={isSnapshotMode ? undefined : handleSubmit} className="space-y-12">
       {/* Vendor Details */}
       <div className="space-y-4">
         <h2 className="text-base font-medium">{__("Vendor details")}</h2>
@@ -108,30 +110,35 @@ export default function VendorOverviewTab() {
             label={__("Name")}
             type="text"
             error={errors.name?.message}
+            disabled={isSubmitting || isSnapshotMode}
           />
           <Field
             {...register("description")}
             label={__("Description")}
             type="textarea"
             error={errors.description?.message}
+            disabled={isSubmitting || isSnapshotMode}
           />
           <Field
             {...register("legalName")}
             label={__("Legal name")}
             type="text"
             error={errors.legalName?.message}
+            disabled={isSubmitting || isSnapshotMode}
           />
           <Field
             {...register("headquarterAddress")}
             label={__("Headquarter address")}
             type="textarea"
             error={errors.headquarterAddress?.message}
+            disabled={isSubmitting || isSnapshotMode}
           />
           <Field
             {...register("websiteUrl")}
             label={__("Website URL")}
             type="text"
             error={errors.websiteUrl?.message}
+            disabled={isSubmitting || isSnapshotMode}
           />
         </Card>
       </div>
@@ -146,6 +153,7 @@ export default function VendorOverviewTab() {
             name="businessOwnerId"
             label={__("Business owner")}
             error={errors.businessOwnerId?.message}
+            disabled={isSubmitting || isSnapshotMode}
           />
           <PeopleSelectField
             organizationId={organizationId}
@@ -153,6 +161,7 @@ export default function VendorOverviewTab() {
             name="securityOwnerId"
             label={__("Security owner")}
             error={errors.securityOwnerId?.message}
+            disabled={isSubmitting || isSnapshotMode}
           />
         </Card>
       </div>
@@ -180,6 +189,7 @@ export default function VendorOverviewTab() {
                 type="text"
                 placeholder="https://..."
                 variant="ghost"
+                disabled={isSubmitting || isSnapshotMode}
               />
             </div>
           ))}
@@ -220,33 +230,39 @@ export default function VendorOverviewTab() {
                   >
                     {__("Download PDF")}
                   </Button>
-                  <EditBusinessAssociateAgreementDialog
-                    vendorId={vendor.id}
-                    agreement={{
-                      validFrom: businessAssociateAgreement.validFrom,
-                      validUntil: businessAssociateAgreement.validUntil,
-                    }}
-                    onSuccess={() => window.location.reload()}
-                  >
-                    <Button variant="quaternary" icon={IconPencil} />
-                  </EditBusinessAssociateAgreementDialog>
-                  <DeleteBusinessAssociateAgreementDialog
-                    vendorId={vendor.id}
-                    fileName={businessAssociateAgreement.fileName}
-                    onSuccess={() => window.location.reload()}
-                  >
-                    <Button variant="quaternary" icon={IconTrashCan} />
-                  </DeleteBusinessAssociateAgreementDialog>
+                  {!isSnapshotMode && (
+                    <>
+                      <EditBusinessAssociateAgreementDialog
+                        vendorId={vendor.id}
+                        agreement={{
+                          validFrom: businessAssociateAgreement.validFrom,
+                          validUntil: businessAssociateAgreement.validUntil,
+                        }}
+                        onSuccess={() => window.location.reload()}
+                      >
+                        <Button variant="quaternary" icon={IconPencil} />
+                      </EditBusinessAssociateAgreementDialog>
+                      <DeleteBusinessAssociateAgreementDialog
+                        vendorId={vendor.id}
+                        fileName={businessAssociateAgreement.fileName}
+                        onSuccess={() => window.location.reload()}
+                      >
+                        <Button variant="quaternary" icon={IconTrashCan} />
+                      </DeleteBusinessAssociateAgreementDialog>
+                    </>
+                  )}
                 </>
               ) : (
-                <UploadBusinessAssociateAgreementDialog
-                  vendorId={vendor.id}
-                  onSuccess={() => window.location.reload()}
-                >
-                  <Button variant="secondary" icon={IconPlusLarge}>
-                    {__("Upload")}
-                  </Button>
-                </UploadBusinessAssociateAgreementDialog>
+                !isSnapshotMode && (
+                  <UploadBusinessAssociateAgreementDialog
+                    vendorId={vendor.id}
+                    onSuccess={() => window.location.reload()}
+                  >
+                    <Button variant="secondary" icon={IconPlusLarge}>
+                      {__("Upload")}
+                    </Button>
+                  </UploadBusinessAssociateAgreementDialog>
+                )
               )}
             </div>
           </div>
@@ -281,26 +297,30 @@ export default function VendorOverviewTab() {
                   >
                     {__("Download PDF")}
                   </Button>
-                  <EditDataPrivacyAgreementDialog
-                    vendorId={vendor.id}
-                    agreement={{
-                      validFrom: dataPrivacyAgreement.validFrom,
-                      validUntil: dataPrivacyAgreement.validUntil,
-                    }}
-                    onSuccess={() => window.location.reload()}
-                  >
-                    <Button variant="quaternary" icon={IconPencil} />
-                  </EditDataPrivacyAgreementDialog>
-                  <DeleteDataPrivacyAgreementDialog
-                    vendorId={vendor.id}
-                    fileName={dataPrivacyAgreement.fileName}
-                    onSuccess={() => window.location.reload()}
-                  >
-                    <Button variant="quaternary" icon={IconTrashCan} />
-                  </DeleteDataPrivacyAgreementDialog>
+                  {!isSnapshotMode && (
+                    <>
+                      <EditDataPrivacyAgreementDialog
+                        vendorId={vendor.id}
+                        agreement={{
+                          validFrom: dataPrivacyAgreement.validFrom,
+                          validUntil: dataPrivacyAgreement.validUntil,
+                        }}
+                        onSuccess={() => window.location.reload()}
+                      >
+                        <Button variant="quaternary" icon={IconPencil} />
+                      </EditDataPrivacyAgreementDialog>
+                      <DeleteDataPrivacyAgreementDialog
+                        vendorId={vendor.id}
+                        fileName={dataPrivacyAgreement.fileName}
+                        onSuccess={() => window.location.reload()}
+                      >
+                        <Button variant="quaternary" icon={IconTrashCan} />
+                      </DeleteDataPrivacyAgreementDialog>
+                    </>
+                  )}
                 </>
               ) : (
-                <>
+                !isSnapshotMode && (
                   <UploadDataPrivacyAgreementDialog
                     vendorId={vendor.id}
                     onSuccess={() => window.location.reload()}
@@ -309,7 +329,7 @@ export default function VendorOverviewTab() {
                       {__("Upload")}
                     </Button>
                   </UploadDataPrivacyAgreementDialog>
-                </>
+                )
               )}
             </div>
           </div>
@@ -317,11 +337,13 @@ export default function VendorOverviewTab() {
       </div>
 
       {/* Submit */}
-      <div className="flex justify-end">
-        <Button type="submit" disabled={isSubmitting}>
-          {__("Update vendor")}
-        </Button>
-      </div>
+      {!isSnapshotMode && (
+        <div className="flex justify-end">
+          <Button type="submit" disabled={isSubmitting}>
+            {__("Update vendor")}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

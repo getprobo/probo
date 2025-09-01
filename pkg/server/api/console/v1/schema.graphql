@@ -1134,6 +1134,10 @@ input AssetFilter {
   snapshotId: ID
 }
 
+input VendorFilter {
+  snapshotId: ID
+}
+
 # Core Types
 type TrustCenter implements Node {
   id: ID!
@@ -1196,6 +1200,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: VendorOrder
+    filter: VendorFilter = { snapshotId: null }
   ): VendorConnection! @goField(forceResolver: true)
 
   peoples(
@@ -1351,6 +1356,7 @@ type People implements Node {
 
 type Vendor implements Node {
   id: ID!
+  snapshotId: ID
   name: String!
   category: VendorCategory!
   description: String

@@ -23,11 +23,12 @@ import {
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import { Outlet } from "react-router";
-import { faviconUrl } from "@probo/helpers";
+import { Outlet, useParams } from "react-router";
+import { faviconUrl, validateSnapshotConsistency } from "@probo/helpers";
 import { ImportAssessmentDialog } from "./dialogs/ImportAssessmentDialog";
 import { complianceReportsFragment } from "./tabs/VendorComplianceTab";
 import type { VendorComplianceTabFragment$key } from "./tabs/__generated__/VendorComplianceTabFragment.graphql";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 
 type Props = {
   queryRef: PreloadedQuery<VendorGraphNodeQuery>;
@@ -38,6 +39,14 @@ export default function VendorDetailPage(props: Props) {
   const vendor = data.node;
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
+
+  if (!vendor) {
+    return <div>{__("Vendor not found")}</div>;
+  }
+
+  validateSnapshotConsistency(vendor, snapshotId);
   const deleteVendor = useDeleteVendor(
     vendor,
     ConnectionHandler.getConnectionID(organizationId, vendorConnectionKey)
@@ -48,13 +57,22 @@ export default function VendorDetailPage(props: Props) {
     vendor as VendorComplianceTabFragment$key
   ).complianceReports.edges.length;
 
+  const vendorsUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors`
+    : `/organizations/${organizationId}/vendors`;
+
+  const baseVendorUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/vendors/${vendor.id}`
+    : `/organizations/${organizationId}/vendors/${vendor.id}`;
+
   return (
     <div className="space-y-6">
+      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
       <Breadcrumb
         items={[
           {
             label: __("Vendors"),
-            to: `/organizations/${organizationId}/vendors`,
+            to: vendorsUrl,
           },
           {
             label: vendor.name ?? "",
@@ -72,54 +90,44 @@ export default function VendorDetailPage(props: Props) {
           )}
           <div className="text-2xl">{vendor.name}</div>
         </div>
-        <div className="flex gap-2 items-center">
-          <ImportAssessmentDialog vendorId={vendor.id!}>
-            <Button icon={IconPageTextLine} variant="secondary">
-              {__("Assessment From Website")}
-            </Button>
-          </ImportAssessmentDialog>
-          <ActionDropdown variant="secondary">
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={deleteVendor}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
-        </div>
+        {!isSnapshotMode && (
+          <div className="flex gap-2 items-center">
+            <ImportAssessmentDialog vendorId={vendor.id!}>
+              <Button icon={IconPageTextLine} variant="secondary">
+                {__("Assessment From Website")}
+              </Button>
+            </ImportAssessmentDialog>
+            <ActionDropdown variant="secondary">
+              <DropdownItem
+                variant="danger"
+                icon={IconTrashCan}
+                onClick={deleteVendor}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          </div>
+        )}
       </div>
 
       <Tabs>
-        <TabLink
-          to={`/organizations/${organizationId}/vendors/${vendor.id}/overview`}
-        >
+        <TabLink to={`${baseVendorUrl}/overview`}>
           {__("Overview")}
         </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/vendors/${vendor.id}/certifications`}
-        >
+        <TabLink to={`${baseVendorUrl}/certifications`}>
           {__("Certifications")}
         </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/vendors/${vendor.id}/compliance`}
-        >
+        <TabLink to={`${baseVendorUrl}/compliance`}>
           {__("Compliance reports")}
           {reportsCount > 0 && <TabBadge>{reportsCount}</TabBadge>}
         </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/vendors/${vendor.id}/risks`}
-        >
+        <TabLink to={`${baseVendorUrl}/risks`}>
           {__("Risk Assessment")}
         </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/vendors/${vendor.id}/contacts`}
-        >
+        <TabLink to={`${baseVendorUrl}/contacts`}>
           {__("Contacts")}
         </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/vendors/${vendor.id}/services`}
-        >
+        <TabLink to={`${baseVendorUrl}/services`}>
           {__("Services")}
         </TabLink>
       </Tabs>

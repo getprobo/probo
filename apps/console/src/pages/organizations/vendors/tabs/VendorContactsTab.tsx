@@ -1,4 +1,4 @@
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 import { graphql } from "relay-runtime";
 import type { VendorContactsTabFragment$key } from "./__generated__/VendorContactsTabFragment.graphql";
 import { useTranslate } from "@probo/i18n";
@@ -89,6 +89,8 @@ export default function VendorContactsTab() {
   const connectionId = data.contacts.__id;
   const contacts = data.contacts.edges.map((edge) => edge.node);
   const { __ } = useTranslate();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
   const [editingContact, setEditingContact] = useState<{
     id: string;
     fullName?: string | null;
@@ -105,12 +107,14 @@ export default function VendorContactsTab() {
         title={__("Contacts")}
         description={__("Manage vendor contacts and their information.")}
       >
-        <CreateContactDialog
-          vendorId={vendor.id}
-          connectionId={connectionId}
-        >
-          <Button icon={IconPlusLarge}>{__("Add contact")}</Button>
-        </CreateContactDialog>
+        {!isSnapshotMode && (
+          <CreateContactDialog
+            vendorId={vendor.id}
+            connectionId={connectionId}
+          >
+            <Button icon={IconPlusLarge}>{__("Add contact")}</Button>
+          </CreateContactDialog>
+        )}
       </PageHeader>
 
       <SortableTable refetch={refetch}>
@@ -120,7 +124,7 @@ export default function VendorContactsTab() {
             <SortableTh field="EMAIL">{__("Email")}</SortableTh>
             <Th>{__("Phone")}</Th>
             <Th>{__("Role")}</Th>
-            <Th>{__("Actions")}</Th>
+            {!isSnapshotMode && <Th>{__("Actions")}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -130,12 +134,13 @@ export default function VendorContactsTab() {
               contactKey={contact}
               connectionId={connectionId}
               onEdit={setEditingContact}
+              isSnapshotMode={isSnapshotMode}
             />
           ))}
         </Tbody>
       </SortableTable>
 
-      {editingContact && (
+      {editingContact && !isSnapshotMode && (
         <EditContactDialog
           contactId={editingContact.id}
           contact={editingContact}
@@ -156,6 +161,7 @@ type ContactRowProps = {
     phone?: string | null;
     role?: string | null;
   }) => void;
+  isSnapshotMode: boolean;
 };
 
 function ContactRow(props: ContactRowProps) {
@@ -220,29 +226,31 @@ function ContactRow(props: ContactRowProps) {
         )}
       </Td>
       <Td>{contact.role || __("—")}</Td>
-      <Td width={50} className="text-end">
-        <ActionDropdown>
-          <DropdownItem
-            icon={IconPencil}
-            onClick={() => props.onEdit({
-              id: contact.id,
-              fullName: contact.fullName,
-              email: contact.email,
-              phone: contact.phone,
-              role: contact.role,
-            })}
-          >
-            {__("Edit")}
-          </DropdownItem>
-          <DropdownItem
-            icon={IconTrashCan}
-            onClick={handleDelete}
-            variant="danger"
-          >
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
-      </Td>
+      {!props.isSnapshotMode && (
+        <Td width={50} className="text-end">
+          <ActionDropdown>
+            <DropdownItem
+              icon={IconPencil}
+              onClick={() => props.onEdit({
+                id: contact.id,
+                fullName: contact.fullName,
+                email: contact.email,
+                phone: contact.phone,
+                role: contact.role,
+              })}
+            >
+              {__("Edit")}
+            </DropdownItem>
+            <DropdownItem
+              icon={IconTrashCan}
+              onClick={handleDelete}
+              variant="danger"
+            >
+              {__("Delete")}
+            </DropdownItem>
+          </ActionDropdown>
+        </Td>
+      )}
     </Tr>
   );
 }
