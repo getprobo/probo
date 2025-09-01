@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9fd7671cda5fa074c27aebb356782846>>
+ * @generated SignedSource<<a7cefedfe9ee9d485354882888556f20>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,14 +17,6 @@ export type ContinualImprovementRegistriesPageFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly audit: {
-          readonly framework: {
-            readonly id: string;
-            readonly name: string;
-          };
-          readonly id: string;
-          readonly name: string | null | undefined;
-        };
         readonly createdAt: any;
         readonly description: string | null | undefined;
         readonly id: string;
@@ -34,7 +26,9 @@ export type ContinualImprovementRegistriesPageFragment$data = {
         };
         readonly priority: ContinualImprovementRegistriesPriority;
         readonly referenceId: string;
+        readonly snapshotId: string | null | undefined;
         readonly source: string | null | undefined;
+        readonly sourceId: string | null | undefined;
         readonly status: ContinualImprovementRegistriesStatus;
         readonly targetDate: any | null | undefined;
         readonly updatedAt: any;
@@ -66,13 +60,6 @@ v1 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-},
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
 };
 return {
   "argumentDefinitions": [
@@ -85,6 +72,11 @@ return {
       "defaultValue": 10,
       "kind": "LocalArgument",
       "name": "first"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "snapshotId"
     }
   ],
   "kind": "Fragment",
@@ -121,7 +113,19 @@ return {
     (v1/*: any*/),
     {
       "alias": "continualImprovementRegistries",
-      "args": null,
+      "args": [
+        {
+          "fields": [
+            {
+              "kind": "Variable",
+              "name": "snapshotId",
+              "variableName": "snapshotId"
+            }
+          ],
+          "kind": "ObjectValue",
+          "name": "filter"
+        }
+      ],
       "concreteType": "ContinualImprovementRegistryConnection",
       "kind": "LinkedField",
       "name": "__ContinualImprovementRegistriesPage_continualImprovementRegistries_connection",
@@ -151,6 +155,20 @@ return {
               "plural": false,
               "selections": [
                 (v1/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "snapshotId",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "sourceId",
+                  "storageKey": null
+                },
                 {
                   "alias": null,
                   "args": null,
@@ -191,32 +209,6 @@ return {
                   "args": null,
                   "kind": "ScalarField",
                   "name": "priority",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "concreteType": "Audit",
-                  "kind": "LinkedField",
-                  "name": "audit",
-                  "plural": false,
-                  "selections": [
-                    (v1/*: any*/),
-                    (v2/*: any*/),
-                    {
-                      "alias": null,
-                      "args": null,
-                      "concreteType": "Framework",
-                      "kind": "LinkedField",
-                      "name": "framework",
-                      "plural": false,
-                      "selections": [
-                        (v1/*: any*/),
-                        (v2/*: any*/)
-                      ],
-                      "storageKey": null
-                    }
-                  ],
                   "storageKey": null
                 },
                 {
@@ -318,6 +310,6 @@ return {
 };
 })();
 
-(node as any).hash = "838609d0047346d2031f045e5227c9f0";
+(node as any).hash = "9e11628f65527ac1ff8974faa1855280";
 
 export default node;

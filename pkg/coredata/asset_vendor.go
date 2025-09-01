@@ -17,6 +17,7 @@ package coredata
 import (
 	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/getprobo/probo/pkg/gid"
@@ -26,13 +27,18 @@ import (
 
 type (
 	AssetVendor struct {
-		AssetID   gid.GID      `db:"asset_id"`
-		VendorID  gid.GID      `db:"vendor_id"`
-		TenantID  gid.TenantID `db:"tenant_id"`
-		CreatedAt time.Time    `db:"created_at"`
+		AssetID    gid.GID      `db:"asset_id"`
+		VendorID   gid.GID      `db:"vendor_id"`
+		TenantID   gid.TenantID `db:"tenant_id"`
+		SnapshotID *gid.GID     `db:"snapshot_id"`
+		CreatedAt  time.Time    `db:"created_at"`
 	}
 
 	AssetVendors []*AssetVendor
+
+	AssetSnapshotter interface {
+		InsertAssetSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+	}
 )
 
 func (av AssetVendors) Merge(
@@ -108,6 +114,64 @@ FROM vendor_ids
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert asset vendors: %w", err)
+	}
+
+	return nil
+}
+
+func (av AssetVendors) InsertAssetSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	source_assets AS (
+		SELECT id
+		FROM assets
+		WHERE organization_id = @organization_id AND snapshot_id IS NULL
+	),
+	snapshot_assets AS (
+		SELECT id, source_id
+		FROM assets
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
+	),
+	snapshot_vendors AS (
+		SELECT id, source_id
+		FROM vendors
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id
+	),
+	source_asset_vendors AS (
+		SELECT asset_id, vendor_id, snapshot_id, created_at
+		FROM asset_vendors
+		WHERE %s AND asset_id = ANY(SELECT id FROM source_assets) AND snapshot_id IS NULL
+	)
+INSERT INTO asset_vendors (tenant_id, asset_id, vendor_id, snapshot_id, created_at)
+SELECT
+	@tenant_id,
+	sa.id,
+	sv.id,
+	@snapshot_id,
+	av.created_at
+FROM source_asset_vendors av
+JOIN snapshot_assets sa ON sa.source_id = av.asset_id
+JOIN snapshot_vendors sv ON sv.source_id = av.vendor_id
+`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":       scope.GetTenantID(),
+		"snapshot_id":     snapshotID,
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert asset vendor snapshots: %w", err)
 	}
 
 	return nil

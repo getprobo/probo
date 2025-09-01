@@ -30,6 +30,7 @@ type (
 
 		Resolver any
 		ParentID gid.GID
+		Filter   *ContinualImprovementRegistryFilter
 	}
 )
 
@@ -37,6 +38,7 @@ func NewContinualImprovementRegistryConnection(
 	p *page.Page[*coredata.ContinualImprovementRegistry, coredata.ContinualImprovementRegistriesOrderField],
 	parentType any,
 	parentID gid.GID,
+	filter *ContinualImprovementRegistryFilter,
 ) *ContinualImprovementRegistryConnection {
 	edges := make([]*ContinualImprovementRegistryEdge, len(p.Data))
 	for i, registry := range p.Data {
@@ -49,12 +51,15 @@ func NewContinualImprovementRegistryConnection(
 
 		Resolver: parentType,
 		ParentID: parentID,
+		Filter:   filter,
 	}
 }
 
 func NewContinualImprovementRegistry(cir *coredata.ContinualImprovementRegistry) *ContinualImprovementRegistry {
 	return &ContinualImprovementRegistry{
 		ID:          cir.ID,
+		SnapshotID:  cir.SnapshotID,
+		SourceID:    cir.SourceID,
 		ReferenceID: cir.ReferenceID,
 		Description: cir.Description,
 		Source:      cir.Source,

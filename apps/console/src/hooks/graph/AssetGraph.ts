@@ -5,10 +5,10 @@ import { useTranslate } from "@probo/i18n";
 import { promisifyMutation, sprintf } from "@probo/helpers";
 
 export const assetsQuery = graphql`
-  query AssetGraphListQuery($organizationId: ID!) {
+  query AssetGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
-        ...AssetsPageFragment
+        ...AssetsPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
   }
@@ -19,6 +19,7 @@ export const assetNodeQuery = graphql`
     node(id: $assetId) {
       ... on Asset {
         id
+        snapshotId
         name
         amount
         criticity
@@ -54,6 +55,7 @@ export const createAssetMutation = graphql`
       assetEdge @prependEdge(connections: $connections) {
         node {
           id
+          snapshotId
           name
           amount
           criticity
@@ -63,7 +65,7 @@ export const createAssetMutation = graphql`
             id
             fullName
           }
-          vendors(first: 10) {
+          vendors(first: 50) {
             edges {
               node {
                 id
@@ -84,6 +86,7 @@ export const updateAssetMutation = graphql`
     updateAsset(input: $input) {
       asset {
         id
+        snapshotId
         name
         amount
         criticity

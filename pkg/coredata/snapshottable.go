@@ -28,8 +28,18 @@ type Snapshottable interface {
 
 func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {
 	switch snapshotType {
+	case SnapshotsTypeAssets:
+		return Assets{}, nil
 	case SnapshotsTypeData:
 		return Data{}, nil
+	case SnapshotsTypeNonConformityRegistries:
+		return NonconformityRegistries{}, nil
+	case SnapshotsTypeComplianceRegistries:
+		return ComplianceRegistries{}, nil
+	case SnapshotsTypeContinualImprovementRegistries:
+		return ContinualImprovementRegistries{}, nil
+	case SnapshotsTypeProcessingActivityRegistries:
+		return ProcessingActivityRegistries{}, nil
 	default:
 		return nil, fmt.Errorf("unsupported snapshot type: %s", snapshotType)
 	}

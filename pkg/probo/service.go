@@ -87,6 +87,7 @@ type (
 		Snapshots                         *SnapshotService
 		ContinualImprovementRegistries    *ContinualImprovementRegistriesService
 		IncidentRegistries                *IncidentRegistryService
+		ProcessingActivityRegistries      *ProcessingActivityRegistryService
 	}
 )
 
@@ -182,5 +183,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Snapshots = &SnapshotService{svc: tenantService}
 	tenantService.ContinualImprovementRegistries = &ContinualImprovementRegistriesService{svc: tenantService}
 	tenantService.IncidentRegistries = &IncidentRegistryService{svc: tenantService}
+	tenantService.ProcessingActivityRegistries = &ProcessingActivityRegistryService{svc: tenantService}
 	return tenantService
 }

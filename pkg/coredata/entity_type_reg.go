@@ -49,4 +49,5 @@ const (
 	SnapshotEntityType
 	ContinualImprovementRegistryEntityType
 	IncidentRegistryEntityType
+	ProcessingActivityRegistryEntityType
 )

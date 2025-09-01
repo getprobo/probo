@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a6972659c0399779d3d646dc4057bc57>>
+ * @generated SignedSource<<725635dc6b9b06340cfc49b9b75d509c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type NonconformityRegistryGraphListQuery$variables = {
   organizationId: string;
+  snapshotId?: string | null | undefined;
 };
 export type NonconformityRegistryGraphListQuery$data = {
   readonly node: {
@@ -29,6 +30,11 @@ var v0 = [
     "defaultValue": null,
     "kind": "LocalArgument",
     "name": "organizationId"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "snapshotId"
   }
 ],
 v1 = [
@@ -38,28 +44,40 @@ v1 = [
     "variableName": "organizationId"
   }
 ],
-v2 = {
+v2 = [
+  {
+    "kind": "Variable",
+    "name": "snapshotId",
+    "variableName": "snapshotId"
+  }
+],
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v4 = [
+v5 = [
+  {
+    "fields": (v2/*: any*/),
+    "kind": "ObjectValue",
+    "name": "filter"
+  },
   {
     "kind": "Literal",
     "name": "first",
     "value": 10
   }
 ],
-v5 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -85,7 +103,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
-                "args": null,
+                "args": (v2/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "NonconformityRegistriesPageFragment"
               }
@@ -114,14 +132,14 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
           (v3/*: any*/),
+          (v4/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "NonconformityRegistryConnection",
                 "kind": "LinkedField",
                 "name": "nonconformityRegistries",
@@ -150,12 +168,19 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
+                          (v4/*: any*/),
                           {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
                             "name": "referenceId",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "snapshotId",
                             "storageKey": null
                           },
                           {
@@ -215,8 +240,8 @@ return {
                             "name": "audit",
                             "plural": false,
                             "selections": [
-                              (v3/*: any*/),
-                              (v5/*: any*/),
+                              (v4/*: any*/),
+                              (v6/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -225,8 +250,8 @@ return {
                                 "name": "framework",
                                 "plural": false,
                                 "selections": [
-                                  (v3/*: any*/),
-                                  (v5/*: any*/)
+                                  (v4/*: any*/),
+                                  (v6/*: any*/)
                                 ],
                                 "storageKey": null
                               }
@@ -241,7 +266,7 @@ return {
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v3/*: any*/),
+                              (v4/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -266,7 +291,7 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
-                          (v2/*: any*/)
+                          (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -318,12 +343,14 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "nonconformityRegistries(first:10)"
+                "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
-                "filters": null,
+                "args": (v5/*: any*/),
+                "filters": [
+                  "filter"
+                ],
                 "handle": "connection",
                 "key": "RegistriesPage_nonconformityRegistries",
                 "kind": "LinkedHandle",
@@ -339,16 +366,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2196012e8a68c64e7d479a2b85021ffd",
+    "cacheID": "f788ee5c51814a5f68795aaca97cb971",
     "id": null,
     "metadata": {},
     "name": "NonconformityRegistryGraphListQuery",
     "operationKind": "query",
-    "text": "query NonconformityRegistryGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...NonconformityRegistriesPageFragment\n    }\n    id\n  }\n}\n\nfragment NonconformityRegistriesPageFragment on Organization {\n  id\n  nonconformityRegistries(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query NonconformityRegistryGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...NonconformityRegistriesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment NonconformityRegistriesPageFragment_3iomuz on Organization {\n  id\n  nonconformityRegistries(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b8104dc2e4ccb9eecfe1f0d494084975";
+(node as any).hash = "2bb77e5c9adce5860e4dd2c31f1155e4";
 
 export default node;

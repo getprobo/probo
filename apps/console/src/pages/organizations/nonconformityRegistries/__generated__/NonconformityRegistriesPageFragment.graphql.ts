@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b883180c6334c3e1c4f7bd44785a0033>>
+ * @generated SignedSource<<7ec3fc6b9ecb6302152fe0031e791682>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -38,6 +38,7 @@ export type NonconformityRegistriesPageFragment$data = {
         };
         readonly referenceId: string;
         readonly rootCause: string;
+        readonly snapshotId: string | null | undefined;
         readonly status: NonconformityRegistryStatus;
         readonly updatedAt: any;
       };
@@ -86,6 +87,11 @@ return {
       "defaultValue": 10,
       "kind": "LocalArgument",
       "name": "first"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "snapshotId"
     }
   ],
   "kind": "Fragment",
@@ -122,7 +128,19 @@ return {
     (v1/*: any*/),
     {
       "alias": "nonconformityRegistries",
-      "args": null,
+      "args": [
+        {
+          "fields": [
+            {
+              "kind": "Variable",
+              "name": "snapshotId",
+              "variableName": "snapshotId"
+            }
+          ],
+          "kind": "ObjectValue",
+          "name": "filter"
+        }
+      ],
       "concreteType": "NonconformityRegistryConnection",
       "kind": "LinkedField",
       "name": "__RegistriesPage_nonconformityRegistries_connection",
@@ -157,6 +175,13 @@ return {
                   "args": null,
                   "kind": "ScalarField",
                   "name": "referenceId",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "snapshotId",
                   "storageKey": null
                 },
                 {
@@ -333,6 +358,6 @@ return {
 };
 })();
 
-(node as any).hash = "34c06ec98cb50738cf479e6bd7cdc83e";
+(node as any).hash = "36f3622d63ddf02a2703a2c8428f4268";
 
 export default node;

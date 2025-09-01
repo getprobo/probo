@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7b7982ce6c305e82103ca4422bbb7c2f>>
+ * @generated SignedSource<<4ea62d99e8a73491f8125cb3e8d8e4b5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -39,6 +39,7 @@ export type NonconformityRegistryGraphNodeQuery$data = {
     };
     readonly referenceId?: string;
     readonly rootCause?: string;
+    readonly snapshotId?: string | null | undefined;
     readonly status?: NonconformityRegistryStatus;
     readonly updatedAt?: any;
   };
@@ -74,59 +75,66 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "referenceId",
+  "name": "snapshotId",
   "storageKey": null
 },
 v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "description",
+  "name": "referenceId",
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "dateIdentified",
+  "name": "description",
   "storageKey": null
 },
 v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "rootCause",
+  "name": "dateIdentified",
   "storageKey": null
 },
 v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "correctiveAction",
+  "name": "rootCause",
   "storageKey": null
 },
 v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "dueDate",
+  "name": "correctiveAction",
   "storageKey": null
 },
 v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "status",
+  "name": "dueDate",
   "storageKey": null
 },
 v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
+  "name": "status",
+  "storageKey": null
+},
+v11 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
   "name": "effectivenessCheck",
   "storageKey": null
 },
-v11 = [
+v12 = [
   (v2/*: any*/),
   {
     "alias": null,
@@ -136,7 +144,7 @@ v11 = [
     "storageKey": null
   }
 ],
-v12 = {
+v13 = {
   "alias": null,
   "args": null,
   "concreteType": "Audit",
@@ -152,13 +160,13 @@ v12 = {
       "kind": "LinkedField",
       "name": "framework",
       "plural": false,
-      "selections": (v11/*: any*/),
+      "selections": (v12/*: any*/),
       "storageKey": null
     }
   ],
   "storageKey": null
 },
-v13 = {
+v14 = {
   "alias": null,
   "args": null,
   "concreteType": "People",
@@ -177,24 +185,24 @@ v13 = {
   ],
   "storageKey": null
 },
-v14 = {
+v15 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
   "kind": "LinkedField",
   "name": "organization",
   "plural": false,
-  "selections": (v11/*: any*/),
+  "selections": (v12/*: any*/),
   "storageKey": null
 },
-v15 = {
+v16 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v16 = {
+v17 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -228,11 +236,12 @@ return {
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
-              (v12/*: any*/),
+              (v11/*: any*/),
               (v13/*: any*/),
               (v14/*: any*/),
               (v15/*: any*/),
-              (v16/*: any*/)
+              (v16/*: any*/),
+              (v17/*: any*/)
             ],
             "type": "NonconformityRegistry",
             "abstractKey": null
@@ -277,11 +286,12 @@ return {
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
-              (v12/*: any*/),
+              (v11/*: any*/),
               (v13/*: any*/),
               (v14/*: any*/),
               (v15/*: any*/),
-              (v16/*: any*/)
+              (v16/*: any*/),
+              (v17/*: any*/)
             ],
             "type": "NonconformityRegistry",
             "abstractKey": null
@@ -292,16 +302,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "fd9bf2453d001f33ed1e32ad5784b647",
+    "cacheID": "ab9100da91dff02cc103e6cf3f04b9e2",
     "id": null,
     "metadata": {},
     "name": "NonconformityRegistryGraphNodeQuery",
     "operationKind": "query",
-    "text": "query NonconformityRegistryGraphNodeQuery(\n  $nonconformityRegistryId: ID!\n) {\n  node(id: $nonconformityRegistryId) {\n    __typename\n    ... on NonconformityRegistry {\n      id\n      referenceId\n      description\n      dateIdentified\n      rootCause\n      correctiveAction\n      dueDate\n      status\n      effectivenessCheck\n      audit {\n        id\n        framework {\n          id\n          name\n        }\n      }\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query NonconformityRegistryGraphNodeQuery(\n  $nonconformityRegistryId: ID!\n) {\n  node(id: $nonconformityRegistryId) {\n    __typename\n    ... on NonconformityRegistry {\n      id\n      snapshotId\n      referenceId\n      description\n      dateIdentified\n      rootCause\n      correctiveAction\n      dueDate\n      status\n      effectivenessCheck\n      audit {\n        id\n        framework {\n          id\n          name\n        }\n      }\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3395719bf2203fba19ccc94d6f740014";
+(node as any).hash = "207465c315f95b9b26e7687c4ef17cbf";
 
 export default node;

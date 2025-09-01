@@ -27,6 +27,7 @@ import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectFiel
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import { validateSnapshotConsistency } from "@probo/helpers";
 import type { DatumGraphNodeQuery } from "/hooks/graph/__generated__/DatumGraphNodeQuery.graphql";
 
 const updateDatumSchema = z.object({
@@ -51,12 +52,18 @@ export default function DatumDetailsPage(props: Props) {
 
   const datumEntry = queryData.node;
 
+  validateSnapshotConsistency(datumEntry, snapshotId);
+
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
   const deleteDatum = useDeleteDatum(
     datumEntry,
-    ConnectionHandler.getConnectionID(organizationId, "DataPage_data"),
+    ConnectionHandler.getConnectionID(
+      organizationId,
+      "DataPage_data",
+      { filter: { snapshotId: snapshotId || null } }
+    ),
   );
 
   const vendors = datumEntry?.vendors?.edges.map(edge => edge.node) ?? [];

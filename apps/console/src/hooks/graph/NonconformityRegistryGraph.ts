@@ -8,10 +8,10 @@ import { useMutationWithToasts } from "../useMutationWithToasts";
 export const RegistriesConnectionKey = "RegistriesPage_nonconformityRegistries";
 
 export const nonconformityRegistriesQuery = graphql`
-  query NonconformityRegistryGraphListQuery($organizationId: ID!) {
+  query NonconformityRegistryGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
-        ...NonconformityRegistriesPageFragment
+        ...NonconformityRegistriesPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
   }
@@ -22,6 +22,7 @@ export const nonconformityRegistryNodeQuery = graphql`
     node(id: $nonconformityRegistryId) {
       ... on NonconformityRegistry {
         id
+        snapshotId
         referenceId
         description
         dateIdentified

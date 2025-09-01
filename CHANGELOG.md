@@ -2,7 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## [0.54.0] - 2025-09-01
+
+### Added
+- Add compliance registry snapshots
+- Add continual improvement snapshots
+- Add processing activity registry snapshots
+- Add assets snapshots
+
+## [0.53.0] - 2025-08-29
+
+### Added
+- Add processing activity registries
+- Add continual improvement registries
+- Add noncoformity registry snapshots
 
 ### Fixed
 

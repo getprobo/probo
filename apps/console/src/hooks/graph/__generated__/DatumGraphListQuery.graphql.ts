@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<453e3cd4a7a9fdbacd183d097ec95a05>>
+ * @generated SignedSource<<7e67f2a3d41fbea46b7b8447595302a5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -316,7 +316,6 @@ return {
                 "alias": null,
                 "args": (v5/*: any*/),
                 "filters": [
-                  "orderBy",
                   "filter"
                 ],
                 "handle": "connection",

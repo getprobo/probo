@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8758668524dc47bc04757126d7f423b3>>
+ * @generated SignedSource<<8d257a13d23e2dd68542540dd12ca35b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type AssetGraphListQuery$variables = {
   organizationId: string;
+  snapshotId?: string | null | undefined;
 };
 export type AssetGraphListQuery$data = {
   readonly node: {
@@ -29,6 +30,11 @@ var v0 = [
     "defaultValue": null,
     "kind": "LocalArgument",
     "name": "organizationId"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "snapshotId"
   }
 ],
 v1 = [
@@ -38,28 +44,40 @@ v1 = [
     "variableName": "organizationId"
   }
 ],
-v2 = {
+v2 = [
+  {
+    "kind": "Variable",
+    "name": "snapshotId",
+    "variableName": "snapshotId"
+  }
+],
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v4 = [
+v5 = [
+  {
+    "fields": (v2/*: any*/),
+    "kind": "ObjectValue",
+    "name": "filter"
+  },
   {
     "kind": "Literal",
     "name": "first",
     "value": 10
   }
 ],
-v5 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -85,7 +103,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
-                "args": null,
+                "args": (v2/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "AssetsPageFragment"
               }
@@ -114,14 +132,14 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
           (v3/*: any*/),
+          (v4/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "AssetConnection",
                 "kind": "LinkedField",
                 "name": "assets",
@@ -143,8 +161,15 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
-                          (v5/*: any*/),
+                          (v4/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "snapshotId",
+                            "storageKey": null
+                          },
+                          (v6/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -181,7 +206,7 @@ return {
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v3/*: any*/),
+                              (v4/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -222,8 +247,8 @@ return {
                                     "name": "node",
                                     "plural": false,
                                     "selections": [
-                                      (v3/*: any*/),
-                                      (v5/*: any*/),
+                                      (v4/*: any*/),
+                                      (v6/*: any*/),
                                       {
                                         "alias": null,
                                         "args": null,
@@ -247,7 +272,7 @@ return {
                             "name": "createdAt",
                             "storageKey": null
                           },
-                          (v2/*: any*/)
+                          (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -313,13 +338,13 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "assets(first:10)"
+                "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "filters": [
-                  "orderBy"
+                  "filter"
                 ],
                 "handle": "connection",
                 "key": "AssetsPage_assets",
@@ -336,16 +361,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7e293e732d5ff8246a1ed772e1c33984",
+    "cacheID": "29eec1243d3cceb5d9931562635e1f24",
     "id": null,
     "metadata": {},
     "name": "AssetGraphListQuery",
     "operationKind": "query",
-    "text": "query AssetGraphListQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...AssetsPageFragment\n    }\n    id\n  }\n}\n\nfragment AssetsPageFragment on Organization {\n  assets(first: 10) {\n    edges {\n      node {\n        id\n        name\n        amount\n        criticity\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AssetGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...AssetsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment AssetsPageFragment_3iomuz on Organization {\n  assets(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        criticity\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "88644d5fcb5f2e017df4b5d6373ce27f";
+(node as any).hash = "4cbb1234b0884823285d3660334a2b29";
 
 export default node;
