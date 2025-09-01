@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.54.0] - 2025-09-01
 
 ### Added
 - Add compliance registry snapshots

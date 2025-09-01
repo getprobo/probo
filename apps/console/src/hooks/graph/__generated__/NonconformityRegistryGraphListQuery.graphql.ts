@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b306072db6c1956ba956e52443ebf866>>
+ * @generated SignedSource<<725635dc6b9b06340cfc49b9b75d509c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -174,6 +174,13 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "referenceId",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "snapshotId",
                             "storageKey": null
                           },
                           {
@@ -359,12 +366,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "727537500ac037fec1a9ffd04a5c651f",
+    "cacheID": "f788ee5c51814a5f68795aaca97cb971",
     "id": null,
     "metadata": {},
     "name": "NonconformityRegistryGraphListQuery",
     "operationKind": "query",
-    "text": "query NonconformityRegistryGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...NonconformityRegistriesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment NonconformityRegistriesPageFragment_3iomuz on Organization {\n  id\n  nonconformityRegistries(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query NonconformityRegistryGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...NonconformityRegistriesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment NonconformityRegistriesPageFragment_3iomuz on Organization {\n  id\n  nonconformityRegistries(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();

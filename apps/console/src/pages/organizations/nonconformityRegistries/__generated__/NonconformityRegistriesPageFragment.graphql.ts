@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fede190bc1e89813ce1034cf93d5ae95>>
+ * @generated SignedSource<<7ec3fc6b9ecb6302152fe0031e791682>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -38,6 +38,7 @@ export type NonconformityRegistriesPageFragment$data = {
         };
         readonly referenceId: string;
         readonly rootCause: string;
+        readonly snapshotId: string | null | undefined;
         readonly status: NonconformityRegistryStatus;
         readonly updatedAt: any;
       };
@@ -174,6 +175,13 @@ return {
                   "args": null,
                   "kind": "ScalarField",
                   "name": "referenceId",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "snapshotId",
                   "storageKey": null
                 },
                 {
@@ -350,6 +358,6 @@ return {
 };
 })();
 
-(node as any).hash = "ebde2010138ec4b17adb214f7bd24ac6";
+(node as any).hash = "36f3622d63ddf02a2703a2c8428f4268";
 
 export default node;

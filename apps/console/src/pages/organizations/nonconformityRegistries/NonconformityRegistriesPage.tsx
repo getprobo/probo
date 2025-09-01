@@ -64,6 +64,7 @@ const nonconformityRegistriesPageFragment = graphql`
         node {
           id
           referenceId
+          snapshotId
           description
           status
           dateIdentified

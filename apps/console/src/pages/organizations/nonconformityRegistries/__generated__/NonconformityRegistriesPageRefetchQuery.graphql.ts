@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c584903b5c82a59b575deef3f54379d9>>
+ * @generated SignedSource<<d47034189b16b400cc098c230ea062c1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -204,6 +204,13 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
+                            "name": "snapshotId",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
                             "name": "description",
                             "storageKey": null
                           },
@@ -383,16 +390,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "50e5771b4ff22e23d81c31bf7c92e619",
+    "cacheID": "c8a936f15b58d1f1d51984f692b0bba5",
     "id": null,
     "metadata": {},
     "name": "NonconformityRegistriesPageRefetchQuery",
     "operationKind": "query",
-    "text": "query NonconformityRegistriesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...NonconformityRegistriesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment NonconformityRegistriesPageFragment_35e0S5 on Organization {\n  id\n  nonconformityRegistries(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query NonconformityRegistriesPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...NonconformityRegistriesPageFragment_35e0S5\n    id\n  }\n}\n\nfragment NonconformityRegistriesPageFragment_35e0S5 on Organization {\n  id\n  nonconformityRegistries(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        snapshotId\n        description\n        status\n        dateIdentified\n        dueDate\n        rootCause\n        correctiveAction\n        effectivenessCheck\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ebde2010138ec4b17adb214f7bd24ac6";
+(node as any).hash = "36f3622d63ddf02a2703a2c8428f4268";
 
 export default node;
