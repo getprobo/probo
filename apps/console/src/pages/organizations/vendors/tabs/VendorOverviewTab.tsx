@@ -154,6 +154,7 @@ export default function VendorOverviewTab() {
             label={__("Business owner")}
             error={errors.businessOwnerId?.message}
             disabled={isSubmitting || isSnapshotMode}
+            optional={true}
           />
           <PeopleSelectField
             organizationId={organizationId}
@@ -162,6 +163,7 @@ export default function VendorOverviewTab() {
             label={__("Security owner")}
             error={errors.securityOwnerId?.message}
             disabled={isSubmitting || isSnapshotMode}
+            optional={true}
           />
         </Card>
       </div>

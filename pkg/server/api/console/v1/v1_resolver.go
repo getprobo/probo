@@ -1443,8 +1443,8 @@ func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateV
 		WebsiteURL:                    input.WebsiteURL,
 		Category:                      input.Category,
 		Certifications:                input.Certifications,
-		BusinessOwnerID:               input.BusinessOwnerID,
-		SecurityOwnerID:               input.SecurityOwnerID,
+		BusinessOwnerID:               &input.BusinessOwnerID,
+		SecurityOwnerID:               &input.SecurityOwnerID,
 		ShowOnTrustCenter:             input.ShowOnTrustCenter,
 	})
 	if err != nil {
