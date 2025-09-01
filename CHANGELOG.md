@@ -2,12 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.55.0] - 2025-09-01
+
+### Added
+- Add vendor snapshots
 
 ### Fixed
 
 - Fix document deletion and update errors
 - Remove signature block from trust center documents
+- Fix non mandatory fields on vendor
 
 ## [0.54.0] - 2025-09-01
 
