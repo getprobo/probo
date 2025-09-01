@@ -311,6 +311,66 @@ enum ProcessingActivityRegistryTransferImpactAssessment
     )
 }
 
+enum IncidentRegistryStatus
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryStatus") {
+  OPEN
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryStatusOpen"
+    )
+  IN_PROGRESS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryStatusInProgress"
+    )
+  RESOLVED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryStatusResolved"
+    )
+  CLOSED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryStatusClosed"
+    )
+}
+
+enum IncidentRegistryPriority
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryPriority") {
+  LOW
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryPriorityLow"
+    )
+  MEDIUM
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryPriorityMedium"
+    )
+  HIGH
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryPriorityHigh"
+    )
+  CRITICAL
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryPriorityCritical"
+    )
+}
+
+enum IncidentRegistrySeverity
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.IncidentRegistrySeverity") {
+  LOW
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistrySeverityLow"
+    )
+  MEDIUM
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistrySeverityMedium"
+    )
+  HIGH
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistrySeverityHigh"
+    )
+  CRITICAL
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistrySeverityCritical"
+    )
+}
+
 # Order Field Enums
 enum UserOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.UserOrderField") {
@@ -830,6 +890,34 @@ enum ContinualImprovementRegistriesOrderField
     )
 }
 
+enum IncidentRegistryOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldCreatedAt"
+    )
+  REFERENCE_ID
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldReferenceId"
+    )
+  INCIDENT_DATE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldIncidentDate"
+    )
+  STATUS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldStatus"
+    )
+  PRIORITY
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldPriority"
+    )
+  SEVERITY
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldSeverity"
+    )
+}
+
 enum ProcessingActivityRegistryOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderField") {
   CREATED_AT
@@ -1007,6 +1095,14 @@ input ContinualImprovementRegistriesOrder
   field: ContinualImprovementRegistriesOrderField!
 }
 
+input IncidentRegistryOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.IncidentRegistryOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: IncidentRegistryOrderField!
+}
+
 input ProcessingActivityRegistryOrder
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityRegistryOrderBy"
@@ -1123,6 +1219,10 @@ input ComplianceRegistryFilter {
 }
 
 input ContinualImprovementRegistryFilter {
+  snapshotId: ID
+}
+
+input IncidentRegistryFilter {
   snapshotId: ID
 }
 
@@ -1294,6 +1394,15 @@ type Organization implements Node {
     orderBy: ContinualImprovementRegistriesOrder
     filter: ContinualImprovementRegistryFilter = { snapshotId: null }
   ): ContinualImprovementRegistryConnection! @goField(forceResolver: true)
+
+  incidentRegistries(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: IncidentRegistryOrder
+    filter: IncidentRegistryFilter = { snapshotId: null }
+  ): IncidentRegistryConnection! @goField(forceResolver: true)
 
   processingActivityRegistries(
     first: Int
@@ -1781,6 +1890,24 @@ type ContinualImprovementRegistry implements Node {
   updatedAt: Datetime!
 }
 
+type IncidentRegistry implements Node {
+  id: ID!
+  organization: Organization! @goField(forceResolver: true)
+  referenceId: String!
+  title: String!
+  description: String
+  source: String
+  owner: People! @goField(forceResolver: true)
+  incidentDate: Datetime
+  resolvedDate: Datetime
+  status: IncidentRegistryStatus!
+  priority: IncidentRegistryPriority!
+  severity: IncidentRegistrySeverity!
+  category: String
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
 type ProcessingActivityRegistry implements Node {
   id: ID!
   snapshotId: ID
@@ -2160,6 +2287,20 @@ type ContinualImprovementRegistryEdge {
   node: ContinualImprovementRegistry!
 }
 
+type IncidentRegistryConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.IncidentRegistryConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [IncidentRegistryEdge!]!
+  pageInfo: PageInfo!
+}
+
+type IncidentRegistryEdge {
+  cursor: CursorKey!
+  node: IncidentRegistry!
+}
+
 type ProcessingActivityRegistryConnection
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityRegistryConnection"
@@ -2448,6 +2589,17 @@ type Mutation {
   deleteContinualImprovementRegistry(
     input: DeleteContinualImprovementRegistryInput!
   ): DeleteContinualImprovementRegistryPayload!
+
+  # Incident Registry mutations
+  createIncidentRegistry(
+    input: CreateIncidentRegistryInput!
+  ): CreateIncidentRegistryPayload!
+  updateIncidentRegistry(
+    input: UpdateIncidentRegistryInput!
+  ): UpdateIncidentRegistryPayload!
+  deleteIncidentRegistry(
+    input: DeleteIncidentRegistryInput!
+  ): DeleteIncidentRegistryPayload!
 
   # Processing Activity Registry mutations
   createProcessingActivityRegistry(
@@ -3051,6 +3203,39 @@ input UpdateContinualImprovementRegistryInput {
 
 input DeleteContinualImprovementRegistryInput {
   continualImprovementRegistryId: ID!
+}
+
+input CreateIncidentRegistryInput {
+  organizationId: ID!
+  referenceId: String!
+  title: String!
+  description: String
+  source: String
+  ownerId: ID!
+  incidentDate: Datetime
+  status: IncidentRegistryStatus
+  priority: IncidentRegistryPriority
+  severity: IncidentRegistrySeverity
+  category: String
+}
+
+input UpdateIncidentRegistryInput {
+  id: ID!
+  referenceId: String
+  title: String
+  description: String
+  source: String
+  ownerId: ID
+  incidentDate: Datetime
+  resolvedDate: Datetime
+  status: IncidentRegistryStatus
+  priority: IncidentRegistryPriority
+  severity: IncidentRegistrySeverity
+  category: String
+}
+
+input DeleteIncidentRegistryInput {
+  incidentRegistryId: ID!
 }
 
 input CreateProcessingActivityRegistryInput {
@@ -3836,6 +4021,18 @@ type UpdateContinualImprovementRegistryPayload {
 
 type DeleteContinualImprovementRegistryPayload {
   deletedContinualImprovementRegistryId: ID!
+}
+
+type CreateIncidentRegistryPayload {
+  incidentRegistryEdge: IncidentRegistryEdge!
+}
+
+type UpdateIncidentRegistryPayload {
+  incidentRegistry: IncidentRegistry!
+}
+
+type DeleteIncidentRegistryPayload {
+  deletedIncidentRegistryId: ID!
 }
 
 type CreateProcessingActivityRegistryPayload {

@@ -947,6 +947,21 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// Organization is the resolver for the organization field.
+func (r *incidentRegistryResolver) Organization(ctx context.Context, obj *types.IncidentRegistry) (*types.Organization, error) {
+	panic(fmt.Errorf("not implemented: Organization - organization"))
+}
+
+// Owner is the resolver for the owner field.
+func (r *incidentRegistryResolver) Owner(ctx context.Context, obj *types.IncidentRegistry) (*types.People, error) {
+	panic(fmt.Errorf("not implemented: Owner - owner"))
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *incidentRegistryConnectionResolver) TotalCount(ctx context.Context, obj *types.IncidentRegistryConnection) (int, error) {
+	panic(fmt.Errorf("not implemented: TotalCount - totalCount"))
+}
+
 // Evidences is the resolver for the evidences field.
 func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -3151,6 +3166,21 @@ func (r *mutationResolver) DeleteContinualImprovementRegistry(ctx context.Contex
 	}, nil
 }
 
+// CreateIncidentRegistry is the resolver for the createIncidentRegistry field.
+func (r *mutationResolver) CreateIncidentRegistry(ctx context.Context, input types.CreateIncidentRegistryInput) (*types.CreateIncidentRegistryPayload, error) {
+	panic(fmt.Errorf("not implemented: CreateIncidentRegistry - createIncidentRegistry"))
+}
+
+// UpdateIncidentRegistry is the resolver for the updateIncidentRegistry field.
+func (r *mutationResolver) UpdateIncidentRegistry(ctx context.Context, input types.UpdateIncidentRegistryInput) (*types.UpdateIncidentRegistryPayload, error) {
+	panic(fmt.Errorf("not implemented: UpdateIncidentRegistry - updateIncidentRegistry"))
+}
+
+// DeleteIncidentRegistry is the resolver for the deleteIncidentRegistry field.
+func (r *mutationResolver) DeleteIncidentRegistry(ctx context.Context, input types.DeleteIncidentRegistryInput) (*types.DeleteIncidentRegistryPayload, error) {
+	panic(fmt.Errorf("not implemented: DeleteIncidentRegistry - deleteIncidentRegistry"))
+}
+
 // CreateProcessingActivityRegistry is the resolver for the createProcessingActivityRegistry field.
 func (r *mutationResolver) CreateProcessingActivityRegistry(ctx context.Context, input types.CreateProcessingActivityRegistryInput) (*types.CreateProcessingActivityRegistryPayload, error) {
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
@@ -3789,6 +3819,11 @@ func (r *organizationResolver) ContinualImprovementRegistries(ctx context.Contex
 	}
 
 	return types.NewContinualImprovementRegistryConnection(page, r, obj.ID, filter), nil
+}
+
+// IncidentRegistries is the resolver for the incidentRegistries field.
+func (r *organizationResolver) IncidentRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.IncidentRegistryOrderBy, filter *types.IncidentRegistryFilter) (*types.IncidentRegistryConnection, error) {
+	panic(fmt.Errorf("not implemented: IncidentRegistries - incidentRegistries"))
 }
 
 // ProcessingActivityRegistries is the resolver for the processingActivityRegistries field.
@@ -4933,6 +4968,16 @@ func (r *Resolver) FrameworkConnection() schema.FrameworkConnectionResolver {
 	return &frameworkConnectionResolver{r}
 }
 
+// IncidentRegistry returns schema.IncidentRegistryResolver implementation.
+func (r *Resolver) IncidentRegistry() schema.IncidentRegistryResolver {
+	return &incidentRegistryResolver{r}
+}
+
+// IncidentRegistryConnection returns schema.IncidentRegistryConnectionResolver implementation.
+func (r *Resolver) IncidentRegistryConnection() schema.IncidentRegistryConnectionResolver {
+	return &incidentRegistryConnectionResolver{r}
+}
+
 // Measure returns schema.MeasureResolver implementation.
 func (r *Resolver) Measure() schema.MeasureResolver { return &measureResolver{r} }
 
@@ -5061,6 +5106,8 @@ type evidenceResolver struct{ *Resolver }
 type evidenceConnectionResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
 type frameworkConnectionResolver struct{ *Resolver }
+type incidentRegistryResolver struct{ *Resolver }
+type incidentRegistryConnectionResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }
 type measureConnectionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }

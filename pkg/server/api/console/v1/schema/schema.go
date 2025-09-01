@@ -64,6 +64,8 @@ type ResolverRoot interface {
 	EvidenceConnection() EvidenceConnectionResolver
 	Framework() FrameworkResolver
 	FrameworkConnection() FrameworkConnectionResolver
+	IncidentRegistry() IncidentRegistryResolver
+	IncidentRegistryConnection() IncidentRegistryConnectionResolver
 	Measure() MeasureResolver
 	MeasureConnection() MeasureConnectionResolver
 	Mutation() MutationResolver
@@ -338,6 +340,10 @@ type ComplexityRoot struct {
 		FrameworkEdge func(childComplexity int) int
 	}
 
+	CreateIncidentRegistryPayload struct {
+		IncidentRegistryEdge func(childComplexity int) int
+	}
+
 	CreateMeasurePayload struct {
 		MeasureEdge func(childComplexity int) int
 	}
@@ -485,6 +491,10 @@ type ComplexityRoot struct {
 
 	DeleteFrameworkPayload struct {
 		DeletedFrameworkID func(childComplexity int) int
+	}
+
+	DeleteIncidentRegistryPayload struct {
+		DeletedIncidentRegistryID func(childComplexity int) int
 	}
 
 	DeleteMeasurePayload struct {
@@ -703,6 +713,35 @@ type ComplexityRoot struct {
 		MeasureEdges func(childComplexity int) int
 	}
 
+	IncidentRegistry struct {
+		Category     func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		Description  func(childComplexity int) int
+		ID           func(childComplexity int) int
+		IncidentDate func(childComplexity int) int
+		Organization func(childComplexity int) int
+		Owner        func(childComplexity int) int
+		Priority     func(childComplexity int) int
+		ReferenceID  func(childComplexity int) int
+		ResolvedDate func(childComplexity int) int
+		Severity     func(childComplexity int) int
+		Source       func(childComplexity int) int
+		Status       func(childComplexity int) int
+		Title        func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+	}
+
+	IncidentRegistryConnection struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	IncidentRegistryEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	InviteUserPayload struct {
 		Success func(childComplexity int) int
 	}
@@ -752,6 +791,7 @@ type ComplexityRoot struct {
 		CreateDocument                         func(childComplexity int, input types.CreateDocumentInput) int
 		CreateDraftDocumentVersion             func(childComplexity int, input types.CreateDraftDocumentVersionInput) int
 		CreateFramework                        func(childComplexity int, input types.CreateFrameworkInput) int
+		CreateIncidentRegistry                 func(childComplexity int, input types.CreateIncidentRegistryInput) int
 		CreateMeasure                          func(childComplexity int, input types.CreateMeasureInput) int
 		CreateNonconformityRegistry            func(childComplexity int, input types.CreateNonconformityRegistryInput) int
 		CreateOrganization                     func(childComplexity int, input types.CreateOrganizationInput) int
@@ -782,6 +822,7 @@ type ComplexityRoot struct {
 		DeleteDraftDocumentVersion             func(childComplexity int, input types.DeleteDraftDocumentVersionInput) int
 		DeleteEvidence                         func(childComplexity int, input types.DeleteEvidenceInput) int
 		DeleteFramework                        func(childComplexity int, input types.DeleteFrameworkInput) int
+		DeleteIncidentRegistry                 func(childComplexity int, input types.DeleteIncidentRegistryInput) int
 		DeleteMeasure                          func(childComplexity int, input types.DeleteMeasureInput) int
 		DeleteNonconformityRegistry            func(childComplexity int, input types.DeleteNonconformityRegistryInput) int
 		DeleteOrganization                     func(childComplexity int, input types.DeleteOrganizationInput) int
@@ -821,6 +862,7 @@ type ComplexityRoot struct {
 		UpdateDocument                         func(childComplexity int, input types.UpdateDocumentInput) int
 		UpdateDocumentVersion                  func(childComplexity int, input types.UpdateDocumentVersionInput) int
 		UpdateFramework                        func(childComplexity int, input types.UpdateFrameworkInput) int
+		UpdateIncidentRegistry                 func(childComplexity int, input types.UpdateIncidentRegistryInput) int
 		UpdateMeasure                          func(childComplexity int, input types.UpdateMeasureInput) int
 		UpdateNonconformityRegistry            func(childComplexity int, input types.UpdateNonconformityRegistryInput) int
 		UpdateOrganization                     func(childComplexity int, input types.UpdateOrganizationInput) int
@@ -884,6 +926,7 @@ type ComplexityRoot struct {
 		Documents                      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
 		Frameworks                     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
 		ID                             func(childComplexity int) int
+		IncidentRegistries             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.IncidentRegistryOrderBy, filter *types.IncidentRegistryFilter) int
 		LogoURL                        func(childComplexity int) int
 		Measures                       func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
 		Name                           func(childComplexity int) int
@@ -1174,6 +1217,10 @@ type ComplexityRoot struct {
 
 	UpdateFrameworkPayload struct {
 		Framework func(childComplexity int) int
+	}
+
+	UpdateIncidentRegistryPayload struct {
+		IncidentRegistry func(childComplexity int) int
 	}
 
 	UpdateMeasurePayload struct {
@@ -1529,6 +1576,14 @@ type FrameworkResolver interface {
 type FrameworkConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.FrameworkConnection) (int, error)
 }
+type IncidentRegistryResolver interface {
+	Organization(ctx context.Context, obj *types.IncidentRegistry) (*types.Organization, error)
+
+	Owner(ctx context.Context, obj *types.IncidentRegistry) (*types.People, error)
+}
+type IncidentRegistryConnectionResolver interface {
+	TotalCount(ctx context.Context, obj *types.IncidentRegistryConnection) (int, error)
+}
 type MeasureResolver interface {
 	Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error)
 	Tasks(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) (*types.TaskConnection, error)
@@ -1642,6 +1697,9 @@ type MutationResolver interface {
 	CreateContinualImprovementRegistry(ctx context.Context, input types.CreateContinualImprovementRegistryInput) (*types.CreateContinualImprovementRegistryPayload, error)
 	UpdateContinualImprovementRegistry(ctx context.Context, input types.UpdateContinualImprovementRegistryInput) (*types.UpdateContinualImprovementRegistryPayload, error)
 	DeleteContinualImprovementRegistry(ctx context.Context, input types.DeleteContinualImprovementRegistryInput) (*types.DeleteContinualImprovementRegistryPayload, error)
+	CreateIncidentRegistry(ctx context.Context, input types.CreateIncidentRegistryInput) (*types.CreateIncidentRegistryPayload, error)
+	UpdateIncidentRegistry(ctx context.Context, input types.UpdateIncidentRegistryInput) (*types.UpdateIncidentRegistryPayload, error)
+	DeleteIncidentRegistry(ctx context.Context, input types.DeleteIncidentRegistryInput) (*types.DeleteIncidentRegistryPayload, error)
 	CreateProcessingActivityRegistry(ctx context.Context, input types.CreateProcessingActivityRegistryInput) (*types.CreateProcessingActivityRegistryPayload, error)
 	UpdateProcessingActivityRegistry(ctx context.Context, input types.UpdateProcessingActivityRegistryInput) (*types.UpdateProcessingActivityRegistryPayload, error)
 	DeleteProcessingActivityRegistry(ctx context.Context, input types.DeleteProcessingActivityRegistryInput) (*types.DeleteProcessingActivityRegistryPayload, error)
@@ -1676,6 +1734,7 @@ type OrganizationResolver interface {
 	NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy, filter *types.NonconformityRegistryFilter) (*types.NonconformityRegistryConnection, error)
 	ComplianceRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy, filter *types.ComplianceRegistryFilter) (*types.ComplianceRegistryConnection, error)
 	ContinualImprovementRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy, filter *types.ContinualImprovementRegistryFilter) (*types.ContinualImprovementRegistryConnection, error)
+	IncidentRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.IncidentRegistryOrderBy, filter *types.IncidentRegistryFilter) (*types.IncidentRegistryConnection, error)
 	ProcessingActivityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy, filter *types.ProcessingActivityRegistryFilter) (*types.ProcessingActivityRegistryConnection, error)
 	Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
@@ -2705,6 +2764,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateFrameworkPayload.FrameworkEdge(childComplexity), true
 
+	case "CreateIncidentRegistryPayload.incidentRegistryEdge":
+		if e.complexity.CreateIncidentRegistryPayload.IncidentRegistryEdge == nil {
+			break
+		}
+
+		return e.complexity.CreateIncidentRegistryPayload.IncidentRegistryEdge(childComplexity), true
+
 	case "CreateMeasurePayload.measureEdge":
 		if e.complexity.CreateMeasurePayload.MeasureEdge == nil {
 			break
@@ -3059,6 +3125,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteFrameworkPayload.DeletedFrameworkID(childComplexity), true
+
+	case "DeleteIncidentRegistryPayload.deletedIncidentRegistryId":
+		if e.complexity.DeleteIncidentRegistryPayload.DeletedIncidentRegistryID == nil {
+			break
+		}
+
+		return e.complexity.DeleteIncidentRegistryPayload.DeletedIncidentRegistryID(childComplexity), true
 
 	case "DeleteMeasurePayload.deletedMeasureId":
 		if e.complexity.DeleteMeasurePayload.DeletedMeasureID == nil {
@@ -3794,6 +3867,146 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ImportMeasurePayload.MeasureEdges(childComplexity), true
 
+	case "IncidentRegistry.category":
+		if e.complexity.IncidentRegistry.Category == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.Category(childComplexity), true
+
+	case "IncidentRegistry.createdAt":
+		if e.complexity.IncidentRegistry.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.CreatedAt(childComplexity), true
+
+	case "IncidentRegistry.description":
+		if e.complexity.IncidentRegistry.Description == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.Description(childComplexity), true
+
+	case "IncidentRegistry.id":
+		if e.complexity.IncidentRegistry.ID == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.ID(childComplexity), true
+
+	case "IncidentRegistry.incidentDate":
+		if e.complexity.IncidentRegistry.IncidentDate == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.IncidentDate(childComplexity), true
+
+	case "IncidentRegistry.organization":
+		if e.complexity.IncidentRegistry.Organization == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.Organization(childComplexity), true
+
+	case "IncidentRegistry.owner":
+		if e.complexity.IncidentRegistry.Owner == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.Owner(childComplexity), true
+
+	case "IncidentRegistry.priority":
+		if e.complexity.IncidentRegistry.Priority == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.Priority(childComplexity), true
+
+	case "IncidentRegistry.referenceId":
+		if e.complexity.IncidentRegistry.ReferenceID == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.ReferenceID(childComplexity), true
+
+	case "IncidentRegistry.resolvedDate":
+		if e.complexity.IncidentRegistry.ResolvedDate == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.ResolvedDate(childComplexity), true
+
+	case "IncidentRegistry.severity":
+		if e.complexity.IncidentRegistry.Severity == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.Severity(childComplexity), true
+
+	case "IncidentRegistry.source":
+		if e.complexity.IncidentRegistry.Source == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.Source(childComplexity), true
+
+	case "IncidentRegistry.status":
+		if e.complexity.IncidentRegistry.Status == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.Status(childComplexity), true
+
+	case "IncidentRegistry.title":
+		if e.complexity.IncidentRegistry.Title == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.Title(childComplexity), true
+
+	case "IncidentRegistry.updatedAt":
+		if e.complexity.IncidentRegistry.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistry.UpdatedAt(childComplexity), true
+
+	case "IncidentRegistryConnection.edges":
+		if e.complexity.IncidentRegistryConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistryConnection.Edges(childComplexity), true
+
+	case "IncidentRegistryConnection.pageInfo":
+		if e.complexity.IncidentRegistryConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistryConnection.PageInfo(childComplexity), true
+
+	case "IncidentRegistryConnection.totalCount":
+		if e.complexity.IncidentRegistryConnection.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistryConnection.TotalCount(childComplexity), true
+
+	case "IncidentRegistryEdge.cursor":
+		if e.complexity.IncidentRegistryEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistryEdge.Cursor(childComplexity), true
+
+	case "IncidentRegistryEdge.node":
+		if e.complexity.IncidentRegistryEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.IncidentRegistryEdge.Node(childComplexity), true
+
 	case "InviteUserPayload.success":
 		if e.complexity.InviteUserPayload.Success == nil {
 			break
@@ -4161,6 +4374,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreateFramework(childComplexity, args["input"].(types.CreateFrameworkInput)), true
 
+	case "Mutation.createIncidentRegistry":
+		if e.complexity.Mutation.CreateIncidentRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createIncidentRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateIncidentRegistry(childComplexity, args["input"].(types.CreateIncidentRegistryInput)), true
+
 	case "Mutation.createMeasure":
 		if e.complexity.Mutation.CreateMeasure == nil {
 			break
@@ -4520,6 +4745,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteFramework(childComplexity, args["input"].(types.DeleteFrameworkInput)), true
+
+	case "Mutation.deleteIncidentRegistry":
+		if e.complexity.Mutation.DeleteIncidentRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteIncidentRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteIncidentRegistry(childComplexity, args["input"].(types.DeleteIncidentRegistryInput)), true
 
 	case "Mutation.deleteMeasure":
 		if e.complexity.Mutation.DeleteMeasure == nil {
@@ -4988,6 +5225,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UpdateFramework(childComplexity, args["input"].(types.UpdateFrameworkInput)), true
+
+	case "Mutation.updateIncidentRegistry":
+		if e.complexity.Mutation.UpdateIncidentRegistry == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateIncidentRegistry_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateIncidentRegistry(childComplexity, args["input"].(types.UpdateIncidentRegistryInput)), true
 
 	case "Mutation.updateMeasure":
 		if e.complexity.Mutation.UpdateMeasure == nil {
@@ -5490,6 +5739,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.ID(childComplexity), true
+
+	case "Organization.incidentRegistries":
+		if e.complexity.Organization.IncidentRegistries == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_incidentRegistries_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.IncidentRegistries(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.IncidentRegistryOrderBy), args["filter"].(*types.IncidentRegistryFilter)), true
 
 	case "Organization.logoUrl":
 		if e.complexity.Organization.LogoURL == nil {
@@ -6719,6 +6980,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.UpdateFrameworkPayload.Framework(childComplexity), true
 
+	case "UpdateIncidentRegistryPayload.incidentRegistry":
+		if e.complexity.UpdateIncidentRegistryPayload.IncidentRegistry == nil {
+			break
+		}
+
+		return e.complexity.UpdateIncidentRegistryPayload.IncidentRegistry(childComplexity), true
+
 	case "UpdateMeasurePayload.measure":
 		if e.complexity.UpdateMeasurePayload.Measure == nil {
 			break
@@ -7725,6 +7993,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateDraftDocumentVersionInput,
 		ec.unmarshalInputCreateEvidenceInput,
 		ec.unmarshalInputCreateFrameworkInput,
+		ec.unmarshalInputCreateIncidentRegistryInput,
 		ec.unmarshalInputCreateMeasureInput,
 		ec.unmarshalInputCreateNonconformityRegistryInput,
 		ec.unmarshalInputCreateOrganizationInput,
@@ -7757,6 +8026,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteDraftDocumentVersionInput,
 		ec.unmarshalInputDeleteEvidenceInput,
 		ec.unmarshalInputDeleteFrameworkInput,
+		ec.unmarshalInputDeleteIncidentRegistryInput,
 		ec.unmarshalInputDeleteMeasureInput,
 		ec.unmarshalInputDeleteNonconformityRegistryInput,
 		ec.unmarshalInputDeleteOrganizationInput,
@@ -7787,6 +8057,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGenerateFrameworkStateOfApplicabilityInput,
 		ec.unmarshalInputImportFrameworkInput,
 		ec.unmarshalInputImportMeasureInput,
+		ec.unmarshalInputIncidentRegistryFilter,
+		ec.unmarshalInputIncidentRegistryOrder,
 		ec.unmarshalInputInviteUserInput,
 		ec.unmarshalInputMeasureFilter,
 		ec.unmarshalInputMeasureOrder,
@@ -7818,6 +8090,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateDocumentInput,
 		ec.unmarshalInputUpdateDocumentVersionInput,
 		ec.unmarshalInputUpdateFrameworkInput,
+		ec.unmarshalInputUpdateIncidentRegistryInput,
 		ec.unmarshalInputUpdateMeasureInput,
 		ec.unmarshalInputUpdateNonconformityRegistryInput,
 		ec.unmarshalInputUpdateOrganizationInput,
@@ -8251,6 +8524,66 @@ enum ProcessingActivityRegistryTransferImpactAssessment
   NOT_NEEDED
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferImpactAssessmentNotNeeded"
+    )
+}
+
+enum IncidentRegistryStatus
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryStatus") {
+  OPEN
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryStatusOpen"
+    )
+  IN_PROGRESS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryStatusInProgress"
+    )
+  RESOLVED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryStatusResolved"
+    )
+  CLOSED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryStatusClosed"
+    )
+}
+
+enum IncidentRegistryPriority
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryPriority") {
+  LOW
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryPriorityLow"
+    )
+  MEDIUM
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryPriorityMedium"
+    )
+  HIGH
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryPriorityHigh"
+    )
+  CRITICAL
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryPriorityCritical"
+    )
+}
+
+enum IncidentRegistrySeverity
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.IncidentRegistrySeverity") {
+  LOW
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistrySeverityLow"
+    )
+  MEDIUM
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistrySeverityMedium"
+    )
+  HIGH
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistrySeverityHigh"
+    )
+  CRITICAL
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistrySeverityCritical"
     )
 }
 
@@ -8773,6 +9106,34 @@ enum ContinualImprovementRegistriesOrderField
     )
 }
 
+enum IncidentRegistryOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldCreatedAt"
+    )
+  REFERENCE_ID
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldReferenceId"
+    )
+  INCIDENT_DATE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldIncidentDate"
+    )
+  STATUS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldStatus"
+    )
+  PRIORITY
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldPriority"
+    )
+  SEVERITY
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.IncidentRegistryOrderFieldSeverity"
+    )
+}
+
 enum ProcessingActivityRegistryOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderField") {
   CREATED_AT
@@ -8950,6 +9311,14 @@ input ContinualImprovementRegistriesOrder
   field: ContinualImprovementRegistriesOrderField!
 }
 
+input IncidentRegistryOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.IncidentRegistryOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: IncidentRegistryOrderField!
+}
+
 input ProcessingActivityRegistryOrder
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityRegistryOrderBy"
@@ -9066,6 +9435,10 @@ input ComplianceRegistryFilter {
 }
 
 input ContinualImprovementRegistryFilter {
+  snapshotId: ID
+}
+
+input IncidentRegistryFilter {
   snapshotId: ID
 }
 
@@ -9237,6 +9610,15 @@ type Organization implements Node {
     orderBy: ContinualImprovementRegistriesOrder
     filter: ContinualImprovementRegistryFilter = { snapshotId: null }
   ): ContinualImprovementRegistryConnection! @goField(forceResolver: true)
+
+  incidentRegistries(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: IncidentRegistryOrder
+    filter: IncidentRegistryFilter = { snapshotId: null }
+  ): IncidentRegistryConnection! @goField(forceResolver: true)
 
   processingActivityRegistries(
     first: Int
@@ -9724,6 +10106,24 @@ type ContinualImprovementRegistry implements Node {
   updatedAt: Datetime!
 }
 
+type IncidentRegistry implements Node {
+  id: ID!
+  organization: Organization! @goField(forceResolver: true)
+  referenceId: String!
+  title: String!
+  description: String
+  source: String
+  owner: People! @goField(forceResolver: true)
+  incidentDate: Datetime
+  resolvedDate: Datetime
+  status: IncidentRegistryStatus!
+  priority: IncidentRegistryPriority!
+  severity: IncidentRegistrySeverity!
+  category: String
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
 type ProcessingActivityRegistry implements Node {
   id: ID!
   snapshotId: ID
@@ -10103,6 +10503,20 @@ type ContinualImprovementRegistryEdge {
   node: ContinualImprovementRegistry!
 }
 
+type IncidentRegistryConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.IncidentRegistryConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [IncidentRegistryEdge!]!
+  pageInfo: PageInfo!
+}
+
+type IncidentRegistryEdge {
+  cursor: CursorKey!
+  node: IncidentRegistry!
+}
+
 type ProcessingActivityRegistryConnection
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityRegistryConnection"
@@ -10391,6 +10805,17 @@ type Mutation {
   deleteContinualImprovementRegistry(
     input: DeleteContinualImprovementRegistryInput!
   ): DeleteContinualImprovementRegistryPayload!
+
+  # Incident Registry mutations
+  createIncidentRegistry(
+    input: CreateIncidentRegistryInput!
+  ): CreateIncidentRegistryPayload!
+  updateIncidentRegistry(
+    input: UpdateIncidentRegistryInput!
+  ): UpdateIncidentRegistryPayload!
+  deleteIncidentRegistry(
+    input: DeleteIncidentRegistryInput!
+  ): DeleteIncidentRegistryPayload!
 
   # Processing Activity Registry mutations
   createProcessingActivityRegistry(
@@ -10994,6 +11419,39 @@ input UpdateContinualImprovementRegistryInput {
 
 input DeleteContinualImprovementRegistryInput {
   continualImprovementRegistryId: ID!
+}
+
+input CreateIncidentRegistryInput {
+  organizationId: ID!
+  referenceId: String!
+  title: String!
+  description: String
+  source: String
+  ownerId: ID!
+  incidentDate: Datetime
+  status: IncidentRegistryStatus
+  priority: IncidentRegistryPriority
+  severity: IncidentRegistrySeverity
+  category: String
+}
+
+input UpdateIncidentRegistryInput {
+  id: ID!
+  referenceId: String
+  title: String
+  description: String
+  source: String
+  ownerId: ID
+  incidentDate: Datetime
+  resolvedDate: Datetime
+  status: IncidentRegistryStatus
+  priority: IncidentRegistryPriority
+  severity: IncidentRegistrySeverity
+  category: String
+}
+
+input DeleteIncidentRegistryInput {
+  incidentRegistryId: ID!
 }
 
 input CreateProcessingActivityRegistryInput {
@@ -11779,6 +12237,18 @@ type UpdateContinualImprovementRegistryPayload {
 
 type DeleteContinualImprovementRegistryPayload {
   deletedContinualImprovementRegistryId: ID!
+}
+
+type CreateIncidentRegistryPayload {
+  incidentRegistryEdge: IncidentRegistryEdge!
+}
+
+type UpdateIncidentRegistryPayload {
+  incidentRegistry: IncidentRegistry!
+}
+
+type DeleteIncidentRegistryPayload {
+  deletedIncidentRegistryId: ID!
 }
 
 type CreateProcessingActivityRegistryPayload {
@@ -13814,6 +14284,29 @@ func (ec *executionContext) field_Mutation_createFramework_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_createIncidentRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_createIncidentRegistry_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_createIncidentRegistry_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.CreateIncidentRegistryInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNCreateIncidentRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateIncidentRegistryInput(ctx, tmp)
+	}
+
+	var zeroVal types.CreateIncidentRegistryInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_createMeasure_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -14501,6 +14994,29 @@ func (ec *executionContext) field_Mutation_deleteFramework_argsInput(
 	}
 
 	var zeroVal types.DeleteFrameworkInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteIncidentRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteIncidentRegistry_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteIncidentRegistry_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.DeleteIncidentRegistryInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNDeleteIncidentRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteIncidentRegistryInput(ctx, tmp)
+	}
+
+	var zeroVal types.DeleteIncidentRegistryInput
 	return zeroVal, nil
 }
 
@@ -15398,6 +15914,29 @@ func (ec *executionContext) field_Mutation_updateFramework_argsInput(
 	}
 
 	var zeroVal types.UpdateFrameworkInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_updateIncidentRegistry_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_updateIncidentRegistry_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_updateIncidentRegistry_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.UpdateIncidentRegistryInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUpdateIncidentRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateIncidentRegistryInput(ctx, tmp)
+	}
+
+	var zeroVal types.UpdateIncidentRegistryInput
 	return zeroVal, nil
 }
 
@@ -16821,6 +17360,119 @@ func (ec *executionContext) field_Organization_frameworks_argsOrderBy(
 	}
 
 	var zeroVal *types.FrameworkOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_incidentRegistries_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Organization_incidentRegistries_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Organization_incidentRegistries_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Organization_incidentRegistries_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Organization_incidentRegistries_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Organization_incidentRegistries_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	arg5, err := ec.field_Organization_incidentRegistries_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
+	return args, nil
+}
+func (ec *executionContext) field_Organization_incidentRegistries_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_incidentRegistries_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_incidentRegistries_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_incidentRegistries_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_incidentRegistries_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.IncidentRegistryOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalOIncidentRegistryOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.IncidentRegistryOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_incidentRegistries_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.IncidentRegistryFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalOIncidentRegistryFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.IncidentRegistryFilter
 	return zeroVal, nil
 }
 
@@ -19688,6 +20340,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -20287,6 +20941,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -21406,6 +22062,8 @@ func (ec *executionContext) fieldContext_ComplianceRegistry_organization(_ conte
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -22893,6 +23551,8 @@ func (ec *executionContext) fieldContext_ContinualImprovementRegistry_organizati
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -25458,6 +26118,56 @@ func (ec *executionContext) fieldContext_CreateFrameworkPayload_frameworkEdge(_ 
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateIncidentRegistryPayload_incidentRegistryEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateIncidentRegistryPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateIncidentRegistryPayload_incidentRegistryEdge(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IncidentRegistryEdge, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.IncidentRegistryEdge)
+	fc.Result = res
+	return ec.marshalNIncidentRegistryEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateIncidentRegistryPayload_incidentRegistryEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateIncidentRegistryPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_IncidentRegistryEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_IncidentRegistryEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type IncidentRegistryEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateMeasurePayload_measureEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateMeasurePayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreateMeasurePayload_measureEdge(ctx, field)
 	if err != nil {
@@ -26687,6 +27397,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -27900,6 +28612,50 @@ func (ec *executionContext) _DeleteFrameworkPayload_deletedFrameworkId(ctx conte
 func (ec *executionContext) fieldContext_DeleteFrameworkPayload_deletedFrameworkId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteFrameworkPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteIncidentRegistryPayload_deletedIncidentRegistryId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteIncidentRegistryPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteIncidentRegistryPayload_deletedIncidentRegistryId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedIncidentRegistryID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteIncidentRegistryPayload_deletedIncidentRegistryId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteIncidentRegistryPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -29150,6 +29906,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -32321,6 +33079,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -32974,6 +33734,993 @@ func (ec *executionContext) fieldContext_ImportMeasurePayload_measureEdges(_ con
 				return ec.fieldContext_MeasureEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MeasureEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_id(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_organization(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_organization(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.IncidentRegistry().Organization(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Organization)
+	fc.Result = res
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "users":
+				return ec.fieldContext_Organization_users(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformityRegistries":
+				return ec.fieldContext_Organization_nonconformityRegistries(ctx, field)
+			case "complianceRegistries":
+				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
+			case "continualImprovementRegistries":
+				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
+			case "processingActivityRegistries":
+				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_referenceId(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_referenceId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ReferenceID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_referenceId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_title(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_title(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_description(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_source(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_source(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Source, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_source(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_owner(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_owner(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.IncidentRegistry().Owner(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.People)
+	fc.Result = res
+	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_owner(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_People_id(ctx, field)
+			case "fullName":
+				return ec.fieldContext_People_fullName(ctx, field)
+			case "primaryEmailAddress":
+				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
+			case "additionalEmailAddresses":
+				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
+			case "kind":
+				return ec.fieldContext_People_kind(ctx, field)
+			case "position":
+				return ec.fieldContext_People_position(ctx, field)
+			case "contractStartDate":
+				return ec.fieldContext_People_contractStartDate(ctx, field)
+			case "contractEndDate":
+				return ec.fieldContext_People_contractEndDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_People_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_People_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_incidentDate(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_incidentDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IncidentDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_incidentDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_resolvedDate(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_resolvedDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ResolvedDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_resolvedDate(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_status(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.IncidentRegistryStatus)
+	fc.Result = res
+	return ec.marshalNIncidentRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type IncidentRegistryStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_priority(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_priority(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Priority, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.IncidentRegistryPriority)
+	fc.Result = res
+	return ec.marshalNIncidentRegistryPriority2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_priority(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type IncidentRegistryPriority does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_severity(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_severity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Severity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.IncidentRegistrySeverity)
+	fc.Result = res
+	return ec.marshalNIncidentRegistrySeverity2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_severity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type IncidentRegistrySeverity does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_category(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_category(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Category, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistry_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistry_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistry_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistryConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistryConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistryConnection_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.IncidentRegistryConnection().TotalCount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistryConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistryConnection",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistryConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistryConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistryConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.IncidentRegistryEdge)
+	fc.Result = res
+	return ec.marshalNIncidentRegistryEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistryConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistryConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_IncidentRegistryEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_IncidentRegistryEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type IncidentRegistryEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistryConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistryConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistryConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(types.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistryConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistryConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistryEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistryEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistryEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(page.CursorKey)
+	fc.Result = res
+	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistryEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistryEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _IncidentRegistryEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.IncidentRegistryEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_IncidentRegistryEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.IncidentRegistry)
+	fc.Result = res
+	return ec.marshalNIncidentRegistry2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_IncidentRegistryEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "IncidentRegistryEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_IncidentRegistry_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_IncidentRegistry_organization(ctx, field)
+			case "referenceId":
+				return ec.fieldContext_IncidentRegistry_referenceId(ctx, field)
+			case "title":
+				return ec.fieldContext_IncidentRegistry_title(ctx, field)
+			case "description":
+				return ec.fieldContext_IncidentRegistry_description(ctx, field)
+			case "source":
+				return ec.fieldContext_IncidentRegistry_source(ctx, field)
+			case "owner":
+				return ec.fieldContext_IncidentRegistry_owner(ctx, field)
+			case "incidentDate":
+				return ec.fieldContext_IncidentRegistry_incidentDate(ctx, field)
+			case "resolvedDate":
+				return ec.fieldContext_IncidentRegistry_resolvedDate(ctx, field)
+			case "status":
+				return ec.fieldContext_IncidentRegistry_status(ctx, field)
+			case "priority":
+				return ec.fieldContext_IncidentRegistry_priority(ctx, field)
+			case "severity":
+				return ec.fieldContext_IncidentRegistry_severity(ctx, field)
+			case "category":
+				return ec.fieldContext_IncidentRegistry_category(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_IncidentRegistry_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_IncidentRegistry_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type IncidentRegistry", field.Name)
 		},
 	}
 	return fc, nil
@@ -39950,6 +41697,183 @@ func (ec *executionContext) fieldContext_Mutation_deleteContinualImprovementRegi
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createIncidentRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createIncidentRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateIncidentRegistry(rctx, fc.Args["input"].(types.CreateIncidentRegistryInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.CreateIncidentRegistryPayload)
+	fc.Result = res
+	return ec.marshalNCreateIncidentRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateIncidentRegistryPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createIncidentRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "incidentRegistryEdge":
+				return ec.fieldContext_CreateIncidentRegistryPayload_incidentRegistryEdge(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateIncidentRegistryPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createIncidentRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateIncidentRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateIncidentRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateIncidentRegistry(rctx, fc.Args["input"].(types.UpdateIncidentRegistryInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.UpdateIncidentRegistryPayload)
+	fc.Result = res
+	return ec.marshalNUpdateIncidentRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateIncidentRegistryPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateIncidentRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "incidentRegistry":
+				return ec.fieldContext_UpdateIncidentRegistryPayload_incidentRegistry(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UpdateIncidentRegistryPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateIncidentRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteIncidentRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteIncidentRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteIncidentRegistry(rctx, fc.Args["input"].(types.DeleteIncidentRegistryInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DeleteIncidentRegistryPayload)
+	fc.Result = res
+	return ec.marshalNDeleteIncidentRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteIncidentRegistryPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteIncidentRegistry(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedIncidentRegistryId":
+				return ec.fieldContext_DeleteIncidentRegistryPayload_deletedIncidentRegistryId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteIncidentRegistryPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteIncidentRegistry_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createProcessingActivityRegistry(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createProcessingActivityRegistry(ctx, field)
 	if err != nil {
@@ -40407,6 +42331,8 @@ func (ec *executionContext) fieldContext_NonconformityRegistry_organization(_ co
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -42386,6 +44312,69 @@ func (ec *executionContext) fieldContext_Organization_continualImprovementRegist
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_incidentRegistries(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_incidentRegistries(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Organization().IncidentRegistries(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.IncidentRegistryOrderBy), fc.Args["filter"].(*types.IncidentRegistryFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.IncidentRegistryConnection)
+	fc.Result = res
+	return ec.marshalNIncidentRegistryConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_incidentRegistries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_IncidentRegistryConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_IncidentRegistryConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_IncidentRegistryConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type IncidentRegistryConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organization_incidentRegistries_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_processingActivityRegistries(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 	if err != nil {
@@ -42882,6 +44871,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -43961,6 +45952,8 @@ func (ec *executionContext) fieldContext_ProcessingActivityRegistry_organization
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -46520,6 +48513,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -47343,6 +49338,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -48246,6 +50243,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -49038,6 +51037,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -50492,6 +52493,82 @@ func (ec *executionContext) fieldContext_UpdateFrameworkPayload_framework(_ cont
 	return fc, nil
 }
 
+func (ec *executionContext) _UpdateIncidentRegistryPayload_incidentRegistry(ctx context.Context, field graphql.CollectedField, obj *types.UpdateIncidentRegistryPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UpdateIncidentRegistryPayload_incidentRegistry(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IncidentRegistry, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.IncidentRegistry)
+	fc.Result = res
+	return ec.marshalNIncidentRegistry2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UpdateIncidentRegistryPayload_incidentRegistry(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UpdateIncidentRegistryPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_IncidentRegistry_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_IncidentRegistry_organization(ctx, field)
+			case "referenceId":
+				return ec.fieldContext_IncidentRegistry_referenceId(ctx, field)
+			case "title":
+				return ec.fieldContext_IncidentRegistry_title(ctx, field)
+			case "description":
+				return ec.fieldContext_IncidentRegistry_description(ctx, field)
+			case "source":
+				return ec.fieldContext_IncidentRegistry_source(ctx, field)
+			case "owner":
+				return ec.fieldContext_IncidentRegistry_owner(ctx, field)
+			case "incidentDate":
+				return ec.fieldContext_IncidentRegistry_incidentDate(ctx, field)
+			case "resolvedDate":
+				return ec.fieldContext_IncidentRegistry_resolvedDate(ctx, field)
+			case "status":
+				return ec.fieldContext_IncidentRegistry_status(ctx, field)
+			case "priority":
+				return ec.fieldContext_IncidentRegistry_priority(ctx, field)
+			case "severity":
+				return ec.fieldContext_IncidentRegistry_severity(ctx, field)
+			case "category":
+				return ec.fieldContext_IncidentRegistry_category(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_IncidentRegistry_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_IncidentRegistry_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type IncidentRegistry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _UpdateMeasurePayload_measure(ctx context.Context, field graphql.CollectedField, obj *types.UpdateMeasurePayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UpdateMeasurePayload_measure(ctx, field)
 	if err != nil {
@@ -50713,6 +52790,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -52606,6 +54685,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_complianceRegistries(ctx, field)
 			case "continualImprovementRegistries":
 				return ec.fieldContext_Organization_continualImprovementRegistries(ctx, field)
+			case "incidentRegistries":
+				return ec.fieldContext_Organization_incidentRegistries(ctx, field)
 			case "processingActivityRegistries":
 				return ec.fieldContext_Organization_processingActivityRegistries(ctx, field)
 			case "snapshots":
@@ -60883,6 +62964,103 @@ func (ec *executionContext) unmarshalInputCreateFrameworkInput(ctx context.Conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateIncidentRegistryInput(ctx context.Context, obj any) (types.CreateIncidentRegistryInput, error) {
+	var it types.CreateIncidentRegistryInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "referenceId", "title", "description", "source", "ownerId", "incidentDate", "status", "priority", "severity", "category"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "referenceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("referenceId"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReferenceID = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "ownerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "incidentDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("incidentDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IncidentDate = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOIncidentRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "priority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+			data, err := ec.unmarshalOIncidentRegistryPriority2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priority = data
+		case "severity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("severity"))
+			data, err := ec.unmarshalOIncidentRegistrySeverity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Severity = data
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateMeasureInput(ctx context.Context, obj any) (types.CreateMeasureInput, error) {
 	var it types.CreateMeasureInput
 	asMap := map[string]any{}
@@ -62419,6 +64597,33 @@ func (ec *executionContext) unmarshalInputDeleteFrameworkInput(ctx context.Conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteIncidentRegistryInput(ctx context.Context, obj any) (types.DeleteIncidentRegistryInput, error) {
+	var it types.DeleteIncidentRegistryInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"incidentRegistryId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "incidentRegistryId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("incidentRegistryId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IncidentRegistryID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteMeasureInput(ctx context.Context, obj any) (types.DeleteMeasureInput, error) {
 	var it types.DeleteMeasureInput
 	asMap := map[string]any{}
@@ -63307,6 +65512,67 @@ func (ec *executionContext) unmarshalInputImportMeasureInput(ctx context.Context
 				return it, err
 			}
 			it.File = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputIncidentRegistryFilter(ctx context.Context, obj any) (types.IncidentRegistryFilter, error) {
+	var it types.IncidentRegistryFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"snapshotId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputIncidentRegistryOrder(ctx context.Context, obj any) (types.IncidentRegistryOrderBy, error) {
+	var it types.IncidentRegistryOrderBy
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"direction", "field"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "direction":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
+			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Direction = data
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNIncidentRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryOrderField(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
 		}
 	}
 
@@ -64592,6 +66858,110 @@ func (ec *executionContext) unmarshalInputUpdateFrameworkInput(ctx context.Conte
 				return it, err
 			}
 			it.Description = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateIncidentRegistryInput(ctx context.Context, obj any) (types.UpdateIncidentRegistryInput, error) {
+	var it types.UpdateIncidentRegistryInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "referenceId", "title", "description", "source", "ownerId", "incidentDate", "resolvedDate", "status", "priority", "severity", "category"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "referenceId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("referenceId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReferenceID = data
+		case "title":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("title"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Title = data
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		case "source":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Source = data
+		case "ownerId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OwnerID = data
+		case "incidentDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("incidentDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.IncidentDate = data
+		case "resolvedDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resolvedDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResolvedDate = data
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOIncidentRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Status = data
+		case "priority":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+			data, err := ec.unmarshalOIncidentRegistryPriority2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priority = data
+		case "severity":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("severity"))
+			data, err := ec.unmarshalOIncidentRegistrySeverity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Severity = data
+		case "category":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Category = data
 		}
 	}
 
@@ -66204,6 +68574,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Measure(ctx, sel, obj)
+	case types.IncidentRegistry:
+		return ec._IncidentRegistry(ctx, sel, &obj)
+	case *types.IncidentRegistry:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._IncidentRegistry(ctx, sel, obj)
 	case types.Framework:
 		return ec._Framework(ctx, sel, &obj)
 	case *types.Framework:
@@ -68844,6 +71221,45 @@ func (ec *executionContext) _CreateFrameworkPayload(ctx context.Context, sel ast
 	return out
 }
 
+var createIncidentRegistryPayloadImplementors = []string{"CreateIncidentRegistryPayload"}
+
+func (ec *executionContext) _CreateIncidentRegistryPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateIncidentRegistryPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createIncidentRegistryPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateIncidentRegistryPayload")
+		case "incidentRegistryEdge":
+			out.Values[i] = ec._CreateIncidentRegistryPayload_incidentRegistryEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var createMeasurePayloadImplementors = []string{"CreateMeasurePayload"}
 
 func (ec *executionContext) _CreateMeasurePayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateMeasurePayload) graphql.Marshaler {
@@ -70311,6 +72727,45 @@ func (ec *executionContext) _DeleteFrameworkPayload(ctx context.Context, sel ast
 			out.Values[i] = graphql.MarshalString("DeleteFrameworkPayload")
 		case "deletedFrameworkId":
 			out.Values[i] = ec._DeleteFrameworkPayload_deletedFrameworkId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteIncidentRegistryPayloadImplementors = []string{"DeleteIncidentRegistryPayload"}
+
+func (ec *executionContext) _DeleteIncidentRegistryPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteIncidentRegistryPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteIncidentRegistryPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteIncidentRegistryPayload")
+		case "deletedIncidentRegistryId":
+			out.Values[i] = ec._DeleteIncidentRegistryPayload_deletedIncidentRegistryId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -72707,6 +75162,286 @@ func (ec *executionContext) _ImportMeasurePayload(ctx context.Context, sel ast.S
 	return out
 }
 
+var incidentRegistryImplementors = []string{"IncidentRegistry", "Node"}
+
+func (ec *executionContext) _IncidentRegistry(ctx context.Context, sel ast.SelectionSet, obj *types.IncidentRegistry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, incidentRegistryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("IncidentRegistry")
+		case "id":
+			out.Values[i] = ec._IncidentRegistry_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._IncidentRegistry_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "referenceId":
+			out.Values[i] = ec._IncidentRegistry_referenceId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "title":
+			out.Values[i] = ec._IncidentRegistry_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._IncidentRegistry_description(ctx, field, obj)
+		case "source":
+			out.Values[i] = ec._IncidentRegistry_source(ctx, field, obj)
+		case "owner":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._IncidentRegistry_owner(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "incidentDate":
+			out.Values[i] = ec._IncidentRegistry_incidentDate(ctx, field, obj)
+		case "resolvedDate":
+			out.Values[i] = ec._IncidentRegistry_resolvedDate(ctx, field, obj)
+		case "status":
+			out.Values[i] = ec._IncidentRegistry_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "priority":
+			out.Values[i] = ec._IncidentRegistry_priority(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "severity":
+			out.Values[i] = ec._IncidentRegistry_severity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "category":
+			out.Values[i] = ec._IncidentRegistry_category(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._IncidentRegistry_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._IncidentRegistry_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var incidentRegistryConnectionImplementors = []string{"IncidentRegistryConnection"}
+
+func (ec *executionContext) _IncidentRegistryConnection(ctx context.Context, sel ast.SelectionSet, obj *types.IncidentRegistryConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, incidentRegistryConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("IncidentRegistryConnection")
+		case "totalCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._IncidentRegistryConnection_totalCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "edges":
+			out.Values[i] = ec._IncidentRegistryConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "pageInfo":
+			out.Values[i] = ec._IncidentRegistryConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var incidentRegistryEdgeImplementors = []string{"IncidentRegistryEdge"}
+
+func (ec *executionContext) _IncidentRegistryEdge(ctx context.Context, sel ast.SelectionSet, obj *types.IncidentRegistryEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, incidentRegistryEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("IncidentRegistryEdge")
+		case "cursor":
+			out.Values[i] = ec._IncidentRegistryEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._IncidentRegistryEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var inviteUserPayloadImplementors = []string{"InviteUserPayload"}
 
 func (ec *executionContext) _InviteUserPayload(ctx context.Context, sel ast.SelectionSet, obj *types.InviteUserPayload) graphql.Marshaler {
@@ -73823,6 +76558,27 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createIncidentRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createIncidentRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateIncidentRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateIncidentRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteIncidentRegistry":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteIncidentRegistry(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createProcessingActivityRegistry":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createProcessingActivityRegistry(ctx, field)
@@ -74793,6 +77549,42 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._Organization_continualImprovementRegistries(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "incidentRegistries":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_incidentRegistries(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -77715,6 +80507,45 @@ func (ec *executionContext) _UpdateFrameworkPayload(ctx context.Context, sel ast
 			out.Values[i] = graphql.MarshalString("UpdateFrameworkPayload")
 		case "framework":
 			out.Values[i] = ec._UpdateFrameworkPayload_framework(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var updateIncidentRegistryPayloadImplementors = []string{"UpdateIncidentRegistryPayload"}
+
+func (ec *executionContext) _UpdateIncidentRegistryPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UpdateIncidentRegistryPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateIncidentRegistryPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UpdateIncidentRegistryPayload")
+		case "incidentRegistry":
+			out.Values[i] = ec._UpdateIncidentRegistryPayload_incidentRegistry(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -81982,6 +84813,25 @@ func (ec *executionContext) marshalNCreateFrameworkPayload2ᚖgithubᚗcomᚋget
 	return ec._CreateFrameworkPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCreateIncidentRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateIncidentRegistryInput(ctx context.Context, v any) (types.CreateIncidentRegistryInput, error) {
+	res, err := ec.unmarshalInputCreateIncidentRegistryInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateIncidentRegistryPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateIncidentRegistryPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateIncidentRegistryPayload) graphql.Marshaler {
+	return ec._CreateIncidentRegistryPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateIncidentRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateIncidentRegistryPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateIncidentRegistryPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateIncidentRegistryPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateMeasureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateMeasureInput(ctx context.Context, v any) (types.CreateMeasureInput, error) {
 	res, err := ec.unmarshalInputCreateMeasureInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -82786,6 +85636,25 @@ func (ec *executionContext) marshalNDeleteFrameworkPayload2ᚖgithubᚗcomᚋget
 		return graphql.Null
 	}
 	return ec._DeleteFrameworkPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteIncidentRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteIncidentRegistryInput(ctx context.Context, v any) (types.DeleteIncidentRegistryInput, error) {
+	res, err := ec.unmarshalInputDeleteIncidentRegistryInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteIncidentRegistryPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteIncidentRegistryPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteIncidentRegistryPayload) graphql.Marshaler {
+	return ec._DeleteIncidentRegistryPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteIncidentRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteIncidentRegistryPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteIncidentRegistryPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteIncidentRegistryPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteMeasureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteMeasureInput(ctx context.Context, v any) (types.DeleteMeasureInput, error) {
@@ -83943,6 +86812,216 @@ func (ec *executionContext) marshalNImportMeasurePayload2ᚖgithubᚗcomᚋgetpr
 	}
 	return ec._ImportMeasurePayload(ctx, sel, v)
 }
+
+func (ec *executionContext) marshalNIncidentRegistry2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistry(ctx context.Context, sel ast.SelectionSet, v *types.IncidentRegistry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._IncidentRegistry(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNIncidentRegistryConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryConnection(ctx context.Context, sel ast.SelectionSet, v types.IncidentRegistryConnection) graphql.Marshaler {
+	return ec._IncidentRegistryConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNIncidentRegistryConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryConnection(ctx context.Context, sel ast.SelectionSet, v *types.IncidentRegistryConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._IncidentRegistryConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNIncidentRegistryEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.IncidentRegistryEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNIncidentRegistryEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNIncidentRegistryEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryEdge(ctx context.Context, sel ast.SelectionSet, v *types.IncidentRegistryEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._IncidentRegistryEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNIncidentRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryOrderField(ctx context.Context, v any) (coredata.IncidentRegistryOrderField, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNIncidentRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryOrderField[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNIncidentRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.IncidentRegistryOrderField) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNIncidentRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryOrderField[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNIncidentRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryOrderField = map[string]coredata.IncidentRegistryOrderField{
+		"CREATED_AT":    coredata.IncidentRegistryOrderFieldCreatedAt,
+		"REFERENCE_ID":  coredata.IncidentRegistryOrderFieldReferenceId,
+		"INCIDENT_DATE": coredata.IncidentRegistryOrderFieldIncidentDate,
+		"STATUS":        coredata.IncidentRegistryOrderFieldStatus,
+		"PRIORITY":      coredata.IncidentRegistryOrderFieldPriority,
+		"SEVERITY":      coredata.IncidentRegistryOrderFieldSeverity,
+	}
+	marshalNIncidentRegistryOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryOrderField = map[coredata.IncidentRegistryOrderField]string{
+		coredata.IncidentRegistryOrderFieldCreatedAt:    "CREATED_AT",
+		coredata.IncidentRegistryOrderFieldReferenceId:  "REFERENCE_ID",
+		coredata.IncidentRegistryOrderFieldIncidentDate: "INCIDENT_DATE",
+		coredata.IncidentRegistryOrderFieldStatus:       "STATUS",
+		coredata.IncidentRegistryOrderFieldPriority:     "PRIORITY",
+		coredata.IncidentRegistryOrderFieldSeverity:     "SEVERITY",
+	}
+)
+
+func (ec *executionContext) unmarshalNIncidentRegistryPriority2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority(ctx context.Context, v any) (coredata.IncidentRegistryPriority, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNIncidentRegistryPriority2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNIncidentRegistryPriority2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority(ctx context.Context, sel ast.SelectionSet, v coredata.IncidentRegistryPriority) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNIncidentRegistryPriority2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNIncidentRegistryPriority2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority = map[string]coredata.IncidentRegistryPriority{
+		"LOW":      coredata.IncidentRegistryPriorityLow,
+		"MEDIUM":   coredata.IncidentRegistryPriorityMedium,
+		"HIGH":     coredata.IncidentRegistryPriorityHigh,
+		"CRITICAL": coredata.IncidentRegistryPriorityCritical,
+	}
+	marshalNIncidentRegistryPriority2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority = map[coredata.IncidentRegistryPriority]string{
+		coredata.IncidentRegistryPriorityLow:      "LOW",
+		coredata.IncidentRegistryPriorityMedium:   "MEDIUM",
+		coredata.IncidentRegistryPriorityHigh:     "HIGH",
+		coredata.IncidentRegistryPriorityCritical: "CRITICAL",
+	}
+)
+
+func (ec *executionContext) unmarshalNIncidentRegistrySeverity2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity(ctx context.Context, v any) (coredata.IncidentRegistrySeverity, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNIncidentRegistrySeverity2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNIncidentRegistrySeverity2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity(ctx context.Context, sel ast.SelectionSet, v coredata.IncidentRegistrySeverity) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNIncidentRegistrySeverity2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNIncidentRegistrySeverity2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity = map[string]coredata.IncidentRegistrySeverity{
+		"LOW":      coredata.IncidentRegistrySeverityLow,
+		"MEDIUM":   coredata.IncidentRegistrySeverityMedium,
+		"HIGH":     coredata.IncidentRegistrySeverityHigh,
+		"CRITICAL": coredata.IncidentRegistrySeverityCritical,
+	}
+	marshalNIncidentRegistrySeverity2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity = map[coredata.IncidentRegistrySeverity]string{
+		coredata.IncidentRegistrySeverityLow:      "LOW",
+		coredata.IncidentRegistrySeverityMedium:   "MEDIUM",
+		coredata.IncidentRegistrySeverityHigh:     "HIGH",
+		coredata.IncidentRegistrySeverityCritical: "CRITICAL",
+	}
+)
+
+func (ec *executionContext) unmarshalNIncidentRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus(ctx context.Context, v any) (coredata.IncidentRegistryStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNIncidentRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNIncidentRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus(ctx context.Context, sel ast.SelectionSet, v coredata.IncidentRegistryStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNIncidentRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNIncidentRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus = map[string]coredata.IncidentRegistryStatus{
+		"OPEN":        coredata.IncidentRegistryStatusOpen,
+		"IN_PROGRESS": coredata.IncidentRegistryStatusInProgress,
+		"RESOLVED":    coredata.IncidentRegistryStatusResolved,
+		"CLOSED":      coredata.IncidentRegistryStatusClosed,
+	}
+	marshalNIncidentRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus = map[coredata.IncidentRegistryStatus]string{
+		coredata.IncidentRegistryStatusOpen:       "OPEN",
+		coredata.IncidentRegistryStatusInProgress: "IN_PROGRESS",
+		coredata.IncidentRegistryStatusResolved:   "RESOLVED",
+		coredata.IncidentRegistryStatusClosed:     "CLOSED",
+	}
+)
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
@@ -85765,6 +88844,25 @@ func (ec *executionContext) marshalNUpdateFrameworkPayload2ᚖgithubᚗcomᚋget
 		return graphql.Null
 	}
 	return ec._UpdateFrameworkPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUpdateIncidentRegistryInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateIncidentRegistryInput(ctx context.Context, v any) (types.UpdateIncidentRegistryInput, error) {
+	res, err := ec.unmarshalInputUpdateIncidentRegistryInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpdateIncidentRegistryPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateIncidentRegistryPayload(ctx context.Context, sel ast.SelectionSet, v types.UpdateIncidentRegistryPayload) graphql.Marshaler {
+	return ec._UpdateIncidentRegistryPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUpdateIncidentRegistryPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateIncidentRegistryPayload(ctx context.Context, sel ast.SelectionSet, v *types.UpdateIncidentRegistryPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UpdateIncidentRegistryPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUpdateMeasureInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUpdateMeasureInput(ctx context.Context, v any) (types.UpdateMeasureInput, error) {
@@ -87771,6 +90869,124 @@ func (ec *executionContext) marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkg�
 	res := gid1.MarshalGIDScalar(*v)
 	return res
 }
+
+func (ec *executionContext) unmarshalOIncidentRegistryFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryFilter(ctx context.Context, v any) (*types.IncidentRegistryFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputIncidentRegistryFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOIncidentRegistryOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐIncidentRegistryOrderBy(ctx context.Context, v any) (*types.IncidentRegistryOrderBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputIncidentRegistryOrder(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOIncidentRegistryPriority2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority(ctx context.Context, v any) (*coredata.IncidentRegistryPriority, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOIncidentRegistryPriority2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOIncidentRegistryPriority2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority(ctx context.Context, sel ast.SelectionSet, v *coredata.IncidentRegistryPriority) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOIncidentRegistryPriority2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority[*v])
+	return res
+}
+
+var (
+	unmarshalOIncidentRegistryPriority2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority = map[string]coredata.IncidentRegistryPriority{
+		"LOW":      coredata.IncidentRegistryPriorityLow,
+		"MEDIUM":   coredata.IncidentRegistryPriorityMedium,
+		"HIGH":     coredata.IncidentRegistryPriorityHigh,
+		"CRITICAL": coredata.IncidentRegistryPriorityCritical,
+	}
+	marshalOIncidentRegistryPriority2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority = map[coredata.IncidentRegistryPriority]string{
+		coredata.IncidentRegistryPriorityLow:      "LOW",
+		coredata.IncidentRegistryPriorityMedium:   "MEDIUM",
+		coredata.IncidentRegistryPriorityHigh:     "HIGH",
+		coredata.IncidentRegistryPriorityCritical: "CRITICAL",
+	}
+)
+
+func (ec *executionContext) unmarshalOIncidentRegistrySeverity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity(ctx context.Context, v any) (*coredata.IncidentRegistrySeverity, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOIncidentRegistrySeverity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOIncidentRegistrySeverity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity(ctx context.Context, sel ast.SelectionSet, v *coredata.IncidentRegistrySeverity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOIncidentRegistrySeverity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity[*v])
+	return res
+}
+
+var (
+	unmarshalOIncidentRegistrySeverity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity = map[string]coredata.IncidentRegistrySeverity{
+		"LOW":      coredata.IncidentRegistrySeverityLow,
+		"MEDIUM":   coredata.IncidentRegistrySeverityMedium,
+		"HIGH":     coredata.IncidentRegistrySeverityHigh,
+		"CRITICAL": coredata.IncidentRegistrySeverityCritical,
+	}
+	marshalOIncidentRegistrySeverity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity = map[coredata.IncidentRegistrySeverity]string{
+		coredata.IncidentRegistrySeverityLow:      "LOW",
+		coredata.IncidentRegistrySeverityMedium:   "MEDIUM",
+		coredata.IncidentRegistrySeverityHigh:     "HIGH",
+		coredata.IncidentRegistrySeverityCritical: "CRITICAL",
+	}
+)
+
+func (ec *executionContext) unmarshalOIncidentRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus(ctx context.Context, v any) (*coredata.IncidentRegistryStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOIncidentRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOIncidentRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus(ctx context.Context, sel ast.SelectionSet, v *coredata.IncidentRegistryStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOIncidentRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus[*v])
+	return res
+}
+
+var (
+	unmarshalOIncidentRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus = map[string]coredata.IncidentRegistryStatus{
+		"OPEN":        coredata.IncidentRegistryStatusOpen,
+		"IN_PROGRESS": coredata.IncidentRegistryStatusInProgress,
+		"RESOLVED":    coredata.IncidentRegistryStatusResolved,
+		"CLOSED":      coredata.IncidentRegistryStatusClosed,
+	}
+	marshalOIncidentRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus = map[coredata.IncidentRegistryStatus]string{
+		coredata.IncidentRegistryStatusOpen:       "OPEN",
+		coredata.IncidentRegistryStatusInProgress: "IN_PROGRESS",
+		coredata.IncidentRegistryStatusResolved:   "RESOLVED",
+		coredata.IncidentRegistryStatusClosed:     "CLOSED",
+	}
+)
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v any) (*int, error) {
 	if v == nil {

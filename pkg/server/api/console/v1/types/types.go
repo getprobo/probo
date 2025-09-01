@@ -402,6 +402,24 @@ type CreateFrameworkPayload struct {
 	FrameworkEdge *FrameworkEdge `json:"frameworkEdge"`
 }
 
+type CreateIncidentRegistryInput struct {
+	OrganizationID gid.GID                            `json:"organizationId"`
+	ReferenceID    string                             `json:"referenceId"`
+	Title          string                             `json:"title"`
+	Description    *string                            `json:"description,omitempty"`
+	Source         *string                            `json:"source,omitempty"`
+	OwnerID        gid.GID                            `json:"ownerId"`
+	IncidentDate   *time.Time                         `json:"incidentDate,omitempty"`
+	Status         *coredata.IncidentRegistryStatus   `json:"status,omitempty"`
+	Priority       *coredata.IncidentRegistryPriority `json:"priority,omitempty"`
+	Severity       *coredata.IncidentRegistrySeverity `json:"severity,omitempty"`
+	Category       *string                            `json:"category,omitempty"`
+}
+
+type CreateIncidentRegistryPayload struct {
+	IncidentRegistryEdge *IncidentRegistryEdge `json:"incidentRegistryEdge"`
+}
+
 type CreateMeasureInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Name           string  `json:"name"`
@@ -767,6 +785,14 @@ type DeleteFrameworkPayload struct {
 	DeletedFrameworkID gid.GID `json:"deletedFrameworkId"`
 }
 
+type DeleteIncidentRegistryInput struct {
+	IncidentRegistryID gid.GID `json:"incidentRegistryId"`
+}
+
+type DeleteIncidentRegistryPayload struct {
+	DeletedIncidentRegistryID gid.GID `json:"deletedIncidentRegistryId"`
+}
+
 type DeleteMeasureInput struct {
 	MeasureID gid.GID `json:"measureId"`
 }
@@ -1092,6 +1118,36 @@ type ImportMeasurePayload struct {
 	MeasureEdges []*MeasureEdge `json:"measureEdges"`
 }
 
+type IncidentRegistry struct {
+	ID           gid.GID                           `json:"id"`
+	Organization *Organization                     `json:"organization"`
+	ReferenceID  string                            `json:"referenceId"`
+	Title        string                            `json:"title"`
+	Description  *string                           `json:"description,omitempty"`
+	Source       *string                           `json:"source,omitempty"`
+	Owner        *People                           `json:"owner"`
+	IncidentDate *time.Time                        `json:"incidentDate,omitempty"`
+	ResolvedDate *time.Time                        `json:"resolvedDate,omitempty"`
+	Status       coredata.IncidentRegistryStatus   `json:"status"`
+	Priority     coredata.IncidentRegistryPriority `json:"priority"`
+	Severity     coredata.IncidentRegistrySeverity `json:"severity"`
+	Category     *string                           `json:"category,omitempty"`
+	CreatedAt    time.Time                         `json:"createdAt"`
+	UpdatedAt    time.Time                         `json:"updatedAt"`
+}
+
+func (IncidentRegistry) IsNode()             {}
+func (this IncidentRegistry) GetID() gid.GID { return this.ID }
+
+type IncidentRegistryEdge struct {
+	Cursor page.CursorKey    `json:"cursor"`
+	Node   *IncidentRegistry `json:"node"`
+}
+
+type IncidentRegistryFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
 type InviteUserInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Email          string  `json:"email"`
@@ -1181,6 +1237,7 @@ type Organization struct {
 	NonconformityRegistries        *NonconformityRegistryConnection        `json:"nonconformityRegistries"`
 	ComplianceRegistries           *ComplianceRegistryConnection           `json:"complianceRegistries"`
 	ContinualImprovementRegistries *ContinualImprovementRegistryConnection `json:"continualImprovementRegistries"`
+	IncidentRegistries             *IncidentRegistryConnection             `json:"incidentRegistries"`
 	ProcessingActivityRegistries   *ProcessingActivityRegistryConnection   `json:"processingActivityRegistries"`
 	Snapshots                      *SnapshotConnection                     `json:"snapshots"`
 	TrustCenter                    *TrustCenter                            `json:"trustCenter,omitempty"`
@@ -1592,6 +1649,25 @@ type UpdateFrameworkInput struct {
 
 type UpdateFrameworkPayload struct {
 	Framework *Framework `json:"framework"`
+}
+
+type UpdateIncidentRegistryInput struct {
+	ID           gid.GID                            `json:"id"`
+	ReferenceID  *string                            `json:"referenceId,omitempty"`
+	Title        *string                            `json:"title,omitempty"`
+	Description  *string                            `json:"description,omitempty"`
+	Source       *string                            `json:"source,omitempty"`
+	OwnerID      *gid.GID                           `json:"ownerId,omitempty"`
+	IncidentDate *time.Time                         `json:"incidentDate,omitempty"`
+	ResolvedDate *time.Time                         `json:"resolvedDate,omitempty"`
+	Status       *coredata.IncidentRegistryStatus   `json:"status,omitempty"`
+	Priority     *coredata.IncidentRegistryPriority `json:"priority,omitempty"`
+	Severity     *coredata.IncidentRegistrySeverity `json:"severity,omitempty"`
+	Category     *string                            `json:"category,omitempty"`
+}
+
+type UpdateIncidentRegistryPayload struct {
+	IncidentRegistry *IncidentRegistry `json:"incidentRegistry"`
 }
 
 type UpdateMeasureInput struct {
