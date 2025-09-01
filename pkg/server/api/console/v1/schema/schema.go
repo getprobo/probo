@@ -9145,6 +9145,7 @@ enum ProcessingActivityRegistryOrderField
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderFieldName"
     )
 }
+
 enum TrustCenterAccessOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField") {
   CREATED_AT
@@ -9325,6 +9326,7 @@ input ProcessingActivityRegistryOrder
   direction: OrderDirection!
   field: ProcessingActivityRegistryOrderField!
 }
+
 input TrustCenterAccessOrder
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterAccessOrderBy"
@@ -11426,9 +11428,10 @@ input CreateIncidentRegistryInput {
   source: String
   ownerId: ID!
   incidentDate: Datetime
-  status: IncidentRegistryStatus
-  priority: IncidentRegistryPriority
-  severity: IncidentRegistrySeverity
+  resolvedDate: Datetime
+  status: IncidentRegistryStatus!
+  priority: IncidentRegistryPriority!
+  severity: IncidentRegistrySeverity!
   category: String
 }
 
@@ -62968,7 +62971,7 @@ func (ec *executionContext) unmarshalInputCreateIncidentRegistryInput(ctx contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "referenceId", "title", "description", "source", "ownerId", "incidentDate", "status", "priority", "severity", "category"}
+	fieldsInOrder := [...]string{"organizationId", "referenceId", "title", "description", "source", "ownerId", "incidentDate", "resolvedDate", "status", "priority", "severity", "category"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63024,23 +63027,30 @@ func (ec *executionContext) unmarshalInputCreateIncidentRegistryInput(ctx contex
 				return it, err
 			}
 			it.IncidentDate = data
+		case "resolvedDate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("resolvedDate"))
+			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ResolvedDate = data
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOIncidentRegistryStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus(ctx, v)
+			data, err := ec.unmarshalNIncidentRegistryStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Status = data
 		case "priority":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
-			data, err := ec.unmarshalOIncidentRegistryPriority2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority(ctx, v)
+			data, err := ec.unmarshalNIncidentRegistryPriority2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistryPriority(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Priority = data
 		case "severity":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("severity"))
-			data, err := ec.unmarshalOIncidentRegistrySeverity2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity(ctx, v)
+			data, err := ec.unmarshalNIncidentRegistrySeverity2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐIncidentRegistrySeverity(ctx, v)
 			if err != nil {
 				return it, err
 			}

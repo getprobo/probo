@@ -403,18 +403,18 @@ type CreateFrameworkPayload struct {
 }
 
 type CreateIncidentRegistryInput struct {
-	OrganizationID gid.GID                            `json:"organizationId"`
-	ReferenceID    string                             `json:"referenceId"`
-	Title          string                             `json:"title"`
-	Description    *string                            `json:"description,omitempty"`
-	Source         *string                            `json:"source,omitempty"`
-	OwnerID        gid.GID                            `json:"ownerId"`
-	IncidentDate   *time.Time                         `json:"incidentDate,omitempty"`
-	ResolvedDate   *time.Time                         `json:"resolvedDate,omitempty"`
-	Status         *coredata.IncidentRegistryStatus   `json:"status,omitempty"`
-	Priority       *coredata.IncidentRegistryPriority `json:"priority,omitempty"`
-	Severity       *coredata.IncidentRegistrySeverity `json:"severity,omitempty"`
-	Category       *string                            `json:"category,omitempty"`
+	OrganizationID gid.GID                           `json:"organizationId"`
+	ReferenceID    string                            `json:"referenceId"`
+	Title          string                            `json:"title"`
+	Description    *string                           `json:"description,omitempty"`
+	Source         *string                           `json:"source,omitempty"`
+	OwnerID        gid.GID                           `json:"ownerId"`
+	IncidentDate   *time.Time                        `json:"incidentDate,omitempty"`
+	ResolvedDate   *time.Time                        `json:"resolvedDate,omitempty"`
+	Status         coredata.IncidentRegistryStatus   `json:"status"`
+	Priority       coredata.IncidentRegistryPriority `json:"priority"`
+	Severity       coredata.IncidentRegistrySeverity `json:"severity"`
+	Category       *string                           `json:"category,omitempty"`
 }
 
 type CreateIncidentRegistryPayload struct {

@@ -3857,11 +3857,6 @@ func (r *organizationResolver) ProcessingActivityRegistries(ctx context.Context,
 	return types.NewProcessingActivityRegistryConnection(page, r, obj.ID, filter), nil
 }
 
-// IncidentRegistries is the resolver for the incidentRegistries field.
-func (r *organizationResolver) IncidentRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.IncidentRegistryOrderBy) (*types.IncidentRegistryConnection, error) {
-	panic(fmt.Errorf("not implemented: IncidentRegistries - incidentRegistries"))
-}
-
 // Snapshots is the resolver for the snapshots field.
 func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -5141,3 +5136,15 @@ type vendorDataPrivacyAgreementResolver struct{ *Resolver }
 type vendorRiskAssessmentResolver struct{ *Resolver }
 type vendorServiceResolver struct{ *Resolver }
 type viewerResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func (r *organizationResolver) IncidentRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.IncidentRegistryOrderBy) (*types.IncidentRegistryConnection, error) {
+	panic(fmt.Errorf("not implemented: IncidentRegistries - incidentRegistries"))
+}
+*/
