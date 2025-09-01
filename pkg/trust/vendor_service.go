@@ -63,7 +63,10 @@ func (s VendorService) ListForOrganizationId(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			filter := coredata.NewVendorTrustCenterFilter()
+			showOnTrustCenter := true
+			var nilSnapshotID *gid.GID = nil
+			filter := coredata.NewVendorFilter(&nilSnapshotID, &showOnTrustCenter)
+
 			err := vendors.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load vendors: %w", err)

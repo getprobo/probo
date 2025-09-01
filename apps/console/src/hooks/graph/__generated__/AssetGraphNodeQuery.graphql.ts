@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bdc352ae0c426ad29ff6e0f53dc357cf>>
+ * @generated SignedSource<<f1d88685da6d13c894f029b8ac4cf3e4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -28,6 +28,7 @@ export type AssetGraphNodeQuery$data = {
       readonly fullName: string;
       readonly id: string;
     };
+    readonly snapshotId?: string | null | undefined;
     readonly updatedAt?: any;
     readonly vendors?: {
       readonly edges: ReadonlyArray<{
@@ -72,38 +73,45 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "name",
+  "name": "snapshotId",
   "storageKey": null
 },
 v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "amount",
+  "name": "name",
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "criticity",
+  "name": "amount",
   "storageKey": null
 },
 v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "assetType",
+  "name": "criticity",
   "storageKey": null
 },
 v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "dataTypesStored",
+  "name": "assetType",
   "storageKey": null
 },
 v8 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "dataTypesStored",
+  "storageKey": null
+},
+v9 = {
   "alias": null,
   "args": null,
   "concreteType": "People",
@@ -122,7 +130,7 @@ v8 = {
   ],
   "storageKey": null
 },
-v9 = {
+v10 = {
   "alias": null,
   "args": [
     {
@@ -153,7 +161,7 @@ v9 = {
           "plural": false,
           "selections": [
             (v2/*: any*/),
-            (v3/*: any*/),
+            (v4/*: any*/),
             {
               "alias": null,
               "args": null,
@@ -177,14 +185,14 @@ v9 = {
   ],
   "storageKey": "vendors(first:50)"
 },
-v10 = {
+v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v11 = {
+v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -218,7 +226,8 @@ return {
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
-              (v11/*: any*/)
+              (v11/*: any*/),
+              (v12/*: any*/)
             ],
             "type": "Asset",
             "abstractKey": null
@@ -263,7 +272,8 @@ return {
               (v8/*: any*/),
               (v9/*: any*/),
               (v10/*: any*/),
-              (v11/*: any*/)
+              (v11/*: any*/),
+              (v12/*: any*/)
             ],
             "type": "Asset",
             "abstractKey": null
@@ -274,16 +284,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "cd1d7c48ccf01acee749af3b8948fb9a",
+    "cacheID": "6c6e10d25c9bd116703346393adb7a3f",
     "id": null,
     "metadata": {},
     "name": "AssetGraphNodeQuery",
     "operationKind": "query",
-    "text": "query AssetGraphNodeQuery(\n  $assetId: ID!\n) {\n  node(id: $assetId) {\n    __typename\n    ... on Asset {\n      id\n      name\n      amount\n      criticity\n      assetType\n      dataTypesStored\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query AssetGraphNodeQuery(\n  $assetId: ID!\n) {\n  node(id: $assetId) {\n    __typename\n    ... on Asset {\n      id\n      snapshotId\n      name\n      amount\n      criticity\n      assetType\n      dataTypesStored\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "47e84c9ea1c9ab9310ad493219c12f3f";
+(node as any).hash = "60053f70c9a65d4658be7b830a3dae72";
 
 export default node;

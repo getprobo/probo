@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<388195a5e7e9e9a1a167ad7cb298c935>>
+ * @generated SignedSource<<db8b4530d56ae89fa8e332555a85eb33>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,14 +18,6 @@ export type ComplianceRegistriesPageFragment$data = {
       readonly node: {
         readonly actionsToBeImplemented: string | null | undefined;
         readonly area: string | null | undefined;
-        readonly audit: {
-          readonly framework: {
-            readonly id: string;
-            readonly name: string;
-          };
-          readonly id: string;
-          readonly name: string | null | undefined;
-        };
         readonly createdAt: any;
         readonly dueDate: any | null | undefined;
         readonly id: string;
@@ -37,7 +29,9 @@ export type ComplianceRegistriesPageFragment$data = {
         readonly referenceId: string;
         readonly regulator: string | null | undefined;
         readonly requirement: string | null | undefined;
+        readonly snapshotId: string | null | undefined;
         readonly source: string | null | undefined;
+        readonly sourceId: string | null | undefined;
         readonly status: ComplianceRegistryStatus;
         readonly updatedAt: any;
       };
@@ -68,13 +62,6 @@ v1 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-},
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
 };
 return {
   "argumentDefinitions": [
@@ -87,6 +74,11 @@ return {
       "defaultValue": 10,
       "kind": "LocalArgument",
       "name": "first"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "snapshotId"
     }
   ],
   "kind": "Fragment",
@@ -123,7 +115,19 @@ return {
     (v1/*: any*/),
     {
       "alias": "complianceRegistries",
-      "args": null,
+      "args": [
+        {
+          "fields": [
+            {
+              "kind": "Variable",
+              "name": "snapshotId",
+              "variableName": "snapshotId"
+            }
+          ],
+          "kind": "ObjectValue",
+          "name": "filter"
+        }
+      ],
       "concreteType": "ComplianceRegistryConnection",
       "kind": "LinkedField",
       "name": "__ComplianceRegistriesPage_complianceRegistries_connection",
@@ -153,6 +157,20 @@ return {
               "plural": false,
               "selections": [
                 (v1/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "snapshotId",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "sourceId",
+                  "storageKey": null
+                },
                 {
                   "alias": null,
                   "args": null,
@@ -214,32 +232,6 @@ return {
                   "args": null,
                   "kind": "ScalarField",
                   "name": "regulator",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "concreteType": "Audit",
-                  "kind": "LinkedField",
-                  "name": "audit",
-                  "plural": false,
-                  "selections": [
-                    (v1/*: any*/),
-                    (v2/*: any*/),
-                    {
-                      "alias": null,
-                      "args": null,
-                      "concreteType": "Framework",
-                      "kind": "LinkedField",
-                      "name": "framework",
-                      "plural": false,
-                      "selections": [
-                        (v1/*: any*/),
-                        (v2/*: any*/)
-                      ],
-                      "storageKey": null
-                    }
-                  ],
                   "storageKey": null
                 },
                 {
@@ -341,6 +333,6 @@ return {
 };
 })();
 
-(node as any).hash = "c85f1b770b00186cc074726ee8766698";
+(node as any).hash = "b22ac157b9ba89ab14fe8363e56957ef";
 
 export default node;

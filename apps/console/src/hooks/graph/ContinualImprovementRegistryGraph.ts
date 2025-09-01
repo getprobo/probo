@@ -8,10 +8,10 @@ import { useMutationWithToasts } from "../useMutationWithToasts";
 export const ContinualImprovementRegistriesConnectionKey = "ContinualImprovementRegistriesPage_continualImprovementRegistries";
 
 export const continualImprovementRegistriesQuery = graphql`
-  query ContinualImprovementRegistryGraphListQuery($organizationId: ID!) {
+  query ContinualImprovementRegistryGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     node(id: $organizationId) {
       ... on Organization {
-        ...ContinualImprovementRegistriesPageFragment
+        ...ContinualImprovementRegistriesPageFragment @arguments(snapshotId: $snapshotId)
       }
     }
   }
@@ -22,20 +22,14 @@ export const continualImprovementRegistryNodeQuery = graphql`
     node(id: $continualImprovementRegistryId) {
       ... on ContinualImprovementRegistry {
         id
+        snapshotId
+        sourceId
         referenceId
         description
         source
         targetDate
         status
         priority
-        audit {
-          id
-          name
-          framework {
-            id
-            name
-          }
-        }
         owner {
           id
           fullName
@@ -66,13 +60,6 @@ export const createContinualImprovementRegistryMutation = graphql`
           targetDate
           status
           priority
-          audit {
-            id
-            name
-            framework {
-              name
-            }
-          }
           owner {
             id
             fullName
@@ -98,14 +85,6 @@ export const updateContinualImprovementRegistryMutation = graphql`
         owner {
           id
           fullName
-        }
-        audit {
-          id
-          name
-          framework {
-            id
-            name
-          }
         }
         updatedAt
       }
@@ -167,7 +146,6 @@ export const useCreateContinualImprovementRegistry = (connectionId: string) => {
     referenceId: string;
     description?: string;
     source?: string;
-    auditId: string;
     ownerId: string;
     targetDate?: string;
     status: string;
@@ -178,9 +156,6 @@ export const useCreateContinualImprovementRegistry = (connectionId: string) => {
     }
     if (!input.referenceId) {
       return alert(__("Failed to create continual improvement registry entry: reference ID is required"));
-    }
-    if (!input.auditId) {
-      return alert(__("Failed to create continual improvement registry entry: audit is required"));
     }
     if (!input.ownerId) {
       return alert(__("Failed to create continual improvement registry entry: owner is required"));
@@ -193,7 +168,6 @@ export const useCreateContinualImprovementRegistry = (connectionId: string) => {
           referenceId: input.referenceId,
           description: input.description,
           source: input.source,
-          auditId: input.auditId,
           ownerId: input.ownerId,
           targetDate: input.targetDate,
           status: input.status || "OPEN",
@@ -214,7 +188,6 @@ export const useUpdateContinualImprovementRegistry = () => {
     referenceId?: string;
     description?: string;
     source?: string;
-    auditId?: string;
     ownerId?: string;
     targetDate?: string;
     status?: string;

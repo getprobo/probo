@@ -88,6 +88,7 @@ func (s DatumService) GetByOwnerID(
 func (s DatumService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
+	filter *coredata.DatumFilter,
 ) (int, error) {
 	var count int
 
@@ -95,7 +96,7 @@ func (s DatumService) CountForOrganizationID(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			data := coredata.Data{}
-			count, err = data.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = data.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count data: %w", err)
 			}

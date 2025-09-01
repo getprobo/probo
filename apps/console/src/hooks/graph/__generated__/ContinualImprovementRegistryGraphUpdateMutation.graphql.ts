@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<befa49d6faa4e4c918a2ff8a85c7fe7d>>
+ * @generated SignedSource<<0f5c8a4c09725f287ec32e2366f5d829>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,6 @@ import { ConcreteRequest } from 'relay-runtime';
 export type ContinualImprovementRegistriesPriority = "HIGH" | "LOW" | "MEDIUM";
 export type ContinualImprovementRegistriesStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
 export type UpdateContinualImprovementRegistryInput = {
-  auditId?: string | null | undefined;
   description?: string | null | undefined;
   id: string;
   ownerId?: string | null | undefined;
@@ -28,14 +27,6 @@ export type ContinualImprovementRegistryGraphUpdateMutation$variables = {
 export type ContinualImprovementRegistryGraphUpdateMutation$data = {
   readonly updateContinualImprovementRegistry: {
     readonly continualImprovementRegistry: {
-      readonly audit: {
-        readonly framework: {
-          readonly id: string;
-          readonly name: string;
-        };
-        readonly id: string;
-        readonly name: string | null | undefined;
-      };
       readonly description: string | null | undefined;
       readonly id: string;
       readonly owner: {
@@ -71,14 +62,7 @@ v1 = {
   "name": "id",
   "storageKey": null
 },
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v3 = [
+v2 = [
   {
     "alias": null,
     "args": [
@@ -166,32 +150,6 @@ v3 = [
           {
             "alias": null,
             "args": null,
-            "concreteType": "Audit",
-            "kind": "LinkedField",
-            "name": "audit",
-            "plural": false,
-            "selections": [
-              (v1/*: any*/),
-              (v2/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "Framework",
-                "kind": "LinkedField",
-                "name": "framework",
-                "plural": false,
-                "selections": [
-                  (v1/*: any*/),
-                  (v2/*: any*/)
-                ],
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
             "kind": "ScalarField",
             "name": "updatedAt",
             "storageKey": null
@@ -209,7 +167,7 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "ContinualImprovementRegistryGraphUpdateMutation",
-    "selections": (v3/*: any*/),
+    "selections": (v2/*: any*/),
     "type": "Mutation",
     "abstractKey": null
   },
@@ -218,19 +176,19 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "ContinualImprovementRegistryGraphUpdateMutation",
-    "selections": (v3/*: any*/)
+    "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "b3b3931c06838e6e60f33738be340d6c",
+    "cacheID": "4fa7e841eea92d03f30fadf630135159",
     "id": null,
     "metadata": {},
     "name": "ContinualImprovementRegistryGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation ContinualImprovementRegistryGraphUpdateMutation(\n  $input: UpdateContinualImprovementRegistryInput!\n) {\n  updateContinualImprovementRegistry(input: $input) {\n    continualImprovementRegistry {\n      id\n      referenceId\n      description\n      source\n      targetDate\n      status\n      priority\n      owner {\n        id\n        fullName\n      }\n      audit {\n        id\n        name\n        framework {\n          id\n          name\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation ContinualImprovementRegistryGraphUpdateMutation(\n  $input: UpdateContinualImprovementRegistryInput!\n) {\n  updateContinualImprovementRegistry(input: $input) {\n    continualImprovementRegistry {\n      id\n      referenceId\n      description\n      source\n      targetDate\n      status\n      priority\n      owner {\n        id\n        fullName\n      }\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e59f20342fd5532b1815034334cd5560";
+(node as any).hash = "82fad800ffad42813aeceda43c3304a3";
 
 export default node;

@@ -26,20 +26,10 @@ type (
 	}
 )
 
-func NewVendorFilter() *VendorFilter {
-	return &VendorFilter{}
-}
-
-func NewVendorTrustCenterFilter() *VendorFilter {
-	showOnTrustCenter := true
+func NewVendorFilter(snapshotID **gid.GID, showOnTrustCenter *bool) *VendorFilter {
 	return &VendorFilter{
-		showOnTrustCenter: &showOnTrustCenter,
-	}
-}
-
-func NewVendorFilterBySnapshotID(snapshotID **gid.GID) *VendorFilter {
-	return &VendorFilter{
-		snapshotID: snapshotID,
+		snapshotID:        snapshotID,
+		showOnTrustCenter: showOnTrustCenter,
 	}
 }
 

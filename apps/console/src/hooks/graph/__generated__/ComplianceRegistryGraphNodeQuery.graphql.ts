@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<14a59a4b5703ae1fb885b70ff8c8d479>>
+ * @generated SignedSource<<ec60b0715df426d6819f03f6e1597fef>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,14 +17,6 @@ export type ComplianceRegistryGraphNodeQuery$data = {
   readonly node: {
     readonly actionsToBeImplemented?: string | null | undefined;
     readonly area?: string | null | undefined;
-    readonly audit?: {
-      readonly framework: {
-        readonly id: string;
-        readonly name: string;
-      };
-      readonly id: string;
-      readonly name: string | null | undefined;
-    };
     readonly createdAt?: any;
     readonly dueDate?: any | null | undefined;
     readonly id?: string;
@@ -40,7 +32,9 @@ export type ComplianceRegistryGraphNodeQuery$data = {
     readonly referenceId?: string;
     readonly regulator?: string | null | undefined;
     readonly requirement?: string | null | undefined;
+    readonly snapshotId?: string | null | undefined;
     readonly source?: string | null | undefined;
+    readonly sourceId?: string | null | undefined;
     readonly status?: ComplianceRegistryStatus;
     readonly updatedAt?: any;
   };
@@ -76,100 +70,80 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "referenceId",
+  "name": "snapshotId",
   "storageKey": null
 },
 v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "area",
+  "name": "sourceId",
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "source",
+  "name": "referenceId",
   "storageKey": null
 },
 v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "requirement",
+  "name": "area",
   "storageKey": null
 },
 v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "actionsToBeImplemented",
+  "name": "source",
   "storageKey": null
 },
 v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "regulator",
+  "name": "requirement",
   "storageKey": null
 },
 v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "lastReviewDate",
+  "name": "actionsToBeImplemented",
   "storageKey": null
 },
 v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "dueDate",
+  "name": "regulator",
   "storageKey": null
 },
 v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "status",
+  "name": "lastReviewDate",
   "storageKey": null
 },
 v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "name",
+  "name": "dueDate",
   "storageKey": null
 },
-v13 = [
-  (v2/*: any*/),
-  (v12/*: any*/)
-],
-v14 = {
+v13 = {
   "alias": null,
   "args": null,
-  "concreteType": "Audit",
-  "kind": "LinkedField",
-  "name": "audit",
-  "plural": false,
-  "selections": [
-    (v2/*: any*/),
-    (v12/*: any*/),
-    {
-      "alias": null,
-      "args": null,
-      "concreteType": "Framework",
-      "kind": "LinkedField",
-      "name": "framework",
-      "plural": false,
-      "selections": (v13/*: any*/),
-      "storageKey": null
-    }
-  ],
+  "kind": "ScalarField",
+  "name": "status",
   "storageKey": null
 },
-v15 = {
+v14 = {
   "alias": null,
   "args": null,
   "concreteType": "People",
@@ -188,24 +162,33 @@ v15 = {
   ],
   "storageKey": null
 },
-v16 = {
+v15 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
   "kind": "LinkedField",
   "name": "organization",
   "plural": false,
-  "selections": (v13/*: any*/),
+  "selections": [
+    (v2/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "name",
+      "storageKey": null
+    }
+  ],
   "storageKey": null
 },
-v17 = {
+v16 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v18 = {
+v17 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -240,11 +223,12 @@ return {
               (v9/*: any*/),
               (v10/*: any*/),
               (v11/*: any*/),
+              (v12/*: any*/),
+              (v13/*: any*/),
               (v14/*: any*/),
               (v15/*: any*/),
               (v16/*: any*/),
-              (v17/*: any*/),
-              (v18/*: any*/)
+              (v17/*: any*/)
             ],
             "type": "ComplianceRegistry",
             "abstractKey": null
@@ -290,11 +274,12 @@ return {
               (v9/*: any*/),
               (v10/*: any*/),
               (v11/*: any*/),
+              (v12/*: any*/),
+              (v13/*: any*/),
               (v14/*: any*/),
               (v15/*: any*/),
               (v16/*: any*/),
-              (v17/*: any*/),
-              (v18/*: any*/)
+              (v17/*: any*/)
             ],
             "type": "ComplianceRegistry",
             "abstractKey": null
@@ -305,16 +290,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "bb1bf89e0916abe7f9807404aa2cf9eb",
+    "cacheID": "2c4649d3258530fd79420bc2ed8fd14a",
     "id": null,
     "metadata": {},
     "name": "ComplianceRegistryGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ComplianceRegistryGraphNodeQuery(\n  $complianceRegistryId: ID!\n) {\n  node(id: $complianceRegistryId) {\n    __typename\n    ... on ComplianceRegistry {\n      id\n      referenceId\n      area\n      source\n      requirement\n      actionsToBeImplemented\n      regulator\n      lastReviewDate\n      dueDate\n      status\n      audit {\n        id\n        name\n        framework {\n          id\n          name\n        }\n      }\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ComplianceRegistryGraphNodeQuery(\n  $complianceRegistryId: ID!\n) {\n  node(id: $complianceRegistryId) {\n    __typename\n    ... on ComplianceRegistry {\n      id\n      snapshotId\n      sourceId\n      referenceId\n      area\n      source\n      requirement\n      actionsToBeImplemented\n      regulator\n      lastReviewDate\n      dueDate\n      status\n      owner {\n        id\n        fullName\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "292fb8d0ee375d8c5e34cbf2633b7f77";
+(node as any).hash = "b290ce12f57b586e64bac227777bc294";
 
 export default node;

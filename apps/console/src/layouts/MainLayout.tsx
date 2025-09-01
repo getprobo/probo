@@ -19,6 +19,7 @@ import {
   IconBox,
   IconShield,
   IconRotateCw,
+  IconCircleProgress,
   IconWarning,
   Layout,
   SidebarItem,
@@ -167,6 +168,11 @@ export function MainLayout() {
               label={__("Incident Register")}
               icon={IconWarning}
               to={`${prefix}/incident-registries`}
+            />
+            <SidebarItem
+              label={__("Processing Activity Registries")}
+              icon={IconCircleProgress}
+              to={`${prefix}/processing-activity-registries`}
             />
           </SidebarCategory>
 

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a226745b4849f8d82a412528166f860f>>
+ * @generated SignedSource<<32acc7b83177d41eb30081c290ba1393>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type ContinualImprovementRegistriesPageQuery$variables = {
   organizationId: string;
+  snapshotId?: string | null | undefined;
 };
 export type ContinualImprovementRegistriesPageQuery$data = {
   readonly node: {
@@ -29,6 +30,11 @@ var v0 = [
     "defaultValue": null,
     "kind": "LocalArgument",
     "name": "organizationId"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "snapshotId"
   }
 ],
 v1 = [
@@ -38,34 +44,39 @@ v1 = [
     "variableName": "organizationId"
   }
 ],
-v2 = {
+v2 = [
+  {
+    "kind": "Variable",
+    "name": "snapshotId",
+    "variableName": "snapshotId"
+  }
+],
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v4 = [
+v5 = [
+  {
+    "fields": (v2/*: any*/),
+    "kind": "ObjectValue",
+    "name": "filter"
+  },
   {
     "kind": "Literal",
     "name": "first",
     "value": 10
   }
-],
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-};
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -85,7 +96,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               {
-                "args": null,
+                "args": (v2/*: any*/),
                 "kind": "FragmentSpread",
                 "name": "ContinualImprovementRegistriesPageFragment"
               }
@@ -114,14 +125,14 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v2/*: any*/),
           (v3/*: any*/),
+          (v4/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "ContinualImprovementRegistryConnection",
                 "kind": "LinkedField",
                 "name": "continualImprovementRegistries",
@@ -150,7 +161,21 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
+                          (v4/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "snapshotId",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "sourceId",
+                            "storageKey": null
+                          },
                           {
                             "alias": null,
                             "args": null,
@@ -196,38 +221,12 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "concreteType": "Audit",
-                            "kind": "LinkedField",
-                            "name": "audit",
-                            "plural": false,
-                            "selections": [
-                              (v3/*: any*/),
-                              (v5/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "concreteType": "Framework",
-                                "kind": "LinkedField",
-                                "name": "framework",
-                                "plural": false,
-                                "selections": [
-                                  (v3/*: any*/),
-                                  (v5/*: any*/)
-                                ],
-                                "storageKey": null
-                              }
-                            ],
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
                             "concreteType": "People",
                             "kind": "LinkedField",
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v3/*: any*/),
+                              (v4/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -252,7 +251,7 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
-                          (v2/*: any*/)
+                          (v3/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -304,12 +303,14 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "continualImprovementRegistries(first:10)"
+                "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
-                "filters": null,
+                "args": (v5/*: any*/),
+                "filters": [
+                  "filter"
+                ],
                 "handle": "connection",
                 "key": "ContinualImprovementRegistriesPage_continualImprovementRegistries",
                 "kind": "LinkedHandle",
@@ -325,16 +326,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "734faf62cb9f84c554159d0cc35a9eda",
+    "cacheID": "8cf92f4e9c75b4a42350503ae2d30cae",
     "id": null,
     "metadata": {},
     "name": "ContinualImprovementRegistriesPageQuery",
     "operationKind": "query",
-    "text": "query ContinualImprovementRegistriesPageQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ContinualImprovementRegistriesPageFragment\n    }\n    id\n  }\n}\n\nfragment ContinualImprovementRegistriesPageFragment on Organization {\n  id\n  continualImprovementRegistries(first: 10) {\n    totalCount\n    edges {\n      node {\n        id\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        audit {\n          id\n          name\n          framework {\n            id\n            name\n          }\n        }\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ContinualImprovementRegistriesPageQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ContinualImprovementRegistriesPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ContinualImprovementRegistriesPageFragment_3iomuz on Organization {\n  id\n  continualImprovementRegistries(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        referenceId\n        description\n        source\n        targetDate\n        status\n        priority\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "fcece87ab1695d20b6b5f31379e67f1d";
+(node as any).hash = "506a807c01116d1b5622ac2624d5bf1b";
 
 export default node;

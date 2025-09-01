@@ -153,6 +153,7 @@ func (d *Data) CountByOrganizationID(
 	conn pg.Conn,
 	scope Scoper,
 	organizationID gid.GID,
+	filter *DatumFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -162,12 +163,14 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 

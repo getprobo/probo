@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b68d2b7e020579736ca058b633352dee>>
+ * @generated SignedSource<<aaed837d3d9cdc303e3096ea7a467bd9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type SnapshotsType = "ASSETS" | "COMPLIANCE_REGISTRIES" | "DATA" | "NON_CONFORMITY_REGISTRIES" | "RISKS" | "VENDORS";
+export type SnapshotsType = "ASSETS" | "COMPLIANCE_REGISTRIES" | "CONTINUAL_IMPROVEMENT_REGISTRIES" | "DATA" | "NONCONFORMITY_REGISTRIES" | "PROCESSING_ACTIVITY_REGISTRIES" | "RISKS" | "VENDORS";
 import { FragmentRefs } from "relay-runtime";
 export type LinkedSnapshotsDialogFragment$data = {
   readonly id: string;

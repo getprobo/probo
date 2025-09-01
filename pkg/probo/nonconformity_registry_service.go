@@ -221,13 +221,14 @@ func (s NonconformityRegistryService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.NonconformityRegistryOrderField],
+	filter *coredata.NonconformityRegistryFilter,
 ) (*page.Page[*coredata.NonconformityRegistry, coredata.NonconformityRegistryOrderField], error) {
 	var registries coredata.NonconformityRegistries
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := registries.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor)
+			err := registries.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load nonconformity registries: %w", err)
 			}
@@ -246,6 +247,7 @@ func (s NonconformityRegistryService) ListForOrganizationID(
 func (s NonconformityRegistryService) CountForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
+	filter *coredata.NonconformityRegistryFilter,
 ) (int, error) {
 	var count int
 
@@ -253,7 +255,7 @@ func (s NonconformityRegistryService) CountForOrganizationID(
 		ctx,
 		func(conn pg.Conn) (err error) {
 			registries := coredata.NonconformityRegistries{}
-			count, err = registries.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			count, err = registries.CountByOrganizationID(ctx, conn, s.svc.scope, organizationID, filter)
 			if err != nil {
 				return fmt.Errorf("cannot count nonconformity registries: %w", err)
 			}

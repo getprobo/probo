@@ -19,6 +19,7 @@ export const datumNodeQuery = graphql`
     node(id: $dataId) {
       ... on Datum {
         id
+        snapshotId
         name
         dataClassification
         owner {
