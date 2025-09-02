@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8ae6d82b30ec5657f8a55bd47fab4e7e>>
+ * @generated SignedSource<<af89b7b79cdb083497eabebd82b51991>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type RiskGraphListQuery$variables = {
   organizationId: string;
+  snapshotId?: string | null | undefined;
 };
 export type RiskGraphListQuery$data = {
   readonly organization: {
@@ -30,6 +31,11 @@ var v0 = [
     "defaultValue": null,
     "kind": "LocalArgument",
     "name": "organizationId"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "snapshotId"
   }
 ],
 v1 = [
@@ -46,14 +52,26 @@ v2 = {
   "name": "id",
   "storageKey": null
 },
-v3 = {
+v3 = [
+  {
+    "kind": "Variable",
+    "name": "snapshotId",
+    "variableName": "snapshotId"
+  }
+],
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v4 = [
+v5 = [
+  {
+    "fields": (v3/*: any*/),
+    "kind": "ObjectValue",
+    "name": "filter"
+  },
   {
     "kind": "Literal",
     "name": "first",
@@ -77,7 +95,7 @@ return {
         "selections": [
           (v2/*: any*/),
           {
-            "args": null,
+            "args": (v3/*: any*/),
             "kind": "FragmentSpread",
             "name": "RiskGraphFragment"
           }
@@ -102,14 +120,14 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
+          (v4/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "RiskConnection",
                 "kind": "LinkedField",
                 "name": "risks",
@@ -132,6 +150,13 @@ return {
                         "plural": false,
                         "selections": [
                           (v2/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "snapshotId",
+                            "storageKey": null
+                          },
                           {
                             "alias": null,
                             "args": null,
@@ -221,7 +246,7 @@ return {
                             ],
                             "storageKey": null
                           },
-                          (v3/*: any*/)
+                          (v4/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -275,13 +300,13 @@ return {
                     "storageKey": null
                   }
                 ],
-                "storageKey": "risks(first:50)"
+                "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "filters": [
-                  "orderBy"
+                  "filter"
                 ],
                 "handle": "connection",
                 "key": "RisksListQuery_risks",
@@ -298,16 +323,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "36e237e142f201c74ebc23ff46d7345a",
+    "cacheID": "b2114c476ed7e095fc9d2317b6b1c554",
     "id": null,
     "metadata": {},
     "name": "RiskGraphListQuery",
     "operationKind": "query",
-    "text": "query RiskGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...RiskGraphFragment\n  }\n}\n\nfragment RiskGraphFragment on Organization {\n  risks(first: 50) {\n    edges {\n      node {\n        id\n        name\n        category\n        treatment\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        inherentRiskScore\n        residualRiskScore\n        ...useRiskFormFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "query RiskGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...RiskGraphFragment_3iomuz\n  }\n}\n\nfragment RiskGraphFragment_3iomuz on Organization {\n  risks(first: 50, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        category\n        treatment\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        inherentRiskScore\n        residualRiskScore\n        ...useRiskFormFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "5d41ad11b598f63829f481ff0ae8aec7";
+(node as any).hash = "a6e146d7d0f9d2713796935d0d615311";
 
 export default node;

@@ -1027,6 +1027,7 @@ type ComplexityRoot struct {
 		ResidualImpact     func(childComplexity int) int
 		ResidualLikelihood func(childComplexity int) int
 		ResidualRiskScore  func(childComplexity int) int
+		SnapshotID         func(childComplexity int) int
 		Treatment          func(childComplexity int) int
 		UpdatedAt          func(childComplexity int) int
 	}
@@ -6224,6 +6225,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Risk.ResidualRiskScore(childComplexity), true
 
+	case "Risk.snapshotId":
+		if e.complexity.Risk.SnapshotID == nil {
+			break
+		}
+
+		return e.complexity.Risk.SnapshotID(childComplexity), true
+
 	case "Risk.treatment":
 		if e.complexity.Risk.Treatment == nil {
 			break
@@ -9061,6 +9069,7 @@ input MeasureFilter {
 
 input RiskFilter {
   query: String
+  snapshotId: ID
 }
 
 input PeopleFilter {
@@ -9197,7 +9206,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: RiskOrder
-    filter: RiskFilter
+    filter: RiskFilter = { snapshotId: null }
   ): RiskConnection! @goField(forceResolver: true)
 
   tasks(
@@ -9625,6 +9634,7 @@ type Document implements Node {
 
 type Risk implements Node {
   id: ID!
+  snapshotId: ID
   name: String!
   description: String!
   category: String!
@@ -45984,6 +45994,47 @@ func (ec *executionContext) fieldContext_Risk_id(_ context.Context, field graphq
 	return fc, nil
 }
 
+func (ec *executionContext) _Risk_snapshotId(ctx context.Context, field graphql.CollectedField, obj *types.Risk) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Risk_snapshotId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SnapshotID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*gid.GID)
+	fc.Result = res
+	return ec.marshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Risk_snapshotId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Risk",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Risk_name(ctx context.Context, field graphql.CollectedField, obj *types.Risk) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Risk_name(ctx, field)
 	if err != nil {
@@ -47135,6 +47186,8 @@ func (ec *executionContext) fieldContext_RiskEdge_node(_ context.Context, field 
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Risk_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Risk_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Risk_name(ctx, field)
 			case "description":
@@ -51015,6 +51068,8 @@ func (ec *executionContext) fieldContext_UpdateRiskPayload_risk(_ context.Contex
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_Risk_id(ctx, field)
+			case "snapshotId":
+				return ec.fieldContext_Risk_snapshotId(ctx, field)
 			case "name":
 				return ec.fieldContext_Risk_name(ctx, field)
 			case "description":
@@ -63958,7 +64013,7 @@ func (ec *executionContext) unmarshalInputRiskFilter(ctx context.Context, obj an
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"query"}
+	fieldsInOrder := [...]string{"query", "snapshotId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63972,6 +64027,13 @@ func (ec *executionContext) unmarshalInputRiskFilter(ctx context.Context, obj an
 				return it, err
 			}
 			it.Query = data
+		case "snapshotId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("snapshotId"))
+			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SnapshotID = data
 		}
 	}
 
@@ -76125,6 +76187,8 @@ func (ec *executionContext) _Risk(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "snapshotId":
+			out.Values[i] = ec._Risk_snapshotId(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._Risk_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

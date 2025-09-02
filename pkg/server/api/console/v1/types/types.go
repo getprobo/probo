@@ -1336,6 +1336,7 @@ type RequestSignaturePayload struct {
 
 type Risk struct {
 	ID                 gid.GID                `json:"id"`
+	SnapshotID         *gid.GID               `json:"snapshotId,omitempty"`
 	Name               string                 `json:"name"`
 	Description        string                 `json:"description"`
 	Category           string                 `json:"category"`
@@ -1365,7 +1366,8 @@ type RiskEdge struct {
 }
 
 type RiskFilter struct {
-	Query *string `json:"query,omitempty"`
+	Query      *string  `json:"query,omitempty"`
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
 type SendSigningNotificationsInput struct {

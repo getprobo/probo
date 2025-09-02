@@ -31,10 +31,10 @@ export function useDeleteRiskMutation() {
 }
 
 export const risksQuery = graphql`
-  query RiskGraphListQuery($organizationId: ID!) {
+  query RiskGraphListQuery($organizationId: ID!, $snapshotId: ID) {
     organization: node(id: $organizationId) {
       id
-      ...RiskGraphFragment
+      ...RiskGraphFragment @arguments(snapshotId: $snapshotId)
     }
   }
 `;
@@ -48,6 +48,7 @@ const risksFragment = graphql`
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
+    snapshotId: { type: "ID", defaultValue: null }
   ) {
     risks(
       first: $first
@@ -55,10 +56,12 @@ const risksFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
-    ) @connection(key: "RisksListQuery_risks") {
+      filter: { snapshotId: $snapshotId }
+    ) @connection(key: "RisksListQuery_risks", filters: ["filter"]) {
       edges {
         node {
           id
+          snapshotId
           name
           category
           treatment
@@ -77,7 +80,7 @@ const risksFragment = graphql`
 
 export const RisksConnectionKey = "RisksListQuery_risks";
 
-export function useRisksQuery(queryRef: PreloadedQuery<RiskGraphListQuery>) {
+export function useRisksQuery(queryRef: PreloadedQuery<RiskGraphListQuery>, snapshotId?: string | null) {
   const data = usePreloadedQuery(risksQuery, queryRef);
   const [dataFragment, refetch] = useRefetchableFragment(
     risksFragment,
@@ -90,6 +93,7 @@ export function useRisksQuery(queryRef: PreloadedQuery<RiskGraphListQuery>) {
     connectionId: ConnectionHandler.getConnectionID(
       data.organization.id,
       RisksConnectionKey,
+      { filter: { snapshotId: snapshotId || null } }
     ),
   };
 }
@@ -98,6 +102,8 @@ export const riskNodeQuery = graphql`
   query RiskGraphNodeQuery($riskId: ID!) {
     node(id: $riskId) {
       ... on Risk {
+        id
+        snapshotId
         name
         description
         treatment

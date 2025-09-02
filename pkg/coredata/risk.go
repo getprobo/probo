@@ -42,11 +42,17 @@ type (
 		ResidualLikelihood int           `db:"residual_likelihood"`
 		ResidualImpact     int           `db:"residual_impact"`
 		ResidualRiskScore  int           `db:"residual_risk_score"`
+		SnapshotID         *gid.GID      `db:"snapshot_id"`
+		SourceID           *gid.GID      `db:"source_id"`
 		CreatedAt          time.Time     `db:"created_at"`
 		UpdatedAt          time.Time     `db:"updated_at"`
 	}
 
 	Risks []*Risk
+
+	RiskSnapshotter interface {
+		InsertRiskSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
+	}
 )
 
 func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
@@ -79,7 +85,9 @@ func (r *Risks) CountByMeasureID(
 WITH rsks AS (
 	SELECT
 		r.id,
-		r.tenant_id
+		r.tenant_id,
+		r.search_vector,
+		r.snapshot_id
 	FROM
 		risks r
 	INNER JOIN
@@ -136,6 +144,8 @@ WITH rsks AS (
 		r.residual_likelihood,
 		r.residual_impact,
 		r.residual_risk_score,
+		r.snapshot_id,
+		r.source_id,
 		r.search_vector,
 		r.created_at,
 		r.updated_at
@@ -161,6 +171,8 @@ SELECT
 	residual_likelihood,
 	residual_impact,
 	residual_risk_score,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -246,6 +258,8 @@ SELECT
 	residual_impact,
 	residual_risk_score,
 	category,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM risks
@@ -298,6 +312,8 @@ SELECT
 	residual_likelihood,
 	residual_impact,
 	residual_risk_score,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM risks
@@ -378,6 +394,7 @@ SET
 	updated_at = @updated_at
 WHERE %s
 	AND id = @risk_id
+	AND snapshot_id IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -408,7 +425,7 @@ func (r *Risk) Delete(
 	riskID gid.GID,
 ) error {
 	q := `
-DELETE FROM risks WHERE %s AND id = @id
+DELETE FROM risks WHERE %s AND id = @id AND snapshot_id IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -430,7 +447,9 @@ func (r *Risks) CountByDocumentID(
 WITH rsks AS (
 	SELECT
 		r.id,
-		r.tenant_id
+		r.tenant_id,
+		r.search_vector,
+		r.snapshot_id
 	FROM
 		risks r
 	INNER JOIN
@@ -459,4 +478,79 @@ WHERE %s
 	}
 
 	return count, nil
+}
+
+func (r Risks) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+	if err := r.InsertRiskSnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
+		return fmt.Errorf("cannot create risk snapshots: %w", err)
+	}
+
+	return nil
+}
+
+func (r Risks) InsertRiskSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+INSERT INTO risks (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	name,
+	description,
+	category,
+	treatment,
+	note,
+	owner_id,
+	inherent_likelihood,
+	inherent_impact,
+	residual_likelihood,
+	residual_impact,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @risk_entity_type),
+	@snapshot_id,
+	r.id,
+	r.organization_id,
+	r.name,
+	r.description,
+	r.category,
+	r.treatment,
+	r.note,
+	r.owner_id,
+	r.inherent_likelihood,
+	r.inherent_impact,
+	r.residual_likelihood,
+	r.residual_impact,
+	r.created_at,
+	r.updated_at
+FROM risks r
+WHERE %s AND organization_id = @organization_id AND snapshot_id IS NULL
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":        scope.GetTenantID(),
+		"snapshot_id":      snapshotID,
+		"organization_id":  organizationID,
+		"risk_entity_type": RiskEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot insert risk snapshots: %w", err)
+	}
+
+	return nil
 }

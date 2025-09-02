@@ -91,7 +91,7 @@ export default function MeasureEvidencesTab() {
   const { measure } = useOutletContext<{
     measure: MeasureEvidencesTabFragment$key & { id: string; name: string };
   }>();
-  const { evidenceId } = useParams<{ evidenceId: string }>();
+  const { evidenceId, snapshotId } = useParams<{ evidenceId: string; snapshotId?: string }>();
   const pagination = usePaginationFragment(evidencesFragment, measure);
   const connectionId = pagination.data.evidences.__id;
   const evidences =
@@ -101,6 +101,7 @@ export default function MeasureEvidencesTab() {
   const evidence = evidences.find((e) => e.id === evidenceId);
   const organizationId = useOrganizationId();
   const dialogRef = useDialogRef();
+  const isSnapshotMode = Boolean(snapshotId);
 
   usePageTitle(measure.name + " - " + __("Evidences"));
 
@@ -124,34 +125,41 @@ export default function MeasureEvidencesTab() {
               measureId={measure.id}
               organizationId={organizationId}
               connectionId={connectionId}
+              hideActions={isSnapshotMode}
+              snapshotId={snapshotId}
             />
           ))}
-          <TrButton
-            colspan={5}
-            onClick={() => dialogRef.current?.open()}
-            icon={IconPlusLarge}
-          >
-            {__("Add evidence")}
-          </TrButton>
+          {!isSnapshotMode && (
+            <TrButton
+              colspan={5}
+              onClick={() => dialogRef.current?.open()}
+              icon={IconPlusLarge}
+            >
+              {__("Add evidence")}
+            </TrButton>
+          )}
         </Tbody>
       </SortableTable>
       {evidence && (
         <EvidencePreviewDialog
           key={evidence?.id}
-          onClose={() =>
-            navigate(
-              `/organizations/${organizationId}/measures/${measure.id}/evidences`
-            )
-          }
+          onClose={() => {
+            const baseUrl = isSnapshotMode
+              ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/measures/${measure.id}/evidences`
+              : `/organizations/${organizationId}/measures/${measure.id}/evidences`;
+            navigate(baseUrl);
+          }}
           evidenceId={evidence.id}
           filename={evidence.filename}
         />
       )}
-      <CreateEvidenceDialog
-        ref={dialogRef}
-        measureId={measure.id}
-        connectionId={connectionId}
-      />
+      {!isSnapshotMode && (
+        <CreateEvidenceDialog
+          ref={dialogRef}
+          measureId={measure.id}
+          connectionId={connectionId}
+        />
+      )}
     </div>
   );
 }
@@ -161,6 +169,8 @@ function EvidenceRow(props: {
   measureId: string;
   organizationId: string;
   connectionId: string;
+  hideActions?: boolean;
+  snapshotId?: string;
 }) {
   const evidence = useFragment(evidenceFragment, props.evidenceKey);
   const { __, dateFormat } = useTranslate();
@@ -203,6 +213,10 @@ function EvidenceRow(props: {
     );
   };
 
+  const evidenceUrl = props.snapshotId
+    ? `/organizations/${props.organizationId}/snapshots/${props.snapshotId}/risks/measures/${props.measureId}/evidences/${evidence.id}`
+    : `/organizations/${props.organizationId}/measures/${props.measureId}/evidences/${evidence.id}`;
+
   return (
     <>
       {isDownloading && (
@@ -211,30 +225,30 @@ function EvidenceRow(props: {
           onClose={() => setIsDownloading(false)}
         />
       )}
-      <Tr
-        to={`/organizations/${props.organizationId}/measures/${props.measureId}/evidences/${evidence.id}`}
-      >
+      <Tr to={evidenceUrl}>
         <Td>{evidence.filename}</Td>
         <Td>{fileType(__, evidence)}</Td>
         <Td>{fileSize(__, evidence.size)}</Td>
         <Td>{dateFormat(evidence.createdAt)}</Td>
         <Td noLink>
-          <div className="flex gap-2">
-            <ActionDropdown>
-              <DropdownItem onClick={() => setIsDownloading(true)}>
-                <IconArrowInbox size={16} />
-                {__("Download")}
-              </DropdownItem>
-              <DropdownItem
-                variant="danger"
-                icon={IconTrashCan}
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {__("Delete")}
-              </DropdownItem>
-            </ActionDropdown>
-          </div>
+          {!props.hideActions && (
+            <div className="flex gap-2">
+              <ActionDropdown>
+                <DropdownItem onClick={() => setIsDownloading(true)}>
+                  <IconArrowInbox size={16} />
+                  {__("Download")}
+                </DropdownItem>
+                <DropdownItem
+                  variant="danger"
+                  icon={IconTrashCan}
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
+                  {__("Delete")}
+                </DropdownItem>
+              </ActionDropdown>
+            </div>
+          )}
         </Td>
       </Tr>
     </>
