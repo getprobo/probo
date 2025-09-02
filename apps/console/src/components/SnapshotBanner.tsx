@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { useLazyLoadQuery, graphql } from "react-relay";
 import { useLocation } from "react-router";
 import type { SnapshotBannerQuery } from "./__generated__/SnapshotBannerQuery.graphql";
-import { getSnapshotTypeUrlPath } from "@probo/helpers";
+import { getSnapshotTypeUrlPath, getSnapshotTypeLabel, sprintf } from "@probo/helpers";
 
 const snapshotQuery = graphql`
   query SnapshotBannerQuery($snapshotId: ID!) {
@@ -50,7 +50,11 @@ export function SnapshotBanner({ snapshotId }: Props) {
           <span className="font-medium text-warning-800">{__("Snapshot")} {snapshot.name}</span>
         </div>
         <p className="text-sm text-warning-700">
-          {__("You are viewing a snapshot from")} {dateFormat(snapshot.createdAt, { year: "numeric", month: "short", day: "numeric" })}
+          {sprintf(
+            __("You are viewing a %s snapshot from %s"),
+            getSnapshotTypeLabel(__, snapshot.type).toLowerCase(),
+            dateFormat(snapshot.createdAt, { year: "numeric", month: "short", day: "numeric" })
+          )}
         </p>
       </div>
     </div>

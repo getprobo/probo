@@ -27,6 +27,8 @@ import { SortableTable, SortableTh } from "/components/SortableTable";
 import type { PreloadedQuery } from "react-relay";
 import type { RiskGraphListQuery } from "/hooks/graph/__generated__/RiskGraphListQuery.graphql";
 import type { RiskGraphFragment$data } from "/hooks/graph/__generated__/RiskGraphFragment.graphql";
+import { useParams } from "react-router";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 
 type Props = {
   queryRef: PreloadedQuery<RiskGraphListQuery>;
@@ -35,6 +37,8 @@ type Props = {
 export default function RisksPage(props: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
 
   const { connectionId, risks, refetch } = useRisksQuery(props.queryRef);
 
@@ -42,11 +46,19 @@ export default function RisksPage(props: Props) {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={__("Risks")}>
-        <FormRiskDialog
-          connection={connectionId}
-          trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
-        />
+      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
+      <PageHeader
+        title={__("Risks")}
+        description={__(
+          "Risks are potential threats to your organization. Manage them by identifying, assessing, and implementing mitigation measures."
+        )}
+      >
+        {!isSnapshotMode && (
+          <FormRiskDialog
+            connection={connectionId}
+            trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
+          />
+        )}
       </PageHeader>
 
       <div className="grid grid-cols-2 gap-4">
@@ -100,6 +112,8 @@ type RowProps = {
 function RiskRow(props: RowProps) {
   const { __ } = useTranslate();
   const { risk, connectionId, organizationId } = props;
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
   const [deleteRisk] = useDeleteRiskMutation();
   const confirm = useConfirm();
   const onDelete = () => {
@@ -125,14 +139,21 @@ function RiskRow(props: RowProps) {
     );
   };
   const formDialogRef = useDialogRef();
+
+  const riskUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/${risk.id}/overview`
+    : `/organizations/${organizationId}/risks/${risk.id}/overview`;
+
   return (
     <>
-      <FormRiskDialog
-        ref={formDialogRef}
-        risk={risk}
-        connection={connectionId}
-      />
-      <Tr to={`/organizations/${organizationId}/risks/${risk.id}`}>
+      {!isSnapshotMode && (
+        <FormRiskDialog
+          ref={formDialogRef}
+          risk={risk}
+          connection={connectionId}
+        />
+      )}
+      <Tr to={riskUrl}>
         <Td>{risk.name}</Td>
         <Td>{risk.category}</Td>
         <Td>{getTreatment(__, risk.treatment)}</Td>
@@ -143,22 +164,24 @@ function RiskRow(props: RowProps) {
           <SeverityBadge score={risk.residualRiskScore} />
         </Td>
         <Td noLink className="text-end">
-          <ActionDropdown>
-            <DropdownItem
-              icon={IconPencil}
-              onClick={() => formDialogRef.current?.open()}
-            >
-              {__("Edit")}
-            </DropdownItem>
+          {!isSnapshotMode && (
+            <ActionDropdown>
+              <DropdownItem
+                icon={IconPencil}
+                onClick={() => formDialogRef.current?.open()}
+              >
+                {__("Edit")}
+              </DropdownItem>
 
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={onDelete}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
+              <DropdownItem
+                variant="danger"
+                icon={IconTrashCan}
+                onClick={onDelete}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          )}
         </Td>
       </Tr>
     </>

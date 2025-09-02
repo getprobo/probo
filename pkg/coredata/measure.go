@@ -36,6 +36,8 @@ type (
 		Description    string       `db:"description"`
 		State          MeasureState `db:"state"`
 		ReferenceID    string       `db:"reference_id"`
+		SnapshotID     *gid.GID     `db:"snapshot_id"`
+		SourceID       *gid.GID     `db:"source_id"`
 		CreatedAt      time.Time    `db:"created_at"`
 		UpdatedAt      time.Time    `db:"updated_at"`
 	}
@@ -63,7 +65,9 @@ func (m *Measures) CountByRiskID(
 WITH msrs AS (
 	SELECT
 		m.id,
-		m.tenant_id
+		m.tenant_id,
+		m.search_vector,
+		m.snapshot_id
 	FROM
 		measures m
 	INNER JOIN
@@ -113,6 +117,9 @@ WITH msrs AS (
 		m.description,
 		m.state,
 		m.reference_id,
+		m.snapshot_id,
+		m.source_id,
+		m.search_vector,
 		m.created_at,
 		m.updated_at
 	FROM
@@ -130,6 +137,8 @@ SELECT
 	description,
 	state,
 	reference_id,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -171,7 +180,9 @@ func (m *Measures) CountByControlID(
 WITH mtgtns AS (
 		SELECT
 			m.id,
-			m.tenant_id
+			m.tenant_id,
+			m.search_vector,
+			m.snapshot_id
 		FROM
 			measures m
 		INNER JOIN
@@ -221,6 +232,8 @@ WITH mtgtns AS (
 		m.description,
 		m.state,
 		m.reference_id,
+		m.snapshot_id,
+		m.source_id,
 		m.search_vector,
 		m.created_at,
 		m.updated_at
@@ -239,6 +252,8 @@ SELECT
 	description,
 	state,
 	reference_id,
+	snapshot_id,
+	source_id,
 	created_at,
 	updated_at
 FROM
@@ -319,6 +334,8 @@ SELECT
     description,
     state,
     reference_id,
+    snapshot_id,
+    source_id,
     created_at,
     updated_at
 FROM
@@ -366,6 +383,8 @@ SELECT
     description,
     state,
     reference_id,
+    snapshot_id,
+    source_id,
     created_at,
     updated_at
 FROM
@@ -536,6 +555,7 @@ SET
   updated_at = @updated_at
 WHERE %s
     AND id = @measure_id
+	AND snapshot_id IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -564,6 +584,7 @@ func (m *Measure) Delete(
 DELETE FROM measures
 WHERE %s
     AND id = @measure_id
+	AND snapshot_id IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -571,5 +592,72 @@ WHERE %s
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+	return err
+}
+
+func (m Measures) InsertRiskSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	snapshot_risks AS (
+		SELECT id, source_id
+		FROM risks
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id AND %s
+	),
+	source_measures AS (
+		SELECT DISTINCT m.*
+		FROM measures m
+		INNER JOIN risks_measures rm ON m.id = rm.measure_id
+		INNER JOIN risks r ON rm.risk_id = r.id
+		AND r.organization_id = @organization_id
+		AND r.snapshot_id IS NULL
+		AND m.snapshot_id IS NULL
+	)
+INSERT INTO measures (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	organization_id,
+	category,
+	name,
+	description,
+	state,
+	reference_id,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @measure_entity_type),
+	@snapshot_id,
+	m.id,
+	m.organization_id,
+	m.category,
+	m.name,
+	m.description,
+	m.state,
+	m.reference_id,
+	m.created_at,
+	m.updated_at
+FROM source_measures m
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":           scope.GetTenantID(),
+		"snapshot_id":         snapshotID,
+		"organization_id":     organizationID,
+		"measure_entity_type": MeasureEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
 	return err
 }

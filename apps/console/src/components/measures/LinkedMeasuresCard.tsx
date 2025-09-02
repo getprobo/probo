@@ -22,6 +22,7 @@ import { useMemo, useState } from "react";
 import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { LinkedMeasureDialog } from "./LinkedMeasuresDialog.tsx";
+import { useParams } from "react-router";
 import clsx from "clsx";
 
 const linkedMeasureFragment = graphql`
@@ -42,17 +43,12 @@ type Mutation<Params> = (p: {
 }) => void;
 
 type Props<Params> = {
-  // Measures linked to the element
   measures: (LinkedMeasuresCardFragment$key & { id: string })[];
-  // Extra params to send to the mutation
   params: Params;
-  // Disable (action when loading for instance)
   disabled?: boolean;
-  // ID of the connection to update
+  hideActions?: boolean;
   connectionId: string;
-  // Mutation to attach a measure (will receive {measureId, ...params})
   onAttach: Mutation<Params>;
-  // Mutation to detach a measure (will receive {measureId, ...params})
   onDetach: Mutation<Params>;
   variant?: "card" | "table";
 };
@@ -62,6 +58,7 @@ type Props<Params> = {
  */
 export function LinkedMeasuresCard<Params>(props: Props<Params>) {
   const { __ } = useTranslate();
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
   const [limit, setLimit] = useState<number | null>(
     props.variant === "card" ? 4 : null
   );
@@ -102,17 +99,19 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
       {variant === "card" && (
         <div className="flex justify-between">
           <div className="text-lg font-semibold">{__("Measures")}</div>
-          <LinkedMeasureDialog
-            connectionId={props.connectionId}
-            disabled={props.disabled}
-            linkedMeasures={props.measures}
-            onLink={onAttach}
-            onUnlink={onDetach}
-          >
-            <Button variant="tertiary" icon={IconPlusLarge}>
-              {__("Link measure")}
-            </Button>
-          </LinkedMeasureDialog>
+          {!props.hideActions && (
+            <LinkedMeasureDialog
+              connectionId={props.connectionId}
+              disabled={props.disabled}
+              linkedMeasures={props.measures}
+              onLink={onAttach}
+              onUnlink={onDetach}
+            >
+              <Button variant="tertiary" icon={IconPlusLarge}>
+                {__("Link measure")}
+              </Button>
+            </LinkedMeasureDialog>
+          )}
         </div>
       )}
       <Table className={clsx(variant === "card" && "bg-invert")}>
@@ -132,9 +131,15 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
             </Tr>
           )}
           {measures.map((measure) => (
-            <MeasureRow key={measure.id} measure={measure} onClick={onDetach} />
+            <MeasureRow
+              key={measure.id}
+              measure={measure}
+              onClick={onDetach}
+              hideActions={props.hideActions}
+              snapshotId={snapshotId}
+            />
           ))}
-          {variant === "table" && (
+          {variant === "table" && !props.hideActions && (
             <LinkedMeasureDialog
               connectionId={props.connectionId}
               disabled={props.disabled}
@@ -166,25 +171,33 @@ export function LinkedMeasuresCard<Params>(props: Props<Params>) {
 function MeasureRow(props: {
   measure: LinkedMeasuresCardFragment$key & { id: string };
   onClick: (measureId: string) => void;
+  hideActions?: boolean;
+  snapshotId?: string;
 }) {
   const measure = useFragment(linkedMeasureFragment, props.measure);
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
 
+  const measureUrl = props.snapshotId
+    ? `/organizations/${organizationId}/snapshots/${props.snapshotId}/risks/measures/${measure.id}/evidences`
+    : `/organizations/${organizationId}/measures/${measure.id}`;
+
   return (
-    <Tr to={`/organizations/${organizationId}/measures/${measure.id}`}>
+    <Tr to={measureUrl}>
       <Td>{measure.name}</Td>
       <Td>
         <MeasureBadge state={measure.state} />
       </Td>
       <Td noLink width={50} className="text-end">
-        <Button
-          variant="secondary"
-          onClick={() => props.onClick(measure.id)}
-          icon={IconTrashCan}
-        >
-          {__("Unlink")}
-        </Button>
+        {!props.hideActions && (
+          <Button
+            variant="secondary"
+            onClick={() => props.onClick(measure.id)}
+            icon={IconTrashCan}
+          >
+            {__("Unlink")}
+          </Button>
+        )}
       </Td>
     </Tr>
   );

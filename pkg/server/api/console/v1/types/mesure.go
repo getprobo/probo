@@ -70,6 +70,7 @@ func NewMeasure(c *coredata.Measure) *Measure {
 		Name:        c.Name,
 		Description: c.Description,
 		State:       c.State,
+		SnapshotID:  c.SnapshotID,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
 	}

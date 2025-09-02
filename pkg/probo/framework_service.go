@@ -342,6 +342,7 @@ func (s FrameworkService) StateOfApplicability(ctx context.Context, frameworkID 
 				}
 
 				measures := coredata.Measures{}
+				var nilSnapshotID *gid.GID = nil
 				err = measures.LoadByControlID(
 					ctx,
 					conn,
@@ -356,7 +357,7 @@ func (s FrameworkService) StateOfApplicability(ctx context.Context, frameworkID 
 							Direction: page.OrderDirectionAsc,
 						},
 					),
-					coredata.NewMeasureFilter(nil),
+					coredata.NewMeasureFilter(nil, &nilSnapshotID),
 				)
 				if err != nil {
 					return fmt.Errorf("cannot load measures: %w", err)
@@ -364,12 +365,13 @@ func (s FrameworkService) StateOfApplicability(ctx context.Context, frameworkID 
 
 				for _, measure := range measures {
 					risks := coredata.Risks{}
+					var nilSnapshotID *gid.GID = nil
 					risksCount, err := risks.CountByMeasureID(
 						ctx,
 						conn,
 						s.svc.scope,
 						measure.ID,
-						coredata.NewRiskFilter(nil),
+						coredata.NewRiskFilter(nil, &nilSnapshotID),
 					)
 					if err != nil {
 						return fmt.Errorf("cannot count risks: %w", err)
@@ -410,7 +412,7 @@ func (s FrameworkService) StateOfApplicability(ctx context.Context, frameworkID 
 						conn,
 						s.svc.scope,
 						document.ID,
-						coredata.NewRiskFilter(nil),
+						coredata.NewRiskFilter(nil, nil),
 					)
 					if err != nil {
 						return fmt.Errorf("cannot count risks: %w", err)

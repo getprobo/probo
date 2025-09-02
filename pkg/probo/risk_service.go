@@ -186,7 +186,6 @@ func (s RiskService) CreateDocumentMapping(
 			riskDocument := &coredata.RiskDocument{
 				RiskID:     risk.ID,
 				DocumentID: document.ID,
-				TenantID:   s.svc.scope.GetTenantID(),
 				CreatedAt:  time.Now(),
 			}
 
@@ -254,7 +253,6 @@ func (s RiskService) CreateMeasureMapping(
 			riskMeasure := &coredata.RiskMeasure{
 				RiskID:    risk.ID,
 				MeasureID: measure.ID,
-				TenantID:  s.svc.scope.GetTenantID(),
 				CreatedAt: time.Now(),
 			}
 
@@ -291,7 +289,6 @@ func (s RiskService) DeleteMeasureMapping(
 			riskMeasure := &coredata.RiskMeasure{
 				RiskID:    riskID,
 				MeasureID: measureID,
-				TenantID:  s.svc.scope.GetTenantID(),
 				CreatedAt: time.Now(),
 			}
 

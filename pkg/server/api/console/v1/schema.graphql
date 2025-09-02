@@ -1096,10 +1096,12 @@ input DocumentFilter {
 
 input MeasureFilter {
   query: String
+  snapshotId: ID
 }
 
 input RiskFilter {
   query: String
+  snapshotId: ID
 }
 
 input PeopleFilter {
@@ -1227,7 +1229,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: MeasureOrder
-    filter: MeasureFilter
+    filter: MeasureFilter = { snapshotId: null }
   ): MeasureConnection! @goField(forceResolver: true)
 
   risks(
@@ -1236,7 +1238,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: RiskOrder
-    filter: RiskFilter
+    filter: RiskFilter = { snapshotId: null }
   ): RiskConnection! @goField(forceResolver: true)
 
   tasks(
@@ -1545,6 +1547,7 @@ type Control implements Node {
 
 type Measure implements Node {
   id: ID!
+  snapshotId: ID
   category: String!
   name: String!
   description: String!
@@ -1664,6 +1667,7 @@ type Document implements Node {
 
 type Risk implements Node {
   id: ID!
+  snapshotId: ID
   name: String!
   description: String!
   category: String!

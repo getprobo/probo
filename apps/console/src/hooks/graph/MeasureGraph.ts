@@ -42,6 +42,7 @@ export const measureNodeQuery = graphql`
     node(id: $measureId) {
       ... on Measure {
         id
+        snapshotId
         name
         description
         state

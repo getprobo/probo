@@ -17,7 +17,7 @@ import {
 } from "@probo/ui";
 import { Outlet, useNavigate, useParams } from "react-router";
 import { useTranslate } from "@probo/i18n";
-import { getTreatment, sprintf } from "@probo/helpers";
+import { getTreatment, sprintf, validateSnapshotConsistency } from "@probo/helpers";
 import { ConnectionHandler } from "relay-runtime";
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
 import FormRiskDialog from "./FormRiskDialog";
@@ -29,23 +29,27 @@ import {
   useDeleteRiskMutation,
 } from "/hooks/graph/RiskGraph";
 import type { RiskGraphNodeQuery } from "/hooks/graph/__generated__/RiskGraphNodeQuery.graphql";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 
 type Props = {
   queryRef: PreloadedQuery<RiskGraphNodeQuery>;
 };
 
 export default function RiskDetailPage(props: Props) {
-  const { riskId } = useParams<{ riskId: string }>();
+  const { riskId, snapshotId } = useParams<{ riskId: string; snapshotId?: string }>();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
+  const isSnapshotMode = Boolean(snapshotId);
 
   if (!riskId) {
     throw new Error("Cannot load risk detail page without riskId parameter");
   }
 
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(riskNodeQuery, props.queryRef);
+  const data = usePreloadedQuery<RiskGraphNodeQuery>(riskNodeQuery, props.queryRef);
   const risk = data.node;
+
+  validateSnapshotConsistency(risk, snapshotId);
   const [deleteRisk] = useDeleteRiskMutation();
 
   usePageTitle(risk.name ?? "Risk detail");
@@ -65,7 +69,10 @@ export default function RiskDetailPage(props: Props) {
               connections: [connectionId],
             },
             onSuccess() {
-              navigate(`/organizations/${organizationId}/risks`);
+              const risksUrl = isSnapshotMode && snapshotId
+                ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks`
+                : `/organizations/${organizationId}/risks`;
+              navigate(risksUrl);
               resolve();
             },
           });
@@ -85,68 +92,73 @@ export default function RiskDetailPage(props: Props) {
   const measuresCount = risk.measuresInfo?.totalCount ?? 0;
   const controlsCount = risk.controlsInfo?.totalCount ?? 0;
 
+  const risksUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks`
+    : `/organizations/${organizationId}/risks`;
+
+  const baseTabUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/${riskId}`
+    : `/organizations/${organizationId}/risks/${riskId}`;
+
   return (
     <div className="space-y-6">
+      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <Breadcrumb
           items={[
             {
               label: __("Risks"),
-              to: `/organizations/${organizationId}/risks`,
+              to: risksUrl,
             },
             {
               label: __("Risk detail"),
             },
           ]}
         />
-        <div className="flex gap-2">
-          <FormRiskDialog
-            trigger={
-              <Button icon={IconPencil} variant="secondary">
-                {__("Edit")}
-              </Button>
-            }
-            risk={{ id: riskId, ...risk }}
-          />
-          <ActionDropdown variant="secondary">
-            <DropdownItem
-              variant="danger"
-              icon={IconTrashCan}
-              onClick={onDelete}
-            >
-              {__("Delete")}
-            </DropdownItem>
-          </ActionDropdown>
-        </div>
+        {!isSnapshotMode && (
+          <div className="flex gap-2">
+            <FormRiskDialog
+              trigger={
+                <Button icon={IconPencil} variant="secondary">
+                  {__("Edit")}
+                </Button>
+              }
+              risk={{ id: riskId, ...risk }}
+            />
+            <ActionDropdown variant="secondary">
+              <DropdownItem
+                variant="danger"
+                icon={IconTrashCan}
+                onClick={onDelete}
+              >
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          </div>
+        )}
       </div>
 
       <PageHeader title={risk.name} />
 
       <Tabs>
-        <TabLink
-          to={`/organizations/${organizationId}/risks/${riskId}/overview`}
-        >
+        <TabLink to={`${baseTabUrl}/overview`}>
           {__("Overview")}
         </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/risks/${riskId}/measures`}
-        >
+        <TabLink to={`${baseTabUrl}/measures`}>
           {__("Measures")}
           <TabBadge>{measuresCount}</TabBadge>
         </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/risks/${riskId}/documents`}
-        >
+        <TabLink to={`${baseTabUrl}/documents`}>
           {__("Documents")}
           <TabBadge>{documentsCount}</TabBadge>
         </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/risks/${riskId}/controls`}
-        >
-          {__("Controls")}
-          <TabBadge>{controlsCount}</TabBadge>
-        </TabLink>
+        {!isSnapshotMode && (
+          <TabLink to={`${baseTabUrl}/controls`}>
+            {__("Controls")}
+            <TabBadge>{controlsCount}</TabBadge>
+          </TabLink>
+        )}
       </Tabs>
 
       <Outlet context={{ risk }} />

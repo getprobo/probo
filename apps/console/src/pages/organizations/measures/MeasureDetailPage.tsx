@@ -12,7 +12,6 @@ import {
   IconPencil,
   IconTrashCan,
   IconWarning,
-
   Option,
   PageHeader,
   PropertyRow,
@@ -41,23 +40,20 @@ import {
   measureStates,
   slugify,
   sprintf,
+  validateSnapshotConsistency,
 } from "@probo/helpers";
 import MeasureFormDialog from "./dialog/MeasureFormDialog";
+import { SnapshotBanner } from "/components/SnapshotBanner";
 
 type Props = {
   queryRef: PreloadedQuery<MeasureGraphNodeQuery>;
 };
 
 export default function MeasureDetailPage(props: Props) {
-  const { measureId } = useParams<{ measureId: string }>();
+  const { measureId, snapshotId } = useParams<{ measureId: string; snapshotId?: string }>();
   const organizationId = useOrganizationId();
-  const data = usePreloadedQuery(measureNodeQuery, props.queryRef);
-  const measure = data.node;
-  const { __ } = useTranslate();
-  const [deleteMeasure] = useDeleteMeasureMutation();
   const navigate = useNavigate();
-  const confirm = useConfirm();
-  const [updateMeasure, isUpdating] = useUpdateMeasure();
+  const isSnapshotMode = Boolean(snapshotId);
 
   if (!measureId) {
     throw new Error(
@@ -65,10 +61,29 @@ export default function MeasureDetailPage(props: Props) {
     );
   }
 
+  const data = usePreloadedQuery(measureNodeQuery, props.queryRef);
+  const measure = data.node;
+  const { __ } = useTranslate();
+  const [deleteMeasure] = useDeleteMeasureMutation();
+  const confirm = useConfirm();
+  const [updateMeasure, isUpdating] = useUpdateMeasure();
+
+  if (isSnapshotMode) {
+    validateSnapshotConsistency(measure, snapshotId);
+  }
+
   const tasksCount = measure.tasksInfos?.totalCount ?? 0;
   const evidencesCount = measure.evidencesInfos?.totalCount ?? 0;
   const controlsCount = measure.controlsInfos?.totalCount ?? 0;
   const risksCount = measure.risksInfos?.totalCount ?? 0;
+
+  const measuresUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks`
+    : `/organizations/${organizationId}/measures`;
+
+  const baseTabUrl = isSnapshotMode && snapshotId
+    ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks/measures/${measureId}`
+    : `/organizations/${organizationId}/measures/${measureId}`;
 
   const onDelete = () => {
     const connectionId = ConnectionHandler.getConnectionID(
@@ -113,14 +128,16 @@ export default function MeasureDetailPage(props: Props) {
 
   return (
     <div className="space-y-6">
+      {snapshotId && <SnapshotBanner snapshotId={snapshotId} />}
+
       {/* Header */}
       <Breadcrumb
         items={[
           {
-            label: __("Measures"),
-            to: `/organizations/${organizationId}/measures`,
+            label: isSnapshotMode ? __("Risks") : __("Measures"),
+            to: measuresUrl,
           },
-          ...(measure.category
+          ...(measure.category && !isSnapshotMode
             ? [
                 {
                   label: measure.category,
@@ -135,61 +152,61 @@ export default function MeasureDetailPage(props: Props) {
       />
 
       <PageHeader title={measure.name} description={measure.description}>
-        <MeasureFormDialog measure={measure}>
-          <Button variant="secondary" icon={IconPencil}>
-            {__("Edit")}
-          </Button>
-        </MeasureFormDialog>
-        <Select
-          disabled={isUpdating}
-          onValueChange={onStateChange}
-          name="state"
-          placeholder={__("Select state")}
-          className="rounded-full"
-          value={measure.state}
-        >
-          {measureStates.map((state) => (
-            <Option key={state} value={state}>
-              {getMeasureStateLabel(__, state)}
-            </Option>
-          ))}
-        </Select>
-        <ActionDropdown variant="secondary">
-          <DropdownItem variant="danger" icon={IconTrashCan} onClick={onDelete}>
-            {__("Delete")}
-          </DropdownItem>
-        </ActionDropdown>
+        {!isSnapshotMode && (
+          <>
+            <MeasureFormDialog measure={measure}>
+              <Button variant="secondary" icon={IconPencil}>
+                {__("Edit")}
+              </Button>
+            </MeasureFormDialog>
+            <Select
+              disabled={isUpdating}
+              onValueChange={onStateChange}
+              name="state"
+              placeholder={__("Select state")}
+              className="rounded-full"
+              value={measure.state}
+            >
+              {measureStates.map((state) => (
+                <Option key={state} value={state}>
+                  {getMeasureStateLabel(__, state)}
+                </Option>
+              ))}
+            </Select>
+            <ActionDropdown variant="secondary">
+              <DropdownItem variant="danger" icon={IconTrashCan} onClick={onDelete}>
+                {__("Delete")}
+              </DropdownItem>
+            </ActionDropdown>
+          </>
+        )}
       </PageHeader>
 
       <Tabs>
-        <TabLink
-          to={`/organizations/${organizationId}/measures/${measureId}/evidences`}
-        >
+        <TabLink to={`${baseTabUrl}/evidences`}>
           <IconPageTextLine size={20} />
           {__("Evidences")}
           <TabBadge>{evidencesCount}</TabBadge>
         </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/measures/${measureId}/tasks`}
-        >
-          <IconCheckmark1 size={20} />
-          {__("Tasks")}
-          <TabBadge>{tasksCount}</TabBadge>
-        </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/measures/${measureId}/controls`}
-        >
-          <IconFrame2 size={20} />
-          {__("Controls")}
-          <TabBadge>{controlsCount}</TabBadge>
-        </TabLink>
-        <TabLink
-          to={`/organizations/${organizationId}/measures/${measureId}/risks`}
-        >
-          <IconWarning size={20} />
-          {__("Risks")}
-          <TabBadge>{risksCount}</TabBadge>
-        </TabLink>
+        {!isSnapshotMode && (
+          <>
+            <TabLink to={`${baseTabUrl}/tasks`}>
+              <IconCheckmark1 size={20} />
+              {__("Tasks")}
+              <TabBadge>{tasksCount}</TabBadge>
+            </TabLink>
+            <TabLink to={`${baseTabUrl}/controls`}>
+              <IconFrame2 size={20} />
+              {__("Controls")}
+              <TabBadge>{controlsCount}</TabBadge>
+            </TabLink>
+            <TabLink to={`${baseTabUrl}/risks`}>
+              <IconWarning size={20} />
+              {__("Risks")}
+              <TabBadge>{risksCount}</TabBadge>
+            </TabLink>
+          </>
+        )}
       </Tabs>
 
       <Outlet context={{ measure }} />
@@ -197,6 +214,9 @@ export default function MeasureDetailPage(props: Props) {
       <Drawer>
         <PropertyRow label={__("State")}>
           <MeasureBadge state={measure.state!} />
+        </PropertyRow>
+        <PropertyRow label={__("Category")}>
+          <div className="text-sm text-txt-secondary">{measure.category}</div>
         </PropertyRow>
       </Drawer>
     </div>

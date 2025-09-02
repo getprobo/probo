@@ -51,17 +51,12 @@ type Mutation<Params> = (p: {
 }) => void;
 
 type Props<Params> = {
-  // Documents linked to the element
   documents: (LinkedDocumentsCardFragment$key & { id: string })[];
-  // Extra params to send to the mutation
   params: Params;
-  // Disable (action when loading for instance)
   disabled?: boolean;
-  // ID of the connection to update
+  hideActions?: boolean;
   connectionId: string;
-  // Mutation to attach a document (will receive {documentId, ...params})
   onAttach: Mutation<Params>;
-  // Mutation to detach a document (will receive {documentId, ...params})
   onDetach: Mutation<Params>;
   variant?: "card" | "table";
 };
@@ -109,17 +104,19 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
       {variant === "card" && (
         <div className="flex justify-between">
           <div className="text-lg font-semibold">{__("Documents")}</div>
-          <LinkedDocumentDialog
-            connectionId={props.connectionId}
-            disabled={props.disabled}
-            linkedDocuments={props.documents}
-            onLink={onAttach}
-            onUnlink={onDetach}
-          >
-            <Button variant="tertiary" icon={IconPlusLarge}>
-              {__("Link document")}
-            </Button>
-          </LinkedDocumentDialog>
+          {!props.hideActions && (
+            <LinkedDocumentDialog
+              connectionId={props.connectionId}
+              disabled={props.disabled}
+              linkedDocuments={props.documents}
+              onLink={onAttach}
+              onUnlink={onDetach}
+            >
+              <Button variant="tertiary" icon={IconPlusLarge}>
+                {__("Link document")}
+              </Button>
+            </LinkedDocumentDialog>
+          )}
         </div>
       )}
       <Table className={clsx(variant === "card" && "bg-invert")}>
@@ -144,9 +141,10 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
               key={document.id}
               document={document}
               onClick={onDetach}
+              hideActions={props.hideActions}
             />
           ))}
-          {variant === "table" && (
+          {variant === "table" && !props.hideActions && (
             <LinkedDocumentDialog
               connectionId={props.connectionId}
               disabled={props.disabled}
@@ -178,6 +176,7 @@ export function LinkedDocumentsCard<Params>(props: Props<Params>) {
 function DocumentRow(props: {
   document: LinkedDocumentsCardFragment$key & { id: string };
   onClick: (documentId: string) => void;
+  hideActions?: boolean;
 }) {
   const document = useFragment(linkedDocumentFragment, props.document);
   const organizationId = useOrganizationId();
@@ -204,13 +203,15 @@ function DocumentRow(props: {
         <DocumentVersionBadge state={document.versions.edges[0].node.status} />
       </Td>
       <Td noLink width={50} className="text-end">
-        <Button
-          variant="secondary"
-          onClick={() => props.onClick(document.id)}
-          icon={IconTrashCan}
-        >
-          {__("Unlink")}
-        </Button>
+        {!props.hideActions && (
+          <Button
+            variant="secondary"
+            onClick={() => props.onClick(document.id)}
+            icon={IconTrashCan}
+          >
+            {__("Unlink")}
+          </Button>
+        )}
       </Td>
     </Tr>
   );

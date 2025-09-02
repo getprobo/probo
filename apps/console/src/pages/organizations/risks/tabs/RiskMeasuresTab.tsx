@@ -1,6 +1,6 @@
 import { graphql, useFragment, useMutation } from "react-relay";
 import type { RiskMeasuresTabFragment$key } from "./__generated__/RiskMeasuresTabFragment.graphql";
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
 
 export const measuresFragment = graphql`
@@ -46,6 +46,9 @@ export const detachMeasureMutation = graphql`
 `;
 
 export default function RiskMeasuresTab() {
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
+
   const { risk } = useOutletContext<{
     risk: RiskMeasuresTabFragment$key & { id: string };
   }>();
@@ -60,6 +63,7 @@ export default function RiskMeasuresTab() {
   return (
     <LinkedMeasuresCard
       disabled={isLoading}
+      hideActions={isSnapshotMode}
       measures={measures}
       onAttach={attachMeasure}
       onDetach={detachMeasure}

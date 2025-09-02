@@ -29,6 +29,8 @@ import (
 type (
 	Evidence struct {
 		ID          gid.GID       `db:"id"`
+		SnapshotID  *gid.GID      `db:"snapshot_id"`
+		SourceID    *gid.GID      `db:"source_id"`
 		MeasureID   gid.GID       `db:"measure_id"`
 		TaskID      *gid.GID      `db:"task_id"`
 		State       EvidenceState `db:"state"`
@@ -66,6 +68,8 @@ INSERT INTO
     evidences (
         tenant_id,
         id,
+        snapshot_id,
+        source_id,
         measure_id,
         task_id,
         reference_id,
@@ -83,6 +87,8 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @evidence_id,
+    @snapshot_id,
+    @source_id,
     @measure_id,
     @task_id,
     @reference_id,
@@ -107,6 +113,8 @@ WHERE evidences.state = 'REQUESTED';
 	args := pgx.StrictNamedArgs{
 		"tenant_id":    scope.GetTenantID(),
 		"evidence_id":  e.ID,
+		"snapshot_id":  e.SnapshotID,
+		"source_id":    e.SourceID,
 		"measure_id":   e.MeasureID,
 		"task_id":      e.TaskID,
 		"reference_id": e.ReferenceID,
@@ -135,6 +143,8 @@ INSERT INTO
     evidences (
         tenant_id,
         id,
+        snapshot_id,
+        source_id,
         measure_id,
         task_id,
         reference_id,
@@ -152,6 +162,8 @@ INSERT INTO
 VALUES (
     @tenant_id,
     @evidence_id,
+    @snapshot_id,
+    @source_id,
     @measure_id,
     @task_id,
     @reference_id,
@@ -171,6 +183,8 @@ VALUES (
 	args := pgx.StrictNamedArgs{
 		"tenant_id":    scope.GetTenantID(),
 		"evidence_id":  e.ID,
+		"snapshot_id":  e.SnapshotID,
+		"source_id":    e.SourceID,
 		"measure_id":   e.MeasureID,
 		"task_id":      e.TaskID,
 		"reference_id": e.ReferenceID,
@@ -198,6 +212,8 @@ func (e *Evidence) LoadByID(
 	q := `
 SELECT
     id,
+    snapshot_id,
+    source_id,
     task_id,
     measure_id,
     reference_id,
@@ -281,6 +297,8 @@ func (e *Evidences) LoadByMeasureID(
 	q := `
 SELECT
 	id,
+	snapshot_id,
+	source_id,
 	measure_id,
 	task_id,
 	reference_id,
@@ -365,6 +383,8 @@ func (e *Evidences) LoadByTaskID(
 	q := `
 SELECT
     id,
+    snapshot_id,
+    source_id,
     measure_id,
     task_id,
     reference_id,
@@ -428,6 +448,7 @@ SET
 WHERE
     %s
 	AND id = @evidence_id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -461,6 +482,7 @@ DELETE FROM
 WHERE
 	%s
     AND id = @evidence_id
+	AND snapshot_id IS NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -469,5 +491,90 @@ WHERE
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
+	return err
+}
+
+func (e Evidences) InsertRiskSnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
+	query := `
+WITH
+	snapshot_risks AS (
+		SELECT id, source_id
+		FROM risks
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id AND %s
+	),
+	snapshot_measures AS (
+		SELECT id, source_id
+		FROM measures
+		WHERE organization_id = @organization_id AND snapshot_id = @snapshot_id AND %s
+	),
+	source_evidences AS (
+		SELECT DISTINCT e.*
+		FROM evidences e
+		INNER JOIN measures m ON e.measure_id = m.id
+		INNER JOIN risks_measures rm ON m.id = rm.measure_id
+		INNER JOIN risks r ON rm.risk_id = r.id
+		WHERE r.organization_id = @organization_id
+		AND r.snapshot_id IS NULL
+		AND m.snapshot_id IS NULL
+		AND e.snapshot_id IS NULL
+	)
+INSERT INTO evidences (
+	tenant_id,
+	id,
+	snapshot_id,
+	source_id,
+	measure_id,
+	task_id,
+	reference_id,
+	state,
+	type,
+	object_key,
+	mime_type,
+	size,
+	filename,
+	url,
+	description,
+	created_at,
+	updated_at
+)
+SELECT
+	@tenant_id,
+	generate_gid(decode_base64_unpadded(@tenant_id), @evidence_entity_type),
+	@snapshot_id,
+	e.id,
+	sm.id,
+	e.task_id,
+	e.reference_id,
+	e.state,
+	e.type,
+	e.object_key,
+	e.mime_type,
+	e.size,
+	e.filename,
+	e.url,
+	e.description,
+	e.created_at,
+	e.updated_at
+FROM source_evidences e
+INNER JOIN snapshot_measures sm ON sm.source_id = e.measure_id
+	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment(), scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id":            scope.GetTenantID(),
+		"snapshot_id":          snapshotID,
+		"organization_id":      organizationID,
+		"evidence_entity_type": EvidenceEntityType,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
 	return err
 }

@@ -70,4 +70,31 @@ export const measureRoutes = [
       },
     ],
   },
+  // Snapshot measure routes
+  {
+    path: "snapshots/:snapshotId/risks/measures/:measureId",
+    fallback: PageSkeleton,
+    queryLoader: ({ measureId }) =>
+      loadQuery(relayEnvironment, measureNodeQuery, { measureId }),
+    Component: lazy(
+      () => import("/pages/organizations/measures/MeasureDetailPage")
+    ),
+    children: [
+      {
+        path: "",
+        loader: () => {
+          throw redirect("evidences");
+        },
+        Component: Fragment,
+      },
+      {
+        path: "evidences/:evidenceId?",
+        fallback: LinkCardSkeleton,
+        Component: lazy(
+          () =>
+            import("/pages/organizations/measures/tabs/MeasureEvidencesTab.tsx")
+        ),
+      },
+    ],
+  },
 ] satisfies AppRoute[];

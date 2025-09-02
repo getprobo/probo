@@ -15,36 +15,62 @@
 package coredata
 
 import (
+	"github.com/getprobo/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 )
 
 type (
 	RiskFilter struct {
-		query *string
+		query      *string
+		snapshotID **gid.GID
 	}
 )
 
-func NewRiskFilter(query *string) *RiskFilter {
+func NewRiskFilter(query *string, snapshotID **gid.GID) *RiskFilter {
 	return &RiskFilter{
-		query: query,
+		query:      query,
+		snapshotID: snapshotID,
 	}
 }
 
-func (f *RiskFilter) SQLArguments() pgx.NamedArgs {
-	return pgx.NamedArgs{
+func (f *RiskFilter) SQLArguments() pgx.StrictNamedArgs {
+	args := pgx.StrictNamedArgs{
 		"query": f.query,
 	}
+
+	if f.snapshotID == nil {
+		args["has_snapshot_filter"] = false
+		args["filter_snapshot_id"] = nil
+	} else if *f.snapshotID == nil {
+		args["has_snapshot_filter"] = true
+		args["filter_snapshot_id"] = nil
+	} else {
+		args["has_snapshot_filter"] = true
+		args["filter_snapshot_id"] = **f.snapshotID
+	}
+
+	return args
 }
 
 func (f *RiskFilter) SQLFragment() string {
-	if f.query == nil || *f.query == "" {
-		return "TRUE"
-	}
-
 	return `
-		search_vector @@ (
-			SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
-			FROM unnest(regexp_split_to_array(trim(@query), '\s+')) AS lexeme
-		)
-	`
+(
+	CASE
+		WHEN @query::text IS NOT NULL AND @query::text != '' THEN
+			search_vector @@ (
+				SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
+				FROM unnest(regexp_split_to_array(trim(@query), '\s+')) AS lexeme
+			)
+		ELSE TRUE
+	END
+	AND
+	CASE
+		WHEN @has_snapshot_filter::boolean = false THEN TRUE
+		WHEN @has_snapshot_filter::boolean = true AND @filter_snapshot_id::text IS NOT NULL THEN
+			snapshot_id = @filter_snapshot_id::text
+		WHEN @has_snapshot_filter::boolean = true AND @filter_snapshot_id::text IS NULL THEN
+			snapshot_id IS NULL
+		ELSE TRUE
+	END
+)`
 }

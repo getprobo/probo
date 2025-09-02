@@ -369,9 +369,9 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil)
+	var measureFilter = coredata.NewMeasureFilter(nil, nil)
 	if filter != nil {
-		measureFilter = coredata.NewMeasureFilter(filter.Query)
+		measureFilter = coredata.NewMeasureFilter(filter.Query, nil)
 	}
 
 	page, err := prb.Measures.ListForControlID(ctx, obj.ID, cursor, measureFilter)
@@ -1034,9 +1034,9 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var riskFilter = coredata.NewRiskFilter(nil)
+	var riskFilter = coredata.NewRiskFilter(nil, nil)
 	if filter != nil {
-		riskFilter = coredata.NewRiskFilter(filter.Query)
+		riskFilter = coredata.NewRiskFilter(filter.Query, &filter.SnapshotID)
 	}
 
 	page, err := prb.Risks.ListForMeasureID(ctx, obj.ID, cursor, riskFilter)
@@ -3565,9 +3565,9 @@ func (r *organizationResolver) Measures(ctx context.Context, obj *types.Organiza
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil)
+	var measureFilter = coredata.NewMeasureFilter(nil, nil)
 	if filter != nil {
-		measureFilter = coredata.NewMeasureFilter(filter.Query)
+		measureFilter = coredata.NewMeasureFilter(filter.Query, &filter.SnapshotID)
 	}
 
 	page, err := prb.Measures.ListForOrganizationID(ctx, obj.ID, cursor, measureFilter)
@@ -3595,9 +3595,9 @@ func (r *organizationResolver) Risks(ctx context.Context, obj *types.Organizatio
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var riskFilter = coredata.NewRiskFilter(nil)
+	var riskFilter = coredata.NewRiskFilter(nil, nil)
 	if filter != nil {
-		riskFilter = coredata.NewRiskFilter(filter.Query)
+		riskFilter = coredata.NewRiskFilter(filter.Query, &filter.SnapshotID)
 	}
 
 	page, err := prb.Risks.ListForOrganizationID(ctx, obj.ID, cursor, riskFilter)
@@ -4178,9 +4178,9 @@ func (r *riskResolver) Measures(ctx context.Context, obj *types.Risk, first *int
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	var measureFilter = coredata.NewMeasureFilter(nil)
+	var measureFilter = coredata.NewMeasureFilter(nil, nil)
 	if filter != nil {
-		measureFilter = coredata.NewMeasureFilter(filter.Query)
+		measureFilter = coredata.NewMeasureFilter(filter.Query, nil)
 	}
 
 	page, err := prb.Measures.ListForRiskID(ctx, obj.ID, cursor, measureFilter)

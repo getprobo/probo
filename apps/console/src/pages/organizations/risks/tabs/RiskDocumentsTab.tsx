@@ -1,5 +1,5 @@
 import { graphql, useFragment, useMutation } from "react-relay";
-import { useOutletContext } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 import { LinkedDocumentsCard } from "/components/documents/LinkedDocumentsCard";
 import type { RiskDocumentsTabFragment$key } from "./__generated__/RiskDocumentsTabFragment.graphql";
 
@@ -46,6 +46,9 @@ export const detachDocumentMutation = graphql`
 `;
 
 export default function RiskDocumentsTab() {
+  const { snapshotId } = useParams<{ snapshotId?: string }>();
+  const isSnapshotMode = Boolean(snapshotId);
+
   const { risk } = useOutletContext<{
     risk: RiskDocumentsTabFragment$key & { id: string };
   }>();
@@ -60,6 +63,7 @@ export default function RiskDocumentsTab() {
   return (
     <LinkedDocumentsCard
       disabled={isLoading}
+      hideActions={isSnapshotMode}
       documents={documents}
       onAttach={attachDocument}
       onDetach={detachDocument}

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d65dc38bcf11079a304f8a5cc4070389>>
+ * @generated SignedSource<<56ea89bc46a591546ad331c94e79ae9c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,6 +25,7 @@ export type RiskGraphFragment$data = {
         readonly residualImpact: number;
         readonly residualLikelihood: number;
         readonly residualRiskScore: number;
+        readonly snapshotId: string | null | undefined;
         readonly treatment: RiskTreatment;
         readonly " $fragmentSpreads": FragmentRefs<"useRiskFormFragment">;
       };
@@ -76,6 +77,11 @@ return {
       "defaultValue": null,
       "kind": "LocalArgument",
       "name": "order"
+    },
+    {
+      "defaultValue": null,
+      "kind": "LocalArgument",
+      "name": "snapshotId"
     }
   ],
   "kind": "Fragment",
@@ -116,6 +122,17 @@ return {
       "alias": "risks",
       "args": [
         {
+          "fields": [
+            {
+              "kind": "Variable",
+              "name": "snapshotId",
+              "variableName": "snapshotId"
+            }
+          ],
+          "kind": "ObjectValue",
+          "name": "filter"
+        },
+        {
           "kind": "Variable",
           "name": "orderBy",
           "variableName": "order"
@@ -143,6 +160,13 @@ return {
               "plural": false,
               "selections": [
                 (v1/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "snapshotId",
+                  "storageKey": null
+                },
                 {
                   "alias": null,
                   "args": null,
@@ -280,6 +304,6 @@ return {
 };
 })();
 
-(node as any).hash = "dc662098b9aceaa2400f4656ed1b2d01";
+(node as any).hash = "f4a8e0e71a70b692b1806d992bc18863";
 
 export default node;
