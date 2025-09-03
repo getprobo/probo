@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router";
 import { graphql } from "relay-runtime";
 import { useRefetchableFragment } from "react-relay";
 import type { DocumentControlsTabFragment$key } from "./__generated__/DocumentControlsTabFragment.graphql";
-import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement.ts";
+import { useMutationWithIncrement } from "/hooks/useMutationWithIncrement";
 
 export const controlsFragment = graphql`
   fragment DocumentControlsTabFragment on Document
