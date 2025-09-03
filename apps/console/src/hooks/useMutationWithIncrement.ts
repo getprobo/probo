@@ -6,10 +6,10 @@ import {
 } from "react-relay";
 import {
   commitLocalUpdate,
+  type Environment,
   type GraphQLTaggedNode,
   type MutationParameters,
 } from "relay-runtime";
-import type RelayModernEnvironment from "relay-runtime/lib/store/RelayModernEnvironment";
 
 const defaultOptions = {
   field: "totalCount",
@@ -36,13 +36,15 @@ export function useMutationWithIncrement<T extends MutationParameters>(
       return mutate({
         ...queryOptions,
         onCompleted: (response, error) => {
-          updateStoreCounter(
-            relayEnv,
-            options.id,
-            options.node,
-            options.value,
-            options.field,
-          );
+          if (!error) {
+            updateStoreCounter(
+              relayEnv,
+              options.id,
+              options.node,
+              options.value,
+              options.field,
+            );
+          }
           queryOptions.onCompleted?.(response, error);
         },
       });
@@ -54,7 +56,7 @@ export function useMutationWithIncrement<T extends MutationParameters>(
 }
 
 export function updateStoreCounter(
-  relayEnv: RelayModernEnvironment,
+  relayEnv: Environment,
   recordId: string,
   nodeName: string,
   value: number = 1,

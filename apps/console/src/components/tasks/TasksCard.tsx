@@ -165,8 +165,8 @@ function TaskRow(props: TaskRowProps) {
             input: { taskId: props.task.id },
             connections: [props.connectionId],
           },
-          onCompleted: () => {
-            if (params.measureId) {
+          onCompleted: (_response, errors) => {
+            if (!errors && params.measureId) {
               updateStoreCounter(
                 relayEnv,
                 params.measureId,

@@ -180,13 +180,15 @@ function EvidenceRow(props: {
               evidenceId: evidence.id,
             },
           },
-          onCompleted: () => {
-            updateStoreCounter(
-              relayEnv,
-              props.measureId,
-              "evidences(first:0)",
-              -1
-            );
+          onCompleted: (_response, errors) => {
+            if (!errors) {
+              updateStoreCounter(
+                relayEnv,
+                props.measureId,
+                "evidences(first:0)",
+                -1
+              );
+            }
           },
         });
       },

@@ -144,8 +144,10 @@ export default function TaskFormDialog(props: Props) {
           },
           connections: [props.connection!],
         },
-        onCompleted: () => {
-          updateStoreCounter(relayEnv, data.measureId, "tasks(first:0)", 1);
+        onCompleted: (_response, errors) => {
+          if (!errors) {
+            updateStoreCounter(relayEnv, data.measureId, "tasks(first:0)", 1);
+          }
         },
       });
       reset();
