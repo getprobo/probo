@@ -29,11 +29,11 @@ import { dataRoutes } from "./routes/dataRoutes.ts";
 import { assetRoutes } from "./routes/assetRoutes.ts";
 import { auditRoutes } from "./routes/auditRoutes.ts";
 import { trustCenterRoutes } from "./routes/trustCenterRoutes.ts";
-import { nonconformityRegistryRoutes } from "./routes/nonconformityRegistryRoutes.ts";
-import { complianceRegistryRoutes } from "./routes/complianceRegistryRoutes.ts";
+import { nonconformityRoutes } from "./routes/nonconformityRoutes.ts";
+import { obligationRoutes } from "./routes/obligationRoutes.ts";
 import { snapshotsRoutes } from "./routes/snapshotsRoutes.ts";
-import { continualImprovementRegistryRoutes } from "./routes/continualImprovementRegistryRoutes.ts";
-import { processingActivityRegistryRoutes } from "./routes/processingActivityRegistryRoutes.ts";
+import { continualImprovementRoutes } from "./routes/continualImprovementRoutes.ts";
+import { processingActivityRoutes } from "./routes/processingActivityRoutes.ts";
 import { lazy } from "@probo/react-lazy";
 
 export type AppRoute = Omit<RouteObject, "Component" | "children"> & {
@@ -154,10 +154,10 @@ const routes = [
       ...assetRoutes,
       ...dataRoutes,
       ...auditRoutes,
-      ...nonconformityRegistryRoutes,
-      ...complianceRegistryRoutes,
-      ...continualImprovementRegistryRoutes,
-      ...processingActivityRegistryRoutes,
+      ...nonconformityRoutes,
+      ...obligationRoutes,
+      ...continualImprovementRoutes,
+      ...processingActivityRoutes,
       ...snapshotsRoutes,
       ...trustCenterRoutes,
       {

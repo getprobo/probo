@@ -144,24 +144,24 @@ export function MainLayout() {
             to={`${prefix}/audits`}
           />
           <SidebarItem
-            label={__("Nonconformity Registries")}
+            label={__("Nonconformities")}
             icon={IconCrossLargeX}
-            to={`${prefix}/nonconformity-registries`}
+            to={`${prefix}/nonconformities`}
           />
           <SidebarItem
-            label={__("Compliance Registries")}
+            label={__("Obligations")}
             icon={IconBook}
-            to={`${prefix}/compliance-registries`}
+            to={`${prefix}/obligations`}
           />
            <SidebarItem
-            label={__("Continual Improvement Registries")}
+            label={__("Continual Improvements")}
             icon={IconRotateCw}
-            to={`${prefix}/continual-improvement-registries`}
+            to={`${prefix}/continual-improvements`}
           />
           <SidebarItem
-            label={__("Processing Activity Registries")}
+            label={__("Processing Activities")}
             icon={IconCircleProgress}
-            to={`${prefix}/processing-activity-registries`}
+            to={`${prefix}/processing-activities`}
           />
           <SidebarItem
             label={__("Snapshots")}

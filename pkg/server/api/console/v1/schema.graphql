@@ -151,163 +151,163 @@ enum AuditState
     )
 }
 
-enum NonconformityRegistryStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryStatus") {
+enum NonconformityStatus
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityStatus") {
   OPEN
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryStatusOpen"
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityStatusOpen"
     )
   IN_PROGRESS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryStatusInProgress"
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityStatusInProgress"
     )
   CLOSED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryStatusClosed"
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityStatusClosed"
     )
 }
 
-enum ComplianceRegistryStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ComplianceRegistryStatus") {
+enum ObligationStatus
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ObligationStatus") {
   OPEN
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ComplianceRegistryStatusOpen"
+      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusOpen"
     )
   IN_PROGRESS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ComplianceRegistryStatusInProgress"
+      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusInProgress"
     )
   CLOSED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ComplianceRegistryStatusClosed"
+      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusClosed"
     )
 }
 
-enum ContinualImprovementRegistriesStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesStatus") {
+enum ContinualImprovementStatus
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatus") {
   OPEN
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesStatusOpen"
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatusOpen"
     )
   IN_PROGRESS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesStatusInProgress"
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatusInProgress"
     )
   CLOSED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesStatusClosed"
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatusClosed"
     )
 }
 
-enum ContinualImprovementRegistriesPriority
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesPriority") {
+enum ContinualImprovementPriority
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriority") {
   LOW
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesPriorityLow"
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriorityLow"
     )
   MEDIUM
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesPriorityMedium"
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriorityMedium"
     )
   HIGH
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesPriorityHigh"
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriorityHigh"
     )
 }
 
-enum ProcessingActivityRegistrySpecialOrCriminalData
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalData") {
+enum ProcessingActivitySpecialOrCriminalData
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalData") {
   YES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalDataYes"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataYes"
     )
   NO
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalDataNo"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataNo"
     )
   POSSIBLE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistrySpecialOrCriminalDataPossible"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataPossible"
     )
 }
 
-enum ProcessingActivityRegistryLawfulBasis
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasis") {
+enum ProcessingActivityLawfulBasis
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasis") {
   LEGITIMATE_INTEREST
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisLegitimateInterest"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisLegitimateInterest"
     )
   CONSENT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisConsent"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisConsent"
     )
   CONTRACTUAL_NECESSITY
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisContractualNecessity"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisContractualNecessity"
     )
   LEGAL_OBLIGATION
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisLegalObligation"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisLegalObligation"
     )
   VITAL_INTERESTS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisVitalInterests"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisVitalInterests"
     )
   PUBLIC_TASK
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryLawfulBasisPublicTask"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisPublicTask"
     )
 }
 
-enum ProcessingActivityRegistryTransferSafeguards
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguards") {
+enum ProcessingActivityTransferSafeguards
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguards") {
   STANDARD_CONTRACTUAL_CLAUSES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsStandardContractualClauses"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsStandardContractualClauses"
     )
   BINDING_CORPORATE_RULES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsBindingCorporateRules"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsBindingCorporateRules"
     )
   ADEQUACY_DECISION
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsAdequacyDecision"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsAdequacyDecision"
     )
   DEROGATIONS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsDerogations"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsDerogations"
     )
   CODES_OF_CONDUCT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsCodesOfConduct"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsCodesOfConduct"
     )
   CERTIFICATION_MECHANISMS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferSafeguardsCertificationMechanisms"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsCertificationMechanisms"
     )
 }
 
-enum ProcessingActivityRegistryDataProtectionImpactAssessment
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryDataProtectionImpactAssessment") {
+enum ProcessingActivityDataProtectionImpactAssessment
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessment") {
   NEEDED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNeeded"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessmentNeeded"
     )
   NOT_NEEDED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryDataProtectionImpactAssessmentNotNeeded"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessmentNotNeeded"
     )
 }
 
-enum ProcessingActivityRegistryTransferImpactAssessment
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferImpactAssessment") {
+enum ProcessingActivityTransferImpactAssessment
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessment") {
   NEEDED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferImpactAssessmentNeeded"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessmentNeeded"
     )
   NOT_NEEDED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryTransferImpactAssessmentNotNeeded"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessmentNotNeeded"
     )
 }
 
@@ -758,87 +758,87 @@ enum AuditOrderField
     )
 }
 
-enum NonconformityRegistryOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderField") {
+enum NonconformityOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldCreatedAt"
     )
   REFERENCE_ID
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderFieldReferenceId"
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldReferenceId"
     )
   DATE_IDENTIFIED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderFieldDateIdentified"
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldDateIdentified"
     )
   DUE_DATE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderFieldDueDate"
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldDueDate"
     )
   STATUS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityRegistryOrderFieldStatus"
+      value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldStatus"
     )
 }
 
-enum ComplianceRegistryOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ComplianceRegistryOrderField") {
+enum ObligationOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ObligationOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ComplianceRegistryOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldCreatedAt"
     )
   REFERENCE_ID
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ComplianceRegistryOrderFieldReferenceId"
+      value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldReferenceId"
     )
   LAST_REVIEW_DATE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ComplianceRegistryOrderFieldLastReviewDate"
+      value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldLastReviewDate"
     )
   DUE_DATE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ComplianceRegistryOrderFieldDueDate"
+      value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldDueDate"
     )
   STATUS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ComplianceRegistryOrderFieldStatus"
+      value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldStatus"
     )
 }
 
-enum ContinualImprovementRegistriesOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderField") {
+enum ContinualImprovementOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldCreatedAt"
     )
   REFERENCE_ID
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderFieldReferenceId"
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldReferenceId"
     )
   TARGET_DATE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderFieldTargetDate"
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldTargetDate"
     )
   STATUS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderFieldStatus"
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldStatus"
     )
   PRIORITY
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementRegistriesOrderFieldPriority"
+      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldPriority"
     )
 }
 
-enum ProcessingActivityRegistryOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderField") {
+enum ProcessingActivityOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderFieldCreatedAt"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderFieldCreatedAt"
     )
   NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityRegistryOrderFieldName"
+      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderFieldName"
     )
 }
 
@@ -868,21 +868,21 @@ enum SnapshotsType
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeData"
     )
-  NONCONFORMITY_REGISTRIES
+  NONCONFORMITIES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeNonConformityRegistries"
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeNonconformities"
     )
-  COMPLIANCE_REGISTRIES
+  OBLIGATIONS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeComplianceRegistries"
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeObligations"
     )
-  CONTINUAL_IMPROVEMENT_REGISTRIES
+  CONTINUAL_IMPROVEMENTS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeContinualImprovementRegistries"
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeContinualImprovements"
     )
-  PROCESSING_ACTIVITY_REGISTRIES
+  PROCESSING_ACTIVITIES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeProcessingActivityRegistries"
+      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeProcessingActivities"
     )
 }
 
@@ -983,36 +983,36 @@ input AuditOrder
   field: AuditOrderField!
 }
 
-input NonconformityRegistryOrder
+input NonconformityOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.NonconformityRegistryOrderBy"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.NonconformityOrderBy"
   ) {
   direction: OrderDirection!
-  field: NonconformityRegistryOrderField!
+  field: NonconformityOrderField!
 }
 
-input ComplianceRegistryOrder
+input ObligationOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ComplianceRegistryOrderBy"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ObligationOrderBy"
   ) {
   direction: OrderDirection!
-  field: ComplianceRegistryOrderField!
+  field: ObligationOrderField!
 }
 
-input ContinualImprovementRegistriesOrder
+input ContinualImprovementOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ContinualImprovementRegistriesOrderBy"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ContinualImprovementOrderBy"
   ) {
   direction: OrderDirection!
-  field: ContinualImprovementRegistriesOrderField!
+  field: ContinualImprovementOrderField!
 }
 
-input ProcessingActivityRegistryOrder
+input ProcessingActivityOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityRegistryOrderBy"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityOrderBy"
   ) {
   direction: OrderDirection!
-  field: ProcessingActivityRegistryOrderField!
+  field: ProcessingActivityOrderField!
 }
 
 input TrustCenterAccessOrder
@@ -1115,19 +1115,19 @@ input DatumFilter {
   snapshotId: ID
 }
 
-input NonconformityRegistryFilter {
+input NonconformityFilter {
   snapshotId: ID
 }
 
-input ComplianceRegistryFilter {
+input ObligationFilter {
   snapshotId: ID
 }
 
-input ContinualImprovementRegistryFilter {
+input ContinualImprovementFilter {
   snapshotId: ID
 }
 
-input ProcessingActivityRegistryFilter {
+input ProcessingActivityFilter {
   snapshotId: ID
 }
 
@@ -1274,41 +1274,41 @@ type Organization implements Node {
     orderBy: AuditOrder
   ): AuditConnection! @goField(forceResolver: true)
 
-  nonconformityRegistries(
+  nonconformities(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: NonconformityRegistryOrder
-    filter: NonconformityRegistryFilter = { snapshotId: null }
-  ): NonconformityRegistryConnection! @goField(forceResolver: true)
+    orderBy: NonconformityOrder
+    filter: NonconformityFilter = { snapshotId: null }
+  ): NonconformityConnection! @goField(forceResolver: true)
 
-  complianceRegistries(
+  obligations(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: ComplianceRegistryOrder
-    filter: ComplianceRegistryFilter = { snapshotId: null }
-  ): ComplianceRegistryConnection! @goField(forceResolver: true)
+    orderBy: ObligationOrder
+    filter: ObligationFilter = { snapshotId: null }
+  ): ObligationConnection! @goField(forceResolver: true)
 
-  continualImprovementRegistries(
+  continualImprovements(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: ContinualImprovementRegistriesOrder
-    filter: ContinualImprovementRegistryFilter = { snapshotId: null }
-  ): ContinualImprovementRegistryConnection! @goField(forceResolver: true)
+    orderBy: ContinualImprovementOrder
+    filter: ContinualImprovementFilter = { snapshotId: null }
+  ): ContinualImprovementConnection! @goField(forceResolver: true)
 
-  processingActivityRegistries(
+  processingActivities(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: ProcessingActivityRegistryOrder
-    filter: ProcessingActivityRegistryFilter = { snapshotId: null }
-  ): ProcessingActivityRegistryConnection! @goField(forceResolver: true)
+    orderBy: ProcessingActivityOrder
+    filter: ProcessingActivityFilter = { snapshotId: null }
+  ): ProcessingActivityConnection! @goField(forceResolver: true)
 
   snapshots(
     first: Int
@@ -1737,7 +1737,7 @@ type Audit implements Node {
   updatedAt: Datetime!
 }
 
-type NonconformityRegistry implements Node {
+type Nonconformity implements Node {
   id: ID!
   snapshotId: ID
   organization: Organization! @goField(forceResolver: true)
@@ -1749,13 +1749,13 @@ type NonconformityRegistry implements Node {
   correctiveAction: String
   owner: People! @goField(forceResolver: true)
   dueDate: Datetime
-  status: NonconformityRegistryStatus!
+  status: NonconformityStatus!
   effectivenessCheck: String
   createdAt: Datetime!
   updatedAt: Datetime!
 }
 
-type ComplianceRegistry implements Node {
+type Obligation implements Node {
   id: ID!
   snapshotId: ID
   sourceId: ID
@@ -1769,12 +1769,12 @@ type ComplianceRegistry implements Node {
   owner: People! @goField(forceResolver: true)
   lastReviewDate: Datetime
   dueDate: Datetime
-  status: ComplianceRegistryStatus!
+  status: ObligationStatus!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
 
-type ContinualImprovementRegistry implements Node {
+type ContinualImprovement implements Node {
   id: ID!
   snapshotId: ID
   sourceId: ID
@@ -1784,13 +1784,13 @@ type ContinualImprovementRegistry implements Node {
   source: String
   owner: People! @goField(forceResolver: true)
   targetDate: Datetime
-  status: ContinualImprovementRegistriesStatus!
-  priority: ContinualImprovementRegistriesPriority!
+  status: ContinualImprovementStatus!
+  priority: ContinualImprovementPriority!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
 
-type ProcessingActivityRegistry implements Node {
+type ProcessingActivity implements Node {
   id: ID!
   snapshotId: ID
   sourceId: ID
@@ -1799,17 +1799,17 @@ type ProcessingActivityRegistry implements Node {
   purpose: String
   dataSubjectCategory: String
   personalDataCategory: String
-  specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData!
+  specialOrCriminalData: ProcessingActivitySpecialOrCriminalData!
   consentEvidenceLink: String
-  lawfulBasis: ProcessingActivityRegistryLawfulBasis!
+  lawfulBasis: ProcessingActivityLawfulBasis!
   recipients: String
   location: String
   internationalTransfers: Boolean!
-  transferSafeguards: ProcessingActivityRegistryTransferSafeguards
+  transferSafeguards: ProcessingActivityTransferSafeguards
   retentionPeriod: String
   securityMeasures: String
-  dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment!
-  transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment!
+  dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
+  transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -2127,60 +2127,59 @@ type AuditEdge {
   node: Audit!
 }
 
-type NonconformityRegistryConnection
+type NonconformityConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.NonconformityRegistryConnection"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.NonconformityConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
-  edges: [NonconformityRegistryEdge!]!
+  edges: [NonconformityEdge!]!
   pageInfo: PageInfo!
 }
 
-type NonconformityRegistryEdge {
+type NonconformityEdge {
   cursor: CursorKey!
-  node: NonconformityRegistry!
+  node: Nonconformity!
 }
-
-type ComplianceRegistryConnection
+type ObligationConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ComplianceRegistryConnection"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ObligationConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
-  edges: [ComplianceRegistryEdge!]!
+  edges: [ObligationEdge!]!
   pageInfo: PageInfo!
 }
 
-type ComplianceRegistryEdge {
+type ObligationEdge {
   cursor: CursorKey!
-  node: ComplianceRegistry!
+  node: Obligation!
 }
 
-type ContinualImprovementRegistryConnection
+type ContinualImprovementConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ContinualImprovementRegistryConnection"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ContinualImprovementConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
-  edges: [ContinualImprovementRegistryEdge!]!
+  edges: [ContinualImprovementEdge!]!
   pageInfo: PageInfo!
 }
 
-type ContinualImprovementRegistryEdge {
+type ContinualImprovementEdge {
   cursor: CursorKey!
-  node: ContinualImprovementRegistry!
+  node: ContinualImprovement!
 }
 
-type ProcessingActivityRegistryConnection
+type ProcessingActivityConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityRegistryConnection"
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
-  edges: [ProcessingActivityRegistryEdge!]!
+  edges: [ProcessingActivityEdge!]!
   pageInfo: PageInfo!
 }
 
-type ProcessingActivityRegistryEdge {
+type ProcessingActivityEdge {
   cursor: CursorKey!
-  node: ProcessingActivityRegistry!
+  node: ProcessingActivity!
 }
 
 type SnapshotConnection
@@ -2426,49 +2425,49 @@ type Mutation {
   uploadAuditReport(input: UploadAuditReportInput!): UploadAuditReportPayload!
   deleteAuditReport(input: DeleteAuditReportInput!): DeleteAuditReportPayload!
 
-  # Nonconformity Registry mutations
-  createNonconformityRegistry(
-    input: CreateNonconformityRegistryInput!
-  ): CreateNonconformityRegistryPayload!
-  updateNonconformityRegistry(
-    input: UpdateNonconformityRegistryInput!
-  ): UpdateNonconformityRegistryPayload!
-  deleteNonconformityRegistry(
-    input: DeleteNonconformityRegistryInput!
-  ): DeleteNonconformityRegistryPayload!
+  # Nonconformity mutations
+  createNonconformity(
+    input: CreateNonconformityInput!
+  ): CreateNonconformityPayload!
+  updateNonconformity(
+    input: UpdateNonconformityInput!
+  ): UpdateNonconformityPayload!
+  deleteNonconformity(
+    input: DeleteNonconformityInput!
+  ): DeleteNonconformityPayload!
 
-  # Compliance Registry mutations
-  createComplianceRegistry(
-    input: CreateComplianceRegistryInput!
-  ): CreateComplianceRegistryPayload!
-  updateComplianceRegistry(
-    input: UpdateComplianceRegistryInput!
-  ): UpdateComplianceRegistryPayload!
-  deleteComplianceRegistry(
-    input: DeleteComplianceRegistryInput!
-  ): DeleteComplianceRegistryPayload!
+  # Obligation mutations
+  createObligation(
+    input: CreateObligationInput!
+  ): CreateObligationPayload!
+  updateObligation(
+    input: UpdateObligationInput!
+  ): UpdateObligationPayload!
+  deleteObligation(
+    input: DeleteObligationInput!
+  ): DeleteObligationPayload!
 
-  # Continual Improvement Registry mutations
-  createContinualImprovementRegistry(
-    input: CreateContinualImprovementRegistryInput!
-  ): CreateContinualImprovementRegistryPayload!
-  updateContinualImprovementRegistry(
-    input: UpdateContinualImprovementRegistryInput!
-  ): UpdateContinualImprovementRegistryPayload!
-  deleteContinualImprovementRegistry(
-    input: DeleteContinualImprovementRegistryInput!
-  ): DeleteContinualImprovementRegistryPayload!
+  # Continual Improvement mutations
+  createContinualImprovement(
+    input: CreateContinualImprovementInput!
+  ): CreateContinualImprovementPayload!
+  updateContinualImprovement(
+    input: UpdateContinualImprovementInput!
+  ): UpdateContinualImprovementPayload!
+  deleteContinualImprovement(
+    input: DeleteContinualImprovementInput!
+  ): DeleteContinualImprovementPayload!
 
-  # Processing Activity Registry mutations
-  createProcessingActivityRegistry(
-    input: CreateProcessingActivityRegistryInput!
-  ): CreateProcessingActivityRegistryPayload!
-  updateProcessingActivityRegistry(
-    input: UpdateProcessingActivityRegistryInput!
-  ): UpdateProcessingActivityRegistryPayload!
-  deleteProcessingActivityRegistry(
-    input: DeleteProcessingActivityRegistryInput!
-  ): DeleteProcessingActivityRegistryPayload!
+  # Processing Activity mutations
+  createProcessingActivity(
+    input: CreateProcessingActivityInput!
+  ): CreateProcessingActivityPayload!
+  updateProcessingActivity(
+    input: UpdateProcessingActivityInput!
+  ): UpdateProcessingActivityPayload!
+  deleteProcessingActivity(
+    input: DeleteProcessingActivityInput!
+  ): DeleteProcessingActivityPayload!
 
   # Snapshot mutations
   createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
@@ -2975,8 +2974,8 @@ input DeleteAuditReportInput {
   auditId: ID!
 }
 
-# Nonconformity Registry input types
-input CreateNonconformityRegistryInput {
+# Nonconformity input types
+input CreateNonconformityInput {
   organizationId: ID!
   referenceId: String!
   description: String
@@ -2986,11 +2985,11 @@ input CreateNonconformityRegistryInput {
   correctiveAction: String
   ownerId: ID!
   dueDate: Datetime
-  status: NonconformityRegistryStatus!
+  status: NonconformityStatus!
   effectivenessCheck: String
 }
 
-input UpdateNonconformityRegistryInput {
+input UpdateNonconformityInput {
   id: ID!
   referenceId: String
   description: String
@@ -3000,15 +2999,15 @@ input UpdateNonconformityRegistryInput {
   ownerId: ID
   auditId: ID
   dueDate: Datetime
-  status: NonconformityRegistryStatus
+  status: NonconformityStatus
   effectivenessCheck: String
 }
 
-input DeleteNonconformityRegistryInput {
-  nonconformityRegistryId: ID!
+input DeleteNonconformityInput {
+  nonconformityId: ID!
 }
 
-input CreateComplianceRegistryInput {
+input CreateObligationInput {
   organizationId: ID!
   referenceId: String!
   area: String
@@ -3019,10 +3018,10 @@ input CreateComplianceRegistryInput {
   ownerId: ID!
   lastReviewDate: Datetime
   dueDate: Datetime
-  status: ComplianceRegistryStatus!
+  status: ObligationStatus!
 }
 
-input UpdateComplianceRegistryInput {
+input UpdateObligationInput {
   id: ID!
   referenceId: String
   area: String
@@ -3033,79 +3032,79 @@ input UpdateComplianceRegistryInput {
   ownerId: ID
   lastReviewDate: Datetime
   dueDate: Datetime
-  status: ComplianceRegistryStatus
+  status: ObligationStatus
 }
 
-input DeleteComplianceRegistryInput {
-  complianceRegistryId: ID!
+input DeleteObligationInput {
+  obligationId: ID!
 }
 
-input CreateContinualImprovementRegistryInput {
+input CreateContinualImprovementInput {
   organizationId: ID!
   referenceId: String!
   description: String
   source: String
   ownerId: ID!
   targetDate: Datetime
-  status: ContinualImprovementRegistriesStatus!
-  priority: ContinualImprovementRegistriesPriority!
+  status: ContinualImprovementStatus!
+  priority: ContinualImprovementPriority!
 }
 
-input UpdateContinualImprovementRegistryInput {
+input UpdateContinualImprovementInput {
   id: ID!
   referenceId: String
   description: String
   source: String
   ownerId: ID
   targetDate: Datetime
-  status: ContinualImprovementRegistriesStatus
-  priority: ContinualImprovementRegistriesPriority
+  status: ContinualImprovementStatus
+  priority: ContinualImprovementPriority
 }
 
-input DeleteContinualImprovementRegistryInput {
-  continualImprovementRegistryId: ID!
+input DeleteContinualImprovementInput {
+  continualImprovementId: ID!
 }
 
-input CreateProcessingActivityRegistryInput {
+input CreateProcessingActivityInput {
   organizationId: ID!
   name: String!
   purpose: String
   dataSubjectCategory: String
   personalDataCategory: String
-  specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData!
+  specialOrCriminalData: ProcessingActivitySpecialOrCriminalData!
   consentEvidenceLink: String
-  lawfulBasis: ProcessingActivityRegistryLawfulBasis!
+  lawfulBasis: ProcessingActivityLawfulBasis!
   recipients: String
   location: String
   internationalTransfers: Boolean!
-  transferSafeguards: ProcessingActivityRegistryTransferSafeguards
+  transferSafeguards: ProcessingActivityTransferSafeguards
   retentionPeriod: String
   securityMeasures: String
-  dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment!
-  transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment!
+  dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
+  transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
 }
 
-input UpdateProcessingActivityRegistryInput {
+input UpdateProcessingActivityInput {
   id: ID!
   name: String
   purpose: String
   dataSubjectCategory: String
   personalDataCategory: String
-  specialOrCriminalData: ProcessingActivityRegistrySpecialOrCriminalData
+  specialOrCriminalData: ProcessingActivitySpecialOrCriminalData
   consentEvidenceLink: String
-  lawfulBasis: ProcessingActivityRegistryLawfulBasis
+  lawfulBasis: ProcessingActivityLawfulBasis
   recipients: String
   location: String
   internationalTransfers: Boolean
-  transferSafeguards: ProcessingActivityRegistryTransferSafeguards
+  transferSafeguards: ProcessingActivityTransferSafeguards
   retentionPeriod: String
   securityMeasures: String
-  dataProtectionImpactAssessment: ProcessingActivityRegistryDataProtectionImpactAssessment
-  transferImpactAssessment: ProcessingActivityRegistryTransferImpactAssessment
+  dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment
+  transferImpactAssessment: ProcessingActivityTransferImpactAssessment
 }
 
-input DeleteProcessingActivityRegistryInput {
-  processingActivityRegistryId: ID!
+input DeleteProcessingActivityInput {
+  processingActivityId: ID!
 }
 
 input CreateSnapshotInput {
@@ -3818,53 +3817,53 @@ type DeleteAuditReportPayload {
   audit: Audit!
 }
 
-# Nonconformity Registry payload types
-type CreateNonconformityRegistryPayload {
-  nonconformityRegistryEdge: NonconformityRegistryEdge!
+# Nonconformity payload types
+type CreateNonconformityPayload {
+  nonconformityEdge: NonconformityEdge!
 }
 
-type UpdateNonconformityRegistryPayload {
-  nonconformityRegistry: NonconformityRegistry!
+type UpdateNonconformityPayload {
+  nonconformity: Nonconformity!
 }
 
-type DeleteNonconformityRegistryPayload {
-  deletedNonconformityRegistryId: ID!
+type DeleteNonconformityPayload {
+  deletedNonconformityId: ID!
 }
 
-type CreateComplianceRegistryPayload {
-  complianceRegistryEdge: ComplianceRegistryEdge!
+type CreateObligationPayload {
+  obligationEdge: ObligationEdge!
 }
 
-type UpdateComplianceRegistryPayload {
-  complianceRegistry: ComplianceRegistry!
+type UpdateObligationPayload {
+  obligation: Obligation!
 }
 
-type DeleteComplianceRegistryPayload {
-  deletedComplianceRegistryId: ID!
+type DeleteObligationPayload {
+  deletedObligationId: ID!
 }
 
-type CreateContinualImprovementRegistryPayload {
-  continualImprovementRegistryEdge: ContinualImprovementRegistryEdge!
+type CreateContinualImprovementPayload {
+  continualImprovementEdge: ContinualImprovementEdge!
 }
 
-type UpdateContinualImprovementRegistryPayload {
-  continualImprovementRegistry: ContinualImprovementRegistry!
+type UpdateContinualImprovementPayload {
+  continualImprovement: ContinualImprovement!
 }
 
-type DeleteContinualImprovementRegistryPayload {
-  deletedContinualImprovementRegistryId: ID!
+type DeleteContinualImprovementPayload {
+  deletedContinualImprovementId: ID!
 }
 
-type CreateProcessingActivityRegistryPayload {
-  processingActivityRegistryEdge: ProcessingActivityRegistryEdge!
+type CreateProcessingActivityPayload {
+  processingActivityEdge: ProcessingActivityEdge!
 }
 
-type UpdateProcessingActivityRegistryPayload {
-  processingActivityRegistry: ProcessingActivityRegistry!
+type UpdateProcessingActivityPayload {
+  processingActivity: ProcessingActivity!
 }
 
-type DeleteProcessingActivityRegistryPayload {
-  deletedProcessingActivityRegistryId: ID!
+type DeleteProcessingActivityPayload {
+  deletedProcessingActivityId: ID!
 }
 
 type CreateSnapshotPayload {

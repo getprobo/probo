@@ -112,37 +112,6 @@ type CancelSignatureRequestPayload struct {
 	DeletedDocumentVersionSignatureID gid.GID `json:"deletedDocumentVersionSignatureId"`
 }
 
-type ComplianceRegistry struct {
-	ID                     gid.GID                           `json:"id"`
-	SnapshotID             *gid.GID                          `json:"snapshotId,omitempty"`
-	SourceID               *gid.GID                          `json:"sourceId,omitempty"`
-	Organization           *Organization                     `json:"organization"`
-	ReferenceID            string                            `json:"referenceId"`
-	Area                   *string                           `json:"area,omitempty"`
-	Source                 *string                           `json:"source,omitempty"`
-	Requirement            *string                           `json:"requirement,omitempty"`
-	ActionsToBeImplemented *string                           `json:"actionsToBeImplemented,omitempty"`
-	Regulator              *string                           `json:"regulator,omitempty"`
-	Owner                  *People                           `json:"owner"`
-	LastReviewDate         *time.Time                        `json:"lastReviewDate,omitempty"`
-	DueDate                *time.Time                        `json:"dueDate,omitempty"`
-	Status                 coredata.ComplianceRegistryStatus `json:"status"`
-	CreatedAt              time.Time                         `json:"createdAt"`
-	UpdatedAt              time.Time                         `json:"updatedAt"`
-}
-
-func (ComplianceRegistry) IsNode()             {}
-func (this ComplianceRegistry) GetID() gid.GID { return this.ID }
-
-type ComplianceRegistryEdge struct {
-	Cursor page.CursorKey      `json:"cursor"`
-	Node   *ComplianceRegistry `json:"node"`
-}
-
-type ComplianceRegistryFilter struct {
-	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
-}
-
 type ConfirmEmailInput struct {
 	Token string `json:"token"`
 }
@@ -177,31 +146,31 @@ type ConnectorOrder struct {
 	Direction page.OrderDirection          `json:"direction"`
 }
 
-type ContinualImprovementRegistry struct {
-	ID           gid.GID                                         `json:"id"`
-	SnapshotID   *gid.GID                                        `json:"snapshotId,omitempty"`
-	SourceID     *gid.GID                                        `json:"sourceId,omitempty"`
-	Organization *Organization                                   `json:"organization"`
-	ReferenceID  string                                          `json:"referenceId"`
-	Description  *string                                         `json:"description,omitempty"`
-	Source       *string                                         `json:"source,omitempty"`
-	Owner        *People                                         `json:"owner"`
-	TargetDate   *time.Time                                      `json:"targetDate,omitempty"`
-	Status       coredata.ContinualImprovementRegistriesStatus   `json:"status"`
-	Priority     coredata.ContinualImprovementRegistriesPriority `json:"priority"`
-	CreatedAt    time.Time                                       `json:"createdAt"`
-	UpdatedAt    time.Time                                       `json:"updatedAt"`
+type ContinualImprovement struct {
+	ID           gid.GID                               `json:"id"`
+	SnapshotID   *gid.GID                              `json:"snapshotId,omitempty"`
+	SourceID     *gid.GID                              `json:"sourceId,omitempty"`
+	Organization *Organization                         `json:"organization"`
+	ReferenceID  string                                `json:"referenceId"`
+	Description  *string                               `json:"description,omitempty"`
+	Source       *string                               `json:"source,omitempty"`
+	Owner        *People                               `json:"owner"`
+	TargetDate   *time.Time                            `json:"targetDate,omitempty"`
+	Status       coredata.ContinualImprovementStatus   `json:"status"`
+	Priority     coredata.ContinualImprovementPriority `json:"priority"`
+	CreatedAt    time.Time                             `json:"createdAt"`
+	UpdatedAt    time.Time                             `json:"updatedAt"`
 }
 
-func (ContinualImprovementRegistry) IsNode()             {}
-func (this ContinualImprovementRegistry) GetID() gid.GID { return this.ID }
+func (ContinualImprovement) IsNode()             {}
+func (this ContinualImprovement) GetID() gid.GID { return this.ID }
 
-type ContinualImprovementRegistryEdge struct {
-	Cursor page.CursorKey                `json:"cursor"`
-	Node   *ContinualImprovementRegistry `json:"node"`
+type ContinualImprovementEdge struct {
+	Cursor page.CursorKey        `json:"cursor"`
+	Node   *ContinualImprovement `json:"node"`
 }
 
-type ContinualImprovementRegistryFilter struct {
+type ContinualImprovementFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
@@ -261,37 +230,19 @@ type CreateAuditPayload struct {
 	AuditEdge *AuditEdge `json:"auditEdge"`
 }
 
-type CreateComplianceRegistryInput struct {
-	OrganizationID         gid.GID                           `json:"organizationId"`
-	ReferenceID            string                            `json:"referenceId"`
-	Area                   *string                           `json:"area,omitempty"`
-	Source                 *string                           `json:"source,omitempty"`
-	Requirement            *string                           `json:"requirement,omitempty"`
-	ActionsToBeImplemented *string                           `json:"actionsToBeImplemented,omitempty"`
-	Regulator              *string                           `json:"regulator,omitempty"`
-	OwnerID                gid.GID                           `json:"ownerId"`
-	LastReviewDate         *time.Time                        `json:"lastReviewDate,omitempty"`
-	DueDate                *time.Time                        `json:"dueDate,omitempty"`
-	Status                 coredata.ComplianceRegistryStatus `json:"status"`
+type CreateContinualImprovementInput struct {
+	OrganizationID gid.GID                               `json:"organizationId"`
+	ReferenceID    string                                `json:"referenceId"`
+	Description    *string                               `json:"description,omitempty"`
+	Source         *string                               `json:"source,omitempty"`
+	OwnerID        gid.GID                               `json:"ownerId"`
+	TargetDate     *time.Time                            `json:"targetDate,omitempty"`
+	Status         coredata.ContinualImprovementStatus   `json:"status"`
+	Priority       coredata.ContinualImprovementPriority `json:"priority"`
 }
 
-type CreateComplianceRegistryPayload struct {
-	ComplianceRegistryEdge *ComplianceRegistryEdge `json:"complianceRegistryEdge"`
-}
-
-type CreateContinualImprovementRegistryInput struct {
-	OrganizationID gid.GID                                         `json:"organizationId"`
-	ReferenceID    string                                          `json:"referenceId"`
-	Description    *string                                         `json:"description,omitempty"`
-	Source         *string                                         `json:"source,omitempty"`
-	OwnerID        gid.GID                                         `json:"ownerId"`
-	TargetDate     *time.Time                                      `json:"targetDate,omitempty"`
-	Status         coredata.ContinualImprovementRegistriesStatus   `json:"status"`
-	Priority       coredata.ContinualImprovementRegistriesPriority `json:"priority"`
-}
-
-type CreateContinualImprovementRegistryPayload struct {
-	ContinualImprovementRegistryEdge *ContinualImprovementRegistryEdge `json:"continualImprovementRegistryEdge"`
+type CreateContinualImprovementPayload struct {
+	ContinualImprovementEdge *ContinualImprovementEdge `json:"continualImprovementEdge"`
 }
 
 type CreateControlAuditMappingInput struct {
@@ -414,22 +365,40 @@ type CreateMeasurePayload struct {
 	MeasureEdge *MeasureEdge `json:"measureEdge"`
 }
 
-type CreateNonconformityRegistryInput struct {
-	OrganizationID     gid.GID                              `json:"organizationId"`
-	ReferenceID        string                               `json:"referenceId"`
-	Description        *string                              `json:"description,omitempty"`
-	AuditID            gid.GID                              `json:"auditId"`
-	DateIdentified     *time.Time                           `json:"dateIdentified,omitempty"`
-	RootCause          string                               `json:"rootCause"`
-	CorrectiveAction   *string                              `json:"correctiveAction,omitempty"`
-	OwnerID            gid.GID                              `json:"ownerId"`
-	DueDate            *time.Time                           `json:"dueDate,omitempty"`
-	Status             coredata.NonconformityRegistryStatus `json:"status"`
-	EffectivenessCheck *string                              `json:"effectivenessCheck,omitempty"`
+type CreateNonconformityInput struct {
+	OrganizationID     gid.GID                      `json:"organizationId"`
+	ReferenceID        string                       `json:"referenceId"`
+	Description        *string                      `json:"description,omitempty"`
+	AuditID            gid.GID                      `json:"auditId"`
+	DateIdentified     *time.Time                   `json:"dateIdentified,omitempty"`
+	RootCause          string                       `json:"rootCause"`
+	CorrectiveAction   *string                      `json:"correctiveAction,omitempty"`
+	OwnerID            gid.GID                      `json:"ownerId"`
+	DueDate            *time.Time                   `json:"dueDate,omitempty"`
+	Status             coredata.NonconformityStatus `json:"status"`
+	EffectivenessCheck *string                      `json:"effectivenessCheck,omitempty"`
 }
 
-type CreateNonconformityRegistryPayload struct {
-	NonconformityRegistryEdge *NonconformityRegistryEdge `json:"nonconformityRegistryEdge"`
+type CreateNonconformityPayload struct {
+	NonconformityEdge *NonconformityEdge `json:"nonconformityEdge"`
+}
+
+type CreateObligationInput struct {
+	OrganizationID         gid.GID                   `json:"organizationId"`
+	ReferenceID            string                    `json:"referenceId"`
+	Area                   *string                   `json:"area,omitempty"`
+	Source                 *string                   `json:"source,omitempty"`
+	Requirement            *string                   `json:"requirement,omitempty"`
+	ActionsToBeImplemented *string                   `json:"actionsToBeImplemented,omitempty"`
+	Regulator              *string                   `json:"regulator,omitempty"`
+	OwnerID                gid.GID                   `json:"ownerId"`
+	LastReviewDate         *time.Time                `json:"lastReviewDate,omitempty"`
+	DueDate                *time.Time                `json:"dueDate,omitempty"`
+	Status                 coredata.ObligationStatus `json:"status"`
+}
+
+type CreateObligationPayload struct {
+	ObligationEdge *ObligationEdge `json:"obligationEdge"`
 }
 
 type CreateOrganizationInput struct {
@@ -455,27 +424,27 @@ type CreatePeoplePayload struct {
 	PeopleEdge *PeopleEdge `json:"peopleEdge"`
 }
 
-type CreateProcessingActivityRegistryInput struct {
-	OrganizationID                 gid.GID                                                           `json:"organizationId"`
-	Name                           string                                                            `json:"name"`
-	Purpose                        *string                                                           `json:"purpose,omitempty"`
-	DataSubjectCategory            *string                                                           `json:"dataSubjectCategory,omitempty"`
-	PersonalDataCategory           *string                                                           `json:"personalDataCategory,omitempty"`
-	SpecialOrCriminalData          coredata.ProcessingActivityRegistrySpecialOrCriminalData          `json:"specialOrCriminalData"`
-	ConsentEvidenceLink            *string                                                           `json:"consentEvidenceLink,omitempty"`
-	LawfulBasis                    coredata.ProcessingActivityRegistryLawfulBasis                    `json:"lawfulBasis"`
-	Recipients                     *string                                                           `json:"recipients,omitempty"`
-	Location                       *string                                                           `json:"location,omitempty"`
-	InternationalTransfers         bool                                                              `json:"internationalTransfers"`
-	TransferSafeguards             *coredata.ProcessingActivityRegistryTransferSafeguards            `json:"transferSafeguards,omitempty"`
-	RetentionPeriod                *string                                                           `json:"retentionPeriod,omitempty"`
-	SecurityMeasures               *string                                                           `json:"securityMeasures,omitempty"`
-	DataProtectionImpactAssessment coredata.ProcessingActivityRegistryDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
-	TransferImpactAssessment       coredata.ProcessingActivityRegistryTransferImpactAssessment       `json:"transferImpactAssessment"`
+type CreateProcessingActivityInput struct {
+	OrganizationID                 gid.GID                                                   `json:"organizationId"`
+	Name                           string                                                    `json:"name"`
+	Purpose                        *string                                                   `json:"purpose,omitempty"`
+	DataSubjectCategory            *string                                                   `json:"dataSubjectCategory,omitempty"`
+	PersonalDataCategory           *string                                                   `json:"personalDataCategory,omitempty"`
+	SpecialOrCriminalData          coredata.ProcessingActivitySpecialOrCriminalData          `json:"specialOrCriminalData"`
+	ConsentEvidenceLink            *string                                                   `json:"consentEvidenceLink,omitempty"`
+	LawfulBasis                    coredata.ProcessingActivityLawfulBasis                    `json:"lawfulBasis"`
+	Recipients                     *string                                                   `json:"recipients,omitempty"`
+	Location                       *string                                                   `json:"location,omitempty"`
+	InternationalTransfers         bool                                                      `json:"internationalTransfers"`
+	TransferSafeguards             *coredata.ProcessingActivityTransferSafeguards            `json:"transferSafeguards,omitempty"`
+	RetentionPeriod                *string                                                   `json:"retentionPeriod,omitempty"`
+	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
+	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
+	TransferImpactAssessment       coredata.ProcessingActivityTransferImpactAssessment       `json:"transferImpactAssessment"`
 }
 
-type CreateProcessingActivityRegistryPayload struct {
-	ProcessingActivityRegistryEdge *ProcessingActivityRegistryEdge `json:"processingActivityRegistryEdge"`
+type CreateProcessingActivityPayload struct {
+	ProcessingActivityEdge *ProcessingActivityEdge `json:"processingActivityEdge"`
 }
 
 type CreateRiskDocumentMappingInput struct {
@@ -663,20 +632,12 @@ type DeleteAuditReportPayload struct {
 	Audit *Audit `json:"audit"`
 }
 
-type DeleteComplianceRegistryInput struct {
-	ComplianceRegistryID gid.GID `json:"complianceRegistryId"`
+type DeleteContinualImprovementInput struct {
+	ContinualImprovementID gid.GID `json:"continualImprovementId"`
 }
 
-type DeleteComplianceRegistryPayload struct {
-	DeletedComplianceRegistryID gid.GID `json:"deletedComplianceRegistryId"`
-}
-
-type DeleteContinualImprovementRegistryInput struct {
-	ContinualImprovementRegistryID gid.GID `json:"continualImprovementRegistryId"`
-}
-
-type DeleteContinualImprovementRegistryPayload struct {
-	DeletedContinualImprovementRegistryID gid.GID `json:"deletedContinualImprovementRegistryId"`
+type DeleteContinualImprovementPayload struct {
+	DeletedContinualImprovementID gid.GID `json:"deletedContinualImprovementId"`
 }
 
 type DeleteControlAuditMappingInput struct {
@@ -775,12 +736,20 @@ type DeleteMeasurePayload struct {
 	DeletedMeasureID gid.GID `json:"deletedMeasureId"`
 }
 
-type DeleteNonconformityRegistryInput struct {
-	NonconformityRegistryID gid.GID `json:"nonconformityRegistryId"`
+type DeleteNonconformityInput struct {
+	NonconformityID gid.GID `json:"nonconformityId"`
 }
 
-type DeleteNonconformityRegistryPayload struct {
-	DeletedNonconformityRegistryID gid.GID `json:"deletedNonconformityRegistryId"`
+type DeleteNonconformityPayload struct {
+	DeletedNonconformityID gid.GID `json:"deletedNonconformityId"`
+}
+
+type DeleteObligationInput struct {
+	ObligationID gid.GID `json:"obligationId"`
+}
+
+type DeleteObligationPayload struct {
+	DeletedObligationID gid.GID `json:"deletedObligationId"`
 }
 
 type DeleteOrganizationInput struct {
@@ -799,12 +768,12 @@ type DeletePeoplePayload struct {
 	DeletedPeopleID gid.GID `json:"deletedPeopleId"`
 }
 
-type DeleteProcessingActivityRegistryInput struct {
-	ProcessingActivityRegistryID gid.GID `json:"processingActivityRegistryId"`
+type DeleteProcessingActivityInput struct {
+	ProcessingActivityID gid.GID `json:"processingActivityId"`
 }
 
-type DeleteProcessingActivityRegistryPayload struct {
-	DeletedProcessingActivityRegistryID gid.GID `json:"deletedProcessingActivityRegistryId"`
+type DeleteProcessingActivityPayload struct {
+	DeletedProcessingActivityID gid.GID `json:"deletedProcessingActivityId"`
 }
 
 type DeleteRiskDocumentMappingInput struct {
@@ -1139,61 +1108,92 @@ type MeasureFilter struct {
 type Mutation struct {
 }
 
-type NonconformityRegistry struct {
-	ID                 gid.GID                              `json:"id"`
-	SnapshotID         *gid.GID                             `json:"snapshotId,omitempty"`
-	Organization       *Organization                        `json:"organization"`
-	ReferenceID        string                               `json:"referenceId"`
-	Description        *string                              `json:"description,omitempty"`
-	Audit              *Audit                               `json:"audit"`
-	DateIdentified     *time.Time                           `json:"dateIdentified,omitempty"`
-	RootCause          string                               `json:"rootCause"`
-	CorrectiveAction   *string                              `json:"correctiveAction,omitempty"`
-	Owner              *People                              `json:"owner"`
-	DueDate            *time.Time                           `json:"dueDate,omitempty"`
-	Status             coredata.NonconformityRegistryStatus `json:"status"`
-	EffectivenessCheck *string                              `json:"effectivenessCheck,omitempty"`
-	CreatedAt          time.Time                            `json:"createdAt"`
-	UpdatedAt          time.Time                            `json:"updatedAt"`
+type Nonconformity struct {
+	ID                 gid.GID                      `json:"id"`
+	SnapshotID         *gid.GID                     `json:"snapshotId,omitempty"`
+	Organization       *Organization                `json:"organization"`
+	ReferenceID        string                       `json:"referenceId"`
+	Description        *string                      `json:"description,omitempty"`
+	Audit              *Audit                       `json:"audit"`
+	DateIdentified     *time.Time                   `json:"dateIdentified,omitempty"`
+	RootCause          string                       `json:"rootCause"`
+	CorrectiveAction   *string                      `json:"correctiveAction,omitempty"`
+	Owner              *People                      `json:"owner"`
+	DueDate            *time.Time                   `json:"dueDate,omitempty"`
+	Status             coredata.NonconformityStatus `json:"status"`
+	EffectivenessCheck *string                      `json:"effectivenessCheck,omitempty"`
+	CreatedAt          time.Time                    `json:"createdAt"`
+	UpdatedAt          time.Time                    `json:"updatedAt"`
 }
 
-func (NonconformityRegistry) IsNode()             {}
-func (this NonconformityRegistry) GetID() gid.GID { return this.ID }
+func (Nonconformity) IsNode()             {}
+func (this Nonconformity) GetID() gid.GID { return this.ID }
 
-type NonconformityRegistryEdge struct {
-	Cursor page.CursorKey         `json:"cursor"`
-	Node   *NonconformityRegistry `json:"node"`
+type NonconformityEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Nonconformity `json:"node"`
 }
 
-type NonconformityRegistryFilter struct {
+type NonconformityFilter struct {
+	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
+}
+
+type Obligation struct {
+	ID                     gid.GID                   `json:"id"`
+	SnapshotID             *gid.GID                  `json:"snapshotId,omitempty"`
+	SourceID               *gid.GID                  `json:"sourceId,omitempty"`
+	Organization           *Organization             `json:"organization"`
+	ReferenceID            string                    `json:"referenceId"`
+	Area                   *string                   `json:"area,omitempty"`
+	Source                 *string                   `json:"source,omitempty"`
+	Requirement            *string                   `json:"requirement,omitempty"`
+	ActionsToBeImplemented *string                   `json:"actionsToBeImplemented,omitempty"`
+	Regulator              *string                   `json:"regulator,omitempty"`
+	Owner                  *People                   `json:"owner"`
+	LastReviewDate         *time.Time                `json:"lastReviewDate,omitempty"`
+	DueDate                *time.Time                `json:"dueDate,omitempty"`
+	Status                 coredata.ObligationStatus `json:"status"`
+	CreatedAt              time.Time                 `json:"createdAt"`
+	UpdatedAt              time.Time                 `json:"updatedAt"`
+}
+
+func (Obligation) IsNode()             {}
+func (this Obligation) GetID() gid.GID { return this.ID }
+
+type ObligationEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Obligation    `json:"node"`
+}
+
+type ObligationFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
 type Organization struct {
-	ID                             gid.GID                                 `json:"id"`
-	Name                           string                                  `json:"name"`
-	LogoURL                        *string                                 `json:"logoUrl,omitempty"`
-	Users                          *UserConnection                         `json:"users"`
-	Connectors                     *ConnectorConnection                    `json:"connectors"`
-	Frameworks                     *FrameworkConnection                    `json:"frameworks"`
-	Controls                       *ControlConnection                      `json:"controls"`
-	Vendors                        *VendorConnection                       `json:"vendors"`
-	Peoples                        *PeopleConnection                       `json:"peoples"`
-	Documents                      *DocumentConnection                     `json:"documents"`
-	Measures                       *MeasureConnection                      `json:"measures"`
-	Risks                          *RiskConnection                         `json:"risks"`
-	Tasks                          *TaskConnection                         `json:"tasks"`
-	Assets                         *AssetConnection                        `json:"assets"`
-	Data                           *DatumConnection                        `json:"data"`
-	Audits                         *AuditConnection                        `json:"audits"`
-	NonconformityRegistries        *NonconformityRegistryConnection        `json:"nonconformityRegistries"`
-	ComplianceRegistries           *ComplianceRegistryConnection           `json:"complianceRegistries"`
-	ContinualImprovementRegistries *ContinualImprovementRegistryConnection `json:"continualImprovementRegistries"`
-	ProcessingActivityRegistries   *ProcessingActivityRegistryConnection   `json:"processingActivityRegistries"`
-	Snapshots                      *SnapshotConnection                     `json:"snapshots"`
-	TrustCenter                    *TrustCenter                            `json:"trustCenter,omitempty"`
-	CreatedAt                      time.Time                               `json:"createdAt"`
-	UpdatedAt                      time.Time                               `json:"updatedAt"`
+	ID                    gid.GID                         `json:"id"`
+	Name                  string                          `json:"name"`
+	LogoURL               *string                         `json:"logoUrl,omitempty"`
+	Users                 *UserConnection                 `json:"users"`
+	Connectors            *ConnectorConnection            `json:"connectors"`
+	Frameworks            *FrameworkConnection            `json:"frameworks"`
+	Controls              *ControlConnection              `json:"controls"`
+	Vendors               *VendorConnection               `json:"vendors"`
+	Peoples               *PeopleConnection               `json:"peoples"`
+	Documents             *DocumentConnection             `json:"documents"`
+	Measures              *MeasureConnection              `json:"measures"`
+	Risks                 *RiskConnection                 `json:"risks"`
+	Tasks                 *TaskConnection                 `json:"tasks"`
+	Assets                *AssetConnection                `json:"assets"`
+	Data                  *DatumConnection                `json:"data"`
+	Audits                *AuditConnection                `json:"audits"`
+	Nonconformities       *NonconformityConnection        `json:"nonconformities"`
+	Obligations           *ObligationConnection           `json:"obligations"`
+	ContinualImprovements *ContinualImprovementConnection `json:"continualImprovements"`
+	ProcessingActivities  *ProcessingActivityConnection   `json:"processingActivities"`
+	Snapshots             *SnapshotConnection             `json:"snapshots"`
+	TrustCenter           *TrustCenter                    `json:"trustCenter,omitempty"`
+	CreatedAt             time.Time                       `json:"createdAt"`
+	UpdatedAt             time.Time                       `json:"updatedAt"`
 }
 
 func (Organization) IsNode()             {}
@@ -1250,39 +1250,39 @@ type PeopleFilter struct {
 	ExcludeContractEnded *bool `json:"excludeContractEnded,omitempty"`
 }
 
-type ProcessingActivityRegistry struct {
-	ID                             gid.GID                                                           `json:"id"`
-	SnapshotID                     *gid.GID                                                          `json:"snapshotId,omitempty"`
-	SourceID                       *gid.GID                                                          `json:"sourceId,omitempty"`
-	Organization                   *Organization                                                     `json:"organization"`
-	Name                           string                                                            `json:"name"`
-	Purpose                        *string                                                           `json:"purpose,omitempty"`
-	DataSubjectCategory            *string                                                           `json:"dataSubjectCategory,omitempty"`
-	PersonalDataCategory           *string                                                           `json:"personalDataCategory,omitempty"`
-	SpecialOrCriminalData          coredata.ProcessingActivityRegistrySpecialOrCriminalData          `json:"specialOrCriminalData"`
-	ConsentEvidenceLink            *string                                                           `json:"consentEvidenceLink,omitempty"`
-	LawfulBasis                    coredata.ProcessingActivityRegistryLawfulBasis                    `json:"lawfulBasis"`
-	Recipients                     *string                                                           `json:"recipients,omitempty"`
-	Location                       *string                                                           `json:"location,omitempty"`
-	InternationalTransfers         bool                                                              `json:"internationalTransfers"`
-	TransferSafeguards             *coredata.ProcessingActivityRegistryTransferSafeguards            `json:"transferSafeguards,omitempty"`
-	RetentionPeriod                *string                                                           `json:"retentionPeriod,omitempty"`
-	SecurityMeasures               *string                                                           `json:"securityMeasures,omitempty"`
-	DataProtectionImpactAssessment coredata.ProcessingActivityRegistryDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
-	TransferImpactAssessment       coredata.ProcessingActivityRegistryTransferImpactAssessment       `json:"transferImpactAssessment"`
-	CreatedAt                      time.Time                                                         `json:"createdAt"`
-	UpdatedAt                      time.Time                                                         `json:"updatedAt"`
+type ProcessingActivity struct {
+	ID                             gid.GID                                                   `json:"id"`
+	SnapshotID                     *gid.GID                                                  `json:"snapshotId,omitempty"`
+	SourceID                       *gid.GID                                                  `json:"sourceId,omitempty"`
+	Organization                   *Organization                                             `json:"organization"`
+	Name                           string                                                    `json:"name"`
+	Purpose                        *string                                                   `json:"purpose,omitempty"`
+	DataSubjectCategory            *string                                                   `json:"dataSubjectCategory,omitempty"`
+	PersonalDataCategory           *string                                                   `json:"personalDataCategory,omitempty"`
+	SpecialOrCriminalData          coredata.ProcessingActivitySpecialOrCriminalData          `json:"specialOrCriminalData"`
+	ConsentEvidenceLink            *string                                                   `json:"consentEvidenceLink,omitempty"`
+	LawfulBasis                    coredata.ProcessingActivityLawfulBasis                    `json:"lawfulBasis"`
+	Recipients                     *string                                                   `json:"recipients,omitempty"`
+	Location                       *string                                                   `json:"location,omitempty"`
+	InternationalTransfers         bool                                                      `json:"internationalTransfers"`
+	TransferSafeguards             *coredata.ProcessingActivityTransferSafeguards            `json:"transferSafeguards,omitempty"`
+	RetentionPeriod                *string                                                   `json:"retentionPeriod,omitempty"`
+	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
+	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
+	TransferImpactAssessment       coredata.ProcessingActivityTransferImpactAssessment       `json:"transferImpactAssessment"`
+	CreatedAt                      time.Time                                                 `json:"createdAt"`
+	UpdatedAt                      time.Time                                                 `json:"updatedAt"`
 }
 
-func (ProcessingActivityRegistry) IsNode()             {}
-func (this ProcessingActivityRegistry) GetID() gid.GID { return this.ID }
+func (ProcessingActivity) IsNode()             {}
+func (this ProcessingActivity) GetID() gid.GID { return this.ID }
 
-type ProcessingActivityRegistryEdge struct {
-	Cursor page.CursorKey              `json:"cursor"`
-	Node   *ProcessingActivityRegistry `json:"node"`
+type ProcessingActivityEdge struct {
+	Cursor page.CursorKey      `json:"cursor"`
+	Node   *ProcessingActivity `json:"node"`
 }
 
-type ProcessingActivityRegistryFilter struct {
+type ProcessingActivityFilter struct {
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
 
@@ -1513,37 +1513,19 @@ type UpdateAuditPayload struct {
 	Audit *Audit `json:"audit"`
 }
 
-type UpdateComplianceRegistryInput struct {
-	ID                     gid.GID                            `json:"id"`
-	ReferenceID            *string                            `json:"referenceId,omitempty"`
-	Area                   *string                            `json:"area,omitempty"`
-	Source                 *string                            `json:"source,omitempty"`
-	Requirement            *string                            `json:"requirement,omitempty"`
-	ActionsToBeImplemented *string                            `json:"actionsToBeImplemented,omitempty"`
-	Regulator              *string                            `json:"regulator,omitempty"`
-	OwnerID                *gid.GID                           `json:"ownerId,omitempty"`
-	LastReviewDate         *time.Time                         `json:"lastReviewDate,omitempty"`
-	DueDate                *time.Time                         `json:"dueDate,omitempty"`
-	Status                 *coredata.ComplianceRegistryStatus `json:"status,omitempty"`
+type UpdateContinualImprovementInput struct {
+	ID          gid.GID                                `json:"id"`
+	ReferenceID *string                                `json:"referenceId,omitempty"`
+	Description *string                                `json:"description,omitempty"`
+	Source      *string                                `json:"source,omitempty"`
+	OwnerID     *gid.GID                               `json:"ownerId,omitempty"`
+	TargetDate  *time.Time                             `json:"targetDate,omitempty"`
+	Status      *coredata.ContinualImprovementStatus   `json:"status,omitempty"`
+	Priority    *coredata.ContinualImprovementPriority `json:"priority,omitempty"`
 }
 
-type UpdateComplianceRegistryPayload struct {
-	ComplianceRegistry *ComplianceRegistry `json:"complianceRegistry"`
-}
-
-type UpdateContinualImprovementRegistryInput struct {
-	ID          gid.GID                                          `json:"id"`
-	ReferenceID *string                                          `json:"referenceId,omitempty"`
-	Description *string                                          `json:"description,omitempty"`
-	Source      *string                                          `json:"source,omitempty"`
-	OwnerID     *gid.GID                                         `json:"ownerId,omitempty"`
-	TargetDate  *time.Time                                       `json:"targetDate,omitempty"`
-	Status      *coredata.ContinualImprovementRegistriesStatus   `json:"status,omitempty"`
-	Priority    *coredata.ContinualImprovementRegistriesPriority `json:"priority,omitempty"`
-}
-
-type UpdateContinualImprovementRegistryPayload struct {
-	ContinualImprovementRegistry *ContinualImprovementRegistry `json:"continualImprovementRegistry"`
+type UpdateContinualImprovementPayload struct {
+	ContinualImprovement *ContinualImprovement `json:"continualImprovement"`
 }
 
 type UpdateControlInput struct {
@@ -1616,22 +1598,40 @@ type UpdateMeasurePayload struct {
 	Measure *Measure `json:"measure"`
 }
 
-type UpdateNonconformityRegistryInput struct {
-	ID                 gid.GID                               `json:"id"`
-	ReferenceID        *string                               `json:"referenceId,omitempty"`
-	Description        *string                               `json:"description,omitempty"`
-	DateIdentified     *time.Time                            `json:"dateIdentified,omitempty"`
-	RootCause          *string                               `json:"rootCause,omitempty"`
-	CorrectiveAction   *string                               `json:"correctiveAction,omitempty"`
-	OwnerID            *gid.GID                              `json:"ownerId,omitempty"`
-	AuditID            *gid.GID                              `json:"auditId,omitempty"`
-	DueDate            *time.Time                            `json:"dueDate,omitempty"`
-	Status             *coredata.NonconformityRegistryStatus `json:"status,omitempty"`
-	EffectivenessCheck *string                               `json:"effectivenessCheck,omitempty"`
+type UpdateNonconformityInput struct {
+	ID                 gid.GID                       `json:"id"`
+	ReferenceID        *string                       `json:"referenceId,omitempty"`
+	Description        *string                       `json:"description,omitempty"`
+	DateIdentified     *time.Time                    `json:"dateIdentified,omitempty"`
+	RootCause          *string                       `json:"rootCause,omitempty"`
+	CorrectiveAction   *string                       `json:"correctiveAction,omitempty"`
+	OwnerID            *gid.GID                      `json:"ownerId,omitempty"`
+	AuditID            *gid.GID                      `json:"auditId,omitempty"`
+	DueDate            *time.Time                    `json:"dueDate,omitempty"`
+	Status             *coredata.NonconformityStatus `json:"status,omitempty"`
+	EffectivenessCheck *string                       `json:"effectivenessCheck,omitempty"`
 }
 
-type UpdateNonconformityRegistryPayload struct {
-	NonconformityRegistry *NonconformityRegistry `json:"nonconformityRegistry"`
+type UpdateNonconformityPayload struct {
+	Nonconformity *Nonconformity `json:"nonconformity"`
+}
+
+type UpdateObligationInput struct {
+	ID                     gid.GID                    `json:"id"`
+	ReferenceID            *string                    `json:"referenceId,omitempty"`
+	Area                   *string                    `json:"area,omitempty"`
+	Source                 *string                    `json:"source,omitempty"`
+	Requirement            *string                    `json:"requirement,omitempty"`
+	ActionsToBeImplemented *string                    `json:"actionsToBeImplemented,omitempty"`
+	Regulator              *string                    `json:"regulator,omitempty"`
+	OwnerID                *gid.GID                   `json:"ownerId,omitempty"`
+	LastReviewDate         *time.Time                 `json:"lastReviewDate,omitempty"`
+	DueDate                *time.Time                 `json:"dueDate,omitempty"`
+	Status                 *coredata.ObligationStatus `json:"status,omitempty"`
+}
+
+type UpdateObligationPayload struct {
+	Obligation *Obligation `json:"obligation"`
 }
 
 type UpdateOrganizationInput struct {
@@ -1659,27 +1659,27 @@ type UpdatePeoplePayload struct {
 	People *People `json:"people"`
 }
 
-type UpdateProcessingActivityRegistryInput struct {
-	ID                             gid.GID                                                            `json:"id"`
-	Name                           *string                                                            `json:"name,omitempty"`
-	Purpose                        *string                                                            `json:"purpose,omitempty"`
-	DataSubjectCategory            *string                                                            `json:"dataSubjectCategory,omitempty"`
-	PersonalDataCategory           *string                                                            `json:"personalDataCategory,omitempty"`
-	SpecialOrCriminalData          *coredata.ProcessingActivityRegistrySpecialOrCriminalData          `json:"specialOrCriminalData,omitempty"`
-	ConsentEvidenceLink            *string                                                            `json:"consentEvidenceLink,omitempty"`
-	LawfulBasis                    *coredata.ProcessingActivityRegistryLawfulBasis                    `json:"lawfulBasis,omitempty"`
-	Recipients                     *string                                                            `json:"recipients,omitempty"`
-	Location                       *string                                                            `json:"location,omitempty"`
-	InternationalTransfers         *bool                                                              `json:"internationalTransfers,omitempty"`
-	TransferSafeguards             *coredata.ProcessingActivityRegistryTransferSafeguards             `json:"transferSafeguards,omitempty"`
-	RetentionPeriod                *string                                                            `json:"retentionPeriod,omitempty"`
-	SecurityMeasures               *string                                                            `json:"securityMeasures,omitempty"`
-	DataProtectionImpactAssessment *coredata.ProcessingActivityRegistryDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment,omitempty"`
-	TransferImpactAssessment       *coredata.ProcessingActivityRegistryTransferImpactAssessment       `json:"transferImpactAssessment,omitempty"`
+type UpdateProcessingActivityInput struct {
+	ID                             gid.GID                                                    `json:"id"`
+	Name                           *string                                                    `json:"name,omitempty"`
+	Purpose                        *string                                                    `json:"purpose,omitempty"`
+	DataSubjectCategory            *string                                                    `json:"dataSubjectCategory,omitempty"`
+	PersonalDataCategory           *string                                                    `json:"personalDataCategory,omitempty"`
+	SpecialOrCriminalData          *coredata.ProcessingActivitySpecialOrCriminalData          `json:"specialOrCriminalData,omitempty"`
+	ConsentEvidenceLink            *string                                                    `json:"consentEvidenceLink,omitempty"`
+	LawfulBasis                    *coredata.ProcessingActivityLawfulBasis                    `json:"lawfulBasis,omitempty"`
+	Recipients                     *string                                                    `json:"recipients,omitempty"`
+	Location                       *string                                                    `json:"location,omitempty"`
+	InternationalTransfers         *bool                                                      `json:"internationalTransfers,omitempty"`
+	TransferSafeguards             *coredata.ProcessingActivityTransferSafeguards             `json:"transferSafeguards,omitempty"`
+	RetentionPeriod                *string                                                    `json:"retentionPeriod,omitempty"`
+	SecurityMeasures               *string                                                    `json:"securityMeasures,omitempty"`
+	DataProtectionImpactAssessment *coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment,omitempty"`
+	TransferImpactAssessment       *coredata.ProcessingActivityTransferImpactAssessment       `json:"transferImpactAssessment,omitempty"`
 }
 
-type UpdateProcessingActivityRegistryPayload struct {
-	ProcessingActivityRegistry *ProcessingActivityRegistry `json:"processingActivityRegistry"`
+type UpdateProcessingActivityPayload struct {
+	ProcessingActivity *ProcessingActivity `json:"processingActivity"`
 }
 
 type UpdateRiskInput struct {

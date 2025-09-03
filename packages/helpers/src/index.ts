@@ -17,7 +17,7 @@ export { getDocumentTypeLabel, documentTypes } from "./documents";
 export { getAssetTypeVariant, getCriticityVariant } from "./assets";
 export { getSnapshotTypeLabel, getSnapshotTypeUrlPath, snapshotTypes, validateSnapshotConsistency } from "./snapshots";
 export { getAuditStateLabel, getAuditStateVariant, auditStates } from "./audits";
-export { getStatusVariant, getStatusLabel, getNonconformityRegistryStatusOptions, getComplianceRegistryStatusOptions, registryStatuses } from "./registryStatus";
+export { getStatusVariant, getStatusLabel, getStatusOptions } from "./registryStatus";
 export { promisifyMutation } from "./relay";
 export { fileType, fileSize } from "./file";
 export { formatDatetime } from "./date";

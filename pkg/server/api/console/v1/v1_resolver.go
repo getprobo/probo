@@ -226,108 +226,53 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 }
 
 // Organization is the resolver for the organization field.
-func (r *complianceRegistryResolver) Organization(ctx context.Context, obj *types.ComplianceRegistry) (*types.Organization, error) {
+func (r *continualImprovementResolver) Organization(ctx context.Context, obj *types.ContinualImprovement) (*types.Organization, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	registry, err := prb.ComplianceRegistries.Get(ctx, obj.ID)
+	continualImprovement, err := prb.ContinualImprovements.Get(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get compliance registry: %w", err))
+		panic(fmt.Errorf("cannot get continual improvement: %w", err))
 	}
 
-	organization, err := prb.Organizations.Get(ctx, registry.OrganizationID)
+	organization, err := prb.Organizations.Get(ctx, continualImprovement.OrganizationID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get compliance registry organization: %w", err))
+		panic(fmt.Errorf("cannot get continual improvement organization: %w", err))
 	}
 
 	return types.NewOrganization(organization), nil
 }
 
 // Owner is the resolver for the owner field.
-func (r *complianceRegistryResolver) Owner(ctx context.Context, obj *types.ComplianceRegistry) (*types.People, error) {
+func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.ContinualImprovement) (*types.People, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	registry, err := prb.ComplianceRegistries.Get(ctx, obj.ID)
+	continualImprovement, err := prb.ContinualImprovements.Get(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get compliance registry: %w", err))
+		panic(fmt.Errorf("cannot get continual improvement: %w", err))
 	}
 
-	people, err := prb.Peoples.Get(ctx, registry.OwnerID)
+	people, err := prb.Peoples.Get(ctx, continualImprovement.OwnerID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get compliance registry owner: %w", err))
+		panic(fmt.Errorf("cannot get continual improvement owner: %w", err))
 	}
 
 	return types.NewPeople(people), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *complianceRegistryConnectionResolver) TotalCount(ctx context.Context, obj *types.ComplianceRegistryConnection) (int, error) {
+func (r *continualImprovementConnectionResolver) TotalCount(ctx context.Context, obj *types.ContinualImprovementConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		complianceRegistryFilter := coredata.NewComplianceRegistryFilter(nil)
+		continualImprovementFilter := coredata.NewContinualImprovementFilter(nil)
 		if obj.Filter != nil {
-			complianceRegistryFilter = coredata.NewComplianceRegistryFilter(&obj.Filter.SnapshotID)
+			continualImprovementFilter = coredata.NewContinualImprovementFilter(&obj.Filter.SnapshotID)
 		}
 
-		count, err := prb.ComplianceRegistries.CountForOrganizationID(ctx, obj.ParentID, complianceRegistryFilter)
+		count, err := prb.ContinualImprovements.CountByOrganizationID(ctx, obj.ParentID, continualImprovementFilter)
 		if err != nil {
-			panic(fmt.Errorf("cannot count compliance registries: %w", err))
-		}
-		return count, nil
-	}
-
-	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
-}
-
-// Organization is the resolver for the organization field.
-func (r *continualImprovementRegistryResolver) Organization(ctx context.Context, obj *types.ContinualImprovementRegistry) (*types.Organization, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	registry, err := prb.ContinualImprovementRegistries.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get continual improvement registry: %w", err))
-	}
-
-	organization, err := prb.Organizations.Get(ctx, registry.OrganizationID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get continual improvement registry organization: %w", err))
-	}
-
-	return types.NewOrganization(organization), nil
-}
-
-// Owner is the resolver for the owner field.
-func (r *continualImprovementRegistryResolver) Owner(ctx context.Context, obj *types.ContinualImprovementRegistry) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	registry, err := prb.ContinualImprovementRegistries.Get(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get continual improvement registry: %w", err))
-	}
-
-	people, err := prb.Peoples.Get(ctx, registry.OwnerID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get continual improvement registry owner: %w", err))
-	}
-
-	return types.NewPeople(people), nil
-}
-
-// TotalCount is the resolver for the totalCount field.
-func (r *continualImprovementRegistryConnectionResolver) TotalCount(ctx context.Context, obj *types.ContinualImprovementRegistryConnection) (int, error) {
-	prb := r.ProboService(ctx, obj.ParentID.TenantID())
-
-	switch obj.Resolver.(type) {
-	case *organizationResolver:
-		continualImprovementRegistryFilter := coredata.NewContinualImprovementRegistryFilter(nil)
-		if obj.Filter != nil {
-			continualImprovementRegistryFilter = coredata.NewContinualImprovementRegistryFilter(&obj.Filter.SnapshotID)
-		}
-
-		count, err := prb.ContinualImprovementRegistries.CountByOrganizationID(ctx, obj.ParentID, continualImprovementRegistryFilter)
-		if err != nil {
-			panic(fmt.Errorf("cannot count continual improvement registries: %w", err))
+			panic(fmt.Errorf("cannot count continual improvements: %w", err))
 		}
 		return count, nil
 	}
@@ -2975,11 +2920,11 @@ func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.De
 	}, nil
 }
 
-// CreateNonconformityRegistry is the resolver for the createNonconformityRegistry field.
-func (r *mutationResolver) CreateNonconformityRegistry(ctx context.Context, input types.CreateNonconformityRegistryInput) (*types.CreateNonconformityRegistryPayload, error) {
+// CreateNonconformity is the resolver for the createNonconformity field.
+func (r *mutationResolver) CreateNonconformity(ctx context.Context, input types.CreateNonconformityInput) (*types.CreateNonconformityPayload, error) {
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	req := probo.CreateNonconformityRegistryRequest{
+	req := probo.CreateNonconformityRequest{
 		OrganizationID:     input.OrganizationID,
 		ReferenceID:        input.ReferenceID,
 		Description:        input.Description,
@@ -2993,21 +2938,21 @@ func (r *mutationResolver) CreateNonconformityRegistry(ctx context.Context, inpu
 		EffectivenessCheck: input.EffectivenessCheck,
 	}
 
-	registry, err := prb.NonconformityRegistries.Create(ctx, &req)
+	nonconformity, err := prb.Nonconformities.Create(ctx, &req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create nonconformity registry: %w", err)
+		panic(fmt.Errorf("cannot create nonconformity: %w", err))
 	}
 
-	return &types.CreateNonconformityRegistryPayload{
-		NonconformityRegistryEdge: types.NewNonconformityRegistryEdge(registry, coredata.NonconformityRegistryOrderFieldCreatedAt),
+	return &types.CreateNonconformityPayload{
+		NonconformityEdge: types.NewNonconformityEdge(nonconformity, coredata.NonconformityOrderFieldCreatedAt),
 	}, nil
 }
 
-// UpdateNonconformityRegistry is the resolver for the updateNonconformityRegistry field.
-func (r *mutationResolver) UpdateNonconformityRegistry(ctx context.Context, input types.UpdateNonconformityRegistryInput) (*types.UpdateNonconformityRegistryPayload, error) {
+// UpdateNonconformity is the resolver for the updateNonconformity field.
+func (r *mutationResolver) UpdateNonconformity(ctx context.Context, input types.UpdateNonconformityInput) (*types.UpdateNonconformityPayload, error) {
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	req := probo.UpdateNonconformityRegistryRequest{
+	req := probo.UpdateNonconformityRequest{
 		ID:                 input.ID,
 		ReferenceID:        input.ReferenceID,
 		Description:        &input.Description,
@@ -3021,35 +2966,35 @@ func (r *mutationResolver) UpdateNonconformityRegistry(ctx context.Context, inpu
 		EffectivenessCheck: &input.EffectivenessCheck,
 	}
 
-	registry, err := prb.NonconformityRegistries.Update(ctx, &req)
+	nonconformity, err := prb.Nonconformities.Update(ctx, &req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot update nonconformity registry: %w", err)
+		panic(fmt.Errorf("cannot update nonconformity: %w", err))
 	}
 
-	return &types.UpdateNonconformityRegistryPayload{
-		NonconformityRegistry: types.NewNonconformityRegistry(registry),
+	return &types.UpdateNonconformityPayload{
+		Nonconformity: types.NewNonconformity(nonconformity),
 	}, nil
 }
 
-// DeleteNonconformityRegistry is the resolver for the deleteNonconformityRegistry field.
-func (r *mutationResolver) DeleteNonconformityRegistry(ctx context.Context, input types.DeleteNonconformityRegistryInput) (*types.DeleteNonconformityRegistryPayload, error) {
-	prb := r.ProboService(ctx, input.NonconformityRegistryID.TenantID())
+// DeleteNonconformity is the resolver for the deleteNonconformity field.
+func (r *mutationResolver) DeleteNonconformity(ctx context.Context, input types.DeleteNonconformityInput) (*types.DeleteNonconformityPayload, error) {
+	prb := r.ProboService(ctx, input.NonconformityID.TenantID())
 
-	err := prb.NonconformityRegistries.Delete(ctx, input.NonconformityRegistryID)
+	err := prb.Nonconformities.Delete(ctx, input.NonconformityID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete nonconformity registry: %w", err)
+		return nil, fmt.Errorf("cannot delete nonconformity: %w", err)
 	}
 
-	return &types.DeleteNonconformityRegistryPayload{
-		DeletedNonconformityRegistryID: input.NonconformityRegistryID,
+	return &types.DeleteNonconformityPayload{
+		DeletedNonconformityID: input.NonconformityID,
 	}, nil
 }
 
-// CreateComplianceRegistry is the resolver for the createComplianceRegistry field.
-func (r *mutationResolver) CreateComplianceRegistry(ctx context.Context, input types.CreateComplianceRegistryInput) (*types.CreateComplianceRegistryPayload, error) {
+// CreateObligation is the resolver for the createObligation field.
+func (r *mutationResolver) CreateObligation(ctx context.Context, input types.CreateObligationInput) (*types.CreateObligationPayload, error) {
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	req := probo.CreateComplianceRegistryRequest{
+	req := probo.CreateObligationRequest{
 		OrganizationID:         input.OrganizationID,
 		ReferenceID:            input.ReferenceID,
 		Area:                   input.Area,
@@ -3063,21 +3008,21 @@ func (r *mutationResolver) CreateComplianceRegistry(ctx context.Context, input t
 		Status:                 &input.Status,
 	}
 
-	registry, err := prb.ComplianceRegistries.Create(ctx, &req)
+	obligation, err := prb.Obligations.Create(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot create compliance registry: %w", err))
+		panic(fmt.Errorf("cannot create obligation: %w", err))
 	}
 
-	return &types.CreateComplianceRegistryPayload{
-		ComplianceRegistryEdge: types.NewComplianceRegistryEdge(registry, coredata.ComplianceRegistryOrderFieldCreatedAt),
+	return &types.CreateObligationPayload{
+		ObligationEdge: types.NewObligationEdge(obligation, coredata.ObligationOrderFieldCreatedAt),
 	}, nil
 }
 
-// UpdateComplianceRegistry is the resolver for the updateComplianceRegistry field.
-func (r *mutationResolver) UpdateComplianceRegistry(ctx context.Context, input types.UpdateComplianceRegistryInput) (*types.UpdateComplianceRegistryPayload, error) {
+// UpdateObligation is the resolver for the updateObligation field.
+func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.UpdateObligationInput) (*types.UpdateObligationPayload, error) {
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	req := probo.UpdateComplianceRegistryRequest{
+	req := probo.UpdateObligationRequest{
 		ID:                     input.ID,
 		ReferenceID:            input.ReferenceID,
 		Area:                   &input.Area,
@@ -3091,35 +3036,35 @@ func (r *mutationResolver) UpdateComplianceRegistry(ctx context.Context, input t
 		Status:                 input.Status,
 	}
 
-	registry, err := prb.ComplianceRegistries.Update(ctx, &req)
+	obligation, err := prb.Obligations.Update(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot update compliance registry: %w", err))
+		panic(fmt.Errorf("cannot update obligation: %w", err))
 	}
 
-	return &types.UpdateComplianceRegistryPayload{
-		ComplianceRegistry: types.NewComplianceRegistry(registry),
+	return &types.UpdateObligationPayload{
+		Obligation: types.NewObligation(obligation),
 	}, nil
 }
 
-// DeleteComplianceRegistry is the resolver for the deleteComplianceRegistry field.
-func (r *mutationResolver) DeleteComplianceRegistry(ctx context.Context, input types.DeleteComplianceRegistryInput) (*types.DeleteComplianceRegistryPayload, error) {
-	prb := r.ProboService(ctx, input.ComplianceRegistryID.TenantID())
+// DeleteObligation is the resolver for the deleteObligation field.
+func (r *mutationResolver) DeleteObligation(ctx context.Context, input types.DeleteObligationInput) (*types.DeleteObligationPayload, error) {
+	prb := r.ProboService(ctx, input.ObligationID.TenantID())
 
-	err := prb.ComplianceRegistries.Delete(ctx, input.ComplianceRegistryID)
+	err := prb.Obligations.Delete(ctx, input.ObligationID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete compliance registry: %w", err))
+		panic(fmt.Errorf("cannot delete obligation: %w", err))
 	}
 
-	return &types.DeleteComplianceRegistryPayload{
-		DeletedComplianceRegistryID: input.ComplianceRegistryID,
+	return &types.DeleteObligationPayload{
+		DeletedObligationID: input.ObligationID,
 	}, nil
 }
 
-// CreateContinualImprovementRegistry is the resolver for the createContinualImprovementRegistry field.
-func (r *mutationResolver) CreateContinualImprovementRegistry(ctx context.Context, input types.CreateContinualImprovementRegistryInput) (*types.CreateContinualImprovementRegistryPayload, error) {
+// CreateContinualImprovement is the resolver for the createContinualImprovement field.
+func (r *mutationResolver) CreateContinualImprovement(ctx context.Context, input types.CreateContinualImprovementInput) (*types.CreateContinualImprovementPayload, error) {
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	req := probo.CreateContinualImprovementRegistryRequest{
+	req := probo.CreateContinualImprovementRequest{
 		OrganizationID: input.OrganizationID,
 		ReferenceID:    input.ReferenceID,
 		Description:    input.Description,
@@ -3130,21 +3075,21 @@ func (r *mutationResolver) CreateContinualImprovementRegistry(ctx context.Contex
 		Priority:       &input.Priority,
 	}
 
-	registry, err := prb.ContinualImprovementRegistries.Create(ctx, &req)
+	continualImprovement, err := prb.ContinualImprovements.Create(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot create continual improvement registry: %w", err))
+		panic(fmt.Errorf("cannot create continual improvement: %w", err))
 	}
 
-	return &types.CreateContinualImprovementRegistryPayload{
-		ContinualImprovementRegistryEdge: types.NewContinualImprovementRegistryEdge(registry, coredata.ContinualImprovementRegistriesOrderFieldCreatedAt),
+	return &types.CreateContinualImprovementPayload{
+		ContinualImprovementEdge: types.NewContinualImprovementEdge(continualImprovement, coredata.ContinualImprovementOrderFieldCreatedAt),
 	}, nil
 }
 
-// UpdateContinualImprovementRegistry is the resolver for the updateContinualImprovementRegistry field.
-func (r *mutationResolver) UpdateContinualImprovementRegistry(ctx context.Context, input types.UpdateContinualImprovementRegistryInput) (*types.UpdateContinualImprovementRegistryPayload, error) {
+// UpdateContinualImprovement is the resolver for the updateContinualImprovement field.
+func (r *mutationResolver) UpdateContinualImprovement(ctx context.Context, input types.UpdateContinualImprovementInput) (*types.UpdateContinualImprovementPayload, error) {
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	req := probo.UpdateContinualImprovementRegistryRequest{
+	req := probo.UpdateContinualImprovementRequest{
 		ID:          input.ID,
 		ReferenceID: input.ReferenceID,
 		Description: &input.Description,
@@ -3155,35 +3100,35 @@ func (r *mutationResolver) UpdateContinualImprovementRegistry(ctx context.Contex
 		Priority:    input.Priority,
 	}
 
-	registry, err := prb.ContinualImprovementRegistries.Update(ctx, &req)
+	continualImprovement, err := prb.ContinualImprovements.Update(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot update continual improvement registry: %w", err))
+		panic(fmt.Errorf("cannot update continual improvement: %w", err))
 	}
 
-	return &types.UpdateContinualImprovementRegistryPayload{
-		ContinualImprovementRegistry: types.NewContinualImprovementRegistry(registry),
+	return &types.UpdateContinualImprovementPayload{
+		ContinualImprovement: types.NewContinualImprovement(continualImprovement),
 	}, nil
 }
 
-// DeleteContinualImprovementRegistry is the resolver for the deleteContinualImprovementRegistry field.
-func (r *mutationResolver) DeleteContinualImprovementRegistry(ctx context.Context, input types.DeleteContinualImprovementRegistryInput) (*types.DeleteContinualImprovementRegistryPayload, error) {
-	prb := r.ProboService(ctx, input.ContinualImprovementRegistryID.TenantID())
+// DeleteContinualImprovement is the resolver for the deleteContinualImprovement field.
+func (r *mutationResolver) DeleteContinualImprovement(ctx context.Context, input types.DeleteContinualImprovementInput) (*types.DeleteContinualImprovementPayload, error) {
+	prb := r.ProboService(ctx, input.ContinualImprovementID.TenantID())
 
-	err := prb.ContinualImprovementRegistries.Delete(ctx, input.ContinualImprovementRegistryID)
+	err := prb.ContinualImprovements.Delete(ctx, input.ContinualImprovementID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete continual improvement registry: %w", err))
+		panic(fmt.Errorf("cannot delete continual improvement: %w", err))
 	}
 
-	return &types.DeleteContinualImprovementRegistryPayload{
-		DeletedContinualImprovementRegistryID: input.ContinualImprovementRegistryID,
+	return &types.DeleteContinualImprovementPayload{
+		DeletedContinualImprovementID: input.ContinualImprovementID,
 	}, nil
 }
 
-// CreateProcessingActivityRegistry is the resolver for the createProcessingActivityRegistry field.
-func (r *mutationResolver) CreateProcessingActivityRegistry(ctx context.Context, input types.CreateProcessingActivityRegistryInput) (*types.CreateProcessingActivityRegistryPayload, error) {
+// CreateProcessingActivity is the resolver for the createProcessingActivity field.
+func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input types.CreateProcessingActivityInput) (*types.CreateProcessingActivityPayload, error) {
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	req := probo.CreateProcessingActivityRegistryRequest{
+	req := probo.CreateProcessingActivityRequest{
 		OrganizationID:                 input.OrganizationID,
 		Name:                           input.Name,
 		Purpose:                        input.Purpose,
@@ -3201,21 +3146,21 @@ func (r *mutationResolver) CreateProcessingActivityRegistry(ctx context.Context,
 		TransferImpactAssessment:       input.TransferImpactAssessment,
 	}
 
-	registry, err := prb.ProcessingActivityRegistries.Create(ctx, &req)
+	activity, err := prb.ProcessingActivities.Create(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot create processing activity registry: %w", err))
+		panic(fmt.Errorf("cannot create processing activity: %w", err))
 	}
 
-	return &types.CreateProcessingActivityRegistryPayload{
-		ProcessingActivityRegistryEdge: types.NewProcessingActivityRegistryEdge(registry, coredata.ProcessingActivityRegistryOrderFieldCreatedAt),
+	return &types.CreateProcessingActivityPayload{
+		ProcessingActivityEdge: types.NewProcessingActivityEdge(activity, coredata.ProcessingActivityOrderFieldCreatedAt),
 	}, nil
 }
 
-// UpdateProcessingActivityRegistry is the resolver for the updateProcessingActivityRegistry field.
-func (r *mutationResolver) UpdateProcessingActivityRegistry(ctx context.Context, input types.UpdateProcessingActivityRegistryInput) (*types.UpdateProcessingActivityRegistryPayload, error) {
+// UpdateProcessingActivity is the resolver for the updateProcessingActivity field.
+func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input types.UpdateProcessingActivityInput) (*types.UpdateProcessingActivityPayload, error) {
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	req := probo.UpdateProcessingActivityRegistryRequest{
+	req := probo.UpdateProcessingActivityRequest{
 		ID:                             input.ID,
 		Name:                           input.Name,
 		Purpose:                        &input.Purpose,
@@ -3233,27 +3178,27 @@ func (r *mutationResolver) UpdateProcessingActivityRegistry(ctx context.Context,
 		TransferImpactAssessment:       input.TransferImpactAssessment,
 	}
 
-	registry, err := prb.ProcessingActivityRegistries.Update(ctx, &req)
+	activity, err := prb.ProcessingActivities.Update(ctx, &req)
 	if err != nil {
-		panic(fmt.Errorf("cannot update processing activity registry: %w", err))
+		panic(fmt.Errorf("cannot update processing activity: %w", err))
 	}
 
-	return &types.UpdateProcessingActivityRegistryPayload{
-		ProcessingActivityRegistry: types.NewProcessingActivityRegistry(registry),
+	return &types.UpdateProcessingActivityPayload{
+		ProcessingActivity: types.NewProcessingActivity(activity),
 	}, nil
 }
 
-// DeleteProcessingActivityRegistry is the resolver for the deleteProcessingActivityRegistry field.
-func (r *mutationResolver) DeleteProcessingActivityRegistry(ctx context.Context, input types.DeleteProcessingActivityRegistryInput) (*types.DeleteProcessingActivityRegistryPayload, error) {
-	prb := r.ProboService(ctx, input.ProcessingActivityRegistryID.TenantID())
+// DeleteProcessingActivity is the resolver for the deleteProcessingActivity field.
+func (r *mutationResolver) DeleteProcessingActivity(ctx context.Context, input types.DeleteProcessingActivityInput) (*types.DeleteProcessingActivityPayload, error) {
+	prb := r.ProboService(ctx, input.ProcessingActivityID.TenantID())
 
-	err := prb.ProcessingActivityRegistries.Delete(ctx, input.ProcessingActivityRegistryID)
+	err := prb.ProcessingActivities.Delete(ctx, input.ProcessingActivityID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete processing activity registry: %w", err))
+		panic(fmt.Errorf("cannot delete processing activity: %w", err))
 	}
 
-	return &types.DeleteProcessingActivityRegistryPayload{
-		DeletedProcessingActivityRegistryID: input.ProcessingActivityRegistryID,
+	return &types.DeleteProcessingActivityPayload{
+		DeletedProcessingActivityID: input.ProcessingActivityID,
 	}, nil
 }
 
@@ -3290,70 +3235,125 @@ func (r *mutationResolver) DeleteSnapshot(ctx context.Context, input types.Delet
 }
 
 // Organization is the resolver for the organization field.
-func (r *nonconformityRegistryResolver) Organization(ctx context.Context, obj *types.NonconformityRegistry) (*types.Organization, error) {
+func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Nonconformity) (*types.Organization, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	registry, err := prb.NonconformityRegistries.Get(ctx, obj.ID)
+	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity registry: %w", err)
+		return nil, fmt.Errorf("cannot get nonconformity: %w", err)
 	}
 
-	organization, err := prb.Organizations.Get(ctx, registry.OrganizationID)
+	organization, err := prb.Organizations.Get(ctx, nonconformity.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity registry organization: %w", err)
+		return nil, fmt.Errorf("cannot get nonconformity organization: %w", err)
 	}
 
 	return types.NewOrganization(organization), nil
 }
 
 // Audit is the resolver for the audit field.
-func (r *nonconformityRegistryResolver) Audit(ctx context.Context, obj *types.NonconformityRegistry) (*types.Audit, error) {
+func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconformity) (*types.Audit, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	registry, err := prb.NonconformityRegistries.Get(ctx, obj.ID)
+	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity registry: %w", err)
+		return nil, fmt.Errorf("cannot get nonconformity: %w", err)
 	}
 
-	audit, err := prb.Audits.Get(ctx, registry.AuditID)
+	audit, err := prb.Audits.Get(ctx, nonconformity.AuditID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity registry audit: %w", err)
+		return nil, fmt.Errorf("cannot get nonconformity audit: %w", err)
 	}
 
 	return types.NewAudit(audit), nil
 }
 
 // Owner is the resolver for the owner field.
-func (r *nonconformityRegistryResolver) Owner(ctx context.Context, obj *types.NonconformityRegistry) (*types.People, error) {
+func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconformity) (*types.People, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	registry, err := prb.NonconformityRegistries.Get(ctx, obj.ID)
+	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity registry: %w", err)
+		return nil, fmt.Errorf("cannot get nonconformity: %w", err)
 	}
 
-	people, err := prb.Peoples.Get(ctx, registry.OwnerID)
+	people, err := prb.Peoples.Get(ctx, nonconformity.OwnerID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity registry owner: %w", err)
+		return nil, fmt.Errorf("cannot get nonconformity owner: %w", err)
 	}
 
 	return types.NewPeople(people), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *nonconformityRegistryConnectionResolver) TotalCount(ctx context.Context, obj *types.NonconformityRegistryConnection) (int, error) {
+func (r *nonconformityConnectionResolver) TotalCount(ctx context.Context, obj *types.NonconformityConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		nonconformityRegistryFilter := coredata.NewNonconformityRegistryFilter(nil)
+		nonconformityFilter := coredata.NewNonconformityFilter(nil)
 		if obj.Filter != nil {
-			nonconformityRegistryFilter = coredata.NewNonconformityRegistryFilter(&obj.Filter.SnapshotID)
+			nonconformityFilter = coredata.NewNonconformityFilter(&obj.Filter.SnapshotID)
 		}
 
-		count, err := prb.NonconformityRegistries.CountForOrganizationID(ctx, obj.ParentID, nonconformityRegistryFilter)
+		count, err := prb.Nonconformities.CountForOrganizationID(ctx, obj.ParentID, nonconformityFilter)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count nonconformity registries: %w", err)
+			return 0, fmt.Errorf("cannot count nonconformities: %w", err)
+		}
+		return count, nil
+	}
+
+	return 0, fmt.Errorf("unsupported resolver: %T", obj.Resolver)
+}
+
+// Organization is the resolver for the organization field.
+func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obligation) (*types.Organization, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	obligation, err := prb.Obligations.Get(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get obligation: %w", err)
+	}
+
+	organization, err := prb.Organizations.Get(ctx, obligation.OrganizationID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get obligation organization: %w", err)
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// Owner is the resolver for the owner field.
+func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (*types.People, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	obligation, err := prb.Obligations.Get(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get obligation: %w", err)
+	}
+
+	people, err := prb.Peoples.Get(ctx, obligation.OwnerID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get obligation owner: %w", err)
+	}
+
+	return types.NewPeople(people), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *types.ObligationConnection) (int, error) {
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	switch obj.Resolver.(type) {
+	case *organizationResolver:
+		obligationFilter := coredata.NewObligationFilter(nil)
+		if obj.Filter != nil {
+			obligationFilter = coredata.NewObligationFilter(&obj.Filter.SnapshotID)
+		}
+
+		count, err := prb.Obligations.CountForOrganizationID(ctx, obj.ParentID, obligationFilter)
+		if err != nil {
+			panic(fmt.Errorf("cannot count obligations: %w", err))
 		}
 		return count, nil
 	}
@@ -3731,16 +3731,17 @@ func (r *organizationResolver) Audits(ctx context.Context, obj *types.Organizati
 	return types.NewAuditConnection(page, r, obj.ID), nil
 }
 
-// NonconformityRegistries is the resolver for the nonconformityRegistries field.
-func (r *organizationResolver) NonconformityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityRegistryOrderBy, filter *types.NonconformityRegistryFilter) (*types.NonconformityRegistryConnection, error) {
+// Nonconformities is the resolver for the nonconformities field.
+func (r *organizationResolver) Nonconformities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.NonconformityOrderBy, filter *types.NonconformityFilter) (*types.NonconformityConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.NonconformityRegistryOrderField]{
-		Field:     coredata.NonconformityRegistryOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.NonconformityOrderField]{
+		Field:     coredata.NonconformityOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.NonconformityRegistryOrderField]{
+		pageOrderBy = page.OrderBy[coredata.NonconformityOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -3748,29 +3749,30 @@ func (r *organizationResolver) NonconformityRegistries(ctx context.Context, obj 
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	nonconformityRegistryFilter := coredata.NewNonconformityRegistryFilter(nil)
+	nonconformityFilter := coredata.NewNonconformityFilter(nil)
 	if filter != nil {
-		nonconformityRegistryFilter = coredata.NewNonconformityRegistryFilter(&filter.SnapshotID)
+		nonconformityFilter = coredata.NewNonconformityFilter(&filter.SnapshotID)
 	}
 
-	page, err := prb.NonconformityRegistries.ListForOrganizationID(ctx, obj.ID, cursor, nonconformityRegistryFilter)
+	page, err := prb.Nonconformities.ListForOrganizationID(ctx, obj.ID, cursor, nonconformityFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list organization nonconformity registries: %w", err)
+		panic(fmt.Errorf("cannot list organization nonconformities: %w", err))
 	}
 
-	return types.NewNonconformityRegistryConnection(page, r, obj.ID, filter), nil
+	return types.NewNonconformityConnection(page, r, obj.ID, filter), nil
 }
 
-// ComplianceRegistries is the resolver for the complianceRegistries field.
-func (r *organizationResolver) ComplianceRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ComplianceRegistryOrderBy, filter *types.ComplianceRegistryFilter) (*types.ComplianceRegistryConnection, error) {
+// Obligations is the resolver for the obligations field.
+func (r *organizationResolver) Obligations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.ComplianceRegistryOrderField]{
-		Field:     coredata.ComplianceRegistryOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
+		Field:     coredata.ObligationOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
+
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ComplianceRegistryOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -3778,30 +3780,30 @@ func (r *organizationResolver) ComplianceRegistries(ctx context.Context, obj *ty
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	complianceRegistryFilter := coredata.NewComplianceRegistryFilter(nil)
+	obligationFilter := coredata.NewObligationFilter(nil)
 	if filter != nil {
-		complianceRegistryFilter = coredata.NewComplianceRegistryFilter(&filter.SnapshotID)
+		obligationFilter = coredata.NewObligationFilter(&filter.SnapshotID)
 	}
 
-	page, err := prb.ComplianceRegistries.ListForOrganizationID(ctx, obj.ID, cursor, complianceRegistryFilter)
+	page, err := prb.Obligations.ListForOrganizationID(ctx, obj.ID, cursor, obligationFilter)
 	if err != nil {
-		panic(fmt.Errorf("cannot list organization compliance registries: %w", err))
+		panic(fmt.Errorf("cannot list organization obligations: %w", err))
 	}
 
-	return types.NewComplianceRegistryConnection(page, r, obj.ID, filter), nil
+	return types.NewObligationConnection(page, r, obj.ID, filter), nil
 }
 
-// ContinualImprovementRegistries is the resolver for the continualImprovementRegistries field.
-func (r *organizationResolver) ContinualImprovementRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementRegistriesOrderBy, filter *types.ContinualImprovementRegistryFilter) (*types.ContinualImprovementRegistryConnection, error) {
+// ContinualImprovements is the resolver for the continualImprovements field.
+func (r *organizationResolver) ContinualImprovements(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) (*types.ContinualImprovementConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.ContinualImprovementRegistriesOrderField]{
-		Field:     coredata.ContinualImprovementRegistriesOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ContinualImprovementOrderField]{
+		Field:     coredata.ContinualImprovementOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ContinualImprovementRegistriesOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ContinualImprovementOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -3809,30 +3811,30 @@ func (r *organizationResolver) ContinualImprovementRegistries(ctx context.Contex
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	continualImprovementRegistryFilter := coredata.NewContinualImprovementRegistryFilter(nil)
+	continualImprovementFilter := coredata.NewContinualImprovementFilter(nil)
 	if filter != nil {
-		continualImprovementRegistryFilter = coredata.NewContinualImprovementRegistryFilter(&filter.SnapshotID)
+		continualImprovementFilter = coredata.NewContinualImprovementFilter(&filter.SnapshotID)
 	}
 
-	page, err := prb.ContinualImprovementRegistries.ListForOrganizationID(ctx, obj.ID, cursor, continualImprovementRegistryFilter)
+	page, err := prb.ContinualImprovements.ListForOrganizationID(ctx, obj.ID, cursor, continualImprovementFilter)
 	if err != nil {
-		panic(fmt.Errorf("cannot list organization continual improvement registries: %w", err))
+		panic(fmt.Errorf("cannot list organization continual improvements: %w", err))
 	}
 
-	return types.NewContinualImprovementRegistryConnection(page, r, obj.ID, filter), nil
+	return types.NewContinualImprovementConnection(page, r, obj.ID, filter), nil
 }
 
-// ProcessingActivityRegistries is the resolver for the processingActivityRegistries field.
-func (r *organizationResolver) ProcessingActivityRegistries(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityRegistryOrderBy, filter *types.ProcessingActivityRegistryFilter) (*types.ProcessingActivityRegistryConnection, error) {
+// ProcessingActivities is the resolver for the processingActivities field.
+func (r *organizationResolver) ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.ProcessingActivityRegistryOrderField]{
-		Field:     coredata.ProcessingActivityRegistryOrderFieldCreatedAt,
+	pageOrderBy := page.OrderBy[coredata.ProcessingActivityOrderField]{
+		Field:     coredata.ProcessingActivityOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ProcessingActivityRegistryOrderField]{
+		pageOrderBy = page.OrderBy[coredata.ProcessingActivityOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -3840,17 +3842,17 @@ func (r *organizationResolver) ProcessingActivityRegistries(ctx context.Context,
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	processingActivityRegistryFilter := coredata.NewProcessingActivityRegistryFilter(nil)
+	processingActivityFilter := coredata.NewProcessingActivityFilter(nil)
 	if filter != nil {
-		processingActivityRegistryFilter = coredata.NewProcessingActivityRegistryFilter(&filter.SnapshotID)
+		processingActivityFilter = coredata.NewProcessingActivityFilter(&filter.SnapshotID)
 	}
 
-	page, err := prb.ProcessingActivityRegistries.ListForOrganizationID(ctx, obj.ID, cursor, processingActivityRegistryFilter)
+	page, err := prb.ProcessingActivities.ListForOrganizationID(ctx, obj.ID, cursor, processingActivityFilter)
 	if err != nil {
-		panic(fmt.Errorf("cannot list organization processing activity registries: %w", err))
+		panic(fmt.Errorf("cannot list organization processing activities: %w", err))
 	}
 
-	return types.NewProcessingActivityRegistryConnection(page, r, obj.ID, filter), nil
+	return types.NewProcessingActivityConnection(page, r, obj.ID, filter), nil
 }
 
 // Snapshots is the resolver for the snapshots field.
@@ -3907,15 +3909,15 @@ func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.Pe
 }
 
 // Organization is the resolver for the organization field.
-func (r *processingActivityRegistryResolver) Organization(ctx context.Context, obj *types.ProcessingActivityRegistry) (*types.Organization, error) {
+func (r *processingActivityResolver) Organization(ctx context.Context, obj *types.ProcessingActivity) (*types.Organization, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	processingActivityRegistry, err := prb.ProcessingActivityRegistries.Get(ctx, obj.ID)
+	processingActivity, err := prb.ProcessingActivities.Get(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get processing activity registry: %w", err))
+		panic(fmt.Errorf("cannot get processing activity: %w", err))
 	}
 
-	organization, err := prb.Organizations.Get(ctx, processingActivityRegistry.OrganizationID)
+	organization, err := prb.Organizations.Get(ctx, processingActivity.OrganizationID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -3924,19 +3926,19 @@ func (r *processingActivityRegistryResolver) Organization(ctx context.Context, o
 }
 
 // TotalCount is the resolver for the totalCount field.
-func (r *processingActivityRegistryConnectionResolver) TotalCount(ctx context.Context, obj *types.ProcessingActivityRegistryConnection) (int, error) {
+func (r *processingActivityConnectionResolver) TotalCount(ctx context.Context, obj *types.ProcessingActivityConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
 
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		processingActivityRegistryFilter := coredata.NewProcessingActivityRegistryFilter(nil)
+		processingActivityFilter := coredata.NewProcessingActivityFilter(nil)
 		if obj.Filter != nil {
-			processingActivityRegistryFilter = coredata.NewProcessingActivityRegistryFilter(&obj.Filter.SnapshotID)
+			processingActivityFilter = coredata.NewProcessingActivityFilter(&obj.Filter.SnapshotID)
 		}
 
-		count, err := prb.ProcessingActivityRegistries.CountForOrganizationID(ctx, obj.ParentID, processingActivityRegistryFilter)
+		count, err := prb.ProcessingActivities.CountForOrganizationID(ctx, obj.ParentID, processingActivityFilter)
 		if err != nil {
-			panic(fmt.Errorf("cannot count organization processing activity registries: %w", err))
+			panic(fmt.Errorf("cannot count organization processing activities: %w", err))
 		}
 		return count, nil
 	}
@@ -4065,36 +4067,36 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 			panic(fmt.Errorf("cannot get audit: %w", err))
 		}
 		return types.NewAudit(audit), nil
-	case coredata.NonconformityRegistryEntityType:
-		nonconformityRegistry, err := prb.NonconformityRegistries.Get(ctx, id)
+	case coredata.NonconformityEntityType:
+		nonconformity, err := prb.Nonconformities.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("cannot get nonconformity registry: %w", err))
+			panic(fmt.Errorf("cannot get nonconformity: %w", err))
 		}
-		return types.NewNonconformityRegistry(nonconformityRegistry), nil
-	case coredata.ComplianceRegistryEntityType:
-		complianceRegistry, err := prb.ComplianceRegistries.Get(ctx, id)
+		return types.NewNonconformity(nonconformity), nil
+	case coredata.ObligationEntityType:
+		obligation, err := prb.Obligations.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("cannot get compliance registry: %w", err))
+			panic(fmt.Errorf("cannot get obligation: %w", err))
 		}
-		return types.NewComplianceRegistry(complianceRegistry), nil
-	case coredata.ContinualImprovementRegistryEntityType:
-		continualImprovementRegistry, err := prb.ContinualImprovementRegistries.Get(ctx, id)
+		return types.NewObligation(obligation), nil
+	case coredata.ContinualImprovementEntityType:
+		continualImprovement, err := prb.ContinualImprovements.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("cannot get continual improvement registry: %w", err))
+			panic(fmt.Errorf("cannot get continual improvement: %w", err))
 		}
-		return types.NewContinualImprovementRegistry(continualImprovementRegistry), nil
+		return types.NewContinualImprovement(continualImprovement), nil
 	case coredata.ReportEntityType:
 		report, err := prb.Reports.Get(ctx, id)
 		if err != nil {
 			panic(fmt.Errorf("cannot get report: %w", err))
 		}
 		return types.NewReport(report), nil
-	case coredata.ProcessingActivityRegistryEntityType:
-		processingActivityRegistry, err := prb.ProcessingActivityRegistries.Get(ctx, id)
+	case coredata.ProcessingActivityEntityType:
+		processingActivity, err := prb.ProcessingActivities.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("cannot get processing activity registry: %w", err))
+			panic(fmt.Errorf("cannot get processing activity: %w", err))
 		}
-		return types.NewProcessingActivityRegistry(processingActivityRegistry), nil
+		return types.NewProcessingActivity(processingActivity), nil
 	case coredata.SnapshotEntityType:
 		snapshot, err := prb.Snapshots.Get(ctx, id)
 		if err != nil {
@@ -4894,24 +4896,14 @@ func (r *Resolver) AuditConnection() schema.AuditConnectionResolver {
 	return &auditConnectionResolver{r}
 }
 
-// ComplianceRegistry returns schema.ComplianceRegistryResolver implementation.
-func (r *Resolver) ComplianceRegistry() schema.ComplianceRegistryResolver {
-	return &complianceRegistryResolver{r}
+// ContinualImprovement returns schema.ContinualImprovementResolver implementation.
+func (r *Resolver) ContinualImprovement() schema.ContinualImprovementResolver {
+	return &continualImprovementResolver{r}
 }
 
-// ComplianceRegistryConnection returns schema.ComplianceRegistryConnectionResolver implementation.
-func (r *Resolver) ComplianceRegistryConnection() schema.ComplianceRegistryConnectionResolver {
-	return &complianceRegistryConnectionResolver{r}
-}
-
-// ContinualImprovementRegistry returns schema.ContinualImprovementRegistryResolver implementation.
-func (r *Resolver) ContinualImprovementRegistry() schema.ContinualImprovementRegistryResolver {
-	return &continualImprovementRegistryResolver{r}
-}
-
-// ContinualImprovementRegistryConnection returns schema.ContinualImprovementRegistryConnectionResolver implementation.
-func (r *Resolver) ContinualImprovementRegistryConnection() schema.ContinualImprovementRegistryConnectionResolver {
-	return &continualImprovementRegistryConnectionResolver{r}
+// ContinualImprovementConnection returns schema.ContinualImprovementConnectionResolver implementation.
+func (r *Resolver) ContinualImprovementConnection() schema.ContinualImprovementConnectionResolver {
+	return &continualImprovementConnectionResolver{r}
 }
 
 // Control returns schema.ControlResolver implementation.
@@ -4975,14 +4967,20 @@ func (r *Resolver) MeasureConnection() schema.MeasureConnectionResolver {
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 
-// NonconformityRegistry returns schema.NonconformityRegistryResolver implementation.
-func (r *Resolver) NonconformityRegistry() schema.NonconformityRegistryResolver {
-	return &nonconformityRegistryResolver{r}
+// Nonconformity returns schema.NonconformityResolver implementation.
+func (r *Resolver) Nonconformity() schema.NonconformityResolver { return &nonconformityResolver{r} }
+
+// NonconformityConnection returns schema.NonconformityConnectionResolver implementation.
+func (r *Resolver) NonconformityConnection() schema.NonconformityConnectionResolver {
+	return &nonconformityConnectionResolver{r}
 }
 
-// NonconformityRegistryConnection returns schema.NonconformityRegistryConnectionResolver implementation.
-func (r *Resolver) NonconformityRegistryConnection() schema.NonconformityRegistryConnectionResolver {
-	return &nonconformityRegistryConnectionResolver{r}
+// Obligation returns schema.ObligationResolver implementation.
+func (r *Resolver) Obligation() schema.ObligationResolver { return &obligationResolver{r} }
+
+// ObligationConnection returns schema.ObligationConnectionResolver implementation.
+func (r *Resolver) ObligationConnection() schema.ObligationConnectionResolver {
+	return &obligationConnectionResolver{r}
 }
 
 // Organization returns schema.OrganizationResolver implementation.
@@ -4993,14 +4991,14 @@ func (r *Resolver) PeopleConnection() schema.PeopleConnectionResolver {
 	return &peopleConnectionResolver{r}
 }
 
-// ProcessingActivityRegistry returns schema.ProcessingActivityRegistryResolver implementation.
-func (r *Resolver) ProcessingActivityRegistry() schema.ProcessingActivityRegistryResolver {
-	return &processingActivityRegistryResolver{r}
+// ProcessingActivity returns schema.ProcessingActivityResolver implementation.
+func (r *Resolver) ProcessingActivity() schema.ProcessingActivityResolver {
+	return &processingActivityResolver{r}
 }
 
-// ProcessingActivityRegistryConnection returns schema.ProcessingActivityRegistryConnectionResolver implementation.
-func (r *Resolver) ProcessingActivityRegistryConnection() schema.ProcessingActivityRegistryConnectionResolver {
-	return &processingActivityRegistryConnectionResolver{r}
+// ProcessingActivityConnection returns schema.ProcessingActivityConnectionResolver implementation.
+func (r *Resolver) ProcessingActivityConnection() schema.ProcessingActivityConnectionResolver {
+	return &processingActivityConnectionResolver{r}
 }
 
 // Query returns schema.QueryResolver implementation.
@@ -5076,10 +5074,8 @@ type assetResolver struct{ *Resolver }
 type assetConnectionResolver struct{ *Resolver }
 type auditResolver struct{ *Resolver }
 type auditConnectionResolver struct{ *Resolver }
-type complianceRegistryResolver struct{ *Resolver }
-type complianceRegistryConnectionResolver struct{ *Resolver }
-type continualImprovementRegistryResolver struct{ *Resolver }
-type continualImprovementRegistryConnectionResolver struct{ *Resolver }
+type continualImprovementResolver struct{ *Resolver }
+type continualImprovementConnectionResolver struct{ *Resolver }
 type controlResolver struct{ *Resolver }
 type controlConnectionResolver struct{ *Resolver }
 type datumResolver struct{ *Resolver }
@@ -5095,12 +5091,14 @@ type frameworkConnectionResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }
 type measureConnectionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
-type nonconformityRegistryResolver struct{ *Resolver }
-type nonconformityRegistryConnectionResolver struct{ *Resolver }
+type nonconformityResolver struct{ *Resolver }
+type nonconformityConnectionResolver struct{ *Resolver }
+type obligationResolver struct{ *Resolver }
+type obligationConnectionResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type peopleConnectionResolver struct{ *Resolver }
-type processingActivityRegistryResolver struct{ *Resolver }
-type processingActivityRegistryConnectionResolver struct{ *Resolver }
+type processingActivityResolver struct{ *Resolver }
+type processingActivityConnectionResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }

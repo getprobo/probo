@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dc710d55da977c21a12e3e21f29fbe94>>
+ * @generated SignedSource<<79d48ab0fd5b269022244b0777eac279>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type SnapshotsType = "ASSETS" | "COMPLIANCE_REGISTRIES" | "CONTINUAL_IMPROVEMENT_REGISTRIES" | "DATA" | "NONCONFORMITY_REGISTRIES" | "PROCESSING_ACTIVITY_REGISTRIES" | "RISKS" | "VENDORS";
+export type SnapshotsType = "ASSETS" | "CONTINUAL_IMPROVEMENTS" | "DATA" | "NONCONFORMITIES" | "OBLIGATIONS" | "PROCESSING_ACTIVITIES" | "RISKS" | "VENDORS";
 import { FragmentRefs } from "relay-runtime";
 export type SnapshotsPageFragment$data = {
   readonly snapshots: {

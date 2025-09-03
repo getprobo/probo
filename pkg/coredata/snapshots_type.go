@@ -24,14 +24,14 @@ type (
 )
 
 const (
-	SnapshotsTypeRisks                          SnapshotsType = "RISKS"
-	SnapshotsTypeVendors                        SnapshotsType = "VENDORS"
-	SnapshotsTypeAssets                         SnapshotsType = "ASSETS"
-	SnapshotsTypeData                           SnapshotsType = "DATA"
-	SnapshotsTypeNonConformityRegistries        SnapshotsType = "NONCONFORMITY_REGISTRIES"
-	SnapshotsTypeComplianceRegistries           SnapshotsType = "COMPLIANCE_REGISTRIES"
-	SnapshotsTypeContinualImprovementRegistries SnapshotsType = "CONTINUAL_IMPROVEMENT_REGISTRIES"
-	SnapshotsTypeProcessingActivityRegistries   SnapshotsType = "PROCESSING_ACTIVITY_REGISTRIES"
+	SnapshotsTypeRisks                 SnapshotsType = "RISKS"
+	SnapshotsTypeVendors               SnapshotsType = "VENDORS"
+	SnapshotsTypeAssets                SnapshotsType = "ASSETS"
+	SnapshotsTypeData                  SnapshotsType = "DATA"
+	SnapshotsTypeNonconformities       SnapshotsType = "NONCONFORMITIES"
+	SnapshotsTypeObligations           SnapshotsType = "OBLIGATIONS"
+	SnapshotsTypeContinualImprovements SnapshotsType = "CONTINUAL_IMPROVEMENTS"
+	SnapshotsTypeProcessingActivities  SnapshotsType = "PROCESSING_ACTIVITIES"
 )
 
 func (st SnapshotsType) String() string {
@@ -58,14 +58,14 @@ func (st *SnapshotsType) Scan(value any) error {
 		*st = SnapshotsTypeAssets
 	case SnapshotsTypeData.String():
 		*st = SnapshotsTypeData
-	case SnapshotsTypeNonConformityRegistries.String():
-		*st = SnapshotsTypeNonConformityRegistries
-	case SnapshotsTypeComplianceRegistries.String():
-		*st = SnapshotsTypeComplianceRegistries
-	case SnapshotsTypeContinualImprovementRegistries.String():
-		*st = SnapshotsTypeContinualImprovementRegistries
-	case SnapshotsTypeProcessingActivityRegistries.String():
-		*st = SnapshotsTypeProcessingActivityRegistries
+	case SnapshotsTypeNonconformities.String():
+		*st = SnapshotsTypeNonconformities
+	case SnapshotsTypeObligations.String():
+		*st = SnapshotsTypeObligations
+	case SnapshotsTypeContinualImprovements.String():
+		*st = SnapshotsTypeContinualImprovements
+	case SnapshotsTypeProcessingActivities.String():
+		*st = SnapshotsTypeProcessingActivities
 	default:
 		return fmt.Errorf("invalid SnapshotsType value: %q", s)
 	}

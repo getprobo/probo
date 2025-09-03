@@ -34,14 +34,14 @@ func GetSnapshottable(snapshotType SnapshotsType) (Snapshottable, error) {
 		return Risks{}, nil
 	case SnapshotsTypeData:
 		return Data{}, nil
-	case SnapshotsTypeNonConformityRegistries:
-		return NonconformityRegistries{}, nil
-	case SnapshotsTypeComplianceRegistries:
-		return ComplianceRegistries{}, nil
-	case SnapshotsTypeContinualImprovementRegistries:
-		return ContinualImprovementRegistries{}, nil
-	case SnapshotsTypeProcessingActivityRegistries:
-		return ProcessingActivityRegistries{}, nil
+	case SnapshotsTypeNonconformities:
+		return Nonconformities{}, nil
+	case SnapshotsTypeObligations:
+		return Obligations{}, nil
+	case SnapshotsTypeContinualImprovements:
+		return ContinualImprovements{}, nil
+	case SnapshotsTypeProcessingActivities:
+		return ProcessingActivities{}, nil
 	case SnapshotsTypeVendors:
 		return Vendors{}, nil
 	default:

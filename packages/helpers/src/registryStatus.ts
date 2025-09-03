@@ -1,7 +1,6 @@
 type Translator = (s: string) => string;
 
-export type NonconformityRegistryStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
-export type ComplianceRegistryStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
+export type RegistryStatus = "CLOSED" | "IN_PROGRESS" | "OPEN";
 
 export const registryStatuses = [
   "OPEN",
@@ -9,7 +8,7 @@ export const registryStatuses = [
   "CLOSED",
 ] as const;
 
-export const getStatusVariant = (status: NonconformityRegistryStatus | ComplianceRegistryStatus) => {
+export const getStatusVariant = (status: RegistryStatus) => {
   switch (status) {
     case "OPEN":
       return "danger" as const;
@@ -22,7 +21,7 @@ export const getStatusVariant = (status: NonconformityRegistryStatus | Complianc
   }
 };
 
-export const getStatusLabel = (status: NonconformityRegistryStatus | ComplianceRegistryStatus) => {
+export const getStatusLabel = (status: RegistryStatus) => {
   switch (status) {
     case "OPEN":
       return "Open";
@@ -35,18 +34,7 @@ export const getStatusLabel = (status: NonconformityRegistryStatus | ComplianceR
   }
 };
 
-export function getNonconformityRegistryStatusOptions(__: Translator) {
-  return registryStatuses.map((status) => ({
-    value: status,
-    label: __({
-      "OPEN": "Open",
-      "IN_PROGRESS": "In Progress",
-      "CLOSED": "Closed",
-    }[status]),
-  }));
-}
-
-export function getComplianceRegistryStatusOptions(__: Translator) {
+export function getStatusOptions(__: Translator) {
   return registryStatuses.map((status) => ({
     value: status,
     label: __({

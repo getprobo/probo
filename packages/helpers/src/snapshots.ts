@@ -5,10 +5,10 @@ export const snapshotTypes = [
   "VENDORS",
   "ASSETS",
   "DATA",
-  "NONCONFORMITY_REGISTRIES",
-  "COMPLIANCE_REGISTRIES",
-  "CONTINUAL_IMPROVEMENT_REGISTRIES",
-  "PROCESSING_ACTIVITY_REGISTRIES",
+  "NONCONFORMITIES",
+  "OBLIGATIONS",
+  "CONTINUAL_IMPROVEMENTS",
+  "PROCESSING_ACTIVITIES",
 ] as const;
 
 export function getSnapshotTypeLabel(__: Translator, type: string | null | undefined) {
@@ -25,14 +25,14 @@ export function getSnapshotTypeLabel(__: Translator, type: string | null | undef
       return __("Assets");
     case "DATA":
       return __("Data");
-    case "NONCONFORMITY_REGISTRIES":
-      return __("Nonconformity Registries");
-    case "COMPLIANCE_REGISTRIES":
-      return __("Compliance Registries");
-    case "CONTINUAL_IMPROVEMENT_REGISTRIES":
-      return __("Continual Improvement Registries");
-    case "PROCESSING_ACTIVITY_REGISTRIES":
-      return __("Processing Activity Registries");
+    case "NONCONFORMITIES":
+      return __("Nonconformities");
+    case "OBLIGATIONS":
+      return __("Obligations");
+    case "CONTINUAL_IMPROVEMENTS":
+      return __("Continual Improvements");
+    case "PROCESSING_ACTIVITIES":
+      return __("Processing Activities");
     default:
       return __("Unknown");
   }
@@ -48,14 +48,14 @@ export function getSnapshotTypeUrlPath(type?: string): string {
       return "/assets";
     case "DATA":
       return "/data";
-    case "NONCONFORMITY_REGISTRIES":
-      return "/nonconformity-registries";
-    case "COMPLIANCE_REGISTRIES":
-      return "/compliance-registries";
-    case "CONTINUAL_IMPROVEMENT_REGISTRIES":
-      return "/continual-improvement-registries";
-    case "PROCESSING_ACTIVITY_REGISTRIES":
-      return "/processing-activity-registries";
+    case "NONCONFORMITIES":
+      return "/nonconformities";
+    case "OBLIGATIONS":
+      return "/obligations";
+    case "CONTINUAL_IMPROVEMENTS":
+      return "/continual-improvements";
+    case "PROCESSING_ACTIVITIES":
+      return "/processing-activities";
     default:
       return "";
   }
