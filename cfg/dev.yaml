@@ -1,13 +1,67 @@
+unit:
+  metrics:
+    addr: "localhost:8081"
+  tracing:
+    addr: "localhost:4317"
+    max-batch-size: 512
+    batch-timeout: 5
+    export-timeout: 30
+    max-queue-size: 2048
+
 probod:
-  auth:
-    invitation-confirmation-token-validity: 3600
+  hostname: "localhost:8080"
+  encryption-key: "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+  chrome-dp-addr: "localhost:9222"
+
   api:
+    addr: "localhost:8080"
     cors:
       allowed-origins: ["http://localhost:8080", "http://localhost:5173"]
+    extra-header-fields: {}
+
+  pg:
+    addr: "localhost:5432"
+    username: "postgres"
+    password: "postgres"
+    database: "probod"
+    pool-size: 100
+
+  auth:
+    disable-signup: false
+    invitation-confirmation-token-validity: 3600
+    cookie:
+      name: "SSID"
+      domain: "localhost"
+      secret: "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"
+      duration: 24
+    password:
+      pepper: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
+      iterations: 1000000
+
+  trust-auth:
+    cookie-name: "TCT"
+    cookie-domain: "localhost"
+    cookie-duration: 24
+    token-duration: 168
+    report-url-duration: 15
+    token-secret: "this-is-a-secure-secret-for-trust-token-signing-at-least-32-bytes"
+    scope: "trust_center_readonly"
+    token-type: "trust_center_access"
+
   aws:
+    region: "us-east-1"
+    bucket: "probod"
     access-key-id: "probod"
     secret-access-key: "thisisnotasecret"
     endpoint: "http://127.0.0.1:9000"
+
+  mailer:
+    sender-name: "Probo"
+    sender-email: "no-reply@notification.getprobo.com"
+    smtp:
+      addr: "localhost:1025"
+      tls-required: false
+
   openai:
     api-key: "thisisnotasecret"
     temperature: 0.1
