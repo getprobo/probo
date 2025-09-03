@@ -81,7 +81,7 @@ export default function ForgotPasswordPage() {
           <p className="text-sm text-txt-tertiary">
             {__("Remember your password?")}{" "}
             <Link
-              to="/login"
+              to="/auth/login"
               className="underline text-txt-primary hover:text-txt-secondary"
             >
               {__("Back to login")}
