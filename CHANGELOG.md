@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.56.0] - 2025-09-03
+
+### Added
+- Add risks snapshots
+
+### Fixed
+
+- Fix tabs counter
+- Fix password page redirection
+
 ## [0.55.0] - 2025-09-01
 
 ### Added
