@@ -18,7 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
+	"net/mail"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
@@ -84,7 +84,7 @@ func (s TrustCenterAccessService) Create(
 	ctx context.Context,
 	req *CreateTrustCenterAccessRequest,
 ) (*coredata.TrustCenterAccess, error) {
-	if !strings.Contains(req.Email, "@") {
+	if _, err := mail.ParseAddress(req.Email); err != nil {
 		return nil, fmt.Errorf("invalid email address")
 	}
 

@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"net/mail"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
@@ -636,7 +635,7 @@ func (s Service) InviteUser(
 	fullName string,
 	emailAddress string,
 ) error {
-	if !strings.Contains(emailAddress, "@") {
+	if _, err := mail.ParseAddress(emailAddress); err != nil {
 		return &ErrInvalidEmail{emailAddress}
 	}
 	if fullName == "" {
