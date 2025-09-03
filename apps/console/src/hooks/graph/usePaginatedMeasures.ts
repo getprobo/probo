@@ -49,7 +49,7 @@ const measuresFragment = graphql`
 export function usePaginatedMeasures(organizationId: string) {
   const query = useLazyLoadQuery<usePaginatedMeasuresQuery>(measuresQuery, {
     organizationId,
-  });
+  }, { fetchPolicy: "network-only" });
   return usePaginationFragment(
     measuresFragment,
     query.organization as usePaginatedMeasuresFragment$key

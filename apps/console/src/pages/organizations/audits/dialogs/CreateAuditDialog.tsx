@@ -164,7 +164,7 @@ function FrameworkSelect({
   name: keyof FormSchema;
 }) {
   const { __ } = useTranslate();
-  const data = useLazyLoadQuery<CreateAuditDialogFrameworksQuery>(frameworksQuery, { organizationId });
+  const data = useLazyLoadQuery<CreateAuditDialogFrameworksQuery>(frameworksQuery, { organizationId }, { fetchPolicy: "network-only" });
   const frameworks = data?.organization?.frameworks?.edges?.map((edge) => edge.node).filter((node): node is NonNullable<typeof node> => node !== null) ?? [];
 
   return (

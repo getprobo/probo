@@ -90,7 +90,7 @@ function LinkedDocumentsDialogContent(props: Omit<Props, "children">) {
   const organizationId = useOrganizationId();
   const query = useLazyLoadQuery<LinkedDocumentsDialogQuery>(documentsQuery, {
     organizationId,
-  });
+  }, { fetchPolicy: "network-only" });
   const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment(
     documentsFragment,
     query.organization as LinkedDocumentsDialogFragment$key

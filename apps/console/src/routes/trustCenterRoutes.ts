@@ -11,7 +11,7 @@ export const trustCenterRoutes = [
     path: "trust-center",
     fallback: PageSkeleton,
     queryLoader: ({ organizationId }) =>
-      loadQuery(relayEnvironment, trustCenterQuery, { organizationId }),
+      loadQuery(relayEnvironment, trustCenterQuery, { organizationId }, { fetchPolicy: "network-only" }),
     Component: lazy(
       () => import("/pages/organizations/trustCenter/TrustCenterPage")
     ),

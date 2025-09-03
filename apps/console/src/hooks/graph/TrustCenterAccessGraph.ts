@@ -89,7 +89,7 @@ export function useTrustCenterAccesses(trustCenterId: string): TrustCenterAccess
   const data = useLazyLoadQuery<TrustCenterAccessGraphQuery>(
     trustCenterAccessesQuery,
     { trustCenterId: trustCenterId || "" },
-    { fetchPolicy: 'store-and-network' }
+    { fetchPolicy: 'network-only' }
   );
 
   // Return null if trustCenterId was empty, otherwise return the data

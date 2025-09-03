@@ -64,7 +64,7 @@ function AuditSelectWithQuery<T extends FieldValues = FieldValues>(
 ) {
   const { __ } = useTranslate();
   const { name, organizationId, control } = props;
-  const data = useLazyLoadQuery<AuditSelectFieldQuery>(auditsQuery, { organizationId });
+  const data = useLazyLoadQuery<AuditSelectFieldQuery>(auditsQuery, { organizationId }, { fetchPolicy: "network-only" });
   const audits = data?.organization?.audits?.edges?.map((edge) => edge.node).filter((node) => node !== null) ?? [];
 
   return (
