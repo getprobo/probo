@@ -91,7 +91,7 @@ export function CreateNonconformityRegistryDialog({
 
       toast({
         title: __("Success"),
-                    description: __("Non conformity registry entry created successfully"),
+                    description: __("Non conformity entry created successfully"),
         variant: "success",
       });
 
@@ -100,7 +100,7 @@ export function CreateNonconformityRegistryDialog({
     } catch (error) {
       toast({
         title: __("Error"),
-                    description: __("Failed to create non conformity registry entry"),
+                    description: __("Failed to create non conformity entry"),
         variant: "error",
       });
     }
@@ -110,7 +110,7 @@ export function CreateNonconformityRegistryDialog({
     <Dialog
       ref={dialogRef}
       trigger={children}
-      title={<Breadcrumb items={[__("Registries"), __("Create Entry")]} />}
+      title={<Breadcrumb items={[__("Nonconformities"), __("Create Entry")]} />}
       className="max-w-2xl"
     >
       <form onSubmit={onSubmit}>
@@ -240,7 +240,7 @@ export function CreateNonconformityRegistryDialog({
 
         <DialogFooter>
           <Button type="submit" disabled={formState.isSubmitting}>
-            {formState.isSubmitting ? __("Creating...") : __("Create Nonconformity Registry Entry")}
+            {formState.isSubmitting ? __("Creating...") : __("Create Nonconformity Entry")}
           </Button>
         </DialogFooter>
       </form>

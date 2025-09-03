@@ -118,8 +118,8 @@ export const useDeleteComplianceRegistry = (
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteComplianceRegistryMutation, {
-    successMessage: __("Compliance registry entry deleted successfully"),
-    errorMessage: __("Failed to delete compliance registry entry"),
+    successMessage: __("Compliance entry deleted successfully"),
+    errorMessage: __("Failed to delete compliance entry"),
   });
   const confirm = useConfirm();
 
@@ -164,13 +164,13 @@ export const useCreateComplianceRegistry = (connectionId: string) => {
     status: string;
   }) => {
     if (!input.organizationId) {
-      return alert(__("Failed to create compliance registry entry: organization is required"));
+      return alert(__("Failed to create compliance entry: organization is required"));
     }
     if (!input.referenceId) {
-      return alert(__("Failed to create compliance registry entry: reference ID is required"));
+      return alert(__("Failed to create compliance entry: reference ID is required"));
     }
     if (!input.ownerId) {
-      return alert(__("Failed to create compliance registry entry: owner is required"));
+      return alert(__("Failed to create compliance entry: owner is required"));
     }
 
     return promisifyMutation(mutate)({
@@ -212,7 +212,7 @@ export const useUpdateComplianceRegistry = () => {
     status?: string;
   }) => {
     if (!input.id) {
-      return alert(__("Failed to update compliance registry entry: registry ID is required"));
+      return alert(__("Failed to update compliance entry: entry ID is required"));
     }
 
     return promisifyMutation(mutate)({

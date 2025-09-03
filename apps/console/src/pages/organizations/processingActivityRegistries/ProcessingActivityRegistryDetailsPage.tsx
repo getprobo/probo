@@ -72,7 +72,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
   const isSnapshotMode = Boolean(snapshotId);
 
   if (!registry) {
-    return <div>{__("Processing activity registry entry not found")}</div>;
+    return <div>{__("Processing activity entry not found")}</div>;
   }
 
   validateSnapshotConsistency(registry, snapshotId);
@@ -133,13 +133,13 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
 
       toast({
         title: __("Success"),
-        description: __("Processing activity registry entry updated successfully"),
+        description: __("Processing activity entry updated successfully"),
         variant: "success",
       });
     } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to update processing activity registry entry"),
+        description: __("Failed to update processing activity entry"),
         variant: "error",
       });
     }
@@ -157,7 +157,7 @@ export default function ProcessingActivityRegistryDetailsPage(props: Props) {
       <div className="flex items-center justify-between">
         <Breadcrumb
           items={[
-            { label: __("Processing Activity Registries"), to: breadcrumbRegistriesUrl },
+            { label: __("Processing Activities"), to: breadcrumbRegistriesUrl },
             { label: registry.name! },
           ]}
         />

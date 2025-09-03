@@ -78,7 +78,7 @@ export function CreateContinualImprovementRegistryDialog({
 
       toast({
         title: __("Success"),
-        description: __("Continual improvement registry entry created successfully"),
+        description: __("Continual improvement entry created successfully"),
         variant: "success",
       });
 
@@ -87,7 +87,7 @@ export function CreateContinualImprovementRegistryDialog({
     } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to create continual improvement registry entry"),
+        description: __("Failed to create continual improvement entry"),
         variant: "error",
       });
     }
@@ -109,7 +109,7 @@ export function CreateContinualImprovementRegistryDialog({
     <Dialog
       ref={dialogRef}
       trigger={children}
-      title={<Breadcrumb items={[__("Registries"), __("Create Continual Improvement Entry")]} />}
+      title={<Breadcrumb items={[__("Continual Improvements"), __("Create Entry")]} />}
       className="max-w-2xl"
     >
       <form onSubmit={onSubmit}>

@@ -115,13 +115,13 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
       reset(formData);
       toast({
         title: __("Success"),
-        description: __("Non conformity registry entry updated successfully"),
+        description: __("Non conformity entry updated successfully"),
         variant: "success",
       });
     } catch (error) {
       toast({
         title: __("Error"),
-        description: error instanceof Error ? error.message : __("Failed to update non conformity registry entry"),
+        description: error instanceof Error ? error.message : __("Failed to update non conformity entry"),
         variant: "error",
       });
     }
@@ -141,11 +141,11 @@ export default function NonconformityRegistryDetailsPage(props: Props) {
       <Breadcrumb
         items={[
           {
-            label: __("Nonconformity Registries"),
+            label: __("Nonconformities"),
             to: breadcrumbNonconformityRegistriesUrl,
           },
           {
-            label: registry.referenceId || __("Unknown Nonconformity Registry"),
+            label: registry.referenceId || __("Unknown Nonconformity"),
           },
         ]}
       />

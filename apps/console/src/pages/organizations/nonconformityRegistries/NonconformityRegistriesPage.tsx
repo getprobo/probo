@@ -102,7 +102,7 @@ export default function NonconformityRegistriesPage({ queryRef }: NonconformityR
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
 
-  usePageTitle(__("Nonconformity Registries"));
+  usePageTitle(__("Nonconformities"));
 
   const organization = usePreloadedQuery(
     graphql`
@@ -135,14 +135,14 @@ export default function NonconformityRegistriesPage({ queryRef }: NonconformityR
         <SnapshotBanner snapshotId={snapshotId!} />
       )}
       <PageHeader
-        title={__("Nonconformity Registries")}
+        title={__("Nonconformities")}
         description={__(
           "Manage your organization's non conformity registries."
         )}
       >
         {!isSnapshotMode && (
           <CreateNonconformityRegistryDialog organizationId={organizationId} connection={connectionId}>
-            <Button icon={IconPlusLarge}>{__("Add nonconformity registry")}</Button>
+            <Button icon={IconPlusLarge}>{__("Add nonconformity")}</Button>
           </CreateNonconformityRegistryDialog>
         )}
       </PageHeader>
@@ -151,10 +151,10 @@ export default function NonconformityRegistriesPage({ queryRef }: NonconformityR
         <Card padded>
           <div className="text-center py-12">
             <h3 className="text-lg font-semibold mb-2">
-              {__("No nonconformity registry entries yet")}
+              {__("No nonconformity entries yet")}
             </h3>
             <p className="text-txt-tertiary mb-4">
-              {__("Create your first nonconformity registry entry to get started.")}
+              {__("Create your first nonconformity entry to get started.")}
             </p>
           </div>
         </Card>

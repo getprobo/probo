@@ -123,8 +123,8 @@ export const useDeleteProcessingActivityRegistry = (
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteProcessingActivityRegistryMutation, {
-    successMessage: __("Processing activity registry entry deleted successfully"),
-    errorMessage: __("Failed to delete processing activity registry entry"),
+    successMessage: __("Processing activity entry deleted successfully"),
+    errorMessage: __("Failed to delete processing activity entry"),
   });
   const confirm = useConfirm();
 
@@ -174,10 +174,10 @@ export const useCreateProcessingActivityRegistry = (connectionId?: string) => {
     transferImpactAssessment?: string;
   }) => {
     if (!input.organizationId) {
-      return alert(__("Failed to create processing activity registry entry: organization is required"));
+      return alert(__("Failed to create processing activity entry: organization is required"));
     }
     if (!input.name) {
-      return alert(__("Failed to create processing activity registry entry: name is required"));
+      return alert(__("Failed to create processing activity entry: name is required"));
     }
 
     return promisifyMutation(mutate)({
@@ -229,7 +229,7 @@ export const useUpdateProcessingActivityRegistry = () => {
     transferImpactAssessment?: string;
   }) => {
     if (!input.id) {
-      return alert(__("Failed to update processing activity registry entry: registry ID is required"));
+      return alert(__("Failed to update processing activity entry: entry ID is required"));
     }
 
     return promisifyMutation(mutate)({

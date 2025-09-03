@@ -88,7 +88,7 @@ export function CreateComplianceRegistryDialog({
 
       toast({
         title: __("Success"),
-        description: __("Compliance registry entry created successfully"),
+        description: __("Compliance entry created successfully"),
         variant: "success",
       });
 
@@ -97,7 +97,7 @@ export function CreateComplianceRegistryDialog({
     } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to create compliance registry entry"),
+        description: __("Failed to create compliance entry"),
         variant: "error",
       });
     }
@@ -107,7 +107,7 @@ export function CreateComplianceRegistryDialog({
     <Dialog
       ref={dialogRef}
       trigger={children}
-      title={<Breadcrumb items={[__("Registries"), __("Create Compliance Entry")]} />}
+      title={<Breadcrumb items={[__("Compliances"), __("Create Entry")]} />}
       className="max-w-2xl"
     >
       <form onSubmit={onSubmit}>
@@ -230,7 +230,7 @@ export function CreateComplianceRegistryDialog({
 
         <DialogFooter>
           <Button type="submit" disabled={formState.isSubmitting}>
-            {formState.isSubmitting ? __("Creating...") : __("Create Compliance Registry Entry")}
+            {formState.isSubmitting ? __("Creating...") : __("Create Compliance Entry")}
           </Button>
         </DialogFooter>
       </form>

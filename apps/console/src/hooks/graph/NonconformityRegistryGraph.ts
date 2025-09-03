@@ -132,8 +132,8 @@ export const useDeleteNonconformityRegistry = (
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteNonconformityRegistryMutation, {
-    successMessage: __("Non conformity registry entry deleted successfully"),
-    errorMessage: __("Failed to delete non conformity registry entry"),
+    successMessage: __("Non conformity entry deleted successfully"),
+    errorMessage: __("Failed to delete non conformity entry"),
   });
   const confirm = useConfirm();
 
@@ -178,19 +178,19 @@ export const useCreateNonconformityRegistry = (connectionId: string) => {
     effectivenessCheck?: string;
   }) => {
     if (!input.organizationId) {
-      return alert(__("Failed to create non conformity registry entry: organization is required"));
+      return alert(__("Failed to create non conformity entry: organization is required"));
     }
     if (!input.referenceId) {
-      return alert(__("Failed to create non conformity registry entry: reference ID is required"));
+      return alert(__("Failed to create non conformity entry: reference ID is required"));
     }
     if (!input.auditId) {
-      return alert(__("Failed to create non conformity registry entry: audit is required"));
+      return alert(__("Failed to create non conformity entry: audit is required"));
     }
     if (!input.ownerId) {
-      return alert(__("Failed to create non conformity registry entry: owner is required"));
+      return alert(__("Failed to create non conformity entry: owner is required"));
     }
     if (!input.rootCause) {
-      return alert(__("Failed to create non conformity registry entry: root cause is required"));
+      return alert(__("Failed to create non conformity entry: root cause is required"));
     }
 
     return promisifyMutation(mutate)({
@@ -232,7 +232,7 @@ export const useUpdateNonconformityRegistry = () => {
     effectivenessCheck?: string;
   }) => {
     if (!input.id) {
-      return alert(__("Failed to update non conformity registry entry: registry ID is required"));
+      return alert(__("Failed to update non conformity entry: entry ID is required"));
     }
 
     return promisifyMutation(mutate)({

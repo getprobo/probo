@@ -59,7 +59,7 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
   const isSnapshotMode = Boolean(snapshotId);
 
   if (!registry) {
-    return <div>{__("Continual improvement registry entry not found")}</div>;
+    return <div>{__("Continual improvement entry not found")}</div>;
   }
 
   validateSnapshotConsistency(registry, snapshotId);
@@ -107,13 +107,13 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
 
       toast({
         title: __("Success"),
-        description: __("Continual improvement registry entry updated successfully"),
+        description: __("Continual improvement entry updated successfully"),
         variant: "success",
       });
     } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to update continual improvement registry entry"),
+        description: __("Failed to update continual improvement entry"),
         variant: "error",
       });
     }
@@ -143,7 +143,7 @@ export default function ContinualImprovementRegistryDetailsPage(props: Props) {
       <div className="flex items-center justify-between">
         <Breadcrumb
           items={[
-            { label: __("Continual Improvement Registries"), to: breadcrumbRegistriesUrl },
+            { label: __("Continual Improvements"), to: breadcrumbRegistriesUrl },
             { label: registry.referenceId! },
           ]}
         />

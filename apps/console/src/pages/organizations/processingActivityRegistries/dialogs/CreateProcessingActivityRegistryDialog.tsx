@@ -106,7 +106,7 @@ export function CreateProcessingActivityRegistryDialog({
 
       toast({
         title: __("Success"),
-        description: __("Processing activity registry entry created successfully"),
+        description: __("Processing activity entry created successfully"),
         variant: "success",
       });
 
@@ -115,7 +115,7 @@ export function CreateProcessingActivityRegistryDialog({
     } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to create processing activity registry entry"),
+        description: __("Failed to create processing activity entry"),
         variant: "error",
       });
     }
@@ -125,7 +125,7 @@ export function CreateProcessingActivityRegistryDialog({
     <Dialog
       ref={dialogRef}
       trigger={children}
-      title={<Breadcrumb items={[__("Registries"), __("Create Processing Activity Entry")]} />}
+      title={<Breadcrumb items={[__("Processing Activities"), __("Create Entry")]} />}
       className="max-w-4xl"
     >
       <form onSubmit={onSubmit}>

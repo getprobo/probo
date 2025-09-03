@@ -109,8 +109,8 @@ export const useDeleteContinualImprovementRegistry = (
 ) => {
   const { __ } = useTranslate();
   const [mutate] = useMutationWithToasts(deleteContinualImprovementRegistryMutation, {
-    successMessage: __("Continual improvement registry entry deleted successfully"),
-    errorMessage: __("Failed to delete continual improvement registry entry"),
+    successMessage: __("Continual improvement entry deleted successfully"),
+    errorMessage: __("Failed to delete continual improvement entry"),
   });
   const confirm = useConfirm();
 
@@ -152,13 +152,13 @@ export const useCreateContinualImprovementRegistry = (connectionId: string) => {
     priority: string;
   }) => {
     if (!input.organizationId) {
-      return alert(__("Failed to create continual improvement registry entry: organization is required"));
+      return alert(__("Failed to create continual improvement entry: organization is required"));
     }
     if (!input.referenceId) {
-      return alert(__("Failed to create continual improvement registry entry: reference ID is required"));
+      return alert(__("Failed to create continual improvement entry: reference ID is required"));
     }
     if (!input.ownerId) {
-      return alert(__("Failed to create continual improvement registry entry: owner is required"));
+      return alert(__("Failed to create continual improvement entry: owner is required"));
     }
 
     return promisifyMutation(mutate)({
@@ -194,7 +194,7 @@ export const useUpdateContinualImprovementRegistry = () => {
     priority?: string;
   }) => {
     if (!input.id) {
-      return alert(__("Failed to update continual improvement registry entry: registry ID is required"));
+      return alert(__("Failed to update continual improvement entry: entry ID is required"));
     }
 
     return promisifyMutation(mutate)({

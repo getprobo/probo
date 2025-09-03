@@ -91,7 +91,7 @@ export default function ProcessingActivityRegistriesPage({ queryRef }: Processin
   const isSnapshotMode = Boolean(snapshotId);
 
 
-  usePageTitle(__("Processing Activity Registries"));
+  usePageTitle(__("Processing Activities"));
 
   const organization = usePreloadedQuery(
     graphql`
@@ -131,14 +131,14 @@ export default function ProcessingActivityRegistriesPage({ queryRef }: Processin
       {isSnapshotMode && snapshotId && (
         <SnapshotBanner snapshotId={snapshotId} />
       )}
-      <PageHeader title={__("Processing Activity Registries")} description={__("Manage your processing activity registry entries under GDPR")}>
+      <PageHeader title={__("Processing Activities")} description={__("Manage your processing activity entries under GDPR")}>
         {!isSnapshotMode && (
           <CreateProcessingActivityRegistryDialog
             organizationId={organizationId}
             connectionId={connectionId}
           >
             <Button icon={IconPlusLarge}>
-              {__("Add processing activity registry")}
+              {__("Add processing activity")}
             </Button>
           </CreateProcessingActivityRegistryDialog>
         )}
@@ -185,10 +185,10 @@ export default function ProcessingActivityRegistriesPage({ queryRef }: Processin
         <Card padded>
           <div className="text-center py-12">
             <h3 className="text-lg font-semibold mb-2">
-              {__("No processing activity registry entries yet")}
+              {__("No processing activity entries yet")}
             </h3>
             <p className="text-txt-tertiary mb-4">
-              {__("Create your first processing activity registry entry to get started with GDPR compliance.")}
+              {__("Create your first processing activity entry to get started with GDPR compliance.")}
             </p>
           </div>
         </Card>

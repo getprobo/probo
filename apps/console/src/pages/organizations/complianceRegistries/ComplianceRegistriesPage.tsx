@@ -95,7 +95,7 @@ export default function ComplianceRegistriesPage({ queryRef }: ComplianceRegistr
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
 
-  usePageTitle(__("Compliance Registries"));
+  usePageTitle(__("Compliances"));
 
   const organization = usePreloadedQuery(
     graphql`
@@ -124,14 +124,14 @@ export default function ComplianceRegistriesPage({ queryRef }: ComplianceRegistr
         <SnapshotBanner snapshotId={snapshotId} />
       )}
       <PageHeader
-        title={__("Compliance Registries")}
+        title={__("Compliances")}
         description={__(
           "Manage your organization's compliance registry entries."
         )}
       >
         {!snapshotId && (
           <CreateComplianceRegistryDialog organizationId={organizationId} connection={connectionId}>
-            <Button icon={IconPlusLarge}>{__("Add compliance registry")}</Button>
+            <Button icon={IconPlusLarge}>{__("Add compliance")}</Button>
           </CreateComplianceRegistryDialog>
         )}
       </PageHeader>
@@ -140,10 +140,10 @@ export default function ComplianceRegistriesPage({ queryRef }: ComplianceRegistr
         <Card padded>
           <div className="text-center py-12">
             <h3 className="text-lg font-semibold mb-2">
-              {__("No compliance registry entries yet")}
+              {__("No compliance entries yet")}
             </h3>
             <p className="text-txt-tertiary mb-4">
-              {__("Create your first compliance registry entry to get started.")}
+              {__("Create your first compliance entry to get started.")}
             </p>
           </div>
         </Card>

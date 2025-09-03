@@ -62,7 +62,7 @@ export default function ComplianceRegistryDetailsPage(props: Props) {
   const isSnapshotMode = Boolean(snapshotId);
 
   if (!registry) {
-    return <div>{__("Compliance registry entry not found")}</div>;
+    return <div>{__("Compliance entry not found")}</div>;
   }
 
   validateSnapshotConsistency(registry, snapshotId);
@@ -118,13 +118,13 @@ export default function ComplianceRegistryDetailsPage(props: Props) {
 
       toast({
         title: __("Success"),
-        description: __("Compliance registry entry updated successfully"),
+        description: __("Compliance entry updated successfully"),
         variant: "success",
       });
     } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to update compliance registry entry"),
+        description: __("Failed to update compliance entry"),
         variant: "error",
       });
     }
@@ -143,7 +143,7 @@ export default function ComplianceRegistryDetailsPage(props: Props) {
         <div>
                    <Breadcrumb
            items={[
-             { label: __("Compliance Registries"), to: breadcrumbComplianceRegistriesUrl },
+             { label: __("Compliances"), to: breadcrumbComplianceRegistriesUrl },
              { label: registry.referenceId! },
            ]}
          />

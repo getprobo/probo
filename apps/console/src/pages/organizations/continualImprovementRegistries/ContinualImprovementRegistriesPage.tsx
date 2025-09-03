@@ -92,7 +92,7 @@ export default function ContinualImprovementRegistriesPage({ queryRef }: Continu
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
 
-  usePageTitle(__("Continual Improvement Registries"));
+  usePageTitle(__("Continual Improvements"));
 
   const organization = usePreloadedQuery(
     graphql`
@@ -132,14 +132,14 @@ export default function ContinualImprovementRegistriesPage({ queryRef }: Continu
       {isSnapshotMode && snapshotId && (
         <SnapshotBanner snapshotId={snapshotId} />
       )}
-      <PageHeader title={__("Continual Improvement Registries")} description={__("Manage your continual improvement registry entries")}>
+      <PageHeader title={__("Continual Improvements")} description={__("Manage your continual improvement entries")}>
         {!isSnapshotMode && (
           <CreateContinualImprovementRegistryDialog
             organizationId={organizationId}
             connectionId={connectionId}
           >
             <Button icon={IconPlusLarge}>
-              {__("Add continual improvement registry")}
+              {__("Add continual improvement")}
             </Button>
           </CreateContinualImprovementRegistryDialog>
         )}
@@ -187,10 +187,10 @@ export default function ContinualImprovementRegistriesPage({ queryRef }: Continu
         <Card padded>
           <div className="text-center py-12">
             <h3 className="text-lg font-semibold mb-2">
-              {__("No continual improvement registry entries yet")}
+              {__("No continual improvement entries yet")}
             </h3>
             <p className="text-txt-tertiary mb-4">
-              {__("Create your first continual improvement registry entry to get started.")}
+              {__("Create your first continual improvement entry to get started.")}
             </p>
           </div>
         </Card>
