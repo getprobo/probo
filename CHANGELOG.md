@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.57.0] - 2025-09-04
+
+### Added
+- Add framework exports
+
 ## [0.56.0] - 2025-09-03
 
 ### Added
