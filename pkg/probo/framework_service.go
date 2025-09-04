@@ -71,8 +71,10 @@ type (
 func (s FrameworkService) RequestExport(
 	ctx context.Context,
 	frameworkID gid.GID,
-) error {
-	return s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+) (error, *coredata.FrameworkExport) {
+	frameworkExport := &coredata.FrameworkExport{}
+
+	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
 		framework := &coredata.Framework{}
 		if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
 			return fmt.Errorf("cannot load framework: %w", err)
@@ -80,7 +82,7 @@ func (s FrameworkService) RequestExport(
 
 		now := time.Now()
 
-		frameworkExport := &coredata.FrameworkExport{
+		frameworkExport = &coredata.FrameworkExport{
 			ID:          gid.New(framework.ID.TenantID(), coredata.FrameworkExportEntityType),
 			FrameworkID: frameworkID,
 			Status:      coredata.FrameworkExportStatusPending,
@@ -93,6 +95,12 @@ func (s FrameworkService) RequestExport(
 
 		return nil
 	})
+
+	if err != nil {
+		return err, nil
+	}
+
+	return nil, frameworkExport
 }
 
 func (s FrameworkService) Export(

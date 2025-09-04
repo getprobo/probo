@@ -65,15 +65,13 @@ INSERT INTO framework_exports (
 	tenant_id,
 	framework_id,
 	status,
-	created_at,
-	expires_at
+	created_at
 ) VALUES (
 	@id,
 	@tenant_id,
 	@framework_id,
 	@status,
-	@created_at,
-	@expires_at
+	@created_at
 )`
 
 	args := pgx.StrictNamedArgs{
@@ -130,6 +128,7 @@ SELECT
 	id,
 	framework_id,
 	status,
+	file_id,
 	created_at,
 	started_at,
 	completed_at

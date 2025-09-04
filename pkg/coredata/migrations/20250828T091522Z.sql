@@ -1,6 +1,6 @@
 CREATE TYPE framework_export_status AS ENUM (
     'pending',
-    'processing', 
+    'processing',
     'completed',
     'failed'
 );
@@ -16,5 +16,14 @@ CREATE TABLE framework_exports (
     completed_at TIMESTAMP WITH TIME ZONE
 );
 
+ALTER TABLE framework_exports ADD CONSTRAINT framework_exports_framework_id_fkey
+    FOREIGN KEY (framework_id)
+    REFERENCES frameworks(id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE;
 
-
+ALTER TABLE framework_exports ADD CONSTRAINT framework_exports_file_id_fkey
+    FOREIGN KEY (file_id)
+    REFERENCES files(id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL;

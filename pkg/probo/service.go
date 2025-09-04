@@ -201,6 +201,13 @@ func (s *Service) ExportFrameworkJob(ctx context.Context) error {
 			}
 
 			scope := coredata.NewScope(fe.ID.TenantID())
+
+			fe.Status = coredata.FrameworkExportStatusProcessing
+			fe.StartedAt = ref.Ref(time.Now())
+			if err := fe.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update framework export: %w", err)
+			}
+
 			framework := &coredata.Framework{}
 			if err := framework.LoadByID(ctx, tx, scope, fe.FrameworkID); err != nil {
 				fe.Status = coredata.FrameworkExportStatusFailed
@@ -209,9 +216,7 @@ func (s *Service) ExportFrameworkJob(ctx context.Context) error {
 					return fmt.Errorf("cannot update framework export: %w", err)
 				}
 
-				// s.logger.Error(ctx, "cannot load framework", "error", err)
-
-				return nil
+				return fmt.Errorf("cannot load framework: %w", err)
 			}
 
 			tenantService := s.WithTenant(fe.ID.TenantID())
@@ -225,9 +230,7 @@ func (s *Service) ExportFrameworkJob(ctx context.Context) error {
 					return fmt.Errorf("cannot update framework export: %w", err)
 				}
 
-				// s.logger.Error(ctx, "cannot create temp file", "error", err)
-
-				return nil
+				return fmt.Errorf("cannot create temp file: %w", err)
 			}
 			defer tempFile.Close()
 			defer os.Remove(tempFile.Name())
@@ -240,8 +243,7 @@ func (s *Service) ExportFrameworkJob(ctx context.Context) error {
 					return fmt.Errorf("cannot update framework export: %w", err)
 				}
 
-				// s.logger.Error(ctx, "cannot export framework", "error", err)
-				return nil
+				return fmt.Errorf("cannot export framework: %w", err)
 			}
 
 			uuid, err := uuid.NewV4()
@@ -252,8 +254,7 @@ func (s *Service) ExportFrameworkJob(ctx context.Context) error {
 					return fmt.Errorf("cannot update framework export: %w", err)
 				}
 
-				// s.logger.Error(ctx, "cannot generate UUID", "error", err)
-				return nil
+				return fmt.Errorf("cannot update framework export: %w", err)
 			}
 
 			if _, err := tempFile.Seek(0, 0); err != nil {
@@ -263,8 +264,7 @@ func (s *Service) ExportFrameworkJob(ctx context.Context) error {
 					return fmt.Errorf("cannot update framework export: %w", err)
 				}
 
-				// s.logger.Error(ctx, "cannot seek temp file", "error", err)
-				return nil
+				return fmt.Errorf("cannot seek temp file: %w", err)
 			}
 
 			fileInfo, err := tempFile.Stat()
@@ -275,8 +275,7 @@ func (s *Service) ExportFrameworkJob(ctx context.Context) error {
 					return fmt.Errorf("cannot update framework export: %w", err)
 				}
 
-				// s.logger.Error(ctx, "cannot get temp file info", "error", err)
-				return nil
+				return fmt.Errorf("cannot stat temp file: %w", err)
 			}
 
 			_, err = s.s3.PutObject(
@@ -300,8 +299,7 @@ func (s *Service) ExportFrameworkJob(ctx context.Context) error {
 					return fmt.Errorf("cannot update framework export: %w", err)
 				}
 
-				// s.logger.Error(ctx, "cannot upload file to S3", "error", err)
-				return nil
+				return fmt.Errorf("cannot upload file to S3: %w", err)
 			}
 
 			now := time.Now()
@@ -312,6 +310,7 @@ func (s *Service) ExportFrameworkJob(ctx context.Context) error {
 				MimeType:   "application/zip",
 				FileName:   fmt.Sprintf("%s Archive %s.zip", framework.Name, time.Now().Format("2006-01-02")),
 				FileKey:    uuid.String(),
+				FileSize:   int(fileInfo.Size()),
 				CreatedAt:  now,
 				UpdatedAt:  now,
 			}

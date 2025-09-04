@@ -1680,7 +1680,15 @@ func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Con
 
 // ExportFramework is the resolver for the exportFramework field.
 func (r *mutationResolver) ExportFramework(ctx context.Context, input types.ExportFrameworkInput) (*types.ExportFrameworkPayload, error) {
-	panic(fmt.Errorf("not implemented: ExportFramework - exportFramework"))
+	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
+	err, exportJobID := prb.Frameworks.RequestExport(ctx, input.FrameworkID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot export framework: %w", err)
+	}
+
+	return &types.ExportFrameworkPayload{
+		ExportJobID: exportJobID.ID,
+	}, nil
 }
 
 // CreateControl is the resolver for the createControl field.
@@ -3963,10 +3971,6 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 
 		return types.NewVendor(vendor), nil
 	case coredata.FrameworkEntityType:
-		if err := prb.Frameworks.Export(ctx, id, nil); err != nil {
-			panic(fmt.Errorf("cannot export organization frameworks: %w", err))
-		}
-
 		framework, err := prb.Frameworks.Get(ctx, id)
 		if err != nil {
 			panic(fmt.Errorf("cannot get framework: %w", err))

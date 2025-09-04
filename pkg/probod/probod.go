@@ -330,9 +330,19 @@ func (impl *Implm) Run(
 		}
 	}()
 
+	frameworkExporterCtx, stopFrameworkExporter := context.WithCancel(context.Background())
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := impl.runFrameworkExporter(frameworkExporterCtx, proboService, l.Named("framework-exporter")); err != nil {
+			cancel(fmt.Errorf("framework exporter crashed: %w", err))
+		}
+	}()
+
 	<-ctx.Done()
 
 	stopMailer()
+	stopFrameworkExporter()
 	stopApiServer()
 
 	wg.Wait()
@@ -340,6 +350,26 @@ func (impl *Implm) Run(
 	pgClient.Close()
 
 	return context.Cause(ctx)
+}
+
+func (impl *Implm) runFrameworkExporter(
+	ctx context.Context,
+	proboService *probo.Service,
+	l *log.Logger,
+) error {
+LOOP:
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(30 * time.Second):
+		if err := proboService.ExportFrameworkJob(ctx); err != nil {
+			if !errors.Is(err, coredata.ErrNoFrameworkExportAvailable) {
+				l.ErrorCtx(ctx, "cannot process framework export", log.Error(err))
+			}
+		}
+
+		goto LOOP
+	}
 }
 
 func (impl *Implm) runApiServer(

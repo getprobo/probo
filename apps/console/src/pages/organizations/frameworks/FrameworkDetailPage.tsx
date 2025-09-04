@@ -27,6 +27,7 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import type { FrameworkGraphNodeQuery } from "/hooks/graph/__generated__/FrameworkGraphNodeQuery.graphql";
 import type { FrameworkDetailPageFragment$key } from "./__generated__/FrameworkDetailPageFragment.graphql";
 import type { FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation } from "./__generated__/FrameworkDetailPageGenerateFrameworkStateOfApplicabilityMutation.graphql";
+import type { FrameworkDetailPageExportFrameworkMutation } from "./__generated__/FrameworkDetailPageExportFrameworkMutation.graphql";
 import { FrameworkFormDialog } from "./dialogs/FrameworkFormDialog";
 import { FrameworkControlDialog } from "./dialogs/FrameworkControlDialog";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
@@ -66,6 +67,18 @@ const generateFrameworkStateOfApplicabilityMutation = graphql`
   }
 `;
 
+const exportFrameworkMutation = graphql`
+  mutation FrameworkDetailPageExportFrameworkMutation(
+    $frameworkId: ID!
+  ) {
+    exportFramework(
+      input: { frameworkId: $frameworkId }
+    ) {
+      exportJobId
+    }
+  }
+`;
+
 type Props = {
   queryRef: PreloadedQuery<FrameworkGraphNodeQuery>;
 };
@@ -97,6 +110,15 @@ export default function FrameworkDetailPage(props: Props) {
         errorMessage: "Failed to generate framework state of applicability",
         successMessage:
           "Framework state of applicability generated successfully",
+      }
+    );
+
+  const [exportFramework] =
+    useMutationWithToasts<FrameworkDetailPageExportFrameworkMutation>(
+      exportFrameworkMutation,
+      {
+        errorMessage: "Failed to export framework",
+        successMessage: "Framework export started successfully",
       }
     );
 
@@ -155,6 +177,16 @@ export default function FrameworkDetailPage(props: Props) {
             }}
           >
             {__("Download SOA")}
+          </DropdownItem>
+          <DropdownItem
+            variant="primary"
+            onClick={() => {
+              exportFramework({
+                variables: { frameworkId: framework.id },
+              });
+            }}
+          >
+            {__("Export Framework")}
           </DropdownItem>
           <DropdownItem icon={IconTrashCan} variant="danger" onClick={onDelete}>
             {__("Delete")}

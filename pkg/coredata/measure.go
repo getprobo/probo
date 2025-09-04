@@ -249,8 +249,6 @@ WHERE %s
 `
 	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
-	fmt.Printf("\n%s\n", q)
-
 	args := pgx.NamedArgs{"control_id": controlID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, filter.SQLArguments())
