@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.57.1] - 2025-09-04
+
+### Added
+- Fix framework export for evidence link
+
 ## [0.57.0] - 2025-09-04
 
 ### Added
