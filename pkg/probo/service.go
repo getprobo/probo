@@ -17,6 +17,7 @@ package probo
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -27,7 +28,9 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/usrmgr"
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 )
 
 type (
@@ -136,7 +139,10 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		agent:         agents.NewAgent(nil, s.agentConfig),
 	}
 
-	tenantService.Frameworks = &FrameworkService{svc: tenantService}
+	tenantService.Frameworks = &FrameworkService{
+		svc:               tenantService,
+		html2pdfConverter: s.html2pdfConverter,
+	}
 	tenantService.Measures = &MeasureService{svc: tenantService}
 	tenantService.Tasks = &TaskService{svc: tenantService}
 	tenantService.Evidences = &EvidenceService{
@@ -183,4 +189,145 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.ContinualImprovementRegistries = &ContinualImprovementRegistriesService{svc: tenantService}
 	tenantService.ProcessingActivityRegistries = &ProcessingActivityRegistryService{svc: tenantService}
 	return tenantService
+}
+
+func (s *Service) ExportFrameworkJob(ctx context.Context) error {
+	return s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			fe := &coredata.FrameworkExport{}
+			if err := fe.LoadNextPendingForUpdateSkipLocked(ctx, tx); err != nil {
+				return err
+			}
+
+			scope := coredata.NewScope(fe.ID.TenantID())
+			framework := &coredata.Framework{}
+			if err := framework.LoadByID(ctx, tx, scope, fe.FrameworkID); err != nil {
+				fe.Status = coredata.FrameworkExportStatusFailed
+				fe.CompletedAt = ref.Ref(time.Now())
+				if err := fe.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update framework export: %w", err)
+				}
+
+				// s.logger.Error(ctx, "cannot load framework", "error", err)
+
+				return nil
+			}
+
+			tenantService := s.WithTenant(fe.ID.TenantID())
+
+			tempDir := os.TempDir()
+			tempFile, err := os.CreateTemp(tempDir, "probo-framework-export-*.zip")
+			if err != nil {
+				fe.Status = coredata.FrameworkExportStatusFailed
+				fe.CompletedAt = ref.Ref(time.Now())
+				if err := fe.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update framework export: %w", err)
+				}
+
+				// s.logger.Error(ctx, "cannot create temp file", "error", err)
+
+				return nil
+			}
+			defer tempFile.Close()
+			defer os.Remove(tempFile.Name())
+
+			err = tenantService.Frameworks.Export(ctx, fe.FrameworkID, tempFile)
+			if err != nil {
+				fe.Status = coredata.FrameworkExportStatusFailed
+				fe.CompletedAt = ref.Ref(time.Now())
+				if err := fe.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update framework export: %w", err)
+				}
+
+				// s.logger.Error(ctx, "cannot export framework", "error", err)
+				return nil
+			}
+
+			uuid, err := uuid.NewV4()
+			if err != nil {
+				fe.Status = coredata.FrameworkExportStatusFailed
+				fe.CompletedAt = ref.Ref(time.Now())
+				if err := fe.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update framework export: %w", err)
+				}
+
+				// s.logger.Error(ctx, "cannot generate UUID", "error", err)
+				return nil
+			}
+
+			if _, err := tempFile.Seek(0, 0); err != nil {
+				fe.Status = coredata.FrameworkExportStatusFailed
+				fe.CompletedAt = ref.Ref(time.Now())
+				if err := fe.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update framework export: %w", err)
+				}
+
+				// s.logger.Error(ctx, "cannot seek temp file", "error", err)
+				return nil
+			}
+
+			fileInfo, err := tempFile.Stat()
+			if err != nil {
+				fe.Status = coredata.FrameworkExportStatusFailed
+				fe.CompletedAt = ref.Ref(time.Now())
+				if err := fe.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update framework export: %w", err)
+				}
+
+				// s.logger.Error(ctx, "cannot get temp file info", "error", err)
+				return nil
+			}
+
+			_, err = s.s3.PutObject(
+				ctx,
+				&s3.PutObjectInput{
+					Bucket:        ref.Ref(s.bucket),
+					Key:           ref.Ref(uuid.String()),
+					Body:          tempFile,
+					ContentLength: ref.Ref(fileInfo.Size()),
+					ContentType:   ref.Ref("application/zip"),
+					Metadata: map[string]string{
+						"framework-id":        framework.ID.String(),
+						"framework-export-id": fe.ID.String(),
+					},
+				},
+			)
+			if err != nil {
+				fe.Status = coredata.FrameworkExportStatusFailed
+				fe.CompletedAt = ref.Ref(time.Now())
+				if err := fe.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot update framework export: %w", err)
+				}
+
+				// s.logger.Error(ctx, "cannot upload file to S3", "error", err)
+				return nil
+			}
+
+			now := time.Now()
+
+			file := coredata.File{
+				ID:         gid.New(fe.ID.TenantID(), coredata.FileEntityType),
+				BucketName: s.bucket,
+				MimeType:   "application/zip",
+				FileName:   fmt.Sprintf("%s Archive %s.zip", framework.Name, time.Now().Format("2006-01-02")),
+				FileKey:    uuid.String(),
+				CreatedAt:  now,
+				UpdatedAt:  now,
+			}
+
+			if err := file.Insert(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot insert file: %w", err)
+			}
+
+			fe.FileID = &file.ID
+			fe.CompletedAt = &now
+			fe.Status = coredata.FrameworkExportStatusCompleted
+			if err := fe.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update framework export: %w", err)
+			}
+
+			return nil
+		},
+	)
 }

@@ -1029,6 +1029,14 @@ type ExportDocumentVersionPDFPayload struct {
 	Data string `json:"data"`
 }
 
+type ExportFrameworkInput struct {
+	FrameworkID gid.GID `json:"frameworkId"`
+}
+
+type ExportFrameworkPayload struct {
+	ExportJobID gid.GID `json:"exportJobId"`
+}
+
 type Framework struct {
 	ID           gid.GID            `json:"id"`
 	Name         string             `json:"name"`

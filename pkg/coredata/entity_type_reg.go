@@ -49,4 +49,5 @@ const (
 	SnapshotEntityType
 	ContinualImprovementRegistryEntityType
 	ProcessingActivityRegistryEntityType
+	FrameworkExportEntityType
 )
