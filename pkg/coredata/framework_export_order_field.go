@@ -14,38 +14,27 @@
 
 package coredata
 
-const (
-	OrganizationEntityType uint16 = iota
-	FrameworkEntityType
-	MeasureEntityType
-	TaskEntityType
-	EvidenceEntityType
-	ConnectorEntityType
-	VendorRiskAssessmentEntityType
-	VendorEntityType
-	PeopleEntityType
-	VendorComplianceReportEntityType
-	DocumentEntityType
-	UserEntityType
-	SessionEntityType
-	EmailEntityType
-	ControlEntityType
-	RiskEntityType
-	DocumentVersionEntityType
-	DocumentVersionSignatureEntityType
-	AssetEntityType
-	DatumEntityType
-	AuditEntityType
-	ReportEntityType
-	TrustCenterEntityType
-	TrustCenterAccessEntityType
-	VendorBusinessAssociateAgreementEntityType
-	FileEntityType
-	VendorContactEntityType
-	VendorDataPrivacyAgreementEntityType
-	NonconformityRegistryEntityType
-	ComplianceRegistryEntityType
-	VendorServiceEntityType
-	SnapshotEntityType
-	FrameworkExportEntityType
+type (
+	FrameworkExportOrderField string
 )
+
+const (
+	FrameworkExportOrderFieldCreatedAt FrameworkExportOrderField = "CREATED_AT"
+)
+
+func (p FrameworkExportOrderField) Column() string {
+	return string(p)
+}
+
+func (p FrameworkExportOrderField) String() string {
+	return string(p)
+}
+
+func (p FrameworkExportOrderField) MarshalText() ([]byte, error) {
+	return []byte(p.String()), nil
+}
+
+func (p *FrameworkExportOrderField) UnmarshalText(text []byte) error {
+	*p = FrameworkExportOrderField(text)
+	return nil
+}

@@ -1969,6 +1969,7 @@ type Mutation {
   generateFrameworkStateOfApplicability(
     input: GenerateFrameworkStateOfApplicabilityInput!
   ): GenerateFrameworkStateOfApplicabilityPayload!
+  exportFramework(input: ExportFrameworkInput!): ExportFrameworkPayload!
 
   # Control mutations
   createControl(input: CreateControlInput!): CreateControlPayload!
@@ -2335,6 +2336,10 @@ input ImportFrameworkInput {
 }
 
 input DeleteFrameworkInput {
+  frameworkId: ID!
+}
+
+input ExportFrameworkInput {
   frameworkId: ID!
 }
 
@@ -2835,6 +2840,10 @@ type ImportFrameworkPayload {
 
 type DeleteFrameworkPayload {
   deletedFrameworkId: ID!
+}
+
+type ExportFrameworkPayload {
+  exportJobId: ID!
 }
 
 type CreateMeasurePayload {

@@ -15,12 +15,17 @@
 package probo
 
 import (
+	"archive/zip"
 	"context"
 	"fmt"
+	"io"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/slug"
 	"github.com/getprobo/probo/pkg/soagen"
@@ -30,14 +35,12 @@ import (
 
 const (
 	maxStateOfApplicabilityLimit = 10_000
-	maxControlsLimit             = 10000
-	maxItemsLimit                = 1000
-	presignExpiry                = 15 * time.Minute
 )
 
 type (
 	FrameworkService struct {
-		svc *TenantService
+		svc               *TenantService
+		html2pdfConverter *html2pdf.Converter
 	}
 
 	CreateFrameworkRequest struct {
@@ -64,6 +67,207 @@ type (
 		}
 	}
 )
+
+func (s FrameworkService) RequestExport(
+	ctx context.Context,
+	frameworkID gid.GID,
+) error {
+	return s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+		framework := &coredata.Framework{}
+		if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
+			return fmt.Errorf("cannot load framework: %w", err)
+		}
+
+		now := time.Now()
+
+		frameworkExport := &coredata.FrameworkExport{
+			ID:          gid.New(framework.ID.TenantID(), coredata.FrameworkExportEntityType),
+			FrameworkID: frameworkID,
+			Status:      coredata.FrameworkExportStatusPending,
+			CreatedAt:   now,
+		}
+
+		if err := frameworkExport.Insert(ctx, conn, s.svc.scope); err != nil {
+			return fmt.Errorf("cannot insert framework export: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func (s FrameworkService) Export(
+	ctx context.Context,
+	frameworkID gid.GID,
+	file io.Writer,
+) error {
+	archive := zip.NewWriter(file)
+	defer archive.Close()
+
+	return s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			framework := &coredata.Framework{}
+			if err := framework.LoadByID(ctx, conn, s.svc.scope, frameworkID); err != nil {
+				return fmt.Errorf("cannot load framework: %w", err)
+			}
+
+			controls := coredata.Controls{}
+			err := controls.LoadByFrameworkID(
+				ctx,
+				conn,
+				s.svc.scope,
+				frameworkID,
+				page.NewCursor(
+					10_000,
+					nil,
+					page.Head,
+					page.OrderBy[coredata.ControlOrderField]{
+						Field:     coredata.ControlOrderFieldSectionTitle,
+						Direction: page.OrderDirectionAsc,
+					},
+				),
+				coredata.NewControlFilter(nil),
+			)
+			if err != nil {
+				return fmt.Errorf("cannot load controls: %w", err)
+			}
+
+			for _, control := range controls {
+				_, err := archive.Create(fmt.Sprintf("%s/%s/", framework.Name, control.SectionTitle))
+				if err != nil {
+					return fmt.Errorf("cannot create control directory in archive: %w", err)
+				}
+
+				measures := coredata.Measures{}
+				err = measures.LoadByControlID(
+					ctx,
+					conn,
+					s.svc.scope,
+					control.ID,
+					page.NewCursor(
+						10_000,
+						nil,
+						page.Head,
+						page.OrderBy[coredata.MeasureOrderField]{
+							Field:     coredata.MeasureOrderFieldCreatedAt,
+							Direction: page.OrderDirectionAsc,
+						},
+					),
+					coredata.NewMeasureFilter(nil),
+				)
+				if err != nil {
+					return fmt.Errorf("cannot load measures: %w", err)
+				}
+
+				for _, measure := range measures {
+					_, err := archive.Create(fmt.Sprintf("%s/%s/%s/", framework.Name, control.SectionTitle, measure.Name))
+					if err != nil {
+						return fmt.Errorf("cannot create measure directory in archive: %w", err)
+					}
+
+					evidences := coredata.Evidences{}
+					err = evidences.LoadByMeasureID(
+						ctx,
+						conn,
+						s.svc.scope,
+						measure.ID,
+						page.NewCursor(
+							10_000,
+							nil,
+							page.Head,
+							page.OrderBy[coredata.EvidenceOrderField]{
+								Field:     coredata.EvidenceOrderFieldCreatedAt,
+								Direction: page.OrderDirectionAsc,
+							},
+						),
+					)
+					if err != nil {
+						return fmt.Errorf("cannot load evidences: %w", err)
+					}
+
+					for _, evidence := range evidences {
+						object, err := s.svc.s3.GetObject(
+							ctx,
+							&s3.GetObjectInput{
+								Bucket: aws.String(s.svc.bucket),
+								Key:    aws.String(evidence.ObjectKey),
+							},
+						)
+						if err != nil {
+							return fmt.Errorf("cannot download evidence: %w", err)
+						}
+						defer object.Body.Close()
+
+						if err != nil {
+							return fmt.Errorf("cannot download evidence: %w", err)
+						}
+
+						w, err := archive.Create(fmt.Sprintf("%s/%s/%s/%s", framework.Name, control.SectionTitle, measure.Name, evidence.Filename))
+						if err != nil {
+							return fmt.Errorf("cannot create evidence in archive: %w", err)
+						}
+
+						_, err = io.Copy(w, object.Body)
+						if err != nil {
+							return fmt.Errorf("cannot write evidence to archive: %w", err)
+						}
+					}
+				}
+
+				documents := coredata.Documents{}
+				err = documents.LoadByControlID(
+					ctx,
+					conn,
+					s.svc.scope,
+					control.ID,
+					page.NewCursor(
+						10_000,
+						nil,
+						page.Head,
+						page.OrderBy[coredata.DocumentOrderField]{
+							Field:     coredata.DocumentOrderFieldCreatedAt,
+							Direction: page.OrderDirectionAsc,
+						},
+					),
+					coredata.NewDocumentFilter(nil),
+				)
+				if err != nil {
+					return fmt.Errorf("cannot load documents: %w", err)
+				}
+
+				for _, document := range documents {
+					documentVersion := &coredata.DocumentVersion{}
+					if err := documentVersion.LoadLatestPublishedVersion(ctx, conn, s.svc.scope, document.ID); err != nil {
+						return fmt.Errorf("cannot load document version: %w", err)
+					}
+
+					exportedPDF, err := exportDocumentPDF(
+						ctx,
+						s.html2pdfConverter,
+						conn,
+						s.svc.scope,
+						documentVersion.ID,
+					)
+					if err != nil {
+						return fmt.Errorf("cannot export document PDF: %w", err)
+					}
+
+					w, err := archive.Create(fmt.Sprintf("%s/%s/%s.pdf", framework.Name, control.SectionTitle, document.Title))
+					if err != nil {
+						return fmt.Errorf("cannot create document in archive: %w", err)
+					}
+
+					_, err = w.Write(exportedPDF)
+					if err != nil {
+						return fmt.Errorf("cannot write document to archive: %w", err)
+					}
+				}
+			}
+
+			return nil
+		},
+	)
+}
 
 func (s FrameworkService) Create(
 	ctx context.Context,
