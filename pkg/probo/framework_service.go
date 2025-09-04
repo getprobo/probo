@@ -194,6 +194,12 @@ func (s FrameworkService) Export(
 					}
 
 					for _, evidence := range evidences {
+						if evidence.Type != coredata.EvidenceTypeFile ||
+							evidence.State != coredata.EvidenceStateFulfilled ||
+							evidence.ObjectKey == "" {
+							continue
+						}
+
 						object, err := s.svc.s3.GetObject(
 							ctx,
 							&s3.GetObjectInput{
@@ -205,10 +211,6 @@ func (s FrameworkService) Export(
 							return fmt.Errorf("cannot download evidence: %w", err)
 						}
 						defer object.Body.Close()
-
-						if err != nil {
-							return fmt.Errorf("cannot download evidence: %w", err)
-						}
 
 						w, err := archive.Create(fmt.Sprintf("%s/%s/%s/%s", framework.Name, control.SectionTitle, measure.Name, evidence.Filename))
 						if err != nil {
