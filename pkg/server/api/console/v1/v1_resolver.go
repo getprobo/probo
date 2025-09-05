@@ -81,12 +81,12 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	if obj.Organization == nil {
-		return nil, fmt.Errorf("cannot get organization")
+		panic(fmt.Errorf("cannot get organization"))
 	}
 
 	org, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get organization: %w", err)
+		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
 	return types.NewOrganization(org), nil
@@ -105,7 +105,7 @@ func (r *assetConnectionResolver) TotalCount(ctx context.Context, obj *types.Ass
 
 		count, err := prb.Assets.CountForOrganizationID(ctx, obj.ParentID, assetFilter)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count assets: %w", err)
+			panic(fmt.Errorf("cannot count assets: %w", err))
 		}
 		return count, nil
 	}
@@ -119,12 +119,12 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load audit: %w", err)
+		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, audit.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load organization: %w", err)
+		panic(fmt.Errorf("cannot load organization: %w", err))
 	}
 
 	return types.NewOrganization(organization), nil
@@ -136,12 +136,12 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load audit: %w", err)
+		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
 
 	framework, err := prb.Frameworks.Get(ctx, audit.FrameworkID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load framework: %w", err)
+		panic(fmt.Errorf("cannot load framework: %w", err))
 	}
 
 	return types.NewFramework(framework), nil
@@ -153,7 +153,7 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load audit: %w", err)
+		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
 
 	if audit.ReportID == nil {
@@ -162,7 +162,7 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 	report, err := prb.Reports.Get(ctx, *audit.ReportID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load report: %w", err)
+		panic(fmt.Errorf("cannot load report: %w", err))
 	}
 
 	return types.NewReport(report), nil
@@ -178,7 +178,7 @@ func (r *auditResolver) ReportURL(ctx context.Context, obj *types.Audit) (*strin
 
 	url, err := prb.Audits.GenerateReportURL(ctx, obj.ID, 15*time.Minute)
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate report URL: %w", err)
+		panic(fmt.Errorf("cannot generate report URL: %w", err))
 	}
 
 	return url, nil
@@ -208,7 +208,7 @@ func (r *auditResolver) Controls(ctx context.Context, obj *types.Audit, first *i
 
 	page, err := prb.Controls.ListForAuditID(ctx, obj.ID, cursor, controlFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list audit controls: %w", err)
+		panic(fmt.Errorf("cannot list audit controls: %w", err))
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -220,7 +220,7 @@ func (r *auditConnectionResolver) TotalCount(ctx context.Context, obj *types.Aud
 
 	count, err := prb.Audits.CountForOrganizationID(ctx, obj.ParentID)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count audits: %w", err)
+		panic(fmt.Errorf("cannot count audits: %w", err))
 	}
 	return count, nil
 }
@@ -3898,7 +3898,7 @@ func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.Pe
 	case *organizationResolver:
 		count, err := prb.Peoples.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count peoples: %w", err)
+			panic(fmt.Errorf("cannot count peoples: %w", err))
 		}
 		return count, nil
 	}
@@ -4130,7 +4130,7 @@ func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*s
 
 	url, err := prb.Reports.GenerateDownloadURL(ctx, obj.ID, 15*time.Minute)
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate download URL: %w", err)
+		panic(fmt.Errorf("cannot generate download URL: %w", err))
 	}
 
 	return url, nil
@@ -4435,13 +4435,13 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 	case *measureResolver:
 		count, err := prb.Tasks.CountForMeasureID(ctx, obj.ParentID)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count tasks: %w", err)
+			panic(fmt.Errorf("cannot count tasks: %w", err))
 		}
 		return count, nil
 	case *organizationResolver:
 		count, err := prb.Tasks.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count tasks: %w", err)
+			panic(fmt.Errorf("cannot count tasks: %w", err))
 		}
 		return count, nil
 	}
@@ -4455,7 +4455,7 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get organization: %w", err)
+		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
 	return types.NewOrganization(organization), nil
@@ -4550,7 +4550,7 @@ func (r *vendorResolver) BusinessAssociateAgreement(ctx context.Context, obj *ty
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("failed to get vendor business associate agreement: %w", err)
+		panic(fmt.Errorf("failed to get vendor business associate agreement: %w", err))
 	}
 
 	return types.NewVendorBusinessAssociateAgreement(vendorBusinessAssociateAgreement, file), nil
@@ -4566,7 +4566,7 @@ func (r *vendorResolver) DataPrivacyAgreement(ctx context.Context, obj *types.Ve
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("failed to get vendor data privacy agreement: %w", err)
+		panic(fmt.Errorf("failed to get vendor data privacy agreement: %w", err))
 	}
 
 	return types.NewVendorDataPrivacyAgreement(vendorDataPrivacyAgreement, file), nil
@@ -4744,19 +4744,19 @@ func (r *vendorConnectionResolver) TotalCount(ctx context.Context, obj *types.Ve
 	case *organizationResolver:
 		count, err := prb.Vendors.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count vendors: %w", err)
+			panic(fmt.Errorf("cannot count vendors: %w", err))
 		}
 		return count, nil
 	case *assetResolver:
 		count, err := prb.Vendors.CountForAssetID(ctx, obj.ParentID)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count vendors: %w", err)
+			panic(fmt.Errorf("cannot count vendors: %w", err))
 		}
 		return count, nil
 	case *datumResolver:
 		count, err := prb.Vendors.CountForDatumID(ctx, obj.ParentID)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count vendors: %w", err)
+			panic(fmt.Errorf("cannot count vendors: %w", err))
 		}
 		return count, nil
 	}
@@ -4788,7 +4788,7 @@ func (r *vendorDataPrivacyAgreementResolver) Vendor(ctx context.Context, obj *ty
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get vendor: %w", err)
+		panic(fmt.Errorf("failed to get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil
@@ -4800,7 +4800,7 @@ func (r *vendorDataPrivacyAgreementResolver) FileURL(ctx context.Context, obj *t
 
 	fileURL, err := prb.VendorDataPrivacyAgreements.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate file URL: %w", err)
+		panic(fmt.Errorf("failed to generate file URL: %w", err))
 	}
 
 	return fileURL, nil
