@@ -30,6 +30,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
+	mcp_v1 "go.probo.inc/probo/pkg/server/api/mcp/v1"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
 	"go.probo.inc/probo/pkg/trust"
 )
@@ -206,6 +207,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Mount the trust API with authentication
 	router.Mount("/trust/v1", s.trustAPIHandler)
+
+	// Mount the MCP API - use Route instead of Mount to preserve path for handler
+	router.Mount(
+		"/mcp/v1",
+		mcp_v1.NewMux(s.cfg.Probo),
+	)
 
 	router.ServeHTTP(w, r)
 }

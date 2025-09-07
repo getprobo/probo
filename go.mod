@@ -16,8 +16,10 @@ require (
 	github.com/crewjam/saml v0.5.1
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/cors v1.2.2
+	github.com/google/jsonschema-go v0.2.1-0.20250825175020-748c325cec76
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jhillyerd/enmime v1.3.0
+	github.com/modelcontextprotocol/go-sdk v0.4.0
 	github.com/openai/openai-go v1.8.2
 	github.com/pdfcpu/pdfcpu v0.11.0
 	github.com/prometheus/client_golang v1.22.0
@@ -99,6 +101,7 @@ require (
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.1 // indirect
+	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	go.gearno.de/x/panicf v0.1.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.37.0 // indirect
