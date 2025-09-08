@@ -2,10 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.58.0] - 2025-09-08
 
 ### Added
 - Soft delete documents
+- Store sidebar state
 
 ## [0.57.1] - 2025-09-04
 
