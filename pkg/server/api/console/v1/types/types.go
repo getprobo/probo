@@ -770,6 +770,14 @@ type DeleteFrameworkPayload struct {
 	DeletedFrameworkID gid.GID `json:"deletedFrameworkId"`
 }
 
+type DeleteInvitationInput struct {
+	InvitationID gid.GID `json:"invitationId"`
+}
+
+type DeleteInvitationPayload struct {
+	DeletedInvitationID gid.GID `json:"deletedInvitationId"`
+}
+
 type DeleteMeasureInput struct {
 	MeasureID gid.GID `json:"measureId"`
 }
@@ -1138,6 +1146,35 @@ type ImportMeasurePayload struct {
 	MeasureEdges []*MeasureEdge `json:"measureEdges"`
 }
 
+type Invitation struct {
+	ID         gid.GID    `json:"id"`
+	Email      string     `json:"email"`
+	FullName   string     `json:"fullName"`
+	Role       string     `json:"role"`
+	ExpiresAt  time.Time  `json:"expiresAt"`
+	AcceptedAt *time.Time `json:"acceptedAt,omitempty"`
+	CreatedAt  time.Time  `json:"createdAt"`
+}
+
+func (Invitation) IsNode()             {}
+func (this Invitation) GetID() gid.GID { return this.ID }
+
+type InvitationConnection struct {
+	TotalCount int               `json:"totalCount"`
+	Edges      []*InvitationEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+}
+
+type InvitationEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Invitation    `json:"node"`
+}
+
+type InvitationOrder struct {
+	Direction page.OrderDirection           `json:"direction"`
+	Field     coredata.InvitationOrderField `json:"field"`
+}
+
 type InviteUserInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Email          string  `json:"email"`
@@ -1146,7 +1183,7 @@ type InviteUserInput struct {
 }
 
 type InviteUserPayload struct {
-	Success bool `json:"success"`
+	InvitationEdge *InvitationEdge `json:"invitationEdge"`
 }
 
 type Measure struct {
@@ -1173,6 +1210,31 @@ type MeasureEdge struct {
 
 type MeasureFilter struct {
 	Query *string `json:"query,omitempty"`
+}
+
+type Membership struct {
+	ID             gid.GID   `json:"id"`
+	UserID         gid.GID   `json:"userID"`
+	OrganizationID gid.GID   `json:"organizationID"`
+	Role           string    `json:"role"`
+	FullName       string    `json:"fullName"`
+	EmailAddress   string    `json:"emailAddress"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+}
+
+func (Membership) IsNode()             {}
+func (this Membership) GetID() gid.GID { return this.ID }
+
+type MembershipConnection struct {
+	TotalCount int               `json:"totalCount"`
+	Edges      []*MembershipEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+}
+
+type MembershipEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *Membership    `json:"node"`
 }
 
 type Mutation struct {
@@ -1246,7 +1308,8 @@ type Organization struct {
 	WebsiteURL            *string                         `json:"websiteUrl,omitempty"`
 	Email                 *string                         `json:"email,omitempty"`
 	HeadquarterAddress    *string                         `json:"headquarterAddress,omitempty"`
-	Users                 *UserConnection                 `json:"users"`
+	Memberships           *MembershipConnection           `json:"memberships"`
+	Invitations           *InvitationConnection           `json:"invitations"`
 	Connectors            *ConnectorConnection            `json:"connectors"`
 	Frameworks            *FrameworkConnection            `json:"frameworks"`
 	Controls              *ControlConnection              `json:"controls"`
@@ -1372,12 +1435,12 @@ type PublishDocumentVersionPayload struct {
 type Query struct {
 }
 
-type RemoveUserInput struct {
+type RemoveMemberInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
-	UserID         gid.GID `json:"userId"`
+	MemberID       gid.GID `json:"memberId"`
 }
 
-type RemoveUserPayload struct {
+type RemoveMemberPayload struct {
 	Success bool `json:"success"`
 }
 
@@ -2023,8 +2086,9 @@ func (User) IsNode()             {}
 func (this User) GetID() gid.GID { return this.ID }
 
 type UserConnection struct {
-	Edges    []*UserEdge `json:"edges"`
-	PageInfo *PageInfo   `json:"pageInfo"`
+	TotalCount int         `json:"totalCount"`
+	Edges      []*UserEdge `json:"edges"`
+	PageInfo   *PageInfo   `json:"pageInfo"`
 }
 
 type UserEdge struct {

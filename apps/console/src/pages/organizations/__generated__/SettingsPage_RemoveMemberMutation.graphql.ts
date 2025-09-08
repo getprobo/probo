@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e5fd0bf99e25c4f410c6c53f4025ed15>>
+ * @generated SignedSource<<994eb713978ecef3329fd9873e4c744c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,21 +9,21 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type RemoveUserInput = {
+export type RemoveMemberInput = {
+  memberId: string;
   organizationId: string;
-  userId: string;
 };
-export type SettingsPage_RemoveUserMutation$variables = {
-  input: RemoveUserInput;
+export type SettingsPage_RemoveMemberMutation$variables = {
+  input: RemoveMemberInput;
 };
-export type SettingsPage_RemoveUserMutation$data = {
-  readonly removeUser: {
+export type SettingsPage_RemoveMemberMutation$data = {
+  readonly removeMember: {
     readonly success: boolean;
   };
 };
-export type SettingsPage_RemoveUserMutation = {
-  response: SettingsPage_RemoveUserMutation$data;
-  variables: SettingsPage_RemoveUserMutation$variables;
+export type SettingsPage_RemoveMemberMutation = {
+  response: SettingsPage_RemoveMemberMutation$data;
+  variables: SettingsPage_RemoveMemberMutation$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -44,9 +44,9 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "RemoveUserPayload",
+    "concreteType": "RemoveMemberPayload",
     "kind": "LinkedField",
-    "name": "removeUser",
+    "name": "removeMember",
     "plural": false,
     "selections": [
       {
@@ -65,7 +65,7 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "SettingsPage_RemoveUserMutation",
+    "name": "SettingsPage_RemoveMemberMutation",
     "selections": (v1/*: any*/),
     "type": "Mutation",
     "abstractKey": null
@@ -74,20 +74,20 @@ return {
   "operation": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "SettingsPage_RemoveUserMutation",
+    "name": "SettingsPage_RemoveMemberMutation",
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "a397335d917a93baf77ceba83c735326",
+    "cacheID": "97e29046871ce8aab01abf98a62236fc",
     "id": null,
     "metadata": {},
-    "name": "SettingsPage_RemoveUserMutation",
+    "name": "SettingsPage_RemoveMemberMutation",
     "operationKind": "mutation",
-    "text": "mutation SettingsPage_RemoveUserMutation(\n  $input: RemoveUserInput!\n) {\n  removeUser(input: $input) {\n    success\n  }\n}\n"
+    "text": "mutation SettingsPage_RemoveMemberMutation(\n  $input: RemoveMemberInput!\n) {\n  removeMember(input: $input) {\n    success\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ba5bf0e182d15f4805080f63d1604d91";
+(node as any).hash = "f61071a0fb6f6554e56e79b6b04bc135";
 
 export default node;

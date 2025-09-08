@@ -138,6 +138,7 @@ LIMIT 1;
 	return nil
 }
 
+// Tenant id scope is not applied because we want to access trust centers by slug across all tenants for public access.
 func (tc *TrustCenter) LoadBySlug(
 	ctx context.Context,
 	conn pg.Conn,

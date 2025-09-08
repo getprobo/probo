@@ -23,7 +23,7 @@ import (
 
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/securecookie"
-	"github.com/getprobo/probo/pkg/usrmgr"
+	"github.com/getprobo/probo/pkg/auth"
 	"go.gearno.de/kit/httpserver"
 )
 
@@ -46,7 +46,7 @@ type (
 	}
 )
 
-func SignInHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFunc {
+func SignInHandler(authSvc *auth.Service, authCfg AuthConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		var req SignInRequest
@@ -55,9 +55,9 @@ func SignInHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFu
 			return
 		}
 
-		user, session, err := usrmgrSvc.SignIn(r.Context(), req.Email, req.Password)
+		session, user, err := authSvc.SignIn(r.Context(), req.Email, req.Password)
 		if err != nil {
-			var ErrInvalidCredentials *usrmgr.ErrInvalidCredentials
+			var ErrInvalidCredentials *auth.ErrInvalidCredentials
 			if errors.As(err, &ErrInvalidCredentials) {
 				httpserver.RenderError(w, http.StatusUnauthorized, err)
 				return

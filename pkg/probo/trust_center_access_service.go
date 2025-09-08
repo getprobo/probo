@@ -25,14 +25,12 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/statelesstoken"
-	"github.com/getprobo/probo/pkg/usrmgr"
 	"go.gearno.de/kit/pg"
 )
 
 type (
 	TrustCenterAccessService struct {
-		svc    *TenantService
-		usrmgr *usrmgr.Service
+		svc *TenantService
 	}
 
 	CreateTrustCenterAccessRequest struct {

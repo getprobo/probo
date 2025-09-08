@@ -21,7 +21,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/probo"
-	"github.com/getprobo/probo/pkg/usrmgr"
+	"github.com/getprobo/probo/pkg/auth"
 	"go.gearno.de/kit/pg"
 )
 
@@ -33,7 +33,7 @@ type (
 		proboSvc          *probo.Service
 		encryptionKey     cipher.EncryptionKey
 		tokenSecret       string
-		usrmgr            *usrmgr.Service
+		auth              *auth.Service
 		html2pdfConverter *html2pdf.Converter
 	}
 
@@ -45,7 +45,7 @@ type (
 		proboSvc            *probo.Service
 		encryptionKey       cipher.EncryptionKey
 		tokenSecret         string
-		usrmgr              *usrmgr.Service
+		auth                *auth.Service
 		html2pdfConverter   *html2pdf.Converter
 		TrustCenters        *TrustCenterService
 		Documents           *DocumentService
@@ -65,7 +65,7 @@ func NewService(
 	bucket string,
 	encryptionKey cipher.EncryptionKey,
 	tokenSecret string,
-	usrmgr *usrmgr.Service,
+	auth *auth.Service,
 	html2pdfConverter *html2pdf.Converter,
 ) *Service {
 	return &Service{
@@ -74,7 +74,7 @@ func NewService(
 		bucket:            bucket,
 		encryptionKey:     encryptionKey,
 		tokenSecret:       tokenSecret,
-		usrmgr:            usrmgr,
+		auth:              auth,
 		html2pdfConverter: html2pdfConverter,
 	}
 }
@@ -88,7 +88,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		proboSvc:          s.proboSvc,
 		encryptionKey:     s.encryptionKey,
 		tokenSecret:       s.tokenSecret,
-		usrmgr:            s.usrmgr,
+		auth:              s.auth,
 		html2pdfConverter: s.html2pdfConverter,
 	}
 
@@ -97,7 +97,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Audits = &AuditService{svc: tenantService}
 	tenantService.Vendors = &VendorService{svc: tenantService}
 	tenantService.Frameworks = &FrameworkService{svc: tenantService}
-	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, usrmgr: s.usrmgr}
+	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, auth: s.auth}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.Organizations = &OrganizationService{svc: tenantService}
