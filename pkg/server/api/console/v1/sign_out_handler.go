@@ -20,11 +20,11 @@ import (
 
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/securecookie"
-	"github.com/getprobo/probo/pkg/usrmgr"
+	"github.com/getprobo/probo/pkg/auth"
 	"go.gearno.de/kit/httpserver"
 )
 
-func SignOutHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFunc {
+func SignOutHandler(authSvc *auth.Service, authCfg AuthConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		sessionID, err := securecookie.Get(r, securecookie.DefaultConfig(
@@ -42,7 +42,7 @@ func SignOutHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerF
 			return
 		}
 
-		err = usrmgrSvc.SignOut(r.Context(), gid)
+		err = authSvc.SignOut(r.Context(), gid)
 		if err != nil {
 			panic(fmt.Errorf("cannot sign out: %w", err))
 		}

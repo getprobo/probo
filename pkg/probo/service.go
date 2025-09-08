@@ -21,6 +21,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/agents"
+	"github.com/getprobo/probo/pkg/auth"
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/certmanager"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/cipher"
@@ -28,7 +30,6 @@ import (
 	"github.com/getprobo/probo/pkg/filevalidation"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
-	"github.com/getprobo/probo/pkg/usrmgr"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
@@ -56,9 +57,10 @@ type (
 		trustConfig       TrustConfig
 		agentConfig       agents.Config
 		html2pdfConverter *html2pdf.Converter
-		usrmgr            *usrmgr.Service
 		acmeService       *certmanager.ACMEService
 		fileManager       *filemanager.Service
+		auth              *auth.Service
+		authz             *authz.Service
 		logger            *log.Logger
 	}
 
@@ -117,9 +119,10 @@ func NewService(
 	trustConfig TrustConfig,
 	agentConfig agents.Config,
 	html2pdfConverter *html2pdf.Converter,
-	usrmgrService *usrmgr.Service,
 	acmeService *certmanager.ACMEService,
 	fileManagerService *filemanager.Service,
+	authService *auth.Service,
+	authzService *authz.Service,
 	logger *log.Logger,
 ) (*Service, error) {
 	if bucket == "" {
@@ -136,9 +139,10 @@ func NewService(
 		trustConfig:       trustConfig,
 		agentConfig:       agentConfig,
 		html2pdfConverter: html2pdfConverter,
-		usrmgr:            usrmgrService,
 		acmeService:       acmeService,
 		fileManager:       fileManagerService,
+		auth:              authService,
+		authz:             authzService,
 		logger:            logger,
 	}
 
@@ -202,7 +206,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Audits = &AuditService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
-	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, usrmgr: s.usrmgr}
+	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.Nonconformities = &NonconformityService{svc: tenantService}
 	tenantService.Obligations = &ObligationService{svc: tenantService}

@@ -20,13 +20,14 @@ import (
 
 	"time"
 
+	"github.com/getprobo/probo/pkg/auth"
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/connector"
 	"github.com/getprobo/probo/pkg/probo"
 	"github.com/getprobo/probo/pkg/saferedirect"
 	console_v1 "github.com/getprobo/probo/pkg/server/api/console/v1"
 	trust_v1 "github.com/getprobo/probo/pkg/server/api/trust/v1"
 	"github.com/getprobo/probo/pkg/trust"
-	"github.com/getprobo/probo/pkg/usrmgr"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"go.gearno.de/kit/httpserver"
@@ -55,9 +56,10 @@ type (
 	Config struct {
 		AllowedOrigins    []string
 		Probo             *probo.Service
-		Usrmgr            *usrmgr.Service
+		Auth              *auth.Service
+		Authz             *authz.Service
 		Trust             *trust.Service
-		Auth              ConsoleAuthConfig
+		ConsoleAuth       ConsoleAuthConfig
 		TrustAuth         TrustAuthConfig
 		ConnectorRegistry *connector.ConnectorRegistry
 		SafeRedirect      *saferedirect.SafeRedirect
@@ -72,8 +74,9 @@ type (
 )
 
 var (
-	ErrMissingProboService  = errors.New("server configuration requires a valid probo.Service instance")
-	ErrMissingUsrmgrService = errors.New("server configuration requires a valid usrmgr.Service instance")
+	ErrMissingProboService = errors.New("server configuration requires a valid probo.Service instance")
+	ErrMissingAuthService  = errors.New("server configuration requires a valid auth.Service instance")
+	ErrMissingAuthzService = errors.New("server configuration requires a valid authz.Service instance")
 )
 
 func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
@@ -105,20 +108,25 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, ErrMissingProboService
 	}
 
-	if cfg.Usrmgr == nil {
-		return nil, ErrMissingUsrmgrService
+	if cfg.Auth == nil {
+		return nil, ErrMissingAuthService
+	}
+
+	if cfg.Authz == nil {
+		return nil, ErrMissingAuthzService
 	}
 
 	// Create trust API handler once
 	trustAPIHandler := trust_v1.NewMux(
 		cfg.Logger.Named("trust.v1"),
-		cfg.Usrmgr,
+		cfg.Auth,
+		cfg.Authz,
 		cfg.Trust,
 		console_v1.AuthConfig{
-			CookieName:      cfg.Auth.CookieName,
-			CookieDomain:    cfg.Auth.CookieDomain,
-			SessionDuration: cfg.Auth.SessionDuration,
-			CookieSecret:    cfg.Auth.CookieSecret,
+			CookieName:      cfg.ConsoleAuth.CookieName,
+			CookieDomain:    cfg.ConsoleAuth.CookieDomain,
+			SessionDuration: cfg.ConsoleAuth.SessionDuration,
+			CookieSecret:    cfg.ConsoleAuth.CookieSecret,
 		},
 		trust_v1.TrustAuthConfig{
 			CookieName:        cfg.TrustAuth.CookieName,
@@ -175,12 +183,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		console_v1.NewMux(
 			s.cfg.Logger.Named("console.v1"),
 			s.cfg.Probo,
-			s.cfg.Usrmgr,
+			s.cfg.Auth,
+			s.cfg.Authz,
 			console_v1.AuthConfig{
-				CookieName:      s.cfg.Auth.CookieName,
-				CookieDomain:    s.cfg.Auth.CookieDomain,
-				SessionDuration: s.cfg.Auth.SessionDuration,
-				CookieSecret:    s.cfg.Auth.CookieSecret,
+				CookieName:      s.cfg.ConsoleAuth.CookieName,
+				CookieDomain:    s.cfg.ConsoleAuth.CookieDomain,
+				SessionDuration: s.cfg.ConsoleAuth.SessionDuration,
+				CookieSecret:    s.cfg.ConsoleAuth.CookieSecret,
 			},
 			s.cfg.ConnectorRegistry,
 			s.cfg.SafeRedirect,

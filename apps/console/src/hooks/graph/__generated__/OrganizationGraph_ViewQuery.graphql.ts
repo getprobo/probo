@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5a41cd3709282172e4d5a3ca65d07b96>>
+ * @generated SignedSource<<df47e943d9509dbbe4d7cf9498941171>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,7 @@ export type OrganizationGraph_ViewQuery$data = {
   readonly node: {
     readonly id?: string;
     readonly name?: string;
-    readonly " $fragmentSpreads": FragmentRefs<"SettingsPageFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"SettingsPageFragment" | "SettingsPageInvitationsFragment" | "SettingsPageMembershipsFragment">;
   };
 };
 export type OrganizationGraph_ViewQuery = {
@@ -58,29 +58,133 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "email",
+  "name": "__typename",
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "type",
+  "name": "email",
   "storageKey": null
 },
 v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
+  "name": "type",
+  "storageKey": null
+},
+v7 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v7 = [
+v8 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "updatedAt",
+  "storageKey": null
+},
+v9 = [
   {
     "kind": "Literal",
     "name": "first",
-    "value": 100
+    "value": 20
+  },
+  {
+    "kind": "Literal",
+    "name": "orderBy",
+    "value": {
+      "direction": "ASC",
+      "field": "CREATED_AT"
+    }
   }
+],
+v10 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "totalCount",
+  "storageKey": null
+},
+v11 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "fullName",
+  "storageKey": null
+},
+v12 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "role",
+  "storageKey": null
+},
+v13 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "cursor",
+  "storageKey": null
+},
+v14 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "PageInfo",
+  "kind": "LinkedField",
+  "name": "pageInfo",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "endCursor",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "hasNextPage",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "hasPreviousPage",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "startCursor",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+},
+v15 = {
+  "kind": "ClientExtension",
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "__id",
+      "storageKey": null
+    }
+  ]
+},
+v16 = [
+  "orderBy"
 ];
 return {
   "fragment": {
@@ -106,6 +210,16 @@ return {
                 "args": null,
                 "kind": "FragmentSpread",
                 "name": "SettingsPageFragment"
+              },
+              {
+                "args": null,
+                "kind": "FragmentSpread",
+                "name": "SettingsPageMembershipsFragment"
+              },
+              {
+                "args": null,
+                "kind": "FragmentSpread",
+                "name": "SettingsPageInvitationsFragment"
               }
             ],
             "type": "Organization",
@@ -132,13 +246,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "__typename",
-            "storageKey": null
-          },
+          (v4/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
@@ -172,7 +280,7 @@ return {
                 "name": "websiteUrl",
                 "storageKey": null
               },
-              (v4/*: any*/),
+              (v5/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -211,7 +319,7 @@ return {
                     "name": "dnsRecords",
                     "plural": true,
                     "selections": [
-                      (v5/*: any*/),
+                      (v6/*: any*/),
                       (v3/*: any*/),
                       {
                         "alias": null,
@@ -237,14 +345,8 @@ return {
                     ],
                     "storageKey": null
                   },
-                  (v6/*: any*/),
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "updatedAt",
-                    "storageKey": null
-                  },
+                  (v7/*: any*/),
+                  (v8/*: any*/),
                   {
                     "alias": null,
                     "args": null,
@@ -255,52 +357,17 @@ return {
                 ],
                 "storageKey": null
               },
+              (v7/*: any*/),
+              (v8/*: any*/),
               {
                 "alias": null,
-                "args": (v7/*: any*/),
-                "concreteType": "UserConnection",
-                "kind": "LinkedField",
-                "name": "users",
-                "plural": false,
-                "selections": [
+                "args": [
                   {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "UserEdge",
-                    "kind": "LinkedField",
-                    "name": "edges",
-                    "plural": true,
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "User",
-                        "kind": "LinkedField",
-                        "name": "node",
-                        "plural": false,
-                        "selections": [
-                          (v2/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "fullName",
-                            "storageKey": null
-                          },
-                          (v4/*: any*/),
-                          (v6/*: any*/)
-                        ],
-                        "storageKey": null
-                      }
-                    ],
-                    "storageKey": null
+                    "kind": "Literal",
+                    "name": "first",
+                    "value": 100
                   }
                 ],
-                "storageKey": "users(first:100)"
-              },
-              {
-                "alias": null,
-                "args": (v7/*: any*/),
                 "concreteType": "ConnectorConnection",
                 "kind": "LinkedField",
                 "name": "connectors",
@@ -324,8 +391,8 @@ return {
                         "selections": [
                           (v2/*: any*/),
                           (v3/*: any*/),
-                          (v5/*: any*/),
-                          (v6/*: any*/)
+                          (v6/*: any*/),
+                          (v7/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -334,6 +401,130 @@ return {
                   }
                 ],
                 "storageKey": "connectors(first:100)"
+              },
+              {
+                "alias": null,
+                "args": (v9/*: any*/),
+                "concreteType": "MembershipConnection",
+                "kind": "LinkedField",
+                "name": "memberships",
+                "plural": false,
+                "selections": [
+                  (v10/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "MembershipEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Membership",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          (v11/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "emailAddress",
+                            "storageKey": null
+                          },
+                          (v12/*: any*/),
+                          (v7/*: any*/),
+                          (v4/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v13/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v14/*: any*/),
+                  (v15/*: any*/)
+                ],
+                "storageKey": "memberships(first:20,orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
+              },
+              {
+                "alias": null,
+                "args": (v9/*: any*/),
+                "filters": (v16/*: any*/),
+                "handle": "connection",
+                "key": "SettingsPageMemberships_memberships",
+                "kind": "LinkedHandle",
+                "name": "memberships"
+              },
+              {
+                "alias": null,
+                "args": (v9/*: any*/),
+                "concreteType": "InvitationConnection",
+                "kind": "LinkedField",
+                "name": "invitations",
+                "plural": false,
+                "selections": [
+                  (v10/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "InvitationEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Invitation",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          (v5/*: any*/),
+                          (v11/*: any*/),
+                          (v12/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "expiresAt",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "acceptedAt",
+                            "storageKey": null
+                          },
+                          (v7/*: any*/),
+                          (v4/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v13/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v14/*: any*/),
+                  (v15/*: any*/)
+                ],
+                "storageKey": "invitations(first:20,orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
+              },
+              {
+                "alias": null,
+                "args": (v9/*: any*/),
+                "filters": (v16/*: any*/),
+                "handle": "connection",
+                "key": "SettingsPageInvitations_invitations",
+                "kind": "LinkedHandle",
+                "name": "invitations"
               }
             ],
             "type": "Organization",
@@ -345,16 +536,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8b9e1f3b1e93e1823354e77f10764e54",
+    "cacheID": "eb300e10b8aec548831c1610ea7bc0ec",
     "id": null,
     "metadata": {},
     "name": "OrganizationGraph_ViewQuery",
     "operationKind": "query",
-    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    sslExpiresAt\n  }\n  users(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n        email\n        createdAt\n      }\n    }\n  }\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n      ...SettingsPageMembershipsFragment\n      ...SettingsPageInvitationsFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    sslExpiresAt\n  }\n  createdAt\n  updatedAt\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n\nfragment SettingsPageInvitationsFragment on Organization {\n  invitations(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        email\n        fullName\n        role\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SettingsPageMembershipsFragment on Organization {\n  memberships(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        fullName\n        emailAddress\n        role\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "196e8c1fc9c2e0b3c76c8b338ed5c7f7";
+(node as any).hash = "fda1489f2b80fd3d0b3962574bd7dfe3";
 
 export default node;

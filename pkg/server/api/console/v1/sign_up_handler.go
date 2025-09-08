@@ -20,9 +20,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/getprobo/probo/pkg/coredata"
+	"github.com/getprobo/probo/pkg/auth"
 	"github.com/getprobo/probo/pkg/securecookie"
-	"github.com/getprobo/probo/pkg/usrmgr"
 	"go.gearno.de/kit/httpserver"
 )
 
@@ -38,7 +37,7 @@ type (
 	}
 )
 
-func SignUpHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFunc {
+func SignUpHandler(authSvc *auth.Service, authCfg AuthConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req SignUpRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -46,20 +45,20 @@ func SignUpHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFu
 			return
 		}
 
-		user, session, err := usrmgrSvc.SignUp(
+		user, session, err := authSvc.SignUp(
 			r.Context(),
 			req.Email,
 			req.Password,
 			req.FullName,
 		)
 		if err != nil {
-			var errUserAlreadyExists *coredata.ErrUserAlreadyExists
+			var errUserAlreadyExists *auth.ErrUserAlreadyExists
 			if errors.As(err, &errUserAlreadyExists) {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot register user: %w", err))
 				return
 			}
 
-			var errSignupDisabled *usrmgr.ErrSignupDisabled
+			var errSignupDisabled *auth.ErrSignupDisabled
 			if errors.As(err, &errSignupDisabled) {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot register user: %w", err))
 				return

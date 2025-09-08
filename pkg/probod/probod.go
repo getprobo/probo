@@ -28,6 +28,8 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/agents"
+	"github.com/getprobo/probo/pkg/auth"
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/awsconfig"
 	"github.com/getprobo/probo/pkg/certmanager"
 	"github.com/getprobo/probo/pkg/connector"
@@ -44,7 +46,6 @@ import (
 	"github.com/getprobo/probo/pkg/server"
 	"github.com/getprobo/probo/pkg/server/api"
 	"github.com/getprobo/probo/pkg/trust"
-	"github.com/getprobo/probo/pkg/usrmgr"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/httpserver"
@@ -257,7 +258,7 @@ func (impl *Implm) Run(
 
 	agent := agents.NewAgent(l.Named("agent"), agentConfig)
 
-	usrmgrService, err := usrmgr.NewService(
+	authService, err := auth.NewService(
 		ctx,
 		pgClient,
 		hp,
@@ -267,7 +268,18 @@ func (impl *Implm) Run(
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
 	)
 	if err != nil {
-		return fmt.Errorf("cannot create usrmgr service: %w", err)
+		return fmt.Errorf("cannot create auth service: %w", err)
+	}
+
+	authzService, err := authz.NewService(
+		ctx,
+		pgClient,
+		impl.cfg.Hostname,
+		impl.cfg.Auth.Cookie.Secret,
+		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot create authz service: %w", err)
 	}
 
 	fileManagerService := filemanager.NewService(s3Client)
@@ -312,9 +324,10 @@ func (impl *Implm) Run(
 		trustConfig,
 		agentConfig,
 		html2pdfConverter,
-		usrmgrService,
 		acmeService,
 		fileManagerService,
+		authService,
+		authzService,
 		l.Named("probo"),
 	)
 	if err != nil {
@@ -327,7 +340,7 @@ func (impl *Implm) Run(
 		impl.cfg.AWS.Bucket,
 		impl.cfg.EncryptionKey,
 		impl.cfg.TrustAuth.TokenSecret,
-		usrmgrService,
+		authService,
 		html2pdfConverter,
 		fileManagerService,
 	)
@@ -337,14 +350,15 @@ func (impl *Implm) Run(
 			AllowedOrigins:    impl.cfg.Api.Cors.AllowedOrigins,
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
-			Usrmgr:            usrmgrService,
+			Auth:              authService,
+			Authz:             authzService,
 			Trust:             trustService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			Agent:             agent,
 			SafeRedirect:      &saferedirect.SafeRedirect{AllowedHost: impl.cfg.Hostname},
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
 			Logger:            l.Named("http.server"),
-			Auth: api.ConsoleAuthConfig{
+			ConsoleAuth: api.ConsoleAuthConfig{
 				CookieName:      impl.cfg.Auth.Cookie.Name,
 				CookieDomain:    impl.cfg.Auth.Cookie.Domain,
 				SessionDuration: time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour,

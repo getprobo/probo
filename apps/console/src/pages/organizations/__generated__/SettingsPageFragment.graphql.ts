@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<122f3da12674107565d07159872492db>>
+ * @generated SignedSource<<8477f42a02a102a4ce8540b794ac4289>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,6 +22,7 @@ export type SettingsPageFragment$data = {
       };
     }>;
   };
+  readonly createdAt: any;
   readonly customDomain: {
     readonly createdAt: any;
     readonly dnsRecords: ReadonlyArray<{
@@ -44,16 +45,7 @@ export type SettingsPageFragment$data = {
   readonly id: string;
   readonly logoUrl: string | null | undefined;
   readonly name: string;
-  readonly users: {
-    readonly edges: ReadonlyArray<{
-      readonly node: {
-        readonly createdAt: any;
-        readonly email: string;
-        readonly fullName: string;
-        readonly id: string;
-      };
-    }>;
-  };
+  readonly updatedAt: any;
   readonly websiteUrl: string | null | undefined;
   readonly " $fragmentType": "SettingsPageFragment";
 };
@@ -81,30 +73,23 @@ v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "email",
+  "name": "type",
   "storageKey": null
 },
 v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "type",
+  "name": "createdAt",
   "storageKey": null
 },
 v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "createdAt",
+  "name": "updatedAt",
   "storageKey": null
-},
-v5 = [
-  {
-    "kind": "Literal",
-    "name": "first",
-    "value": 100
-  }
-];
+};
 return {
   "argumentDefinitions": [],
   "kind": "Fragment",
@@ -141,7 +126,13 @@ return {
       "name": "websiteUrl",
       "storageKey": null
     },
-    (v2/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "email",
+      "storageKey": null
+    },
     {
       "alias": null,
       "args": null,
@@ -180,7 +171,7 @@ return {
           "name": "dnsRecords",
           "plural": true,
           "selections": [
-            (v3/*: any*/),
+            (v2/*: any*/),
             (v1/*: any*/),
             {
               "alias": null,
@@ -206,14 +197,8 @@ return {
           ],
           "storageKey": null
         },
+        (v3/*: any*/),
         (v4/*: any*/),
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "updatedAt",
-          "storageKey": null
-        },
         {
           "alias": null,
           "args": null,
@@ -224,52 +209,17 @@ return {
       ],
       "storageKey": null
     },
+    (v3/*: any*/),
+    (v4/*: any*/),
     {
       "alias": null,
-      "args": (v5/*: any*/),
-      "concreteType": "UserConnection",
-      "kind": "LinkedField",
-      "name": "users",
-      "plural": false,
-      "selections": [
+      "args": [
         {
-          "alias": null,
-          "args": null,
-          "concreteType": "UserEdge",
-          "kind": "LinkedField",
-          "name": "edges",
-          "plural": true,
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "concreteType": "User",
-              "kind": "LinkedField",
-              "name": "node",
-              "plural": false,
-              "selections": [
-                (v0/*: any*/),
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "fullName",
-                  "storageKey": null
-                },
-                (v2/*: any*/),
-                (v4/*: any*/)
-              ],
-              "storageKey": null
-            }
-          ],
-          "storageKey": null
+          "kind": "Literal",
+          "name": "first",
+          "value": 100
         }
       ],
-      "storageKey": "users(first:100)"
-    },
-    {
-      "alias": null,
-      "args": (v5/*: any*/),
       "concreteType": "ConnectorConnection",
       "kind": "LinkedField",
       "name": "connectors",
@@ -293,8 +243,8 @@ return {
               "selections": [
                 (v0/*: any*/),
                 (v1/*: any*/),
-                (v3/*: any*/),
-                (v4/*: any*/)
+                (v2/*: any*/),
+                (v3/*: any*/)
               ],
               "storageKey": null
             }
@@ -310,6 +260,6 @@ return {
 };
 })();
 
-(node as any).hash = "6cea6f88fb0d7b2ae7ef9053b9979898";
+(node as any).hash = "b3b152b507befd6b6918a12972e05f14";
 
 export default node;

@@ -107,7 +107,7 @@ LIMIT 1;
 }
 
 // Tenant id scope is not applied in this functions because we want to access all user's organizations.
-func (o *Organizations) ListForUserID(
+func (o *Organizations) LoadByUserID(
 	ctx context.Context,
 	conn pg.Conn,
 	userID gid.GID,
@@ -118,7 +118,7 @@ WITH user_org AS (
 	SELECT
 		organization_id
 	FROM
-		users_organizations
+		authz_memberships
 	WHERE
 		user_id = @user_id
 )
@@ -147,6 +147,59 @@ WHERE
 
 	args := pgx.StrictNamedArgs{"user_id": userID}
 	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query organizations: %w", err)
+	}
+
+	organizations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Organization])
+	if err != nil {
+		return fmt.Errorf("cannot collect organizations: %w", err)
+	}
+
+	*o = organizations
+
+	return nil
+}
+
+// Tenant id scope is not applied in this function because we want to access all user's organizations.
+func (o *Organizations) LoadAllByUserID(
+	ctx context.Context,
+	conn pg.Conn,
+	userID gid.GID,
+) error {
+	q := `
+WITH user_org AS (
+	SELECT
+		organization_id
+	FROM
+		authz_memberships
+	WHERE
+		user_id = @user_id
+)
+SELECT
+	tenant_id,
+    id,
+    name,
+    description,
+    website_url,
+    email,
+    headquarter_address,
+    custom_domain_id,
+    logo_file_id,
+    horizontal_logo_file_id,
+    created_at,
+    updated_at
+FROM
+	organizations
+INNER JOIN
+	user_org ON organizations.id = user_org.organization_id
+ORDER BY
+	created_at DESC
+`
+
+	args := pgx.StrictNamedArgs{"user_id": userID}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

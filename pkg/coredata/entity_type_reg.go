@@ -59,4 +59,6 @@ const (
 	TrustCenterReferenceEntityType
 	TrustCenterDocumentAccessEntityType
 	CustomDomainEntityType
+	InvitationEntityType
+	MembershipEntityType
 )

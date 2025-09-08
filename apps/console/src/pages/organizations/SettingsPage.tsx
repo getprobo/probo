@@ -1,5 +1,4 @@
 import {
-  ActionDropdown,
   Avatar,
   Badge,
   Button,
@@ -7,14 +6,21 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
-  DropdownItem,
   Field,
   FileButton,
   IconTrashCan,
   Label,
   PageHeader,
   Spinner,
+  TabBadge,
+  TabItem,
+  Tabs,
+  Tbody,
+  Td,
   Textarea,
+  Th,
+  Thead,
+  Tr,
   useConfirm,
   useDialogRef,
   useToast,
@@ -22,19 +28,28 @@ import {
 import { useTranslate } from "@probo/i18n";
 import type { PreloadedQuery } from "react-relay";
 import type { OrganizationGraph_ViewQuery } from "/hooks/graph/__generated__/OrganizationGraph_ViewQuery.graphql";
-import { useFragment, useMutation, usePreloadedQuery } from "react-relay";
+import { useFragment, useMutation, usePreloadedQuery, usePaginationFragment } from "react-relay";
 import { organizationViewQuery } from "/hooks/graph/OrganizationGraph";
 import { graphql } from "relay-runtime";
+import { SortableTable, SortableTh } from "/components/SortableTable";
+import clsx from "clsx";
 import type {
   SettingsPageFragment$data,
   SettingsPageFragment$key,
 } from "./__generated__/SettingsPageFragment.graphql";
+import type {
+  SettingsPageMembershipsFragment$data,
+  SettingsPageMembershipsFragment$key
+} from "./__generated__/SettingsPageMembershipsFragment.graphql";
+import type {
+  SettingsPageInvitationsFragment$data,
+  SettingsPageInvitationsFragment$key
+} from "./__generated__/SettingsPageInvitationsFragment.graphql";
 import { useState, type ChangeEventHandler, useEffect } from "react";
 import { sprintf } from "@probo/helpers";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { z } from "zod";
 import type { NodeOf } from "/types";
-import clsx from "clsx";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { InviteUserDialog } from "/components/organizations/InviteUserDialog";
@@ -82,16 +97,8 @@ const organizationFragment = graphql`
       updatedAt
       sslExpiresAt
     }
-    users(first: 100) {
-      edges {
-        node {
-          id
-          fullName
-          email
-          createdAt
-        }
-      }
-    }
+    createdAt
+    updatedAt
     connectors(first: 100) {
       edges {
         node {
@@ -101,6 +108,83 @@ const organizationFragment = graphql`
           createdAt
         }
       }
+    }
+  }
+`;
+
+const paginatedMembershipsFragment = graphql`
+  fragment SettingsPageMembershipsFragment on Organization
+  @refetchable(queryName: "SettingsMembershipsRefetchQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 20 }
+    order: { type: "MembershipOrder", defaultValue: { direction: ASC, field: CREATED_AT } }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    memberships(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "SettingsPageMemberships_memberships") {
+      __id
+      totalCount
+      edges {
+        node {
+          id
+          fullName
+          emailAddress
+          role
+          createdAt
+        }
+      }
+    }
+  }
+`;
+
+const paginatedInvitationsFragment = graphql`
+  fragment SettingsPageInvitationsFragment on Organization
+  @refetchable(queryName: "SettingsInvitationsRefetchQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 20 }
+    order: { type: "InvitationOrder", defaultValue: { direction: ASC, field: CREATED_AT } }
+    after: { type: "CursorKey", defaultValue: null }
+    before: { type: "CursorKey", defaultValue: null }
+    last: { type: "Int", defaultValue: null }
+  ) {
+    invitations(
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      orderBy: $order
+    ) @connection(key: "SettingsPageInvitations_invitations") {
+      __id
+      totalCount
+      edges {
+        node {
+          id
+          email
+          fullName
+          role
+          expiresAt
+          acceptedAt
+          createdAt
+        }
+      }
+    }
+  }
+`;
+
+const deleteInvitationMutation = graphql`
+  mutation SettingsPage_DeleteInvitationMutation(
+    $input: DeleteInvitationInput!
+    $connections: [ID!]!
+  ) {
+    deleteInvitation(input: $input) {
+      deletedInvitationId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -145,6 +229,17 @@ export default function SettingsPage({ queryRef }: Props) {
     organizationFragment,
     organizationKey
   );
+
+  const membershipsPagination = usePaginationFragment(
+    paginatedMembershipsFragment,
+    organizationKey as SettingsPageMembershipsFragment$key
+  );
+
+  const invitationsPagination = usePaginationFragment(
+    paginatedInvitationsFragment,
+    organizationKey as SettingsPageInvitationsFragment$key
+  );
+
   const [updateOrganization] = useMutation(updateOrganizationMutation);
   const [deleteHorizontalLogo, isDeletingHorizontalLogo] = useMutationWithToasts(
     deleteHorizontalLogoMutation,
@@ -154,7 +249,27 @@ export default function SettingsPage({ queryRef }: Props) {
     }
   );
   const [deleteOrganization, isDeleting] = useDeleteOrganizationMutation();
-  const users = organization.users.edges.map((edge) => edge.node);
+  const memberships = membershipsPagination.data.memberships?.edges.map((edge) => edge.node) || [];
+  const invitations = invitationsPagination.data.invitations?.edges.map((edge) => edge.node) || [];
+  const [activeTab, setActiveTab] = useState<"memberships" | "invitations">("memberships");
+
+  const refetchMemberships = ({ order }: { order: { direction: string; field: string } }) => {
+    membershipsPagination.refetch({
+      order: {
+        direction: order.direction as "ASC" | "DESC",
+        field: order.field as "CREATED_AT" | "FULL_NAME" | "EMAIL_ADDRESS" | "ROLE"
+      }
+    });
+  };
+
+  const refetchInvitations = ({ order }: { order: { direction: string; field: string } }) => {
+    invitationsPagination.refetch({
+      order: {
+        direction: order.direction as "ASC" | "DESC",
+        field: order.field as "CREATED_AT" | "EXPIRES_AT" | "FULL_NAME" | "EMAIL" | "ROLE" | "STATUS" | "ACCEPTED_AT"
+      }
+    });
+  };
 
   const { formState, handleSubmit, register, reset } = useFormWithSchema(
     organizationSchema,
@@ -454,19 +569,103 @@ export default function SettingsPage({ queryRef }: Props) {
           </Card>
         </div>
       </form>
-
-      {/* Integrations */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-medium">{__("Workspace members")}</h2>
-          <InviteUserDialog>
+          <InviteUserDialog connectionId={invitationsPagination.data.invitations?.__id}>
             <Button variant="secondary">{__("Invite member")}</Button>
           </InviteUserDialog>
         </div>
-        <Card className="divide-y divide-border-solid">
-          {users.map((user) => (
-            <UserRow key={user.id} user={user} />
-          ))}
+
+        <Tabs>
+          <TabItem
+            active={activeTab === "memberships"}
+            onClick={() => setActiveTab("memberships")}
+          >
+            {__("Members")}
+            {(membershipsPagination.data.memberships?.totalCount || 0) > 0 && (
+              <TabBadge>{membershipsPagination.data.memberships?.totalCount}</TabBadge>
+            )}
+          </TabItem>
+          <TabItem
+            active={activeTab === "invitations"}
+            onClick={() => setActiveTab("invitations")}
+          >
+            {__("Invitations")}
+            {(invitationsPagination.data.invitations?.totalCount || 0) > 0 && (
+              <TabBadge>{invitationsPagination.data.invitations?.totalCount}</TabBadge>
+            )}
+          </TabItem>
+        </Tabs>
+
+        <Card>
+          <div className="px-6 pb-6 pt-6">
+            {activeTab === "memberships" && (
+              <SortableTable
+                {...membershipsPagination}
+                refetch={refetchMemberships}
+              >
+                <Thead>
+                  <Tr>
+                    <SortableTh field="FULL_NAME">{__("Name")}</SortableTh>
+                    <SortableTh field="EMAIL_ADDRESS">{__("Email")}</SortableTh>
+                    <SortableTh field="ROLE">{__("Role")}</SortableTh>
+                    <SortableTh field="CREATED_AT">{__("Joined")}</SortableTh>
+                    <Th></Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {memberships.length === 0 ? (
+                    <Tr>
+                      <Td colSpan={5} className="text-center text-txt-secondary">
+                        {__("No members")}
+                      </Td>
+                    </Tr>
+                  ) : (
+                    memberships.map((membership) => (
+                      <MembershipRow key={membership.id} membership={membership} />
+                    ))
+                  )}
+                </Tbody>
+              </SortableTable>
+            )}
+
+            {activeTab === "invitations" && (
+              <SortableTable
+                {...invitationsPagination}
+                refetch={refetchInvitations}
+              >
+                <Thead>
+                  <Tr>
+                    <SortableTh field="FULL_NAME">{__("Name")}</SortableTh>
+                    <SortableTh field="EMAIL">{__("Email")}</SortableTh>
+                    <SortableTh field="ROLE">{__("Role")}</SortableTh>
+                    <SortableTh field="CREATED_AT">{__("Invited")}</SortableTh>
+                    <Th>{__("Status")}</Th>
+                    <SortableTh field="ACCEPTED_AT">{__("Accepted at")}</SortableTh>
+                    <Th></Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {invitations.length === 0 ? (
+                    <Tr>
+                      <Td colSpan={7} className="text-center text-txt-secondary">
+                        {__("No invitations")}
+                      </Td>
+                    </Tr>
+                  ) : (
+                    invitations.map((invitation) => (
+                      <InvitationRow
+                        key={invitation.id}
+                        invitation={invitation}
+                        connectionId={invitationsPagination.data.invitations?.__id}
+                      />
+                    ))
+                  )}
+                </Tbody>
+              </SortableTable>
+            )}
+          </div>
         </Card>
       </div>
 
@@ -594,23 +793,107 @@ function Connectors(props: {
   );
 }
 
-const removeUserMutation = graphql`
-  mutation SettingsPage_RemoveUserMutation($input: RemoveUserInput!) {
-    removeUser(input: $input) {
+const removeMemberMutation = graphql`
+  mutation SettingsPage_RemoveMemberMutation($input: RemoveMemberInput!) {
+    removeMember(input: $input) {
       success
     }
   }
 `;
 
-function UserRow(props: { user: NodeOf<SettingsPageFragment$data["users"]> }) {
+function InvitationRow(props: {
+  invitation: NodeOf<SettingsPageInvitationsFragment$data["invitations"]>;
+  connectionId?: string;
+}) {
+  const { __ } = useTranslate();
+  const confirm = useConfirm();
+  const [deleteInvitation, isDeleting] = useMutationWithToasts(
+    deleteInvitationMutation,
+    {
+      successMessage: sprintf(
+        __("Invitation for %s deleted successfully"),
+        props.invitation.fullName
+      ),
+    }
+  );
+
+  const isExpired = new Date() > new Date(props.invitation.expiresAt);
+  const isAccepted = !!props.invitation.acceptedAt;
+
+  const onDelete = () => {
+    confirm(
+      () => {
+        return deleteInvitation({
+          variables: {
+            input: {
+              invitationId: props.invitation.id,
+            },
+            connections: props.connectionId ? [props.connectionId] : [],
+          },
+        });
+      },
+      {
+        message: sprintf(
+          __("Are you sure you want to delete the invitation for %s?"),
+          props.invitation.fullName
+        ),
+      }
+    );
+  };
+
+  return (
+    <Tr className={clsx(isDeleting && "opacity-60 pointer-events-none")}>
+      <Td>
+        <div className="font-semibold">{props.invitation.fullName}</div>
+      </Td>
+      <Td>{props.invitation.email}</Td>
+      <Td>
+        <Badge>{props.invitation.role}</Badge>
+      </Td>
+      <Td>{new Date(props.invitation.createdAt).toLocaleDateString()}</Td>
+      <Td>
+        {isAccepted ? (
+          <Badge variant="success">{__("Accepted")}</Badge>
+        ) : isExpired ? (
+          <Badge variant="danger">{__("Expired")}</Badge>
+        ) : (
+          <Badge variant="warning">{__("Pending")}</Badge>
+        )}
+      </Td>
+      <Td>
+        {props.invitation.acceptedAt ? new Date(props.invitation.acceptedAt).toLocaleDateString() : "-"}
+      </Td>
+      <Td noLink width={80} className="text-end">
+        <div
+          className="flex gap-2 justify-end"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {isDeleting ? (
+            <Spinner size={16} />
+          ) : (
+            <Button
+              variant="danger"
+              onClick={onDelete}
+              disabled={isDeleting}
+              icon={IconTrashCan}
+              aria-label={__("Delete invitation")}
+            />
+          )}
+        </div>
+      </Td>
+    </Tr>
+  );
+}
+
+function MembershipRow(props: { membership: NodeOf<SettingsPageMembershipsFragment$data["memberships"]> }) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
-  const [removeUser, isRemoving] = useMutationWithToasts(removeUserMutation, {
+  const [removeMember, isRemoving] = useMutationWithToasts(removeMemberMutation, {
     successMessage: sprintf(
-      __("User %s removed successfully"),
-      props.user.fullName
+      __("Member %s removed successfully"),
+      props.membership.fullName
     ),
-    errorMessage: sprintf(__("Failed to remove user %s"), props.user.fullName),
+    errorMessage: sprintf(__("Failed to remove member %s"), props.membership.fullName),
   });
   const confirm = useConfirm();
   const [isRemoved, setIsRemoved] = useState(false);
@@ -622,10 +905,10 @@ function UserRow(props: { user: NodeOf<SettingsPageFragment$data["users"]> }) {
   const onRemove = async () => {
     confirm(
       () => {
-        return removeUser({
+        return removeMember({
           variables: {
             input: {
-              userId: props.user.id,
+              memberId: props.membership.id,
               organizationId: organizationId,
             },
           },
@@ -637,42 +920,40 @@ function UserRow(props: { user: NodeOf<SettingsPageFragment$data["users"]> }) {
       {
         message: sprintf(
           __("Are you sure you want to remove %s?"),
-          props.user.fullName
+          props.membership.fullName
         ),
       }
     );
   };
 
   return (
-    <div
-      className={clsx(
-        "flex justify-between items-center py-4 px-4",
-        isRemoving && "opacity-60 pointer-events-none"
-      )}
-    >
-      <div className="flex items-center gap-4">
-        <Avatar name={props.user.fullName} size="l" />
-        <div>
-          <h3 className="text-base font-semibold">{props.user.fullName}</h3>
-          <p className="text-sm text-txt-tertiary">{props.user.email}</p>
-        </div>
-      </div>
-      <div className="flex gap-2 items-center">
-        <Badge>{__("Owner")}</Badge>
-        {isRemoving ? (
-          <Spinner size={16} />
-        ) : (
-          <ActionDropdown>
-            <DropdownItem
+    <Tr className={clsx(isRemoving && "opacity-60 pointer-events-none")}>
+      <Td>
+        <div className="font-semibold">{props.membership.fullName}</div>
+      </Td>
+      <Td>{props.membership.emailAddress}</Td>
+      <Td>
+        <Badge>{props.membership.role}</Badge>
+      </Td>
+      <Td>{new Date(props.membership.createdAt).toLocaleDateString()}</Td>
+      <Td noLink width={80} className="text-end">
+        <div
+          className="flex gap-2 justify-end"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {isRemoving ? (
+            <Spinner size={16} />
+          ) : (
+            <Button
               variant="danger"
-              icon={IconTrashCan}
               onClick={onRemove}
-            >
-              {__("Remove")}
-            </DropdownItem>
-          </ActionDropdown>
-        )}
-      </div>
-    </div>
+              disabled={isRemoving}
+              icon={IconTrashCan}
+              aria-label={__("Remove member")}
+            />
+          )}
+        </div>
+      </Td>
+    </Tr>
   );
 }

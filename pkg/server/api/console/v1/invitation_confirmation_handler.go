@@ -16,11 +16,14 @@ package console_v1
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/getprobo/probo/pkg/probo"
-	"github.com/getprobo/probo/pkg/usrmgr"
+	"github.com/getprobo/probo/pkg/auth"
+	"github.com/getprobo/probo/pkg/authz"
+	"github.com/getprobo/probo/pkg/coredata"
+	"github.com/getprobo/probo/pkg/statelesstoken"
 	"go.gearno.de/kit/httpserver"
 )
 
@@ -34,7 +37,7 @@ type (
 	}
 )
 
-func InvitationConfirmationHandler(usrmgrSvc *usrmgr.Service, proboSvc *probo.Service, authCfg AuthConfig) http.HandlerFunc {
+func InvitationConfirmationHandler(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req InvitationConfirmationRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -42,7 +45,32 @@ func InvitationConfirmationHandler(usrmgrSvc *usrmgr.Service, proboSvc *probo.Se
 			return
 		}
 
-		_, err := usrmgrSvc.ConfirmInvitation(r.Context(), req.Token, req.Password)
+		payload, err := statelesstoken.ValidateToken[coredata.InvitationData](
+			authCfg.CookieSecret,
+			authz.TokenTypeOrganizationInvitation,
+			req.Token,
+		)
+		if err != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid invitation token: %w", err))
+			return
+		}
+
+		user, _, err := authSvc.SignUp(r.Context(), payload.Data.Email, req.Password, payload.Data.FullName)
+		if err != nil {
+			var errUserAlreadyExists *auth.ErrUserAlreadyExists
+			if errors.As(err, &errUserAlreadyExists) {
+				user, err = authSvc.GetUserByEmail(r.Context(), payload.Data.Email)
+				if err != nil {
+					httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("failed to load existing user: %w", err))
+					return
+				}
+			} else {
+				httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("failed to create user: %w", err))
+				return
+			}
+		}
+
+		err = authzSvc.AcceptInvitation(r.Context(), req.Token, user.ID)
 		if err != nil {
 			httpserver.RenderError(w, http.StatusInternalServerError, err)
 			return

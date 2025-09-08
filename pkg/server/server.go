@@ -21,6 +21,8 @@ import (
 	"strings"
 
 	"github.com/getprobo/probo/pkg/agents"
+	"github.com/getprobo/probo/pkg/auth"
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/connector"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/probo"
@@ -30,7 +32,6 @@ import (
 	"github.com/getprobo/probo/pkg/server/trust"
 	"github.com/getprobo/probo/pkg/server/web"
 	trust_pkg "github.com/getprobo/probo/pkg/trust"
-	"github.com/getprobo/probo/pkg/usrmgr"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 )
@@ -40,9 +41,10 @@ type Config struct {
 	AllowedOrigins    []string
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
-	Usrmgr            *usrmgr.Service
+	Auth              *auth.Service
+	Authz             *authz.Service
 	Trust             *trust_pkg.Service
-	Auth              api.ConsoleAuthConfig
+	ConsoleAuth       api.ConsoleAuthConfig
 	TrustAuth         api.TrustAuthConfig
 	ConnectorRegistry *connector.ConnectorRegistry
 	Agent             *agents.Agent
@@ -68,9 +70,10 @@ func NewServer(cfg Config) (*Server, error) {
 	apiCfg := api.Config{
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
-		Usrmgr:            cfg.Usrmgr,
-		Trust:             cfg.Trust,
 		Auth:              cfg.Auth,
+		Authz:             cfg.Authz,
+		Trust:             cfg.Trust,
+		ConsoleAuth:       cfg.ConsoleAuth,
 		TrustAuth:         cfg.TrustAuth,
 		ConnectorRegistry: cfg.ConnectorRegistry,
 		SafeRedirect:      cfg.SafeRedirect,

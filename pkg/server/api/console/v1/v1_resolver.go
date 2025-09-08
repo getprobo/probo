@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
@@ -890,6 +891,27 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *types.InvitationConnection) (int, error) {
+	currentUser := UserFromContext(ctx)
+	if currentUser == nil {
+		return 0, fmt.Errorf("no authenticated user")
+	}
+
+	memberships, err := r.authzSvc.GetAllUserOrganizations(ctx, currentUser.ID)
+	if err != nil || len(memberships) == 0 {
+		return 0, fmt.Errorf("user has no organization memberships")
+	}
+
+	orgID := memberships[0].ID
+	count, err := r.authzSvc.CountOrganizationInvitations(ctx, orgID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count invitations: %w", err)
+	}
+
+	return count, nil
+}
+
 // Evidences is the resolver for the evidences field.
 func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.EvidenceOrderBy) (*types.EvidenceConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -1028,6 +1050,27 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *types.MembershipConnection) (int, error) {
+	currentUser := UserFromContext(ctx)
+	if currentUser == nil {
+		return 0, fmt.Errorf("no authenticated user")
+	}
+
+	memberships, err := r.authzSvc.GetAllUserOrganizations(ctx, currentUser.ID)
+	if err != nil || len(memberships) == 0 {
+		return 0, fmt.Errorf("user has no organization memberships")
+	}
+
+	orgID := memberships[0].ID
+	count, err := r.authzSvc.CountOrganizationMemberships(ctx, orgID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count memberships: %w", err)
+	}
+
+	return count, nil
+}
+
 // CreateOrganization is the resolver for the createOrganization field.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error) {
 	prb := r.proboSvc.WithTenant(gid.NewTenantID())
@@ -1042,10 +1085,11 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		return nil, fmt.Errorf("cannot create organization: %w", err)
 	}
 
-	err = r.usrmgrSvc.EnrollUserInOrganization(
+	err = r.authzSvc.AddUserToOrganization(
 		ctx,
 		UserFromContext(ctx).ID,
 		organization.ID,
+		string(authz.RoleMember),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add user to organization: %w", err)
@@ -1324,7 +1368,7 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 
 // ConfirmEmail is the resolver for the confirmEmail field.
 func (r *mutationResolver) ConfirmEmail(ctx context.Context, input types.ConfirmEmailInput) (*types.ConfirmEmailPayload, error) {
-	err := r.usrmgrSvc.ConfirmEmail(ctx, input.Token)
+	err := r.authSvc.ConfirmEmail(ctx, input.Token)
 
 	if err != nil {
 		return nil, err
@@ -1337,44 +1381,70 @@ func (r *mutationResolver) ConfirmEmail(ctx context.Context, input types.Confirm
 func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error) {
 	user := UserFromContext(ctx)
 
-	organizations, err := r.usrmgrSvc.ListOrganizationsForUserID(ctx, user.ID)
+	organizations, err := r.authzSvc.GetAllUserOrganizations(ctx, user.ID)
 	if err != nil {
 		panic(fmt.Errorf("failed to list organizations for user: %w", err))
 	}
 
 	for _, organization := range organizations {
 		if organization.ID == input.OrganizationID {
-			createPeople := input.CreatePeople
-
-			err := r.usrmgrSvc.InviteUser(ctx, input.OrganizationID, input.FullName, input.Email, createPeople)
+			invitation, err := r.authzSvc.InviteUserToOrganization(ctx, input.OrganizationID, input.Email, input.FullName, string(authz.RoleMember))
 			if err != nil {
 				return nil, err
 			}
 
-			return &types.InviteUserPayload{Success: true}, nil
+			if input.CreatePeople {
+				prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+				_, err := prb.Peoples.Create(ctx, probo.CreatePeopleRequest{
+					OrganizationID:           input.OrganizationID,
+					FullName:                 input.FullName,
+					PrimaryEmailAddress:      input.Email,
+					AdditionalEmailAddresses: []string{},
+					Kind:                     coredata.PeopleKindEmployee,
+				})
+				if err != nil {
+					return nil, fmt.Errorf("failed to create people record: %w", err)
+				}
+			}
+
+			return &types.InviteUserPayload{
+				InvitationEdge: types.NewInvitationEdge(invitation, coredata.InvitationOrderFieldCreatedAt),
+			}, nil
 		}
 	}
 
 	return nil, fmt.Errorf("organization not found")
 }
 
-// RemoveUser is the resolver for the removeUser field.
-func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error) {
+// DeleteInvitation is the resolver for the deleteInvitation field.
+func (r *mutationResolver) DeleteInvitation(ctx context.Context, input types.DeleteInvitationInput) (*types.DeleteInvitationPayload, error) {
+	err := r.authzSvc.DeleteInvitation(ctx, input.InvitationID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.DeleteInvitationPayload{
+		DeletedInvitationID: input.InvitationID,
+	}, nil
+}
+
+// RemoveMember is the resolver for the removeMember field.
+func (r *mutationResolver) RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error) {
 	user := UserFromContext(ctx)
 
-	organizations, err := r.usrmgrSvc.ListOrganizationsForUserID(ctx, user.ID)
+	organizations, err := r.authzSvc.GetAllUserOrganizations(ctx, user.ID)
 	if err != nil {
 		panic(fmt.Errorf("failed to list organizations for user: %w", err))
 	}
 
 	for _, organization := range organizations {
 		if organization.ID == input.OrganizationID {
-			err := r.usrmgrSvc.RemoveUser(ctx, input.OrganizationID, input.UserID)
+			err := r.authzSvc.RemoveMemberFromOrganization(ctx, input.OrganizationID, input.MemberID)
 			if err != nil {
 				return nil, err
 			}
 
-			return &types.RemoveUserPayload{Success: true}, nil
+			return &types.RemoveMemberPayload{Success: true}, nil
 		}
 	}
 
@@ -3526,14 +3596,14 @@ func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types
 	return prb.Organizations.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
 }
 
-// Users is the resolver for the users field.
-func (r *organizationResolver) Users(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.UserOrderBy) (*types.UserConnection, error) {
-	pageOrderBy := page.OrderBy[coredata.UserOrderField]{
-		Field:     coredata.UserOrderFieldCreatedAt,
+// Memberships is the resolver for the memberships field.
+func (r *organizationResolver) Memberships(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error) {
+	pageOrderBy := page.OrderBy[coredata.MembershipOrderField]{
+		Field:     coredata.MembershipOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
 	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.UserOrderField]{
+		pageOrderBy = page.OrderBy[coredata.MembershipOrderField]{
 			Field:     orderBy.Field,
 			Direction: orderBy.Direction,
 		}
@@ -3541,12 +3611,35 @@ func (r *organizationResolver) Users(ctx context.Context, obj *types.Organizatio
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.usrmgrSvc.ListUsersForTenant(ctx, obj.ID, cursor)
+	page, err := r.authzSvc.GetAllOrganizationMemberships(ctx, obj.ID, cursor)
 	if err != nil {
-		panic(fmt.Errorf("cannot list users: %w", err))
+		panic(fmt.Errorf("cannot list memberships: %w", err))
 	}
 
-	return types.NewUserConnection(page), nil
+	return types.NewMembershipConnection(page), nil
+}
+
+// Invitations is the resolver for the invitations field.
+func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder) (*types.InvitationConnection, error) {
+	pageOrderBy := page.OrderBy[coredata.InvitationOrderField]{
+		Field:     coredata.InvitationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.InvitationOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := r.authzSvc.GetAllOrganizationInvitations(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list invitations: %w", err))
+	}
+
+	return types.NewInvitationConnection(page), nil
 }
 
 // Connectors is the resolver for the connectors field.
@@ -4866,6 +4959,27 @@ func (r *userResolver) People(ctx context.Context, obj *types.User, organization
 	return types.NewPeople(people), nil
 }
 
+// TotalCount is the resolver for the totalCount field.
+func (r *userConnectionResolver) TotalCount(ctx context.Context, obj *types.UserConnection) (int, error) {
+	currentUser := UserFromContext(ctx)
+	if currentUser == nil {
+		return 0, fmt.Errorf("no authenticated user")
+	}
+
+	memberships, err := r.authzSvc.GetAllUserOrganizations(ctx, currentUser.ID)
+	if err != nil || len(memberships) == 0 {
+		return 0, fmt.Errorf("user has no organization memberships")
+	}
+
+	orgID := memberships[0].ID
+	count, err := r.authzSvc.CountOrganizationMemberships(ctx, orgID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count memberships: %w", err)
+	}
+
+	return count, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*types.Organization, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -5229,7 +5343,7 @@ func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, f
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	organizations, err := r.usrmgrSvc.ListOrganizationsForUserIDPaginated(ctx, user.ID, cursor)
+	organizations, err := r.authzSvc.GetUserOrganizations(ctx, user.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("failed to list organizations for user: %w", err))
 	}
@@ -5318,12 +5432,22 @@ func (r *Resolver) FrameworkConnection() schema.FrameworkConnectionResolver {
 	return &frameworkConnectionResolver{r}
 }
 
+// InvitationConnection returns schema.InvitationConnectionResolver implementation.
+func (r *Resolver) InvitationConnection() schema.InvitationConnectionResolver {
+	return &invitationConnectionResolver{r}
+}
+
 // Measure returns schema.MeasureResolver implementation.
 func (r *Resolver) Measure() schema.MeasureResolver { return &measureResolver{r} }
 
 // MeasureConnection returns schema.MeasureConnectionResolver implementation.
 func (r *Resolver) MeasureConnection() schema.MeasureConnectionResolver {
 	return &measureConnectionResolver{r}
+}
+
+// MembershipConnection returns schema.MembershipConnectionResolver implementation.
+func (r *Resolver) MembershipConnection() schema.MembershipConnectionResolver {
+	return &membershipConnectionResolver{r}
 }
 
 // Mutation returns schema.MutationResolver implementation.
@@ -5420,6 +5544,9 @@ func (r *Resolver) TrustCenterReferenceConnection() schema.TrustCenterReferenceC
 // User returns schema.UserResolver implementation.
 func (r *Resolver) User() schema.UserResolver { return &userResolver{r} }
 
+// UserConnection returns schema.UserConnectionResolver implementation.
+func (r *Resolver) UserConnection() schema.UserConnectionResolver { return &userConnectionResolver{r} }
+
 // Vendor returns schema.VendorResolver implementation.
 func (r *Resolver) Vendor() schema.VendorResolver { return &vendorResolver{r} }
 
@@ -5476,8 +5603,10 @@ type evidenceConnectionResolver struct{ *Resolver }
 type fileResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
 type frameworkConnectionResolver struct{ *Resolver }
+type invitationConnectionResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }
 type measureConnectionResolver struct{ *Resolver }
+type membershipConnectionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type nonconformityResolver struct{ *Resolver }
 type nonconformityConnectionResolver struct{ *Resolver }
@@ -5502,6 +5631,7 @@ type trustCenterDocumentAccessConnectionResolver struct{ *Resolver }
 type trustCenterReferenceResolver struct{ *Resolver }
 type trustCenterReferenceConnectionResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
+type userConnectionResolver struct{ *Resolver }
 type vendorResolver struct{ *Resolver }
 type vendorBusinessAssociateAgreementResolver struct{ *Resolver }
 type vendorComplianceReportResolver struct{ *Resolver }

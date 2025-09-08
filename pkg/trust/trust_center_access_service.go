@@ -24,14 +24,14 @@ import (
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/usrmgr"
+	"github.com/getprobo/probo/pkg/auth"
 	"go.gearno.de/kit/pg"
 )
 
 type (
 	TrustCenterAccessService struct {
 		svc    *TenantService
-		usrmgr *usrmgr.Service
+		auth *auth.Service
 	}
 
 	RequestTrustCenterAccessRequest struct {
