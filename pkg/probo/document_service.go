@@ -800,7 +800,7 @@ func (s *DocumentService) DeleteDraft(
 	)
 }
 
-func (s *DocumentService) Delete(
+func (s *DocumentService) SoftDelete(
 	ctx context.Context,
 	documentID gid.GID,
 ) error {
@@ -809,7 +809,7 @@ func (s *DocumentService) Delete(
 	return s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return document.Delete(ctx, conn, s.svc.scope)
+			return document.SoftDelete(ctx, conn, s.svc.scope)
 		},
 	)
 }

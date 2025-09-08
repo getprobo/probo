@@ -2484,9 +2484,9 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 func (r *mutationResolver) DeleteDocument(ctx context.Context, input types.DeleteDocumentInput) (*types.DeleteDocumentPayload, error) {
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
-	err := prb.Documents.Delete(ctx, input.DocumentID)
+	err := prb.Documents.SoftDelete(ctx, input.DocumentID)
 	if err != nil {
-		panic(fmt.Errorf("cannot delete document: %w", err))
+		panic(fmt.Errorf("cannot soft delete document: %w", err))
 	}
 
 	return &types.DeleteDocumentPayload{

@@ -76,6 +76,7 @@ FROM
     documents
 WHERE
     %s
+    AND deleted_at IS NULL
     AND id = @document_id
 LIMIT 1;
 `
@@ -114,6 +115,7 @@ FROM
     documents
 WHERE
     %s
+    AND deleted_at IS NULL
     AND organization_id = @organization_id
     AND %s
 `
@@ -156,6 +158,7 @@ FROM
     documents
 WHERE
     %s
+    AND deleted_at IS NULL
     AND organization_id = @organization_id
     AND %s
     AND %s
@@ -232,18 +235,18 @@ VALUES (
 	return err
 }
 
-func (p Document) Delete(
+func (p Document) SoftDelete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
 ) error {
 	q := `
-DELETE FROM documents WHERE %s AND id = @document_id
+UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = @document_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"document_id": p.ID}
+	args := pgx.StrictNamedArgs{"document_id": p.ID, "deleted_at": time.Now()}
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
@@ -284,8 +287,10 @@ SET
 	document_type = @document_type,
 	show_on_trust_center = @show_on_trust_center,
 	updated_at = @updated_at
-WHERE %s
-    AND id = @document_id
+WHERE
+	%s
+	AND id = @document_id
+	AND deleted_at IS NULL
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
@@ -321,7 +326,8 @@ WITH plcs AS (
 		p.id,
 		p.tenant_id,
 		p.search_vector,
-		p.show_on_trust_center
+		p.show_on_trust_center,
+		p.deleted_at
 	FROM
 		documents p
 	INNER JOIN
@@ -333,7 +339,9 @@ SELECT
 	COUNT(id)
 FROM
 	plcs
-WHERE %s
+WHERE
+	%s
+	AND deleted_at IS NULL
 	AND %s
 `
 
@@ -373,7 +381,8 @@ WITH plcs AS (
 		p.current_published_version,
 		p.show_on_trust_center,
 		p.created_at,
-		p.updated_at
+		p.updated_at,
+		p.deleted_at
 	FROM
 		documents p
 	INNER JOIN
@@ -393,7 +402,9 @@ SELECT
 	updated_at
 FROM
 	plcs
-WHERE %s
+WHERE
+	%s
+	AND deleted_at IS NULL
 	AND %s
 	AND %s
 `
@@ -432,7 +443,8 @@ WITH plcs AS (
 		p.id,
 		p.tenant_id,
 		p.search_vector,
-		p.show_on_trust_center
+		p.show_on_trust_center,
+		p.deleted_at
 	FROM
 		documents p
 	INNER JOIN
@@ -444,7 +456,9 @@ SELECT
 	COUNT(id)
 FROM
 	plcs
-WHERE %s
+WHERE
+	%s
+	AND deleted_at IS NULL
 	AND %s
 `
 
@@ -484,7 +498,8 @@ WITH plcs AS (
 		p.show_on_trust_center,
 		p.created_at,
 		p.updated_at,
-		p.search_vector
+		p.search_vector,
+		p.deleted_at
 	FROM
 		documents p
 	INNER JOIN
@@ -504,7 +519,9 @@ SELECT
 	updated_at
 FROM
 	plcs
-WHERE %s
+WHERE
+	%s
+	AND deleted_at IS NULL
 	AND %s
 	AND %s
 `
