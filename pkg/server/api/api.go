@@ -20,6 +20,7 @@ import (
 
 	"time"
 
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/connector"
 	"github.com/getprobo/probo/pkg/probo"
 	"github.com/getprobo/probo/pkg/saferedirect"
@@ -56,6 +57,7 @@ type (
 		AllowedOrigins    []string
 		Probo             *probo.Service
 		Usrmgr            *usrmgr.Service
+		Authz             *authz.Service
 		Trust             *trust.Service
 		Auth              ConsoleAuthConfig
 		TrustAuth         TrustAuthConfig
@@ -146,6 +148,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			s.cfg.Logger.Named("console.v1"),
 			s.cfg.Probo,
 			s.cfg.Usrmgr,
+			s.cfg.Authz,
 			console_v1.AuthConfig{
 				CookieName:      s.cfg.Auth.CookieName,
 				CookieDomain:    s.cfg.Auth.CookieDomain,

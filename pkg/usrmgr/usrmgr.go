@@ -25,12 +25,13 @@ import (
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/passwdhash"
 	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/statelesstoken"
 	"go.gearno.de/kit/pg"
 )
 
 type (
+	// Service handles ONLY user authentication and management
+	// No organization-related logic - that belongs to authz service
 	Service struct {
 		pg                      *pg.Client
 		hp                      *passwdhash.Profile
@@ -80,12 +81,6 @@ type (
 		Email  string  `json:"email"`
 	}
 
-	InvitationData struct {
-		OrganizationID gid.GID `json:"organization_id"`
-		Email          string  `json:"email"`
-		FullName       string  `json:"full_name"`
-	}
-
 	PasswordResetData struct {
 		Email string `json:"email"`
 	}
@@ -93,9 +88,8 @@ type (
 
 // Token types
 const (
-	TokenTypeEmailConfirmation      = "email_confirmation"
-	TokenTypeOrganizationInvitation = "organization_invitation"
-	TokenTypePasswordReset          = "password_reset"
+	TokenTypeEmailConfirmation = "email_confirmation"
+	TokenTypePasswordReset     = "password_reset"
 )
 
 var (
@@ -103,14 +97,6 @@ var (
 	signupEmailTemplate = `
 	Thanks joining Probo!
 	Please confirm your email address by clicking the link below[1]
-
-	[1] %s
-	`
-
-	invitationEmailSubject  = "Join Probo"
-	invitationEmailTemplate = `
-	You have been invited to join Probo!
-	Please click the link below to sign up[1]
 
 	[1] %s
 	`
@@ -181,6 +167,7 @@ func NewService(
 	}, nil
 }
 
+// ForgetPassword generates and sends a password reset email
 func (s Service) ForgetPassword(
 	ctx context.Context,
 	email string,
@@ -206,53 +193,37 @@ func (s Service) ForgetPassword(
 		}.Encode(),
 	}
 
-	user := &coredata.User{}
+	passwordResetEmail := coredata.NewEmail(
+		"",
+		email,
+		passwordResetEmailSubject,
+		fmt.Sprintf(passwordResetEmailTemplate, resetPasswordUrl.String()),
+	)
 
-	err = s.pg.WithTx(
+	return s.pg.WithConn(
 		ctx,
-		func(tx pg.Conn) error {
-			if err := user.LoadByEmail(ctx, tx, email); err != nil {
-				var errUserNotFound *coredata.ErrUserNotFound
-
-				if errors.As(err, &errUserNotFound) {
-					// We don't want to leak information about existing emails
-					// Return success even if the email doesn't exist
-					return nil
-				}
-				return fmt.Errorf("cannot load user by %q email: %w", email, err)
-			}
-
-			resetPasswordEmail := coredata.NewEmail(
-				user.FullName,
-				user.EmailAddress,
-				passwordResetEmailSubject,
-				fmt.Sprintf(passwordResetEmailTemplate, resetPasswordUrl.String()),
-			)
-
-			if err := resetPasswordEmail.Insert(ctx, tx); err != nil {
+		func(conn pg.Conn) error {
+			if err := passwordResetEmail.Insert(ctx, conn); err != nil {
 				return fmt.Errorf("cannot insert email: %w", err)
 			}
-
 			return nil
 		},
 	)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
+// SignUp creates a new user account
 func (s Service) SignUp(
 	ctx context.Context,
-	email, password, fullName string,
+	emailAddress string,
+	password string,
+	fullName string,
 ) (*coredata.User, *coredata.Session, error) {
 	if s.disableSignup {
 		return nil, nil, &ErrSignupDisabled{}
 	}
 
-	if _, err := mail.ParseAddress(email); err != nil {
-		return nil, nil, &ErrInvalidEmail{email}
+	if _, err := mail.ParseAddress(emailAddress); err != nil {
+		return nil, nil, &ErrInvalidEmail{emailAddress}
 	}
 
 	if len(password) < 8 || len(password) > 128 {
@@ -270,58 +241,60 @@ func (s Service) SignUp(
 
 	now := time.Now()
 	user := &coredata.User{
-		ID:             gid.New(gid.NilTenant, coredata.UserEntityType),
-		EmailAddress:   email,
-		HashedPassword: hashedPassword,
-		FullName:       fullName,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:                   gid.New(gid.NilTenant, coredata.UserEntityType),
+		EmailAddress:         emailAddress,
+		HashedPassword:       hashedPassword,
+		EmailAddressVerified: false,
+		FullName:             fullName,
+		CreatedAt:            now,
+		UpdatedAt:            now,
 	}
 
 	session := &coredata.Session{
 		ID:        gid.New(gid.NilTenant, coredata.SessionEntityType),
 		UserID:    user.ID,
-		ExpiredAt: now.Add(24 * time.Hour),
+		Data:      coredata.SessionData{},
+		ExpiredAt: now.Add(24 * time.Hour * 7), // 7 days,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-
-	confirmationToken, err := statelesstoken.NewToken(
-		s.tokenSecret,
-		TokenTypeEmailConfirmation,
-		1*time.Hour,
-		EmailConfirmationData{UserID: user.ID, Email: user.EmailAddress},
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot generate confirmation token: %w", err)
-	}
-
-	confirmationEmailUrl := url.URL{
-		Scheme: "https",
-		Host:   s.hostname,
-		Path:   "/auth/confirm-email",
-		RawQuery: url.Values{
-			"token": []string{confirmationToken},
-		}.Encode(),
-	}
-
-	confirmationEmail := coredata.NewEmail(
-		user.FullName,
-		user.EmailAddress,
-		signupEmailSubject,
-		fmt.Sprintf(signupEmailTemplate, confirmationEmailUrl.String()),
-	)
 
 	err = s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
 			if err := user.Insert(ctx, tx); err != nil {
+				var errUserAlreadyExists *coredata.ErrUserAlreadyExists
+				if errors.As(err, &errUserAlreadyExists) {
+					return &ErrUserAlreadyExists{errUserAlreadyExists.Error()}
+				}
 				return fmt.Errorf("cannot insert user: %w", err)
 			}
 
-			if err := session.Insert(ctx, tx); err != nil {
-				return fmt.Errorf("cannot insert session: %w", err)
+			confirmationToken, err := statelesstoken.NewToken(
+				s.tokenSecret,
+				TokenTypeEmailConfirmation,
+				24*time.Hour,
+				EmailConfirmationData{UserID: user.ID, Email: user.EmailAddress},
+			)
+			if err != nil {
+				return fmt.Errorf("cannot generate confirmation token: %w", err)
 			}
+
+			confirmationUrl := url.URL{
+				Scheme: "https",
+				Host:   s.hostname,
+				Path:   "/auth/confirm-email",
+				RawQuery: url.Values{
+					"token": []string{confirmationToken},
+				}.Encode(),
+			}
+
+			confirmationEmail := coredata.NewEmail(
+				user.FullName,
+				user.EmailAddress,
+				signupEmailSubject,
+				fmt.Sprintf(signupEmailTemplate, confirmationUrl.String()),
+			)
 
 			if err := confirmationEmail.Insert(ctx, tx); err != nil {
 				return fmt.Errorf("cannot insert email: %w", err)
@@ -338,49 +311,47 @@ func (s Service) SignUp(
 	return user, session, nil
 }
 
+// SignIn authenticates a user and creates a session
 func (s Service) SignIn(
 	ctx context.Context,
-	email, password string,
-) (*coredata.User, *coredata.Session, error) {
-	now := time.Now()
-	user := &coredata.User{}
-	session := &coredata.Session{
-		ID:        gid.New(gid.NilTenant, coredata.SessionEntityType),
-		UserID:    gid.Nil,
-		ExpiredAt: now.Add(24 * time.Hour),
-		CreatedAt: now,
-		UpdatedAt: now,
+	emailAddress string,
+	password string,
+) (*coredata.Session, *coredata.User, error) {
+	if _, err := mail.ParseAddress(emailAddress); err != nil {
+		return nil, nil, &ErrInvalidCredentials{"invalid email or password"}
 	}
 
-	if len(password) < 8 || len(password) > 128 {
-		return nil, nil, &ErrInvalidPassword{minLength: 8, maxLength: 128}
-	}
+	user := &coredata.User{}
+	session := &coredata.Session{}
 
 	err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			if err := user.LoadByEmail(ctx, tx, email); err != nil {
-				_, _ = s.hp.ComparePasswordAndHash([]byte("this-compare-should-never-succeed"), []byte("it-just-to-prevent-timing-attack"))
-
+			if err := user.LoadByEmail(ctx, tx, emailAddress); err != nil {
 				var errUserNotFound *coredata.ErrUserNotFound
-
 				if errors.As(err, &errUserNotFound) {
-					return &ErrInvalidCredentials{message: "invalid email or password"}
+					return &ErrInvalidCredentials{"invalid email or password"}
 				}
-
 				return fmt.Errorf("cannot load user by email: %w", err)
 			}
 
-			ok, err := s.hp.ComparePasswordAndHash([]byte(password), user.HashedPassword)
+			match, err := s.hp.ComparePasswordAndHash([]byte(password), user.HashedPassword)
 			if err != nil {
-				return fmt.Errorf("cannot compare password: %w", err)
+				return fmt.Errorf("cannot verify password: %w", err)
+			}
+			if !match {
+				return &ErrInvalidCredentials{"invalid email or password"}
 			}
 
-			if !ok {
-				return &ErrInvalidCredentials{message: "invalid email or password"}
+			now := time.Now()
+			session = &coredata.Session{
+				ID:        gid.New(gid.NilTenant, coredata.SessionEntityType),
+				UserID:    user.ID,
+				Data:      coredata.SessionData{},
+				ExpiredAt: now.Add(24 * time.Hour * 7), // 7 days
+				CreatedAt: now,
+				UpdatedAt: now,
 			}
-
-			session.UserID = user.ID
 
 			if err := session.Insert(ctx, tx); err != nil {
 				return fmt.Errorf("cannot insert session: %w", err)
@@ -394,18 +365,20 @@ func (s Service) SignIn(
 		return nil, nil, err
 	}
 
-	return user, session, nil
+	return session, user, nil
 }
 
-func (s Service) SignOut(
-	ctx context.Context,
-	sessionID gid.GID,
-) error {
+// SignOut invalidates a session
+func (s Service) SignOut(ctx context.Context, sessionID gid.GID) error {
 	return s.pg.WithConn(
 		ctx,
-		func(tx pg.Conn) error {
-			err := coredata.DeleteSession(ctx, tx, sessionID)
-			if err != nil {
+		func(conn pg.Conn) error {
+			session := &coredata.Session{}
+			if err := session.LoadByID(ctx, conn, sessionID); err != nil {
+				return &ErrSessionNotFound{"session not found"}
+			}
+
+			if err := coredata.DeleteSession(ctx, conn, sessionID); err != nil {
 				return fmt.Errorf("cannot delete session: %w", err)
 			}
 
@@ -414,24 +387,21 @@ func (s Service) SignOut(
 	)
 }
 
-func (s Service) GetSession(
-	ctx context.Context,
-	sessionID gid.GID,
-) (*coredata.Session, error) {
+// GetSession retrieves a session by ID
+func (s Service) GetSession(ctx context.Context, sessionID gid.GID) (*coredata.Session, error) {
 	session := &coredata.Session{}
 
-	err := s.pg.WithTx(
+	err := s.pg.WithConn(
 		ctx,
-		func(tx pg.Conn) error {
-			if err := session.LoadByID(ctx, tx, sessionID); err != nil {
-				return &ErrSessionNotFound{message: "session not found"}
+		func(conn pg.Conn) error {
+			if err := session.LoadByID(ctx, conn, sessionID); err != nil {
+				return &ErrSessionNotFound{"session not found"}
 			}
 
 			if time.Now().After(session.ExpiredAt) {
-				if err := coredata.DeleteSession(ctx, tx, sessionID); err != nil {
-					return fmt.Errorf("cannot delete expired session: %w", err)
-				}
-				return &ErrSessionExpired{message: "session expired"}
+				// Clean up expired session
+				_ = coredata.DeleteSession(ctx, conn, sessionID)
+				return &ErrSessionExpired{"session expired"}
 			}
 
 			return nil
@@ -445,17 +415,15 @@ func (s Service) GetSession(
 	return session, nil
 }
 
-func (s Service) GetUserByID(
-	ctx context.Context,
-	userID gid.GID,
-) (*coredata.User, error) {
+// GetUserByID retrieves a user by ID
+func (s Service) GetUserByID(ctx context.Context, userID gid.GID) (*coredata.User, error) {
 	user := &coredata.User{}
 
-	err := s.pg.WithTx(
+	err := s.pg.WithConn(
 		ctx,
-		func(tx pg.Conn) error {
-			if err := user.LoadByID(ctx, tx, userID); err != nil {
-				return fmt.Errorf("user not found: %w", err)
+		func(conn pg.Conn) error {
+			if err := user.LoadByID(ctx, conn, userID); err != nil {
+				return fmt.Errorf("cannot load user by ID: %w", err)
 			}
 			return nil
 		},
@@ -468,10 +436,8 @@ func (s Service) GetUserByID(
 	return user, nil
 }
 
-func (s Service) GetUserBySession(
-	ctx context.Context,
-	sessionID gid.GID,
-) (*coredata.User, error) {
+// GetUserBySession retrieves a user by session ID
+func (s Service) GetUserBySession(ctx context.Context, sessionID gid.GID) (*coredata.User, error) {
 	session, err := s.GetSession(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -480,28 +446,26 @@ func (s Service) GetUserBySession(
 	return s.GetUserByID(ctx, session.UserID)
 }
 
-func (s Service) ListOrganizationsForUserID(
-	ctx context.Context,
-	userID gid.GID,
-) (coredata.Organizations, error) {
+// UpdateSession extends a session's expiration time
+func (s Service) UpdateSession(ctx context.Context, sessionID gid.GID) (*coredata.Session, error) {
+	session := &coredata.Session{}
 
-	uos := coredata.UserOrganizations{}
-	organizations := []*coredata.Organization{}
-
-	err := s.pg.WithConn(
+	err := s.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := uos.ForUserID(ctx, conn, userID); err != nil {
-				return fmt.Errorf("cannot list user organizations: %w", err)
+		func(tx pg.Conn) error {
+			if err := session.LoadByID(ctx, tx, sessionID); err != nil {
+				return &ErrSessionNotFound{"session not found"}
 			}
 
-			for _, uo := range uos {
-				scope := coredata.NewScope(uo.OrganizationID.TenantID())
-				organization := &coredata.Organization{}
-				if err := organization.LoadByID(ctx, conn, scope, uo.OrganizationID); err != nil {
-					return fmt.Errorf("cannot load organization by id: %w", err)
-				}
-				organizations = append(organizations, organization)
+			if time.Now().After(session.ExpiredAt) {
+				return &ErrSessionExpired{"session expired"}
+			}
+
+			now := time.Now()
+			session.ExpiredAt = now.Add(24 * time.Hour * 7) // Extend by 7 days
+			session.UpdatedAt = now
+			if err := session.Update(ctx, tx); err != nil {
+				return fmt.Errorf("cannot update session: %w", err)
 			}
 
 			return nil
@@ -512,91 +476,31 @@ func (s Service) ListOrganizationsForUserID(
 		return nil, err
 	}
 
-	return organizations, nil
+	return session, nil
 }
 
-func (s Service) ListTenantsForUserID(
-	ctx context.Context,
-	userID gid.GID,
-) ([]gid.TenantID, error) {
-
-	uos := coredata.UserOrganizations{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(tx pg.Conn) error {
-			return uos.ForUserID(ctx, tx, userID)
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	tenantIDs := make([]gid.TenantID, len(uos))
-	for _, uo := range uos {
-		tenantIDs = append(tenantIDs, uo.OrganizationID.TenantID())
-	}
-
-	return tenantIDs, nil
-}
-
-func (s Service) EnrollUserInOrganization(
-	ctx context.Context,
-	userID gid.GID,
-	organizationID gid.GID,
-) error {
-
-	uo := coredata.UserOrganization{
-		UserID:         userID,
-		OrganizationID: organizationID,
-		CreatedAt:      time.Now(),
-	}
-
-	return s.pg.WithConn(
-		ctx,
-		func(tx pg.Conn) error {
-			return uo.Insert(ctx, tx)
-		},
-	)
-}
-
-func (s Service) UpdateSession(
-	ctx context.Context,
-	session *coredata.Session,
-) error {
-	session.UpdatedAt = time.Now()
-	session.ExpiredAt = time.Now().Add(24 * time.Hour)
-
-	return s.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			return session.Update(ctx, tx)
-		},
-	)
-}
-
+// ConfirmEmail confirms a user's email address
 func (s Service) ConfirmEmail(ctx context.Context, tokenString string) error {
-	token, err := statelesstoken.ValidateToken[EmailConfirmationData](
+	payload, err := statelesstoken.ValidateToken[EmailConfirmationData](
 		s.tokenSecret,
 		TokenTypeEmailConfirmation,
 		tokenString,
 	)
 	if err != nil {
-		return fmt.Errorf("cannot validate email confirmation token: %w", err)
+		return &ErrInvalidTokenType{"invalid confirmation token"}
 	}
+	emailConfirmationData := payload.Data
 
 	return s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
 			user := &coredata.User{}
-
-			if err := user.LoadByID(ctx, tx, token.Data.UserID); err != nil {
-				return fmt.Errorf("user not found: %w", err)
+			if err := user.LoadByID(ctx, tx, emailConfirmationData.UserID); err != nil {
+				return fmt.Errorf("cannot load user: %w", err)
 			}
 
-			if user.EmailAddress != token.Data.Email {
-				return fmt.Errorf("token email does not match user email")
+			if user.EmailAddressVerified {
+				return nil // Already verified
 			}
 
 			if err := user.UpdateEmailVerification(ctx, tx, true); err != nil {
@@ -608,277 +512,17 @@ func (s Service) ConfirmEmail(ctx context.Context, tokenString string) error {
 	)
 }
 
-func (s Service) ListUsersForTenant(
-	ctx context.Context,
-	organizationID gid.GID,
-	cursor *page.Cursor[coredata.UserOrderField],
-) (*page.Page[*coredata.User, coredata.UserOrderField], error) {
-	users := coredata.Users{}
-
-	err := s.pg.WithConn(
-		ctx,
-		func(tx pg.Conn) error {
-			return users.LoadByOrganizationID(ctx, tx, organizationID, cursor)
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return page.NewPage(users, cursor), nil
-}
-
-func (s Service) InviteUser(
-	ctx context.Context,
-	organizationID gid.GID,
-	fullName string,
-	emailAddress string,
-) error {
-	if _, err := mail.ParseAddress(emailAddress); err != nil {
-		return &ErrInvalidEmail{emailAddress}
-	}
-	if fullName == "" {
-		return &ErrInvalidFullName{fullName}
-	}
-
-	var userExists bool
-	err := s.pg.WithConn(
-		ctx,
-		func(tx pg.Conn) error {
-			user := &coredata.User{}
-
-			if err := user.LoadByEmail(ctx, tx, emailAddress); err != nil {
-				var errUserNotFound *coredata.ErrUserNotFound
-
-				if errors.As(err, &errUserNotFound) {
-					userExists = false
-					return nil
-				}
-
-				return fmt.Errorf("cannot load user by email: %w", err)
-			}
-
-			userExists = true
-			uo := coredata.UserOrganization{
-				UserID:         user.ID,
-				OrganizationID: organizationID,
-				CreatedAt:      time.Now(),
-			}
-
-			if err := uo.Insert(ctx, tx); err != nil {
-				return fmt.Errorf("cannot insert user organization: %w", err)
-			}
-
-			people := &coredata.People{}
-			scope := coredata.NewScope(organizationID.TenantID())
-			if err := people.LoadByEmail(ctx, tx, scope, emailAddress); err != nil {
-				var errPeopleNotFound *coredata.ErrPeopleNotFound
-
-				if errors.As(err, &errPeopleNotFound) {
-					people = &coredata.People{
-						ID:                       gid.New(organizationID.TenantID(), coredata.PeopleEntityType),
-						OrganizationID:           organizationID,
-						UserID:                   &user.ID,
-						FullName:                 fullName,
-						PrimaryEmailAddress:      emailAddress,
-						Kind:                     coredata.PeopleKindContractor,
-						AdditionalEmailAddresses: []string{},
-						CreatedAt:                time.Now(),
-						UpdatedAt:                time.Now(),
-					}
-
-					if err := people.Insert(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot insert people: %w", err)
-					}
-
-					return nil
-				}
-
-				return fmt.Errorf("cannot load people by email: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return err
-	}
-
-	if userExists {
-		return nil
-	}
-
-	confirmationToken, err := statelesstoken.NewToken(
-		s.tokenSecret,
-		TokenTypeOrganizationInvitation,
-		s.invitationTokenValidity,
-		InvitationData{OrganizationID: organizationID, Email: emailAddress, FullName: fullName},
-	)
-	if err != nil {
-		return fmt.Errorf("cannot generate confirmation token: %w", err)
-	}
-
-	confirmationInvitationUrl := url.URL{
-		Scheme: "https",
-		Host:   s.hostname,
-		Path:   "/auth/confirm-invitation",
-		RawQuery: url.Values{
-			"token": []string{confirmationToken},
-		}.Encode(),
-	}
-
-	confirmationEmail := coredata.NewEmail(
-		fullName,
-		emailAddress,
-		invitationEmailSubject,
-		fmt.Sprintf(invitationEmailTemplate, confirmationInvitationUrl.String()),
-	)
-
-	return s.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			if err := confirmationEmail.Insert(ctx, conn); err != nil {
-				return fmt.Errorf("cannot insert email: %w", err)
-			}
-
-			return nil
-		},
-	)
-}
-
-func (s Service) ConfirmInvitation(ctx context.Context, tokenString string, password string) (*coredata.User, error) {
-	token, err := statelesstoken.ValidateToken[InvitationData](
-		s.tokenSecret,
-		TokenTypeOrganizationInvitation,
-		tokenString,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot validate organization invitation token: %w", err)
-	}
-
-	if len(password) < 8 || len(password) > 128 {
-		return nil, &ErrInvalidPassword{minLength: 8, maxLength: 128}
-	}
-
-	now := time.Now()
-
-	hashedPassword, err := s.hp.HashPassword([]byte(password))
-	if err != nil {
-		return nil, fmt.Errorf("cannot hash password: %w", err)
-	}
-
-	user := &coredata.User{}
-
-	err = s.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-
-			if err := user.LoadByEmail(ctx, tx, token.Data.Email); err != nil {
-				var errUserNotFound *coredata.ErrUserNotFound
-
-				if errors.As(err, &errUserNotFound) {
-					user = &coredata.User{
-						ID:                   gid.New(gid.NilTenant, coredata.UserEntityType),
-						EmailAddress:         token.Data.Email,
-						HashedPassword:       hashedPassword,
-						EmailAddressVerified: true,
-						FullName:             token.Data.FullName,
-						CreatedAt:            now,
-						UpdatedAt:            now,
-					}
-
-					if err := user.Insert(ctx, tx); err != nil {
-						return fmt.Errorf("cannot insert user: %w", err)
-					}
-				}
-			}
-
-			uo := coredata.UserOrganization{
-				UserID:         user.ID,
-				OrganizationID: token.Data.OrganizationID,
-				CreatedAt:      now,
-			}
-
-			if err := uo.Insert(ctx, tx); err != nil {
-				return fmt.Errorf("cannot insert user organization: %w", err)
-			}
-
-			people := &coredata.People{}
-			scope := coredata.NewScope(token.Data.OrganizationID.TenantID())
-
-			if err := people.LoadByEmail(ctx, tx, scope, token.Data.Email); err != nil {
-				var errPeopleNotFound *coredata.ErrPeopleNotFound
-
-				if errors.As(err, &errPeopleNotFound) {
-					peopleID := gid.New(token.Data.OrganizationID.TenantID(), coredata.PeopleEntityType)
-					people = &coredata.People{
-						ID:                       peopleID,
-						OrganizationID:           token.Data.OrganizationID,
-						UserID:                   &user.ID,
-						FullName:                 token.Data.FullName,
-						PrimaryEmailAddress:      token.Data.Email,
-						Kind:                     coredata.PeopleKindEmployee,
-						AdditionalEmailAddresses: []string{},
-						CreatedAt:                now,
-						UpdatedAt:                now,
-					}
-
-					if err := people.Insert(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot insert people: %w", err)
-					}
-				} else {
-					return fmt.Errorf("cannot load people by email: %w", err)
-				}
-			} else {
-				people.UserID = &user.ID
-				people.FullName = token.Data.FullName
-				people.UpdatedAt = now
-
-				if err := people.Update(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot update people: %w", err)
-				}
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (s Service) RemoveUser(ctx context.Context, organizationID gid.GID, userID gid.GID) error {
-	return s.pg.WithConn(
-		ctx,
-		func(tx pg.Conn) error {
-			uo := coredata.UserOrganization{
-				UserID:         userID,
-				OrganizationID: organizationID,
-			}
-
-			if err := uo.Delete(ctx, tx); err != nil {
-				return fmt.Errorf("cannot delete user organization: %w", err)
-			}
-
-			return nil
-		},
-	)
-}
-
+// ResetPassword resets a user's password using a reset token
 func (s Service) ResetPassword(ctx context.Context, tokenString string, newPassword string) error {
-	token, err := statelesstoken.ValidateToken[PasswordResetData](
+	payload, err := statelesstoken.ValidateToken[PasswordResetData](
 		s.tokenSecret,
 		TokenTypePasswordReset,
 		tokenString,
 	)
 	if err != nil {
-		return fmt.Errorf("cannot validate password reset token: %w", err)
+		return &ErrInvalidTokenType{"invalid reset token"}
 	}
+	passwordResetData := payload.Data
 
 	if len(newPassword) < 8 || len(newPassword) > 128 {
 		return &ErrInvalidPassword{minLength: 8, maxLength: 128}
@@ -893,19 +537,16 @@ func (s Service) ResetPassword(ctx context.Context, tokenString string, newPassw
 		ctx,
 		func(tx pg.Conn) error {
 			user := &coredata.User{}
-
-			if err := user.LoadByEmail(ctx, tx, token.Data.Email); err != nil {
+			if err := user.LoadByEmail(ctx, tx, passwordResetData.Email); err != nil {
 				var errUserNotFound *coredata.ErrUserNotFound
-
 				if errors.As(err, &errUserNotFound) {
-					return fmt.Errorf("user not found: %w", err)
+					return nil // Don't leak information about non-existent users
 				}
-
-				return fmt.Errorf("cannot load user by email: %w", err)
+				return fmt.Errorf("cannot load user: %w", err)
 			}
 
 			if err := user.UpdatePassword(ctx, tx, hashedPassword); err != nil {
-				return fmt.Errorf("cannot update user password: %w", err)
+				return fmt.Errorf("cannot update password: %w", err)
 			}
 
 			return nil

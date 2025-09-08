@@ -1282,14 +1282,14 @@ func (r *mutationResolver) ConfirmEmail(ctx context.Context, input types.Confirm
 func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error) {
 	user := UserFromContext(ctx)
 
-	organizations, err := r.usrmgrSvc.ListOrganizationsForUserID(ctx, user.ID)
+	organizations, err := r.authzSvc.GetUserOrganizations(ctx, user.ID)
 	if err != nil {
 		panic(fmt.Errorf("failed to list organizations for user: %w", err))
 	}
 
 	for _, organization := range organizations {
 		if organization.ID == input.OrganizationID {
-			err := r.usrmgrSvc.InviteUser(ctx, input.OrganizationID, input.FullName, input.Email)
+			_, err := r.authzSvc.InviteUserToOrganization(ctx, input.OrganizationID, input.Email, input.FullName, "member")
 			if err != nil {
 				return nil, err
 			}
@@ -1305,14 +1305,14 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUserInput) (*types.RemoveUserPayload, error) {
 	user := UserFromContext(ctx)
 
-	organizations, err := r.usrmgrSvc.ListOrganizationsForUserID(ctx, user.ID)
+	organizations, err := r.authzSvc.GetUserOrganizations(ctx, user.ID)
 	if err != nil {
 		panic(fmt.Errorf("failed to list organizations for user: %w", err))
 	}
 
 	for _, organization := range organizations {
 		if organization.ID == input.OrganizationID {
-			err := r.usrmgrSvc.RemoveUser(ctx, input.OrganizationID, input.UserID)
+			err := r.authzSvc.RemoveUserFromOrganization(ctx, input.OrganizationID, input.UserID)
 			if err != nil {
 				return nil, err
 			}
@@ -3383,7 +3383,7 @@ func (r *organizationResolver) Users(ctx context.Context, obj *types.Organizatio
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := r.usrmgrSvc.ListUsersForTenant(ctx, obj.ID, cursor)
+	page, err := r.authzSvc.GetOrganizationMembers(ctx, obj.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list users: %w", err))
 	}
@@ -4858,7 +4858,7 @@ func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, f
 	user := UserFromContext(ctx)
 
 	// For now, we're not using cursor pagination since we're loading all organizations
-	organizations, err := r.usrmgrSvc.ListOrganizationsForUserID(ctx, user.ID)
+	organizations, err := r.authzSvc.GetUserOrganizations(ctx, user.ID)
 	if err != nil {
 		panic(fmt.Errorf("failed to list organizations for user: %w", err))
 	}

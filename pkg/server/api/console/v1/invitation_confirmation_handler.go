@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/getprobo/probo/pkg/probo"
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"go.gearno.de/kit/httpserver"
 )
@@ -34,7 +34,7 @@ type (
 	}
 )
 
-func InvitationConfirmationHandler(usrmgrSvc *usrmgr.Service, proboSvc *probo.Service, authCfg AuthConfig) http.HandlerFunc {
+func InvitationConfirmationHandler(usrmgrSvc *usrmgr.Service, authzSvc *authz.Service, authCfg AuthConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req InvitationConfirmationRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -42,7 +42,7 @@ func InvitationConfirmationHandler(usrmgrSvc *usrmgr.Service, proboSvc *probo.Se
 			return
 		}
 
-		_, err := usrmgrSvc.ConfirmInvitation(r.Context(), req.Token, req.Password)
+		err := authzSvc.AcceptInvitation(r.Context(), req.Token)
 		if err != nil {
 			httpserver.RenderError(w, http.StatusInternalServerError, err)
 			return

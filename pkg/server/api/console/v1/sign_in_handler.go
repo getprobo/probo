@@ -55,7 +55,7 @@ func SignInHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFu
 			return
 		}
 
-		user, session, err := usrmgrSvc.SignIn(r.Context(), req.Email, req.Password)
+		session, user, err := usrmgrSvc.SignIn(r.Context(), req.Email, req.Password)
 		if err != nil {
 			var ErrInvalidCredentials *usrmgr.ErrInvalidCredentials
 			if errors.As(err, &ErrInvalidCredentials) {

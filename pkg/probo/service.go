@@ -22,6 +22,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/agents"
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/cipher"
 	"github.com/getprobo/probo/pkg/filevalidation"
@@ -51,6 +52,7 @@ type (
 		agentConfig       agents.Config
 		html2pdfConverter *html2pdf.Converter
 		usrmgr            *usrmgr.Service
+		authz             *authz.Service
 	}
 
 	TenantService struct {
@@ -105,6 +107,7 @@ func NewService(
 	agentConfig agents.Config,
 	html2pdfConverter *html2pdf.Converter,
 	usrmgrService *usrmgr.Service,
+	authzService *authz.Service,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -121,6 +124,7 @@ func NewService(
 		agentConfig:       agentConfig,
 		html2pdfConverter: html2pdfConverter,
 		usrmgr:            usrmgrService,
+		authz:             authzService,
 	}
 
 	return svc, nil
@@ -182,7 +186,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Audits = &AuditService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
-	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, usrmgr: s.usrmgr}
+	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService}
 	tenantService.NonconformityRegistries = &NonconformityRegistryService{svc: tenantService}
 	tenantService.ComplianceRegistries = &ComplianceRegistryService{svc: tenantService}
 	tenantService.Snapshots = &SnapshotService{svc: tenantService}

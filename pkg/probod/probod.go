@@ -25,6 +25,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/agents"
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/awsconfig"
 	"github.com/getprobo/probo/pkg/connector"
 	"github.com/getprobo/probo/pkg/coredata"
@@ -242,6 +243,17 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create usrmgr service: %w", err)
 	}
 
+	authzService, err := authz.NewService(
+		ctx,
+		pgClient,
+		impl.cfg.Hostname,
+		impl.cfg.Auth.Cookie.Secret,
+		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot create authz service: %w", err)
+	}
+
 	proboService, err := probo.NewService(
 		ctx,
 		impl.cfg.EncryptionKey,
@@ -254,6 +266,7 @@ func (impl *Implm) Run(
 		agentConfig,
 		html2pdfConverter,
 		usrmgrService,
+		authzService,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -275,6 +288,7 @@ func (impl *Implm) Run(
 			ExtraHeaderFields: impl.cfg.Api.ExtraHeaderFields,
 			Probo:             proboService,
 			Usrmgr:            usrmgrService,
+			Authz:             authzService,
 			Trust:             trustService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			Agent:             agent,

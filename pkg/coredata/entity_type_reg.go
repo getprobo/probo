@@ -50,4 +50,6 @@ const (
 	ContinualImprovementRegistryEntityType
 	ProcessingActivityRegistryEntityType
 	FrameworkExportEntityType
+	InvitationEntityType
+	MembershipEntityType
 )

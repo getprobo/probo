@@ -19,6 +19,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/securecookie"
@@ -49,6 +50,7 @@ func TryAuth(
 	w http.ResponseWriter,
 	r *http.Request,
 	usrmgrSvc *usrmgr.Service,
+	authzSvc *authz.Service,
 	authCfg AuthConfig,
 	errorHandler ErrorHandler,
 ) *AuthResult {
@@ -87,12 +89,17 @@ func TryAuth(
 		return nil
 	}
 
-	tenantIDs, err := usrmgrSvc.ListTenantsForUserID(ctx, user.ID)
+	organizations, err := authzSvc.GetUserOrganizations(ctx, user.ID)
 	if err != nil {
 		if errorHandler.OnTenantError != nil {
 			errorHandler.OnTenantError(err)
 		}
 		return nil
+	}
+
+	tenantIDs := make([]gid.TenantID, len(organizations))
+	for i, org := range organizations {
+		tenantIDs[i] = org.OrganizationID.TenantID()
 	}
 
 	return &AuthResult{

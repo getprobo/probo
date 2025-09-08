@@ -29,6 +29,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/connector"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
@@ -55,6 +56,7 @@ type (
 	Resolver struct {
 		proboSvc  *probo.Service
 		usrmgrSvc *usrmgr.Service
+		authzSvc  *authz.Service
 		authCfg   AuthConfig
 	}
 
@@ -81,6 +83,7 @@ func NewMux(
 	logger *log.Logger,
 	proboSvc *probo.Service,
 	usrmgrSvc *usrmgr.Service,
+	authzSvc *authz.Service,
 	authCfg AuthConfig,
 	connectorRegistry *connector.ConnectorRegistry,
 	safeRedirect *saferedirect.SafeRedirect,
@@ -152,11 +155,11 @@ func NewMux(
 	r.Post("/auth/register", SignUpHandler(usrmgrSvc, authCfg))
 	r.Post("/auth/login", SignInHandler(usrmgrSvc, authCfg))
 	r.Delete("/auth/logout", SignOutHandler(usrmgrSvc, authCfg))
-	r.Post("/auth/invitation", InvitationConfirmationHandler(usrmgrSvc, proboSvc, authCfg))
+	r.Post("/auth/invitation", InvitationConfirmationHandler(usrmgrSvc, authzSvc, authCfg))
 	r.Post("/auth/forget-password", ForgetPasswordHandler(usrmgrSvc, authCfg))
 	r.Post("/auth/reset-password", ResetPasswordHandler(usrmgrSvc, authCfg))
 
-	r.Get("/connectors/initiate", WithSession(usrmgrSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/connectors/initiate", WithSession(usrmgrSvc, authzSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
 		connectorID := r.URL.Query().Get("connector_id")
 		organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
 		if err != nil {
@@ -173,7 +176,7 @@ func NewMux(
 		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 	}))
 
-	r.Get("/connectors/complete", WithSession(usrmgrSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/connectors/complete", WithSession(usrmgrSvc, authzSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
 		connectorID := r.URL.Query().Get("connector_id")
 		organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
 		if err != nil {
@@ -204,12 +207,12 @@ func NewMux(
 	}))
 
 	r.Get("/", playground.Handler("GraphQL", "/api/console/v1/query"))
-	r.Post("/query", graphqlHandler(logger, proboSvc, usrmgrSvc, authCfg))
+	r.Post("/query", graphqlHandler(logger, proboSvc, usrmgrSvc, authzSvc, authCfg))
 
 	return r
 }
 
-func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFunc {
+func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrmgr.Service, authzSvc *authz.Service, authCfg AuthConfig) http.HandlerFunc {
 	var mb int64 = 1 << 20
 
 	es := schema.NewExecutableSchema(
@@ -217,6 +220,7 @@ func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrm
 			Resolvers: &Resolver{
 				proboSvc:  proboSvc,
 				usrmgrSvc: usrmgrSvc,
+				authzSvc:  authzSvc,
 				authCfg:   authCfg,
 			},
 		},
@@ -256,10 +260,10 @@ func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrm
 		},
 	)
 
-	return WithSession(usrmgrSvc, authCfg, srv.ServeHTTP)
+	return WithSession(usrmgrSvc, authzSvc, authCfg, srv.ServeHTTP)
 }
 
-func WithSession(usrmgrSvc *usrmgr.Service, authCfg AuthConfig, next http.HandlerFunc) http.HandlerFunc {
+func WithSession(usrmgrSvc *usrmgr.Service, authzSvc *authz.Service, authCfg AuthConfig, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -286,7 +290,7 @@ func WithSession(usrmgrSvc *usrmgr.Service, authCfg AuthConfig, next http.Handle
 			},
 		}
 
-		authResult := session.TryAuth(ctx, w, r, usrmgrSvc, sessionAuthCfg, errorHandler)
+		authResult := session.TryAuth(ctx, w, r, usrmgrSvc, authzSvc, sessionAuthCfg, errorHandler)
 		if authResult == nil {
 			next(w, r)
 			return
@@ -299,7 +303,7 @@ func WithSession(usrmgrSvc *usrmgr.Service, authCfg AuthConfig, next http.Handle
 		next(w, r.WithContext(ctx))
 
 		// Update session after the handler completes
-		if err := usrmgrSvc.UpdateSession(ctx, authResult.Session); err != nil {
+		if _, err := usrmgrSvc.UpdateSession(ctx, authResult.Session.ID); err != nil {
 			panic(fmt.Errorf("failed to update session: %w", err))
 		}
 	}
