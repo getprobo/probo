@@ -50,6 +50,7 @@ type Props = {
     className?: string;
     ref?: DialogRef;
     onClose?: () => void;
+    closable?: boolean;
 };
 
 export const useDialogRef = (): DialogRef => {
@@ -64,6 +65,7 @@ export function Dialog({
     ref,
     defaultOpen,
     onClose,
+    closable = true,
 }: Props) {
     const { overlay, content, header, title: titleClassname } = dialog();
     const [open, setOpen] = useState(!!defaultOpen);
@@ -80,41 +82,55 @@ export function Dialog({
     }
 
     const onOpenChange = (open: boolean) => {
+        if (!open && !closable) {
+            return;
+        }
         setOpen(open);
         if (!open) {
             onClose?.();
         }
     };
 
+    const contentProps = closable ? {} : {
+        onEscapeKeyDown: (e: Event) => e.preventDefault(),
+        onPointerDownOutside: (e: Event) => e.preventDefault(),
+        onInteractOutside: (e: Event) => e.preventDefault(),
+    };
+
     return (
-        <Root open={open} onOpenChange={onOpenChange}>
+        <Root open={open} onOpenChange={closable ? onOpenChange : undefined}>
             {trigger && <Trigger asChild>{trigger}</Trigger>}
             <Portal>
                 <Overlay className={overlay()} />
                 <Content
                     aria-describedby={undefined}
                     className={content({ className })}
+                    {...contentProps}
                 >
                     {title ? (
                         <div className={header()}>
                             <Title className={titleClassname()}> {title}</Title>
+                            {closable && (
+                                <Close asChild>
+                                    <Button
+                                        tabIndex={-1}
+                                        variant="tertiary"
+                                        icon={IconCrossLargeX}
+                                    />
+                                </Close>
+                            )}
+                        </div>
+                    ) : (
+                        closable && (
                             <Close asChild>
                                 <Button
                                     tabIndex={-1}
                                     variant="tertiary"
+                                    className="absolute top-4 right-4"
                                     icon={IconCrossLargeX}
                                 />
                             </Close>
-                        </div>
-                    ) : (
-                        <Close asChild>
-                            <Button
-                                tabIndex={-1}
-                                variant="tertiary"
-                                className="absolute top-4 right-4"
-                                icon={IconCrossLargeX}
-                            />
-                        </Close>
+                        )
                     )}
                     {children}
                 </Content>

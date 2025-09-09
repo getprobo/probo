@@ -5,6 +5,7 @@ import { PublicTrustCenterLayout } from "/layouts/PublicTrustCenterLayout";
 import { PublicTrustCenterAudits } from "../components/PublicTrustCenterAudits";
 import { PublicTrustCenterVendors } from "../components/PublicTrustCenterVendors";
 import { PublicTrustCenterDocuments } from "../components/PublicTrustCenterDocuments";
+import { NDAAcceptanceDialog } from "../components/NDAAcceptanceDialog";
 import { Spinner } from "@probo/ui";
 import { useTrustCenterQuery, type TrustCenterDocument, type TrustCenterAudit, type TrustCenterVendor } from "/hooks/useTrustCenterQueries";
 
@@ -66,36 +67,49 @@ export default function PublicTrustCenterPage() {
   }
 
   const { trustCenterBySlug } = data;
-  const { documents, audits, vendors, isUserAuthenticated } = trustCenterBySlug;
+  const { documents, audits, vendors, isUserAuthenticated, hasAcceptedNonDisclosureAgreement } = trustCenterBySlug;
 
   const trustCenterDocuments = documents.edges.map((edge) => edge.node) as TrustCenterDocument[];
   const trustCenterAudits = audits.edges.map((edge) => edge.node) as TrustCenterAudit[];
   const trustCenterVendors = vendors.edges.map((edge) => edge.node) as TrustCenterVendor[];
 
+  const showNdaDialog = isUserAuthenticated && !hasAcceptedNonDisclosureAgreement;
+
   return (
-    <PublicTrustCenterLayout
-      organizationName={organizationName}
-      organizationLogo={organization?.logoUrl}
-      isAuthenticated={isUserAuthenticated}
-    >
-      <div className="space-y-12">
-        <PublicTrustCenterAudits
-          audits={trustCenterAudits}
-          organizationName={organizationName}
-          isAuthenticated={isUserAuthenticated}
+    <>
+      {showNdaDialog && (
+        <NDAAcceptanceDialog
           trustCenterId={trustCenterBySlug.id}
-        />
-        <PublicTrustCenterDocuments
-          documents={trustCenterDocuments}
           organizationName={organizationName}
-          isAuthenticated={isUserAuthenticated}
-          trustCenterId={trustCenterBySlug.id}
+          ndaFileName={trustCenterBySlug.ndaFileName}
+          ndaFileUrl={trustCenterBySlug.ndaFileUrl}
         />
-        <PublicTrustCenterVendors
-          vendors={trustCenterVendors}
-          organizationName={organizationName}
-        />
-      </div>
-    </PublicTrustCenterLayout>
+      )}
+
+      <PublicTrustCenterLayout
+        organizationName={organizationName}
+        organizationLogo={organization?.logoUrl}
+        isAuthenticated={isUserAuthenticated}
+      >
+        <div className="space-y-12">
+          <PublicTrustCenterAudits
+            audits={trustCenterAudits}
+            organizationName={organizationName}
+            isAuthenticated={isUserAuthenticated}
+            trustCenterId={trustCenterBySlug.id}
+          />
+          <PublicTrustCenterDocuments
+            documents={trustCenterDocuments}
+            organizationName={organizationName}
+            isAuthenticated={isUserAuthenticated}
+            trustCenterId={trustCenterBySlug.id}
+          />
+          <PublicTrustCenterVendors
+            vendors={trustCenterVendors}
+            organizationName={organizationName}
+          />
+        </div>
+      </PublicTrustCenterLayout>
+    </>
   );
 }

@@ -828,6 +828,14 @@ type DeleteTrustCenterAccessPayload struct {
 	DeletedTrustCenterAccessID gid.GID `json:"deletedTrustCenterAccessId"`
 }
 
+type DeleteTrustCenterNDAInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+}
+
+type DeleteTrustCenterNDAPayload struct {
+	TrustCenter *TrustCenter `json:"trustCenter"`
+}
+
 type DeleteVendorBusinessAssociateAgreementInput struct {
 	VendorID gid.GID `json:"vendorId"`
 }
@@ -1436,6 +1444,8 @@ type TrustCenter struct {
 	ID           gid.GID                      `json:"id"`
 	Active       bool                         `json:"active"`
 	Slug         string                       `json:"slug"`
+	NdaFileName  *string                      `json:"ndaFileName,omitempty"`
+	NdaFileURL   *string                      `json:"ndaFileUrl,omitempty"`
 	CreatedAt    time.Time                    `json:"createdAt"`
 	UpdatedAt    time.Time                    `json:"updatedAt"`
 	Organization *Organization                `json:"organization"`
@@ -1446,12 +1456,13 @@ func (TrustCenter) IsNode()             {}
 func (this TrustCenter) GetID() gid.GID { return this.ID }
 
 type TrustCenterAccess struct {
-	ID        gid.GID   `json:"id"`
-	Email     string    `json:"email"`
-	Name      string    `json:"name"`
-	Active    bool      `json:"active"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID                                gid.GID   `json:"id"`
+	Email                             string    `json:"email"`
+	Name                              string    `json:"name"`
+	Active                            bool      `json:"active"`
+	HasAcceptedNonDisclosureAgreement bool      `json:"hasAcceptedNonDisclosureAgreement"`
+	CreatedAt                         time.Time `json:"createdAt"`
+	UpdatedAt                         time.Time `json:"updatedAt"`
 }
 
 func (TrustCenterAccess) IsNode()             {}
@@ -1829,6 +1840,16 @@ type UploadTaskEvidenceInput struct {
 
 type UploadTaskEvidencePayload struct {
 	EvidenceEdge *EvidenceEdge `json:"evidenceEdge"`
+}
+
+type UploadTrustCenterNDAInput struct {
+	TrustCenterID gid.GID        `json:"trustCenterId"`
+	FileName      string         `json:"fileName"`
+	File          graphql.Upload `json:"file"`
+}
+
+type UploadTrustCenterNDAPayload struct {
+	TrustCenter *TrustCenter `json:"trustCenter"`
 }
 
 type UploadVendorBusinessAssociateAgreementInput struct {

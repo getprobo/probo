@@ -18,12 +18,18 @@ import (
 	"github.com/getprobo/probo/pkg/coredata"
 )
 
-func NewTrustCenter(tc *coredata.TrustCenter) *TrustCenter {
+func NewTrustCenter(tc *coredata.TrustCenter, file *coredata.File) *TrustCenter {
+	var ndaFileName *string
+	if file != nil {
+		ndaFileName = &file.FileName
+	}
+
 	return &TrustCenter{
-		ID:        tc.ID,
-		Active:    tc.Active,
-		Slug:      tc.Slug,
-		CreatedAt: tc.CreatedAt,
-		UpdatedAt: tc.UpdatedAt,
+		ID:          tc.ID,
+		Active:      tc.Active,
+		Slug:        tc.Slug,
+		NdaFileName: ndaFileName,
+		CreatedAt:   tc.CreatedAt,
+		UpdatedAt:   tc.UpdatedAt,
 	}
 }

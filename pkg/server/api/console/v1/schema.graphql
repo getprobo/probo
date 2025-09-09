@@ -1144,6 +1144,8 @@ type TrustCenter implements Node {
   id: ID!
   active: Boolean!
   slug: String!
+  ndaFileName: String
+  ndaFileUrl: String @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
   organization: Organization! @goField(forceResolver: true)
@@ -1889,6 +1891,7 @@ type TrustCenterAccess implements Node {
   email: String!
   name: String!
   active: Boolean!
+  hasAcceptedNonDisclosureAgreement: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -2218,6 +2221,14 @@ type Mutation {
     input: UpdateTrustCenterInput!
   ): UpdateTrustCenterPayload!
 
+  uploadTrustCenterNDA(
+    input: UploadTrustCenterNDAInput!
+  ): UploadTrustCenterNDAPayload!
+
+  deleteTrustCenterNDA(
+    input: DeleteTrustCenterNDAInput!
+  ): DeleteTrustCenterNDAPayload!
+
   # Trust Center Access CRUD mutations
   createTrustCenterAccess(
     input: CreateTrustCenterAccessInput!
@@ -2501,6 +2512,16 @@ input UpdateTrustCenterInput {
   trustCenterId: ID!
   active: Boolean
   slug: String
+}
+
+input UploadTrustCenterNDAInput {
+  trustCenterId: ID!
+  fileName: String!
+  file: Upload!
+}
+
+input DeleteTrustCenterNDAInput {
+  trustCenterId: ID!
 }
 
 input CreateTrustCenterAccessInput {
@@ -3132,6 +3153,14 @@ type DeleteOrganizationPayload {
 }
 
 type UpdateTrustCenterPayload {
+  trustCenter: TrustCenter!
+}
+
+type UploadTrustCenterNDAPayload {
+  trustCenter: TrustCenter!
+}
+
+type DeleteTrustCenterNDAPayload {
   trustCenter: TrustCenter!
 }
 

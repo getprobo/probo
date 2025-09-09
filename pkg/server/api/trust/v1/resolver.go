@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -138,19 +139,28 @@ func graphqlHandler(logger *log.Logger, usrmgrSvc *usrmgr.Service, trustSvc *tru
 	return WithSession(usrmgrSvc, trustSvc, authCfg, trustAuthCfg, srv.ServeHTTP)
 }
 
-// TrustService returns a trust service scoped to the given tenant
-func (r *Resolver) TrustService(ctx context.Context, tenantID gid.TenantID) *trust.TenantService {
+func (r *Resolver) RootTrustService(ctx context.Context) *trust.TenantService {
+	return r.trustCenterSvc.WithTenant(gid.NewTenantID())
+}
+
+func (r *Resolver) PublicTrustService(ctx context.Context, tenantID gid.TenantID) *trust.TenantService {
 	return r.trustCenterSvc.WithTenant(tenantID)
 }
 
-// GetTenantService returns a tenant service for the given tenant ID
-func (r *Resolver) GetTenantService(ctx context.Context, tenantID gid.TenantID) *trust.TenantService {
-	return r.trustCenterSvc.WithTenant(tenantID)
+func (r *Resolver) PrivateTrustService(ctx context.Context, tenantID gid.TenantID) (*trust.TenantService, error) {
+	if err := auth.ValidateTenantAccess(ctx, r, userTenantContextKey, tenantID); err != nil {
+		return nil, fmt.Errorf("cannot access trust center: %w", err)
+	}
+
+	return r.trustCenterSvc.WithTenant(tenantID), nil
 }
 
 func WithSession(usrmgrSvc *usrmgr.Service, trustSvc *trust.Service, authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
+		ip := extractIPAddress(r)
+		ctx = context.WithValue(ctx, coredata.ContextKeyIPAddress, ip)
 
 		if authCtx := tryTokenAuth(ctx, w, r, trustSvc, trustAuthCfg); authCtx != nil {
 			next(w, r.WithContext(authCtx))
@@ -219,15 +229,14 @@ func tryTokenAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, t
 	tenantID := basicPayload.Data.TrustCenterID.TenantID()
 
 	tenantSvc := trustSvc.WithTenant(tenantID)
-	payload, err := tenantSvc.TrustCenterAccesses.ValidateToken(ctx, cookie.Value)
-	if err != nil {
+	if err := tenantSvc.TrustCenterAccesses.ValidateToken(ctx, basicPayload.Data.TrustCenterID, basicPayload.Data.Email); err != nil {
 		clearTokenCookie(w, trustAuthCfg)
 		return nil
 	}
 
 	tokenAccess := &auth.TokenAccessData{
-		TrustCenterID: payload.TrustCenterID,
-		Email:         payload.Email,
+		TrustCenterID: basicPayload.Data.TrustCenterID,
+		Email:         basicPayload.Data.Email,
 		TenantID:      tenantID,
 		Scope:         trustAuthCfg.Scope,
 	}
@@ -255,4 +264,22 @@ func updateSessionIfNeeded(ctx context.Context, usrmgrSvc *usrmgr.Service) {
 			panic(fmt.Errorf("failed to update session: %w", err))
 		}
 	}
+}
+
+func extractIPAddress(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		if ip := strings.Split(xff, ",")[0]; ip != "" {
+			return strings.TrimSpace(ip)
+		}
+	}
+
+	if xri := r.Header.Get("X-Real-IP"); xri != "" {
+		return strings.TrimSpace(xri)
+	}
+
+	if ip := strings.Split(r.RemoteAddr, ":")[0]; ip != "" {
+		return ip
+	}
+
+	return "unknown"
 }

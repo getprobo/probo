@@ -23,12 +23,13 @@ type TrustCenterAccessOrderBy = OrderBy[coredata.TrustCenterAccessOrderField]
 
 func NewTrustCenterAccess(tca *coredata.TrustCenterAccess) *TrustCenterAccess {
 	return &TrustCenterAccess{
-		ID:        tca.ID,
-		Email:     tca.Email,
-		Name:      tca.Name,
-		Active:    tca.Active,
-		CreatedAt: tca.CreatedAt,
-		UpdatedAt: tca.UpdatedAt,
+		ID:                                tca.ID,
+		Email:                             tca.Email,
+		Name:                              tca.Name,
+		Active:                            tca.Active,
+		HasAcceptedNonDisclosureAgreement: tca.HasAcceptedNonDisclosureAgreement,
+		CreatedAt:                         tca.CreatedAt,
+		UpdatedAt:                         tca.UpdatedAt,
 	}
 }
 

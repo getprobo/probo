@@ -16,6 +16,7 @@ package trust
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/mail"
@@ -23,8 +24,6 @@ import (
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/probo"
-	"github.com/getprobo/probo/pkg/statelesstoken"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"go.gearno.de/kit/pg"
 )
@@ -48,20 +47,12 @@ const (
 
 func (s TrustCenterAccessService) ValidateToken(
 	ctx context.Context,
-	tokenString string,
-) (*probo.TrustCenterAccessData, error) {
-	token, err := statelesstoken.ValidateToken[probo.TrustCenterAccessData](
-		s.svc.tokenSecret,
-		TokenTypeTrustCenterAccess,
-		tokenString,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot validate trust center access token: %w", err)
-	}
-
-	access := &coredata.TrustCenterAccess{}
-	err = s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, token.Data.TrustCenterID, token.Data.Email)
+	trustCenterID gid.GID,
+	email string,
+) error {
+	return s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+		access := &coredata.TrustCenterAccess{}
+		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
 		if err != nil {
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
@@ -72,12 +63,6 @@ func (s TrustCenterAccessService) ValidateToken(
 
 		return nil
 	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &token.Data, nil
 }
 
 func (s TrustCenterAccessService) Create(
@@ -115,14 +100,15 @@ func (s TrustCenterAccessService) Create(
 		}
 
 		access = &coredata.TrustCenterAccess{
-			ID:            gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
-			TenantID:      s.svc.scope.GetTenantID(),
-			TrustCenterID: req.TrustCenterID,
-			Email:         req.Email,
-			Name:          req.Name,
-			Active:        false,
-			CreatedAt:     now,
-			UpdatedAt:     now,
+			ID:                                gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
+			TenantID:                          s.svc.scope.GetTenantID(),
+			TrustCenterID:                     req.TrustCenterID,
+			Email:                             req.Email,
+			Name:                              req.Name,
+			Active:                            false,
+			HasAcceptedNonDisclosureAgreement: false,
+			CreatedAt:                         now,
+			UpdatedAt:                         now,
 		}
 
 		if err := access.Insert(ctx, tx, s.svc.scope); err != nil {
@@ -136,4 +122,49 @@ func (s TrustCenterAccessService) Create(
 	}
 
 	return access, nil
+}
+
+func (s TrustCenterAccessService) HasAcceptedNonDisclosureAgreement(ctx context.Context, trustCenterID gid.GID, email string) (bool, error) {
+	access := &coredata.TrustCenterAccess{}
+	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
+		if err != nil {
+			return fmt.Errorf("cannot load trust center access: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return false, nil
+	}
+
+	return access.HasAcceptedNonDisclosureAgreement, nil
+}
+
+func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Context, trustCenterID gid.GID, email string) error {
+	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
+		access := &coredata.TrustCenterAccess{}
+		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenterID, email); err != nil {
+			return fmt.Errorf("cannot load trust center access: %w", err)
+		}
+
+		acceptationLogs, err := json.Marshal(map[string]string{
+			"email":     email,
+			"timestamp": time.Now().Format(time.RFC3339),
+			"ip":        ctx.Value(coredata.ContextKeyIPAddress).(string),
+		})
+		if err != nil {
+			return fmt.Errorf("cannot marshal non disclosure agreement acceptation logs: %w", err)
+		}
+
+		access.HasAcceptedNonDisclosureAgreement = true
+		access.UpdatedAt = time.Now()
+		access.HasAcceptedNonDisclosureAgreementMetadata = acceptationLogs
+		if err := access.Update(ctx, tx, s.svc.scope); err != nil {
+			return fmt.Errorf("cannot update trust center access: %w", err)
+		}
+
+		return nil
+	})
 }
