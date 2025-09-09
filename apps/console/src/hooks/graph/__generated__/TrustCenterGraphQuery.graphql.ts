@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<25550a93c5459c3b405c782be19ac888>>
+ * @generated SignedSource<<9dbea87f398ce8189cb2431d7c03912c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -37,6 +37,8 @@ export type TrustCenterGraphQuery$data = {
       readonly active: boolean;
       readonly createdAt: any;
       readonly id: string;
+      readonly ndaFileName: string | null | undefined;
+      readonly ndaFileUrl: string | null | undefined;
       readonly slug: string;
       readonly updatedAt: any;
     } | null | undefined;
@@ -112,6 +114,20 @@ v5 = {
       "args": null,
       "kind": "ScalarField",
       "name": "slug",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "ndaFileName",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "ndaFileUrl",
       "storageKey": null
     },
     (v4/*: any*/),
@@ -544,16 +560,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "28c1a32327e2fee9320fd091100ec800",
+    "cacheID": "8dff30a639470418ba7151cb5743d3cc",
     "id": null,
     "metadata": {},
     "name": "TrustCenterGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      trustCenter {\n        id\n        active\n        slug\n        createdAt\n        updatedAt\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterAuditsCardFragment\n          }\n        }\n      }\n      vendors(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterVendorsCardFragment\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  showOnTrustCenter\n  createdAt\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  showOnTrustCenter\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n}\n"
+    "text": "query TrustCenterGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      trustCenter {\n        id\n        active\n        slug\n        ndaFileName\n        ndaFileUrl\n        createdAt\n        updatedAt\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterAuditsCardFragment\n          }\n        }\n      }\n      vendors(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterVendorsCardFragment\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  showOnTrustCenter\n  createdAt\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  showOnTrustCenter\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "260529b3ca03240b07989f278bb7a539";
+(node as any).hash = "21b2915ae5002dd54c990013e94adf5d";
 
 export default node;

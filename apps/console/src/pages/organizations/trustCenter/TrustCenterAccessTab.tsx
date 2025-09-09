@@ -16,6 +16,7 @@ import {
   useDialogRef,
   IconTrashCan,
   IconPencil,
+  IconCheckmark1,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
@@ -85,6 +86,7 @@ export default function TrustCenterAccessTab() {
     email: string;
     name: string;
     active: boolean;
+    hasAcceptedNonDisclosureAgreement: boolean;
     createdAt: Date;
     };
 
@@ -95,6 +97,7 @@ export default function TrustCenterAccessTab() {
     email: edge.node.email,
     name: edge.node.name,
     active: edge.node.active,
+    hasAcceptedNonDisclosureAgreement: edge.node.hasAcceptedNonDisclosureAgreement,
     createdAt: new Date(edge.node.createdAt)
   })) ?? [];
 
@@ -203,6 +206,7 @@ export default function TrustCenterAccessTab() {
                 <Th>{__("Email")}</Th>
                 <Th>{__("Date")}</Th>
                 <Th>{__("Active")}</Th>
+                <Th>{__("NDA")}</Th>
                 <Th></Th>
               </Tr>
             </Thead>
@@ -219,6 +223,11 @@ export default function TrustCenterAccessTab() {
                       checked={access.active}
                       onChange={(active) => handleToggleActive(access.id, active)}
                     />
+                  </Td>
+                  <Td>
+                    {access.hasAcceptedNonDisclosureAgreement && (
+                      <IconCheckmark1 size={16} className="text-txt-success" />
+                    )}
                   </Td>
                   <Td noLink width={160} className="text-end">
                     <div className="flex gap-2 justify-end">

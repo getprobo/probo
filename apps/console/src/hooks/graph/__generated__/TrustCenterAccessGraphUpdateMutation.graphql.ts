@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6de2ecb63a58c88c3008368061943b49>>
+ * @generated SignedSource<<d2f40d8fc2bd9c7627d308660dedb1e5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,6 +23,7 @@ export type TrustCenterAccessGraphUpdateMutation$data = {
       readonly active: boolean;
       readonly createdAt: any;
       readonly email: string;
+      readonly hasAcceptedNonDisclosureAgreement: boolean;
       readonly id: string;
       readonly name: string;
       readonly updatedAt: any;
@@ -97,6 +98,13 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
+            "name": "hasAcceptedNonDisclosureAgreement",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
             "name": "createdAt",
             "storageKey": null
           },
@@ -132,16 +140,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "683ee01fb5173b49b0a7f3c2d99cf002",
+    "cacheID": "223169ee8a4f65008047097ecff68fc5",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAccessGraphUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      active\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterAccessGraphUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      active\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "cccd083b0047f6bc7b504b7494205e9d";
+(node as any).hash = "0da1f737e6ea1db7a1b9930c4b6cc545";
 
 export default node;

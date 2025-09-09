@@ -57,6 +57,10 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AcceptNonDisclosureAgreementPayload struct {
+		Success func(childComplexity int) int
+	}
+
 	Audit struct {
 		Framework func(childComplexity int) int
 		ID        func(childComplexity int) int
@@ -103,8 +107,9 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateTrustCenterAccess func(childComplexity int, input types.CreateTrustCenterAccessInput) int
-		ExportDocumentPDF       func(childComplexity int, input types.ExportDocumentPDFInput) int
+		AcceptNonDisclosureAgreement func(childComplexity int, input types.AcceptNonDisclosureAgreementInput) int
+		CreateTrustCenterAccess      func(childComplexity int, input types.CreateTrustCenterAccessInput) int
+		ExportDocumentPDF            func(childComplexity int, input types.ExportDocumentPDFInput) int
 	}
 
 	Organization struct {
@@ -131,14 +136,17 @@ type ComplexityRoot struct {
 	}
 
 	TrustCenter struct {
-		Active              func(childComplexity int) int
-		Audits              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		Documents           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
-		ID                  func(childComplexity int) int
-		IsUserAuthenticated func(childComplexity int) int
-		Organization        func(childComplexity int) int
-		Slug                func(childComplexity int) int
-		Vendors             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Active                            func(childComplexity int) int
+		Audits                            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		Documents                         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		HasAcceptedNonDisclosureAgreement func(childComplexity int) int
+		ID                                func(childComplexity int) int
+		IsUserAuthenticated               func(childComplexity int) int
+		NdaFileName                       func(childComplexity int) int
+		NdaFileURL                        func(childComplexity int) int
+		Organization                      func(childComplexity int) int
+		Slug                              func(childComplexity int) int
+		Vendors                           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 	}
 
 	TrustCenterAccess struct {
@@ -175,6 +183,7 @@ type AuditResolver interface {
 type MutationResolver interface {
 	CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error)
 	ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error)
+	AcceptNonDisclosureAgreement(ctx context.Context, input types.AcceptNonDisclosureAgreementInput) (*types.AcceptNonDisclosureAgreementPayload, error)
 }
 type OrganizationResolver interface {
 	LogoURL(ctx context.Context, obj *types.Organization) (*string, error)
@@ -186,8 +195,10 @@ type ReportResolver interface {
 	DownloadURL(ctx context.Context, obj *types.Report) (*string, error)
 }
 type TrustCenterResolver interface {
+	NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
 	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
 	IsUserAuthenticated(ctx context.Context, obj *types.TrustCenter) (bool, error)
+	HasAcceptedNonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (bool, error)
 	Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error)
 	Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error)
 	Vendors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.VendorConnection, error)
@@ -211,6 +222,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AcceptNonDisclosureAgreementPayload.success":
+		if e.complexity.AcceptNonDisclosureAgreementPayload.Success == nil {
+			break
+		}
+
+		return e.complexity.AcceptNonDisclosureAgreementPayload.Success(childComplexity), true
 
 	case "Audit.framework":
 		if e.complexity.Audit.Framework == nil {
@@ -337,6 +355,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Framework.Name(childComplexity), true
+
+	case "Mutation.acceptNonDisclosureAgreement":
+		if e.complexity.Mutation.AcceptNonDisclosureAgreement == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_acceptNonDisclosureAgreement_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AcceptNonDisclosureAgreement(childComplexity, args["input"].(types.AcceptNonDisclosureAgreementInput)), true
 
 	case "Mutation.createTrustCenterAccess":
 		if e.complexity.Mutation.CreateTrustCenterAccess == nil {
@@ -475,6 +505,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TrustCenter.Documents(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
 
+	case "TrustCenter.hasAcceptedNonDisclosureAgreement":
+		if e.complexity.TrustCenter.HasAcceptedNonDisclosureAgreement == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.HasAcceptedNonDisclosureAgreement(childComplexity), true
+
 	case "TrustCenter.id":
 		if e.complexity.TrustCenter.ID == nil {
 			break
@@ -488,6 +525,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenter.IsUserAuthenticated(childComplexity), true
+
+	case "TrustCenter.ndaFileName":
+		if e.complexity.TrustCenter.NdaFileName == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.NdaFileName(childComplexity), true
+
+	case "TrustCenter.ndaFileUrl":
+		if e.complexity.TrustCenter.NdaFileURL == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.NdaFileURL(childComplexity), true
 
 	case "TrustCenter.organization":
 		if e.complexity.TrustCenter.Organization == nil {
@@ -621,6 +672,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAcceptNonDisclosureAgreementInput,
 		ec.unmarshalInputCreateTrustCenterAccessInput,
 		ec.unmarshalInputExportDocumentPDFInput,
 	)
@@ -921,8 +973,11 @@ type TrustCenter implements Node {
   id: ID!
   active: Boolean!
   slug: String!
+  ndaFileName: String
+  ndaFileUrl: String @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
   isUserAuthenticated: Boolean! @goField(forceResolver: true)
+  hasAcceptedNonDisclosureAgreement: Boolean! @goField(forceResolver: true)
 
   documents(
     first: Int
@@ -968,8 +1023,16 @@ input ExportDocumentPDFInput {
   documentId: ID!
 }
 
+input AcceptNonDisclosureAgreementInput {
+  trustCenterId: ID!
+}
+
 type ExportDocumentPDFPayload {
   data: String!
+}
+
+type  AcceptNonDisclosureAgreementPayload{
+  success: Boolean!
 }
 
 type Query {
@@ -984,6 +1047,10 @@ type Mutation {
   exportDocumentPDF(
     input: ExportDocumentPDFInput!
   ): ExportDocumentPDFPayload! @mustBeAuthenticated(role: USER)
+
+  acceptNonDisclosureAgreement(
+    input: AcceptNonDisclosureAgreementInput!
+  ): AcceptNonDisclosureAgreementPayload! @mustBeAuthenticated(role: USER)
 }
 `, BuiltIn: false},
 }
@@ -1018,6 +1085,29 @@ func (ec *executionContext) dir_mustBeAuthenticated_argsRole(
 	}
 
 	var zeroVal *types.Role
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_acceptNonDisclosureAgreement_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_acceptNonDisclosureAgreement_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_acceptNonDisclosureAgreement_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.AcceptNonDisclosureAgreementInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNAcceptNonDisclosureAgreementInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementInput(ctx, tmp)
+	}
+
+	var zeroVal types.AcceptNonDisclosureAgreementInput
 	return zeroVal, nil
 }
 
@@ -1443,6 +1533,50 @@ func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AcceptNonDisclosureAgreementPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.AcceptNonDisclosureAgreementPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AcceptNonDisclosureAgreementPayload_success(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Success, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AcceptNonDisclosureAgreementPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AcceptNonDisclosureAgreementPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Audit_id(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Audit_id(ctx, field)
@@ -2479,6 +2613,92 @@ func (ec *executionContext) fieldContext_Mutation_exportDocumentPDF(ctx context.
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_acceptNonDisclosureAgreement(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_acceptNonDisclosureAgreement(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		directive0 := func(rctx context.Context) (any, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().AcceptNonDisclosureAgreement(rctx, fc.Args["input"].(types.AcceptNonDisclosureAgreementInput))
+		}
+
+		directive1 := func(ctx context.Context) (any, error) {
+			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "USER")
+			if err != nil {
+				var zeroVal *types.AcceptNonDisclosureAgreementPayload
+				return zeroVal, err
+			}
+			if ec.directives.MustBeAuthenticated == nil {
+				var zeroVal *types.AcceptNonDisclosureAgreementPayload
+				return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+			}
+			return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.AcceptNonDisclosureAgreementPayload); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.AcceptNonDisclosureAgreementPayload`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.AcceptNonDisclosureAgreementPayload)
+	fc.Result = res
+	return ec.marshalNAcceptNonDisclosureAgreementPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_acceptNonDisclosureAgreement(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "success":
+				return ec.fieldContext_AcceptNonDisclosureAgreementPayload_success(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AcceptNonDisclosureAgreementPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_acceptNonDisclosureAgreement_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Organization_id(ctx, field)
 	if err != nil {
@@ -2847,10 +3067,16 @@ func (ec *executionContext) fieldContext_Query_trustCenterBySlug(ctx context.Con
 				return ec.fieldContext_TrustCenter_active(ctx, field)
 			case "slug":
 				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "ndaFileName":
+				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
+			case "ndaFileUrl":
+				return ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
 			case "organization":
 				return ec.fieldContext_TrustCenter_organization(ctx, field)
 			case "isUserAuthenticated":
 				return ec.fieldContext_TrustCenter_isUserAuthenticated(ctx, field)
+			case "hasAcceptedNonDisclosureAgreement":
+				return ec.fieldContext_TrustCenter_hasAcceptedNonDisclosureAgreement(ctx, field)
 			case "documents":
 				return ec.fieldContext_TrustCenter_documents(ctx, field)
 			case "audits":
@@ -3294,6 +3520,88 @@ func (ec *executionContext) fieldContext_TrustCenter_slug(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenter_ndaFileName(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NdaFileName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_ndaFileName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_ndaFileUrl(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TrustCenter().NdaFileURL(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_ndaFileUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenter_organization(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TrustCenter_organization(ctx, field)
 	if err != nil {
@@ -3378,6 +3686,50 @@ func (ec *executionContext) _TrustCenter_isUserAuthenticated(ctx context.Context
 }
 
 func (ec *executionContext) fieldContext_TrustCenter_isUserAuthenticated(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_hasAcceptedNonDisclosureAgreement(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenter_hasAcceptedNonDisclosureAgreement(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TrustCenter().HasAcceptedNonDisclosureAgreement(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_hasAcceptedNonDisclosureAgreement(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TrustCenter",
 		Field:      field,
@@ -6162,6 +6514,33 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAcceptNonDisclosureAgreementInput(ctx context.Context, obj any) (types.AcceptNonDisclosureAgreementInput, error) {
+	var it types.AcceptNonDisclosureAgreementInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"trustCenterId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "trustCenterId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrustCenterID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateTrustCenterAccessInput(ctx context.Context, obj any) (types.CreateTrustCenterAccessInput, error) {
 	var it types.CreateTrustCenterAccessInput
 	asMap := map[string]any{}
@@ -6302,6 +6681,45 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var acceptNonDisclosureAgreementPayloadImplementors = []string{"AcceptNonDisclosureAgreementPayload"}
+
+func (ec *executionContext) _AcceptNonDisclosureAgreementPayload(ctx context.Context, sel ast.SelectionSet, obj *types.AcceptNonDisclosureAgreementPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, acceptNonDisclosureAgreementPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AcceptNonDisclosureAgreementPayload")
+		case "success":
+			out.Values[i] = ec._AcceptNonDisclosureAgreementPayload_success(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var auditImplementors = []string{"Audit", "Node"}
 
@@ -6791,6 +7209,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "acceptNonDisclosureAgreement":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_acceptNonDisclosureAgreement(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7111,6 +7536,41 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "ndaFileName":
+			out.Values[i] = ec._TrustCenter_ndaFileName(ctx, field, obj)
+		case "ndaFileUrl":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_ndaFileUrl(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "organization":
 			field := field
 
@@ -7157,6 +7617,42 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 					}
 				}()
 				res = ec._TrustCenter_isUserAuthenticated(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "hasAcceptedNonDisclosureAgreement":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_hasAcceptedNonDisclosureAgreement(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -7848,6 +8344,25 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAcceptNonDisclosureAgreementInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementInput(ctx context.Context, v any) (types.AcceptNonDisclosureAgreementInput, error) {
+	res, err := ec.unmarshalInputAcceptNonDisclosureAgreementInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAcceptNonDisclosureAgreementPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload(ctx context.Context, sel ast.SelectionSet, v types.AcceptNonDisclosureAgreementPayload) graphql.Marshaler {
+	return ec._AcceptNonDisclosureAgreementPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAcceptNonDisclosureAgreementPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload(ctx context.Context, sel ast.SelectionSet, v *types.AcceptNonDisclosureAgreementPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AcceptNonDisclosureAgreementPayload(ctx, sel, v)
+}
 
 func (ec *executionContext) marshalNAudit2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAudit(ctx context.Context, sel ast.SelectionSet, v *types.Audit) graphql.Marshaler {
 	if v == nil {

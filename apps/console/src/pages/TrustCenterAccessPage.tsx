@@ -127,7 +127,9 @@ export default function TrustCenterAccessPage() {
   if (error) {
     const isTokenError = error.toLowerCase().includes('token') ||
                         error.toLowerCase().includes('expired') ||
-                        error.toLowerCase().includes('invalid');
+                        error.toLowerCase().includes('invalid') ||
+                        error.toLowerCase().includes('401') ||
+                        error.toLowerCase().includes('unauthorized');
 
     if (isTokenError) {
       return <TokenErrorPage error={error} />;

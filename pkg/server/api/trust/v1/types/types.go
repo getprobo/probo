@@ -19,6 +19,14 @@ type Node interface {
 	GetID() gid.GID
 }
 
+type AcceptNonDisclosureAgreementInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+}
+
+type AcceptNonDisclosureAgreementPayload struct {
+	Success bool `json:"success"`
+}
+
 type Audit struct {
 	ID        gid.GID    `json:"id"`
 	Framework *Framework `json:"framework"`
@@ -115,14 +123,17 @@ func (Report) IsNode()             {}
 func (this Report) GetID() gid.GID { return this.ID }
 
 type TrustCenter struct {
-	ID                  gid.GID             `json:"id"`
-	Active              bool                `json:"active"`
-	Slug                string              `json:"slug"`
-	Organization        *Organization       `json:"organization"`
-	IsUserAuthenticated bool                `json:"isUserAuthenticated"`
-	Documents           *DocumentConnection `json:"documents"`
-	Audits              *AuditConnection    `json:"audits"`
-	Vendors             *VendorConnection   `json:"vendors"`
+	ID                                gid.GID             `json:"id"`
+	Active                            bool                `json:"active"`
+	Slug                              string              `json:"slug"`
+	NdaFileName                       *string             `json:"ndaFileName,omitempty"`
+	NdaFileURL                        *string             `json:"ndaFileUrl,omitempty"`
+	Organization                      *Organization       `json:"organization"`
+	IsUserAuthenticated               bool                `json:"isUserAuthenticated"`
+	HasAcceptedNonDisclosureAgreement bool                `json:"hasAcceptedNonDisclosureAgreement"`
+	Documents                         *DocumentConnection `json:"documents"`
+	Audits                            *AuditConnection    `json:"audits"`
+	Vendors                           *VendorConnection   `json:"vendors"`
 }
 
 func (TrustCenter) IsNode()             {}

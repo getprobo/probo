@@ -109,15 +109,12 @@ func validateTrustCenterAccessToken(ctx context.Context, trustSvc *trust.Service
 		return nil, fmt.Errorf("cannot validate trust center access token: %w", err)
 	}
 
-	tenantID := token.Data.TrustCenterID.TenantID()
-	tenantSvc := trustSvc.WithTenant(tenantID)
-
-	accessData, err := tenantSvc.TrustCenterAccesses.ValidateToken(ctx, tokenString)
-	if err != nil {
+	tenantSvc := trustSvc.WithTenant(token.Data.TrustCenterID.TenantID())
+	if err := tenantSvc.TrustCenterAccesses.ValidateToken(ctx, token.Data.TrustCenterID, token.Data.Email); err != nil {
 		return nil, fmt.Errorf("cannot validate trust center access token: %w", err)
 	}
 
-	return accessData, nil
+	return &token.Data, nil
 }
 
 func trustCenterLogoutHandler(authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig) http.HandlerFunc {

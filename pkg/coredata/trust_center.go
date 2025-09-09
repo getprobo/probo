@@ -28,13 +28,14 @@ import (
 
 type (
 	TrustCenter struct {
-		ID             gid.GID      `db:"id"`
-		OrganizationID gid.GID      `db:"organization_id"`
-		TenantID       gid.TenantID `db:"tenant_id"`
-		Active         bool         `db:"active"`
-		Slug           string       `db:"slug"`
-		CreatedAt      time.Time    `db:"created_at"`
-		UpdatedAt      time.Time    `db:"updated_at"`
+		ID                           gid.GID      `db:"id"`
+		OrganizationID               gid.GID      `db:"organization_id"`
+		TenantID                     gid.TenantID `db:"tenant_id"`
+		Active                       bool         `db:"active"`
+		Slug                         string       `db:"slug"`
+		NonDisclosureAgreementFileID *gid.GID     `db:"non_disclosure_agreement_file_id"`
+		CreatedAt                    time.Time    `db:"created_at"`
+		UpdatedAt                    time.Time    `db:"updated_at"`
 	}
 
 	TrustCenters []*TrustCenter
@@ -62,6 +63,7 @@ SELECT
 	tenant_id,
 	active,
 	slug,
+	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
 FROM
@@ -105,6 +107,7 @@ SELECT
 	tenant_id,
 	active,
 	slug,
+	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
 FROM
@@ -147,6 +150,7 @@ SELECT
 	tenant_id,
 	active,
 	slug,
+	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
 FROM
@@ -185,6 +189,7 @@ INSERT INTO trust_centers (
 	tenant_id,
 	active,
 	slug,
+	non_disclosure_agreement_file_id,
 	created_at,
 	updated_at
 ) VALUES (
@@ -193,19 +198,21 @@ INSERT INTO trust_centers (
 	@tenant_id,
 	@active,
 	@slug,
+	@non_disclosure_agreement_file_id,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              tc.ID,
-		"organization_id": tc.OrganizationID,
-		"tenant_id":       tc.TenantID,
-		"active":          tc.Active,
-		"slug":            tc.Slug,
-		"created_at":      tc.CreatedAt,
-		"updated_at":      tc.UpdatedAt,
+		"id":                               tc.ID,
+		"organization_id":                  tc.OrganizationID,
+		"tenant_id":                        tc.TenantID,
+		"active":                           tc.Active,
+		"slug":                             tc.Slug,
+		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
+		"created_at":                       tc.CreatedAt,
+		"updated_at":                       tc.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -226,6 +233,7 @@ UPDATE trust_centers
 SET
 	active = @active,
 	slug = @slug,
+	non_disclosure_agreement_file_id = @non_disclosure_agreement_file_id,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -235,10 +243,11 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":         tc.ID,
-		"active":     tc.Active,
-		"slug":       tc.Slug,
-		"updated_at": tc.UpdatedAt,
+		"id":                               tc.ID,
+		"active":                           tc.Active,
+		"slug":                             tc.Slug,
+		"non_disclosure_agreement_file_id": tc.NonDisclosureAgreementFileID,
+		"updated_at":                       tc.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 

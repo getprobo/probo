@@ -34,6 +34,9 @@ interface TrustCenterQueryData {
     active: boolean;
     slug: string;
     isUserAuthenticated: boolean;
+    hasAcceptedNonDisclosureAgreement: boolean;
+    ndaFileName: string | null;
+    ndaFileUrl: string | null;
     organization: {
       id: string;
       name: string;
@@ -96,7 +99,19 @@ interface CreateTrustCenterAccessVariables {
   };
 }
 
-type GraphQLVariables = TrustCenterQueryVariables | ExportDocumentPDFVariables | CreateTrustCenterAccessVariables | Record<string, never>;
+interface AcceptNonDisclosureAgreementData {
+  acceptNonDisclosureAgreement: {
+    success: boolean;
+  };
+}
+
+interface AcceptNonDisclosureAgreementVariables {
+  input: {
+    trustCenterId: string;
+  };
+}
+
+type GraphQLVariables = TrustCenterQueryVariables | ExportDocumentPDFVariables | CreateTrustCenterAccessVariables | AcceptNonDisclosureAgreementVariables | Record<string, never>;
 
 async function trustCenterGraphQLRequest<T = unknown>(
   operationName: string,
@@ -127,12 +142,14 @@ async function trustCenterGraphQLRequest<T = unknown>(
 
 function isCriticalError(error: GraphQLError): boolean {
   const message = error.message?.toLowerCase() || '';
-  const path = error.path || [];
 
-  if (message.includes('access denied') || message.includes('authentication required')) {
-    if (path.length > 2) {
-      return false;
-    }
+  if (
+    message.includes('access denied') ||
+      message.includes('authentication required') ||
+      message.includes('user has not accepted nda') ||
+      message.includes('no nda file found')
+  ) {
+    return false;
   }
 
   return true;
@@ -145,6 +162,9 @@ const TRUST_CENTER_QUERY = `
       active
       slug
       isUserAuthenticated
+      hasAcceptedNonDisclosureAgreement
+      ndaFileName
+      ndaFileUrl
       organization {
         id
         name
@@ -209,6 +229,16 @@ const CREATE_TRUST_CENTER_ACCESS_MUTATION = `
         email
         name
       }
+    }
+  }
+`;
+
+const ACCEPT_NDA_MUTATION = `
+  mutation AcceptNonDisclosureAgreementMutation(
+    $input: AcceptNonDisclosureAgreementInput!
+  ) {
+    acceptNonDisclosureAgreement(input: $input) {
+      success
     }
   }
 `;
@@ -280,6 +310,30 @@ export function useCreateTrustCenterAccess() {
       const result = await trustCenterGraphQLRequest<CreateTrustCenterAccessData>(
         "PublicTrustCenterAccessRequestDialogMutation",
         CREATE_TRUST_CENTER_ACCESS_MUTATION,
+        { input }
+      );
+
+      if (result.errors && result.errors.length > 0) {
+        throw new Error(
+          `GraphQL error: ${result.errors.map((e) => e.message).join(", ")}`
+        );
+      }
+
+      if (!result.data) {
+        throw new Error("No data returned from mutation");
+      }
+
+      return result.data;
+    },
+  });
+}
+
+export function useAcceptNonDisclosureAgreement() {
+  return useMutation<AcceptNonDisclosureAgreementData, Error, { trustCenterId: string }>({
+    mutationFn: async (input: { trustCenterId: string }) => {
+      const result = await trustCenterGraphQLRequest<AcceptNonDisclosureAgreementData>(
+        "AcceptNonDisclosureAgreementMutation",
+        ACCEPT_NDA_MUTATION,
         { input }
       );
 

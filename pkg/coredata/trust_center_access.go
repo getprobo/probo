@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -29,14 +30,16 @@ import (
 
 type (
 	TrustCenterAccess struct {
-		ID            gid.GID      `db:"id"`
-		TenantID      gid.TenantID `db:"tenant_id"`
-		TrustCenterID gid.GID      `db:"trust_center_id"`
-		Email         string       `db:"email"`
-		Name          string       `db:"name"`
-		Active        bool         `db:"active"`
-		CreatedAt     time.Time    `db:"created_at"`
-		UpdatedAt     time.Time    `db:"updated_at"`
+		ID                                        gid.GID         `db:"id"`
+		TenantID                                  gid.TenantID    `db:"tenant_id"`
+		TrustCenterID                             gid.GID         `db:"trust_center_id"`
+		Email                                     string          `db:"email"`
+		Name                                      string          `db:"name"`
+		Active                                    bool            `db:"active"`
+		HasAcceptedNonDisclosureAgreement         bool            `db:"has_accepted_non_disclosure_agreement"`
+		HasAcceptedNonDisclosureAgreementMetadata json.RawMessage `db:"has_accepted_non_disclosure_agreement_metadata"`
+		CreatedAt                                 time.Time       `db:"created_at"`
+		UpdatedAt                                 time.Time       `db:"updated_at"`
 	}
 
 	TrustCenterAccesses []*TrustCenterAccess
@@ -73,6 +76,8 @@ SELECT
 	email,
 	name,
 	active,
+	has_accepted_non_disclosure_agreement,
+	has_accepted_non_disclosure_agreement_metadata,
 	created_at,
 	updated_at
 FROM
@@ -122,6 +127,8 @@ SELECT
 	email,
 	name,
 	active,
+	has_accepted_non_disclosure_agreement,
+	has_accepted_non_disclosure_agreement_metadata,
 	created_at,
 	updated_at
 FROM
@@ -173,6 +180,7 @@ INSERT INTO trust_center_accesses (
 	email,
 	name,
 	active,
+	has_accepted_non_disclosure_agreement,
 	created_at,
 	updated_at
 ) VALUES (
@@ -182,20 +190,22 @@ INSERT INTO trust_center_accesses (
 	@email,
 	@name,
 	@active,
+	@has_accepted_non_disclosure_agreement,
 	@created_at,
 	@updated_at
 )
 `
 
 	args := pgx.StrictNamedArgs{
-		"id":              tca.ID,
-		"tenant_id":       tca.TenantID,
-		"trust_center_id": tca.TrustCenterID,
-		"email":           tca.Email,
-		"name":            tca.Name,
-		"active":          tca.Active,
-		"created_at":      tca.CreatedAt,
-		"updated_at":      tca.UpdatedAt,
+		"id":                                    tca.ID,
+		"tenant_id":                             tca.TenantID,
+		"trust_center_id":                       tca.TrustCenterID,
+		"email":                                 tca.Email,
+		"name":                                  tca.Name,
+		"active":                                tca.Active,
+		"has_accepted_non_disclosure_agreement": tca.HasAcceptedNonDisclosureAgreement,
+		"created_at":                            tca.CreatedAt,
+		"updated_at":                            tca.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -215,7 +225,9 @@ func (tca *TrustCenterAccess) Update(
 UPDATE trust_center_accesses SET
 	name = @name,
 	active = @active,
-	updated_at = @updated_at
+	updated_at = @updated_at,
+	has_accepted_non_disclosure_agreement = @has_accepted_non_disclosure_agreement,
+	has_accepted_non_disclosure_agreement_metadata = @has_accepted_non_disclosure_agreement_metadata
 WHERE
 	%s
 	AND id = @id
@@ -224,10 +236,12 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":         tca.ID,
-		"name":       tca.Name,
-		"active":     tca.Active,
-		"updated_at": tca.UpdatedAt,
+		"id":                                    tca.ID,
+		"name":                                  tca.Name,
+		"active":                                tca.Active,
+		"updated_at":                            tca.UpdatedAt,
+		"has_accepted_non_disclosure_agreement": tca.HasAcceptedNonDisclosureAgreement,
+		"has_accepted_non_disclosure_agreement_metadata": tca.HasAcceptedNonDisclosureAgreementMetadata,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -281,6 +295,8 @@ SELECT
 	email,
 	name,
 	active,
+	has_accepted_non_disclosure_agreement,
+	has_accepted_non_disclosure_agreement_metadata,
 	created_at,
 	updated_at
 FROM

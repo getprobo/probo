@@ -199,8 +199,11 @@ type TrustCenter implements Node {
   id: ID!
   active: Boolean!
   slug: String!
+  ndaFileName: String
+  ndaFileUrl: String @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
   isUserAuthenticated: Boolean! @goField(forceResolver: true)
+  hasAcceptedNonDisclosureAgreement: Boolean! @goField(forceResolver: true)
 
   documents(
     first: Int
@@ -246,8 +249,16 @@ input ExportDocumentPDFInput {
   documentId: ID!
 }
 
+input AcceptNonDisclosureAgreementInput {
+  trustCenterId: ID!
+}
+
 type ExportDocumentPDFPayload {
   data: String!
+}
+
+type  AcceptNonDisclosureAgreementPayload{
+  success: Boolean!
 }
 
 type Query {
@@ -262,4 +273,8 @@ type Mutation {
   exportDocumentPDF(
     input: ExportDocumentPDFInput!
   ): ExportDocumentPDFPayload! @mustBeAuthenticated(role: USER)
+
+  acceptNonDisclosureAgreement(
+    input: AcceptNonDisclosureAgreementInput!
+  ): AcceptNonDisclosureAgreementPayload! @mustBeAuthenticated(role: USER)
 }

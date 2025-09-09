@@ -504,6 +504,10 @@ type ComplexityRoot struct {
 		DeletedTrustCenterAccessID func(childComplexity int) int
 	}
 
+	DeleteTrustCenterNDAPayload struct {
+		TrustCenter func(childComplexity int) int
+	}
+
 	DeleteVendorBusinessAssociateAgreementPayload struct {
 		DeletedVendorID func(childComplexity int) int
 	}
@@ -768,6 +772,7 @@ type ComplexityRoot struct {
 		DeleteSnapshot                         func(childComplexity int, input types.DeleteSnapshotInput) int
 		DeleteTask                             func(childComplexity int, input types.DeleteTaskInput) int
 		DeleteTrustCenterAccess                func(childComplexity int, input types.DeleteTrustCenterAccessInput) int
+		DeleteTrustCenterNda                   func(childComplexity int, input types.DeleteTrustCenterNDAInput) int
 		DeleteVendor                           func(childComplexity int, input types.DeleteVendorInput) int
 		DeleteVendorBusinessAssociateAgreement func(childComplexity int, input types.DeleteVendorBusinessAssociateAgreementInput) int
 		DeleteVendorComplianceReport           func(childComplexity int, input types.DeleteVendorComplianceReportInput) int
@@ -814,6 +819,7 @@ type ComplexityRoot struct {
 		UploadAuditReport                      func(childComplexity int, input types.UploadAuditReportInput) int
 		UploadMeasureEvidence                  func(childComplexity int, input types.UploadMeasureEvidenceInput) int
 		UploadTaskEvidence                     func(childComplexity int, input types.UploadTaskEvidenceInput) int
+		UploadTrustCenterNda                   func(childComplexity int, input types.UploadTrustCenterNDAInput) int
 		UploadVendorBusinessAssociateAgreement func(childComplexity int, input types.UploadVendorBusinessAssociateAgreementInput) int
 		UploadVendorComplianceReport           func(childComplexity int, input types.UploadVendorComplianceReportInput) int
 		UploadVendorDataPrivacyAgreement       func(childComplexity int, input types.UploadVendorDataPrivacyAgreementInput) int
@@ -1109,18 +1115,21 @@ type ComplexityRoot struct {
 		Active       func(childComplexity int) int
 		CreatedAt    func(childComplexity int) int
 		ID           func(childComplexity int) int
+		NdaFileName  func(childComplexity int) int
+		NdaFileURL   func(childComplexity int) int
 		Organization func(childComplexity int) int
 		Slug         func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
 	}
 
 	TrustCenterAccess struct {
-		Active    func(childComplexity int) int
-		CreatedAt func(childComplexity int) int
-		Email     func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Name      func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
+		Active                            func(childComplexity int) int
+		CreatedAt                         func(childComplexity int) int
+		Email                             func(childComplexity int) int
+		HasAcceptedNonDisclosureAgreement func(childComplexity int) int
+		ID                                func(childComplexity int) int
+		Name                              func(childComplexity int) int
+		UpdatedAt                         func(childComplexity int) int
 	}
 
 	TrustCenterAccessConnection struct {
@@ -1249,6 +1258,10 @@ type ComplexityRoot struct {
 
 	UploadTaskEvidencePayload struct {
 		EvidenceEdge func(childComplexity int) int
+	}
+
+	UploadTrustCenterNDAPayload struct {
+		TrustCenter func(childComplexity int) int
 	}
 
 	UploadVendorBusinessAssociateAgreementPayload struct {
@@ -1544,6 +1557,8 @@ type MutationResolver interface {
 	UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error)
 	DeleteOrganization(ctx context.Context, input types.DeleteOrganizationInput) (*types.DeleteOrganizationPayload, error)
 	UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error)
+	UploadTrustCenterNda(ctx context.Context, input types.UploadTrustCenterNDAInput) (*types.UploadTrustCenterNDAPayload, error)
+	DeleteTrustCenterNda(ctx context.Context, input types.DeleteTrustCenterNDAInput) (*types.DeleteTrustCenterNDAPayload, error)
 	CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error)
 	UpdateTrustCenterAccess(ctx context.Context, input types.UpdateTrustCenterAccessInput) (*types.UpdateTrustCenterAccessPayload, error)
 	DeleteTrustCenterAccess(ctx context.Context, input types.DeleteTrustCenterAccessInput) (*types.DeleteTrustCenterAccessPayload, error)
@@ -1734,6 +1749,8 @@ type TaskConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.TaskConnection) (int, error)
 }
 type TrustCenterResolver interface {
+	NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
+
 	Organization(ctx context.Context, obj *types.TrustCenter) (*types.Organization, error)
 	Accesses(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterAccessOrderField]) (*types.TrustCenterAccessConnection, error)
 }
@@ -3020,6 +3037,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteTrustCenterAccessPayload.DeletedTrustCenterAccessID(childComplexity), true
+
+	case "DeleteTrustCenterNDAPayload.trustCenter":
+		if e.complexity.DeleteTrustCenterNDAPayload.TrustCenter == nil {
+			break
+		}
+
+		return e.complexity.DeleteTrustCenterNDAPayload.TrustCenter(childComplexity), true
 
 	case "DeleteVendorBusinessAssociateAgreementPayload.deletedVendorId":
 		if e.complexity.DeleteVendorBusinessAssociateAgreementPayload.DeletedVendorID == nil {
@@ -4530,6 +4554,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.DeleteTrustCenterAccess(childComplexity, args["input"].(types.DeleteTrustCenterAccessInput)), true
 
+	case "Mutation.deleteTrustCenterNDA":
+		if e.complexity.Mutation.DeleteTrustCenterNda == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteTrustCenterNDA_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteTrustCenterNda(childComplexity, args["input"].(types.DeleteTrustCenterNDAInput)), true
+
 	case "Mutation.deleteVendor":
 		if e.complexity.Mutation.DeleteVendor == nil {
 			break
@@ -5081,6 +5117,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.UploadTaskEvidence(childComplexity, args["input"].(types.UploadTaskEvidenceInput)), true
+
+	case "Mutation.uploadTrustCenterNDA":
+		if e.complexity.Mutation.UploadTrustCenterNda == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_uploadTrustCenterNDA_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UploadTrustCenterNda(childComplexity, args["input"].(types.UploadTrustCenterNDAInput)), true
 
 	case "Mutation.uploadVendorBusinessAssociateAgreement":
 		if e.complexity.Mutation.UploadVendorBusinessAssociateAgreement == nil {
@@ -6573,6 +6621,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TrustCenter.ID(childComplexity), true
 
+	case "TrustCenter.ndaFileName":
+		if e.complexity.TrustCenter.NdaFileName == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.NdaFileName(childComplexity), true
+
+	case "TrustCenter.ndaFileUrl":
+		if e.complexity.TrustCenter.NdaFileURL == nil {
+			break
+		}
+
+		return e.complexity.TrustCenter.NdaFileURL(childComplexity), true
+
 	case "TrustCenter.organization":
 		if e.complexity.TrustCenter.Organization == nil {
 			break
@@ -6614,6 +6676,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenterAccess.Email(childComplexity), true
+
+	case "TrustCenterAccess.hasAcceptedNonDisclosureAgreement":
+		if e.complexity.TrustCenterAccess.HasAcceptedNonDisclosureAgreement == nil {
+			break
+		}
+
+		return e.complexity.TrustCenterAccess.HasAcceptedNonDisclosureAgreement(childComplexity), true
 
 	case "TrustCenterAccess.id":
 		if e.complexity.TrustCenterAccess.ID == nil {
@@ -6880,6 +6949,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.UploadTaskEvidencePayload.EvidenceEdge(childComplexity), true
+
+	case "UploadTrustCenterNDAPayload.trustCenter":
+		if e.complexity.UploadTrustCenterNDAPayload.TrustCenter == nil {
+			break
+		}
+
+		return e.complexity.UploadTrustCenterNDAPayload.TrustCenter(childComplexity), true
 
 	case "UploadVendorBusinessAssociateAgreementPayload.vendorBusinessAssociateAgreement":
 		if e.complexity.UploadVendorBusinessAssociateAgreementPayload.VendorBusinessAssociateAgreement == nil {
@@ -7816,6 +7892,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteSnapshotInput,
 		ec.unmarshalInputDeleteTaskInput,
 		ec.unmarshalInputDeleteTrustCenterAccessInput,
+		ec.unmarshalInputDeleteTrustCenterNDAInput,
 		ec.unmarshalInputDeleteVendorBusinessAssociateAgreementInput,
 		ec.unmarshalInputDeleteVendorComplianceReportInput,
 		ec.unmarshalInputDeleteVendorContactInput,
@@ -7886,6 +7963,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUploadAuditReportInput,
 		ec.unmarshalInputUploadMeasureEvidenceInput,
 		ec.unmarshalInputUploadTaskEvidenceInput,
+		ec.unmarshalInputUploadTrustCenterNDAInput,
 		ec.unmarshalInputUploadVendorBusinessAssociateAgreementInput,
 		ec.unmarshalInputUploadVendorComplianceReportInput,
 		ec.unmarshalInputUploadVendorDataPrivacyAgreementInput,
@@ -9139,6 +9217,8 @@ type TrustCenter implements Node {
   id: ID!
   active: Boolean!
   slug: String!
+  ndaFileName: String
+  ndaFileUrl: String @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
   organization: Organization! @goField(forceResolver: true)
@@ -9884,6 +9964,7 @@ type TrustCenterAccess implements Node {
   email: String!
   name: String!
   active: Boolean!
+  hasAcceptedNonDisclosureAgreement: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -10213,6 +10294,14 @@ type Mutation {
     input: UpdateTrustCenterInput!
   ): UpdateTrustCenterPayload!
 
+  uploadTrustCenterNDA(
+    input: UploadTrustCenterNDAInput!
+  ): UploadTrustCenterNDAPayload!
+
+  deleteTrustCenterNDA(
+    input: DeleteTrustCenterNDAInput!
+  ): DeleteTrustCenterNDAPayload!
+
   # Trust Center Access CRUD mutations
   createTrustCenterAccess(
     input: CreateTrustCenterAccessInput!
@@ -10496,6 +10585,16 @@ input UpdateTrustCenterInput {
   trustCenterId: ID!
   active: Boolean
   slug: String
+}
+
+input UploadTrustCenterNDAInput {
+  trustCenterId: ID!
+  fileName: String!
+  file: Upload!
+}
+
+input DeleteTrustCenterNDAInput {
+  trustCenterId: ID!
 }
 
 input CreateTrustCenterAccessInput {
@@ -11127,6 +11226,14 @@ type DeleteOrganizationPayload {
 }
 
 type UpdateTrustCenterPayload {
+  trustCenter: TrustCenter!
+}
+
+type UploadTrustCenterNDAPayload {
+  trustCenter: TrustCenter!
+}
+
+type DeleteTrustCenterNDAPayload {
   trustCenter: TrustCenter!
 }
 
@@ -14825,6 +14932,29 @@ func (ec *executionContext) field_Mutation_deleteTrustCenterAccess_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteTrustCenterNDA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteTrustCenterNDA_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteTrustCenterNDA_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.DeleteTrustCenterNDAInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNDeleteTrustCenterNDAInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTrustCenterNDAInput(ctx, tmp)
+	}
+
+	var zeroVal types.DeleteTrustCenterNDAInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteVendorBusinessAssociateAgreement_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -15880,6 +16010,29 @@ func (ec *executionContext) field_Mutation_uploadTaskEvidence_argsInput(
 	}
 
 	var zeroVal types.UploadTaskEvidenceInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_uploadTrustCenterNDA_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_uploadTrustCenterNDA_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_uploadTrustCenterNDA_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.UploadTrustCenterNDAInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNUploadTrustCenterNDAInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUploadTrustCenterNDAInput(ctx, tmp)
+	}
+
+	var zeroVal types.UploadTrustCenterNDAInput
 	return zeroVal, nil
 }
 
@@ -27616,6 +27769,70 @@ func (ec *executionContext) fieldContext_DeleteTrustCenterAccessPayload_deletedT
 	return fc, nil
 }
 
+func (ec *executionContext) _DeleteTrustCenterNDAPayload_trustCenter(ctx context.Context, field graphql.CollectedField, obj *types.DeleteTrustCenterNDAPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteTrustCenterNDAPayload_trustCenter(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TrustCenter, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.TrustCenter)
+	fc.Result = res
+	return ec.marshalNTrustCenter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenter(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteTrustCenterNDAPayload_trustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteTrustCenterNDAPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TrustCenter_id(ctx, field)
+			case "active":
+				return ec.fieldContext_TrustCenter_active(ctx, field)
+			case "slug":
+				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "ndaFileName":
+				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
+			case "ndaFileUrl":
+				return ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TrustCenter_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_TrustCenter_updatedAt(ctx, field)
+			case "organization":
+				return ec.fieldContext_TrustCenter_organization(ctx, field)
+			case "accesses":
+				return ec.fieldContext_TrustCenter_accesses(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeleteVendorBusinessAssociateAgreementPayload_deletedVendorId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteVendorBusinessAssociateAgreementPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeleteVendorBusinessAssociateAgreementPayload_deletedVendorId(ctx, field)
 	if err != nil {
@@ -33251,6 +33468,124 @@ func (ec *executionContext) fieldContext_Mutation_updateTrustCenter(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateTrustCenter_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_uploadTrustCenterNDA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_uploadTrustCenterNDA(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UploadTrustCenterNda(rctx, fc.Args["input"].(types.UploadTrustCenterNDAInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.UploadTrustCenterNDAPayload)
+	fc.Result = res
+	return ec.marshalNUploadTrustCenterNDAPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUploadTrustCenterNDAPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_uploadTrustCenterNDA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "trustCenter":
+				return ec.fieldContext_UploadTrustCenterNDAPayload_trustCenter(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type UploadTrustCenterNDAPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_uploadTrustCenterNDA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteTrustCenterNDA(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteTrustCenterNDA(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteTrustCenterNda(rctx, fc.Args["input"].(types.DeleteTrustCenterNDAInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DeleteTrustCenterNDAPayload)
+	fc.Result = res
+	return ec.marshalNDeleteTrustCenterNDAPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTrustCenterNDAPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteTrustCenterNDA(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "trustCenter":
+				return ec.fieldContext_DeleteTrustCenterNDAPayload_trustCenter(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteTrustCenterNDAPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteTrustCenterNDA_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -42812,6 +43147,10 @@ func (ec *executionContext) fieldContext_Organization_trustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_active(ctx, field)
 			case "slug":
 				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "ndaFileName":
+				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
+			case "ndaFileUrl":
+				return ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TrustCenter_createdAt(ctx, field)
 			case "updatedAt":
@@ -49174,6 +49513,88 @@ func (ec *executionContext) fieldContext_TrustCenter_slug(_ context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenter_ndaFileName(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NdaFileName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_ndaFileName(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenter_ndaFileUrl(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TrustCenter().NdaFileURL(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenter_ndaFileUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenter",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenter_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TrustCenter_createdAt(ctx, field)
 	if err != nil {
@@ -49593,6 +50014,50 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_active(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasAcceptedNonDisclosureAgreement, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterAccess",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenterAccess_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
 	if err != nil {
@@ -49876,6 +50341,8 @@ func (ec *executionContext) fieldContext_TrustCenterAccessEdge_node(_ context.Co
 				return ec.fieldContext_TrustCenterAccess_name(ctx, field)
 			case "active":
 				return ec.fieldContext_TrustCenterAccess_active(ctx, field)
+			case "hasAcceptedNonDisclosureAgreement":
+				return ec.fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
 			case "updatedAt":
@@ -50080,6 +50547,10 @@ func (ec *executionContext) fieldContext_TrustCenterEdge_node(_ context.Context,
 				return ec.fieldContext_TrustCenter_active(ctx, field)
 			case "slug":
 				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "ndaFileName":
+				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
+			case "ndaFileUrl":
+				return ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TrustCenter_createdAt(ctx, field)
 			case "updatedAt":
@@ -51390,6 +51861,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterAccessPayload_trustCen
 				return ec.fieldContext_TrustCenterAccess_name(ctx, field)
 			case "active":
 				return ec.fieldContext_TrustCenterAccess_active(ctx, field)
+			case "hasAcceptedNonDisclosureAgreement":
+				return ec.fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
 			case "updatedAt":
@@ -51446,6 +51919,10 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterPayload_trustCenter(_ 
 				return ec.fieldContext_TrustCenter_active(ctx, field)
 			case "slug":
 				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "ndaFileName":
+				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
+			case "ndaFileUrl":
+				return ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TrustCenter_createdAt(ctx, field)
 			case "updatedAt":
@@ -51982,6 +52459,70 @@ func (ec *executionContext) fieldContext_UploadTaskEvidencePayload_evidenceEdge(
 				return ec.fieldContext_EvidenceEdge_node(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type EvidenceEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UploadTrustCenterNDAPayload_trustCenter(ctx context.Context, field graphql.CollectedField, obj *types.UploadTrustCenterNDAPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UploadTrustCenterNDAPayload_trustCenter(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TrustCenter, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.TrustCenter)
+	fc.Result = res
+	return ec.marshalNTrustCenter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenter(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UploadTrustCenterNDAPayload_trustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UploadTrustCenterNDAPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TrustCenter_id(ctx, field)
+			case "active":
+				return ec.fieldContext_TrustCenter_active(ctx, field)
+			case "slug":
+				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "ndaFileName":
+				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
+			case "ndaFileUrl":
+				return ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TrustCenter_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_TrustCenter_updatedAt(ctx, field)
+			case "organization":
+				return ec.fieldContext_TrustCenter_organization(ctx, field)
+			case "accesses":
+				return ec.fieldContext_TrustCenter_accesses(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
 		},
 	}
 	return fc, nil
@@ -63026,6 +63567,33 @@ func (ec *executionContext) unmarshalInputDeleteTrustCenterAccessInput(ctx conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteTrustCenterNDAInput(ctx context.Context, obj any) (types.DeleteTrustCenterNDAInput, error) {
+	var it types.DeleteTrustCenterNDAInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"trustCenterId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "trustCenterId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrustCenterID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteVendorBusinessAssociateAgreementInput(ctx context.Context, obj any) (types.DeleteVendorBusinessAssociateAgreementInput, error) {
 	var it types.DeleteVendorBusinessAssociateAgreementInput
 	asMap := map[string]any{}
@@ -66072,6 +66640,47 @@ func (ec *executionContext) unmarshalInputUploadTaskEvidenceInput(ctx context.Co
 				return it, err
 			}
 			it.TaskID = data
+		case "file":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+			data, err := ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.File = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUploadTrustCenterNDAInput(ctx context.Context, obj any) (types.UploadTrustCenterNDAInput, error) {
+	var it types.UploadTrustCenterNDAInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"trustCenterId", "fileName", "file"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "trustCenterId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrustCenterID = data
+		case "fileName":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fileName"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.FileName = data
 		case "file":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
 			data, err := ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
@@ -70951,6 +71560,45 @@ func (ec *executionContext) _DeleteTrustCenterAccessPayload(ctx context.Context,
 	return out
 }
 
+var deleteTrustCenterNDAPayloadImplementors = []string{"DeleteTrustCenterNDAPayload"}
+
+func (ec *executionContext) _DeleteTrustCenterNDAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteTrustCenterNDAPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteTrustCenterNDAPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteTrustCenterNDAPayload")
+		case "trustCenter":
+			out.Values[i] = ec._DeleteTrustCenterNDAPayload_trustCenter(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deleteVendorBusinessAssociateAgreementPayloadImplementors = []string{"DeleteVendorBusinessAssociateAgreementPayload"}
 
 func (ec *executionContext) _DeleteVendorBusinessAssociateAgreementPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteVendorBusinessAssociateAgreementPayload) graphql.Marshaler {
@@ -73340,6 +73988,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "updateTrustCenter":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_updateTrustCenter(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "uploadTrustCenterNDA":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_uploadTrustCenterNDA(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteTrustCenterNDA":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteTrustCenterNDA(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -77502,6 +78164,41 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "ndaFileName":
+			out.Values[i] = ec._TrustCenter_ndaFileName(ctx, field, obj)
+		case "ndaFileUrl":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenter_ndaFileUrl(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "createdAt":
 			out.Values[i] = ec._TrustCenter_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -77635,6 +78332,11 @@ func (ec *executionContext) _TrustCenterAccess(ctx context.Context, sel ast.Sele
 			}
 		case "active":
 			out.Values[i] = ec._TrustCenterAccess_active(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasAcceptedNonDisclosureAgreement":
+			out.Values[i] = ec._TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -78874,6 +79576,45 @@ func (ec *executionContext) _UploadTaskEvidencePayload(ctx context.Context, sel 
 			out.Values[i] = graphql.MarshalString("UploadTaskEvidencePayload")
 		case "evidenceEdge":
 			out.Values[i] = ec._UploadTaskEvidencePayload_evidenceEdge(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var uploadTrustCenterNDAPayloadImplementors = []string{"UploadTrustCenterNDAPayload"}
+
+func (ec *executionContext) _UploadTrustCenterNDAPayload(ctx context.Context, sel ast.SelectionSet, obj *types.UploadTrustCenterNDAPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, uploadTrustCenterNDAPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("UploadTrustCenterNDAPayload")
+		case "trustCenter":
+			out.Values[i] = ec._UploadTrustCenterNDAPayload_trustCenter(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -83353,6 +84094,25 @@ func (ec *executionContext) marshalNDeleteTrustCenterAccessPayload2ᚖgithubᚗc
 	return ec._DeleteTrustCenterAccessPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNDeleteTrustCenterNDAInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTrustCenterNDAInput(ctx context.Context, v any) (types.DeleteTrustCenterNDAInput, error) {
+	res, err := ec.unmarshalInputDeleteTrustCenterNDAInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteTrustCenterNDAPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTrustCenterNDAPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteTrustCenterNDAPayload) graphql.Marshaler {
+	return ec._DeleteTrustCenterNDAPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteTrustCenterNDAPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteTrustCenterNDAPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteTrustCenterNDAPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteTrustCenterNDAPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNDeleteVendorBusinessAssociateAgreementInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteVendorBusinessAssociateAgreementInput(ctx context.Context, v any) (types.DeleteVendorBusinessAssociateAgreementInput, error) {
 	res, err := ec.unmarshalInputDeleteVendorBusinessAssociateAgreementInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -86567,6 +87327,25 @@ func (ec *executionContext) marshalNUploadTaskEvidencePayload2ᚖgithubᚗcomᚋ
 		return graphql.Null
 	}
 	return ec._UploadTaskEvidencePayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNUploadTrustCenterNDAInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUploadTrustCenterNDAInput(ctx context.Context, v any) (types.UploadTrustCenterNDAInput, error) {
+	res, err := ec.unmarshalInputUploadTrustCenterNDAInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUploadTrustCenterNDAPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUploadTrustCenterNDAPayload(ctx context.Context, sel ast.SelectionSet, v types.UploadTrustCenterNDAPayload) graphql.Marshaler {
+	return ec._UploadTrustCenterNDAPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNUploadTrustCenterNDAPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUploadTrustCenterNDAPayload(ctx context.Context, sel ast.SelectionSet, v *types.UploadTrustCenterNDAPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._UploadTrustCenterNDAPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNUploadVendorBusinessAssociateAgreementInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUploadVendorBusinessAssociateAgreementInput(ctx context.Context, v any) (types.UploadVendorBusinessAssociateAgreementInput, error) {

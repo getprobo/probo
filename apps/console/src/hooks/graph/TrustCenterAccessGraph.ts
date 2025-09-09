@@ -26,6 +26,7 @@ export const trustCenterAccessesQuery = graphql`
               email
               name
               active
+              hasAcceptedNonDisclosureAgreement
               createdAt
             }
           }
@@ -48,6 +49,7 @@ export const createTrustCenterAccessMutation = graphql`
           email
           name
           active
+          hasAcceptedNonDisclosureAgreement
           createdAt
         }
       }
@@ -65,6 +67,7 @@ export const updateTrustCenterAccessMutation = graphql`
         email
         name
         active
+        hasAcceptedNonDisclosureAgreement
         createdAt
         updatedAt
       }

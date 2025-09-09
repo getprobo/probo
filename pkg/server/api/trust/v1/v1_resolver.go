@@ -11,9 +11,7 @@ import (
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
-	"github.com/getprobo/probo/pkg/server/api/trust/v1/auth"
 	"github.com/getprobo/probo/pkg/server/api/trust/v1/schema"
 	"github.com/getprobo/probo/pkg/server/api/trust/v1/types"
 	"github.com/getprobo/probo/pkg/trust"
@@ -21,14 +19,14 @@ import (
 
 // Framework is the resolver for the framework field.
 func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types.Framework, error) {
-	trust := r.TrustService(ctx, obj.ID.TenantID())
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
 
-	audit, err := trust.Audits.Get(ctx, obj.ID)
+	audit, err := publicTrustService.Audits.Get(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
 
-	framework, err := trust.Frameworks.Get(ctx, audit.FrameworkID)
+	framework, err := publicTrustService.Frameworks.Get(ctx, audit.FrameworkID)
 	if err != nil {
 		panic(fmt.Errorf("cannot load framework: %w", err))
 	}
@@ -38,9 +36,9 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 
 // Report is the resolver for the report field.
 func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Report, error) {
-	trust := r.TrustService(ctx, obj.ID.TenantID())
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
 
-	audit, err := trust.Audits.Get(ctx, obj.ID)
+	audit, err := publicTrustService.Audits.Get(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
@@ -49,7 +47,7 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 		return nil, nil
 	}
 
-	report, err := trust.Reports.Get(ctx, *audit.ReportID)
+	report, err := publicTrustService.Reports.Get(ctx, *audit.ReportID)
 	if err != nil {
 		panic(fmt.Errorf("cannot load report: %w", err))
 	}
@@ -59,9 +57,9 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 // CreateTrustCenterAccess is the resolver for the createTrustCenterAccess field.
 func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error) {
-	trustSvc := r.trustCenterSvc.WithTenant(input.TrustCenterID.TenantID())
+	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
 
-	access, err := trustSvc.TrustCenterAccesses.Create(ctx, &trust.CreateTrustCenterAccessRequest{
+	access, err := publicTrustService.TrustCenterAccesses.Create(ctx, &trust.CreateTrustCenterAccessRequest{
 		TrustCenterID: input.TrustCenterID,
 		Email:         input.Email,
 		Name:          input.Name,
@@ -83,15 +81,33 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 
 // ExportDocumentPDF is the resolver for the exportDocumentPDF field.
 func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error) {
-	if err := auth.ValidateTenantAccess(ctx, r, userTenantContextKey, input.DocumentID.TenantID()); err != nil {
-		return nil, err
-	}
-
-	trust := r.trustCenterSvc.WithTenant(input.DocumentID.TenantID())
-
-	pdf, err := trust.Documents.ExportPDF(ctx, input.DocumentID)
+	privateTrustService, err := r.PrivateTrustService(ctx, input.DocumentID.TenantID())
 	if err != nil {
 		return nil, fmt.Errorf("cannot export document PDF: %w", err)
+	}
+
+	hasAcceptedNDA := false
+	userData := UserFromContext(ctx)
+	if userData != nil {
+		hasAcceptedNDA = true
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		tokenData := TokenAccessFromContext(ctx)
+		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+		if err != nil {
+			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+		}
+	}
+
+	if !hasAcceptedNDA {
+		return nil, fmt.Errorf("user has not accepted NDA")
+	}
+
+	pdf, err := privateTrustService.Documents.ExportPDF(ctx, input.DocumentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot export document PDF: %w", err))
 	}
 
 	return &types.ExportDocumentPDFPayload{
@@ -99,18 +115,38 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 	}, nil
 }
 
+// AcceptNonDisclosureAgreement is the resolver for the acceptNonDisclosureAgreement field.
+func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context, input types.AcceptNonDisclosureAgreementInput) (*types.AcceptNonDisclosureAgreementPayload, error) {
+	privateTrustService, err := r.PrivateTrustService(ctx, input.TrustCenterID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot accept NDA: %w", err)
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData == nil {
+		return nil, fmt.Errorf("token not found")
+	}
+
+	err = privateTrustService.TrustCenterAccesses.AcceptNonDisclosureAgreement(ctx, input.TrustCenterID, tokenData.GetEmail())
+	if err != nil {
+		return nil, fmt.Errorf("cannot accept NDA: %w", err)
+	}
+
+	return &types.AcceptNonDisclosureAgreementPayload{Success: true}, nil
+}
+
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
-	trust := r.TrustService(ctx, obj.ID.TenantID())
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
 
-	return trust.Organizations.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+	return publicTrustService.Organizations.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
 }
 
 // TrustCenterBySlug is the resolver for the trustCenterBySlug field.
 func (r *queryResolver) TrustCenterBySlug(ctx context.Context, slug string) (*types.TrustCenter, error) {
-	publicTrust := r.trustCenterSvc.WithTenant(gid.NewTenantID())
+	rootTrustService := r.RootTrustService(ctx)
 
-	trustCenter, err := publicTrust.TrustCenters.GetBySlug(ctx, slug)
+	trustCenter, err := rootTrustService.TrustCenters.GetBySlug(ctx, slug)
 	if err != nil {
 		return nil, nil
 	}
@@ -119,33 +155,68 @@ func (r *queryResolver) TrustCenterBySlug(ctx context.Context, slug string) (*ty
 		return nil, nil
 	}
 
-	result := types.NewTrustCenter(trustCenter)
+	publicTrustService := r.PublicTrustService(ctx, trustCenter.TenantID)
+	trustCenter, file, err := publicTrustService.TrustCenters.Get(ctx, trustCenter.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get trust center: %w", err))
+	}
 
-	orgTrust := r.trustCenterSvc.WithTenant(trustCenter.TenantID)
-	org, err := orgTrust.Organizations.Get(ctx, trustCenter.OrganizationID)
+	org, err := publicTrustService.Organizations.Get(ctx, trustCenter.OrganizationID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
+	response := types.NewTrustCenter(trustCenter, file)
+	response.Organization = types.NewOrganization(org)
 
-	result.Organization = types.NewOrganization(org)
-
-	return result, nil
+	return response, nil
 }
 
 // DownloadURL is the resolver for the downloadUrl field.
 func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*string, error) {
-	if err := auth.ValidateTenantAccess(ctx, r, userTenantContextKey, obj.ID.TenantID()); err != nil {
-		return nil, err
+	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate download URL: %w", err)
 	}
 
-	trust := r.TrustService(ctx, obj.ID.TenantID())
+	hasAcceptedNDA := false
+	userData := UserFromContext(ctx)
+	if userData != nil {
+		hasAcceptedNDA = true
+	}
 
-	url, err := trust.Reports.GenerateDownloadURL(ctx, obj.ID, r.trustAuthCfg.ReportURLDuration)
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+		if err != nil {
+			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+		}
+	}
+
+	if !hasAcceptedNDA {
+		return nil, fmt.Errorf("user has not accepted NDA")
+	}
+
+	url, err := privateTrustService.Reports.GenerateDownloadURL(ctx, obj.ID, r.trustAuthCfg.ReportURLDuration)
 	if err != nil {
 		panic(fmt.Errorf("cannot generate download URL: %w", err))
 	}
 
 	return url, nil
+}
+
+// NdaFileURL is the resolver for the ndaFileUrl field.
+func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
+	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get private trust service: %w", err)
+	}
+
+	fileURL, err := privateTrustService.TrustCenters.GenerateNDAFileURL(ctx, obj.ID, 15*time.Minute)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate NDA file URL: %w", err)
+	}
+
+	return &fileURL, nil
 }
 
 // Organization is the resolver for the organization field.
@@ -155,15 +226,41 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 
 // IsUserAuthenticated is the resolver for the isUserAuthenticated field.
 func (r *trustCenterResolver) IsUserAuthenticated(ctx context.Context, obj *types.TrustCenter) (bool, error) {
-	if err := auth.ValidateTenantAccess(ctx, r, userTenantContextKey, obj.Organization.ID.TenantID()); err != nil {
+	_, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	if err != nil {
 		return false, nil
 	}
+
 	return true, nil
+}
+
+// HasAcceptedNonDisclosureAgreement is the resolver for the hasAcceptedNonDisclosureAgreement field.
+func (r *trustCenterResolver) HasAcceptedNonDisclosureAgreement(ctx context.Context, obj *types.TrustCenter) (bool, error) {
+	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return false, nil
+	}
+
+	userData := UserFromContext(ctx)
+	if userData != nil {
+		return true, nil
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		hasAcceptedNDA, err := privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, obj.ID, tokenData.GetEmail())
+		if err != nil {
+			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+		}
+		return hasAcceptedNDA, nil
+	}
+
+	panic(fmt.Errorf("no user or token data found"))
 }
 
 // Documents is the resolver for the documents field.
 func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.DocumentConnection, error) {
-	trust := r.trustCenterSvc.WithTenant(obj.Organization.ID.TenantID())
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DocumentOrderField]{
 		Field:     coredata.DocumentOrderFieldTitle,
@@ -171,7 +268,7 @@ func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCen
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	documentPage, err := trust.Documents.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
+	documentPage, err := publicTrustService.Documents.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list public documents: %w", err))
 	}
@@ -181,7 +278,7 @@ func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCen
 
 // Audits is the resolver for the audits field.
 func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.AuditConnection, error) {
-	trust := r.trustCenterSvc.WithTenant(obj.Organization.ID.TenantID())
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.AuditOrderField]{
 		Field:     coredata.AuditOrderFieldValidFrom,
@@ -189,7 +286,7 @@ func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	auditPage, err := trust.Audits.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
+	auditPage, err := publicTrustService.Audits.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list public audits: %w", err))
 	}
@@ -199,7 +296,7 @@ func (r *trustCenterResolver) Audits(ctx context.Context, obj *types.TrustCenter
 
 // Vendors is the resolver for the vendors field.
 func (r *trustCenterResolver) Vendors(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.VendorConnection, error) {
-	trust := r.trustCenterSvc.WithTenant(obj.Organization.ID.TenantID())
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
 		Field:     coredata.VendorOrderFieldName,
@@ -207,7 +304,7 @@ func (r *trustCenterResolver) Vendors(ctx context.Context, obj *types.TrustCente
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	vendorPage, err := trust.Vendors.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
+	vendorPage, err := publicTrustService.Vendors.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list public vendors: %w", err))
 	}

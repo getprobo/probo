@@ -12,6 +12,8 @@ export const trustCenterQuery = graphql`
           id
           active
           slug
+          ndaFileName
+          ndaFileUrl
           createdAt
           updatedAt
         }
@@ -66,3 +68,48 @@ export function useUpdateTrustCenterMutation() {
     }
   );
 }
+
+export const uploadTrustCenterNDAMutation = graphql`
+  mutation TrustCenterGraphUploadNDAMutation($input: UploadTrustCenterNDAInput!) {
+    uploadTrustCenterNDA(input: $input) {
+      trustCenter {
+        id
+        ndaFileName
+        updatedAt
+      }
+    }
+  }
+`;
+
+export function useUploadTrustCenterNDAMutation() {
+  return useMutationWithToasts(
+    uploadTrustCenterNDAMutation,
+    {
+      successMessage: "NDA uploaded successfully",
+      errorMessage: "Failed to upload NDA",
+    }
+  );
+}
+
+export const deleteTrustCenterNDAMutation = graphql`
+  mutation TrustCenterGraphDeleteNDAMutation($input: DeleteTrustCenterNDAInput!) {
+    deleteTrustCenterNDA(input: $input) {
+      trustCenter {
+        id
+        ndaFileName
+        updatedAt
+      }
+    }
+  }
+`;
+
+export function useDeleteTrustCenterNDAMutation() {
+  return useMutationWithToasts(
+    deleteTrustCenterNDAMutation,
+    {
+      successMessage: "NDA deleted successfully",
+      errorMessage: "Failed to delete NDA",
+    }
+  );
+}
+
