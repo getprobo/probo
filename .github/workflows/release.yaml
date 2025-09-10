@@ -38,12 +38,11 @@ jobs:
         run: npm ci
 
       - name: Install Syft
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+        uses: anchore/sbom-action/download-syft@v0
 
       - name: Install Grype
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/v0.85.0/install.sh | sh -s -- -b /usr/local/bin
 
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
@@ -74,7 +73,7 @@ jobs:
 
       - name: Generate SBOM for attestation
         run: |
-          syft dir:. --output cyclonedx-json --source-name probod --source-version ${{ github.ref_name }} > sbom.json
+          syft dir:. --output cyclonedx-json --source-name probo --source-version ${{ github.ref_name }} > sbom.json
 
       - name: Scan SBOM for vulnerabilities
         run: |
