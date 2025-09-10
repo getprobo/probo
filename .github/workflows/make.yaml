@@ -24,7 +24,7 @@ jobs:
           go-version: "1.25"
       - uses: "actions/setup-node@v4"
         with:
-          node-version: 22
+          node-version-file: ".nvmrc"
       - run: "npm ci"
       - uses: "docker/setup-qemu-action@v3"
       - uses: "docker/setup-buildx-action@v3"
@@ -58,7 +58,7 @@ jobs:
           go-version: "1.25"
       - uses: "actions/setup-node@v4"
         with:
-          node-version: 22
+          node-version-file: ".nvmrc"
       - run: "npm ci"
       - run: "make build"
       - run: "make test"

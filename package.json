@@ -2,7 +2,7 @@
   "name": "probo",
   "description": "Probo monorepo containing applications and shared packages",
   "engines": {
-    "node": "22.x"
+    "node": "v24.4.0"
   },
   "workspaces": [
     "apps/*",
@@ -25,6 +25,6 @@
   "license": "MIT",
   "packageManager": "npm@11.1.0",
   "volta": {
-    "node": "22.16.0"
+    "node": "v24.4.0"
   }
 }
