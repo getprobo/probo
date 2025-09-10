@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.58.1] - 2025-09-10
+
+### Chore
+- Rename registries
+
 ## [0.58.0] - 2025-09-08
 
 ### Added
