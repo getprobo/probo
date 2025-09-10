@@ -29,7 +29,7 @@ jobs:
       - uses: "docker/setup-qemu-action@v3"
       - uses: "docker/setup-buildx-action@v3"
       - uses: "sigstore/cosign-installer@v3"
-      - uses: "anchore/sbom-action/download-syft@v0"
+      - uses: "anchore/sbom-action/download-syft@da167eac915b4e86f08b264dbdbc867b61be6f0c" # v0.20.5
       - uses: "goreleaser/goreleaser-action@v6"
         with:
           distribution: "goreleaser"
@@ -72,33 +72,16 @@ jobs:
             coverage.html
           retention-days: 30
       - run: "make lint"
+      - name: Generate SBOM
+        uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c #v0.20.5
+        with:
+          path: ./
+          format: cyclonedx-json
+          output-file: sbom.json
 
-  vulnerability-scan:
-    name: "vulnerability-scan"
-    runs-on: "ubuntu-24.04"
-    permissions:
-      contents: "read"
-    steps:
-      - uses: "actions/checkout@v4"
+      - name: Run vulnerability scan
+        uses: anchore/scan-action@1638637db639e0ade3258b51db49a9a137574c3e #v6.5.1
         with:
-          fetch-depth: 0
-      - uses: "actions/setup-go@v5"
-        with:
-          go-version: "1.25"
-      - uses: "actions/setup-node@v4"
-        with:
-          node-version: 22
-      - run: "npm ci"
-      - name: "Install Syft"
-        uses: "anchore/sbom-action/download-syft@v0"
-      - name: "Install Grype"
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/v0.85.0/install.sh | sh -s -- -b /usr/local/bin
-      - name: "Generate SBOM"
-        run: |
-          syft dir:. --output cyclonedx-json --source-name probo --source-version ${{ github.sha }} > sbom.json
-      - name: "Scan SBOM for vulnerabilities"
-        run: |
-          echo "Scanning SBOM for vulnerabilities..."
-          grype sbom:sbom.json --fail-on critical --output table
-          echo "Vulnerability scan completed successfully - no critical vulnerabilities found"
+          path: ./
+          fail-build: true
+          severity-cutoff: critical

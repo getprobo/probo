@@ -87,15 +87,15 @@ sbom:
 
 .PHONY: scan-sbom
 scan-sbom: sbom
-	$(GRYPE) sbom:sbom.json --fail-on high
+	$(GRYPE) sbom:sbom.json --config .grype.yaml --fail-on high
 
 .PHONY: scan-sbom-docker
 scan-sbom-docker: sbom-docker
-	$(GRYPE) sbom:sbom-docker.json --fail-on high
+	$(GRYPE) sbom:sbom-docker.json --config .grype.yaml --fail-on high
 
 .PHONY: scan-docker
 scan-docker: docker-build
-	$(GRYPE) docker:$(DOCKER_IMAGE_NAME):$(DOCKER_TAG_NAME) --fail-on high
+	$(GRYPE) docker:$(DOCKER_IMAGE_NAME):$(DOCKER_TAG_NAME) --config .grype.yaml --fail-on high
 
 .PHONY: scan
 scan: scan-sbom scan-sbom-docker scan-docker

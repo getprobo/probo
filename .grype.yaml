@@ -1,0 +1,5 @@
+ignore:
+  - vulnerability: "CVE-2024-3566"
+    package:
+      name: "stdlib"
+    reason: "CERT VU#123335: Go is Not Affected"
