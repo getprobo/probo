@@ -210,6 +210,23 @@ func (s *Service) ExportFrameworkJob(ctx context.Context) error {
 		return fmt.Errorf("cannot build and upload framework export: %w", buildErr)
 	}
 
+	tenantService := s.WithTenant(scope.GetTenantID())
+	if emailErr := tenantService.Frameworks.SendFrameworkExportEmail(ctx, *fe.FileID, fe.RecipientName, fe.RecipientEmail); emailErr != nil {
+		if err := s.commitFailedExport(ctx, scope, fe); err != nil {
+			return fmt.Errorf(
+				"cannot send completion email: %w, and cannot commit failed export: %w",
+				emailErr,
+				err,
+			)
+		}
+
+		return fmt.Errorf("cannot send completion email: %w", emailErr)
+	}
+
+	if err := s.commitSuccessfulExport(ctx, scope, fe); err != nil {
+		return fmt.Errorf("cannot commit successful export: %w", err)
+	}
+
 	return nil
 }
 
@@ -314,8 +331,6 @@ func (s *Service) buildAndUploadExport(ctx context.Context, scope coredata.Scope
 			}
 
 			fe.FileID = &file.ID
-			fe.CompletedAt = ref.Ref(time.Now())
-			fe.Status = coredata.FrameworkExportStatusCompleted
 			if err := fe.Update(ctx, tx, scope); err != nil {
 				return fmt.Errorf("cannot update framework export: %w", err)
 			}
@@ -334,6 +349,22 @@ func (s *Service) buildAndUploadExport(ctx context.Context, scope coredata.Scope
 func (s *Service) commitFailedExport(ctx context.Context, scope coredata.Scoper, fe *coredata.FrameworkExport) error {
 	fe.CompletedAt = ref.Ref(time.Now())
 	fe.Status = coredata.FrameworkExportStatusFailed
+
+	return s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := fe.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update framework export: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) commitSuccessfulExport(ctx context.Context, scope coredata.Scoper, fe *coredata.FrameworkExport) error {
+	fe.CompletedAt = ref.Ref(time.Now())
+	fe.Status = coredata.FrameworkExportStatusCompleted
 
 	return s.pg.WithConn(
 		ctx,

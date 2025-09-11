@@ -29,13 +29,15 @@ import (
 
 type (
 	FrameworkExport struct {
-		ID          gid.GID               `db:"id"`
-		FrameworkID gid.GID               `db:"framework_id"`
-		Status      FrameworkExportStatus `db:"status"`
-		FileID      *gid.GID              `db:"file_id"`
-		CreatedAt   time.Time             `db:"created_at"`
-		StartedAt   *time.Time            `db:"started_at"`
-		CompletedAt *time.Time            `db:"completed_at"`
+		ID             gid.GID               `db:"id"`
+		FrameworkID    gid.GID               `db:"framework_id"`
+		RecipientEmail string                `db:"recipient_email"`
+		RecipientName  string                `db:"recipient_name"`
+		Status         FrameworkExportStatus `db:"status"`
+		FileID         *gid.GID              `db:"file_id"`
+		CreatedAt      time.Time             `db:"created_at"`
+		StartedAt      *time.Time            `db:"started_at"`
+		CompletedAt    *time.Time            `db:"completed_at"`
 	}
 
 	FrameworkExports []*FrameworkExport
@@ -64,22 +66,28 @@ INSERT INTO framework_exports (
 	id,
 	tenant_id,
 	framework_id,
+	recipient_email,
+	recipient_name,
 	status,
 	created_at
 ) VALUES (
 	@id,
 	@tenant_id,
 	@framework_id,
+	@recipient_email,
+	@recipient_name,
 	@status,
 	@created_at
 )`
 
 	args := pgx.StrictNamedArgs{
-		"id":           fe.ID,
-		"tenant_id":    scope.GetTenantID(),
-		"framework_id": fe.FrameworkID,
-		"status":       fe.Status,
-		"created_at":   fe.CreatedAt,
+		"id":              fe.ID,
+		"tenant_id":       scope.GetTenantID(),
+		"framework_id":    fe.FrameworkID,
+		"recipient_email": fe.RecipientEmail,
+		"recipient_name":  fe.RecipientName,
+		"status":          fe.Status,
+		"created_at":      fe.CreatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -127,6 +135,8 @@ func (fe *FrameworkExport) LoadNextPendingForUpdateSkipLocked(
 SELECT
 	id,
 	framework_id,
+	recipient_email,
+	recipient_name,
 	status,
 	file_id,
 	created_at,

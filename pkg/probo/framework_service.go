@@ -34,7 +34,16 @@ import (
 )
 
 const (
-	maxStateOfApplicabilityLimit = 10_000
+	maxStateOfApplicabilityLimit  = 10_000
+	frameworkExportEmailExpiresIn = 24 * time.Hour
+	frameworkExportEmailSubject   = "Your framework export is ready"
+	frameworkExportEmailBody      = `
+Your framework export has been completed successfully.
+
+You can download the export using the link below:
+[1] %s
+
+This link will expire in 24 hours.`
 )
 
 type (
@@ -71,6 +80,8 @@ type (
 func (s FrameworkService) RequestExport(
 	ctx context.Context,
 	frameworkID gid.GID,
+	recipientEmail string,
+	recipientName string,
 ) (error, *coredata.FrameworkExport) {
 	frameworkExport := &coredata.FrameworkExport{}
 
@@ -83,10 +94,12 @@ func (s FrameworkService) RequestExport(
 		now := time.Now()
 
 		frameworkExport = &coredata.FrameworkExport{
-			ID:          gid.New(framework.ID.TenantID(), coredata.FrameworkExportEntityType),
-			FrameworkID: frameworkID,
-			Status:      coredata.FrameworkExportStatusPending,
-			CreatedAt:   now,
+			ID:             gid.New(framework.ID.TenantID(), coredata.FrameworkExportEntityType),
+			FrameworkID:    frameworkID,
+			Status:         coredata.FrameworkExportStatusPending,
+			RecipientEmail: recipientEmail,
+			RecipientName:  recipientName,
+			CreatedAt:      now,
 		}
 
 		if err := frameworkExport.Insert(ctx, conn, s.svc.scope); err != nil {
@@ -660,4 +673,66 @@ func (s FrameworkService) StateOfApplicability(ctx context.Context, frameworkID 
 	}
 
 	return output, nil
+}
+
+func (s FrameworkService) SendFrameworkExportEmail(
+	ctx context.Context,
+	fileID gid.GID,
+	recipientName string,
+	recipientEmail string,
+) error {
+	return s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			file := &coredata.File{}
+			if err := file.LoadByID(ctx, tx, s.svc.scope, fileID); err != nil {
+				return fmt.Errorf("cannot load file: %w", err)
+			}
+
+			downloadURL, err := s.GenerateFrameworkExportDownloadURL(ctx, file)
+			if err != nil {
+				return fmt.Errorf("cannot generate download URL: %w", err)
+			}
+
+			email := coredata.NewEmail(
+				recipientName,
+				recipientEmail,
+				frameworkExportEmailSubject,
+				fmt.Sprintf(frameworkExportEmailBody, downloadURL),
+			)
+
+			if err := email.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot insert email: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s FrameworkService) GenerateFrameworkExportDownloadURL(
+	ctx context.Context,
+	file *coredata.File,
+) (string, error) {
+	presignClient := s3.NewPresignClient(s.svc.s3)
+
+	presignedReq, err := presignClient.PresignGetObject(
+		ctx,
+		&s3.GetObjectInput{
+			Bucket:                     ref.Ref(s.svc.bucket),
+			Key:                        ref.Ref(file.FileKey),
+			ResponseCacheControl:       ref.Ref("max-age=3600, public"),
+			ResponseContentType:        ref.Ref(file.MimeType),
+			ResponseContentDisposition: ref.Ref(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
+		},
+		func(opts *s3.PresignOptions) {
+			opts.Expires = frameworkExportEmailExpiresIn
+		},
+	)
+
+	if err != nil {
+		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
+	}
+
+	return presignedReq.URL, nil
 }

@@ -1626,7 +1626,18 @@ func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Con
 // ExportFramework is the resolver for the exportFramework field.
 func (r *mutationResolver) ExportFramework(ctx context.Context, input types.ExportFrameworkInput) (*types.ExportFrameworkPayload, error) {
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
-	err, exportJobID := prb.Frameworks.RequestExport(ctx, input.FrameworkID)
+
+	user := UserFromContext(ctx)
+	if user == nil {
+		panic(fmt.Errorf("user not found"))
+	}
+
+	err, exportJobID := prb.Frameworks.RequestExport(
+		ctx,
+		input.FrameworkID,
+		user.FullName,
+		user.EmailAddress,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot export framework: %w", err)
 	}
