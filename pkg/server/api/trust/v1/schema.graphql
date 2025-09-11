@@ -73,7 +73,6 @@ type Framework implements Node {
 type Report implements Node {
   id: ID!
   filename: String!
-  downloadUrl: String @goField(forceResolver: true) @mustBeAuthenticated(role: USER)
 }
 
 type Audit implements Node {
@@ -249,11 +248,19 @@ input ExportDocumentPDFInput {
   documentId: ID!
 }
 
+input ExportReportPDFInput {
+  reportId: ID!
+}
+
 input AcceptNonDisclosureAgreementInput {
   trustCenterId: ID!
 }
 
 type ExportDocumentPDFPayload {
+  data: String!
+}
+
+type ExportReportPDFPayload {
   data: String!
 }
 
@@ -273,6 +280,10 @@ type Mutation {
   exportDocumentPDF(
     input: ExportDocumentPDFInput!
   ): ExportDocumentPDFPayload! @mustBeAuthenticated(role: USER)
+
+  exportReportPDF(
+    input: ExportReportPDFInput!
+  ): ExportReportPDFPayload! @mustBeAuthenticated(role: USER)
 
   acceptNonDisclosureAgreement(
     input: AcceptNonDisclosureAgreementInput!
