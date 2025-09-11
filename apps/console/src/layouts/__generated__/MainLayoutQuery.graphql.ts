@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d411922830ba632f8c48c98caa435a22>>
+ * @generated SignedSource<<0719379cc0124f36eb1810ad24b2ae5a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,24 +9,23 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type MainLayoutQuery$variables = Record<PropertyKey, never>;
+import { FragmentRefs } from "relay-runtime";
+export type MainLayoutQuery$variables = {
+  organizationId: string;
+};
 export type MainLayoutQuery$data = {
+  readonly organization: {
+    readonly id?: string;
+    readonly logoUrl?: string | null | undefined;
+    readonly name?: string;
+  };
   readonly viewer: {
     readonly id: string;
-    readonly organizations: {
-      readonly __id: string;
-      readonly edges: ReadonlyArray<{
-        readonly node: {
-          readonly id: string;
-          readonly logoUrl: string | null | undefined;
-          readonly name: string;
-        };
-      }>;
-    };
     readonly user: {
       readonly email: string;
       readonly fullName: string;
     };
+    readonly " $fragmentSpreads": FragmentRefs<"MainLayout_OrganizationSelector_viewer">;
   };
 };
 export type MainLayoutQuery = {
@@ -35,127 +34,80 @@ export type MainLayoutQuery = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = {
+var v0 = [
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "organizationId"
+  }
+],
+v1 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v1 = {
+v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "fullName",
   "storageKey": null
 },
-v2 = {
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "email",
   "storageKey": null
 },
-v3 = [
+v4 = [
   {
-    "alias": null,
-    "args": null,
-    "concreteType": "OrganizationEdge",
-    "kind": "LinkedField",
-    "name": "edges",
-    "plural": true,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "concreteType": "Organization",
-        "kind": "LinkedField",
-        "name": "node",
-        "plural": false,
-        "selections": [
-          (v0/*: any*/),
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "name",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "logoUrl",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "__typename",
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "cursor",
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
-  },
-  {
-    "alias": null,
-    "args": null,
-    "concreteType": "PageInfo",
-    "kind": "LinkedField",
-    "name": "pageInfo",
-    "plural": false,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "endCursor",
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "hasNextPage",
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
-  },
-  {
-    "kind": "ClientExtension",
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "__id",
-        "storageKey": null
-      }
-    ]
+    "kind": "Variable",
+    "name": "id",
+    "variableName": "organizationId"
   }
 ],
-v4 = [
+v5 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v6 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "logoUrl",
+  "storageKey": null
+},
+v7 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 25
+  },
+  {
+    "kind": "Literal",
+    "name": "orderBy",
+    "value": {
+      "direction": "ASC",
+      "field": "NAME"
+    }
   }
-];
+],
+v8 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "__typename",
+  "storageKey": null
+};
 return {
   "fragment": {
-    "argumentDefinitions": [],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
     "name": "MainLayoutQuery",
@@ -168,7 +120,7 @@ return {
         "name": "viewer",
         "plural": false,
         "selections": [
-          (v0/*: any*/),
+          (v1/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -177,20 +129,36 @@ return {
             "name": "user",
             "plural": false,
             "selections": [
-              (v1/*: any*/),
-              (v2/*: any*/)
+              (v2/*: any*/),
+              (v3/*: any*/)
             ],
             "storageKey": null
           },
           {
-            "alias": "organizations",
             "args": null,
-            "concreteType": "OrganizationConnection",
-            "kind": "LinkedField",
-            "name": "__MainLayout_organizations_connection",
-            "plural": false,
-            "selections": (v3/*: any*/),
-            "storageKey": null
+            "kind": "FragmentSpread",
+            "name": "MainLayout_OrganizationSelector_viewer"
+          }
+        ],
+        "storageKey": null
+      },
+      {
+        "alias": "organization",
+        "args": (v4/*: any*/),
+        "concreteType": null,
+        "kind": "LinkedField",
+        "name": "node",
+        "plural": false,
+        "selections": [
+          {
+            "kind": "InlineFragment",
+            "selections": [
+              (v1/*: any*/),
+              (v5/*: any*/),
+              (v6/*: any*/)
+            ],
+            "type": "Organization",
+            "abstractKey": null
           }
         ],
         "storageKey": null
@@ -201,7 +169,7 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": [],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "MainLayoutQuery",
     "selections": [
@@ -213,7 +181,7 @@ return {
         "name": "viewer",
         "plural": false,
         "selections": [
-          (v0/*: any*/),
+          (v1/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -222,30 +190,113 @@ return {
             "name": "user",
             "plural": false,
             "selections": [
-              (v1/*: any*/),
               (v2/*: any*/),
-              (v0/*: any*/)
+              (v3/*: any*/),
+              (v1/*: any*/)
             ],
             "storageKey": null
           },
           {
             "alias": null,
-            "args": (v4/*: any*/),
+            "args": (v7/*: any*/),
             "concreteType": "OrganizationConnection",
             "kind": "LinkedField",
             "name": "organizations",
             "plural": false,
-            "selections": (v3/*: any*/),
-            "storageKey": "organizations(first:25)"
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "OrganizationEdge",
+                "kind": "LinkedField",
+                "name": "edges",
+                "plural": true,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "Organization",
+                    "kind": "LinkedField",
+                    "name": "node",
+                    "plural": false,
+                    "selections": [
+                      (v1/*: any*/),
+                      (v5/*: any*/),
+                      (v6/*: any*/),
+                      (v8/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "cursor",
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "PageInfo",
+                "kind": "LinkedField",
+                "name": "pageInfo",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "hasNextPage",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "endCursor",
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": "organizations(first:25,orderBy:{\"direction\":\"ASC\",\"field\":\"NAME\"})"
           },
           {
             "alias": null,
-            "args": (v4/*: any*/),
-            "filters": null,
+            "args": (v7/*: any*/),
+            "filters": [
+              "orderBy"
+            ],
             "handle": "connection",
-            "key": "MainLayout_organizations",
+            "key": "MainLayout_OrganizationSelector_organizations",
             "kind": "LinkedHandle",
             "name": "organizations"
+          }
+        ],
+        "storageKey": null
+      },
+      {
+        "alias": "organization",
+        "args": (v4/*: any*/),
+        "concreteType": null,
+        "kind": "LinkedField",
+        "name": "node",
+        "plural": false,
+        "selections": [
+          (v8/*: any*/),
+          (v1/*: any*/),
+          {
+            "kind": "InlineFragment",
+            "selections": [
+              (v5/*: any*/),
+              (v6/*: any*/)
+            ],
+            "type": "Organization",
+            "abstractKey": null
           }
         ],
         "storageKey": null
@@ -253,28 +304,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9ab80df970b8fa7c4eabff75a6730ec5",
+    "cacheID": "6287440397ef427d84f8734b0953784c",
     "id": null,
-    "metadata": {
-      "connection": [
-        {
-          "count": null,
-          "cursor": null,
-          "direction": "forward",
-          "path": [
-            "viewer",
-            "organizations"
-          ]
-        }
-      ]
-    },
+    "metadata": {},
     "name": "MainLayoutQuery",
     "operationKind": "query",
-    "text": "query MainLayoutQuery {\n  viewer {\n    id\n    user {\n      fullName\n      email\n      id\n    }\n    organizations(first: 25) {\n      edges {\n        node {\n          id\n          name\n          logoUrl\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n  }\n}\n"
+    "text": "query MainLayoutQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    id\n    user {\n      fullName\n      email\n      id\n    }\n    ...MainLayout_OrganizationSelector_viewer\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      logoUrl\n    }\n    id\n  }\n}\n\nfragment MainLayout_OrganizationSelector_viewer on Viewer {\n  organizations(first: 25, orderBy: {field: NAME, direction: ASC}) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "fc37d1b70f1a239abb4c959d47ee28fd";
+(node as any).hash = "aaaca58a896839aa85ce7c2fcf75de39";
 
 export default node;

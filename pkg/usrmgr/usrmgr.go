@@ -515,6 +515,33 @@ func (s Service) ListOrganizationsForUserID(
 	return organizations, nil
 }
 
+// Tenant id scope is not applied in this functions because we want to access all user's organizations.
+func (s Service) ListOrganizationsForUserIDPaginated(
+	ctx context.Context,
+	userID gid.GID,
+	cursor *page.Cursor[coredata.OrganizationOrderField],
+) (coredata.Organizations, error) {
+	organizations := coredata.Organizations{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := organizations.ListForUserID(ctx, conn, userID, cursor)
+			if err != nil {
+				return fmt.Errorf("cannot list user organizations: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return organizations, nil
+}
+
 func (s Service) ListTenantsForUserID(
 	ctx context.Context,
 	userID gid.GID,

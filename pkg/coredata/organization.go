@@ -41,8 +41,12 @@ type (
 
 func (o Organization) CursorKey(orderBy OrganizationOrderField) page.CursorKey {
 	switch orderBy {
+	case OrganizationOrderFieldName:
+		return page.NewCursorKey(o.ID, o.Name)
 	case OrganizationOrderFieldCreatedAt:
 		return page.NewCursorKey(o.ID, o.CreatedAt)
+	case OrganizationOrderFieldUpdatedAt:
+		return page.NewCursorKey(o.ID, o.UpdatedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -86,6 +90,57 @@ LIMIT 1;
 	}
 
 	*o = organization
+
+	return nil
+}
+
+// Tenant id scope is not applied in this functions because we want to access all user's organizations.
+func (o *Organizations) ListForUserID(
+	ctx context.Context,
+	conn pg.Conn,
+	userID gid.GID,
+	cursor *page.Cursor[OrganizationOrderField],
+) error {
+	q := `
+WITH user_org AS (
+	SELECT
+		organization_id
+	FROM
+		users_organizations
+	WHERE
+		user_id = @user_id
+)
+SELECT
+	tenant_id,
+    id,
+    name,
+    logo_object_key,
+    created_at,
+    updated_at
+FROM
+	organizations
+INNER JOIN
+	user_org ON organizations.id = user_org.organization_id
+WHERE
+	%s
+`
+
+	q = fmt.Sprintf(q, cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"user_id": userID}
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query organizations: %w", err)
+	}
+
+	organizations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Organization])
+	if err != nil {
+		return fmt.Errorf("cannot collect organizations: %w", err)
+	}
+
+	*o = organizations
 
 	return nil
 }

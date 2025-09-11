@@ -4870,25 +4870,26 @@ func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorSer
 func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder, filter *types.OrganizationFilter) (*types.OrganizationConnection, error) {
 	user := UserFromContext(ctx)
 
-	// For now, we're not using cursor pagination since we're loading all organizations
-	organizations, err := r.usrmgrSvc.ListOrganizationsForUserID(ctx, user.ID)
+	pageOrderBy := page.OrderBy[coredata.OrganizationOrderField]{
+		Field:     coredata.OrganizationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.OrganizationOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	organizations, err := r.usrmgrSvc.ListOrganizationsForUserIDPaginated(ctx, user.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("failed to list organizations for user: %w", err))
 	}
 
-	var edges []*types.OrganizationEdge
-	for _, organization := range organizations {
-		edges = append(edges, types.NewOrganizationEdge(organization, coredata.OrganizationOrderFieldCreatedAt))
-	}
+	page := page.NewPage(organizations, cursor)
 
-	// The simple implementation doesn't handle pagination yet
-	return &types.OrganizationConnection{
-		Edges: edges,
-		PageInfo: &types.PageInfo{
-			HasNextPage:     false,
-			HasPreviousPage: false,
-		},
-	}, nil
+	return types.NewOrganizationConnection(page), nil
 }
 
 // Asset returns schema.AssetResolver implementation.

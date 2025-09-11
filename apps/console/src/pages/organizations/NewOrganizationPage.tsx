@@ -57,7 +57,11 @@ export default function NewOrganizationPage() {
         connections: [
           ConnectionHandler.getConnectionID(
             data.viewer.id,
-            "NewOrganizationPageQuery"
+            "OrganizationsPage_organizations"
+          ),
+          ConnectionHandler.getConnectionID(
+            data.viewer.id,
+            "MainLayout_OrganizationSelector_organizations"
           ),
         ],
       },

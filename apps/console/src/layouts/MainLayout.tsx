@@ -30,35 +30,59 @@ import {
   DropdownItem,
   IconChevronGrabberVertical,
   IconPlusLarge,
+  IconChevronDown,
   Avatar,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
-import { useLazyLoadQuery } from "react-relay";
+import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
 import type { MainLayoutQuery as MainLayoutQueryType } from "./__generated__/MainLayoutQuery.graphql";
-import { Suspense } from "react";
+import type { MainLayout_OrganizationSelector_viewer$key } from "./__generated__/MainLayout_OrganizationSelector_viewer.graphql";
+import { Suspense, useState } from "react";
 import { useToast } from "@probo/ui";
 import { ErrorBoundary } from "react-error-boundary";
 import { PageError } from "/components/PageError";
 import { buildEndpoint } from "/providers/RelayProviders";
 
 const MainLayoutQuery = graphql`
-  query MainLayoutQuery {
+  query MainLayoutQuery($organizationId: ID!) {
     viewer {
       id
       user {
         fullName
         email
       }
-      organizations(first: 25) @connection(key: "MainLayout_organizations") {
-        __id
-        edges {
-          node {
-            id
-            name
-            logoUrl
-          }
+      ...MainLayout_OrganizationSelector_viewer
+    }
+    organization: node(id: $organizationId) {
+      ... on Organization {
+        id
+        name
+        logoUrl
+      }
+    }
+  }
+`;
+
+const OrganizationSelectorFragment = graphql`
+  fragment MainLayout_OrganizationSelector_viewer on Viewer
+  @refetchable(queryName: "MainLayoutOrganizationSelectorPaginationQuery")
+  @argumentDefinitions(
+    first: { type: "Int", defaultValue: 25 }
+    after: { type: "CursorKey" }
+  ) {
+    organizations(first: $first, after: $after, orderBy: {field: NAME, direction: ASC})
+    @connection(key: "MainLayout_OrganizationSelector_organizations") {
+      edges {
+        node {
+          id
+          name
+          logoUrl
         }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }
@@ -83,11 +107,11 @@ export function MainLayout() {
         <>
           <div className="mr-auto">
             <Suspense fallback={<Skeleton className="w-20 h-8" />}>
-              <OrganizationSelector organizationId={organizationId} />
+              <OrganizationSelectorWrapper organizationId={organizationId} />
             </Suspense>
           </div>
           <Suspense fallback={<Skeleton className="w-32 h-8" />}>
-            <UserDropdown />
+            <UserDropdown organizationId={organizationId} />
           </Suspense>
         </>
       }
@@ -188,10 +212,10 @@ export function MainLayout() {
   );
 }
 
-function UserDropdown() {
+function UserDropdown({ organizationId }: { organizationId: string }) {
   const { __ } = useTranslate();
   const { toast } = useToast();
-  const user = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {}).viewer
+  const user = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, { organizationId }).viewer
     .user;
 
   const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = async (
@@ -242,15 +266,39 @@ function UserDropdown() {
   );
 }
 
-function OrganizationSelector({ organizationId }: { organizationId: string }) {
-  const organizations = useLazyLoadQuery<MainLayoutQueryType>(
-    MainLayoutQuery,
-    {}
-  ).viewer.organizations.edges.map((edge) => edge.node);
-  const currentOrganization = organizations.find(
-    (organization) => organization.id === organizationId
-  );
+function OrganizationSelectorWrapper({ organizationId }: { organizationId: string }) {
+  const data = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, { organizationId });
+  return <OrganizationSelector viewer={data.viewer} currentOrganization={data.organization} />;
+}
+
+function OrganizationSelector({
+  viewer,
+  currentOrganization
+}: {
+  viewer: MainLayout_OrganizationSelector_viewer$key;
+  currentOrganization: MainLayoutQueryType["response"]["organization"];
+}) {
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const { __ } = useTranslate();
+
+  const { data, loadNext, hasNext } = usePaginationFragment(
+    OrganizationSelectorFragment,
+    viewer
+  );
+
+  const organizations = data.organizations.edges.map((edge) => edge.node);
+
+  const handleLoadMore = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+
+    if (hasNext && !isLoadingMore) {
+      setIsLoadingMore(true);
+      loadNext(25, {
+        onComplete: () => setIsLoadingMore(false),
+      });
+    }
+  };
 
   return (
     <Dropdown
@@ -260,22 +308,40 @@ function OrganizationSelector({ organizationId }: { organizationId: string }) {
           variant="tertiary"
           iconAfter={IconChevronGrabberVertical}
         >
-          {currentOrganization?.name}
+          {currentOrganization?.name || ""}
         </Button>
       }
     >
-      {organizations.map((organization) => (
-        <DropdownItem
-          asChild
-          key={organization.id}
-          icon={IconCircleQuestionmark}
-        >
-          <Link to={`/organizations/${organization.id}`}>
-            <Avatar src={organization.logoUrl} name={organization.name} />
-            {organization.name}
-          </Link>
-        </DropdownItem>
-      ))}
+      <div className="max-h-150 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
+        {organizations.map((organization) => (
+          <DropdownItem
+            asChild
+            key={organization.id}
+          >
+            <Link to={`/organizations/${organization.id}`}>
+              <Avatar src={organization.logoUrl} name={organization.name} />
+              {organization.name}
+            </Link>
+          </DropdownItem>
+        ))}
+        {hasNext && (
+          <div className="px-3 py-1 flex justify-center">
+            <Button
+              variant="tertiary"
+              onClick={handleLoadMore}
+              onMouseDown={(e: React.MouseEvent) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              className="mx-auto"
+              icon={IconChevronDown}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? __("Loading...") : __("Show More")}
+            </Button>
+          </div>
+        )}
+      </div>
       <DropdownSeparator />
       <DropdownItem asChild icon={IconPlusLarge}>
         <Link to="/organizations/new">

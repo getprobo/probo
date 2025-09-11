@@ -9,18 +9,13 @@ import {
   Button,
   Card,
   IconPlusLarge,
-  ActionDropdown,
-  DropdownItem,
-  IconTrashCan,
 } from "@probo/ui";
 import { usePageTitle } from "@probo/hooks";
-import { useDeleteOrganizationMutation } from "../hooks/graph/OrganizationGraph";
-import { DeleteOrganizationDialog } from "../components/organizations/DeleteOrganizationDialog";
 
 const OrganizationsPageQuery = graphql`
   query OrganizationsPageQuery {
     viewer {
-      organizations(first: 25) @connection(key: "OrganizationsPage_organizations") {
+      organizations(first: 1000, orderBy: {field: NAME, direction: ASC}) @connection(key: "OrganizationsPage_organizations") {
         __id
         edges {
           node {
@@ -67,7 +62,6 @@ export default function OrganizationsPage() {
             <OrganizationCard
               key={organization.id}
               organization={organization}
-              connectionId={data.viewer.organizations.__id}
             />
           ))}
           <Card padded>
@@ -98,23 +92,10 @@ type OrganizationCardProps = {
     name: string;
     logoUrl: string | null | undefined;
   };
-  connectionId: string;
 };
 
-function OrganizationCard({ organization, connectionId }: OrganizationCardProps) {
+function OrganizationCard({ organization }: OrganizationCardProps) {
   const { __ } = useTranslate();
-  const [deleteOrganization, isDeleting] = useDeleteOrganizationMutation();
-
-  const handleDelete = () => {
-    return deleteOrganization({
-      variables: {
-        input: {
-          organizationId: organization.id,
-        },
-        connections: [connectionId],
-      },
-    });
-  };
 
   return (
     <Card padded className="w-full">
@@ -136,21 +117,6 @@ function OrganizationCard({ organization, connectionId }: OrganizationCardProps)
               {__("Select")}
             </Link>
           </Button>
-          <DeleteOrganizationDialog
-            organizationName={organization.name}
-            onConfirm={handleDelete}
-            isDeleting={isDeleting}
-          >
-            <ActionDropdown>
-              <DropdownItem
-                variant="danger"
-                icon={IconTrashCan}
-                disabled={isDeleting}
-              >
-                {__("Delete organization")}
-              </DropdownItem>
-            </ActionDropdown>
-          </DeleteOrganizationDialog>
         </div>
       </div>
     </Card>
