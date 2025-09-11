@@ -9,11 +9,13 @@ import {
   Button,
   IconArrowDown,
   IconLock,
+  useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { sprintf } from "@probo/helpers";
 import { FrameworkLogo } from "/components/FrameworkLogo";
 import { PublicTrustCenterAccessRequestDialog } from "./PublicTrustCenterAccessRequestDialog";
+import { useExportReportPDF } from "../../hooks/useTrustCenterQueries";
 import type { TrustCenterAudit } from "../pages/PublicTrustCenterPage";
 
 type Props = {
@@ -30,6 +32,31 @@ export function PublicTrustCenterAudits({
   trustCenterId
 }: Props) {
   const { __ } = useTranslate();
+  const { toast } = useToast();
+
+  const mutation = useExportReportPDF();
+
+  const handleDownload = (report: NonNullable<TrustCenterAudit["report"]>) => {
+    mutation.mutate(report.id, {
+      onSuccess: (data) => {
+        if (data.exportReportPDF?.data) {
+          const link = window.document.createElement("a");
+          link.href = data.exportReportPDF.data;
+          link.download = `${report.filename}`;
+          window.document.body.appendChild(link);
+          link.click();
+          window.document.body.removeChild(link);
+        }
+      },
+      onError: () => {
+        toast({
+          title: __("Download Failed"),
+          description: __("Unable to download the report. Please try again."),
+          variant: "error",
+        });
+      },
+    });
+  };
 
   if (audits.length === 0) {
     return (
@@ -67,8 +94,6 @@ export function PublicTrustCenterAudits({
         <Tbody>
           {audits.map((audit) => {
             const hasReport = audit.report !== null;
-            const downloadUrl = audit.report?.downloadUrl;
-            const reportName = audit.report?.filename || __("Compliance Report");
 
             return (
               <Tr key={audit.id}>
@@ -102,25 +127,15 @@ export function PublicTrustCenterAudits({
                       trustCenterId={trustCenterId}
                       organizationName={organizationName}
                     />
-                  ) : downloadUrl ? (
+                  ) : (
                     <Button
                       variant="secondary"
                       icon={IconArrowDown}
-                      onClick={() => {
-                        const link = document.createElement('a');
-                        link.href = downloadUrl;
-                        link.download = reportName;
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                      }}
+                      onClick={() => handleDownload(audit.report!)}
+                      disabled={mutation.isPending}
                     >
-                      {__("Download")}
+                      {mutation.isPending ? __("Downloading...") : __("Download")}
                     </Button>
-                  ) : (
-                    <span className="text-txt-tertiary text-sm">
-                      {__("Not available")}
-                    </span>
                   )}
                 </Td>
               </Tr>

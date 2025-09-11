@@ -17,12 +17,14 @@ package trust
 import (
 	"context"
 	"fmt"
+	"io"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/watermarkpdf"
 	"go.gearno.de/kit/pg"
 )
 
@@ -81,4 +83,36 @@ func (s ReportService) GenerateDownloadURL(
 	}
 
 	return &presignedReq.URL, nil
+}
+
+func (s ReportService) ExportPDF(
+	ctx context.Context,
+	reportID gid.GID,
+	email string,
+) ([]byte, error) {
+	report, err := s.Get(ctx, reportID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get report: %w", err)
+	}
+
+	result, err := s.svc.s3.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.svc.bucket),
+		Key:    aws.String(report.ObjectKey),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot download PDF from S3: %w", err)
+	}
+	defer result.Body.Close()
+
+	pdfData, err := io.ReadAll(result.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read PDF data: %w", err)
+	}
+
+	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
+	if err != nil {
+		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
+	}
+
+	return watermarkedPDF, nil
 }

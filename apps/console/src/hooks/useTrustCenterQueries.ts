@@ -16,7 +16,6 @@ export interface TrustCenterAudit {
   report: {
     id: string;
     filename: string;
-    downloadUrl: string | null;
   } | null;
 }
 
@@ -71,6 +70,12 @@ interface ExportDocumentPDFData {
   };
 }
 
+interface ExportReportPDFData {
+  exportReportPDF: {
+    data: string;
+  };
+}
+
 interface CreateTrustCenterAccessData {
   createTrustCenterAccess: {
     trustCenterAccess: {
@@ -111,7 +116,13 @@ interface AcceptNonDisclosureAgreementVariables {
   };
 }
 
-type GraphQLVariables = TrustCenterQueryVariables | ExportDocumentPDFVariables | CreateTrustCenterAccessVariables | AcceptNonDisclosureAgreementVariables | Record<string, never>;
+interface ExportReportPDFVariables {
+  input: {
+    reportId: string;
+  };
+}
+
+type GraphQLVariables = TrustCenterQueryVariables | ExportDocumentPDFVariables | ExportReportPDFVariables | CreateTrustCenterAccessVariables | AcceptNonDisclosureAgreementVariables | Record<string, never>;
 
 async function trustCenterGraphQLRequest<T = unknown>(
   operationName: string,
@@ -189,7 +200,6 @@ const TRUST_CENTER_QUERY = `
             report {
               id
               filename
-              downloadUrl
             }
           }
         }
@@ -214,6 +224,16 @@ const EXPORT_DOCUMENT_PDF_MUTATION = `
     $input: ExportDocumentPDFInput!
   ) {
     exportDocumentPDF(input: $input) {
+      data
+    }
+  }
+`;
+
+const EXPORT_REPORT_PDF_MUTATION = `
+  mutation PublicTrustCenterAuditsExportReportPDFMutation(
+    $input: ExportReportPDFInput!
+  ) {
+    exportReportPDF(input: $input) {
       data
     }
   }
@@ -287,6 +307,30 @@ export function useExportDocumentPDF() {
         "PublicTrustCenterDocumentsExportPDFMutation",
         EXPORT_DOCUMENT_PDF_MUTATION,
         { input: { documentId } }
+      );
+
+      if (result.errors && result.errors.length > 0) {
+        throw new Error(
+          `GraphQL error: ${result.errors.map((e) => e.message).join(", ")}`
+        );
+      }
+
+      if (!result.data) {
+        throw new Error("No data returned from mutation");
+      }
+
+      return result.data;
+    },
+  });
+}
+
+export function useExportReportPDF() {
+  return useMutation<ExportReportPDFData, Error, string>({
+    mutationFn: async (reportId: string) => {
+      const result = await trustCenterGraphQLRequest<ExportReportPDFData>(
+        "PublicTrustCenterAuditsExportReportPDFMutation",
+        EXPORT_REPORT_PDF_MUTATION,
+        { input: { reportId } }
       );
 
       if (result.errors && result.errors.length > 0) {

@@ -105,12 +105,63 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 		return nil, fmt.Errorf("user has not accepted NDA")
 	}
 
-	pdf, err := privateTrustService.Documents.ExportPDF(ctx, input.DocumentID)
+	userEmail := ""
+	if userData != nil {
+		userEmail = userData.EmailAddress
+	}
+	if tokenData != nil {
+		userEmail = tokenData.GetEmail()
+	}
+
+	pdf, err := privateTrustService.Documents.ExportPDF(ctx, input.DocumentID, userEmail)
 	if err != nil {
 		panic(fmt.Errorf("cannot export document PDF: %w", err))
 	}
 
 	return &types.ExportDocumentPDFPayload{
+		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+	}, nil
+}
+
+// ExportReportPDF is the resolver for the exportReportPDF field.
+func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error) {
+	privateTrustService, err := r.PrivateTrustService(ctx, input.ReportID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot export report PDF: %w", err)
+	}
+
+	hasAcceptedNDA := false
+	userData := r.UserFromContext(ctx)
+	if userData != nil {
+		hasAcceptedNDA = true
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+		if err != nil {
+			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+		}
+	}
+
+	if !hasAcceptedNDA {
+		return nil, fmt.Errorf("user has not accepted NDA")
+	}
+
+	userEmail := ""
+	if userData != nil {
+		userEmail = userData.EmailAddress
+	}
+	if tokenData != nil {
+		userEmail = tokenData.GetEmail()
+	}
+
+	pdf, err := privateTrustService.Reports.ExportPDF(ctx, input.ReportID, userEmail)
+	if err != nil {
+		panic(fmt.Errorf("cannot export report PDF: %w", err))
+	}
+
+	return &types.ExportReportPDFPayload{
 		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
 	}, nil
 }
@@ -169,39 +220,6 @@ func (r *queryResolver) TrustCenterBySlug(ctx context.Context, slug string) (*ty
 	response.Organization = types.NewOrganization(org)
 
 	return response, nil
-}
-
-// DownloadURL is the resolver for the downloadUrl field.
-func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*string, error) {
-	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate download URL: %w", err)
-	}
-
-	hasAcceptedNDA := false
-	userData := UserFromContext(ctx)
-	if userData != nil {
-		hasAcceptedNDA = true
-	}
-
-	tokenData := TokenAccessFromContext(ctx)
-	if tokenData != nil {
-		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
-		if err != nil {
-			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
-		}
-	}
-
-	if !hasAcceptedNDA {
-		return nil, fmt.Errorf("user has not accepted NDA")
-	}
-
-	url, err := privateTrustService.Reports.GenerateDownloadURL(ctx, obj.ID, r.trustAuthCfg.ReportURLDuration)
-	if err != nil {
-		panic(fmt.Errorf("cannot generate download URL: %w", err))
-	}
-
-	return url, nil
 }
 
 // NdaFileURL is the resolver for the ndaFileUrl field.
@@ -324,9 +342,6 @@ func (r *Resolver) Organization() schema.OrganizationResolver { return &organiza
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 
-// Report returns schema.ReportResolver implementation.
-func (r *Resolver) Report() schema.ReportResolver { return &reportResolver{r} }
-
 // TrustCenter returns schema.TrustCenterResolver implementation.
 func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
 
@@ -334,5 +349,4 @@ type auditResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type reportResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }

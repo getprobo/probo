@@ -83,6 +83,14 @@ type ExportDocumentPDFPayload struct {
 	Data string `json:"data"`
 }
 
+type ExportReportPDFInput struct {
+	ReportID gid.GID `json:"reportId"`
+}
+
+type ExportReportPDFPayload struct {
+	Data string `json:"data"`
+}
+
 type Framework struct {
 	ID   gid.GID `json:"id"`
 	Name string  `json:"name"`
@@ -114,9 +122,8 @@ type Query struct {
 }
 
 type Report struct {
-	ID          gid.GID `json:"id"`
-	Filename    string  `json:"filename"`
-	DownloadURL *string `json:"downloadUrl,omitempty"`
+	ID       gid.GID `json:"id"`
+	Filename string  `json:"filename"`
 }
 
 func (Report) IsNode()             {}

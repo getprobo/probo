@@ -24,6 +24,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/page"
+	"github.com/getprobo/probo/pkg/watermarkpdf"
 	"go.gearno.de/kit/pg"
 )
 
@@ -86,6 +87,7 @@ func (s *DocumentService) ListForOrganizationId(
 func (s *DocumentService) ExportPDF(
 	ctx context.Context,
 	documentID gid.GID,
+	email string,
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
@@ -169,5 +171,11 @@ func (s *DocumentService) ExportPDF(
 	if err != nil {
 		return nil, fmt.Errorf("cannot read PDF data: %w", err)
 	}
-	return pdfData, nil
+
+	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
+	if err != nil {
+		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
+	}
+
+	return watermarkedPDF, nil
 }
