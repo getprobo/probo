@@ -62,16 +62,6 @@ archives:
 checksum:
   name_template: "checksums.txt"
 
-sboms:
-  - artifacts: archive
-    documents:
-      - "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}_sbom.json"
-    cmd: syft
-    args:
-      - "dir:."
-      - "--output=cyclonedx-json={{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}_sbom.json"
-      - "--source-name={{ .ProjectName }}"
-      - "--source-version={{ .Version }}"
 
 signs:
   - cmd: sh
