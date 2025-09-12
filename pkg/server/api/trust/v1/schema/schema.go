@@ -48,7 +48,6 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Organization() OrganizationResolver
 	Query() QueryResolver
-	Report() ReportResolver
 	TrustCenter() TrustCenterResolver
 }
 
@@ -101,6 +100,10 @@ type ComplexityRoot struct {
 		Data func(childComplexity int) int
 	}
 
+	ExportReportPDFPayload struct {
+		Data func(childComplexity int) int
+	}
+
 	Framework struct {
 		ID   func(childComplexity int) int
 		Name func(childComplexity int) int
@@ -110,6 +113,7 @@ type ComplexityRoot struct {
 		AcceptNonDisclosureAgreement func(childComplexity int, input types.AcceptNonDisclosureAgreementInput) int
 		CreateTrustCenterAccess      func(childComplexity int, input types.CreateTrustCenterAccessInput) int
 		ExportDocumentPDF            func(childComplexity int, input types.ExportDocumentPDFInput) int
+		ExportReportPDF              func(childComplexity int, input types.ExportReportPDFInput) int
 	}
 
 	Organization struct {
@@ -130,9 +134,8 @@ type ComplexityRoot struct {
 	}
 
 	Report struct {
-		DownloadURL func(childComplexity int) int
-		Filename    func(childComplexity int) int
-		ID          func(childComplexity int) int
+		Filename func(childComplexity int) int
+		ID       func(childComplexity int) int
 	}
 
 	TrustCenter struct {
@@ -183,6 +186,7 @@ type AuditResolver interface {
 type MutationResolver interface {
 	CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error)
 	ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error)
+	ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error)
 	AcceptNonDisclosureAgreement(ctx context.Context, input types.AcceptNonDisclosureAgreementInput) (*types.AcceptNonDisclosureAgreementPayload, error)
 }
 type OrganizationResolver interface {
@@ -190,9 +194,6 @@ type OrganizationResolver interface {
 }
 type QueryResolver interface {
 	TrustCenterBySlug(ctx context.Context, slug string) (*types.TrustCenter, error)
-}
-type ReportResolver interface {
-	DownloadURL(ctx context.Context, obj *types.Report) (*string, error)
 }
 type TrustCenterResolver interface {
 	NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error)
@@ -342,6 +343,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ExportDocumentPDFPayload.Data(childComplexity), true
 
+	case "ExportReportPDFPayload.data":
+		if e.complexity.ExportReportPDFPayload.Data == nil {
+			break
+		}
+
+		return e.complexity.ExportReportPDFPayload.Data(childComplexity), true
+
 	case "Framework.id":
 		if e.complexity.Framework.ID == nil {
 			break
@@ -391,6 +399,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.ExportDocumentPDF(childComplexity, args["input"].(types.ExportDocumentPDFInput)), true
+
+	case "Mutation.exportReportPDF":
+		if e.complexity.Mutation.ExportReportPDF == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_exportReportPDF_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ExportReportPDF(childComplexity, args["input"].(types.ExportReportPDFInput)), true
 
 	case "Organization.id":
 		if e.complexity.Organization.ID == nil {
@@ -452,13 +472,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Query.TrustCenterBySlug(childComplexity, args["slug"].(string)), true
-
-	case "Report.downloadUrl":
-		if e.complexity.Report.DownloadURL == nil {
-			break
-		}
-
-		return e.complexity.Report.DownloadURL(childComplexity), true
 
 	case "Report.filename":
 		if e.complexity.Report.Filename == nil {
@@ -675,6 +688,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAcceptNonDisclosureAgreementInput,
 		ec.unmarshalInputCreateTrustCenterAccessInput,
 		ec.unmarshalInputExportDocumentPDFInput,
+		ec.unmarshalInputExportReportPDFInput,
 	)
 	first := true
 
@@ -847,7 +861,6 @@ type Framework implements Node {
 type Report implements Node {
   id: ID!
   filename: String!
-  downloadUrl: String @goField(forceResolver: true) @mustBeAuthenticated(role: USER)
 }
 
 type Audit implements Node {
@@ -1023,11 +1036,19 @@ input ExportDocumentPDFInput {
   documentId: ID!
 }
 
+input ExportReportPDFInput {
+  reportId: ID!
+}
+
 input AcceptNonDisclosureAgreementInput {
   trustCenterId: ID!
 }
 
 type ExportDocumentPDFPayload {
+  data: String!
+}
+
+type ExportReportPDFPayload {
   data: String!
 }
 
@@ -1047,6 +1068,10 @@ type Mutation {
   exportDocumentPDF(
     input: ExportDocumentPDFInput!
   ): ExportDocumentPDFPayload! @mustBeAuthenticated(role: USER)
+
+  exportReportPDF(
+    input: ExportReportPDFInput!
+  ): ExportReportPDFPayload! @mustBeAuthenticated(role: USER)
 
   acceptNonDisclosureAgreement(
     input: AcceptNonDisclosureAgreementInput!
@@ -1154,6 +1179,29 @@ func (ec *executionContext) field_Mutation_exportDocumentPDF_argsInput(
 	}
 
 	var zeroVal types.ExportDocumentPDFInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_exportReportPDF_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_exportReportPDF_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_exportReportPDF_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.ExportReportPDFInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNExportReportPDFInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFInput(ctx, tmp)
+	}
+
+	var zeroVal types.ExportReportPDFInput
 	return zeroVal, nil
 }
 
@@ -1712,8 +1760,6 @@ func (ec *executionContext) fieldContext_Audit_report(_ context.Context, field g
 				return ec.fieldContext_Report_id(ctx, field)
 			case "filename":
 				return ec.fieldContext_Report_filename(ctx, field)
-			case "downloadUrl":
-				return ec.fieldContext_Report_downloadUrl(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Report", field.Name)
 		},
@@ -2353,6 +2399,50 @@ func (ec *executionContext) fieldContext_ExportDocumentPDFPayload_data(_ context
 	return fc, nil
 }
 
+func (ec *executionContext) _ExportReportPDFPayload_data(ctx context.Context, field graphql.CollectedField, obj *types.ExportReportPDFPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ExportReportPDFPayload_data(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Data, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ExportReportPDFPayload_data(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ExportReportPDFPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Framework_id(ctx context.Context, field graphql.CollectedField, obj *types.Framework) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Framework_id(ctx, field)
 	if err != nil {
@@ -2607,6 +2697,92 @@ func (ec *executionContext) fieldContext_Mutation_exportDocumentPDF(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_exportDocumentPDF_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_exportReportPDF(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		directive0 := func(rctx context.Context) (any, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().ExportReportPDF(rctx, fc.Args["input"].(types.ExportReportPDFInput))
+		}
+
+		directive1 := func(ctx context.Context) (any, error) {
+			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "USER")
+			if err != nil {
+				var zeroVal *types.ExportReportPDFPayload
+				return zeroVal, err
+			}
+			if ec.directives.MustBeAuthenticated == nil {
+				var zeroVal *types.ExportReportPDFPayload
+				return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+			}
+			return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.ExportReportPDFPayload); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.ExportReportPDFPayload`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.ExportReportPDFPayload)
+	fc.Result = res
+	return ec.marshalNExportReportPDFPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_exportReportPDF(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "data":
+				return ec.fieldContext_ExportReportPDFPayload_data(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ExportReportPDFPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_exportReportPDF_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3313,74 +3489,6 @@ func (ec *executionContext) fieldContext_Report_filename(_ context.Context, fiel
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Report_downloadUrl(ctx context.Context, field graphql.CollectedField, obj *types.Report) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Report_downloadUrl(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		directive0 := func(rctx context.Context) (any, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Report().DownloadURL(rctx, obj)
-		}
-
-		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "USER")
-			if err != nil {
-				var zeroVal *string
-				return zeroVal, err
-			}
-			if ec.directives.MustBeAuthenticated == nil {
-				var zeroVal *string
-				return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
-			}
-			return ec.directives.MustBeAuthenticated(ctx, obj, directive0, role)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(*string); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *string`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Report_downloadUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Report",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -6609,6 +6717,33 @@ func (ec *executionContext) unmarshalInputExportDocumentPDFInput(ctx context.Con
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputExportReportPDFInput(ctx context.Context, obj any) (types.ExportReportPDFInput, error) {
+	var it types.ExportReportPDFInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"reportId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "reportId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reportId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReportID = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -7132,6 +7267,45 @@ func (ec *executionContext) _ExportDocumentPDFPayload(ctx context.Context, sel a
 	return out
 }
 
+var exportReportPDFPayloadImplementors = []string{"ExportReportPDFPayload"}
+
+func (ec *executionContext) _ExportReportPDFPayload(ctx context.Context, sel ast.SelectionSet, obj *types.ExportReportPDFPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, exportReportPDFPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ExportReportPDFPayload")
+		case "data":
+			out.Values[i] = ec._ExportReportPDFPayload_data(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var frameworkImplementors = []string{"Framework", "Node"}
 
 func (ec *executionContext) _Framework(ctx context.Context, sel ast.SelectionSet, obj *types.Framework) graphql.Marshaler {
@@ -7205,6 +7379,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "exportDocumentPDF":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_exportDocumentPDF(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "exportReportPDF":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_exportReportPDF(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -7447,46 +7628,13 @@ func (ec *executionContext) _Report(ctx context.Context, sel ast.SelectionSet, o
 		case "id":
 			out.Values[i] = ec._Report_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "filename":
 			out.Values[i] = ec._Report_filename(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "downloadUrl":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Report_downloadUrl(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8634,6 +8782,25 @@ func (ec *executionContext) marshalNExportDocumentPDFPayload2ᚖgithubᚗcomᚋg
 		return graphql.Null
 	}
 	return ec._ExportDocumentPDFPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNExportReportPDFInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFInput(ctx context.Context, v any) (types.ExportReportPDFInput, error) {
+	res, err := ec.unmarshalInputExportReportPDFInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNExportReportPDFPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload(ctx context.Context, sel ast.SelectionSet, v types.ExportReportPDFPayload) graphql.Marshaler {
+	return ec._ExportReportPDFPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNExportReportPDFPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportReportPDFPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ExportReportPDFPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNFramework2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐFramework(ctx context.Context, sel ast.SelectionSet, v types.Framework) graphql.Marshaler {
