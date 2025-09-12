@@ -3,7 +3,10 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import { App } from "./App";
 import { RelayProvider } from "./providers/RelayProviders";
-import { TranslatorProvider } from "./providers/TranslatorProvider";
+import {
+  LangProvider,
+  TranslatorProvider,
+} from "./providers/TranslatorProvider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient({
@@ -18,9 +21,11 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <RelayProvider>
-        <TranslatorProvider>
-          <App />
-        </TranslatorProvider>
+        <LangProvider>
+          <TranslatorProvider>
+            <App />
+          </TranslatorProvider>
+        </LangProvider>
       </RelayProvider>
     </QueryClientProvider>
   </StrictMode>
