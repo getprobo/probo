@@ -62,7 +62,6 @@ archives:
 checksum:
   name_template: "checksums.txt"
 
-
 signs:
   - cmd: sh
     env:

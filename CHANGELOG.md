@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.58.3] - 2025-09-12
+
+### Fixed
+- Fix release workflow
+
 ## [0.58.2] - 2025-09-12
 
 ### Added
