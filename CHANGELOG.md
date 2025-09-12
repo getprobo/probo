@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- Send framework export by email
+
 ## [0.58.1] - 2025-09-10
 
 ### Chore
