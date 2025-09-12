@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Send framework export by email
+- Order organization by name
 
 ## [0.58.1] - 2025-09-10
 
