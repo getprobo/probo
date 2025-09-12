@@ -1145,7 +1145,7 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.D
 func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error) {
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
-	trustCenter, err := prb.TrustCenters.Update(ctx, &probo.UpdateTrustCenterRequest{
+	trustCenter, file, err := prb.TrustCenters.Update(ctx, &probo.UpdateTrustCenterRequest{
 		ID:     input.TrustCenterID,
 		Active: input.Active,
 		Slug:   input.Slug,
@@ -1155,7 +1155,41 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 	}
 
 	return &types.UpdateTrustCenterPayload{
-		TrustCenter: types.NewTrustCenter(trustCenter),
+		TrustCenter: types.NewTrustCenter(trustCenter, file),
+	}, nil
+}
+
+// UploadTrustCenterNda is the resolver for the uploadTrustCenterNDA field.
+func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types.UploadTrustCenterNDAInput) (*types.UploadTrustCenterNDAPayload, error) {
+	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
+
+	trustCenter, file, err := prb.TrustCenters.UploadNDA(ctx, &probo.UploadTrustCenterNDARequest{
+		TrustCenterID: input.TrustCenterID,
+		File:          input.File.File,
+		FileName:      input.FileName,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot upload trust center NDA: %w", err)
+	}
+
+	return &types.UploadTrustCenterNDAPayload{
+		TrustCenter: types.NewTrustCenter(trustCenter, file),
+	}, nil
+}
+
+// DeleteTrustCenterNda is the resolver for the deleteTrustCenterNDA field.
+func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types.DeleteTrustCenterNDAInput) (*types.DeleteTrustCenterNDAPayload, error) {
+	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
+
+	trustCenter, file, err := prb.TrustCenters.DeleteNDA(ctx, &probo.DeleteTrustCenterNDARequest{
+		TrustCenterID: input.TrustCenterID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot delete trust center NDA: %w", err)
+	}
+
+	return &types.DeleteTrustCenterNDAPayload{
+		TrustCenter: types.NewTrustCenter(trustCenter, file),
 	}, nil
 }
 
@@ -3895,12 +3929,12 @@ func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organiz
 func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	trustCenter, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
+	trustCenter, file, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get trust center: %w", err)
 	}
 
-	return types.NewTrustCenter(trustCenter), nil
+	return types.NewTrustCenter(trustCenter, file), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
@@ -4115,11 +4149,12 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 		return types.NewSnapshot(snapshot), nil
 	case coredata.TrustCenterEntityType:
-		trustCenter, err := prb.TrustCenters.Get(ctx, id)
+		trustCenter, file, err := prb.TrustCenters.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("cannot get trust center: %w", err))
+			panic(fmt.Errorf("cannot get trust center with file: %w", err))
 		}
-		return types.NewTrustCenter(trustCenter), nil
+
+		return types.NewTrustCenter(trustCenter, file), nil
 	default:
 	}
 
@@ -4460,6 +4495,18 @@ func (r *taskConnectionResolver) TotalCount(ctx context.Context, obj *types.Task
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+}
+
+// NdaFileURL is the resolver for the ndaFileUrl field.
+func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	fileURL, err := prb.TrustCenters.GenerateNDAFileURL(ctx, obj.ID, 15*time.Minute)
+	if err != nil {
+		panic(fmt.Errorf("failed to generate NDA file URL: %w", err))
+	}
+
+	return fileURL, nil
 }
 
 // Organization is the resolver for the organization field.

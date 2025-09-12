@@ -14,6 +14,12 @@
 
 package coredata
 
+type ctxKey struct{ name string }
+
+var (
+	ContextKeyIPAddress = &ctxKey{name: "ip_address"}
+)
+
 const (
 	OrganizationEntityType uint16 = iota
 	FrameworkEntityType

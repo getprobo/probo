@@ -15,12 +15,16 @@
 package trust
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/cipher"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/probo"
+	"github.com/getprobo/probo/pkg/server/api/trust/v1/auth"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"go.gearno.de/kit/pg"
 )
@@ -55,6 +59,11 @@ type (
 		TrustCenterAccesses *TrustCenterAccessService
 		Reports             *ReportService
 		Organizations       *OrganizationService
+	}
+
+	ContextAccessor interface {
+		UserFromContext(ctx context.Context) *coredata.User
+		TokenAccessFromContext(ctx context.Context) *auth.TokenAccessData
 	}
 )
 
@@ -105,4 +114,26 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 
 func (s *Service) GetTokenSecret() string {
 	return s.tokenSecret
+}
+
+func (ts *TenantService) HasAcceptedNonDisclosureAgreement(
+	ctx context.Context,
+	accessor ContextAccessor,
+) (bool, error) {
+	user := accessor.UserFromContext(ctx)
+	if user != nil {
+		return true, nil
+	}
+
+	tokenData := accessor.TokenAccessFromContext(ctx)
+	if tokenData == nil {
+		return false, nil
+	}
+
+	hasAcceptedNDA, err := ts.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.Email)
+	if err != nil {
+		return false, fmt.Errorf("cannot check if user has accepted NDA: %w", err)
+	}
+
+	return hasAcceptedNDA, nil
 }

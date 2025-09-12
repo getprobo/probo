@@ -31,6 +31,10 @@ type TokenAccessData struct {
 	Scope         string
 }
 
+func (t *TokenAccessData) GetEmail() string {
+	return t.Email
+}
+
 type ContextAccessor interface {
 	UserFromContext(ctx context.Context) *coredata.User
 	TokenAccessFromContext(ctx context.Context) *TokenAccessData

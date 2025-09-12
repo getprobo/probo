@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   Checkbox,
+  Dropzone,
   Field,
   Input,
   PageHeader,
@@ -12,9 +13,10 @@ import {
   Tabs,
   TabLink,
   TabItem,
+  IconTrashCan,
 } from "@probo/ui";
 import { usePreloadedQuery, type PreloadedQuery } from "react-relay";
-import { trustCenterQuery, useUpdateTrustCenterMutation } from "/hooks/graph/TrustCenterGraph";
+import { trustCenterQuery, useUpdateTrustCenterMutation, useUploadTrustCenterNDAMutation, useDeleteTrustCenterNDAMutation } from "/hooks/graph/TrustCenterGraph";
 import type { TrustCenterGraphQuery } from "/hooks/graph/__generated__/TrustCenterGraphQuery.graphql";
 import { useState } from "react";
 import { useOrganizationId } from "/hooks/useOrganizationId";
@@ -32,6 +34,8 @@ export default function TrustCenterPage({ queryRef }: Props) {
   const { organization } = usePreloadedQuery(trustCenterQuery, queryRef);
 
   const [updateTrustCenter, isUpdating] = useUpdateTrustCenterMutation();
+  const [uploadNDA, isUploadingNDA] = useUploadTrustCenterNDAMutation();
+  const [deleteNDA, isDeletingNDA] = useDeleteTrustCenterNDAMutation();
   const [isActive, setIsActive] = useState(organization.trustCenter?.active || false);
   const [slug, setSlug] = useState(organization.trustCenter?.slug || "");
   const [isUpdatingSlug, setIsUpdatingSlug] = useState(false);
@@ -97,6 +101,57 @@ export default function TrustCenterPage({ queryRef }: Props) {
       onError: () => {
         setIsUpdatingSlug(false);
         setSlug(organization.trustCenter?.slug || "");
+      },
+    });
+  };
+
+  const handleNDAUpload = async (files: File[]) => {
+    if (!organization.trustCenter?.id) {
+      toast({
+        title: __("Error"),
+        description: __("Trust center not found"),
+        variant: "error",
+      });
+      return;
+    }
+
+    if (files.length === 0) return;
+
+    const file = files[0];
+
+    await uploadNDA({
+      variables: {
+        input: {
+          trustCenterId: organization.trustCenter.id,
+          fileName: file.name,
+          file: null,
+        },
+      },
+      uploadables: {
+        "input.file": file,
+      },
+    });
+  };
+
+  const handleNDADelete = async () => {
+    if (!organization.trustCenter?.id) {
+      toast({
+        title: __("Error"),
+        description: __("Trust center not found"),
+        variant: "error",
+      });
+      return;
+    }
+
+    if (!confirm(__("Are you sure you want to delete the NDA file?"))) {
+      return;
+    }
+
+    await deleteNDA({
+      variables: {
+        input: {
+          trustCenterId: organization.trustCenter.id,
+        },
       },
     });
   };
@@ -211,6 +266,68 @@ export default function TrustCenterPage({ queryRef }: Props) {
           </div>
         </Card>
       </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-medium">{__("Non-Disclosure Agreement")}</h2>
+          {(isUploadingNDA || isDeletingNDA) && <Spinner />}
+        </div>
+        <Card padded className="space-y-4">
+          <div className="space-y-2">
+            {!organization.trustCenter?.ndaFileName ?  (
+              <p className="text-sm text-txt-tertiary">
+                {__("Upload a Non-Disclosure Agreement that visitors must accept before accessing your trust center")}
+              </p>
+            ) : (<></>)}
+            {organization.trustCenter?.ndaFileName ? (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium">
+                        {organization.trustCenter.ndaFileName || __("Non-Disclosure Agreement")}
+                      </p>
+                    </div>
+                    <p className="text-xs text-txt-tertiary">
+                      {__("Visitors will need to accept this NDA before accessing your trust center")}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        if (organization.trustCenter?.ndaFileUrl) {
+                          window.open(organization.trustCenter.ndaFileUrl, '_blank');
+                        }
+                      }}
+                    >
+                      {__("Download PDF")}
+                    </Button>
+                    <Button
+                      variant="quaternary"
+                      icon={IconTrashCan}
+                      onClick={handleNDADelete}
+                      disabled={isDeletingNDA}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Dropzone
+                description={__("Upload PDF files up to 10MB")}
+                isUploading={isUploadingNDA}
+                onDrop={handleNDAUpload}
+                accept={{
+                  "application/pdf": [".pdf"],
+                }}
+                maxSize={10}
+              />
+            )}
+          </div>
+        </Card>
+      </div>
+
       <div className="space-y-4">
         <Tabs>
           <TabItem

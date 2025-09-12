@@ -149,14 +149,15 @@ func (s TrustCenterAccessService) Create(
 		}
 
 		access = &coredata.TrustCenterAccess{
-			ID:            gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
-			TenantID:      s.svc.scope.GetTenantID(),
-			TrustCenterID: req.TrustCenterID,
-			Email:         req.Email,
-			Name:          req.Name,
-			Active:        req.Active,
-			CreatedAt:     now,
-			UpdatedAt:     now,
+			ID:                                gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
+			TenantID:                          s.svc.scope.GetTenantID(),
+			TrustCenterID:                     req.TrustCenterID,
+			Email:                             req.Email,
+			Name:                              req.Name,
+			Active:                            req.Active,
+			HasAcceptedNonDisclosureAgreement: false,
+			CreatedAt:                         now,
+			UpdatedAt:                         now,
 		}
 
 		if err := access.Insert(ctx, tx, s.svc.scope); err != nil {

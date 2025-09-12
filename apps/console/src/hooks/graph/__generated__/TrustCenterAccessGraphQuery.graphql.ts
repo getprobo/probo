@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2333a6a7d5415f1a08a5612dcaceee8f>>
+ * @generated SignedSource<<e9cdda9f586cee5ffe66f238216060f6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,6 +22,7 @@ export type TrustCenterAccessGraphQuery$data = {
           readonly active: boolean;
           readonly createdAt: any;
           readonly email: string;
+          readonly hasAcceptedNonDisclosureAgreement: boolean;
           readonly id: string;
           readonly name: string;
         };
@@ -167,6 +168,13 @@ v5 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
+            "name": "hasAcceptedNonDisclosureAgreement",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
             "name": "createdAt",
             "storageKey": null
           },
@@ -290,7 +298,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5b83cd4ae2434ce2e00de7230d264432",
+    "cacheID": "0286ec03fb4ae012ada7bae8a2234152",
     "id": null,
     "metadata": {
       "connection": [
@@ -307,11 +315,11 @@ return {
     },
     "name": "TrustCenterAccessGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphQuery(\n  $trustCenterId: ID!\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      accesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        pageInfo {\n          hasNextPage\n          hasPreviousPage\n          startCursor\n          endCursor\n        }\n        edges {\n          cursor\n          node {\n            id\n            email\n            name\n            active\n            createdAt\n            __typename\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query TrustCenterAccessGraphQuery(\n  $trustCenterId: ID!\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      accesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        pageInfo {\n          hasNextPage\n          hasPreviousPage\n          startCursor\n          endCursor\n        }\n        edges {\n          cursor\n          node {\n            id\n            email\n            name\n            active\n            hasAcceptedNonDisclosureAgreement\n            createdAt\n            __typename\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "af598fd2af198e63ed84fd618857a985";
+(node as any).hash = "f837b96937f1397ac1a3065f58386e4d";
 
 export default node;
