@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.58.2] - 2025-09-12
 
 ### Added
 - Send framework export by email
