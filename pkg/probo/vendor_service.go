@@ -44,6 +44,7 @@ type (
 		BusinessAssociateAgreementURL *string
 		SubprocessorsListURL          *string
 		Certifications                []string
+		Countries                     coredata.CountryCodes
 		SecurityPageURL               *string
 		TrustPageURL                  *string
 		TermsOfServiceURL             *string
@@ -67,6 +68,7 @@ type (
 		BusinessAssociateAgreementURL *string
 		SubprocessorsListURL          *string
 		Certifications                []string
+		Countries                     coredata.CountryCodes
 		SecurityPageURL               *string
 		TrustPageURL                  *string
 		StatusPageURL                 *string
@@ -290,6 +292,10 @@ func (s VendorService) Update(
 				vendor.Certifications = req.Certifications
 			}
 
+			if req.Countries != nil {
+				vendor.Countries = req.Countries
+			}
+
 			if req.StatusPageURL != nil {
 				vendor.StatusPageURL = req.StatusPageURL
 			}
@@ -396,6 +402,7 @@ func (s VendorService) Create(
 		BusinessAssociateAgreementURL: req.BusinessAssociateAgreementURL,
 		SubprocessorsListURL:          req.SubprocessorsListURL,
 		Certifications:                req.Certifications,
+		Countries:                     req.Countries,
 		SecurityPageURL:               req.SecurityPageURL,
 		TrustPageURL:                  req.TrustPageURL,
 		StatusPageURL:                 req.StatusPageURL,

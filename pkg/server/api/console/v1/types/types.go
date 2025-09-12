@@ -547,6 +547,7 @@ type CreateVendorInput struct {
 	BusinessAssociateAgreementURL *string                  `json:"businessAssociateAgreementUrl,omitempty"`
 	SubprocessorsListURL          *string                  `json:"subprocessorsListUrl,omitempty"`
 	Certifications                []string                 `json:"certifications,omitempty"`
+	Countries                     []coredata.CountryCode   `json:"countries,omitempty"`
 	SecurityPageURL               *string                  `json:"securityPageUrl,omitempty"`
 	TrustPageURL                  *string                  `json:"trustPageUrl,omitempty"`
 	StatusPageURL                 *string                  `json:"statusPageUrl,omitempty"`
@@ -1792,6 +1793,7 @@ type UpdateVendorInput struct {
 	HeadquarterAddress            *string                  `json:"headquarterAddress,omitempty"`
 	Category                      *coredata.VendorCategory `json:"category,omitempty"`
 	Certifications                []string                 `json:"certifications,omitempty"`
+	Countries                     []coredata.CountryCode   `json:"countries,omitempty"`
 	SecurityPageURL               *string                  `json:"securityPageUrl,omitempty"`
 	TrustPageURL                  *string                  `json:"trustPageUrl,omitempty"`
 	BusinessOwnerID               *gid.GID                 `json:"businessOwnerId,omitempty"`
@@ -1933,6 +1935,7 @@ type Vendor struct {
 	BusinessAssociateAgreementURL *string                           `json:"businessAssociateAgreementUrl,omitempty"`
 	SubprocessorsListURL          *string                           `json:"subprocessorsListUrl,omitempty"`
 	Certifications                []string                          `json:"certifications"`
+	Countries                     []coredata.CountryCode            `json:"countries"`
 	SecurityPageURL               *string                           `json:"securityPageUrl,omitempty"`
 	TrustPageURL                  *string                           `json:"trustPageUrl,omitempty"`
 	HeadquarterAddress            *string                           `json:"headquarterAddress,omitempty"`

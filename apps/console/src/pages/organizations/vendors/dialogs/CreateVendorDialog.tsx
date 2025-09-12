@@ -51,6 +51,7 @@ export function CreateVendorDialog({
             serviceLevelAgreementUrl: vendor.serviceLevelAgreementUrl,
             dataProcessingAgreementUrl: vendor.dataProcessingAgreementUrl,
             certifications: vendor.certifications,
+            countries: vendor.countries,
             securityPageUrl: vendor.securityPageUrl,
             trustPageUrl: vendor.trustPageUrl,
             statusPageUrl: vendor.statusPageUrl,

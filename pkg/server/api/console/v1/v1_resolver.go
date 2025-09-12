@@ -1390,6 +1390,7 @@ func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateV
 			TrustPageURL:                  input.TrustPageURL,
 			BusinessOwnerID:               input.BusinessOwnerID,
 			SecurityOwnerID:               input.SecurityOwnerID,
+			Countries:                     input.Countries,
 		},
 	)
 	if err != nil {
@@ -1425,6 +1426,7 @@ func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateV
 		BusinessOwnerID:               &input.BusinessOwnerID,
 		SecurityOwnerID:               &input.SecurityOwnerID,
 		ShowOnTrustCenter:             input.ShowOnTrustCenter,
+		Countries:                     input.Countries,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot update vendor: %w", err)

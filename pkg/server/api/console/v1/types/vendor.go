@@ -81,6 +81,7 @@ func NewVendor(v *coredata.Vendor) *Vendor {
 		Category:                      v.Category,
 		ShowOnTrustCenter:             v.ShowOnTrustCenter,
 		SnapshotID:                    v.SnapshotID,
+		Countries:                     v.Countries,
 		UpdatedAt:                     v.UpdatedAt,
 		CreatedAt:                     v.CreatedAt,
 	}

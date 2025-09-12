@@ -83,6 +83,9 @@ export interface Vendor {
 
   /** URL to vendor's status page */
   statusPageUrl?: string;
+
+  /** Countries where the vendor is located */
+  countries?: CountryCode[];
 }
 
 /**

@@ -10,6 +10,7 @@ import { useEffect, useMemo } from "react";
 const schema = z.object({
   name: z.string(),
   description: z.string(),
+  category: z.string().nullish(),
   statusPageUrl: z.string(),
   termsOfServiceUrl: z.string(),
   privacyPolicyUrl: z.string(),
@@ -19,6 +20,7 @@ const schema = z.object({
   legalName: z.string(),
   headquarterAddress: z.string(),
   certifications: z.array(z.string()),
+  countries: z.array(z.string()),
   securityPageUrl: z.string(),
   trustPageUrl: z.string(),
   businessOwnerId: z.string().nullish(),
@@ -30,6 +32,7 @@ const vendorFormFragment = graphql`
     id
     name
     description
+    category
     statusPageUrl
     termsOfServiceUrl
     privacyPolicyUrl
@@ -39,6 +42,7 @@ const vendorFormFragment = graphql`
     legalName
     headquarterAddress
     certifications
+    countries
     securityPageUrl
     trustPageUrl
     businessOwner {
@@ -73,6 +77,7 @@ export function useVendorForm(vendorKey: useVendorFormFragment$key) {
     () => ({
       name: vendor.name,
       description: vendor.description ?? "",
+      category: vendor.category ?? null,
       statusPageUrl: vendor.statusPageUrl ?? "",
       termsOfServiceUrl: vendor.termsOfServiceUrl ?? "",
       privacyPolicyUrl: vendor.privacyPolicyUrl ?? "",
@@ -82,6 +87,7 @@ export function useVendorForm(vendorKey: useVendorFormFragment$key) {
       legalName: vendor.legalName ?? "",
       headquarterAddress: vendor.headquarterAddress ?? "",
       certifications: [...(vendor.certifications ?? [])],
+      countries: [...(vendor.countries ?? [])],
       securityPageUrl: vendor.securityPageUrl ?? "",
       trustPageUrl: vendor.trustPageUrl ?? "",
       businessOwnerId: vendor.businessOwner?.id,

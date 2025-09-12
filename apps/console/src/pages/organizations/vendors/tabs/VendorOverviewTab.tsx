@@ -1,8 +1,10 @@
 import { useTranslate } from "@probo/i18n";
 import { useVendorForm } from "/hooks/forms/useVendorForm";
 import { useOutletContext, useParams } from "react-router";
-import { Button, Card, Field, Input, IconPlusLarge, IconTrashCan, IconPencil } from "@probo/ui";
+import { Button, Card, Field, Input, IconPlusLarge, IconTrashCan, IconPencil, Option } from "@probo/ui";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
+import { ControlledField } from "/components/form/ControlledField";
+import { CountriesField } from "/components/form/CountriesField";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useMemo } from "react";
 import { usePageTitle } from "@probo/hooks";
@@ -17,6 +19,7 @@ import { EditDataPrivacyAgreementDialog } from "../dialogs/EditDataPrivacyAgreem
 import type { useVendorFormFragment$key } from "/hooks/forms/__generated__/useVendorFormFragment.graphql";
 import type { VendorOverviewTabBusinessAssociateAgreementFragment$key } from "./__generated__/VendorOverviewTabBusinessAssociateAgreementFragment.graphql";
 import type { VendorOverviewTabDataPrivacyAgreementFragment$key } from "./__generated__/VendorOverviewTabDataPrivacyAgreementFragment.graphql";
+import type { VendorCategory } from "@probo/vendors";
 
 const vendorBusinessAssociateAgreementFragment = graphql`
   fragment VendorOverviewTabBusinessAssociateAgreementFragment on Vendor {
@@ -54,6 +57,31 @@ export default function VendorOverviewTab() {
   }>();
 
   const { __ } = useTranslate();
+
+  const vendorCategories: { value: VendorCategory; label: string }[] = [
+    { value: "ANALYTICS", label: __("Analytics") },
+    { value: "CLOUD_MONITORING", label: __("Cloud Monitoring") },
+    { value: "CLOUD_PROVIDER", label: __("Cloud Provider") },
+    { value: "COLLABORATION", label: __("Collaboration") },
+    { value: "CUSTOMER_SUPPORT", label: __("Customer Support") },
+    { value: "DATA_STORAGE_AND_PROCESSING", label: __("Data Storage and Processing") },
+    { value: "DOCUMENT_MANAGEMENT", label: __("Document Management") },
+    { value: "EMPLOYEE_MANAGEMENT", label: __("Employee Management") },
+    { value: "ENGINEERING", label: __("Engineering") },
+    { value: "FINANCE", label: __("Finance") },
+    { value: "IDENTITY_PROVIDER", label: __("Identity Provider") },
+    { value: "IT", label: __("IT") },
+    { value: "MARKETING", label: __("Marketing") },
+    { value: "OFFICE_OPERATIONS", label: __("Office Operations") },
+    { value: "OTHER", label: __("Other") },
+    { value: "PASSWORD_MANAGEMENT", label: __("Password Management") },
+    { value: "PRODUCT_AND_DESIGN", label: __("Product and Design") },
+    { value: "PROFESSIONAL_SERVICES", label: __("Professional Services") },
+    { value: "RECRUITING", label: __("Recruiting") },
+    { value: "SALES", label: __("Sales") },
+    { value: "SECURITY", label: __("Security") },
+    { value: "VERSION_CONTROL", label: __("Version Control") },
+  ];
   const organizationId = useOrganizationId();
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
@@ -119,6 +147,21 @@ export default function VendorOverviewTab() {
             error={errors.description?.message}
             disabled={isSubmitting || isSnapshotMode}
           />
+          <ControlledField
+            control={control}
+            name="category"
+            type="select"
+            label={__("Category")}
+            placeholder={__("Select a category")}
+            error={errors.category?.message}
+            disabled={isSubmitting || isSnapshotMode}
+          >
+            {vendorCategories.map((category) => (
+              <Option key={category.value} value={category.value}>
+                {category.label}
+              </Option>
+            ))}
+          </ControlledField>
           <Field
             {...register("legalName")}
             label={__("Legal name")}
@@ -138,6 +181,17 @@ export default function VendorOverviewTab() {
             label={__("Website URL")}
             type="text"
             error={errors.websiteUrl?.message}
+            disabled={isSubmitting || isSnapshotMode}
+          />
+        </Card>
+      </div>
+
+      <div className="space-y-4">
+        <h2 className="text-base font-medium">{__("Countries")}</h2>
+        <Card padded>
+          <CountriesField
+            control={control}
+            name="countries"
             disabled={isSubmitting || isSnapshotMode}
           />
         </Card>

@@ -12,6 +12,7 @@ export { randomInt } from "./number";
 export { getMeasureStateLabel, measureStates } from "./measure";
 export { getRole, getRoles, peopleRoles } from "./people";
 export { certificationCategoryLabel, certifications } from "./certifications";
+export { getCountryName, getCountryOptions, getCountryLabel, countries, type CountryCode } from "./countries";
 export { availableFrameworks } from "./frameworks";
 export { getDocumentTypeLabel, documentTypes } from "./documents";
 export { getAssetTypeVariant, getCriticityVariant } from "./assets";
