@@ -1635,8 +1635,8 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 	err, exportJobID := prb.Frameworks.RequestExport(
 		ctx,
 		input.FrameworkID,
-		user.FullName,
 		user.EmailAddress,
+		user.FullName,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot export framework: %w", err)
