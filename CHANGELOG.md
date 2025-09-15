@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+# [Unreleased]
+
+### Added
+- Add nda to trust centers
+- Add confidential watermark to trust center documents
+
 # [0.58.4] - 2025-09-12
 
 ### Fixed
