@@ -2,11 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-# [Unreleased]
+# [0.59.0] - 2025-09-16
 
 ### Added
 - Add nda to trust centers
 - Add confidential watermark to trust center documents
+- Add countries to vendors
+
+### Fixed
+- Add category back to vendors
 
 # [0.58.4] - 2025-09-12
 
