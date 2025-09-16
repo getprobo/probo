@@ -17,7 +17,6 @@ package probo
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -28,10 +27,14 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/usrmgr"
-	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 )
+
+type ExportService interface {
+	BuildAndUploadExport(ctx context.Context, exportJobID gid.GID) (*coredata.ExportJob, error)
+	SendExportEmail(ctx context.Context, fileID gid.GID, recipientName, recipientEmail string) error
+}
 
 type (
 	TrustConfig struct {
@@ -191,170 +194,100 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	return tenantService
 }
 
-func (s *Service) ExportFrameworkJob(ctx context.Context) error {
-	fe, scope, err := s.lockExport(ctx)
+func (s *Service) ExportJob(ctx context.Context) error {
+	exportJob, err := s.lockExportJob(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot lock framework export: %w", err)
+		return fmt.Errorf("cannot lock export job: %w", err)
 	}
 
-	fe, buildErr := s.buildAndUploadExport(ctx, scope, fe)
+	tenantService := s.WithTenant(exportJob.ID.TenantID())
+
+	var exportService ExportService
+
+	switch exportJob.Type {
+	case coredata.ExportJobTypeFramework:
+		exportService = tenantService.Frameworks
+	case coredata.ExportJobTypeDocument:
+		exportService = tenantService.Documents
+	default:
+		unknownTypeErr := fmt.Errorf("unknown export job type: %q", exportJob.Type)
+		if err := s.commitFailedExport(ctx, exportJob, unknownTypeErr); err != nil {
+			return fmt.Errorf("unknown export job type %q, and cannot commit failed export: %w", exportJob.Type, err)
+		}
+		return unknownTypeErr
+	}
+
+	exportJob, buildErr := exportService.BuildAndUploadExport(ctx, exportJob.ID)
 	if buildErr != nil {
-		if err := s.commitFailedExport(ctx, scope, fe); err != nil {
+		if err := s.commitFailedExport(ctx, exportJob, buildErr); err != nil {
 			return fmt.Errorf(
-				"cannot build and upload framework export: %w, and cannot commit failed export: %w",
+				"cannot build and upload %s export: %w, and cannot commit failed export: %w",
+				exportJob.Type,
 				buildErr,
 				err,
 			)
 		}
-
-		return fmt.Errorf("cannot build and upload framework export: %w", buildErr)
+		return fmt.Errorf("cannot build and upload %s export: %w", exportJob.Type, buildErr)
 	}
 
-	tenantService := s.WithTenant(scope.GetTenantID())
-	if emailErr := tenantService.Frameworks.SendFrameworkExportEmail(ctx, *fe.FileID, fe.RecipientName, fe.RecipientEmail); emailErr != nil {
-		if err := s.commitFailedExport(ctx, scope, fe); err != nil {
+	if emailErr := exportService.SendExportEmail(ctx, *exportJob.FileID, exportJob.RecipientName, exportJob.RecipientEmail); emailErr != nil {
+		if err := s.commitFailedExport(ctx, exportJob, emailErr); err != nil {
 			return fmt.Errorf(
 				"cannot send completion email: %w, and cannot commit failed export: %w",
 				emailErr,
 				err,
 			)
 		}
-
 		return fmt.Errorf("cannot send completion email: %w", emailErr)
 	}
 
-	if err := s.commitSuccessfulExport(ctx, scope, fe); err != nil {
-		return fmt.Errorf("cannot commit successful export: %w", err)
+	if err := s.commitSuccessfulExport(ctx, exportJob); err != nil {
+		return fmt.Errorf("cannot commit successful %s export: %w", exportJob.Type, err)
 	}
 
 	return nil
 }
 
-func (s *Service) lockExport(ctx context.Context) (*coredata.FrameworkExport, coredata.Scoper, error) {
-	fe := &coredata.FrameworkExport{}
+func (s *Service) lockExportJob(ctx context.Context) (*coredata.ExportJob, error) {
+	exportJob := &coredata.ExportJob{}
 	var scope coredata.Scoper
 
 	err := s.pg.WithTx(ctx,
 		func(tx pg.Conn) error {
-			if err := fe.LoadNextPendingForUpdateSkipLocked(ctx, tx); err != nil {
-				return fmt.Errorf("cannot load next pending framework export: %w", err)
+			if err := exportJob.LoadNextPendingForUpdateSkipLocked(ctx, tx); err != nil {
+				return fmt.Errorf("cannot load next pending export job: %w", err)
 			}
 
-			scope = coredata.NewScope(fe.ID.TenantID())
+			scope = coredata.NewScope(exportJob.ID.TenantID())
 
-			fe.Status = coredata.FrameworkExportStatusProcessing
-			fe.StartedAt = ref.Ref(time.Now())
-			if err := fe.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update framework export: %w", err)
+			exportJob.Status = coredata.ExportJobStatusProcessing
+			exportJob.StartedAt = ref.Ref(time.Now())
+			if err := exportJob.Update(ctx, tx, scope); err != nil {
+				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot lock framework export: %w", err)
+		return nil, fmt.Errorf("cannot lock export job: %w", err)
 	}
 
-	return fe, scope, nil
+	return exportJob, nil
 }
 
-func (s *Service) buildAndUploadExport(ctx context.Context, scope coredata.Scoper, fe *coredata.FrameworkExport) (*coredata.FrameworkExport, error) {
-	err := s.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			framework := &coredata.Framework{}
-			if err := framework.LoadByID(ctx, tx, scope, fe.FrameworkID); err != nil {
-				return fmt.Errorf("cannot load framework: %w", err)
-			}
-
-			tempDir := os.TempDir()
-			tempFile, err := os.CreateTemp(tempDir, "probo-framework-export-*.zip")
-			if err != nil {
-				return fmt.Errorf("cannot create temp file: %w", err)
-			}
-			defer tempFile.Close()
-			defer os.Remove(tempFile.Name())
-
-			tenantService := s.WithTenant(scope.GetTenantID())
-			err = tenantService.Frameworks.Export(ctx, fe.FrameworkID, tempFile)
-			if err != nil {
-				return fmt.Errorf("cannot export framework: %w", err)
-			}
-
-			uuid, err := uuid.NewV4()
-			if err != nil {
-				return fmt.Errorf("cannot generate uuid: %w", err)
-			}
-
-			if _, err := tempFile.Seek(0, 0); err != nil {
-				return fmt.Errorf("cannot seek temp file: %w", err)
-			}
-
-			fileInfo, err := tempFile.Stat()
-			if err != nil {
-				return fmt.Errorf("cannot stat temp file: %w", err)
-			}
-
-			_, err = s.s3.PutObject(
-				ctx,
-				&s3.PutObjectInput{
-					Bucket:        ref.Ref(s.bucket),
-					Key:           ref.Ref(uuid.String()),
-					Body:          tempFile,
-					ContentLength: ref.Ref(fileInfo.Size()),
-					ContentType:   ref.Ref("application/zip"),
-					Metadata: map[string]string{
-						"framework-id":        framework.ID.String(),
-						"framework-export-id": fe.ID.String(),
-					},
-				},
-			)
-			if err != nil {
-				return fmt.Errorf("cannot upload file to S3: %w", err)
-			}
-
-			now := time.Now()
-
-			file := coredata.File{
-				ID:         gid.New(fe.ID.TenantID(), coredata.FileEntityType),
-				BucketName: s.bucket,
-				MimeType:   "application/zip",
-				FileName:   fmt.Sprintf("%s Archive %s.zip", framework.Name, now.Format("2006-01-02")),
-				FileKey:    uuid.String(),
-				FileSize:   int(fileInfo.Size()),
-				CreatedAt:  now,
-				UpdatedAt:  now,
-			}
-
-			if err := file.Insert(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot insert file: %w", err)
-			}
-
-			fe.FileID = &file.ID
-			if err := fe.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("cannot update framework export: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return fe, fmt.Errorf("cannot build and upload export: %w", err)
-	}
-
-	return fe, nil
-}
-
-func (s *Service) commitFailedExport(ctx context.Context, scope coredata.Scoper, fe *coredata.FrameworkExport) error {
-	fe.CompletedAt = ref.Ref(time.Now())
-	fe.Status = coredata.FrameworkExportStatusFailed
+func (s *Service) commitFailedExport(ctx context.Context, exportJob *coredata.ExportJob, failureErr error) error {
+	exportJob.CompletedAt = ref.Ref(time.Now())
+	exportJob.Status = coredata.ExportJobStatusFailed
+	errorMsg := failureErr.Error()
+	exportJob.Error = &errorMsg
 
 	return s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := fe.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update framework export: %w", err)
+			scope := coredata.NewScope(exportJob.ID.TenantID())
+			if err := exportJob.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
 			return nil
@@ -362,15 +295,16 @@ func (s *Service) commitFailedExport(ctx context.Context, scope coredata.Scoper,
 	)
 }
 
-func (s *Service) commitSuccessfulExport(ctx context.Context, scope coredata.Scoper, fe *coredata.FrameworkExport) error {
-	fe.CompletedAt = ref.Ref(time.Now())
-	fe.Status = coredata.FrameworkExportStatusCompleted
+func (s *Service) commitSuccessfulExport(ctx context.Context, exportJob *coredata.ExportJob) error {
+	exportJob.CompletedAt = ref.Ref(time.Now())
+	exportJob.Status = coredata.ExportJobStatusCompleted
 
 	return s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := fe.Update(ctx, conn, scope); err != nil {
-				return fmt.Errorf("cannot update framework export: %w", err)
+			scope := coredata.NewScope(exportJob.ID.TenantID())
+			if err := exportJob.Update(ctx, conn, scope); err != nil {
+				return fmt.Errorf("cannot update %s export job: %w", exportJob.Type, err)
 			}
 
 			return nil

@@ -546,3 +546,27 @@ WHERE
 
 	return nil
 }
+
+func (p *Documents) BulkSoftDelete(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+UPDATE documents SET deleted_at = @deleted_at WHERE %s AND id = ANY(@document_ids)
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	ids := make([]gid.GID, len(*p))
+	for i, doc := range *p {
+		ids[i] = doc.ID
+	}
+
+	args := pgx.StrictNamedArgs{
+		"document_ids": ids,
+		"deleted_at":   time.Now()}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	return err
+}

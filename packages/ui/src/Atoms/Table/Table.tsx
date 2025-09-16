@@ -35,17 +35,20 @@ export function Th({
     children,
     className,
     width,
+    compact,
     ...props
 }: {
     className?: string;
     width?: number;
     colspan?: number;
+    compact?: boolean;
 } & ThHTMLAttributes<HTMLTableCellElement>) {
     return (
         <th
             {...props}
             className={clsx(
-                "first:pl-6 last:pr-6 py-3 whitespace-nowrap",
+                "first:pl-6 last:pr-6 whitespace-nowrap",
+                compact ? "py-1" : "py-3",
                 className,
             )}
             style={{ width }}

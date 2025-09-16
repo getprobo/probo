@@ -118,7 +118,7 @@ export default function FrameworkDetailPage(props: Props) {
       exportFrameworkMutation,
       {
         errorMessage: "Failed to export framework",
-        successMessage: "Framework export started successfully",
+        successMessage: "Framework export started successfully. You will receive an email when the export is ready.",
       }
     );
 

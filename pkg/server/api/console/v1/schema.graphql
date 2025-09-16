@@ -2643,6 +2643,12 @@ type Mutation {
   bulkPublishDocumentVersions(
     input: BulkPublishDocumentVersionsInput!
   ): BulkPublishDocumentVersionsPayload!
+  bulkDeleteDocuments(
+    input: BulkDeleteDocumentsInput!
+  ): BulkDeleteDocumentsPayload!
+  bulkExportDocuments(
+    input: BulkExportDocumentsInput!
+  ): BulkExportDocumentsPayload!
   generateDocumentChangelog(
     input: GenerateDocumentChangelogInput!
   ): GenerateDocumentChangelogPayload!
@@ -3854,6 +3860,22 @@ input BulkPublishDocumentVersionsInput {
 type BulkPublishDocumentVersionsPayload {
   documentVersionEdges: [DocumentVersionEdge!]!
   documentEdges: [DocumentEdge!]!
+}
+
+input BulkDeleteDocumentsInput {
+  documentIds: [ID!]!
+}
+
+input BulkExportDocumentsInput {
+  documentIds: [ID!]!
+}
+
+type BulkDeleteDocumentsPayload {
+  deletedDocumentIds: [ID!]!
+}
+
+type BulkExportDocumentsPayload {
+  exportJobId: ID!
 }
 
 input PublishDocumentVersionInput {

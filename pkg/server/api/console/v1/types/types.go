@@ -85,6 +85,22 @@ type AuditEdge struct {
 	Node   *Audit         `json:"node"`
 }
 
+type BulkDeleteDocumentsInput struct {
+	DocumentIds []gid.GID `json:"documentIds"`
+}
+
+type BulkDeleteDocumentsPayload struct {
+	DeletedDocumentIds []gid.GID `json:"deletedDocumentIds"`
+}
+
+type BulkExportDocumentsInput struct {
+	DocumentIds []gid.GID `json:"documentIds"`
+}
+
+type BulkExportDocumentsPayload struct {
+	ExportJobID gid.GID `json:"exportJobId"`
+}
+
 type BulkPublishDocumentVersionsInput struct {
 	DocumentIds []gid.GID `json:"documentIds"`
 	Changelog   string    `json:"changelog"`

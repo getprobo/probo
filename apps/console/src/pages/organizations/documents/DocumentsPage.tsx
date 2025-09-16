@@ -19,6 +19,8 @@ import {
   IconCrossLargeX,
   IconSignature,
   IconCheckmark1,
+  IconArrowDown,
+  Card,
 } from "@probo/ui";
 import {
   useFragment,
@@ -32,6 +34,8 @@ import {
   documentsQuery,
   useDeleteDocumentMutation,
   useSendSigningNotificationsMutation,
+  useBulkDeleteDocumentsMutation,
+  useBulkExportDocumentsMutation,
 } from "/hooks/graph/DocumentGraph";
 import type { DocumentsPageListFragment$key } from "./__generated__/DocumentsPageListFragment.graphql";
 import { useList, usePageTitle } from "@probo/hooks";
@@ -94,7 +98,10 @@ export default function DocumentsPage(props: Props) {
     .filter(Boolean);
   const connectionId = pagination.data.documents.__id;
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
+  const [bulkDeleteDocuments] = useBulkDeleteDocumentsMutation();
+  const [bulkExportDocuments] = useBulkExportDocumentsMutation();
   const { list: selection, toggle, clear, reset } = useList<string>([]);
+  const confirm = useConfirm();
 
   usePageTitle(__("Documents"));
 
@@ -103,6 +110,39 @@ export default function DocumentsPage(props: Props) {
       variables: {
         input: { organizationId: organization.id },
       },
+    });
+  };
+
+  const handleBulkDelete = () => {
+    const documentCount = selection.length;
+    confirm(
+      () =>
+        bulkDeleteDocuments({
+          variables: {
+            input: { documentIds: selection },
+          },
+        }).then(() => {
+          clear();
+        }),
+      {
+        message: sprintf(
+          __(
+            'This will permanently delete %s document%s. This action cannot be undone.'
+          ),
+          documentCount,
+          documentCount > 1 ? 's' : ''
+        ),
+      }
+    );
+  };
+
+  const handleBulkExport = () => {
+    bulkExportDocuments({
+      variables: {
+        input: { documentIds: selection },
+      },
+    }).then(() => {
+      clear();
     });
   };
 
@@ -126,72 +166,103 @@ export default function DocumentsPage(props: Props) {
           />
         </div>
       </PageHeader>
-      <SortableTable {...pagination}>
-        <Thead>
-          {selection.length === 0 ? (
-            <Tr>
-              <Th>
-                <Checkbox
-                  checked={selection.length === documents.length && documents.length > 0}
-                  onChange={() => reset(documents.map((d) => d.id))}
-                />
-              </Th>
-              <SortableTh field="TITLE">{__("Name")}</SortableTh>
-              <Th>{__("Status")}</Th>
-              <SortableTh field="DOCUMENT_TYPE">{__("Type")}</SortableTh>
-              <Th>{__("Owner")}</Th>
-              <Th>{__("Last update")}</Th>
-              <Th>{__("Signatures")}</Th>
-              <Th></Th>
-            </Tr>
-          ) : (
-            <Tr>
-              <Th colspan={8}>
-                <div className="flex justify-between items-center">
-                  <div className="flex gap-2 items-center">
-                    {sprintf(__("%s documents selected"), selection.length)} -
-                    <button
-                      onClick={clear}
-                      className="flex gap-1 items-center hover:text-txt-primary"
-                    >
-                      <IconCrossLargeX size={12} />
-                      {__("Clear selection")}
-                    </button>
-                  </div>
-                  <div className="flex gap-2">
-                    <PublishDocumentsDialog
-                      documentIds={selection}
-                      onSave={clear}
-                    >
-                      <Button icon={IconCheckmark1}>{__("Publish")}</Button>
-                    </PublishDocumentsDialog>
+      {documents.length > 0 ? (
+        <SortableTable {...pagination}>
+          <Thead>
+            {selection.length === 0 ? (
+              <Tr>
+                <Th className="w-18">
+                  <Checkbox
+                    checked={selection.length === documents.length && documents.length > 0}
+                    onChange={() => reset(documents.map((d) => d.id))}
+                  />
+                </Th>
+                <SortableTh field="TITLE" className="min-w-0">{__("Name")}</SortableTh>
+                <Th className="w-24">{__("Status")}</Th>
+                <SortableTh field="DOCUMENT_TYPE" className="w-28">{__("Type")}</SortableTh>
+                <Th className="w-60">{__("Owner")}</Th>
+                <Th className="w-60">{__("Last update")}</Th>
+                <Th className="w-20">{__("Signatures")}</Th>
+                <Th className="w-18"></Th>
+              </Tr>
+            ) : (
+              <Tr>
+                <Th colspan={8} compact>
+                  <div className="flex justify-between items-center h-8">
+                    <div className="flex gap-2 items-center">
+                      {sprintf(__("%s documents selected"), selection.length)} -
+                      <button
+                        onClick={clear}
+                        className="flex gap-1 items-center hover:text-txt-primary"
+                      >
+                        <IconCrossLargeX size={12} />
+                        {__("Clear selection")}
+                      </button>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <PublishDocumentsDialog
+                        documentIds={selection}
+                        onSave={clear}
+                      >
+                        <Button icon={IconCheckmark1} className="py-0.5 px-2 text-xs h-6 min-h-6">
+                          {__("Publish")}
+                        </Button>
+                      </PublishDocumentsDialog>
                     <SignatureDocumentsDialog
                       documentIds={selection}
                       onSave={clear}
                     >
-                      <Button variant="secondary" icon={IconSignature}>
+                      <Button variant="secondary" icon={IconSignature} className="py-0.5 px-2 text-xs h-6 min-h-6">
                         {__("Request signature")}
                       </Button>
                     </SignatureDocumentsDialog>
+                    <Button
+                      variant="secondary"
+                      icon={IconArrowDown}
+                      onClick={handleBulkExport}
+                      className="py-0.5 px-2 text-xs h-6 min-h-6"
+                    >
+                      {__("Export")}
+                    </Button>
+                    <Button
+                      variant="danger"
+                      icon={IconTrashCan}
+                      onClick={handleBulkDelete}
+                      className="py-0.5 px-2 text-xs h-6 min-h-6"
+                    >
+                      {__("Delete")}
+                    </Button>
+                    </div>
                   </div>
-                </div>
-              </Th>
-            </Tr>
-          )}
-        </Thead>
-        <Tbody>
-          {documents.map((document) => (
-            <DocumentRow
-              checked={selection.includes(document.id)}
-              onCheck={() => toggle(document.id)}
-              key={document.id}
-              document={document}
-              organizationId={organization.id}
-              connectionId={connectionId}
-            />
-          ))}
-        </Tbody>
-      </SortableTable>
+                </Th>
+              </Tr>
+            )}
+          </Thead>
+          <Tbody>
+            {documents.map((document) => (
+              <DocumentRow
+                checked={selection.includes(document.id)}
+                onCheck={() => toggle(document.id)}
+                key={document.id}
+                document={document}
+                organizationId={organization.id}
+                connectionId={connectionId}
+              />
+            ))}
+          </Tbody>
+        </SortableTable>
+      ) : (
+        <Card padded>
+          <div className="text-center py-12">
+            <h3 className="text-lg font-semibold mb-2">
+              {__("No documents yet")}
+            </h3>
+            <p className="text-txt-tertiary mb-4">
+              {__("Create your first document to get started.")}
+            </p>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
@@ -278,34 +349,27 @@ function DocumentRow({
 
   return (
     <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
-      <Td noLink>
+      <Td noLink className="w-18">
         <Checkbox checked={checked} onChange={onCheck} />
       </Td>
-      <Td>
+      <Td className="min-w-0">
         <div className="flex gap-4 items-center">
-          <img
-            src="/document.png"
-            alt=""
-            width={28}
-            height={36}
-            className="border-4 border-highlight rounded box-content"
-          />
           {document.title}
         </div>
       </Td>
-      <Td>
+      <Td className="w-24">
         <Badge variant={isDraft ? "neutral" : "success"}>
           {isDraft ? __("Draft") : __("Published")}
         </Badge>
       </Td>
-      <Td>{getDocumentTypeLabel(__, document.documentType)}</Td>
-      <Td>
+      <Td className="w-28">{getDocumentTypeLabel(__, document.documentType)}</Td>
+      <Td className="w-60">
         <div className="flex gap-2 items-center">
           <Avatar name={document.owner?.fullName ?? ""} />
           {document.owner?.fullName}
         </div>
       </Td>
-      <Td>
+      <Td className="w-60">
         {dateFormat(document.updatedAt, {
           year: "numeric",
           month: "short",
@@ -313,10 +377,10 @@ function DocumentRow({
           weekday: "short",
         })}
       </Td>
-      <Td>
+      <Td className="w-20">
         {signedCount}/{signatures.length}
       </Td>
-      <Td noLink width={50} className="text-end">
+      <Td noLink width={50} className="text-end w-18">
         <ActionDropdown>
           <DropdownItem
             variant="danger"

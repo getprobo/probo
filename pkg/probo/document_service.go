@@ -1,12 +1,19 @@
 package probo
 
 import (
+	"archive/zip"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
+	"os"
+	"regexp"
+	"strings"
 	"time"
+	"unicode"
 
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/docgen"
 	"github.com/getprobo/probo/pkg/gid"
@@ -14,7 +21,9 @@ import (
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/statelesstoken"
 	"github.com/jackc/pgx/v5"
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 )
 
 type (
@@ -68,6 +77,22 @@ type (
 
 const (
 	TokenTypeSigningRequest = "signing_request"
+
+	documentExportEmailExpiresIn = 24 * time.Hour
+	documentExportEmailSubject   = "Your document export is ready"
+	documentExportEmailBody      = `
+Your document export has been completed successfully.
+
+You can download the export using the link below:
+[1] %s
+
+This link will expire in 24 hours.`
+
+	maxFilenameLength = 200
+)
+
+var (
+	invalidFilenameChars = regexp.MustCompile(`[<>:"/\\|?*\x00-\x1f\x7f]`)
 )
 
 func (e ErrSignatureNotCancellable) Error() string {
@@ -814,6 +839,76 @@ func (s *DocumentService) SoftDelete(
 	)
 }
 
+func (s *DocumentService) BulkSoftDelete(
+	ctx context.Context,
+	documentIDs []gid.GID,
+) error {
+	documents := coredata.Documents{}
+
+	for _, documentID := range documentIDs {
+		documents = append(documents, &coredata.Document{ID: documentID})
+	}
+
+	return s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return documents.BulkSoftDelete(ctx, conn, s.svc.scope)
+		},
+	)
+}
+
+func (s *DocumentService) RequestExport(
+	ctx context.Context,
+	documentIDs []gid.GID,
+	recipientEmail string,
+	recipientName string,
+) (*coredata.ExportJob, error) {
+	var exportJobID gid.GID
+	exportJob := &coredata.ExportJob{}
+
+	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+		for _, documentID := range documentIDs {
+			document := &coredata.Document{}
+			if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
+				return fmt.Errorf("cannot load document %q: %w", documentID, err)
+			}
+		}
+
+		now := time.Now()
+		exportJobID = gid.New(s.svc.scope.GetTenantID(), coredata.ExportJobEntityType)
+
+		args := coredata.DocumentExportArguments{
+			DocumentIDs: documentIDs,
+		}
+		argsJSON, err := json.Marshal(args)
+		if err != nil {
+			return fmt.Errorf("cannot marshal document export arguments: %w", err)
+		}
+
+		exportJob = &coredata.ExportJob{
+			ID:             exportJobID,
+			Type:           coredata.ExportJobTypeDocument,
+			Arguments:      argsJSON,
+			Status:         coredata.ExportJobStatusPending,
+			RecipientEmail: recipientEmail,
+			RecipientName:  recipientName,
+			CreatedAt:      now,
+		}
+
+		if err := exportJob.Insert(ctx, conn, s.svc.scope); err != nil {
+			return fmt.Errorf("cannot insert export job: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return exportJob, nil
+}
+
 func (s *DocumentService) ListVersions(
 	ctx context.Context,
 	documentID gid.GID,
@@ -1118,6 +1213,97 @@ func (s *DocumentService) ExportPDF(
 	return data, nil
 }
 
+func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID gid.GID) (*coredata.ExportJob, error) {
+	exportJob := &coredata.ExportJob{}
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			if err := exportJob.LoadByID(ctx, tx, s.svc.scope, exportJobID); err != nil {
+				return fmt.Errorf("cannot load export job: %w", err)
+			}
+
+			documentIDs, err := exportJob.GetDocumentIDs()
+			if err != nil {
+				return fmt.Errorf("cannot get document IDs: %w", err)
+			}
+
+			tempDir := os.TempDir()
+			tempFile, err := os.CreateTemp(tempDir, "probo-document-export-*.zip")
+			if err != nil {
+				return fmt.Errorf("cannot create temp file: %w", err)
+			}
+			defer tempFile.Close()
+			defer os.Remove(tempFile.Name())
+
+			err = s.Export(ctx, documentIDs, tempFile)
+			if err != nil {
+				return fmt.Errorf("cannot export documents: %w", err)
+			}
+
+			uuid, err := uuid.NewV4()
+			if err != nil {
+				return fmt.Errorf("cannot generate uuid: %w", err)
+			}
+
+			if _, err := tempFile.Seek(0, 0); err != nil {
+				return fmt.Errorf("cannot seek temp file: %w", err)
+			}
+
+			fileInfo, err := tempFile.Stat()
+			if err != nil {
+				return fmt.Errorf("cannot stat temp file: %w", err)
+			}
+
+			_, err = s.svc.s3.PutObject(
+				ctx,
+				&s3.PutObjectInput{
+					Bucket:        ref.Ref(s.svc.bucket),
+					Key:           ref.Ref(uuid.String()),
+					Body:          tempFile,
+					ContentLength: ref.Ref(fileInfo.Size()),
+					ContentType:   ref.Ref("application/zip"),
+					Metadata: map[string]string{
+						"type":          "document-export",
+						"export-job-id": exportJob.ID.String(),
+					},
+				},
+			)
+			if err != nil {
+				return fmt.Errorf("cannot upload file to S3: %w", err)
+			}
+
+			now := time.Now()
+
+			file := coredata.File{
+				ID:         gid.New(exportJob.ID.TenantID(), coredata.FileEntityType),
+				BucketName: s.svc.bucket,
+				MimeType:   "application/zip",
+				FileName:   fmt.Sprintf("Documents Export %s.zip", now.Format("2006-01-02")),
+				FileKey:    uuid.String(),
+				FileSize:   int(fileInfo.Size()),
+				CreatedAt:  now,
+				UpdatedAt:  now,
+			}
+
+			if err := file.Insert(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert file: %w", err)
+			}
+
+			exportJob.FileID = &file.ID
+			if err := exportJob.Update(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update export job: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return exportJob, nil
+}
+
 func exportDocumentPDF(
 	ctx context.Context,
 	html2pdfConverter *html2pdf.Converter,
@@ -1239,4 +1425,147 @@ func exportDocumentPDF(
 		return nil, fmt.Errorf("cannot read PDF data: %w", err)
 	}
 	return pdfData, nil
+}
+
+func (s *DocumentService) Export(
+	ctx context.Context,
+	documentIDs []gid.GID,
+	file io.Writer,
+) (err error) {
+	archive := zip.NewWriter(file)
+	defer func() {
+		if closeErr := archive.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("cannot close archive: %w", closeErr)
+		}
+	}()
+
+	return s.svc.pg.WithTx(
+		ctx,
+		func(conn pg.Conn) error {
+			for i, documentID := range documentIDs {
+				document := &coredata.Document{}
+				if err := document.LoadByID(ctx, conn, s.svc.scope, documentID); err != nil {
+					return fmt.Errorf("cannot load document %q: %w", documentID, err)
+				}
+
+				documentVersion := &coredata.DocumentVersion{}
+				if err := documentVersion.LoadLatestVersion(ctx, conn, s.svc.scope, documentID); err != nil {
+					return fmt.Errorf("cannot load document version for %q: %w", documentID, err)
+				}
+
+				exportedPDF, err := exportDocumentPDF(
+					ctx,
+					s.html2pdfConverter,
+					conn,
+					s.svc.scope,
+					documentVersion.ID,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot export document PDF for %q: %w", documentID, err)
+				}
+
+				filename := fmt.Sprintf("%d_%s.pdf", i+1, sanitizeFilename(document.Title))
+				w, err := archive.Create(filename)
+				if err != nil {
+					return fmt.Errorf("cannot create document in archive: %w", err)
+				}
+
+				_, err = w.Write(exportedPDF)
+				if err != nil {
+					return fmt.Errorf("cannot write document to archive: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *DocumentService) SendExportEmail(
+	ctx context.Context,
+	fileID gid.GID,
+	recipientName string,
+	recipientEmail string,
+) error {
+	return s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			file := &coredata.File{}
+			if err := file.LoadByID(ctx, tx, s.svc.scope, fileID); err != nil {
+				return fmt.Errorf("cannot load file: %w", err)
+			}
+
+			downloadURL, err := s.GenerateDocumentExportDownloadURL(ctx, file)
+			if err != nil {
+				return fmt.Errorf("cannot generate download URL: %w", err)
+			}
+
+			email := coredata.NewEmail(
+				recipientName,
+				recipientEmail,
+				documentExportEmailSubject,
+				fmt.Sprintf(documentExportEmailBody, downloadURL),
+			)
+
+			if err := email.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot insert email: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *DocumentService) GenerateDocumentExportDownloadURL(
+	ctx context.Context,
+	file *coredata.File,
+) (string, error) {
+	presignClient := s3.NewPresignClient(s.svc.s3)
+
+	presignedReq, err := presignClient.PresignGetObject(
+		ctx,
+		&s3.GetObjectInput{
+			Bucket:                     ref.Ref(s.svc.bucket),
+			Key:                        ref.Ref(file.FileKey),
+			ResponseCacheControl:       ref.Ref("max-age=3600, public"),
+			ResponseContentType:        ref.Ref(file.MimeType),
+			ResponseContentDisposition: ref.Ref(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
+		},
+		func(opts *s3.PresignOptions) {
+			opts.Expires = documentExportEmailExpiresIn
+		},
+	)
+
+	if err != nil {
+		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
+	}
+
+	return presignedReq.URL, nil
+}
+
+func sanitizeFilename(title string) string {
+	if title == "" {
+		return "Untitled"
+	}
+
+	sanitized := invalidFilenameChars.ReplaceAllString(title, "_")
+
+	sanitized = strings.TrimFunc(sanitized, func(r rune) bool {
+		return unicode.IsSpace(r) || r == '.'
+	})
+
+	sanitized = regexp.MustCompile(`[\s_]+`).ReplaceAllString(sanitized, "_")
+
+	if sanitized == "" || sanitized == "_" {
+		sanitized = "Untitled"
+	}
+
+	if len(sanitized) > maxFilenameLength-20 {
+		sanitized = sanitized[:maxFilenameLength-20]
+		sanitized = strings.TrimFunc(sanitized, func(r rune) bool {
+			return r == unicode.ReplacementChar
+		})
+	}
+
+	return sanitized
 }

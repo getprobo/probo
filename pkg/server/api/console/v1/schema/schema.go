@@ -159,6 +159,14 @@ type ComplexityRoot struct {
 		Node   func(childComplexity int) int
 	}
 
+	BulkDeleteDocumentsPayload struct {
+		DeletedDocumentIds func(childComplexity int) int
+	}
+
+	BulkExportDocumentsPayload struct {
+		ExportJobID func(childComplexity int) int
+	}
+
 	BulkPublishDocumentVersionsPayload struct {
 		DocumentEdges        func(childComplexity int) int
 		DocumentVersionEdges func(childComplexity int) int
@@ -714,6 +722,8 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AssessVendor                           func(childComplexity int, input types.AssessVendorInput) int
 		AssignTask                             func(childComplexity int, input types.AssignTaskInput) int
+		BulkDeleteDocuments                    func(childComplexity int, input types.BulkDeleteDocumentsInput) int
+		BulkExportDocuments                    func(childComplexity int, input types.BulkExportDocumentsInput) int
 		BulkPublishDocumentVersions            func(childComplexity int, input types.BulkPublishDocumentVersionsInput) int
 		BulkRequestSignatures                  func(childComplexity int, input types.BulkRequestSignaturesInput) int
 		CancelSignatureRequest                 func(childComplexity int, input types.CancelSignatureRequestInput) int
@@ -1629,6 +1639,8 @@ type MutationResolver interface {
 	DeleteDocument(ctx context.Context, input types.DeleteDocumentInput) (*types.DeleteDocumentPayload, error)
 	PublishDocumentVersion(ctx context.Context, input types.PublishDocumentVersionInput) (*types.PublishDocumentVersionPayload, error)
 	BulkPublishDocumentVersions(ctx context.Context, input types.BulkPublishDocumentVersionsInput) (*types.BulkPublishDocumentVersionsPayload, error)
+	BulkDeleteDocuments(ctx context.Context, input types.BulkDeleteDocumentsInput) (*types.BulkDeleteDocumentsPayload, error)
+	BulkExportDocuments(ctx context.Context, input types.BulkExportDocumentsInput) (*types.BulkExportDocumentsPayload, error)
 	GenerateDocumentChangelog(ctx context.Context, input types.GenerateDocumentChangelogInput) (*types.GenerateDocumentChangelogPayload, error)
 	CreateDraftDocumentVersion(ctx context.Context, input types.CreateDraftDocumentVersionInput) (*types.CreateDraftDocumentVersionPayload, error)
 	DeleteDraftDocumentVersion(ctx context.Context, input types.DeleteDraftDocumentVersionInput) (*types.DeleteDraftDocumentVersionPayload, error)
@@ -2089,6 +2101,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.AuditEdge.Node(childComplexity), true
+
+	case "BulkDeleteDocumentsPayload.deletedDocumentIds":
+		if e.complexity.BulkDeleteDocumentsPayload.DeletedDocumentIds == nil {
+			break
+		}
+
+		return e.complexity.BulkDeleteDocumentsPayload.DeletedDocumentIds(childComplexity), true
+
+	case "BulkExportDocumentsPayload.exportJobId":
+		if e.complexity.BulkExportDocumentsPayload.ExportJobID == nil {
+			break
+		}
+
+		return e.complexity.BulkExportDocumentsPayload.ExportJobID(childComplexity), true
 
 	case "BulkPublishDocumentVersionsPayload.documentEdges":
 		if e.complexity.BulkPublishDocumentVersionsPayload.DocumentEdges == nil {
@@ -3858,6 +3884,30 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.AssignTask(childComplexity, args["input"].(types.AssignTaskInput)), true
+
+	case "Mutation.bulkDeleteDocuments":
+		if e.complexity.Mutation.BulkDeleteDocuments == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkDeleteDocuments_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkDeleteDocuments(childComplexity, args["input"].(types.BulkDeleteDocumentsInput)), true
+
+	case "Mutation.bulkExportDocuments":
+		if e.complexity.Mutation.BulkExportDocuments == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkExportDocuments_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkExportDocuments(childComplexity, args["input"].(types.BulkExportDocumentsInput)), true
 
 	case "Mutation.bulkPublishDocumentVersions":
 		if e.complexity.Mutation.BulkPublishDocumentVersions == nil {
@@ -7834,6 +7884,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputAssetOrder,
 		ec.unmarshalInputAssignTaskInput,
 		ec.unmarshalInputAuditOrder,
+		ec.unmarshalInputBulkDeleteDocumentsInput,
+		ec.unmarshalInputBulkExportDocumentsInput,
 		ec.unmarshalInputBulkPublishDocumentVersionsInput,
 		ec.unmarshalInputBulkRequestSignaturesInput,
 		ec.unmarshalInputCancelSignatureRequestInput,
@@ -10724,6 +10776,12 @@ type Mutation {
   bulkPublishDocumentVersions(
     input: BulkPublishDocumentVersionsInput!
   ): BulkPublishDocumentVersionsPayload!
+  bulkDeleteDocuments(
+    input: BulkDeleteDocumentsInput!
+  ): BulkDeleteDocumentsPayload!
+  bulkExportDocuments(
+    input: BulkExportDocumentsInput!
+  ): BulkExportDocumentsPayload!
   generateDocumentChangelog(
     input: GenerateDocumentChangelogInput!
   ): GenerateDocumentChangelogPayload!
@@ -11935,6 +11993,22 @@ input BulkPublishDocumentVersionsInput {
 type BulkPublishDocumentVersionsPayload {
   documentVersionEdges: [DocumentVersionEdge!]!
   documentEdges: [DocumentEdge!]!
+}
+
+input BulkDeleteDocumentsInput {
+  documentIds: [ID!]!
+}
+
+input BulkExportDocumentsInput {
+  documentIds: [ID!]!
+}
+
+type BulkDeleteDocumentsPayload {
+  deletedDocumentIds: [ID!]!
+}
+
+type BulkExportDocumentsPayload {
+  exportJobId: ID!
 }
 
 input PublishDocumentVersionInput {
@@ -13858,6 +13932,52 @@ func (ec *executionContext) field_Mutation_assignTask_argsInput(
 	}
 
 	var zeroVal types.AssignTaskInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkDeleteDocuments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_bulkDeleteDocuments_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_bulkDeleteDocuments_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.BulkDeleteDocumentsInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNBulkDeleteDocumentsInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐBulkDeleteDocumentsInput(ctx, tmp)
+	}
+
+	var zeroVal types.BulkDeleteDocumentsInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkExportDocuments_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_bulkExportDocuments_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_bulkExportDocuments_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.BulkExportDocumentsInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNBulkExportDocumentsInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐBulkExportDocumentsInput(ctx, tmp)
+	}
+
+	var zeroVal types.BulkExportDocumentsInput
 	return zeroVal, nil
 }
 
@@ -21573,6 +21693,94 @@ func (ec *executionContext) fieldContext_AuditEdge_node(_ context.Context, field
 				return ec.fieldContext_Audit_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Audit", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BulkDeleteDocumentsPayload_deletedDocumentIds(ctx context.Context, field graphql.CollectedField, obj *types.BulkDeleteDocumentsPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BulkDeleteDocumentsPayload_deletedDocumentIds(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedDocumentIds, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]gid.GID)
+	fc.Result = res
+	return ec.marshalNID2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BulkDeleteDocumentsPayload_deletedDocumentIds(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BulkDeleteDocumentsPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BulkExportDocumentsPayload_exportJobId(ctx context.Context, field graphql.CollectedField, obj *types.BulkExportDocumentsPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BulkExportDocumentsPayload_exportJobId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExportJobID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BulkExportDocumentsPayload_exportJobId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BulkExportDocumentsPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -37952,6 +38160,124 @@ func (ec *executionContext) fieldContext_Mutation_bulkPublishDocumentVersions(ct
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_bulkPublishDocumentVersions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkDeleteDocuments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkDeleteDocuments(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkDeleteDocuments(rctx, fc.Args["input"].(types.BulkDeleteDocumentsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.BulkDeleteDocumentsPayload)
+	fc.Result = res
+	return ec.marshalNBulkDeleteDocumentsPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐBulkDeleteDocumentsPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkDeleteDocuments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedDocumentIds":
+				return ec.fieldContext_BulkDeleteDocumentsPayload_deletedDocumentIds(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BulkDeleteDocumentsPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkDeleteDocuments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkExportDocuments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkExportDocuments(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkExportDocuments(rctx, fc.Args["input"].(types.BulkExportDocumentsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.BulkExportDocumentsPayload)
+	fc.Result = res
+	return ec.marshalNBulkExportDocumentsPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐBulkExportDocumentsPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkExportDocuments(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "exportJobId":
+				return ec.fieldContext_BulkExportDocumentsPayload_exportJobId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BulkExportDocumentsPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkExportDocuments_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -61021,6 +61347,60 @@ func (ec *executionContext) unmarshalInputAuditOrder(ctx context.Context, obj an
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputBulkDeleteDocumentsInput(ctx context.Context, obj any) (types.BulkDeleteDocumentsInput, error) {
+	var it types.BulkDeleteDocumentsInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"documentIds"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "documentIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentIds"))
+			data, err := ec.unmarshalNID2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentIds = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBulkExportDocumentsInput(ctx context.Context, obj any) (types.BulkExportDocumentsInput, error) {
+	var it types.BulkExportDocumentsInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"documentIds"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "documentIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentIds"))
+			data, err := ec.unmarshalNID2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DocumentIds = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputBulkPublishDocumentVersionsInput(ctx context.Context, obj any) (types.BulkPublishDocumentVersionsInput, error) {
 	var it types.BulkPublishDocumentVersionsInput
 	asMap := map[string]any{}
@@ -68443,6 +68823,84 @@ func (ec *executionContext) _AuditEdge(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var bulkDeleteDocumentsPayloadImplementors = []string{"BulkDeleteDocumentsPayload"}
+
+func (ec *executionContext) _BulkDeleteDocumentsPayload(ctx context.Context, sel ast.SelectionSet, obj *types.BulkDeleteDocumentsPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bulkDeleteDocumentsPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BulkDeleteDocumentsPayload")
+		case "deletedDocumentIds":
+			out.Values[i] = ec._BulkDeleteDocumentsPayload_deletedDocumentIds(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var bulkExportDocumentsPayloadImplementors = []string{"BulkExportDocumentsPayload"}
+
+func (ec *executionContext) _BulkExportDocumentsPayload(ctx context.Context, sel ast.SelectionSet, obj *types.BulkExportDocumentsPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bulkExportDocumentsPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BulkExportDocumentsPayload")
+		case "exportJobId":
+			out.Values[i] = ec._BulkExportDocumentsPayload_exportJobId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var bulkPublishDocumentVersionsPayloadImplementors = []string{"BulkPublishDocumentVersionsPayload"}
 
 func (ec *executionContext) _BulkPublishDocumentVersionsPayload(ctx context.Context, sel ast.SelectionSet, obj *types.BulkPublishDocumentVersionsPayload) graphql.Marshaler {
@@ -74824,6 +75282,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "bulkPublishDocumentVersions":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_bulkPublishDocumentVersions(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkDeleteDocuments":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkDeleteDocuments(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkExportDocuments":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkExportDocuments(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -82654,6 +83126,44 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNBulkDeleteDocumentsInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐBulkDeleteDocumentsInput(ctx context.Context, v any) (types.BulkDeleteDocumentsInput, error) {
+	res, err := ec.unmarshalInputBulkDeleteDocumentsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBulkDeleteDocumentsPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐBulkDeleteDocumentsPayload(ctx context.Context, sel ast.SelectionSet, v types.BulkDeleteDocumentsPayload) graphql.Marshaler {
+	return ec._BulkDeleteDocumentsPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBulkDeleteDocumentsPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐBulkDeleteDocumentsPayload(ctx context.Context, sel ast.SelectionSet, v *types.BulkDeleteDocumentsPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BulkDeleteDocumentsPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNBulkExportDocumentsInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐBulkExportDocumentsInput(ctx context.Context, v any) (types.BulkExportDocumentsInput, error) {
+	res, err := ec.unmarshalInputBulkExportDocumentsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBulkExportDocumentsPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐBulkExportDocumentsPayload(ctx context.Context, sel ast.SelectionSet, v types.BulkExportDocumentsPayload) graphql.Marshaler {
+	return ec._BulkExportDocumentsPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBulkExportDocumentsPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐBulkExportDocumentsPayload(ctx context.Context, sel ast.SelectionSet, v *types.BulkExportDocumentsPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BulkExportDocumentsPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNBulkPublishDocumentVersionsInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐBulkPublishDocumentVersionsInput(ctx context.Context, v any) (types.BulkPublishDocumentVersionsInput, error) {

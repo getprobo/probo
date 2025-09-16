@@ -2543,6 +2543,49 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 	}, nil
 }
 
+// BulkDeleteDocuments is the resolver for the bulkDeleteDocuments field.
+func (r *mutationResolver) BulkDeleteDocuments(ctx context.Context, input types.BulkDeleteDocumentsInput) (*types.BulkDeleteDocumentsPayload, error) {
+	if len(input.DocumentIds) == 0 {
+		return &types.BulkDeleteDocumentsPayload{
+			DeletedDocumentIds: []gid.GID{},
+		}, nil
+	}
+
+	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
+
+	err := prb.Documents.BulkSoftDelete(ctx, input.DocumentIds)
+	if err != nil {
+		panic(fmt.Errorf("cannot bulk delete documents: %w", err))
+	}
+
+	return &types.BulkDeleteDocumentsPayload{
+		DeletedDocumentIds: input.DocumentIds,
+	}, nil
+}
+
+// BulkExportDocuments is the resolver for the bulkExportDocuments field.
+func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.BulkExportDocumentsInput) (*types.BulkExportDocumentsPayload, error) {
+	if len(input.DocumentIds) == 0 {
+		panic(fmt.Errorf("no document ids provided"))
+	}
+
+	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
+
+	user := UserFromContext(ctx)
+	if user == nil {
+		panic(fmt.Errorf("user not found"))
+	}
+
+	documentExport, err := prb.Documents.RequestExport(ctx, input.DocumentIds, user.EmailAddress, user.FullName)
+	if err != nil {
+		panic(fmt.Errorf("cannot request document export: %w", err))
+	}
+
+	return &types.BulkExportDocumentsPayload{
+		ExportJobID: documentExport.ID,
+	}, nil
+}
+
 // GenerateDocumentChangelog is the resolver for the generateDocumentChangelog field.
 func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input types.GenerateDocumentChangelogInput) (*types.GenerateDocumentChangelogPayload, error) {
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())

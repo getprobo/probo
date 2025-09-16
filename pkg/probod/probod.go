@@ -330,19 +330,19 @@ func (impl *Implm) Run(
 		}
 	}()
 
-	frameworkExporterCtx, stopFrameworkExporter := context.WithCancel(context.Background())
+	exportJobExporterCtx, stopExportJobExporter := context.WithCancel(context.Background())
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := impl.runFrameworkExporter(frameworkExporterCtx, proboService, l.Named("framework-exporter")); err != nil {
-			cancel(fmt.Errorf("framework exporter crashed: %w", err))
+		if err := impl.runExportJob(exportJobExporterCtx, proboService, l.Named("export-job-exporter")); err != nil {
+			cancel(fmt.Errorf("export job exporter crashed: %w", err))
 		}
 	}()
 
 	<-ctx.Done()
 
 	stopMailer()
-	stopFrameworkExporter()
+	stopExportJobExporter()
 	stopApiServer()
 
 	wg.Wait()
@@ -352,7 +352,7 @@ func (impl *Implm) Run(
 	return context.Cause(ctx)
 }
 
-func (impl *Implm) runFrameworkExporter(
+func (impl *Implm) runExportJob(
 	ctx context.Context,
 	proboService *probo.Service,
 	l *log.Logger,
@@ -362,9 +362,9 @@ LOOP:
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-time.After(30 * time.Second):
-		if err := proboService.ExportFrameworkJob(ctx); err != nil {
-			if !errors.Is(err, coredata.ErrNoFrameworkExportAvailable) {
-				l.ErrorCtx(ctx, "cannot process framework export", log.Error(err))
+		if err := proboService.ExportJob(ctx); err != nil {
+			if !errors.Is(err, coredata.ErrNoExportJobAvailable) {
+				l.ErrorCtx(ctx, "cannot process export job", log.Error(err))
 			}
 		}
 

@@ -524,12 +524,14 @@ export default function DocumentDetailPage(props: Props) {
             {__("Controls")}
             <TabBadge>{controlsCount}</TabBadge>
           </TabLink>
-          <TabLink to={`${urlPrefix}/signatures`}>
-            {__("Signatures")}
-            <TabBadge>
-              {signedSignatures.length}/{signatures.length}
-            </TabBadge>
-          </TabLink>
+          {!isDraft && (
+            <TabLink to={`${urlPrefix}/signatures`}>
+              {__("Signatures")}
+              <TabBadge>
+                {signedSignatures.length}/{signatures.length}
+              </TabBadge>
+            </TabLink>
+          )}
         </Tabs>
 
         <Outlet context={{ document, version: currentVersion }} />

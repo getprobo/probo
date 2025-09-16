@@ -17,8 +17,10 @@ package probo
 import (
 	"archive/zip"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -29,6 +31,7 @@ import (
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/slug"
 	"github.com/getprobo/probo/pkg/soagen"
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 )
@@ -82,8 +85,9 @@ func (s FrameworkService) RequestExport(
 	frameworkID gid.GID,
 	recipientEmail string,
 	recipientName string,
-) (error, *coredata.FrameworkExport) {
-	frameworkExport := &coredata.FrameworkExport{}
+) (error, *coredata.ExportJob) {
+	var exportJobID gid.GID
+	exportJob := &coredata.ExportJob{}
 
 	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
 		framework := &coredata.Framework{}
@@ -92,18 +96,28 @@ func (s FrameworkService) RequestExport(
 		}
 
 		now := time.Now()
+		exportJobID = gid.New(s.svc.scope.GetTenantID(), coredata.ExportJobEntityType)
 
-		frameworkExport = &coredata.FrameworkExport{
-			ID:             gid.New(framework.ID.TenantID(), coredata.FrameworkExportEntityType),
-			FrameworkID:    frameworkID,
-			Status:         coredata.FrameworkExportStatusPending,
+		args := coredata.FrameworkExportArguments{
+			FrameworkID: frameworkID,
+		}
+		argsJSON, err := json.Marshal(args)
+		if err != nil {
+			return fmt.Errorf("cannot marshal framework export arguments: %w", err)
+		}
+
+		exportJob = &coredata.ExportJob{
+			ID:             exportJobID,
+			Type:           coredata.ExportJobTypeFramework,
+			Arguments:      argsJSON,
+			Status:         coredata.ExportJobStatusPending,
 			RecipientEmail: recipientEmail,
 			RecipientName:  recipientName,
 			CreatedAt:      now,
 		}
 
-		if err := frameworkExport.Insert(ctx, conn, s.svc.scope); err != nil {
-			return fmt.Errorf("cannot insert framework export: %w", err)
+		if err := exportJob.Insert(ctx, conn, s.svc.scope); err != nil {
+			return fmt.Errorf("cannot insert export job: %w", err)
 		}
 
 		return nil
@@ -113,7 +127,7 @@ func (s FrameworkService) RequestExport(
 		return err, nil
 	}
 
-	return nil, frameworkExport
+	return nil, exportJob
 }
 
 func (s FrameworkService) Export(
@@ -675,7 +689,7 @@ func (s FrameworkService) StateOfApplicability(ctx context.Context, frameworkID 
 	return output, nil
 }
 
-func (s FrameworkService) SendFrameworkExportEmail(
+func (s FrameworkService) SendExportEmail(
 	ctx context.Context,
 	fileID gid.GID,
 	recipientName string,
@@ -735,4 +749,100 @@ func (s FrameworkService) GenerateFrameworkExportDownloadURL(
 	}
 
 	return presignedReq.URL, nil
+}
+
+func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, exportJobID gid.GID) (*coredata.ExportJob, error) {
+	exportJob := &coredata.ExportJob{}
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			if err := exportJob.LoadByID(ctx, tx, s.svc.scope, exportJobID); err != nil {
+				return fmt.Errorf("cannot load export job: %w", err)
+			}
+
+			frameworkID, err := exportJob.GetFrameworkID()
+			if err != nil {
+				return fmt.Errorf("cannot get framework ID: %w", err)
+			}
+
+			framework := &coredata.Framework{}
+			if err := framework.LoadByID(ctx, tx, s.svc.scope, frameworkID); err != nil {
+				return fmt.Errorf("cannot load framework: %w", err)
+			}
+
+			tempDir := os.TempDir()
+			tempFile, err := os.CreateTemp(tempDir, "probo-framework-export-*.zip")
+			if err != nil {
+				return fmt.Errorf("cannot create temp file: %w", err)
+			}
+			defer tempFile.Close()
+			defer os.Remove(tempFile.Name())
+
+			err = s.Export(ctx, frameworkID, tempFile)
+			if err != nil {
+				return fmt.Errorf("cannot export framework: %w", err)
+			}
+
+			uuid, err := uuid.NewV4()
+			if err != nil {
+				return fmt.Errorf("cannot generate uuid: %w", err)
+			}
+
+			if _, err := tempFile.Seek(0, 0); err != nil {
+				return fmt.Errorf("cannot seek temp file: %w", err)
+			}
+
+			fileInfo, err := tempFile.Stat()
+			if err != nil {
+				return fmt.Errorf("cannot stat temp file: %w", err)
+			}
+
+			_, err = s.svc.s3.PutObject(
+				ctx,
+				&s3.PutObjectInput{
+					Bucket:        ref.Ref(s.svc.bucket),
+					Key:           ref.Ref(uuid.String()),
+					Body:          tempFile,
+					ContentLength: ref.Ref(fileInfo.Size()),
+					ContentType:   ref.Ref("application/zip"),
+					Metadata: map[string]string{
+						"type":          "framework-export",
+						"export-job-id": exportJob.ID.String(),
+					},
+				},
+			)
+			if err != nil {
+				return fmt.Errorf("cannot upload file to S3: %w", err)
+			}
+
+			now := time.Now()
+
+			file := coredata.File{
+				ID:         gid.New(exportJob.ID.TenantID(), coredata.FileEntityType),
+				BucketName: s.svc.bucket,
+				MimeType:   "application/zip",
+				FileName:   fmt.Sprintf("Framework Export %s.zip", now.Format("2006-01-02")),
+				FileKey:    uuid.String(),
+				FileSize:   int(fileInfo.Size()),
+				CreatedAt:  now,
+				UpdatedAt:  now,
+			}
+
+			if err := file.Insert(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert file: %w", err)
+			}
+
+			exportJob.FileID = &file.ID
+			if err := exportJob.Update(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update export job: %w", err)
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return exportJob, nil
 }

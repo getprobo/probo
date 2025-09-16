@@ -55,5 +55,5 @@ const (
 	SnapshotEntityType
 	ContinualImprovementEntityType
 	ProcessingActivityEntityType
-	FrameworkExportEntityType
+	ExportJobEntityType
 )
