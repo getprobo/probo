@@ -182,7 +182,6 @@ type Vendor implements Node {
   category: VendorCategory!
   websiteUrl: String
   privacyPolicyUrl: String
-  countries: [String!]!
 }
 
 type VendorConnection {
