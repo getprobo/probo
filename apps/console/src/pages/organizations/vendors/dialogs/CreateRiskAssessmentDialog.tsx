@@ -67,7 +67,7 @@ export function CreateRiskAssessmentDialog({
     createRiskAssessmentMutation,
     {
       successMessage: __("Risk Assessment created successfully."),
-      errorMessage: __("Failed to create Risk Assessment. Please try again."),
+      errorMessage: __("Failed to create Risk Assessment"),
     }
   );
 

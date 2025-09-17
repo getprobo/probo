@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/managederror"
 	"github.com/getprobo/probo/pkg/securecookie"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"go.gearno.de/kit/httpserver"
@@ -57,8 +58,8 @@ func SignInHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFu
 
 		user, session, err := usrmgrSvc.SignIn(r.Context(), req.Email, req.Password)
 		if err != nil {
-			var ErrInvalidCredentials *usrmgr.ErrInvalidCredentials
-			if errors.As(err, &ErrInvalidCredentials) {
+			var errManaged *managederror.ErrorManaged
+			if errors.As(err, &errManaged) && errManaged.Code == managederror.CodeInvalidInput {
 				httpserver.RenderError(w, http.StatusUnauthorized, err)
 				return
 			}

@@ -32,6 +32,7 @@ import (
 	"github.com/getprobo/probo/pkg/connector"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/managederror"
 	"github.com/getprobo/probo/pkg/probo"
 	"github.com/getprobo/probo/pkg/saferedirect"
 	"github.com/getprobo/probo/pkg/server/api/console/v1/schema"
@@ -232,6 +233,7 @@ func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrm
 	srv.Use(extension.Introspection{})
 	srv.Use(tracingExtension{})
 	srv.SetRecoverFunc(gqlutils.RecoverFunc)
+	srv.SetErrorPresenter(gqlutils.ErrorPresenter)
 
 	srv.AroundOperations(
 		func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
@@ -244,7 +246,7 @@ func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrm
 							&gqlerror.Error{
 								Message: "authentication required",
 								Extensions: map[string]any{
-									"code": "UNAUTHENTICATED",
+									"code": managederror.CodeUnauthenticated,
 								},
 							},
 						},

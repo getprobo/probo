@@ -213,7 +213,7 @@ export default function DocumentDetailPage(props: Props) {
     publishDocumentVersionMutation,
     {
       successMessage: __("Document published successfully."),
-      errorMessage: __("Failed to publish document. Please try again."),
+      errorMessage: __("Failed to publish document"),
     }
   );
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
@@ -223,14 +223,14 @@ export default function DocumentDetailPage(props: Props) {
       exportDocumentVersionPDFMutation,
       {
         successMessage: __("PDF download started."),
-        errorMessage: __("Failed to generate PDF. Please try again."),
+        errorMessage: __("Failed to generate PDF"),
       }
     );
   const [updateDocument, isUpdatingDocument] = useMutationWithToasts<DocumentDetailPageUpdateMutation>(
     updateDocumentMutation,
     {
       successMessage: __("Document updated successfully."),
-      errorMessage: __("Failed to update document. Please try again."),
+      errorMessage: __("Failed to update document"),
     }
   );
   const versionConnectionId = document.versions.__id;

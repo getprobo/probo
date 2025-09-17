@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/getprobo/probo/pkg/coredata"
+	"github.com/getprobo/probo/pkg/managederror"
 	"github.com/getprobo/probo/pkg/securecookie"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"go.gearno.de/kit/httpserver"
@@ -53,14 +53,13 @@ func SignUpHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFu
 			req.FullName,
 		)
 		if err != nil {
-			var errUserAlreadyExists *coredata.ErrUserAlreadyExists
-			if errors.As(err, &errUserAlreadyExists) {
+			var errManaged *managederror.ErrorManaged
+			if errors.As(err, &errManaged) && errManaged.Code == managederror.CodeAlreadyExists {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot register user: %w", err))
 				return
 			}
 
-			var errSignupDisabled *usrmgr.ErrSignupDisabled
-			if errors.As(err, &errSignupDisabled) {
+			if errors.As(err, &errManaged) && errManaged.Code == managederror.CodeOperationNotAllowed {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot register user: %w", err))
 				return
 			}

@@ -117,13 +117,6 @@ const fetchRelay: FetchFunction = async (
       throw new UnAuthenticatedError();
     }
 
-    throw new Error(
-      `Error fetching GraphQL query '${
-        request.name
-      }' with variables '${JSON.stringify(variables)}': ${JSON.stringify(
-        json.errors
-      )}`
-    );
   }
 
   return json;

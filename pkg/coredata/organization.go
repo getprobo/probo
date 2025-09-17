@@ -171,7 +171,7 @@ INSERT INTO organizations (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot insert organization: %w", err)
 	}
 
 	return nil

@@ -357,19 +357,7 @@ func (impl *Implm) runFrameworkExporter(
 	proboService *probo.Service,
 	l *log.Logger,
 ) error {
-LOOP:
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-time.After(30 * time.Second):
-		if err := proboService.ExportFrameworkJob(ctx); err != nil {
-			if !errors.Is(err, coredata.ErrNoFrameworkExportAvailable) {
-				l.ErrorCtx(ctx, "cannot process framework export", log.Error(err))
-			}
-		}
-
-		goto LOOP
-	}
+	return nil
 }
 
 func (impl *Implm) runApiServer(

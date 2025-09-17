@@ -22,3 +22,4 @@ export { getStatusVariant, getStatusLabel, getStatusOptions } from "./registrySt
 export { promisifyMutation } from "./relay";
 export { fileType, fileSize } from "./file";
 export { formatDatetime } from "./date";
+export { formatError, type GraphQLError } from "./error";

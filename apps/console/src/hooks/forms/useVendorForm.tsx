@@ -70,7 +70,7 @@ export function useVendorForm(vendorKey: useVendorFormFragment$key) {
 
   const [mutate] = useMutationWithToasts(vendorUpdateQuery, {
     successMessage: __("Vendor updated successfully."),
-    errorMessage: __("Failed to update vendor. Please try again."),
+    errorMessage: __("Failed to update vendor"),
   });
 
   const defaultValues = useMemo(

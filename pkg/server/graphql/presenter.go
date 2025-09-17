@@ -16,25 +16,36 @@ package graphql
 
 import (
 	"context"
-	"errors"
-	"runtime/debug"
+	"maps"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/getprobo/probo/pkg/managederror"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 )
 
-func RecoverFunc(ctx context.Context, err any) error {
-	logger := httpserver.LoggerFromContext(ctx)
-	logger.Error("resolver panic", log.Any("error", err), log.Any("stack", string(debug.Stack())))
+func ErrorPresenter(ctx context.Context, e error) *gqlerror.Error {
+	err := graphql.DefaultErrorPresenter(ctx, e)
 
-	if panicErr, ok := err.(error); ok {
-		if managederror.IsErrorManaged(panicErr) {
-			return panicErr
+	if managedErr := managederror.GetErrorManaged(e); managedErr != nil {
+		err.Message = managedErr.Message
+		extensions := map[string]any{
+			"code": managedErr.Code,
 		}
 
-		logger.Error("unhandled error causing panic", log.Any("original_error", panicErr))
+		maps.Copy(extensions, managedErr.Details)
+
+		err.Extensions = extensions
+	} else {
+		logger := httpserver.LoggerFromContext(ctx)
+		logger.Error("unhandled error in resolver", log.Any("error", e))
+
+		err.Message = "Internal server error"
+		err.Extensions = map[string]any{
+			"code": managederror.CodeInternalServerError,
+		}
 	}
 
-	return errors.New("internal server error")
+	return err
 }

@@ -9,7 +9,7 @@ import {
   useDialogRef,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { sprintf } from "@probo/helpers";
+import { sprintf, formatError, type GraphQLError } from "@probo/helpers";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { z } from "zod";
 import { useCreateTrustCenterAccess } from "/hooks/useTrustCenterQueries";
@@ -63,10 +63,10 @@ export function PublicTrustCenterAccessRequestDialog({
           }
           setIsSubmitting(false);
         },
-        onError: (_: Error) => {
+        onError: (error: GraphQLError) => {
           toast({
             title: __("Error"),
-            description: __("An error occurred while submitting your request."),
+            description: formatError(__("Failed to submit request"), error),
             variant: "error",
           });
           setIsSubmitting(false);

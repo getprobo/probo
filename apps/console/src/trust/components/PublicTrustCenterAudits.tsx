@@ -51,7 +51,7 @@ export function PublicTrustCenterAudits({
       onError: () => {
         toast({
           title: __("Download Failed"),
-          description: __("Unable to download the report. Please try again."),
+          description: __("Unable to download the report"),
           variant: "error",
         });
       },

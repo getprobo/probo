@@ -25,8 +25,10 @@ import (
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/passwdhash"
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/managederror"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/statelesstoken"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -39,41 +41,6 @@ type (
 		disableSignup           bool
 		invitationTokenValidity time.Duration
 	}
-
-	ErrInvalidCredentials struct {
-		message string
-	}
-
-	ErrInvalidEmail struct {
-		email string
-	}
-
-	ErrInvalidPassword struct {
-		minLength int
-		maxLength int
-	}
-
-	ErrInvalidFullName struct {
-		fullName string
-	}
-
-	ErrUserAlreadyExists struct {
-		message string
-	}
-
-	ErrSessionNotFound struct {
-		message string
-	}
-
-	ErrSessionExpired struct {
-		message string
-	}
-
-	ErrInvalidTokenType struct {
-		message string
-	}
-
-	ErrSignupDisabled struct{}
 
 	EmailConfirmationData struct {
 		UserID gid.GID `json:"uid"`
@@ -125,42 +92,6 @@ var (
 	[1] %s
 	`
 )
-
-func (e ErrInvalidCredentials) Error() string {
-	return e.message
-}
-
-func (e ErrUserAlreadyExists) Error() string {
-	return e.message
-}
-
-func (e ErrSessionNotFound) Error() string {
-	return e.message
-}
-
-func (e ErrSessionExpired) Error() string {
-	return e.message
-}
-
-func (e ErrInvalidEmail) Error() string {
-	return fmt.Sprintf("invalid email: %s", e.email)
-}
-
-func (e ErrInvalidPassword) Error() string {
-	return fmt.Sprintf("invalid password: the length must be between %d and %d characters", e.minLength, e.maxLength)
-}
-
-func (e ErrInvalidFullName) Error() string {
-	return fmt.Sprintf("invalid full name: %s", e.fullName)
-}
-
-func (e ErrInvalidTokenType) Error() string {
-	return e.message
-}
-
-func (e ErrSignupDisabled) Error() string {
-	return "signup is disabled, contact the owner of the Probo instance"
-}
 
 func NewService(
 	ctx context.Context,
@@ -248,19 +179,19 @@ func (s Service) SignUp(
 	email, password, fullName string,
 ) (*coredata.User, *coredata.Session, error) {
 	if s.disableSignup {
-		return nil, nil, &ErrSignupDisabled{}
+		return nil, nil, managederror.NewOperationNotAllowedError("signup is disabled")
 	}
 
 	if _, err := mail.ParseAddress(email); err != nil {
-		return nil, nil, &ErrInvalidEmail{email}
+		return nil, nil, managederror.NewInvalidInputError("invalid email")
 	}
 
 	if len(password) < 8 || len(password) > 128 {
-		return nil, nil, &ErrInvalidPassword{minLength: 8, maxLength: 128}
+		return nil, nil, managederror.NewInvalidInputError("the length of the password must be between 8 and 128 characters")
 	}
 
 	if fullName == "" {
-		return nil, nil, &ErrInvalidFullName{fullName}
+		return nil, nil, managederror.NewInvalidInputError("invalid full name")
 	}
 
 	hashedPassword, err := s.hp.HashPassword([]byte(password))
@@ -353,7 +284,7 @@ func (s Service) SignIn(
 	}
 
 	if len(password) < 8 || len(password) > 128 {
-		return nil, nil, &ErrInvalidPassword{minLength: 8, maxLength: 128}
+		return nil, nil, managederror.NewInvalidInputError("the length of the password must be between 8 and 128 characters")
 	}
 
 	err := s.pg.WithTx(
@@ -365,7 +296,7 @@ func (s Service) SignIn(
 				var errUserNotFound *coredata.ErrUserNotFound
 
 				if errors.As(err, &errUserNotFound) {
-					return &ErrInvalidCredentials{message: "invalid email or password"}
+					return managederror.NewInvalidInputError("invalid email or password")
 				}
 
 				return fmt.Errorf("cannot load user by email: %w", err)
@@ -377,7 +308,7 @@ func (s Service) SignIn(
 			}
 
 			if !ok {
-				return &ErrInvalidCredentials{message: "invalid email or password"}
+				return managederror.NewInvalidInputError("invalid email or password")
 			}
 
 			session.UserID = user.ID
@@ -424,14 +355,14 @@ func (s Service) GetSession(
 		ctx,
 		func(tx pg.Conn) error {
 			if err := session.LoadByID(ctx, tx, sessionID); err != nil {
-				return &ErrSessionNotFound{message: "session not found"}
+				return managederror.NewNotFoundError("session")
 			}
 
 			if time.Now().After(session.ExpiredAt) {
 				if err := coredata.DeleteSession(ctx, tx, sessionID); err != nil {
 					return fmt.Errorf("cannot delete expired session: %w", err)
 				}
-				return &ErrSessionExpired{message: "session expired"}
+				return managederror.NewSessionExpiredError()
 			}
 
 			return nil
@@ -663,10 +594,10 @@ func (s Service) InviteUser(
 	emailAddress string,
 ) error {
 	if _, err := mail.ParseAddress(emailAddress); err != nil {
-		return &ErrInvalidEmail{emailAddress}
+		return managederror.NewInvalidInputError("invalid email")
 	}
 	if fullName == "" {
-		return &ErrInvalidFullName{fullName}
+		return managederror.NewInvalidInputError("invalid full name")
 	}
 
 	var userExists bool
@@ -694,6 +625,10 @@ func (s Service) InviteUser(
 			}
 
 			if err := uo.Insert(ctx, tx); err != nil {
+				var pgErr *pgconn.PgError
+				if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+					return managederror.NewAlreadyExistsError("user")
+				}
 				return fmt.Errorf("cannot insert user organization: %w", err)
 			}
 
@@ -786,7 +721,7 @@ func (s Service) ConfirmInvitation(ctx context.Context, tokenString string, pass
 	}
 
 	if len(password) < 8 || len(password) > 128 {
-		return nil, &ErrInvalidPassword{minLength: 8, maxLength: 128}
+		return nil, managederror.NewInvalidInputError("the length of the password must be between 8 and 128 characters")
 	}
 
 	now := time.Now()
@@ -829,6 +764,10 @@ func (s Service) ConfirmInvitation(ctx context.Context, tokenString string, pass
 			}
 
 			if err := uo.Insert(ctx, tx); err != nil {
+				var pgErr *pgconn.PgError
+				if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+					return managederror.NewAlreadyExistsError("user")
+				}
 				return fmt.Errorf("cannot insert user organization: %w", err)
 			}
 
@@ -908,7 +847,7 @@ func (s Service) ResetPassword(ctx context.Context, tokenString string, newPassw
 	}
 
 	if len(newPassword) < 8 || len(newPassword) > 128 {
-		return &ErrInvalidPassword{minLength: 8, maxLength: 128}
+		return managederror.NewInvalidInputError("the length of the password must be between 8 and 128 characters")
 	}
 
 	hashedPassword, err := s.hp.HashPassword([]byte(newPassword))

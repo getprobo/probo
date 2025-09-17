@@ -67,7 +67,7 @@ export function CreateContactDialog({
     createContactMutation,
     {
       successMessage: __("Contact created successfully."),
-      errorMessage: __("Failed to create contact. Please try again."),
+      errorMessage: __("Failed to create contact"),
     }
   );
 

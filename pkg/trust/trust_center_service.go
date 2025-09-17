@@ -95,17 +95,17 @@ func (s TrustCenterService) GenerateNDAFileURL(
 	expiresIn time.Duration,
 ) (string, error) {
 	var file *coredata.File
+	trustCenter := &coredata.TrustCenter{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			trustCenter := &coredata.TrustCenter{}
 			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
 			if trustCenter.NonDisclosureAgreementFileID == nil {
-				return fmt.Errorf("no NDA file found")
+				return nil
 			}
 
 			file = &coredata.File{}
@@ -118,6 +118,10 @@ func (s TrustCenterService) GenerateNDAFileURL(
 	)
 	if err != nil {
 		return "", err
+	}
+
+	if trustCenter.NonDisclosureAgreementFileID == nil {
+		return "", nil
 	}
 
 	presignClient := s3.NewPresignClient(s.svc.s3)

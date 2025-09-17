@@ -73,7 +73,7 @@ export default function MeasureFormDialog(props: Props) {
     ? useUpdateMeasure()
     : useMutationWithToasts(measureCreateMutation, {
         successMessage: __("Measure created successfully."),
-        errorMessage: __("Failed to create measure. Please try again."),
+        errorMessage: __("Failed to create measure"),
       });
 
   const { control, handleSubmit, register, formState, reset } =

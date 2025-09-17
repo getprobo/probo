@@ -16,12 +16,15 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/managederror"
 	"github.com/getprobo/probo/pkg/page"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -270,10 +273,20 @@ func (s PeopleService) Delete(
 ) error {
 	people := coredata.People{ID: peopleID}
 
-	return s.svc.pg.WithConn(
+	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
 			return people.Delete(ctx, conn, s.svc.scope)
 		},
 	)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return managederror.NewOperationNotAllowedError("cannot delete person referenced by other resources")
+		}
+		return err
+	}
+
+	return nil
 }

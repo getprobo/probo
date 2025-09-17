@@ -16,12 +16,15 @@ package probo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/managederror"
 	"github.com/getprobo/probo/pkg/page"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -735,6 +738,10 @@ func (s ControlService) Create(
 	)
 
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, managederror.NewConflictError("a control with the same section title already exists in this framework")
+		}
 		return nil, fmt.Errorf("cannot create control: %w", err)
 	}
 

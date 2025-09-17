@@ -21,6 +21,7 @@ import (
 
 	"errors"
 
+	"github.com/getprobo/probo/pkg/managederror"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"go.gearno.de/kit/httpserver"
 )
@@ -46,15 +47,9 @@ func ResetPasswordHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.Ha
 
 		err := usrmgrSvc.ResetPassword(r.Context(), req.Token, req.Password)
 		if err != nil {
-			var invalidPasswordErr *usrmgr.ErrInvalidPassword
-			var invalidTokenErr *usrmgr.ErrInvalidTokenType
+			var errManaged *managederror.ErrorManaged
 
-			if errors.As(err, &invalidPasswordErr) {
-				httpserver.RenderError(w, http.StatusBadRequest, err)
-				return
-			}
-
-			if errors.As(err, &invalidTokenErr) {
+			if errors.As(err, &errManaged) && errManaged.Code == managederror.CodeInvalidInput {
 				httpserver.RenderError(w, http.StatusBadRequest, err)
 				return
 			}

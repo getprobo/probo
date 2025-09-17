@@ -11,6 +11,7 @@ import (
 	"github.com/getprobo/probo/pkg/docgen"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
+	"github.com/getprobo/probo/pkg/managederror"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/statelesstoken"
 	"github.com/jackc/pgx/v5"
@@ -258,7 +259,8 @@ func (s *DocumentService) publishVersionInTx(
 		if publishedVersion.Content == documentVersion.Content &&
 			publishedVersion.Title == documentVersion.Title &&
 			publishedVersion.OwnerID == documentVersion.OwnerID {
-			return nil, nil, fmt.Errorf("cannot publish version: no changes detected")
+
+			return nil, nil, managederror.NewValidationError("no changes detected")
 		}
 	}
 

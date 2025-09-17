@@ -64,7 +64,7 @@ export function EditContactDialog({ contactId, contact, onClose }: Props) {
     updateContactMutation,
     {
       successMessage: __("Contact updated successfully."),
-      errorMessage: __("Failed to update contact. Please try again."),
+      errorMessage: __("Failed to update contact"),
     }
   );
 

@@ -72,8 +72,8 @@ const schema = z.object({
   name: z.string(),
   description: z.string(),
   timeEstimate: z.string().nullable(),
-  assignedToId: z.string(),
-  measureId: z.string(),
+  assignedToId: z.string().min(1, "Assigned to is required"),
+  measureId: z.string().min(1, "Measure is required"),
   deadline: z
     .date({
       coerce: true,
@@ -98,11 +98,11 @@ export default function TaskFormDialog(props: Props) {
   const [mutate] = task
     ? useMutationWithToasts(taskUpdateMutation, {
         successMessage: __("Task updated successfully."),
-        errorMessage: __("Failed to update task. Please try again."),
+        errorMessage: __("Failed to update task"),
       })
     : useMutationWithToasts(taskCreateMutation, {
         successMessage: __("Task created successfully."),
-        errorMessage: __("Failed to create task. Please try again."),
+        errorMessage: __("Failed to create task"),
       });
 
   const { control, handleSubmit, register, formState, reset } =

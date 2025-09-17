@@ -11,6 +11,7 @@ import {
   useDialogRef
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { useAcceptNonDisclosureAgreement } from "/hooks/useTrustCenterQueries";
 import { buildEndpoint } from "/providers/RelayProviders";
 import { sprintf } from "@probo/helpers";
@@ -73,10 +74,10 @@ export function NDAAcceptanceDialog({ trustCenterId, organizationName, ndaFileNa
         onSuccess: () => {
           window.location.reload();
         },
-        onError: () => {
+        onError: (error) => {
           toast({
             title: __("Error"),
-            description: __("Failed to accept the Non-Disclosure Agreement"),
+            description: formatError(__("Failed to accept the Non-Disclosure Agreement"), error as GraphQLError),
             variant: "error",
           });
         },

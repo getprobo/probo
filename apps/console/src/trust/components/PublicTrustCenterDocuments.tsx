@@ -49,7 +49,7 @@ export function PublicTrustCenterDocuments({
       onError: () => {
         toast({
           title: __("Download Failed"),
-          description: __("Unable to download the document. Please try again."),
+          description: __("Unable to download the document"),
           variant: "error",
         });
       },
