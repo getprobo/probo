@@ -21,6 +21,7 @@ import (
 
 	"errors"
 
+	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"go.gearno.de/kit/httpserver"
 )
@@ -46,10 +47,10 @@ func ResetPasswordHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.Ha
 
 		err := usrmgrSvc.ResetPassword(r.Context(), req.Token, req.Password)
 		if err != nil {
-			var invalidPasswordErr *usrmgr.ErrInvalidPassword
+			var invalidValueErr *coredata.ErrInvalidValue
 			var invalidTokenErr *usrmgr.ErrInvalidTokenType
 
-			if errors.As(err, &invalidPasswordErr) {
+			if errors.As(err, &invalidValueErr) {
 				httpserver.RenderError(w, http.StatusBadRequest, err)
 				return
 			}

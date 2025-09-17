@@ -43,8 +43,8 @@ export function EditContactDialog({ contactId, contact, onClose }: Props) {
 
   const schema = z.object({
     fullName: z.string().optional(),
-    email: z.string().email(__("Please enter a valid email address")).optional().or(z.literal("")),
-    phone: z.string().regex(phoneRegex, __("Phone number must be in international format (e.g., +1234567890)")).optional().or(z.literal("")),
+    email: z.union([z.string().email(__("Please enter a valid email address")), z.literal("")]),
+    phone: z.union([z.string().regex(phoneRegex, __("Phone number must be in international format (e.g., +1234567890)")), z.literal("")]),
     role: z.string().optional(),
   });
 
@@ -64,7 +64,7 @@ export function EditContactDialog({ contactId, contact, onClose }: Props) {
     updateContactMutation,
     {
       successMessage: __("Contact updated successfully."),
-      errorMessage: __("Failed to update contact. Please try again."),
+      errorMessage: __("Failed to update contact"),
     }
   );
 

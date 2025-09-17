@@ -63,11 +63,11 @@ export default function TrustCenterAccessTab() {
   });
   const [updateInvitation, isUpdating] = useMutationWithToasts(updateTrustCenterAccessMutation, {
     successMessage: __("Access updated successfully"),
-    errorMessage: __("Failed to update access. Please try again."),
+    errorMessage: __("Failed to update access"),
   });
   const [deleteInvitation, isDeleting] = useMutationWithToasts(deleteTrustCenterAccessMutation, {
     successMessage: __("Access deleted successfully"),
-    errorMessage: __("Failed to delete access. Please try again."),
+    errorMessage: __("Failed to delete access"),
   });
 
   const dialogRef = useDialogRef();

@@ -53,8 +53,8 @@ func SignUpHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFu
 			req.FullName,
 		)
 		if err != nil {
-			var errUserAlreadyExists *coredata.ErrUserAlreadyExists
-			if errors.As(err, &errUserAlreadyExists) {
+			var errResourceAlreadyExists *coredata.ErrResourceAlreadyExists
+			if errors.As(err, &errResourceAlreadyExists) {
 				httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("cannot register user: %w", err))
 				return
 			}

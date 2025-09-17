@@ -23,9 +23,25 @@ import (
 	"go.gearno.de/kit/log"
 )
 
-func RecoverFunc(ctx context.Context, err any) error {
-	logger := httpserver.LoggerFromContext(ctx)
-	logger.Error("resolver panic", log.Any("error", err), log.Any("stack", string(debug.Stack())))
+type RescuedError struct {
+	Original error
+}
 
-	return errors.New("internal server error")
+func (e RescuedError) Error() string {
+	return e.Original.Error()
+}
+
+func (e RescuedError) Unwrap() error {
+	return e.Original
+}
+
+func RecoverFunc(ctx context.Context, err any) error {
+	if panicErr, ok := err.(error); ok {
+		return &RescuedError{Original: panicErr}
+	}
+
+	logger := httpserver.LoggerFromContext(ctx)
+	logger.Error("resolver panic with non-error value", log.Any("panic", err), log.Any("stack", string(debug.Stack())))
+
+	return &RescuedError{Original: errors.New("internal server error")}
 }

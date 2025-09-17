@@ -2,8 +2,9 @@ import {
   useMutation,
   usePreloadedQuery,
   type PreloadedQuery,
+  type UseMutationConfig,
 } from "react-relay";
-import { graphql } from "relay-runtime";
+import { graphql, type MutationParameters } from "relay-runtime";
 import {
   ActionDropdown,
   Button,
@@ -11,8 +12,10 @@ import {
   IconPencil,
   IconTrashCan,
   useConfirm,
+  useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { LinkedMeasuresCard } from "/components/measures/LinkedMeasuresCard";
 import { useNavigate, useOutletContext } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
@@ -153,6 +156,7 @@ type Props = {
  */
 export default function FrameworkControlPage({ queryRef }: Props) {
   const { __ } = useTranslate();
+  const { toast } = useToast();
   const { framework } = useOutletContext<{
     framework: FrameworkDetailPageFragment$data;
   }>();
@@ -161,24 +165,43 @@ export default function FrameworkControlPage({ queryRef }: Props) {
   const organizationId = useOrganizationId();
   const confirm = useConfirm();
   const navigate = useNavigate();
-  // Mutations
-  const [detachMeasure, isDetachingMeasure] = useMutation(
-    detachMeasureMutation
-  );
-  const [attachMeasure, isAttachingMeasure] = useMutation(
-    attachMeasureMutation
-  );
-  const [detachDocument, isDetachingDocument] = useMutation(
-    detachDocumentMutation
-  );
-  const [attachDocument, isAttachingDocument] = useMutation(
-    attachDocumentMutation
-  );
+
+  const [detachMeasure, isDetachingMeasure] = useMutation(detachMeasureMutation);
+  const [attachMeasure, isAttachingMeasure] = useMutation(attachMeasureMutation);
+  const [detachDocument, isDetachingDocument] = useMutation(detachDocumentMutation);
+  const [attachDocument, isAttachingDocument] = useMutation(attachDocumentMutation);
   const [detachAudit, isDetachingAudit] = useMutation(detachAuditMutation);
   const [attachAudit, isAttachingAudit] = useMutation(attachAuditMutation);
   const [detachSnapshot, isDetachingSnapshot] = useMutation(detachSnapshotMutation);
   const [attachSnapshot, isAttachingSnapshot] = useMutation(attachSnapshotMutation);
   const [deleteControl] = useMutation(deleteControlMutation);
+
+  const withErrorHandling = <T extends MutationParameters>(
+    mutationFn: (config: UseMutationConfig<T>) => void,
+    errorMessage: string
+  ) => (options: UseMutationConfig<T>) => {
+    mutationFn({
+      ...options,
+      onCompleted: (response, error) => {
+        if (error) {
+          toast({
+            title: __("Error"),
+            description: formatError(errorMessage, error as GraphQLError),
+            variant: "error",
+          });
+        }
+        options.onCompleted?.(response, error);
+      },
+      onError: (error) => {
+        toast({
+          title: __("Error"),
+          description: formatError(errorMessage, error as GraphQLError),
+          variant: "error",
+        });
+        options.onError?.(error);
+      },
+    });
+  };
 
   const onDelete = () => {
     confirm(
@@ -253,8 +276,8 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             measures={control.measures?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
             connectionId={control.measures?.__id!}
-            onAttach={attachMeasure}
-            onDetach={detachMeasure}
+            onAttach={withErrorHandling(attachMeasure, __("Failed to link measure"))}
+            onDetach={withErrorHandling(detachMeasure, __("Failed to unlink measure"))}
             disabled={isAttachingMeasure || isDetachingMeasure}
           />
         </div>
@@ -264,8 +287,8 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             documents={control.documents?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
             connectionId={control.documents?.__id!}
-            onAttach={attachDocument}
-            onDetach={detachDocument}
+            onAttach={withErrorHandling(attachDocument, __("Failed to link document"))}
+            onDetach={withErrorHandling(detachDocument, __("Failed to unlink document"))}
             disabled={isAttachingDocument || isDetachingDocument}
           />
         </div>
@@ -275,8 +298,8 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             audits={control.audits?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
             connectionId={control.audits?.__id!}
-            onAttach={attachAudit}
-            onDetach={detachAudit}
+            onAttach={withErrorHandling(attachAudit, __("Failed to link audit"))}
+            onDetach={withErrorHandling(detachAudit, __("Failed to unlink audit"))}
             disabled={isAttachingAudit || isDetachingAudit}
           />
         </div>
@@ -286,8 +309,8 @@ export default function FrameworkControlPage({ queryRef }: Props) {
             snapshots={control.snapshots?.edges.map((edge) => edge.node) ?? []}
             params={{ controlId: control.id }}
             connectionId={control.snapshots?.__id!}
-            onAttach={attachSnapshot}
-            onDetach={detachSnapshot}
+            onAttach={withErrorHandling(attachSnapshot, __("Failed to link snapshot"))}
+            onDetach={withErrorHandling(detachSnapshot, __("Failed to unlink snapshot"))}
             disabled={isAttachingSnapshot || isDetachingSnapshot}
           />
         </div>

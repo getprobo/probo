@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -725,7 +727,22 @@ VALUES (
 		"updated_at":              c.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
-	return err
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
+				return &ErrResourceAlreadyExists{
+					Resource: "control",
+					Message:  "same section title in framework",
+				}
+			}
+		}
+
+		return fmt.Errorf("cannot insert control: %w", err)
+	}
+
+	return nil
 }
 
 func (c Control) Delete(
@@ -810,6 +827,15 @@ RETURNING
 
 	control, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Control])
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
+				return &ErrResourceAlreadyExists{
+					Resource: "control",
+					Message:  "same section title in framework",
+				}
+			}
+		}
 		return fmt.Errorf("cannot collect control: %w", err)
 	}
 

@@ -24,6 +24,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -44,15 +45,7 @@ type (
 	}
 
 	Peoples []*People
-
-	ErrPeopleNotFound struct {
-		Identifier string
-	}
 )
-
-func (e ErrPeopleNotFound) Error() string {
-	return fmt.Sprintf("people not found: %s", e.Identifier)
-}
 
 func (p People) CursorKey(orderBy PeopleOrderField) page.CursorKey {
 	switch orderBy {
@@ -156,7 +149,7 @@ func (p *People) LoadByEmail(
 	people, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[People])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrPeopleNotFound{Identifier: primaryEmailAddress}
+			return &ErrResourceNotFound{Resource: "people", Identifier: primaryEmailAddress}
 		}
 
 		return fmt.Errorf("cannot collect people: %w", err)
@@ -208,7 +201,7 @@ LIMIT 1;
 	people, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[People])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrPeopleNotFound{Identifier: userID.String()}
+			return &ErrResourceNotFound{Resource: "people", Identifier: userID.String()}
 		}
 
 		return fmt.Errorf("cannot collect people: %w", err)
@@ -292,7 +285,19 @@ DELETE FROM peoples WHERE %s AND id = @people_id
 	maps.Copy(args, scope.SQLArguments())
 
 	_, err := conn.Exec(ctx, q, args)
-	return err
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23503" {
+				return &ErrRestrictedOperation{
+					Resource: "people",
+					Message:  "still referenced by other resources",
+				}
+			}
+		}
+		return fmt.Errorf("cannot delete people: %w", err)
+	}
+	return nil
 }
 
 func (p *Peoples) CountByOrganizationID(

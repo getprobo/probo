@@ -107,7 +107,7 @@ export default function MeasuresPage(props: Props) {
     importMeasuresMutation,
     {
       successMessage: __("Measures imported successfully."),
-      errorMessage: __("Failed to import measures. Please try again."),
+      errorMessage: __("Failed to import measures"),
     }
   );
   const importFileRef = useRef<HTMLInputElement>(null);

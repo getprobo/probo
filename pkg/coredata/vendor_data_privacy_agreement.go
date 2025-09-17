@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -92,6 +93,9 @@ LIMIT 1;
 
 	vendorDataPrivacyAgreement, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[VendorDataPrivacyAgreement])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrResourceNotFound{Resource: "vendor data privacy agreement", Identifier: vendorID.String()}
+		}
 		return fmt.Errorf("cannot collect vendor data privacy agreement: %w", err)
 	}
 

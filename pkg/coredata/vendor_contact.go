@@ -42,15 +42,7 @@ type (
 	}
 
 	VendorContacts []*VendorContact
-
-	ErrVendorContactNotFound struct {
-		Identifier string
-	}
 )
-
-func (e ErrVendorContactNotFound) Error() string {
-	return fmt.Sprintf("vendor contact not found: %s", e.Identifier)
-}
 
 func (vc VendorContact) CursorKey(orderBy VendorContactOrderField) page.CursorKey {
 	switch orderBy {
@@ -105,7 +97,7 @@ LIMIT 1;
 	vendorContact, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[VendorContact])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrVendorContactNotFound{Identifier: vendorContactID.String()}
+			return &ErrResourceNotFound{Resource: "vendor contact", Identifier: vendorContactID.String()}
 		}
 
 		return fmt.Errorf("cannot collect vendor contact: %w", err)

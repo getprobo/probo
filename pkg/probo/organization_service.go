@@ -184,7 +184,7 @@ func (s OrganizationService) Update(
 			if req.Email != nil {
 				if *req.Email != nil {
 					if _, err := mail.ParseAddress(**req.Email); err != nil {
-						return fmt.Errorf("invalid email address: %w", err)
+						return &coredata.ErrInvalidValue{Field: "email"}
 					}
 				}
 				organization.Email = *req.Email

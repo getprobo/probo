@@ -32,7 +32,7 @@ import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { AuditSelectField } from "/components/form/AuditSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
-import { getStatusVariant, getStatusLabel, formatDatetime, validateSnapshotConsistency, getStatusOptions } from "@probo/helpers";
+import { getStatusVariant, getStatusLabel, formatDatetime, validateSnapshotConsistency, getStatusOptions, formatError, type GraphQLError } from "@probo/helpers";
 import type { NonconformityGraphNodeQuery } from "/hooks/graph/__generated__/NonconformityGraphNodeQuery.graphql";
 
 const updateNonconformitySchema = z.object({
@@ -121,7 +121,7 @@ export default function NonconformityDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: error instanceof Error ? error.message : __("Failed to update nonconformity"),
+        description: formatError(__("Failed to update nonconformity"), error as GraphQLError),
         variant: "error",
       });
     }

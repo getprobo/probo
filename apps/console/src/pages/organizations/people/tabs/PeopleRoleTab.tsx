@@ -33,7 +33,7 @@ export default function PeopleRoleTab() {
     updatePeopleMutation,
     {
       successMessage: __("Member updated successfully."),
-      errorMessage: __("Failed to update member. Please try again."),
+      errorMessage: __("Failed to update member"),
     }
   );
 

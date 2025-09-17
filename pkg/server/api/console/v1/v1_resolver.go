@@ -18,8 +18,6 @@ import (
 	"github.com/getprobo/probo/pkg/probo"
 	"github.com/getprobo/probo/pkg/server/api/console/v1/schema"
 	"github.com/getprobo/probo/pkg/server/api/console/v1/types"
-	pgx "github.com/jackc/pgx/v5"
-	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // Owner is the resolver for the owner field.
@@ -321,7 +319,7 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 
 	page, err := prb.Measures.ListForControlID(ctx, obj.ID, cursor, measureFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measures: %w", err)
+		panic(fmt.Errorf("cannot list measures: %w", err))
 	}
 
 	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
@@ -351,7 +349,7 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 
 	page, err := prb.Documents.ListForControlID(ctx, obj.ID, cursor, documentFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list documents: %w", err)
+		panic(fmt.Errorf("cannot list documents: %w", err))
 	}
 
 	return types.NewDocumentConnection(page, r, obj.ID, documentFilter), nil
@@ -376,7 +374,7 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 
 	page, err := prb.Audits.ListForControlID(ctx, obj.ID, cursor)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list control audits: %w", err)
+		panic(fmt.Errorf("cannot list control audits: %w", err))
 	}
 
 	return types.NewAuditConnection(page, r, obj.ID), nil
@@ -416,31 +414,31 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 	case *organizationResolver:
 		count, err := prb.Controls.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count controls: %w", err)
+			panic(fmt.Errorf("cannot count controls: %w", err))
 		}
 		return count, nil
 	case *frameworkResolver:
 		count, err := prb.Controls.CountForFrameworkID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count controls: %w", err)
+			panic(fmt.Errorf("cannot count controls: %w", err))
 		}
 		return count, nil
 	case *documentResolver:
 		count, err := prb.Controls.CountForDocumentID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count controls: %w", err)
+			panic(fmt.Errorf("cannot count controls: %w", err))
 		}
 		return count, nil
 	case *measureResolver:
 		count, err := prb.Controls.CountForMeasureID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count controls: %w", err)
+			panic(fmt.Errorf("cannot count controls: %w", err))
 		}
 		return count, nil
 	case *riskResolver:
 		count, err := prb.Controls.CountForRiskID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count controls: %w", err)
+			panic(fmt.Errorf("cannot count controls: %w", err))
 		}
 		return count, nil
 	}
@@ -454,12 +452,12 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Peo
 
 	data, err := prb.Data.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get datum: %w", err)
+		panic(fmt.Errorf("cannot get datum: %w", err))
 	}
 
 	people, err := prb.Peoples.Get(ctx, data.OwnerID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get owner: %w", err)
+		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
 
 	return types.NewPeople(people), nil
@@ -496,7 +494,7 @@ func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*ty
 
 	org, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get organization: %w", err)
+		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
 	return types.NewOrganization(org), nil
@@ -515,7 +513,7 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 
 		count, err := prb.Data.CountForOrganizationID(ctx, obj.ParentID, datumFilter)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count data: %w", err)
+			panic(fmt.Errorf("cannot count data: %w", err))
 		}
 		return count, nil
 	}
@@ -532,7 +530,6 @@ func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*typ
 		panic(fmt.Errorf("cannot get document: %w", err))
 	}
 
-	// Get the owner
 	owner, err := prb.Peoples.Get(ctx, document.OwnerID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get owner: %w", err))
@@ -744,7 +741,7 @@ func (r *evidenceResolver) FileURL(ctx context.Context, obj *types.Evidence) (*s
 
 	fileURL, err := prb.Evidences.GenerateFileURL(ctx, obj.ID, 15*time.Minute)
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate file URL: %w", err)
+		panic(fmt.Errorf("cannot generate file URL: %w", err))
 	}
 
 	result := *fileURL
@@ -757,16 +754,16 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 
 	evidence, err := prb.Evidences.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load evidence: %w", err)
+		panic(fmt.Errorf("cannot load evidence: %w", err))
 	}
 
 	if evidence.TaskID == nil {
-		return nil, fmt.Errorf("evidence is not associated with a task")
+		return nil, errors.New("evidence is not associated with a task")
 	}
 
 	task, err := prb.Tasks.Get(ctx, *evidence.TaskID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load task: %w", err)
+		panic(fmt.Errorf("cannot load task: %w", err))
 	}
 
 	return types.NewTask(task), nil
@@ -778,12 +775,12 @@ func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*t
 
 	evidence, err := prb.Evidences.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load evidence: %w", err)
+		panic(fmt.Errorf("cannot load evidence: %w", err))
 	}
 
 	measure, err := prb.Measures.Get(ctx, evidence.MeasureID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load measure: %w", err)
+		panic(fmt.Errorf("cannot load measure: %w", err))
 	}
 
 	return types.NewMeasure(measure), nil
@@ -797,13 +794,13 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 	case *measureResolver:
 		count, err := prb.Evidences.CountForMeasureID(ctx, obj.ParentID)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count tasks: %w", err)
+			panic(fmt.Errorf("cannot count evidences: %w", err))
 		}
 		return count, nil
 	case *taskResolver:
 		count, err := prb.Evidences.CountForTaskID(ctx, obj.ParentID)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count tasks: %w", err)
+			panic(fmt.Errorf("cannot count evidences: %w", err))
 		}
 		return count, nil
 	}
@@ -817,12 +814,12 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 
 	framework, err := prb.Frameworks.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load framework: %w", err)
+		panic(fmt.Errorf("cannot load framework: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, framework.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load organization: %w", err)
+		panic(fmt.Errorf("cannot load organization: %w", err))
 	}
 
 	return types.NewOrganization(organization), nil
@@ -852,7 +849,7 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 
 	page, err := prb.Controls.ListForFrameworkID(ctx, obj.ID, cursor, controlFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list controls: %w", err)
+		panic(fmt.Errorf("cannot list controls: %w", err))
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -866,7 +863,7 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 	case *organizationResolver:
 		count, err := prb.Frameworks.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count frameworks: %w", err)
+			panic(fmt.Errorf("cannot count frameworks: %w", err))
 		}
 		return count, nil
 	}
@@ -893,7 +890,7 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 
 	page, err := prb.Evidences.ListForMeasureID(ctx, obj.ID, cursor)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measure evidences: %w", err)
+		panic(fmt.Errorf("cannot list measure evidences: %w", err))
 	}
 
 	return types.NewEvidenceConnection(page, r, obj.ID), nil
@@ -918,7 +915,7 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 	page, err := prb.Tasks.ListForMeasureID(ctx, obj.ID, cursor)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measure tasks: %w", err)
+		panic(fmt.Errorf("cannot list measure tasks: %w", err))
 	}
 
 	return types.NewTaskConnection(page, r, obj.ID), nil
@@ -948,7 +945,7 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 
 	page, err := prb.Risks.ListForMeasureID(ctx, obj.ID, cursor, riskFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measure risks: %w", err)
+		panic(fmt.Errorf("cannot list measure risks: %w", err))
 	}
 
 	return types.NewRiskConnection(page, r, obj.ID, riskFilter), nil
@@ -978,7 +975,7 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 
 	page, err := prb.Controls.ListForMeasureID(ctx, obj.ID, cursor, controlFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measure controls: %w", err)
+		panic(fmt.Errorf("cannot list measure controls: %w", err))
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -992,19 +989,19 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 	case *organizationResolver:
 		count, err := prb.Measures.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count measures: %w", err)
+			panic(fmt.Errorf("cannot count measures: %w", err))
 		}
 		return count, nil
 	case *controlResolver:
 		count, err := prb.Measures.CountForControlID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count measures: %w", err)
+			panic(fmt.Errorf("cannot count measures: %w", err))
 		}
 		return count, nil
 	case *riskResolver:
 		count, err := prb.Measures.CountForRiskID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count measures: %w", err)
+			panic(fmt.Errorf("cannot count measures: %w", err))
 		}
 		return count, nil
 	}
@@ -1023,7 +1020,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create organization: %w", err)
+		panic(fmt.Errorf("cannot create organization: %w", err))
 	}
 
 	err = r.usrmgrSvc.EnrollUserInOrganization(
@@ -1032,7 +1029,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		organization.ID,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot add user to organization: %w", err)
+		panic(fmt.Errorf("cannot add user to organization: %w", err))
 	}
 
 	tenantIDs, _ := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
@@ -1053,7 +1050,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create people: %w", err)
+		panic(fmt.Errorf("cannot create people: %w", err))
 	}
 
 	return &types.CreateOrganizationPayload{
@@ -1085,7 +1082,7 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 
 	organization, err := prb.Organizations.Update(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot update organization: %w", err)
+		panic(fmt.Errorf("cannot update organization: %w", err))
 	}
 
 	return &types.UpdateOrganizationPayload{
@@ -1099,7 +1096,7 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.D
 
 	err := prb.Organizations.Delete(ctx, input.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete organization: %w", err)
+		panic(fmt.Errorf("cannot delete organization: %w", err))
 	}
 
 	return &types.DeleteOrganizationPayload{
@@ -1117,7 +1114,7 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 		Slug:   input.Slug,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot update trust center: %w", err)
+		panic(fmt.Errorf("cannot update trust center: %w", err))
 	}
 
 	return &types.UpdateTrustCenterPayload{
@@ -1135,7 +1132,7 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 		FileName:      input.FileName,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot upload trust center NDA: %w", err)
+		panic(fmt.Errorf("cannot upload trust center NDA: %w", err))
 	}
 
 	return &types.UploadTrustCenterNDAPayload{
@@ -1151,7 +1148,7 @@ func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types
 		TrustCenterID: input.TrustCenterID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete trust center NDA: %w", err)
+		panic(fmt.Errorf("cannot delete trust center NDA: %w", err))
 	}
 
 	return &types.DeleteTrustCenterNDAPayload{
@@ -1169,7 +1166,7 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 		Name:          input.Name,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot create trust center access: %w", err)
+		panic(fmt.Errorf("cannot create trust center access: %w", err))
 	}
 
 	return &types.CreateTrustCenterAccessPayload{
@@ -1205,7 +1202,7 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 		ID: input.ID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete trust center access: %w", err)
+		panic(fmt.Errorf("cannot delete trust center access: %w", err))
 	}
 
 	return &types.DeleteTrustCenterAccessPayload{
@@ -1230,7 +1227,7 @@ func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot create trust center reference: %w", err)
+		panic(fmt.Errorf("cannot create trust center reference: %w", err))
 	}
 
 	return &types.CreateTrustCenterReferencePayload{
@@ -1260,7 +1257,7 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 
 	reference, err := prb.TrustCenterReferences.Update(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot update trust center reference: %w", err)
+		panic(fmt.Errorf("cannot update trust center reference: %w", err))
 	}
 
 	return &types.UpdateTrustCenterReferencePayload{
@@ -1276,7 +1273,7 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 		ID: input.ID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete trust center reference: %w", err)
+		panic(fmt.Errorf("cannot delete trust center reference: %w", err))
 	}
 
 	return &types.DeleteTrustCenterReferencePayload{
@@ -1289,7 +1286,7 @@ func (r *mutationResolver) ConfirmEmail(ctx context.Context, input types.Confirm
 	err := r.usrmgrSvc.ConfirmEmail(ctx, input.Token)
 
 	if err != nil {
-		return nil, err
+		panic(fmt.Errorf("cannot confirm email: %w", err))
 	}
 
 	return &types.ConfirmEmailPayload{Success: true}, nil
@@ -1310,14 +1307,14 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 
 			err := r.usrmgrSvc.InviteUser(ctx, input.OrganizationID, input.FullName, input.Email, createPeople)
 			if err != nil {
-				return nil, err
+				panic(fmt.Errorf("cannot invite user: %w", err))
 			}
 
 			return &types.InviteUserPayload{Success: true}, nil
 		}
 	}
 
-	return nil, fmt.Errorf("organization not found")
+	return nil, errors.New("organization not found or access denied")
 }
 
 // RemoveUser is the resolver for the removeUser field.
@@ -1333,14 +1330,14 @@ func (r *mutationResolver) RemoveUser(ctx context.Context, input types.RemoveUse
 		if organization.ID == input.OrganizationID {
 			err := r.usrmgrSvc.RemoveUser(ctx, input.OrganizationID, input.UserID)
 			if err != nil {
-				return nil, err
+				panic(fmt.Errorf("cannot remove user: %w", err))
 			}
 
 			return &types.RemoveUserPayload{Success: true}, nil
 		}
 	}
 
-	return nil, fmt.Errorf("organization not found")
+	return nil, errors.New("organization not found or access denied")
 }
 
 // CreatePeople is the resolver for the createPeople field.
@@ -1359,7 +1356,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create people: %w", err)
+		panic(fmt.Errorf("cannot create people: %w", err))
 	}
 
 	return &types.CreatePeoplePayload{
@@ -1382,7 +1379,7 @@ func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdateP
 		ContractEndDate:          &input.ContractEndDate,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot update people: %w", err)
+		panic(fmt.Errorf("cannot update people: %w", err))
 	}
 
 	return &types.UpdatePeoplePayload{
@@ -1396,7 +1393,7 @@ func (r *mutationResolver) DeletePeople(ctx context.Context, input types.DeleteP
 
 	err := prb.Peoples.Delete(ctx, input.PeopleID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete people: %w", err)
+		panic(fmt.Errorf("cannot delete people: %w", err))
 	}
 
 	return &types.DeletePeoplePayload{
@@ -1434,7 +1431,7 @@ func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateV
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create vendor: %w", err)
+		panic(fmt.Errorf("cannot create vendor: %w", err))
 	}
 	return &types.CreateVendorPayload{
 		VendorEdge: types.NewVendorEdge(vendor, coredata.VendorOrderFieldName),
@@ -1469,7 +1466,7 @@ func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateV
 		Countries:                     input.Countries,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot update vendor: %w", err)
+		panic(fmt.Errorf("cannot update vendor: %w", err))
 	}
 
 	return &types.UpdateVendorPayload{
@@ -1483,7 +1480,7 @@ func (r *mutationResolver) DeleteVendor(ctx context.Context, input types.DeleteV
 
 	err := prb.Vendors.Delete(ctx, input.VendorID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete vendor: %w", err)
+		panic(fmt.Errorf("cannot delete vendor: %w", err))
 	}
 
 	return &types.DeleteVendorPayload{
@@ -1505,7 +1502,7 @@ func (r *mutationResolver) CreateVendorContact(ctx context.Context, input types.
 
 	vendorContact, err := prb.VendorContacts.Create(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create vendor contact: %w", err)
+		panic(fmt.Errorf("failed to create vendor contact: %w", err))
 	}
 
 	return &types.CreateVendorContactPayload{
@@ -1527,7 +1524,7 @@ func (r *mutationResolver) UpdateVendorContact(ctx context.Context, input types.
 
 	vendorContact, err := prb.VendorContacts.Update(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update vendor contact: %w", err)
+		panic(fmt.Errorf("failed to update vendor contact: %w", err))
 	}
 
 	return &types.UpdateVendorContactPayload{
@@ -1541,7 +1538,7 @@ func (r *mutationResolver) DeleteVendorContact(ctx context.Context, input types.
 
 	err := prb.VendorContacts.Delete(ctx, input.VendorContactID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete vendor contact: %w", err)
+		panic(fmt.Errorf("failed to delete vendor contact: %w", err))
 	}
 
 	return &types.DeleteVendorContactPayload{
@@ -1561,7 +1558,7 @@ func (r *mutationResolver) CreateVendorService(ctx context.Context, input types.
 
 	vendorService, err := prb.VendorServices.Create(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create vendor service: %w", err)
+		panic(fmt.Errorf("failed to create vendor service: %w", err))
 	}
 
 	return &types.CreateVendorServicePayload{
@@ -1581,7 +1578,7 @@ func (r *mutationResolver) UpdateVendorService(ctx context.Context, input types.
 
 	vendorService, err := prb.VendorServices.Update(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update vendor service: %w", err)
+		panic(fmt.Errorf("failed to update vendor service: %w", err))
 	}
 
 	return &types.UpdateVendorServicePayload{
@@ -1595,7 +1592,7 @@ func (r *mutationResolver) DeleteVendorService(ctx context.Context, input types.
 
 	err := prb.VendorServices.Delete(ctx, input.VendorServiceID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete vendor service: %w", err)
+		panic(fmt.Errorf("failed to delete vendor service: %w", err))
 	}
 
 	return &types.DeleteVendorServicePayload{
@@ -1612,7 +1609,7 @@ func (r *mutationResolver) CreateFramework(ctx context.Context, input types.Crea
 		Name:           input.Name,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot create framework: %w", err)
+		panic(fmt.Errorf("cannot create framework: %w", err))
 	}
 
 	return &types.CreateFrameworkPayload{
@@ -1630,7 +1627,7 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 		Description: input.Description,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot update framework: %w", err)
+		panic(fmt.Errorf("cannot update framework: %w", err))
 	}
 
 	return &types.UpdateFrameworkPayload{
@@ -1644,23 +1641,12 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 
 	req := probo.ImportFrameworkRequest{}
 	if err := json.NewDecoder(input.File.File).Decode(&req.Framework); err != nil {
-		return nil, fmt.Errorf("cannot decode framework: %w", err)
+		panic(fmt.Errorf("cannot decode framework: %w", err))
 	}
 
 	framework, err := prb.Frameworks.Import(ctx, input.OrganizationID, req)
 	if err != nil {
-		var errFrameworkReferenceIDAlreadyExists *coredata.ErrFrameworkReferenceIDAlreadyExists
-		if errors.As(err, &errFrameworkReferenceIDAlreadyExists) {
-			return nil, &gqlerror.Error{
-				Err:     err,
-				Message: fmt.Sprintf("framework %q already exists", req.Framework.Name),
-				Extensions: map[string]any{
-					"frameworkReferenceId": errFrameworkReferenceIDAlreadyExists.ReferenceID,
-				},
-			}
-		}
-
-		return nil, fmt.Errorf("cannot import framework: %w", err)
+		panic(fmt.Errorf("cannot import framework: %w", err))
 	}
 
 	return &types.ImportFrameworkPayload{
@@ -1674,7 +1660,7 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 
 	err := prb.Frameworks.Delete(ctx, input.FrameworkID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete framework: %w", err)
+		panic(fmt.Errorf("cannot delete framework: %w", err))
 	}
 
 	return &types.DeleteFrameworkPayload{
@@ -1688,7 +1674,7 @@ func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Con
 
 	soa, err := prb.Frameworks.StateOfApplicability(ctx, input.FrameworkID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate framework SOA: %w", err)
+		panic(fmt.Errorf("cannot generate framework SOA: %w", err))
 	}
 
 	return &types.GenerateFrameworkStateOfApplicabilityPayload{
@@ -1705,7 +1691,7 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 
 	user := UserFromContext(ctx)
 	if user == nil {
-		panic(fmt.Errorf("user not found"))
+		panic(fmt.Errorf("user authentication required"))
 	}
 
 	err, exportJobID := prb.Frameworks.RequestExport(
@@ -1715,7 +1701,7 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 		user.FullName,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot export framework: %w", err)
+		panic(fmt.Errorf("cannot export framework: %w", err))
 	}
 
 	return &types.ExportFrameworkPayload{
@@ -1736,7 +1722,7 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 		ExclusionJustification: input.ExclusionJustification,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot create control: %w", err)
+		panic(fmt.Errorf("cannot create control: %w", err))
 	}
 
 	return &types.CreateControlPayload{
@@ -1758,7 +1744,7 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot update control: %w", err)
+		panic(fmt.Errorf("cannot update control: %w", err))
 	}
 
 	return &types.UpdateControlPayload{
@@ -1772,7 +1758,7 @@ func (r *mutationResolver) DeleteControl(ctx context.Context, input types.Delete
 
 	err := prb.Controls.Delete(ctx, input.ControlID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete control: %w", err)
+		panic(fmt.Errorf("cannot delete control: %w", err))
 	}
 
 	return &types.DeleteControlPayload{
@@ -1825,12 +1811,12 @@ func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.Import
 
 	var req probo.ImportMeasureRequest
 	if err := json.NewDecoder(input.File.File).Decode(&req.Measures); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal measure: %w", err)
+		panic(fmt.Errorf("cannot unmarshal measure: %w", err))
 	}
 
 	measures, err := prb.Measures.Import(ctx, input.OrganizationID, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot import measure: %w", err)
+		panic(fmt.Errorf("cannot import measure: %w", err))
 	}
 
 	measureEdges := make([]*types.MeasureEdge, len(measures.Data))
@@ -1878,10 +1864,6 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 
 	control, document, err := prb.Controls.CreateDocumentMapping(ctx, input.ControlID, input.DocumentID)
 	if err != nil {
-		var errMappingExists *coredata.ErrControlDocumentMappingAlreadyExists
-		if errors.As(err, &errMappingExists) {
-			return nil, errors.New(errMappingExists.Error())
-		}
 		panic(fmt.Errorf("cannot create control document mapping: %w", err))
 	}
 
@@ -1927,7 +1909,7 @@ func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input 
 
 	control, audit, err := prb.Controls.CreateAuditMapping(ctx, input.ControlID, input.AuditID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create control audit mapping: %w", err)
+		panic(fmt.Errorf("cannot create control audit mapping: %w", err))
 	}
 
 	return &types.CreateControlAuditMappingPayload{
@@ -1942,7 +1924,7 @@ func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input 
 
 	control, audit, err := prb.Controls.DeleteAuditMapping(ctx, input.ControlID, input.AuditID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete control audit mapping: %w", err)
+		panic(fmt.Errorf("cannot delete control audit mapping: %w", err))
 	}
 
 	return &types.DeleteControlAuditMappingPayload{
@@ -2392,7 +2374,7 @@ func (r *mutationResolver) UploadVendorBusinessAssociateAgreement(ctx context.Co
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to upload vendor business associate agreement: %w", err)
+		panic(fmt.Errorf("failed to upload vendor business associate agreement: %w", err))
 	}
 
 	return &types.UploadVendorBusinessAssociateAgreementPayload{
@@ -2413,7 +2395,7 @@ func (r *mutationResolver) UpdateVendorBusinessAssociateAgreement(ctx context.Co
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update vendor business associate agreement: %w", err)
+		panic(fmt.Errorf("failed to update vendor business associate agreement: %w", err))
 	}
 
 	return &types.UpdateVendorBusinessAssociateAgreementPayload{
@@ -2427,7 +2409,7 @@ func (r *mutationResolver) DeleteVendorBusinessAssociateAgreement(ctx context.Co
 
 	err := prb.VendorBusinessAssociateAgreements.DeleteByVendorID(ctx, input.VendorID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete vendor business associate agreement: %w", err)
+		panic(fmt.Errorf("failed to delete vendor business associate agreement: %w", err))
 	}
 
 	return &types.DeleteVendorBusinessAssociateAgreementPayload{
@@ -2450,7 +2432,7 @@ func (r *mutationResolver) UploadVendorDataPrivacyAgreement(ctx context.Context,
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to upload vendor data privacy agreement: %w", err)
+		panic(fmt.Errorf("failed to upload vendor data privacy agreement: %w", err))
 	}
 
 	return &types.UploadVendorDataPrivacyAgreementPayload{
@@ -2471,7 +2453,7 @@ func (r *mutationResolver) UpdateVendorDataPrivacyAgreement(ctx context.Context,
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update vendor data privacy agreement: %w", err)
+		panic(fmt.Errorf("failed to update vendor data privacy agreement: %w", err))
 	}
 
 	return &types.UpdateVendorDataPrivacyAgreementPayload{
@@ -2485,7 +2467,7 @@ func (r *mutationResolver) DeleteVendorDataPrivacyAgreement(ctx context.Context,
 
 	err := prb.VendorDataPrivacyAgreements.DeleteByVendorID(ctx, input.VendorID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete vendor data privacy agreement: %w", err)
+		panic(fmt.Errorf("failed to delete vendor data privacy agreement: %w", err))
 	}
 
 	return &types.DeleteVendorDataPrivacyAgreementPayload{
@@ -2532,7 +2514,7 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot update document: %w", err)
+		panic(fmt.Errorf("cannot update document: %w", err))
 	}
 
 	return &types.UpdateDocumentPayload{
@@ -2631,7 +2613,7 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 
 	user := UserFromContext(ctx)
 	if user == nil {
-		panic(fmt.Errorf("user not found"))
+		panic(fmt.Errorf("user authentication required"))
 	}
 
 	options := probo.BulkExportOptions{
@@ -2835,7 +2817,7 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 		WebsiteURL: input.WebsiteURL,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot assess vendor: %w", err)
+		panic(fmt.Errorf("cannot assess vendor: %w", err))
 	}
 
 	return &types.AssessVendorPayload{
@@ -2859,7 +2841,7 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create asset: %w", err)
+		panic(fmt.Errorf("cannot create asset: %w", err))
 	}
 
 	return &types.CreateAssetPayload{
@@ -2882,7 +2864,7 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 		VendorIDs:       input.VendorIds,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot update asset: %w", err)
+		panic(fmt.Errorf("cannot update asset: %w", err))
 	}
 
 	return &types.UpdateAssetPayload{
@@ -2896,7 +2878,7 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAs
 
 	err := prb.Assets.Delete(ctx, input.AssetID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete asset: %w", err)
+		panic(fmt.Errorf("cannot delete asset: %w", err))
 	}
 
 	return &types.DeleteAssetPayload{
@@ -2917,7 +2899,7 @@ func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDa
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create datum: %w", err)
+		panic(fmt.Errorf("cannot create datum: %w", err))
 	}
 
 	return &types.CreateDatumPayload{
@@ -2938,7 +2920,7 @@ func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDa
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot update datum: %w", err)
+		panic(fmt.Errorf("cannot update datum: %w", err))
 	}
 
 	return &types.UpdateDatumPayload{
@@ -2951,7 +2933,7 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 	prb := r.ProboService(ctx, input.DatumID.TenantID())
 
 	if err := prb.Data.Delete(ctx, input.DatumID); err != nil {
-		return nil, fmt.Errorf("cannot delete datum: %w", err)
+		panic(fmt.Errorf("cannot delete datum: %w", err))
 	}
 
 	return &types.DeleteDatumPayload{
@@ -3050,7 +3032,7 @@ func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.De
 
 	audit, err := prb.Audits.DeleteReport(ctx, input.AuditID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete audit report: %w", err)
+		panic(fmt.Errorf("cannot delete audit report: %w", err))
 	}
 
 	return &types.DeleteAuditReportPayload{
@@ -3120,7 +3102,7 @@ func (r *mutationResolver) DeleteNonconformity(ctx context.Context, input types.
 
 	err := prb.Nonconformities.Delete(ctx, input.NonconformityID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete nonconformity: %w", err)
+		panic(fmt.Errorf("cannot delete nonconformity: %w", err))
 	}
 
 	return &types.DeleteNonconformityPayload{
@@ -3376,12 +3358,12 @@ func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Non
 
 	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity: %w", err)
+		panic(fmt.Errorf("cannot get nonconformity: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, nonconformity.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity organization: %w", err)
+		panic(fmt.Errorf("cannot get nonconformity organization: %w", err))
 	}
 
 	return types.NewOrganization(organization), nil
@@ -3393,12 +3375,12 @@ func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconform
 
 	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity: %w", err)
+		panic(fmt.Errorf("cannot get nonconformity: %w", err))
 	}
 
 	audit, err := prb.Audits.Get(ctx, nonconformity.AuditID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity audit: %w", err)
+		panic(fmt.Errorf("cannot get nonconformity audit: %w", err))
 	}
 
 	return types.NewAudit(audit), nil
@@ -3410,12 +3392,12 @@ func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconform
 
 	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity: %w", err)
+		panic(fmt.Errorf("cannot get nonconformity: %w", err))
 	}
 
 	people, err := prb.Peoples.Get(ctx, nonconformity.OwnerID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity owner: %w", err)
+		panic(fmt.Errorf("cannot get nonconformity owner: %w", err))
 	}
 
 	return types.NewPeople(people), nil
@@ -3434,12 +3416,12 @@ func (r *nonconformityConnectionResolver) TotalCount(ctx context.Context, obj *t
 
 		count, err := prb.Nonconformities.CountForOrganizationID(ctx, obj.ParentID, nonconformityFilter)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count nonconformities: %w", err)
+			panic(fmt.Errorf("cannot count nonconformities: %w", err))
 		}
 		return count, nil
 	}
 
-	return 0, fmt.Errorf("unsupported resolver: %T", obj.Resolver)
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
 // Organization is the resolver for the organization field.
@@ -3448,12 +3430,12 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 
 	obligation, err := prb.Obligations.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation: %w", err)
+		panic(fmt.Errorf("cannot get obligation: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, obligation.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation organization: %w", err)
+		panic(fmt.Errorf("cannot get obligation organization: %w", err))
 	}
 
 	return types.NewOrganization(organization), nil
@@ -3465,12 +3447,12 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 
 	obligation, err := prb.Obligations.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation: %w", err)
+		panic(fmt.Errorf("cannot get obligation: %w", err))
 	}
 
 	people, err := prb.Peoples.Get(ctx, obligation.OwnerID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation owner: %w", err)
+		panic(fmt.Errorf("cannot get obligation owner: %w", err))
 	}
 
 	return types.NewPeople(people), nil
@@ -3612,7 +3594,7 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 
 	page, err := prb.Controls.ListForOrganizationID(ctx, obj.ID, cursor, controlFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list controls: %w", err)
+		panic(fmt.Errorf("cannot list controls: %w", err))
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -4033,7 +4015,7 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 
 	trustCenter, file, err := prb.TrustCenters.GetByOrganizationID(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get trust center: %w", err)
+		panic(fmt.Errorf("cannot get trust center: %w", err))
 	}
 
 	return types.NewTrustCenter(trustCenter, file), nil
@@ -4260,7 +4242,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	default:
 	}
 
-	return nil, gqlerror.Errorf("node %q not found", id)
+	return nil, fmt.Errorf("node %q not found", id)
 }
 
 // Viewer is the resolver for the viewer field.
@@ -4292,7 +4274,7 @@ func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.A
 
 	audit, err := prb.Audits.GetByReportID(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load audit for report: %w", err)
+		panic(fmt.Errorf("cannot load audit for report: %w", err))
 	}
 
 	return types.NewAudit(audit), nil
@@ -4752,7 +4734,7 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 
 	documentAccess, err := prb.TrustCenterAccesses.GetDocumentAccess(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load trust center document access: %w", err)
+		panic(fmt.Errorf("cannot load trust center document access: %w", err))
 	}
 
 	if documentAccess.DocumentID == nil {
@@ -4761,7 +4743,7 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 
 	document, err := prb.Documents.Get(ctx, *documentAccess.DocumentID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load document: %w", err)
+		panic(fmt.Errorf("cannot load document: %w", err))
 	}
 
 	return types.NewDocument(document), nil
@@ -4773,7 +4755,7 @@ func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *typ
 
 	documentAccess, err := prb.TrustCenterAccesses.GetDocumentAccess(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load trust center document access: %w", err)
+		panic(fmt.Errorf("cannot load trust center document access: %w", err))
 	}
 
 	if documentAccess.ReportID == nil {
@@ -4782,7 +4764,7 @@ func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *typ
 
 	report, err := prb.Reports.Get(ctx, *documentAccess.ReportID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load report: %w", err)
+		panic(fmt.Errorf("cannot load report: %w", err))
 	}
 
 	return types.NewReport(report), nil
@@ -4794,7 +4776,7 @@ func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Con
 
 	count, err := prb.TrustCenterAccesses.CountDocumentAccesses(ctx, obj.ParentID)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count trust center document accesses: %w", err)
+		panic(fmt.Errorf("cannot count trust center document accesses: %w", err))
 	}
 
 	return count, nil
@@ -4829,8 +4811,8 @@ func (r *userResolver) People(ctx context.Context, obj *types.User, organization
 
 	people, err := prb.Peoples.GetByUserID(ctx, obj.ID)
 	if err != nil {
-		var errPeopleNotFound *coredata.ErrPeopleNotFound
-		if errors.As(err, &errPeopleNotFound) {
+		var errResourceNotFound *coredata.ErrResourceNotFound
+		if errors.As(err, &errResourceNotFound) {
 			return nil, nil
 		}
 		panic(fmt.Errorf("failed to get people: %w", err))
@@ -4887,7 +4869,8 @@ func (r *vendorResolver) BusinessAssociateAgreement(ctx context.Context, obj *ty
 
 	vendorBusinessAssociateAgreement, file, err := prb.VendorBusinessAssociateAgreements.GetByVendorID(ctx, obj.ID)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		var errResourceNotFound *coredata.ErrResourceNotFound
+		if errors.As(err, &errResourceNotFound) {
 			return nil, nil
 		}
 
@@ -4903,7 +4886,8 @@ func (r *vendorResolver) DataPrivacyAgreement(ctx context.Context, obj *types.Ve
 
 	vendorDataPrivacyAgreement, file, err := prb.VendorDataPrivacyAgreements.GetByVendorID(ctx, obj.ID)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
+		var errResourceNotFound *coredata.ErrResourceNotFound
+		if errors.As(err, &errResourceNotFound) {
 			return nil, nil
 		}
 
@@ -5035,7 +5019,7 @@ func (r *vendorBusinessAssociateAgreementResolver) Vendor(ctx context.Context, o
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get vendor: %w", err)
+		panic(fmt.Errorf("failed to get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil

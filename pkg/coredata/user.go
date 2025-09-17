@@ -41,23 +41,7 @@ type (
 	}
 
 	Users []*User
-
-	ErrUserNotFound struct {
-		Identifier string
-	}
-
-	ErrUserAlreadyExists struct {
-		message string
-	}
 )
-
-func (e ErrUserNotFound) Error() string {
-	return fmt.Sprintf("user not found: %q", e.Identifier)
-}
-
-func (e ErrUserAlreadyExists) Error() string {
-	return e.message
-}
 
 func (u User) CursorKey(orderBy UserOrderField) page.CursorKey {
 	switch orderBy {
@@ -143,7 +127,7 @@ LIMIT 1;
 	user, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[User])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrUserNotFound{Identifier: email}
+			return &ErrResourceNotFound{Resource: "user", Identifier: email}
 		}
 
 		return fmt.Errorf("cannot collect user: %w", err)
@@ -185,7 +169,7 @@ LIMIT 1;
 	user, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[User])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrUserNotFound{Identifier: userID.String()}
+			return &ErrResourceNotFound{Resource: "user", Identifier: userID.String()}
 		}
 
 		return fmt.Errorf("cannot collect user: %w", err)
@@ -230,8 +214,9 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && strings.Contains(pgErr.ConstraintName, "email_address") {
-				return &ErrUserAlreadyExists{
-					message: fmt.Sprintf("user with email %s already exists", u.EmailAddress),
+				return &ErrResourceAlreadyExists{
+					Resource: "user",
+					Message:  "same email address",
 				}
 			}
 		}

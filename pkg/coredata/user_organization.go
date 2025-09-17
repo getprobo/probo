@@ -16,10 +16,12 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -43,7 +45,22 @@ VALUES (@user_id, @organization_id, @created_at)
 `
 
 	_, err := conn.Exec(ctx, q, pgx.StrictNamedArgs{"user_id": uo.UserID, "organization_id": uo.OrganizationID, "created_at": uo.CreatedAt})
-	return err
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "usrmgr_user_organizations_pkey" {
+				return &ErrResourceAlreadyExists{
+					Resource: "user organization membership",
+					Message:  "user is already a member of this organization",
+				}
+			}
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 func (uo UserOrganization) Delete(ctx context.Context, conn pg.Conn) error {
