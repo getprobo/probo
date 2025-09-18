@@ -19,6 +19,7 @@ import {
   IconCheckmark1,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
+import { formatDate } from "@probo/helpers";
 import { useOutletContext } from "react-router";
 import { useState, useCallback } from "react";
 import z from "zod";
@@ -87,8 +88,8 @@ export default function TrustCenterAccessTab() {
     name: string;
     active: boolean;
     hasAcceptedNonDisclosureAgreement: boolean;
-    createdAt: Date;
-    };
+    createdAt: string;
+  };
 
   const trustCenterData = useTrustCenterAccesses(organization.trustCenter?.id || "");
 
@@ -98,7 +99,7 @@ export default function TrustCenterAccessTab() {
     name: edge.node.name,
     active: edge.node.active,
     hasAcceptedNonDisclosureAgreement: edge.node.hasAcceptedNonDisclosureAgreement,
-    createdAt: new Date(edge.node.createdAt)
+    createdAt: edge.node.createdAt
   })) ?? [];
 
   const handleInvite = inviteForm.handleSubmit(async (data) => {
@@ -216,7 +217,7 @@ export default function TrustCenterAccessTab() {
                   <Td className="font-medium">{access.name}</Td>
                   <Td>{access.email}</Td>
                   <Td>
-                    {access.createdAt.toLocaleDateString()}
+                    {formatDate(access.createdAt)}
                   </Td>
                   <Td>
                     <Checkbox

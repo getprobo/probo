@@ -12,7 +12,7 @@ import {
   IconTrashCan,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { getSnapshotTypeLabel } from "@probo/helpers";
+import { getSnapshotTypeLabel, formatDate } from "@probo/helpers";
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { graphql } from "relay-runtime";
 import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
@@ -155,7 +155,7 @@ type RowProps = {
 };
 
 function SnapshotRow(props: RowProps) {
-  const { __, dateFormat } = useTranslate();
+  const { __ } = useTranslate();
 
   const isLinked = props.linkedSnapshots.has(props.snapshot.id);
   const onClick = isLinked ? props.onUnlink : props.onLink;
@@ -177,7 +177,7 @@ function SnapshotRow(props: RowProps) {
           {props.snapshot.description || __("No description")}
         </div>
         <div className="text-sm text-txt-tertiary flex-shrink-0">
-          {dateFormat(props.snapshot.createdAt, { year: "numeric", month: "short", day: "numeric" })}
+          {formatDate(props.snapshot.createdAt)}
         </div>
       </div>
       <Button

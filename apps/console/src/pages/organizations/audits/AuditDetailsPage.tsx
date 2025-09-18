@@ -32,7 +32,7 @@ import { FrameworkLogo } from "/components/FrameworkLogo";
 import { ControlledField } from "/components/form/ControlledField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
-import { getAuditStateLabel, getAuditStateVariant, auditStates, fileSize, sprintf, formatDatetime } from "@probo/helpers";
+import { getAuditStateLabel, getAuditStateVariant, auditStates, fileSize, sprintf, formatDatetime, formatDate } from "@probo/helpers";
 import type { AuditGraphNodeQuery } from "/hooks/graph/__generated__/AuditGraphNodeQuery.graphql";
 
 const updateAuditSchema = z.object({
@@ -49,7 +49,7 @@ type Props = {
 export default function AuditDetailsPage(props: Props) {
   const audit = usePreloadedQuery<AuditGraphNodeQuery>(auditNodeQuery, props.queryRef);
   const auditEntry = audit.node;
-  const { __, dateFormat } = useTranslate();
+  const { __ } = useTranslate();
   const organizationId = useOrganizationId();
 
   if (!auditEntry || !auditEntry.id || !auditEntry.framework) {
@@ -209,7 +209,7 @@ export default function AuditDetailsPage(props: Props) {
                           {fileSize(__, auditEntry.report.size)}
                         </span>
                         <span>
-                          {__("Uploaded")} {dateFormat(auditEntry.report.createdAt)}
+                          {__("Uploaded")} {formatDate(auditEntry.report.createdAt)}
                         </span>
                       </div>
                     </div>

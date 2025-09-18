@@ -25,7 +25,7 @@ import { CreateAuditDialog } from "./dialogs/CreateAuditDialog";
 import { useDeleteAudit, auditsQuery } from "../../../hooks/graph/AuditGraph";
 import type { AuditGraphListQuery } from "/hooks/graph/__generated__/AuditGraphListQuery.graphql";
 import type { NodeOf } from "/types";
-import { getAuditStateLabel, getAuditStateVariant } from "@probo/helpers";
+import { getAuditStateLabel, getAuditStateVariant, formatDate } from "@probo/helpers";
 import type {
   AuditsPageFragment$data,
   AuditsPageFragment$key,
@@ -141,7 +141,7 @@ function AuditRow({
   connectionId: string;
 }) {
   const organizationId = useOrganizationId();
-  const { __, dateFormat } = useTranslate();
+  const { __ } = useTranslate();
   const deleteAudit = useDeleteAudit(entry, connectionId);
 
   return (
@@ -153,8 +153,8 @@ function AuditRow({
           {getAuditStateLabel(__, entry.state)}
         </Badge>
       </Td>
-      <Td>{dateFormat(entry.validFrom, { year: "numeric", month: "short", day: "numeric" }) || __("Not set")}</Td>
-      <Td>{dateFormat(entry.validUntil, { year: "numeric", month: "short", day: "numeric" }) || __("Not set")}</Td>
+      <Td>{formatDate(entry.validFrom) || __("Not set")}</Td>
+      <Td>{formatDate(entry.validUntil) || __("Not set")}</Td>
       <Td>
         {entry.report ? (
           <div className="flex flex-col">

@@ -3,7 +3,7 @@ import { useTranslate } from "@probo/i18n";
 import { useLazyLoadQuery, graphql } from "react-relay";
 import { useLocation } from "react-router";
 import type { SnapshotBannerQuery } from "./__generated__/SnapshotBannerQuery.graphql";
-import { getSnapshotTypeUrlPath, getSnapshotTypeLabel, sprintf } from "@probo/helpers";
+import { getSnapshotTypeUrlPath, getSnapshotTypeLabel, sprintf, formatDate } from "@probo/helpers";
 
 const snapshotQuery = graphql`
   query SnapshotBannerQuery($snapshotId: ID!) {
@@ -28,7 +28,7 @@ type Props = {
 };
 
 export function SnapshotBanner({ snapshotId }: Props) {
-  const { __, dateFormat } = useTranslate();
+  const { __ } = useTranslate();
   const location = useLocation();
 
   const data = useLazyLoadQuery<SnapshotBannerQuery>(snapshotQuery, { snapshotId });
@@ -53,7 +53,7 @@ export function SnapshotBanner({ snapshotId }: Props) {
           {sprintf(
             __("You are viewing a %s snapshot from %s"),
             getSnapshotTypeLabel(__, snapshot.type).toLocaleLowerCase(),
-            dateFormat(snapshot.createdAt, { year: "numeric", month: "short", day: "numeric" })
+            formatDate(snapshot.createdAt)
           )}
         </p>
       </div>

@@ -28,7 +28,7 @@ import { useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateObligationDialog } from "./dialogs/CreateObligationDialog";
 import { deleteObligationMutation } from "../../../hooks/graph/ObligationGraph";
-import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel } from "@probo/helpers";
+import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel, formatDate } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ObligationsPageQuery } from "./__generated__/ObligationsPageQuery.graphql";
 import type {
@@ -205,9 +205,6 @@ function ObligationRow({
   const confirm = useConfirm();
   const isSnapshotMode = Boolean(snapshotId);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
 
   const handleDelete = () => {
     confirm(

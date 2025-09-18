@@ -29,7 +29,7 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { CreateContinualImprovementDialog } from "./dialogs/CreateContinualImprovementDialog";
 import { deleteContinualImprovementMutation, ContinualImprovementsConnectionKey } from "../../../hooks/graph/ContinualImprovementGraph";
-import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel } from "@probo/helpers";
+import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel, formatDate } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { NodeOf } from "/types";
 import type { ContinualImprovementsPageQuery } from "./__generated__/ContinualImprovementsPageQuery.graphql";
@@ -214,9 +214,6 @@ function ImprovementRow({
   const confirm = useConfirm();
   const isSnapshotMode = Boolean(snapshotId);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
 
   const handleDelete = () => {
     confirm(

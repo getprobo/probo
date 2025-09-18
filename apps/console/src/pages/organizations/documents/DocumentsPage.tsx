@@ -39,7 +39,7 @@ import {
 } from "/hooks/graph/DocumentGraph";
 import type { DocumentsPageListFragment$key } from "./__generated__/DocumentsPageListFragment.graphql";
 import { useList, usePageTitle } from "@probo/hooks";
-import { sprintf, getDocumentTypeLabel } from "@probo/helpers";
+import { sprintf, getDocumentTypeLabel, formatDate } from "@probo/helpers";
 import { CreateDocumentDialog } from "./dialogs/CreateDocumentDialog";
 import type { DocumentsPageRowFragment$key } from "./__generated__/DocumentsPageRowFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
@@ -320,7 +320,7 @@ function DocumentRow({
   }
 
   const isDraft = lastVersion.status === "DRAFT";
-  const { __, dateFormat } = useTranslate();
+  const { __ } = useTranslate();
   const signatures = lastVersion.signatures?.edges?.map((edge) => edge?.node)?.filter(Boolean) ?? [];
   const signedCount = signatures.filter(
     (signature) => signature.state === "SIGNED"
@@ -370,12 +370,7 @@ function DocumentRow({
         </div>
       </Td>
       <Td className="w-60">
-        {dateFormat(document.updatedAt, {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          weekday: "short",
-        })}
+        {formatDate(document.updatedAt)}
       </Td>
       <Td className="w-20">
         {signedCount}/{signatures.length}

@@ -22,7 +22,7 @@ import {
 } from "react-relay";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
-import { faviconUrl } from "@probo/helpers";
+import { faviconUrl, formatDate } from "@probo/helpers";
 import type { NodeOf } from "/types";
 import { CreateVendorDialog } from "./dialogs/CreateVendorDialog";
 import {
@@ -115,7 +115,7 @@ function VendorRow({
 }) {
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
-  const { __, dateFormat } = useTranslate();
+  const { __ } = useTranslate();
   const latestAssessment = vendor.riskAssessments?.edges[0]?.node;
 
   const deleteVendor = useDeleteVendor(vendor, connectionId);
@@ -135,11 +135,7 @@ function VendorRow({
         </Td>
         <Td>
           {latestAssessment?.assessedAt
-            ? dateFormat(latestAssessment.assessedAt, {
-                day: "2-digit",
-                weekday: "short",
-                month: "short",
-              })
+            ? formatDate(latestAssessment.assessedAt)
             : __("Not assessed")}
         </Td>
         <Td>

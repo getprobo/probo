@@ -28,7 +28,7 @@ import {
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateNonconformityDialog } from "./dialogs/CreateNonconformityDialog";
 import { deleteNonconformityMutation, NonconformitiesConnectionKey } from "../../../hooks/graph/NonconformityGraph";
-import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel } from "@probo/helpers";
+import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel, formatDate } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import { useParams } from "react-router";
 import type { NonconformitiesPageQuery } from "./__generated__/NonconformitiesPageQuery.graphql";
@@ -220,9 +220,6 @@ function NonconformityRow({
   const confirm = useConfirm();
   const [deleteNonconformity] = useMutation(deleteNonconformityMutation);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
 
   const nonconformityDetailUrl = isSnapshotMode
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/nonconformities/${nonconformity.id}`

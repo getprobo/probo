@@ -18,7 +18,7 @@ import { useTranslate } from "@probo/i18n";
 import type { LinkedSnapshotsCardFragment$key } from "./__generated__/LinkedSnapshotsCardFragment.graphql";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
-import { sprintf, getSnapshotTypeLabel, getSnapshotTypeUrlPath } from "@probo/helpers";
+import { sprintf, getSnapshotTypeLabel, getSnapshotTypeUrlPath, formatDate } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { LinkedSnapshotsDialog } from "./LinkedSnapshotsDialog";
 import clsx from "clsx";
@@ -165,7 +165,7 @@ function SnapshotRow(props: {
 }) {
   const snapshot = useFragment(linkedSnapshotFragment, props.snapshot);
   const organizationId = useOrganizationId();
-  const { __, dateFormat } = useTranslate();
+  const { __ } = useTranslate();
 
   const urlPath = getSnapshotTypeUrlPath(snapshot.type);
   const snapshotUrl = `/organizations/${organizationId}/snapshots/${snapshot.id}${urlPath}`;
@@ -184,7 +184,7 @@ function SnapshotRow(props: {
         </Td>
       )}
       <Td className="text-txt-tertiary">
-        {dateFormat(snapshot.createdAt, { year: "numeric", month: "short", day: "numeric" })}
+        {formatDate(snapshot.createdAt)}
       </Td>
       <Td noLink width={50} className="text-end">
         <Button

@@ -45,7 +45,7 @@ import {
 } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { getDocumentTypeLabel, sprintf, documentTypes } from "@probo/helpers";
+import { getDocumentTypeLabel, sprintf, documentTypes, formatDate } from "@probo/helpers";
 import {
   Link,
   Outlet,
@@ -195,7 +195,7 @@ export default function DocumentDetailPage(props: Props) {
     documentFragment,
     node
   );
-  const { __, dateFormat } = useTranslate();
+  const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const navigate = useNavigate();
 
@@ -607,13 +607,13 @@ export default function DocumentDetailPage(props: Props) {
         </PropertyRow>
         <PropertyRow label={__("Last modified")}>
           <div className="text-sm text-txt-secondary">
-            {dateFormat(currentVersion.updatedAt)}
+            {formatDate(currentVersion.updatedAt)}
           </div>
         </PropertyRow>
         {currentVersion.publishedAt && (
           <PropertyRow label={__("Published Date")}>
             <div className="text-sm text-txt-secondary">
-              {dateFormat(currentVersion.publishedAt)}
+              {formatDate(currentVersion.publishedAt)}
             </div>
           </PropertyRow>
         )}

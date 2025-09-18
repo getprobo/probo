@@ -5,7 +5,7 @@ import {
   type PreloadedQuery,
 } from "react-relay";
 import { useTranslate } from "@probo/i18n";
-import { getSnapshotTypeLabel, getSnapshotTypeUrlPath } from "@probo/helpers";
+import { getSnapshotTypeLabel, getSnapshotTypeUrlPath, formatDate } from "@probo/helpers";
 import {
   ActionDropdown,
   Badge,
@@ -129,7 +129,7 @@ type SnapshotRowProps = {
 };
 
 function SnapshotRow(props: SnapshotRowProps) {
-  const { __, dateFormat } = useTranslate();
+  const { __ } = useTranslate();
   const deleteSnapshot = useDeleteSnapshot(props.snapshot, props.connectionId);
 
   const typePath = getSnapshotTypeUrlPath(props.snapshot.type);
@@ -146,7 +146,7 @@ function SnapshotRow(props: SnapshotRowProps) {
         {props.snapshot.description || __("No description")}
       </Td>
       <Td className="text-txt-tertiary">
-        {dateFormat(props.snapshot.createdAt, { year: "numeric", month: "short", day: "numeric" })}
+        {formatDate(props.snapshot.createdAt)}
       </Td>
       <Td noLink width={50} className="text-end">
         <ActionDropdown>

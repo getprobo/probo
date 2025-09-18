@@ -18,7 +18,7 @@ import {
 import { useFragment, useMutation, useRefetchableFragment } from "react-relay";
 import type { VendorComplianceTabFragment_report$key } from "./__generated__/VendorComplianceTabFragment_report.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { sprintf, fileSize } from "@probo/helpers";
+import { sprintf, fileSize, formatDate } from "@probo/helpers";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 
 export const complianceReportsFragment = graphql`
@@ -175,7 +175,6 @@ function ReportRow(props: ReportRowProps) {
     complianceReportFragment,
     props.reportKey
   );
-  const { dateFormat } = useTranslate();
   const confirm = useConfirm();
   const [deleteReport] = useMutationWithToasts(deleteReportMutation, {
     successMessage: __("Report deleted successfully"),
@@ -207,8 +206,8 @@ function ReportRow(props: ReportRowProps) {
   return (
     <Tr>
       <Td>{report.reportName}</Td>
-      <Td>{dateFormat(report.reportDate)}</Td>
-      <Td>{dateFormat(report.validUntil)}</Td>
+      <Td>{formatDate(report.reportDate)}</Td>
+      <Td>{formatDate(report.validUntil)}</Td>
       <Td>{fileSize(__, report.fileSize)}</Td>
       {!props.isSnapshotMode && (
         <Td width={50} className="text-end">

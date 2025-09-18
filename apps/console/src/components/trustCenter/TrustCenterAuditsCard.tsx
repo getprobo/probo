@@ -16,7 +16,7 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
-import { sprintf, getAuditStateVariant, getAuditStateLabel } from "@probo/helpers";
+import { sprintf, getAuditStateVariant, getAuditStateLabel, formatDate } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import clsx from "clsx";
 import type { TrustCenterAuditsCardFragment$key } from "./__generated__/TrustCenterAuditsCardFragment.graphql";
@@ -131,7 +131,7 @@ function AuditRow(props: {
   const { __ } = useTranslate();
 
   const validUntilFormatted = audit.validUntil
-    ? new Date(audit.validUntil).toLocaleDateString()
+    ? formatDate(audit.validUntil)
     : __("No expiry");
 
   return (

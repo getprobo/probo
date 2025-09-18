@@ -26,7 +26,7 @@ import {
 } from "react-relay";
 import { SortableTable } from "/components/SortableTable";
 import type { MeasureEvidencesTabFragment_evidence$key } from "./__generated__/MeasureEvidencesTabFragment_evidence.graphql";
-import { fileSize, fileType, promisifyMutation, sprintf } from "@probo/helpers";
+import { fileSize, fileType, promisifyMutation, sprintf, formatDate } from "@probo/helpers";
 import { EvidencePreviewDialog } from "../dialog/EvidencePreviewDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateEvidenceDialog } from "../dialog/CreateEvidenceDialog";
@@ -173,7 +173,7 @@ function EvidenceRow(props: {
   snapshotId?: string;
 }) {
   const evidence = useFragment(evidenceFragment, props.evidenceKey);
-  const { __, dateFormat } = useTranslate();
+  const { __ } = useTranslate();
 
   const [mutate, isDeleting] = useMutation(deleteEvidenceMutation);
   const confirm = useConfirm();
@@ -229,7 +229,7 @@ function EvidenceRow(props: {
         <Td>{evidence.filename}</Td>
         <Td>{fileType(__, evidence)}</Td>
         <Td>{fileSize(__, evidence.size)}</Td>
-        <Td>{dateFormat(evidence.createdAt)}</Td>
+        <Td>{formatDate(evidence.createdAt)}</Td>
         <Td noLink>
           {!props.hideActions && (
             <div className="flex gap-2">

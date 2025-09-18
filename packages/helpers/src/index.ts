@@ -21,4 +21,4 @@ export { getAuditStateLabel, getAuditStateVariant, auditStates } from "./audits"
 export { getStatusVariant, getStatusLabel, getStatusOptions } from "./registryStatus";
 export { promisifyMutation } from "./relay";
 export { fileType, fileSize } from "./file";
-export { formatDatetime } from "./date";
+export { formatDatetime, formatDate } from "./date";

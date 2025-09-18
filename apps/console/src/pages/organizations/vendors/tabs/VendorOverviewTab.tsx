@@ -8,7 +8,7 @@ import { CountriesField } from "/components/form/CountriesField";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useMemo } from "react";
 import { usePageTitle } from "@probo/hooks";
-import { downloadFile } from "@probo/helpers";
+import { downloadFile, formatDate } from "@probo/helpers";
 import { useFragment, graphql } from "react-relay";
 import { UploadBusinessAssociateAgreementDialog } from "../dialogs/UploadBusinessAssociateAgreementDialog";
 import { DeleteBusinessAssociateAgreementDialog } from "../dialogs/DeleteBusinessAssociateAgreementDialog";
@@ -268,10 +268,10 @@ export default function VendorOverviewTab() {
                 <p className="text-xs text-txt-secondary mt-1">
                   {__("Valid")}
                   {businessAssociateAgreement.validFrom &&
-                    ` ${__("from")} ${new Date(businessAssociateAgreement.validFrom).toLocaleDateString()}`
+                    ` ${__("from")} ${formatDate(businessAssociateAgreement.validFrom)}`
                   }
                   {businessAssociateAgreement.validUntil &&
-                    ` ${__("until")} ${new Date(businessAssociateAgreement.validUntil).toLocaleDateString()}`
+                    ` ${__("until")} ${formatDate(businessAssociateAgreement.validUntil)}`
                   }
                 </p>
               )}
@@ -335,10 +335,10 @@ export default function VendorOverviewTab() {
                 <p className="text-xs text-txt-secondary mt-1">
                   {__("Valid")}
                   {dataPrivacyAgreement.validFrom &&
-                    ` ${__("from")} ${new Date(dataPrivacyAgreement.validFrom).toLocaleDateString()}`
+                    ` ${__("from")} ${formatDate(dataPrivacyAgreement.validFrom)}`
                   }
                   {dataPrivacyAgreement.validUntil &&
-                    ` ${__("until")} ${new Date(dataPrivacyAgreement.validUntil).toLocaleDateString()}`
+                    ` ${__("until")} ${formatDate(dataPrivacyAgreement.validUntil)}`
                   }
                 </p>
               )}
