@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+# [Unreleased]
+
+### Added
+- Add bulk export documents
+- Add bulk delete documents
+- Display risk description
+
 # [0.59.1] - 2025-09-16
 
 ### Fixed
