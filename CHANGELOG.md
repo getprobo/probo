@@ -2,12 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-# [Unreleased]
+# [0.60.0] - 2025-09-18
 
 ### Added
 - Add bulk export documents
 - Add bulk delete documents
 - Display risk description
+- Uniformize date diplay
+- Add risk order by owner full name
 
 # [0.59.1] - 2025-09-16
 
