@@ -8564,6 +8564,10 @@ enum RiskOrderField
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldResidualRiskScore"
     )
+  OWNER_FULL_NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldOwnerFullName"
+    )
 }
 
 enum EvidenceOrderField
@@ -88188,6 +88192,7 @@ var (
 		"TREATMENT":           coredata.RiskOrderFieldTreatment,
 		"INHERENT_RISK_SCORE": coredata.RiskOrderFieldInherentRiskScore,
 		"RESIDUAL_RISK_SCORE": coredata.RiskOrderFieldResidualRiskScore,
+		"OWNER_FULL_NAME":     coredata.RiskOrderFieldOwnerFullName,
 	}
 	marshalNRiskOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐRiskOrderField = map[coredata.RiskOrderField]string{
 		coredata.RiskOrderFieldCreatedAt:         "CREATED_AT",
@@ -88197,6 +88202,7 @@ var (
 		coredata.RiskOrderFieldTreatment:         "TREATMENT",
 		coredata.RiskOrderFieldInherentRiskScore: "INHERENT_RISK_SCORE",
 		coredata.RiskOrderFieldResidualRiskScore: "RESIDUAL_RISK_SCORE",
+		coredata.RiskOrderFieldOwnerFullName:     "OWNER_FULL_NAME",
 	}
 )
 

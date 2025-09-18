@@ -431,6 +431,10 @@ enum RiskOrderField
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldResidualRiskScore"
     )
+  OWNER_FULL_NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldOwnerFullName"
+    )
 }
 
 enum EvidenceOrderField

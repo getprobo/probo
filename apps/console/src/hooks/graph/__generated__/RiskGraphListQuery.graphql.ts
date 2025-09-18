@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<af89b7b79cdb083497eabebd82b51991>>
+ * @generated SignedSource<<af4a12179ab70cae3cc3f8c434151de0>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -76,6 +76,14 @@ v5 = [
     "kind": "Literal",
     "name": "first",
     "value": 50
+  },
+  {
+    "kind": "Literal",
+    "name": "orderBy",
+    "value": {
+      "direction": "DESC",
+      "field": "CREATED_AT"
+    }
   }
 ];
 return {
@@ -181,6 +189,25 @@ return {
                           {
                             "alias": null,
                             "args": null,
+                            "concreteType": "People",
+                            "kind": "LinkedField",
+                            "name": "owner",
+                            "plural": false,
+                            "selections": [
+                              (v2/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "fullName",
+                                "storageKey": null
+                              }
+                            ],
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
                             "kind": "ScalarField",
                             "name": "inherentLikelihood",
                             "storageKey": null
@@ -232,18 +259,6 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "note",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "concreteType": "People",
-                            "kind": "LinkedField",
-                            "name": "owner",
-                            "plural": false,
-                            "selections": [
-                              (v2/*: any*/)
-                            ],
                             "storageKey": null
                           },
                           (v4/*: any*/)
@@ -298,6 +313,18 @@ return {
                       }
                     ],
                     "storageKey": null
+                  },
+                  {
+                    "kind": "ClientExtension",
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "__id",
+                        "storageKey": null
+                      }
+                    ]
                   }
                 ],
                 "storageKey": null
@@ -323,12 +350,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b2114c476ed7e095fc9d2317b6b1c554",
+    "cacheID": "225123bb702f2bce307ca69bea183e88",
     "id": null,
     "metadata": {},
     "name": "RiskGraphListQuery",
     "operationKind": "query",
-    "text": "query RiskGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...RiskGraphFragment_3iomuz\n  }\n}\n\nfragment RiskGraphFragment_3iomuz on Organization {\n  risks(first: 50, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        category\n        treatment\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        inherentRiskScore\n        residualRiskScore\n        ...useRiskFormFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "query RiskGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...RiskGraphFragment_3iomuz\n  }\n}\n\nfragment RiskGraphFragment_3iomuz on Organization {\n  risks(first: 50, orderBy: {direction: DESC, field: CREATED_AT}, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        category\n        treatment\n        owner {\n          id\n          fullName\n        }\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        inherentRiskScore\n        residualRiskScore\n        ...useRiskFormFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();

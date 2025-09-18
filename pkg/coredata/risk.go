@@ -46,6 +46,9 @@ type (
 		SourceID           *gid.GID      `db:"source_id"`
 		CreatedAt          time.Time     `db:"created_at"`
 		UpdatedAt          time.Time     `db:"updated_at"`
+
+		// Ordering only
+		OwnerFullName *string `db:"owner_full_name"`
 	}
 
 	Risks []*Risk
@@ -69,6 +72,8 @@ func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 		return page.CursorKey{ID: r.ID, Value: r.InherentRiskScore}
 	case RiskOrderFieldResidualRiskScore:
 		return page.CursorKey{ID: r.ID, Value: r.ResidualRiskScore}
+	case RiskOrderFieldOwnerFullName:
+		return page.CursorKey{ID: r.ID, Value: r.OwnerFullName}
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -136,6 +141,7 @@ WITH rsks AS (
 		r.description,
 		r.category,
 		r.owner_id,
+		p.full_name as owner_full_name,
 		r.treatment,
 		r.note,
 		r.inherent_likelihood,
@@ -153,6 +159,8 @@ WITH rsks AS (
 		risks r
 	INNER JOIN
 		risks_measures rm ON r.id = rm.risk_id
+	LEFT JOIN
+		peoples p ON r.owner_id = p.id
 	WHERE
 		rm.measure_id = @measure_id
 )
@@ -163,6 +171,7 @@ SELECT
 	description,
 	category,
 	owner_id,
+	owner_full_name,
 	treatment,
 	note,
 	inherent_likelihood,
@@ -243,12 +252,43 @@ func (r *Risks) LoadByOrganizationID(
 	filter *RiskFilter,
 ) error {
 	q := `
+WITH rsks AS (
+	SELECT
+		r.id,
+		r.tenant_id,
+		r.organization_id,
+		r.name,
+		r.description,
+		r.owner_id,
+		p.full_name as owner_full_name,
+		r.treatment,
+		r.note,
+		r.inherent_likelihood,
+		r.inherent_impact,
+		r.inherent_risk_score,
+		r.residual_likelihood,
+		r.residual_impact,
+		r.residual_risk_score,
+		r.category,
+		r.snapshot_id,
+		r.source_id,
+		r.search_vector,
+		r.created_at,
+		r.updated_at
+	FROM
+		risks r
+	LEFT JOIN
+		peoples p ON r.owner_id = p.id
+	WHERE
+		r.organization_id = @organization_id
+)
 SELECT
 	id,
 	organization_id,
 	name,
 	description,
 	owner_id,
+	owner_full_name,
 	treatment,
 	note,
 	inherent_likelihood,
@@ -262,9 +302,9 @@ SELECT
 	source_id,
 	created_at,
 	updated_at
-FROM risks
+FROM
+	rsks
 WHERE %s
-	AND organization_id = @organization_id
 	AND %s
 	AND %s
 `
@@ -304,6 +344,7 @@ SELECT
 	description,
 	category,
 	owner_id,
+	NULL as owner_full_name,
 	treatment,
 	note,
 	inherent_likelihood,

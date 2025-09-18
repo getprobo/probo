@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2b964bdee12b49230932678f583c7401>>
+ * @generated SignedSource<<c579c68998b3ded3e8833a7911f01a19>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,6 +14,7 @@ import { FragmentRefs } from "relay-runtime";
 export type RiskGraphFragment$data = {
   readonly id: string;
   readonly risks: {
+    readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly category: string;
@@ -22,6 +23,10 @@ export type RiskGraphFragment$data = {
         readonly inherentLikelihood: number;
         readonly inherentRiskScore: number;
         readonly name: string;
+        readonly owner: {
+          readonly fullName: string;
+          readonly id: string;
+        } | null | undefined;
         readonly residualImpact: number;
         readonly residualLikelihood: number;
         readonly residualRiskScore: number;
@@ -74,7 +79,10 @@ return {
       "name": "last"
     },
     {
-      "defaultValue": null,
+      "defaultValue": {
+        "direction": "DESC",
+        "field": "CREATED_AT"
+      },
       "kind": "LocalArgument",
       "name": "order"
     },
@@ -186,6 +194,25 @@ return {
                 {
                   "alias": null,
                   "args": null,
+                  "concreteType": "People",
+                  "kind": "LinkedField",
+                  "name": "owner",
+                  "plural": false,
+                  "selections": [
+                    (v1/*: any*/),
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "fullName",
+                      "storageKey": null
+                    }
+                  ],
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
                   "kind": "ScalarField",
                   "name": "inherentLikelihood",
                   "storageKey": null
@@ -288,6 +315,18 @@ return {
             }
           ],
           "storageKey": null
+        },
+        {
+          "kind": "ClientExtension",
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "__id",
+              "storageKey": null
+            }
+          ]
         }
       ],
       "storageKey": null
@@ -299,6 +338,6 @@ return {
 };
 })();
 
-(node as any).hash = "95c68a022cbf075eede9b7417393a369";
+(node as any).hash = "d8048ddb0ff8d4b08b7b9676d9b98f1a";
 
 export default node;

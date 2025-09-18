@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7d5730a1c721f5256e6e0c07199aa0d2>>
+ * @generated SignedSource<<66f4e8603a811d1fb363ae88ea697b22>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -213,6 +213,20 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
+                    "name": "inherentRiskScore",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "residualRiskScore",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
                     "name": "note",
                     "storageKey": null
                   },
@@ -256,12 +270,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e2131409b62d6cd6bd8a6d008f2ac1f5",
+    "cacheID": "a6ca4767b2443f6b4d02d6fdd1358600",
     "id": null,
     "metadata": {},
     "name": "FormRiskDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation FormRiskDialogMutation(\n  $input: CreateRiskInput!\n) {\n  createRisk(input: $input) {\n    riskEdge {\n      node {\n        ...useRiskFormFragment\n        id\n      }\n    }\n  }\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "mutation FormRiskDialogMutation(\n  $input: CreateRiskInput!\n) {\n  createRisk(input: $input) {\n    riskEdge {\n      node {\n        ...useRiskFormFragment\n        id\n      }\n    }\n  }\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();

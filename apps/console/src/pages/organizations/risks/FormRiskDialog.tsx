@@ -41,6 +41,7 @@ type Props = {
   risk?: RiskKey;
   connection?: string;
   ref?: ReturnType<typeof useDialogRef>;
+  onSuccess?: () => void;
 };
 
 type RiskTemplate = {
@@ -82,6 +83,7 @@ export default function FormRiskDialog({
   risk,
   connection,
   ref: refProps,
+  onSuccess,
 }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
@@ -131,6 +133,7 @@ export default function FormRiskDialog({
       onSuccess: () => {
         ref?.current?.close();
         reset();
+        onSuccess?.();
       },
     });
   });

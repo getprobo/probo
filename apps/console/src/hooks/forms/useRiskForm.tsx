@@ -18,6 +18,8 @@ const RiskFragment = graphql`
     inherentImpact
     residualLikelihood
     residualImpact
+    inherentRiskScore
+    residualRiskScore
     note
     owner {
       id

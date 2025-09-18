@@ -40,7 +40,17 @@ export default function RisksPage(props: Props) {
   const { snapshotId } = useParams<{ snapshotId?: string }>();
   const isSnapshotMode = Boolean(snapshotId);
 
-  const { connectionId, risks, refetch } = useRisksQuery(props.queryRef, snapshotId);
+  const { connectionId, risks, ...pagination } = useRisksQuery(props.queryRef);
+
+  const refetch = ({ order }: { order: { direction: string; field: string } }) => {
+    pagination.refetch({
+      snapshotId,
+      order: {
+        direction: order.direction as "ASC" | "DESC",
+        field: order.field as "NAME" | "CATEGORY" | "TREATMENT" | "INHERENT_RISK_SCORE" | "RESIDUAL_RISK_SCORE" | "OWNER_FULL_NAME" | "CREATED_AT"
+      }
+    }, { fetchPolicy: 'network-only' });
+  };
 
   usePageTitle(__("Risks"));
 
@@ -56,6 +66,9 @@ export default function RisksPage(props: Props) {
         {!isSnapshotMode && (
           <FormRiskDialog
             connection={connectionId}
+            onSuccess={() => {
+              pagination.refetch({ snapshotId });
+            }}
             trigger={<Button icon={IconPlusLarge}>{__("New Risk")}</Button>}
           />
         )}
@@ -73,7 +86,7 @@ export default function RisksPage(props: Props) {
           risks={risks}
         />
       </div>
-      <SortableTable refetch={refetch}>
+      <SortableTable {...pagination} refetch={refetch}>
         <Thead>
           <Tr>
             <SortableTh field="NAME">{__("Risk name")}</SortableTh>
@@ -84,6 +97,9 @@ export default function RisksPage(props: Props) {
             </SortableTh>
             <SortableTh field="RESIDUAL_RISK_SCORE">
               {__("Residual Risk")}
+            </SortableTh>
+            <SortableTh field="OWNER_FULL_NAME">
+              {__("Owner")}
             </SortableTh>
             <Th></Th>
           </Tr>
@@ -163,6 +179,7 @@ function RiskRow(props: RowProps) {
         <Td>
           <SeverityBadge score={risk.residualRiskScore} />
         </Td>
+        <Td>{risk.owner?.fullName || __("Unassigned")}</Td>
         <Td noLink className="text-end">
           {!isSnapshotMode && (
             <ActionDropdown>

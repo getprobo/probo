@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<38b7fae585eb2c09409935db8ad3cfe9>>
+ * @generated SignedSource<<828d1e2364b7b8c540508d9fb7104b06>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,6 +17,7 @@ export type useRiskFormFragment$data = {
   readonly id: string;
   readonly inherentImpact: number;
   readonly inherentLikelihood: number;
+  readonly inherentRiskScore: number;
   readonly name: string;
   readonly note: string;
   readonly owner: {
@@ -24,6 +25,7 @@ export type useRiskFormFragment$data = {
   } | null | undefined;
   readonly residualImpact: number;
   readonly residualLikelihood: number;
+  readonly residualRiskScore: number;
   readonly treatment: RiskTreatment;
   readonly " $fragmentType": "useRiskFormFragment";
 };
@@ -107,6 +109,20 @@ return {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
+      "name": "inherentRiskScore",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "residualRiskScore",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
       "name": "note",
       "storageKey": null
     },
@@ -128,6 +144,6 @@ return {
 };
 })();
 
-(node as any).hash = "7ad9386b4049af3f139d7269bb5229c2";
+(node as any).hash = "d9b52f879eadba5f7b1c18dcdbf85559";
 
 export default node;

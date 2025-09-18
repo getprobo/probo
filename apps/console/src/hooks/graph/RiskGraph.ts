@@ -1,10 +1,10 @@
-import { ConnectionHandler, graphql } from "relay-runtime";
+import { graphql } from "relay-runtime";
 import { useTranslate } from "@probo/i18n";
 import { useMutationWithToasts } from "../useMutationWithToasts.ts";
 import type { RiskGraphDeleteMutation } from "./__generated__/RiskGraphDeleteMutation.graphql.ts";
 import {
   usePreloadedQuery,
-  useRefetchableFragment,
+  usePaginationFragment,
   type PreloadedQuery,
 } from "react-relay";
 import type { RiskGraphListQuery } from "./__generated__/RiskGraphListQuery.graphql.ts";
@@ -44,7 +44,7 @@ const risksFragment = graphql`
   @refetchable(queryName: "RisksListQuery")
   @argumentDefinitions(
     first: { type: "Int", defaultValue: 50 }
-    order: { type: "RiskOrder", defaultValue: null }
+    order: { type: "RiskOrder", defaultValue: { direction: DESC, field: CREATED_AT } }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
     last: { type: "Int", defaultValue: null }
@@ -58,6 +58,7 @@ const risksFragment = graphql`
       orderBy: $order
       filter: { snapshotId: $snapshotId }
     ) @connection(key: "RisksListQuery_risks", filters: ["filter"]) {
+      __id
       edges {
         node {
           id
@@ -65,6 +66,10 @@ const risksFragment = graphql`
           name
           category
           treatment
+          owner {
+            id
+            fullName
+          }
           inherentLikelihood
           inherentImpact
           residualLikelihood
@@ -80,21 +85,18 @@ const risksFragment = graphql`
 
 export const RisksConnectionKey = "RisksListQuery_risks";
 
-export function useRisksQuery(queryRef: PreloadedQuery<RiskGraphListQuery>, snapshotId?: string | null) {
+export function useRisksQuery(queryRef: PreloadedQuery<RiskGraphListQuery>) {
   const data = usePreloadedQuery(risksQuery, queryRef);
-  const [dataFragment, refetch] = useRefetchableFragment(
+  const pagination = usePaginationFragment(
     risksFragment,
     data.organization as RiskGraphFragment$key,
   );
-  const risks = dataFragment?.risks?.edges.map((edge) => edge.node);
+  const risks = pagination.data?.risks?.edges.map((edge) => edge.node);
+
   return {
+    ...pagination,
     risks,
-    refetch,
-    connectionId: ConnectionHandler.getConnectionID(
-      data.organization.id,
-      RisksConnectionKey,
-      { filter: { snapshotId: snapshotId || null } }
-    ),
+    connectionId: pagination.data.risks.__id,
   };
 }
 

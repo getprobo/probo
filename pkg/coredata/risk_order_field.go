@@ -26,6 +26,7 @@ const (
 	RiskOrderFieldTreatment         RiskOrderField = "TREATMENT"
 	RiskOrderFieldInherentRiskScore RiskOrderField = "INHERENT_RISK_SCORE"
 	RiskOrderFieldResidualRiskScore RiskOrderField = "RESIDUAL_RISK_SCORE"
+	RiskOrderFieldOwnerFullName     RiskOrderField = "OWNER_FULL_NAME"
 )
 
 func (p RiskOrderField) Column() string {

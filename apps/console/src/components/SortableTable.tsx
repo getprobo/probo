@@ -21,7 +21,7 @@ type Order = {
   field: string;
 };
 
-const SortableContext = createContext({
+export const SortableContext = createContext({
   order: {
     direction: "DESC",
     field: "CREATED_AT",

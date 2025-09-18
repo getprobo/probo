@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4a0922eabd4e20c574db91e75f45a562>>
+ * @generated SignedSource<<29125e9f2562c96a6076ed8b0504a4b1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type OrderDirection = "ASC" | "DESC";
-export type RiskOrderField = "CATEGORY" | "CREATED_AT" | "INHERENT_RISK_SCORE" | "NAME" | "RESIDUAL_RISK_SCORE" | "TREATMENT" | "UPDATED_AT";
+export type RiskOrderField = "CATEGORY" | "CREATED_AT" | "INHERENT_RISK_SCORE" | "NAME" | "OWNER_FULL_NAME" | "RESIDUAL_RISK_SCORE" | "TREATMENT" | "UPDATED_AT";
 export type RiskOrder = {
   direction: OrderDirection;
   field: RiskOrderField;
@@ -62,7 +62,10 @@ v4 = {
   "name": "last"
 },
 v5 = {
-  "defaultValue": null,
+  "defaultValue": {
+    "direction": "DESC",
+    "field": "CREATED_AT"
+  },
   "kind": "LocalArgument",
   "name": "order"
 },
@@ -264,6 +267,25 @@ return {
                           {
                             "alias": null,
                             "args": null,
+                            "concreteType": "People",
+                            "kind": "LinkedField",
+                            "name": "owner",
+                            "plural": false,
+                            "selections": [
+                              (v14/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "fullName",
+                                "storageKey": null
+                              }
+                            ],
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
                             "kind": "ScalarField",
                             "name": "inherentLikelihood",
                             "storageKey": null
@@ -315,18 +337,6 @@ return {
                             "args": null,
                             "kind": "ScalarField",
                             "name": "note",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "concreteType": "People",
-                            "kind": "LinkedField",
-                            "name": "owner",
-                            "plural": false,
-                            "selections": [
-                              (v14/*: any*/)
-                            ],
                             "storageKey": null
                           },
                           (v13/*: any*/)
@@ -381,6 +391,18 @@ return {
                       }
                     ],
                     "storageKey": null
+                  },
+                  {
+                    "kind": "ClientExtension",
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "__id",
+                        "storageKey": null
+                      }
+                    ]
                   }
                 ],
                 "storageKey": null
@@ -406,16 +428,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "161eb78d1d5100120c68db5d8106aa7e",
+    "cacheID": "34a33dde7e4e7868a885b6b6317f506b",
     "id": null,
     "metadata": {},
     "name": "RisksListQuery",
     "operationKind": "query",
-    "text": "query RisksListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: RiskOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...RiskGraphFragment_25MC8O\n    id\n  }\n}\n\nfragment RiskGraphFragment_25MC8O on Organization {\n  risks(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        category\n        treatment\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        inherentRiskScore\n        residualRiskScore\n        ...useRiskFormFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  note\n  owner {\n    id\n  }\n}\n"
+    "text": "query RisksListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: RiskOrder = {direction: DESC, field: CREATED_AT}\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...RiskGraphFragment_25MC8O\n    id\n  }\n}\n\nfragment RiskGraphFragment_25MC8O on Organization {\n  risks(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        category\n        treatment\n        owner {\n          id\n          fullName\n        }\n        inherentLikelihood\n        inherentImpact\n        residualLikelihood\n        residualImpact\n        inherentRiskScore\n        residualRiskScore\n        ...useRiskFormFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment useRiskFormFragment on Risk {\n  id\n  name\n  category\n  description\n  treatment\n  inherentLikelihood\n  inherentImpact\n  residualLikelihood\n  residualImpact\n  inherentRiskScore\n  residualRiskScore\n  note\n  owner {\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "95c68a022cbf075eede9b7417393a369";
+(node as any).hash = "d8048ddb0ff8d4b08b7b9676d9b98f1a";
 
 export default node;
