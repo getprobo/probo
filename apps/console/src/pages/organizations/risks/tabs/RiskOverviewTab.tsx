@@ -22,7 +22,7 @@ export default function RiskOverviewTab() {
 
   const risk = useFragment(overviewFragment, key);
   return (
-    <div className="grid grid-cols-2">
+    <div className="grid grid-cols-2 gap-4">
       <RiskOverview type="inherent" risk={risk} />
       <RiskOverview type="residual" risk={risk} />
     </div>

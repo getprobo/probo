@@ -140,8 +140,7 @@ export default function RiskDetailPage(props: Props) {
         )}
       </div>
 
-      <PageHeader title={risk.name} />
-
+      <PageHeader title={risk.name} description={risk.description} />
       <Tabs>
         <TabLink to={`${baseTabUrl}/overview`}>
           {__("Overview")}
