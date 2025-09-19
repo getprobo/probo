@@ -28,12 +28,16 @@ import (
 
 type (
 	Organization struct {
-		ID            gid.GID      `db:"id"`
-		TenantID      gid.TenantID `db:"tenant_id"`
-		Name          string       `db:"name"`
-		LogoObjectKey string       `db:"logo_object_key"`
-		CreatedAt     time.Time    `db:"created_at"`
-		UpdatedAt     time.Time    `db:"updated_at"`
+		ID                 gid.GID      `db:"id"`
+		TenantID           gid.TenantID `db:"tenant_id"`
+		Name               string       `db:"name"`
+		LogoObjectKey      string       `db:"logo_object_key"`
+		Description        *string      `db:"description"`
+		WebsiteURL         *string      `db:"website_url"`
+		Email              *string      `db:"email"`
+		HeadquarterAddress *string      `db:"headquarter_address"`
+		CreatedAt          time.Time    `db:"created_at"`
+		UpdatedAt          time.Time    `db:"updated_at"`
 	}
 
 	Organizations []*Organization
@@ -64,6 +68,10 @@ SELECT
     id,
     name,
     logo_object_key,
+    description,
+    website_url,
+    email,
+    headquarter_address,
     created_at,
     updated_at
 FROM
@@ -115,6 +123,10 @@ SELECT
     id,
     name,
     logo_object_key,
+    description,
+    website_url,
+    email,
+    headquarter_address,
     created_at,
     updated_at
 FROM
@@ -155,18 +167,26 @@ INSERT INTO organizations (
     id,
     name,
     logo_object_key,
+    description,
+    website_url,
+    email,
+    headquarter_address,
     created_at,
     updated_at
-) VALUES (@tenant_id, @id, @name, @logo_object_key, @created_at, @updated_at)
+) VALUES (@tenant_id, @id, @name, @logo_object_key, @description, @website_url, @email, @headquarter_address, @created_at, @updated_at)
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       o.TenantID,
-		"id":              o.ID,
-		"name":            o.Name,
-		"logo_object_key": o.LogoObjectKey,
-		"created_at":      o.CreatedAt,
-		"updated_at":      o.UpdatedAt,
+		"tenant_id":           o.TenantID,
+		"id":                  o.ID,
+		"name":                o.Name,
+		"logo_object_key":     o.LogoObjectKey,
+		"description":         o.Description,
+		"website_url":         o.WebsiteURL,
+		"email":               o.Email,
+		"headquarter_address": o.HeadquarterAddress,
+		"created_at":          o.CreatedAt,
+		"updated_at":          o.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -187,6 +207,10 @@ UPDATE organizations
 SET
     name = @name,
     logo_object_key = @logo_object_key,
+    description = @description,
+    website_url = @website_url,
+    email = @email,
+    headquarter_address = @headquarter_address,
     updated_at = @updated_at
 WHERE
     %s
@@ -196,10 +220,14 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":              o.ID,
-		"name":            o.Name,
-		"logo_object_key": o.LogoObjectKey,
-		"updated_at":      o.UpdatedAt,
+		"id":                  o.ID,
+		"name":                o.Name,
+		"logo_object_key":     o.LogoObjectKey,
+		"description":         o.Description,
+		"website_url":         o.WebsiteURL,
+		"email":               o.Email,
+		"headquarter_address": o.HeadquarterAddress,
+		"updated_at":          o.UpdatedAt,
 	}
 
 	maps.Copy(args, scope.SQLArguments())

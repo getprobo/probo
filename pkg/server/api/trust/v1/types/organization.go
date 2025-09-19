@@ -20,7 +20,11 @@ import (
 
 func NewOrganization(o *coredata.Organization) *Organization {
 	return &Organization{
-		ID:   o.ID,
-		Name: o.Name,
+		ID:                 o.ID,
+		Name:               o.Name,
+		Description:        o.Description,
+		WebsiteURL:         o.WebsiteURL,
+		Email:              o.Email,
+		HeadquarterAddress: o.HeadquarterAddress,
 	}
 }

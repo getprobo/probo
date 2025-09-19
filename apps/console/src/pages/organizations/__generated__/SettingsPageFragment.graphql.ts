@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e5b6c1db04175ebddb21379dfd331fc6>>
+ * @generated SignedSource<<c071187d5ef9cecb128621c57f97393b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,6 +21,9 @@ export type SettingsPageFragment$data = {
       };
     }>;
   };
+  readonly description: string | null | undefined;
+  readonly email: string | null | undefined;
+  readonly headquarterAddress: string | null | undefined;
   readonly id: string;
   readonly logoUrl: string | null | undefined;
   readonly name: string;
@@ -34,6 +37,7 @@ export type SettingsPageFragment$data = {
       };
     }>;
   };
+  readonly websiteUrl: string | null | undefined;
   readonly " $fragmentType": "SettingsPageFragment";
 };
 export type SettingsPageFragment$key = {
@@ -56,14 +60,21 @@ v1 = {
   "name": "name",
   "storageKey": null
 },
-v2 = [
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "email",
+  "storageKey": null
+},
+v3 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 100
   }
 ],
-v3 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -87,7 +98,29 @@ return {
     },
     {
       "alias": null,
-      "args": (v2/*: any*/),
+      "args": null,
+      "kind": "ScalarField",
+      "name": "description",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "websiteUrl",
+      "storageKey": null
+    },
+    (v2/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "headquarterAddress",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": (v3/*: any*/),
       "concreteType": "UserConnection",
       "kind": "LinkedField",
       "name": "users",
@@ -117,14 +150,8 @@ return {
                   "name": "fullName",
                   "storageKey": null
                 },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "email",
-                  "storageKey": null
-                },
-                (v3/*: any*/)
+                (v2/*: any*/),
+                (v4/*: any*/)
               ],
               "storageKey": null
             }
@@ -136,7 +163,7 @@ return {
     },
     {
       "alias": null,
-      "args": (v2/*: any*/),
+      "args": (v3/*: any*/),
       "concreteType": "ConnectorConnection",
       "kind": "LinkedField",
       "name": "connectors",
@@ -167,7 +194,7 @@ return {
                   "name": "type",
                   "storageKey": null
                 },
-                (v3/*: any*/)
+                (v4/*: any*/)
               ],
               "storageKey": null
             }
@@ -183,6 +210,6 @@ return {
 };
 })();
 
-(node as any).hash = "b7ee53afcaaa0406dceeda0427afdfef";
+(node as any).hash = "bdd548b7b3fa4c1cfef32569dc63d45d";
 
 export default node;

@@ -1420,6 +1420,11 @@ type Organization implements Node {
   name: String!
   logoUrl: String @goField(forceResolver: true)
 
+  description: String
+  websiteUrl: String
+  email: String
+  headquarterAddress: String
+
   users(
     first: Int
     after: CursorKey
@@ -2765,6 +2770,10 @@ input UpdateOrganizationInput {
   organizationId: ID!
   name: String
   logo: Upload
+  description: String
+  websiteUrl: String
+  email: String
+  headquarterAddress: String
 }
 
 input DeleteOrganizationInput {

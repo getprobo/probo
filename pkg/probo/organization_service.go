@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io"
 	"mime"
+	"net/mail"
 	"net/url"
 	"path/filepath"
 	"time"
@@ -67,9 +68,13 @@ type (
 	}
 
 	UpdateOrganizationRequest struct {
-		ID   gid.GID
-		Name *string
-		File *File
+		ID                 gid.GID
+		Name               *string
+		File               *File
+		Description        **string
+		WebsiteURL         **string
+		Email              **string
+		HeadquarterAddress **string
 	}
 )
 
@@ -166,6 +171,27 @@ func (s OrganizationService) Update(
 
 			if req.Name != nil {
 				organization.Name = *req.Name
+			}
+
+			if req.Description != nil {
+				organization.Description = *req.Description
+			}
+
+			if req.WebsiteURL != nil {
+				organization.WebsiteURL = *req.WebsiteURL
+			}
+
+			if req.Email != nil {
+				if *req.Email != nil {
+					if _, err := mail.ParseAddress(**req.Email); err != nil {
+						return fmt.Errorf("invalid email address: %w", err)
+					}
+				}
+				organization.Email = *req.Email
+			}
+
+			if req.HeadquarterAddress != nil {
+				organization.HeadquarterAddress = *req.HeadquarterAddress
 			}
 
 			if req.File != nil {

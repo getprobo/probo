@@ -180,6 +180,10 @@ const TRUST_CENTER_QUERY = `
         id
         name
         logoUrl
+        description
+        websiteUrl
+        email
+        headquarterAddress
       }
       documents(first: 100) {
         edges {

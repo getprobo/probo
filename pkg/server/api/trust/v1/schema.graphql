@@ -37,6 +37,11 @@ type Organization implements Node {
   id: ID!
   name: String!
   logoUrl: String @goField(forceResolver: true)
+
+  description: String
+  websiteUrl: String
+  email: String
+  headquarterAddress: String
 }
 
 enum DocumentType
