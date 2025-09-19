@@ -1198,6 +1198,10 @@ type Organization struct {
 	ID                    gid.GID                         `json:"id"`
 	Name                  string                          `json:"name"`
 	LogoURL               *string                         `json:"logoUrl,omitempty"`
+	Description           *string                         `json:"description,omitempty"`
+	WebsiteURL            *string                         `json:"websiteUrl,omitempty"`
+	Email                 *string                         `json:"email,omitempty"`
+	HeadquarterAddress    *string                         `json:"headquarterAddress,omitempty"`
 	Users                 *UserConnection                 `json:"users"`
 	Connectors            *ConnectorConnection            `json:"connectors"`
 	Frameworks            *FrameworkConnection            `json:"frameworks"`
@@ -1663,9 +1667,13 @@ type UpdateObligationPayload struct {
 }
 
 type UpdateOrganizationInput struct {
-	OrganizationID gid.GID         `json:"organizationId"`
-	Name           *string         `json:"name,omitempty"`
-	Logo           *graphql.Upload `json:"logo,omitempty"`
+	OrganizationID     gid.GID         `json:"organizationId"`
+	Name               *string         `json:"name,omitempty"`
+	Logo               *graphql.Upload `json:"logo,omitempty"`
+	Description        *string         `json:"description,omitempty"`
+	WebsiteURL         *string         `json:"websiteUrl,omitempty"`
+	Email              *string         `json:"email,omitempty"`
+	HeadquarterAddress *string         `json:"headquarterAddress,omitempty"`
 }
 
 type UpdateOrganizationPayload struct {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6f19d3ea0d16b3f4418e85261e3e4915>>
+ * @generated SignedSource<<148c6dc2b419fa0611529004e0a3535a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -54,14 +54,21 @@ v3 = {
   "name": "name",
   "storageKey": null
 },
-v4 = [
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "email",
+  "storageKey": null
+},
+v5 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 100
   }
 ],
-v5 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -139,7 +146,29 @@ return {
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": null,
+                "kind": "ScalarField",
+                "name": "description",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "websiteUrl",
+                "storageKey": null
+              },
+              (v4/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "headquarterAddress",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": (v5/*: any*/),
                 "concreteType": "UserConnection",
                 "kind": "LinkedField",
                 "name": "users",
@@ -169,14 +198,8 @@ return {
                             "name": "fullName",
                             "storageKey": null
                           },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "email",
-                            "storageKey": null
-                          },
-                          (v5/*: any*/)
+                          (v4/*: any*/),
+                          (v6/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -188,7 +211,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v4/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "ConnectorConnection",
                 "kind": "LinkedField",
                 "name": "connectors",
@@ -219,7 +242,7 @@ return {
                             "name": "type",
                             "storageKey": null
                           },
-                          (v5/*: any*/)
+                          (v6/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -239,12 +262,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3062be33ff59b816b10d098c083db370",
+    "cacheID": "c19271fc733cfb1de051ccdd98ae9bef",
     "id": null,
     "metadata": {},
     "name": "OrganizationGraph_ViewQuery",
     "operationKind": "query",
-    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  users(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n        email\n        createdAt\n      }\n    }\n  }\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  users(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n        email\n        createdAt\n      }\n    }\n  }\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
