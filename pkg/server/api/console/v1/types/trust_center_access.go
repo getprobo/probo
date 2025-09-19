@@ -54,5 +54,3 @@ func NewTrustCenterAccessEdge(tca *coredata.TrustCenterAccess, orderBy coredata.
 		Node:   NewTrustCenterAccess(tca),
 	}
 }
-
-// Types are auto-generated in types.go - only helper functions remain here

@@ -20,3 +20,16 @@ export function downloadFile(url: string | undefined | null, filename: string) {
     link.click();
     document.body.removeChild(link);
 }
+
+export function safeOpenUrl(url: string) {
+    try {
+        const parsedUrl = new URL(url);
+        if (parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:') {
+            window.open(url, '_blank', 'noopener,noreferrer');
+        } else {
+            console.error('Invalid URL protocol. Only HTTP and HTTPS URLs are allowed:', url);
+        }
+    } catch (error) {
+        console.error('Invalid URL format:', url, error);
+    }
+}

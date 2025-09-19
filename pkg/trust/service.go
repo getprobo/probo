@@ -53,6 +53,7 @@ type (
 		Vendors             *VendorService
 		Frameworks          *FrameworkService
 		TrustCenterAccesses *TrustCenterAccessService
+		TrustCenterReferences *TrustCenterReferenceService
 		Reports             *ReportService
 		Organizations       *OrganizationService
 	}
@@ -97,6 +98,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Vendors = &VendorService{svc: tenantService}
 	tenantService.Frameworks = &FrameworkService{svc: tenantService}
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, usrmgr: s.usrmgr}
+	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.Organizations = &OrganizationService{svc: tenantService}
 

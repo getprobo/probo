@@ -56,4 +56,5 @@ const (
 	ContinualImprovementEntityType
 	ProcessingActivityEntityType
 	ExportJobEntityType
+	TrustCenterReferenceEntityType
 )

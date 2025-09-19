@@ -222,6 +222,17 @@ const TRUST_CENTER_QUERY = `
           }
         }
       }
+      references(first: 100) {
+        edges {
+          node {
+            id
+            name
+            description
+            websiteUrl
+            logoUrl
+          }
+        }
+      }
     }
   }
 `;

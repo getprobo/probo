@@ -537,6 +537,18 @@ type CreateTrustCenterAccessPayload struct {
 	TrustCenterAccessEdge *TrustCenterAccessEdge `json:"trustCenterAccessEdge"`
 }
 
+type CreateTrustCenterReferenceInput struct {
+	TrustCenterID gid.GID        `json:"trustCenterId"`
+	Name          string         `json:"name"`
+	Description   string         `json:"description"`
+	WebsiteURL    string         `json:"websiteUrl"`
+	LogoFile      graphql.Upload `json:"logoFile"`
+}
+
+type CreateTrustCenterReferencePayload struct {
+	TrustCenterReferenceEdge *TrustCenterReferenceEdge `json:"trustCenterReferenceEdge"`
+}
+
 type CreateVendorContactInput struct {
 	VendorID gid.GID `json:"vendorId"`
 	FullName *string `json:"fullName,omitempty"`
@@ -850,6 +862,14 @@ type DeleteTrustCenterNDAInput struct {
 
 type DeleteTrustCenterNDAPayload struct {
 	TrustCenter *TrustCenter `json:"trustCenter"`
+}
+
+type DeleteTrustCenterReferenceInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type DeleteTrustCenterReferencePayload struct {
+	DeletedTrustCenterReferenceID gid.GID `json:"deletedTrustCenterReferenceId"`
 }
 
 type DeleteVendorBusinessAssociateAgreementInput struct {
@@ -1461,15 +1481,16 @@ type TaskEdge struct {
 }
 
 type TrustCenter struct {
-	ID           gid.GID                      `json:"id"`
-	Active       bool                         `json:"active"`
-	Slug         string                       `json:"slug"`
-	NdaFileName  *string                      `json:"ndaFileName,omitempty"`
-	NdaFileURL   *string                      `json:"ndaFileUrl,omitempty"`
-	CreatedAt    time.Time                    `json:"createdAt"`
-	UpdatedAt    time.Time                    `json:"updatedAt"`
-	Organization *Organization                `json:"organization"`
-	Accesses     *TrustCenterAccessConnection `json:"accesses"`
+	ID           gid.GID                         `json:"id"`
+	Active       bool                            `json:"active"`
+	Slug         string                          `json:"slug"`
+	NdaFileName  *string                         `json:"ndaFileName,omitempty"`
+	NdaFileURL   *string                         `json:"ndaFileUrl,omitempty"`
+	CreatedAt    time.Time                       `json:"createdAt"`
+	UpdatedAt    time.Time                       `json:"updatedAt"`
+	Organization *Organization                   `json:"organization"`
+	Accesses     *TrustCenterAccessConnection    `json:"accesses"`
+	References   *TrustCenterReferenceConnection `json:"references"`
 }
 
 func (TrustCenter) IsNode()             {}
@@ -1506,6 +1527,24 @@ type TrustCenterConnection struct {
 type TrustCenterEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *TrustCenter   `json:"node"`
+}
+
+type TrustCenterReference struct {
+	ID          gid.GID   `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	WebsiteURL  string    `json:"websiteUrl"`
+	LogoURL     string    `json:"logoUrl"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+func (TrustCenterReference) IsNode()             {}
+func (this TrustCenterReference) GetID() gid.GID { return this.ID }
+
+type TrustCenterReferenceEdge struct {
+	Cursor page.CursorKey        `json:"cursor"`
+	Node   *TrustCenterReference `json:"node"`
 }
 
 type UnassignTaskInput struct {
@@ -1765,6 +1804,18 @@ type UpdateTrustCenterInput struct {
 
 type UpdateTrustCenterPayload struct {
 	TrustCenter *TrustCenter `json:"trustCenter"`
+}
+
+type UpdateTrustCenterReferenceInput struct {
+	ID          gid.GID         `json:"id"`
+	Name        *string         `json:"name,omitempty"`
+	Description *string         `json:"description,omitempty"`
+	WebsiteURL  *string         `json:"websiteUrl,omitempty"`
+	LogoFile    *graphql.Upload `json:"logoFile,omitempty"`
+}
+
+type UpdateTrustCenterReferencePayload struct {
+	TrustCenterReference *TrustCenterReference `json:"trustCenterReference"`
 }
 
 type UpdateVendorBusinessAssociateAgreementInput struct {

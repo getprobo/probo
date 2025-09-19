@@ -21,6 +21,7 @@ import type { TrustCenterGraphQuery } from "/hooks/graph/__generated__/TrustCent
 import { useState } from "react";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Outlet, useLocation, Link } from "react-router";
+import { TrustCenterReferencesSection } from "/components/trustCenter/TrustCenterReferencesSection";
 
 type Props = {
   queryRef: PreloadedQuery<TrustCenterGraphQuery>;
@@ -327,6 +328,10 @@ export default function TrustCenterPage({ queryRef }: Props) {
           </div>
         </Card>
       </div>
+
+      {organization.trustCenter?.id && (
+        <TrustCenterReferencesSection trustCenterId={organization.trustCenter.id} />
+      )}
 
       <div className="space-y-4">
         <Tabs>

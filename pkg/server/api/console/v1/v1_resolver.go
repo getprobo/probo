@@ -1229,6 +1229,77 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 	}, nil
 }
 
+// CreateTrustCenterReference is the resolver for the createTrustCenterReference field.
+func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input types.CreateTrustCenterReferenceInput) (*types.CreateTrustCenterReferencePayload, error) {
+	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
+
+	reference, err := prb.TrustCenterReferences.Create(ctx, &probo.CreateTrustCenterReferenceRequest{
+		TrustCenterID: input.TrustCenterID,
+		Name:          input.Name,
+		Description:   input.Description,
+		WebsiteURL:    input.WebsiteURL,
+		LogoFile: probo.File{
+			Content:     input.LogoFile.File,
+			Filename:    input.LogoFile.Filename,
+			Size:        input.LogoFile.Size,
+			ContentType: input.LogoFile.ContentType,
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot create trust center reference: %w", err)
+	}
+
+	return &types.CreateTrustCenterReferencePayload{
+		TrustCenterReferenceEdge: types.NewTrustCenterReferenceEdge(reference, coredata.TrustCenterReferenceOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateTrustCenterReference is the resolver for the updateTrustCenterReference field.
+func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input types.UpdateTrustCenterReferenceInput) (*types.UpdateTrustCenterReferencePayload, error) {
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	req := &probo.UpdateTrustCenterReferenceRequest{
+		ID:          input.ID,
+		Name:        input.Name,
+		Description: input.Description,
+		WebsiteURL:  input.WebsiteURL,
+	}
+
+	if input.LogoFile != nil {
+		req.LogoFile = &probo.File{
+			Content:     input.LogoFile.File,
+			Filename:    input.LogoFile.Filename,
+			Size:        input.LogoFile.Size,
+			ContentType: input.LogoFile.ContentType,
+		}
+	}
+
+	reference, err := prb.TrustCenterReferences.Update(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot update trust center reference: %w", err)
+	}
+
+	return &types.UpdateTrustCenterReferencePayload{
+		TrustCenterReference: types.NewTrustCenterReference(reference),
+	}, nil
+}
+
+// DeleteTrustCenterReference is the resolver for the deleteTrustCenterReference field.
+func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input types.DeleteTrustCenterReferenceInput) (*types.DeleteTrustCenterReferencePayload, error) {
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	err := prb.TrustCenterReferences.Delete(ctx, &probo.DeleteTrustCenterReferenceRequest{
+		ID: input.ID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot delete trust center reference: %w", err)
+	}
+
+	return &types.DeleteTrustCenterReferencePayload{
+		DeletedTrustCenterReferenceID: input.ID,
+	}, nil
+}
+
 // ConfirmEmail is the resolver for the confirmEmail field.
 func (r *mutationResolver) ConfirmEmail(ctx context.Context, input types.ConfirmEmailInput) (*types.ConfirmEmailPayload, error) {
 	err := r.usrmgrSvc.ConfirmEmail(ctx, input.Token)
@@ -4552,6 +4623,54 @@ func (r *trustCenterResolver) Accesses(ctx context.Context, obj *types.TrustCent
 	return types.NewTrustCenterAccessConnection(result), nil
 }
 
+// References is the resolver for the references field.
+func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) (*types.TrustCenterReferenceConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
+		Field:     coredata.TrustCenterReferenceOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrustCenterReferenceOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := prb.TrustCenterReferences.ListForTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list trust center references: %w", err))
+	}
+
+	return types.NewTrustCenterReferenceConnection(result, obj.ID), nil
+}
+
+// LogoURL is the resolver for the logoUrl field.
+func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	fileURL, err := prb.TrustCenterReferences.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		panic(fmt.Errorf("failed to generate logo URL: %w", err))
+	}
+
+	return fileURL, nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *trustCenterReferenceConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterReferenceConnection) (int, error) {
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	count, err := prb.TrustCenterReferences.CountForTrustCenterID(ctx, obj.ParentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot count trust center references: %w", err))
+	}
+	return count, nil
+}
+
 // People is the resolver for the people field.
 func (r *userResolver) People(ctx context.Context, obj *types.User, organizationID gid.GID) (*types.People, error) {
 	prb := r.ProboService(ctx, organizationID.TenantID())
@@ -5082,6 +5201,16 @@ func (r *Resolver) TaskConnection() schema.TaskConnectionResolver { return &task
 // TrustCenter returns schema.TrustCenterResolver implementation.
 func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
 
+// TrustCenterReference returns schema.TrustCenterReferenceResolver implementation.
+func (r *Resolver) TrustCenterReference() schema.TrustCenterReferenceResolver {
+	return &trustCenterReferenceResolver{r}
+}
+
+// TrustCenterReferenceConnection returns schema.TrustCenterReferenceConnectionResolver implementation.
+func (r *Resolver) TrustCenterReferenceConnection() schema.TrustCenterReferenceConnectionResolver {
+	return &trustCenterReferenceConnectionResolver{r}
+}
+
 // User returns schema.UserResolver implementation.
 func (r *Resolver) User() schema.UserResolver { return &userResolver{r} }
 
@@ -5160,6 +5289,8 @@ type snapshotConnectionResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }
 type taskConnectionResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }
+type trustCenterReferenceResolver struct{ *Resolver }
+type trustCenterReferenceConnectionResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
 type vendorResolver struct{ *Resolver }
 type vendorBusinessAssociateAgreementResolver struct{ *Resolver }

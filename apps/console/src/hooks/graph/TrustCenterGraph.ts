@@ -16,6 +16,19 @@ export const trustCenterQuery = graphql`
           ndaFileUrl
           createdAt
           updatedAt
+          references(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+            edges {
+              node {
+                id
+                name
+                description
+                websiteUrl
+                logoUrl
+                createdAt
+                updatedAt
+              }
+            }
+          }
         }
         documents(first: 100) {
           edges {
@@ -112,4 +125,3 @@ export function useDeleteTrustCenterNDAMutation() {
     }
   );
 }
-

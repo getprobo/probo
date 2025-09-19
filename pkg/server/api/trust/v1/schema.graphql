@@ -452,6 +452,24 @@ type VendorEdge {
   node: Vendor!
 }
 
+type TrustCenterReference implements Node {
+  id: ID!
+  name: String!
+  description: String!
+  websiteUrl: String!
+  logoUrl: String! @goField(forceResolver: true)
+}
+
+type TrustCenterReferenceConnection {
+  edges: [TrustCenterReferenceEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TrustCenterReferenceEdge {
+  cursor: CursorKey!
+  node: TrustCenterReference!
+}
+
 type TrustCenter implements Node {
   id: ID!
   active: Boolean!
@@ -482,6 +500,13 @@ type TrustCenter implements Node {
     last: Int
     before: CursorKey
   ): VendorConnection! @goField(forceResolver: true)
+
+  references(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): TrustCenterReferenceConnection! @goField(forceResolver: true)
 }
 
 type TrustCenterAccess implements Node {

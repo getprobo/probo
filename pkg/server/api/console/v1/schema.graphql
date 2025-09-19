@@ -1106,6 +1106,22 @@ enum TrustCenterAccessOrderField
     )
 }
 
+enum TrustCenterReferenceOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderField") {
+  NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldName"
+    )
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldCreatedAt"
+    )
+  UPDATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldUpdatedAt"
+    )
+}
+
 enum SnapshotsType
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.SnapshotsType") {
   RISKS
@@ -1279,6 +1295,14 @@ input TrustCenterAccessOrder
   field: TrustCenterAccessOrderField!
 }
 
+input TrustCenterReferenceOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterReferenceOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: TrustCenterReferenceOrderField!
+}
+
 input EvidenceOrder
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.EvidenceOrderBy"
@@ -1413,6 +1437,14 @@ type TrustCenter implements Node {
     before: CursorKey
     orderBy: TrustCenterAccessOrder
   ): TrustCenterAccessConnection! @goField(forceResolver: true)
+
+  references(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: TrustCenterReferenceOrder
+  ): TrustCenterReferenceConnection! @goField(forceResolver: true)
 }
 
 type Organization implements Node {
@@ -2168,6 +2200,29 @@ type TrustCenterAccessEdge {
   node: TrustCenterAccess!
 }
 
+type TrustCenterReference implements Node {
+  id: ID!
+  name: String!
+  description: String!
+  websiteUrl: String!
+  logoUrl: String! @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type TrustCenterReferenceConnection @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterReferenceConnection"
+  ){
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [TrustCenterReferenceEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TrustCenterReferenceEdge {
+  cursor: CursorKey!
+  node: TrustCenterReference!
+}
+
 type UserConnection {
   edges: [UserEdge!]!
   pageInfo: PageInfo!
@@ -2504,6 +2559,19 @@ type Mutation {
     input: DeleteTrustCenterAccessInput!
   ): DeleteTrustCenterAccessPayload!
 
+  # Trust Center Reference mutations
+  createTrustCenterReference(
+    input: CreateTrustCenterReferenceInput!
+  ): CreateTrustCenterReferencePayload!
+
+  updateTrustCenterReference(
+    input: UpdateTrustCenterReferenceInput!
+  ): UpdateTrustCenterReferencePayload!
+
+  deleteTrustCenterReference(
+    input: DeleteTrustCenterReferenceInput!
+  ): DeleteTrustCenterReferencePayload!
+
   # User mutations
   confirmEmail(input: ConfirmEmailInput!): ConfirmEmailPayload!
   inviteUser(input: InviteUserInput!): InviteUserPayload!
@@ -2810,6 +2878,26 @@ input UpdateTrustCenterAccessInput {
 }
 
 input DeleteTrustCenterAccessInput {
+  id: ID!
+}
+
+input CreateTrustCenterReferenceInput {
+  trustCenterId: ID!
+  name: String!
+  description: String!
+  websiteUrl: String!
+  logoFile: Upload!
+}
+
+input UpdateTrustCenterReferenceInput {
+  id: ID!
+  name: String
+  description: String
+  websiteUrl: String
+  logoFile: Upload
+}
+
+input DeleteTrustCenterReferenceInput {
   id: ID!
 }
 
@@ -3448,6 +3536,18 @@ type UpdateTrustCenterAccessPayload {
 
 type DeleteTrustCenterAccessPayload {
   deletedTrustCenterAccessId: ID!
+}
+
+type CreateTrustCenterReferencePayload {
+  trustCenterReferenceEdge: TrustCenterReferenceEdge!
+}
+
+type UpdateTrustCenterReferencePayload {
+  trustCenterReference: TrustCenterReference!
+}
+
+type DeleteTrustCenterReferencePayload {
+  deletedTrustCenterReferenceId: ID!
 }
 
 type CreateControlPayload {

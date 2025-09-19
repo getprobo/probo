@@ -330,6 +330,36 @@ func (r *trustCenterResolver) Vendors(ctx context.Context, obj *types.TrustCente
 	return types.NewVendorConnection(vendorPage), nil
 }
 
+// References is the resolver for the references field.
+func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterReferenceConnection, error) {
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
+		Field:     coredata.TrustCenterReferenceOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	referencePage, err := publicTrustService.TrustCenterReferences.ListForTrustCenterID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list public trust center references: %w", err))
+	}
+
+	return types.NewTrustCenterReferenceConnection(referencePage), nil
+}
+
+// LogoURL is the resolver for the logoUrl field.
+func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error) {
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+
+	logoURL, err := publicTrustService.TrustCenterReferences.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		panic(fmt.Errorf("cannot generate logo URL: %w", err))
+	}
+
+	return logoURL, nil
+}
+
 // Audit returns schema.AuditResolver implementation.
 func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
 
@@ -345,8 +375,14 @@ func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
 // TrustCenter returns schema.TrustCenterResolver implementation.
 func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
 
+// TrustCenterReference returns schema.TrustCenterReferenceResolver implementation.
+func (r *Resolver) TrustCenterReference() schema.TrustCenterReferenceResolver {
+	return &trustCenterReferenceResolver{r}
+}
+
 type auditResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }
+type trustCenterReferenceResolver struct{ *Resolver }

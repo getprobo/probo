@@ -134,17 +134,18 @@ func (Report) IsNode()             {}
 func (this Report) GetID() gid.GID { return this.ID }
 
 type TrustCenter struct {
-	ID                                gid.GID             `json:"id"`
-	Active                            bool                `json:"active"`
-	Slug                              string              `json:"slug"`
-	NdaFileName                       *string             `json:"ndaFileName,omitempty"`
-	NdaFileURL                        *string             `json:"ndaFileUrl,omitempty"`
-	Organization                      *Organization       `json:"organization"`
-	IsUserAuthenticated               bool                `json:"isUserAuthenticated"`
-	HasAcceptedNonDisclosureAgreement bool                `json:"hasAcceptedNonDisclosureAgreement"`
-	Documents                         *DocumentConnection `json:"documents"`
-	Audits                            *AuditConnection    `json:"audits"`
-	Vendors                           *VendorConnection   `json:"vendors"`
+	ID                                gid.GID                         `json:"id"`
+	Active                            bool                            `json:"active"`
+	Slug                              string                          `json:"slug"`
+	NdaFileName                       *string                         `json:"ndaFileName,omitempty"`
+	NdaFileURL                        *string                         `json:"ndaFileUrl,omitempty"`
+	Organization                      *Organization                   `json:"organization"`
+	IsUserAuthenticated               bool                            `json:"isUserAuthenticated"`
+	HasAcceptedNonDisclosureAgreement bool                            `json:"hasAcceptedNonDisclosureAgreement"`
+	Documents                         *DocumentConnection             `json:"documents"`
+	Audits                            *AuditConnection                `json:"audits"`
+	Vendors                           *VendorConnection               `json:"vendors"`
+	References                        *TrustCenterReferenceConnection `json:"references"`
 }
 
 func (TrustCenter) IsNode()             {}
@@ -160,6 +161,27 @@ type TrustCenterAccess struct {
 
 func (TrustCenterAccess) IsNode()             {}
 func (this TrustCenterAccess) GetID() gid.GID { return this.ID }
+
+type TrustCenterReference struct {
+	ID          gid.GID `json:"id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	WebsiteURL  string  `json:"websiteUrl"`
+	LogoURL     string  `json:"logoUrl"`
+}
+
+func (TrustCenterReference) IsNode()             {}
+func (this TrustCenterReference) GetID() gid.GID { return this.ID }
+
+type TrustCenterReferenceConnection struct {
+	Edges    []*TrustCenterReferenceEdge `json:"edges"`
+	PageInfo *PageInfo                   `json:"pageInfo"`
+}
+
+type TrustCenterReferenceEdge struct {
+	Cursor page.CursorKey        `json:"cursor"`
+	Node   *TrustCenterReference `json:"node"`
+}
 
 type Vendor struct {
 	ID               gid.GID                 `json:"id"`
