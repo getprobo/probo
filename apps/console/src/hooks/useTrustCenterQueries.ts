@@ -212,6 +212,7 @@ const TRUST_CENTER_QUERY = `
             category
             websiteUrl
             privacyPolicyUrl
+            countries
           }
         }
       }

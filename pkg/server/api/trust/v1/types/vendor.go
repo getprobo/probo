@@ -40,6 +40,7 @@ func NewVendor(v *coredata.Vendor) *Vendor {
 		Category:         v.Category,
 		WebsiteURL:       v.WebsiteURL,
 		PrivacyPolicyURL: v.PrivacyPolicyURL,
+		Countries:        []coredata.CountryCode(v.Countries),
 	}
 }
 

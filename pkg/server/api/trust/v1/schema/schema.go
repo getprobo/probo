@@ -162,6 +162,7 @@ type ComplexityRoot struct {
 
 	Vendor struct {
 		Category         func(childComplexity int) int
+		Countries        func(childComplexity int) int
 		ID               func(childComplexity int) int
 		Name             func(childComplexity int) int
 		PrivacyPolicyURL func(childComplexity int) int
@@ -621,6 +622,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Vendor.Category(childComplexity), true
 
+	case "Vendor.countries":
+		if e.complexity.Vendor.Countries == nil {
+			break
+		}
+
+		return e.complexity.Vendor.Countries(childComplexity), true
+
 	case "Vendor.id":
 		if e.complexity.Vendor.ID == nil {
 			break
@@ -879,6 +887,258 @@ type AuditEdge {
   node: Audit!
 }
 
+enum CountryCode
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.CountryCode") {
+  AD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAD")
+  AE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAE")
+  AF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAF")
+  AG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAG")
+  AI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAI")
+  AL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAL")
+  AM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAM")
+  AO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAO")
+  AQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAQ")
+  AR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAR")
+  AS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAS")
+  AT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAT")
+  AU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAU")
+  AW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAW")
+  AX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAX")
+  AZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAZ")
+  BA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBA")
+  BB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBB")
+  BD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBD")
+  BE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBE")
+  BF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBF")
+  BG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBG")
+  BH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBH")
+  BI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBI")
+  BJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBJ")
+  BL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBL")
+  BM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBM")
+  BN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBN")
+  BO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBO")
+  BQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBQ")
+  BR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBR")
+  BS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBS")
+  BT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBT")
+  BV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBV")
+  BW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBW")
+  BY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBY")
+  BZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBZ")
+  CA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCA")
+  CC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCC")
+  CD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCD")
+  CF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCF")
+  CG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCG")
+  CH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCH")
+  CI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCI")
+  CK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCK")
+  CL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCL")
+  CM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCM")
+  CN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCN")
+  CO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCO")
+  CR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCR")
+  CU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCU")
+  CV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCV")
+  CW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCW")
+  CX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCX")
+  CY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCY")
+  CZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCZ")
+  DE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDE")
+  DJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDJ")
+  DK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDK")
+  DM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDM")
+  DO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDO")
+  DZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDZ")
+  EC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEC")
+  EE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEE")
+  EG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEG")
+  EH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEH")
+  ER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeER")
+  ES @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeES")
+  ET @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeET")
+  FI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFI")
+  FJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFJ")
+  FK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFK")
+  FM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFM")
+  FO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFO")
+  FR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFR")
+  GA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGA")
+  GB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGB")
+  GD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGD")
+  GE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGE")
+  GF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGF")
+  GG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGG")
+  GH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGH")
+  GI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGI")
+  GL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGL")
+  GM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGM")
+  GN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGN")
+  GP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGP")
+  GQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGQ")
+  GR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGR")
+  GT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGT")
+  GU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGU")
+  GW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGW")
+  GY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGY")
+  HK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHK")
+  HM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHM")
+  HN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHN")
+  HR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHR")
+  HT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHT")
+  HU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHU")
+  ID @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeID")
+  IE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIE")
+  IL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIL")
+  IM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIM")
+  IN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIN")
+  IO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIO")
+  IQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIQ")
+  IR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIR")
+  IS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIS")
+  IT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIT")
+  JE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJE")
+  JM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJM")
+  JO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJO")
+  JP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJP")
+  KE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKE")
+  KG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKG")
+  KH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKH")
+  KI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKI")
+  KM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKM")
+  KN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKN")
+  KP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKP")
+  KR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKR")
+  KW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKW")
+  KY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKY")
+  KZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKZ")
+  LA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLA")
+  LB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLB")
+  LC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLC")
+  LI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLI")
+  LK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLK")
+  LR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLR")
+  LS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLS")
+  LT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLT")
+  LU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLU")
+  LV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLV")
+  LY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLY")
+  MA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMA")
+  MC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMC")
+  MD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMD")
+  ME @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeME")
+  MF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMF")
+  MG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMG")
+  MH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMH")
+  MK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMK")
+  ML @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeML")
+  MM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMM")
+  MN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMN")
+  MO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMO")
+  MP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMP")
+  MQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMQ")
+  MR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMR")
+  MS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMS")
+  MT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMT")
+  MU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMU")
+  MV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMV")
+  MW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMW")
+  MX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMX")
+  MY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMY")
+  MZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMZ")
+  NA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNA")
+  NC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNC")
+  NE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNE")
+  NF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNF")
+  NG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNG")
+  NI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNI")
+  NL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNL")
+  NO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNO")
+  NP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNP")
+  NR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNR")
+  NU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNU")
+  NZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNZ")
+  OM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeOM")
+  PA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePA")
+  PE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePE")
+  PF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePF")
+  PG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePG")
+  PH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePH")
+  PK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePK")
+  PL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePL")
+  PM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePM")
+  PN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePN")
+  PR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePR")
+  PS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePS")
+  PT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePT")
+  PW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePW")
+  PY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePY")
+  QA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeQA")
+  RE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRE")
+  RO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRO")
+  RS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRS")
+  RU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRU")
+  RW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRW")
+  SA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSA")
+  SB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSB")
+  SC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSC")
+  SD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSD")
+  SE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSE")
+  SG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSG")
+  SH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSH")
+  SI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSI")
+  SJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSJ")
+  SK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSK")
+  SL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSL")
+  SM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSM")
+  SN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSN")
+  SO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSO")
+  SR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSR")
+  SS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSS")
+  ST @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeST")
+  SV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSV")
+  SX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSX")
+  SY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSY")
+  SZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSZ")
+  TC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTC")
+  TD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTD")
+  TF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTF")
+  TG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTG")
+  TH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTH")
+  TJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTJ")
+  TK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTK")
+  TL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTL")
+  TM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTM")
+  TN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTN")
+  TO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTO")
+  TR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTR")
+  TT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTT")
+  TV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTV")
+  TW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTW")
+  TZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTZ")
+  UA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUA")
+  UG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUG")
+  UM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUM")
+  US @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUS")
+  UY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUY")
+  UZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUZ")
+  VA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVA")
+  VC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVC")
+  VE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVE")
+  VG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVG")
+  VI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVI")
+  VN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVN")
+  VU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVU")
+  WF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeWF")
+  WS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeWS")
+  YE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeYE")
+  YT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeYT")
+  ZA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeZA")
+  ZM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeZM")
+  ZW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeZW")
+}
+
 enum VendorCategory
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.VendorCategory") {
   ANALYTICS
@@ -970,6 +1230,7 @@ type Vendor implements Node {
   category: VendorCategory!
   websiteUrl: String
   privacyPolicyUrl: String
+  countries: [CountryCode!]!
 }
 
 type VendorConnection {
@@ -4467,6 +4728,50 @@ func (ec *executionContext) fieldContext_Vendor_privacyPolicyUrl(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Vendor_countries(ctx context.Context, field graphql.CollectedField, obj *types.Vendor) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Vendor_countries(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Countries, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]coredata.CountryCode)
+	fc.Result = res
+	return ec.marshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Vendor_countries(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Vendor",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CountryCode does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VendorConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.VendorConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VendorConnection_edges(ctx, field)
 	if err != nil {
@@ -4664,6 +4969,8 @@ func (ec *executionContext) fieldContext_VendorEdge_node(_ context.Context, fiel
 				return ec.fieldContext_Vendor_websiteUrl(ctx, field)
 			case "privacyPolicyUrl":
 				return ec.fieldContext_Vendor_privacyPolicyUrl(ctx, field)
+			case "countries":
+				return ec.fieldContext_Vendor_countries(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Vendor", field.Name)
 		},
@@ -8047,6 +8354,11 @@ func (ec *executionContext) _Vendor(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Vendor_websiteUrl(ctx, field, obj)
 		case "privacyPolicyUrl":
 			out.Values[i] = ec._Vendor_privacyPolicyUrl(ctx, field, obj)
+		case "countries":
+			out.Values[i] = ec._Vendor_countries(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8605,6 +8917,1088 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	}
 	return res
 }
+
+func (ec *executionContext) unmarshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx context.Context, v any) (coredata.CountryCode, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx context.Context, sel ast.SelectionSet, v coredata.CountryCode) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode = map[string]coredata.CountryCode{
+		"AD": coredata.CountryCodeAD,
+		"AE": coredata.CountryCodeAE,
+		"AF": coredata.CountryCodeAF,
+		"AG": coredata.CountryCodeAG,
+		"AI": coredata.CountryCodeAI,
+		"AL": coredata.CountryCodeAL,
+		"AM": coredata.CountryCodeAM,
+		"AO": coredata.CountryCodeAO,
+		"AQ": coredata.CountryCodeAQ,
+		"AR": coredata.CountryCodeAR,
+		"AS": coredata.CountryCodeAS,
+		"AT": coredata.CountryCodeAT,
+		"AU": coredata.CountryCodeAU,
+		"AW": coredata.CountryCodeAW,
+		"AX": coredata.CountryCodeAX,
+		"AZ": coredata.CountryCodeAZ,
+		"BA": coredata.CountryCodeBA,
+		"BB": coredata.CountryCodeBB,
+		"BD": coredata.CountryCodeBD,
+		"BE": coredata.CountryCodeBE,
+		"BF": coredata.CountryCodeBF,
+		"BG": coredata.CountryCodeBG,
+		"BH": coredata.CountryCodeBH,
+		"BI": coredata.CountryCodeBI,
+		"BJ": coredata.CountryCodeBJ,
+		"BL": coredata.CountryCodeBL,
+		"BM": coredata.CountryCodeBM,
+		"BN": coredata.CountryCodeBN,
+		"BO": coredata.CountryCodeBO,
+		"BQ": coredata.CountryCodeBQ,
+		"BR": coredata.CountryCodeBR,
+		"BS": coredata.CountryCodeBS,
+		"BT": coredata.CountryCodeBT,
+		"BV": coredata.CountryCodeBV,
+		"BW": coredata.CountryCodeBW,
+		"BY": coredata.CountryCodeBY,
+		"BZ": coredata.CountryCodeBZ,
+		"CA": coredata.CountryCodeCA,
+		"CC": coredata.CountryCodeCC,
+		"CD": coredata.CountryCodeCD,
+		"CF": coredata.CountryCodeCF,
+		"CG": coredata.CountryCodeCG,
+		"CH": coredata.CountryCodeCH,
+		"CI": coredata.CountryCodeCI,
+		"CK": coredata.CountryCodeCK,
+		"CL": coredata.CountryCodeCL,
+		"CM": coredata.CountryCodeCM,
+		"CN": coredata.CountryCodeCN,
+		"CO": coredata.CountryCodeCO,
+		"CR": coredata.CountryCodeCR,
+		"CU": coredata.CountryCodeCU,
+		"CV": coredata.CountryCodeCV,
+		"CW": coredata.CountryCodeCW,
+		"CX": coredata.CountryCodeCX,
+		"CY": coredata.CountryCodeCY,
+		"CZ": coredata.CountryCodeCZ,
+		"DE": coredata.CountryCodeDE,
+		"DJ": coredata.CountryCodeDJ,
+		"DK": coredata.CountryCodeDK,
+		"DM": coredata.CountryCodeDM,
+		"DO": coredata.CountryCodeDO,
+		"DZ": coredata.CountryCodeDZ,
+		"EC": coredata.CountryCodeEC,
+		"EE": coredata.CountryCodeEE,
+		"EG": coredata.CountryCodeEG,
+		"EH": coredata.CountryCodeEH,
+		"ER": coredata.CountryCodeER,
+		"ES": coredata.CountryCodeES,
+		"ET": coredata.CountryCodeET,
+		"FI": coredata.CountryCodeFI,
+		"FJ": coredata.CountryCodeFJ,
+		"FK": coredata.CountryCodeFK,
+		"FM": coredata.CountryCodeFM,
+		"FO": coredata.CountryCodeFO,
+		"FR": coredata.CountryCodeFR,
+		"GA": coredata.CountryCodeGA,
+		"GB": coredata.CountryCodeGB,
+		"GD": coredata.CountryCodeGD,
+		"GE": coredata.CountryCodeGE,
+		"GF": coredata.CountryCodeGF,
+		"GG": coredata.CountryCodeGG,
+		"GH": coredata.CountryCodeGH,
+		"GI": coredata.CountryCodeGI,
+		"GL": coredata.CountryCodeGL,
+		"GM": coredata.CountryCodeGM,
+		"GN": coredata.CountryCodeGN,
+		"GP": coredata.CountryCodeGP,
+		"GQ": coredata.CountryCodeGQ,
+		"GR": coredata.CountryCodeGR,
+		"GT": coredata.CountryCodeGT,
+		"GU": coredata.CountryCodeGU,
+		"GW": coredata.CountryCodeGW,
+		"GY": coredata.CountryCodeGY,
+		"HK": coredata.CountryCodeHK,
+		"HM": coredata.CountryCodeHM,
+		"HN": coredata.CountryCodeHN,
+		"HR": coredata.CountryCodeHR,
+		"HT": coredata.CountryCodeHT,
+		"HU": coredata.CountryCodeHU,
+		"ID": coredata.CountryCodeID,
+		"IE": coredata.CountryCodeIE,
+		"IL": coredata.CountryCodeIL,
+		"IM": coredata.CountryCodeIM,
+		"IN": coredata.CountryCodeIN,
+		"IO": coredata.CountryCodeIO,
+		"IQ": coredata.CountryCodeIQ,
+		"IR": coredata.CountryCodeIR,
+		"IS": coredata.CountryCodeIS,
+		"IT": coredata.CountryCodeIT,
+		"JE": coredata.CountryCodeJE,
+		"JM": coredata.CountryCodeJM,
+		"JO": coredata.CountryCodeJO,
+		"JP": coredata.CountryCodeJP,
+		"KE": coredata.CountryCodeKE,
+		"KG": coredata.CountryCodeKG,
+		"KH": coredata.CountryCodeKH,
+		"KI": coredata.CountryCodeKI,
+		"KM": coredata.CountryCodeKM,
+		"KN": coredata.CountryCodeKN,
+		"KP": coredata.CountryCodeKP,
+		"KR": coredata.CountryCodeKR,
+		"KW": coredata.CountryCodeKW,
+		"KY": coredata.CountryCodeKY,
+		"KZ": coredata.CountryCodeKZ,
+		"LA": coredata.CountryCodeLA,
+		"LB": coredata.CountryCodeLB,
+		"LC": coredata.CountryCodeLC,
+		"LI": coredata.CountryCodeLI,
+		"LK": coredata.CountryCodeLK,
+		"LR": coredata.CountryCodeLR,
+		"LS": coredata.CountryCodeLS,
+		"LT": coredata.CountryCodeLT,
+		"LU": coredata.CountryCodeLU,
+		"LV": coredata.CountryCodeLV,
+		"LY": coredata.CountryCodeLY,
+		"MA": coredata.CountryCodeMA,
+		"MC": coredata.CountryCodeMC,
+		"MD": coredata.CountryCodeMD,
+		"ME": coredata.CountryCodeME,
+		"MF": coredata.CountryCodeMF,
+		"MG": coredata.CountryCodeMG,
+		"MH": coredata.CountryCodeMH,
+		"MK": coredata.CountryCodeMK,
+		"ML": coredata.CountryCodeML,
+		"MM": coredata.CountryCodeMM,
+		"MN": coredata.CountryCodeMN,
+		"MO": coredata.CountryCodeMO,
+		"MP": coredata.CountryCodeMP,
+		"MQ": coredata.CountryCodeMQ,
+		"MR": coredata.CountryCodeMR,
+		"MS": coredata.CountryCodeMS,
+		"MT": coredata.CountryCodeMT,
+		"MU": coredata.CountryCodeMU,
+		"MV": coredata.CountryCodeMV,
+		"MW": coredata.CountryCodeMW,
+		"MX": coredata.CountryCodeMX,
+		"MY": coredata.CountryCodeMY,
+		"MZ": coredata.CountryCodeMZ,
+		"NA": coredata.CountryCodeNA,
+		"NC": coredata.CountryCodeNC,
+		"NE": coredata.CountryCodeNE,
+		"NF": coredata.CountryCodeNF,
+		"NG": coredata.CountryCodeNG,
+		"NI": coredata.CountryCodeNI,
+		"NL": coredata.CountryCodeNL,
+		"NO": coredata.CountryCodeNO,
+		"NP": coredata.CountryCodeNP,
+		"NR": coredata.CountryCodeNR,
+		"NU": coredata.CountryCodeNU,
+		"NZ": coredata.CountryCodeNZ,
+		"OM": coredata.CountryCodeOM,
+		"PA": coredata.CountryCodePA,
+		"PE": coredata.CountryCodePE,
+		"PF": coredata.CountryCodePF,
+		"PG": coredata.CountryCodePG,
+		"PH": coredata.CountryCodePH,
+		"PK": coredata.CountryCodePK,
+		"PL": coredata.CountryCodePL,
+		"PM": coredata.CountryCodePM,
+		"PN": coredata.CountryCodePN,
+		"PR": coredata.CountryCodePR,
+		"PS": coredata.CountryCodePS,
+		"PT": coredata.CountryCodePT,
+		"PW": coredata.CountryCodePW,
+		"PY": coredata.CountryCodePY,
+		"QA": coredata.CountryCodeQA,
+		"RE": coredata.CountryCodeRE,
+		"RO": coredata.CountryCodeRO,
+		"RS": coredata.CountryCodeRS,
+		"RU": coredata.CountryCodeRU,
+		"RW": coredata.CountryCodeRW,
+		"SA": coredata.CountryCodeSA,
+		"SB": coredata.CountryCodeSB,
+		"SC": coredata.CountryCodeSC,
+		"SD": coredata.CountryCodeSD,
+		"SE": coredata.CountryCodeSE,
+		"SG": coredata.CountryCodeSG,
+		"SH": coredata.CountryCodeSH,
+		"SI": coredata.CountryCodeSI,
+		"SJ": coredata.CountryCodeSJ,
+		"SK": coredata.CountryCodeSK,
+		"SL": coredata.CountryCodeSL,
+		"SM": coredata.CountryCodeSM,
+		"SN": coredata.CountryCodeSN,
+		"SO": coredata.CountryCodeSO,
+		"SR": coredata.CountryCodeSR,
+		"SS": coredata.CountryCodeSS,
+		"ST": coredata.CountryCodeST,
+		"SV": coredata.CountryCodeSV,
+		"SX": coredata.CountryCodeSX,
+		"SY": coredata.CountryCodeSY,
+		"SZ": coredata.CountryCodeSZ,
+		"TC": coredata.CountryCodeTC,
+		"TD": coredata.CountryCodeTD,
+		"TF": coredata.CountryCodeTF,
+		"TG": coredata.CountryCodeTG,
+		"TH": coredata.CountryCodeTH,
+		"TJ": coredata.CountryCodeTJ,
+		"TK": coredata.CountryCodeTK,
+		"TL": coredata.CountryCodeTL,
+		"TM": coredata.CountryCodeTM,
+		"TN": coredata.CountryCodeTN,
+		"TO": coredata.CountryCodeTO,
+		"TR": coredata.CountryCodeTR,
+		"TT": coredata.CountryCodeTT,
+		"TV": coredata.CountryCodeTV,
+		"TW": coredata.CountryCodeTW,
+		"TZ": coredata.CountryCodeTZ,
+		"UA": coredata.CountryCodeUA,
+		"UG": coredata.CountryCodeUG,
+		"UM": coredata.CountryCodeUM,
+		"US": coredata.CountryCodeUS,
+		"UY": coredata.CountryCodeUY,
+		"UZ": coredata.CountryCodeUZ,
+		"VA": coredata.CountryCodeVA,
+		"VC": coredata.CountryCodeVC,
+		"VE": coredata.CountryCodeVE,
+		"VG": coredata.CountryCodeVG,
+		"VI": coredata.CountryCodeVI,
+		"VN": coredata.CountryCodeVN,
+		"VU": coredata.CountryCodeVU,
+		"WF": coredata.CountryCodeWF,
+		"WS": coredata.CountryCodeWS,
+		"YE": coredata.CountryCodeYE,
+		"YT": coredata.CountryCodeYT,
+		"ZA": coredata.CountryCodeZA,
+		"ZM": coredata.CountryCodeZM,
+		"ZW": coredata.CountryCodeZW,
+	}
+	marshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode = map[coredata.CountryCode]string{
+		coredata.CountryCodeAD: "AD",
+		coredata.CountryCodeAE: "AE",
+		coredata.CountryCodeAF: "AF",
+		coredata.CountryCodeAG: "AG",
+		coredata.CountryCodeAI: "AI",
+		coredata.CountryCodeAL: "AL",
+		coredata.CountryCodeAM: "AM",
+		coredata.CountryCodeAO: "AO",
+		coredata.CountryCodeAQ: "AQ",
+		coredata.CountryCodeAR: "AR",
+		coredata.CountryCodeAS: "AS",
+		coredata.CountryCodeAT: "AT",
+		coredata.CountryCodeAU: "AU",
+		coredata.CountryCodeAW: "AW",
+		coredata.CountryCodeAX: "AX",
+		coredata.CountryCodeAZ: "AZ",
+		coredata.CountryCodeBA: "BA",
+		coredata.CountryCodeBB: "BB",
+		coredata.CountryCodeBD: "BD",
+		coredata.CountryCodeBE: "BE",
+		coredata.CountryCodeBF: "BF",
+		coredata.CountryCodeBG: "BG",
+		coredata.CountryCodeBH: "BH",
+		coredata.CountryCodeBI: "BI",
+		coredata.CountryCodeBJ: "BJ",
+		coredata.CountryCodeBL: "BL",
+		coredata.CountryCodeBM: "BM",
+		coredata.CountryCodeBN: "BN",
+		coredata.CountryCodeBO: "BO",
+		coredata.CountryCodeBQ: "BQ",
+		coredata.CountryCodeBR: "BR",
+		coredata.CountryCodeBS: "BS",
+		coredata.CountryCodeBT: "BT",
+		coredata.CountryCodeBV: "BV",
+		coredata.CountryCodeBW: "BW",
+		coredata.CountryCodeBY: "BY",
+		coredata.CountryCodeBZ: "BZ",
+		coredata.CountryCodeCA: "CA",
+		coredata.CountryCodeCC: "CC",
+		coredata.CountryCodeCD: "CD",
+		coredata.CountryCodeCF: "CF",
+		coredata.CountryCodeCG: "CG",
+		coredata.CountryCodeCH: "CH",
+		coredata.CountryCodeCI: "CI",
+		coredata.CountryCodeCK: "CK",
+		coredata.CountryCodeCL: "CL",
+		coredata.CountryCodeCM: "CM",
+		coredata.CountryCodeCN: "CN",
+		coredata.CountryCodeCO: "CO",
+		coredata.CountryCodeCR: "CR",
+		coredata.CountryCodeCU: "CU",
+		coredata.CountryCodeCV: "CV",
+		coredata.CountryCodeCW: "CW",
+		coredata.CountryCodeCX: "CX",
+		coredata.CountryCodeCY: "CY",
+		coredata.CountryCodeCZ: "CZ",
+		coredata.CountryCodeDE: "DE",
+		coredata.CountryCodeDJ: "DJ",
+		coredata.CountryCodeDK: "DK",
+		coredata.CountryCodeDM: "DM",
+		coredata.CountryCodeDO: "DO",
+		coredata.CountryCodeDZ: "DZ",
+		coredata.CountryCodeEC: "EC",
+		coredata.CountryCodeEE: "EE",
+		coredata.CountryCodeEG: "EG",
+		coredata.CountryCodeEH: "EH",
+		coredata.CountryCodeER: "ER",
+		coredata.CountryCodeES: "ES",
+		coredata.CountryCodeET: "ET",
+		coredata.CountryCodeFI: "FI",
+		coredata.CountryCodeFJ: "FJ",
+		coredata.CountryCodeFK: "FK",
+		coredata.CountryCodeFM: "FM",
+		coredata.CountryCodeFO: "FO",
+		coredata.CountryCodeFR: "FR",
+		coredata.CountryCodeGA: "GA",
+		coredata.CountryCodeGB: "GB",
+		coredata.CountryCodeGD: "GD",
+		coredata.CountryCodeGE: "GE",
+		coredata.CountryCodeGF: "GF",
+		coredata.CountryCodeGG: "GG",
+		coredata.CountryCodeGH: "GH",
+		coredata.CountryCodeGI: "GI",
+		coredata.CountryCodeGL: "GL",
+		coredata.CountryCodeGM: "GM",
+		coredata.CountryCodeGN: "GN",
+		coredata.CountryCodeGP: "GP",
+		coredata.CountryCodeGQ: "GQ",
+		coredata.CountryCodeGR: "GR",
+		coredata.CountryCodeGT: "GT",
+		coredata.CountryCodeGU: "GU",
+		coredata.CountryCodeGW: "GW",
+		coredata.CountryCodeGY: "GY",
+		coredata.CountryCodeHK: "HK",
+		coredata.CountryCodeHM: "HM",
+		coredata.CountryCodeHN: "HN",
+		coredata.CountryCodeHR: "HR",
+		coredata.CountryCodeHT: "HT",
+		coredata.CountryCodeHU: "HU",
+		coredata.CountryCodeID: "ID",
+		coredata.CountryCodeIE: "IE",
+		coredata.CountryCodeIL: "IL",
+		coredata.CountryCodeIM: "IM",
+		coredata.CountryCodeIN: "IN",
+		coredata.CountryCodeIO: "IO",
+		coredata.CountryCodeIQ: "IQ",
+		coredata.CountryCodeIR: "IR",
+		coredata.CountryCodeIS: "IS",
+		coredata.CountryCodeIT: "IT",
+		coredata.CountryCodeJE: "JE",
+		coredata.CountryCodeJM: "JM",
+		coredata.CountryCodeJO: "JO",
+		coredata.CountryCodeJP: "JP",
+		coredata.CountryCodeKE: "KE",
+		coredata.CountryCodeKG: "KG",
+		coredata.CountryCodeKH: "KH",
+		coredata.CountryCodeKI: "KI",
+		coredata.CountryCodeKM: "KM",
+		coredata.CountryCodeKN: "KN",
+		coredata.CountryCodeKP: "KP",
+		coredata.CountryCodeKR: "KR",
+		coredata.CountryCodeKW: "KW",
+		coredata.CountryCodeKY: "KY",
+		coredata.CountryCodeKZ: "KZ",
+		coredata.CountryCodeLA: "LA",
+		coredata.CountryCodeLB: "LB",
+		coredata.CountryCodeLC: "LC",
+		coredata.CountryCodeLI: "LI",
+		coredata.CountryCodeLK: "LK",
+		coredata.CountryCodeLR: "LR",
+		coredata.CountryCodeLS: "LS",
+		coredata.CountryCodeLT: "LT",
+		coredata.CountryCodeLU: "LU",
+		coredata.CountryCodeLV: "LV",
+		coredata.CountryCodeLY: "LY",
+		coredata.CountryCodeMA: "MA",
+		coredata.CountryCodeMC: "MC",
+		coredata.CountryCodeMD: "MD",
+		coredata.CountryCodeME: "ME",
+		coredata.CountryCodeMF: "MF",
+		coredata.CountryCodeMG: "MG",
+		coredata.CountryCodeMH: "MH",
+		coredata.CountryCodeMK: "MK",
+		coredata.CountryCodeML: "ML",
+		coredata.CountryCodeMM: "MM",
+		coredata.CountryCodeMN: "MN",
+		coredata.CountryCodeMO: "MO",
+		coredata.CountryCodeMP: "MP",
+		coredata.CountryCodeMQ: "MQ",
+		coredata.CountryCodeMR: "MR",
+		coredata.CountryCodeMS: "MS",
+		coredata.CountryCodeMT: "MT",
+		coredata.CountryCodeMU: "MU",
+		coredata.CountryCodeMV: "MV",
+		coredata.CountryCodeMW: "MW",
+		coredata.CountryCodeMX: "MX",
+		coredata.CountryCodeMY: "MY",
+		coredata.CountryCodeMZ: "MZ",
+		coredata.CountryCodeNA: "NA",
+		coredata.CountryCodeNC: "NC",
+		coredata.CountryCodeNE: "NE",
+		coredata.CountryCodeNF: "NF",
+		coredata.CountryCodeNG: "NG",
+		coredata.CountryCodeNI: "NI",
+		coredata.CountryCodeNL: "NL",
+		coredata.CountryCodeNO: "NO",
+		coredata.CountryCodeNP: "NP",
+		coredata.CountryCodeNR: "NR",
+		coredata.CountryCodeNU: "NU",
+		coredata.CountryCodeNZ: "NZ",
+		coredata.CountryCodeOM: "OM",
+		coredata.CountryCodePA: "PA",
+		coredata.CountryCodePE: "PE",
+		coredata.CountryCodePF: "PF",
+		coredata.CountryCodePG: "PG",
+		coredata.CountryCodePH: "PH",
+		coredata.CountryCodePK: "PK",
+		coredata.CountryCodePL: "PL",
+		coredata.CountryCodePM: "PM",
+		coredata.CountryCodePN: "PN",
+		coredata.CountryCodePR: "PR",
+		coredata.CountryCodePS: "PS",
+		coredata.CountryCodePT: "PT",
+		coredata.CountryCodePW: "PW",
+		coredata.CountryCodePY: "PY",
+		coredata.CountryCodeQA: "QA",
+		coredata.CountryCodeRE: "RE",
+		coredata.CountryCodeRO: "RO",
+		coredata.CountryCodeRS: "RS",
+		coredata.CountryCodeRU: "RU",
+		coredata.CountryCodeRW: "RW",
+		coredata.CountryCodeSA: "SA",
+		coredata.CountryCodeSB: "SB",
+		coredata.CountryCodeSC: "SC",
+		coredata.CountryCodeSD: "SD",
+		coredata.CountryCodeSE: "SE",
+		coredata.CountryCodeSG: "SG",
+		coredata.CountryCodeSH: "SH",
+		coredata.CountryCodeSI: "SI",
+		coredata.CountryCodeSJ: "SJ",
+		coredata.CountryCodeSK: "SK",
+		coredata.CountryCodeSL: "SL",
+		coredata.CountryCodeSM: "SM",
+		coredata.CountryCodeSN: "SN",
+		coredata.CountryCodeSO: "SO",
+		coredata.CountryCodeSR: "SR",
+		coredata.CountryCodeSS: "SS",
+		coredata.CountryCodeST: "ST",
+		coredata.CountryCodeSV: "SV",
+		coredata.CountryCodeSX: "SX",
+		coredata.CountryCodeSY: "SY",
+		coredata.CountryCodeSZ: "SZ",
+		coredata.CountryCodeTC: "TC",
+		coredata.CountryCodeTD: "TD",
+		coredata.CountryCodeTF: "TF",
+		coredata.CountryCodeTG: "TG",
+		coredata.CountryCodeTH: "TH",
+		coredata.CountryCodeTJ: "TJ",
+		coredata.CountryCodeTK: "TK",
+		coredata.CountryCodeTL: "TL",
+		coredata.CountryCodeTM: "TM",
+		coredata.CountryCodeTN: "TN",
+		coredata.CountryCodeTO: "TO",
+		coredata.CountryCodeTR: "TR",
+		coredata.CountryCodeTT: "TT",
+		coredata.CountryCodeTV: "TV",
+		coredata.CountryCodeTW: "TW",
+		coredata.CountryCodeTZ: "TZ",
+		coredata.CountryCodeUA: "UA",
+		coredata.CountryCodeUG: "UG",
+		coredata.CountryCodeUM: "UM",
+		coredata.CountryCodeUS: "US",
+		coredata.CountryCodeUY: "UY",
+		coredata.CountryCodeUZ: "UZ",
+		coredata.CountryCodeVA: "VA",
+		coredata.CountryCodeVC: "VC",
+		coredata.CountryCodeVE: "VE",
+		coredata.CountryCodeVG: "VG",
+		coredata.CountryCodeVI: "VI",
+		coredata.CountryCodeVN: "VN",
+		coredata.CountryCodeVU: "VU",
+		coredata.CountryCodeWF: "WF",
+		coredata.CountryCodeWS: "WS",
+		coredata.CountryCodeYE: "YE",
+		coredata.CountryCodeYT: "YT",
+		coredata.CountryCodeZA: "ZA",
+		coredata.CountryCodeZM: "ZM",
+		coredata.CountryCodeZW: "ZW",
+	}
+)
+
+func (ec *executionContext) unmarshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ(ctx context.Context, v any) ([]coredata.CountryCode, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]coredata.CountryCode, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ(ctx context.Context, sel ast.SelectionSet, v []coredata.CountryCode) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+var (
+	unmarshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ = map[string]coredata.CountryCode{
+		"AD": coredata.CountryCodeAD,
+		"AE": coredata.CountryCodeAE,
+		"AF": coredata.CountryCodeAF,
+		"AG": coredata.CountryCodeAG,
+		"AI": coredata.CountryCodeAI,
+		"AL": coredata.CountryCodeAL,
+		"AM": coredata.CountryCodeAM,
+		"AO": coredata.CountryCodeAO,
+		"AQ": coredata.CountryCodeAQ,
+		"AR": coredata.CountryCodeAR,
+		"AS": coredata.CountryCodeAS,
+		"AT": coredata.CountryCodeAT,
+		"AU": coredata.CountryCodeAU,
+		"AW": coredata.CountryCodeAW,
+		"AX": coredata.CountryCodeAX,
+		"AZ": coredata.CountryCodeAZ,
+		"BA": coredata.CountryCodeBA,
+		"BB": coredata.CountryCodeBB,
+		"BD": coredata.CountryCodeBD,
+		"BE": coredata.CountryCodeBE,
+		"BF": coredata.CountryCodeBF,
+		"BG": coredata.CountryCodeBG,
+		"BH": coredata.CountryCodeBH,
+		"BI": coredata.CountryCodeBI,
+		"BJ": coredata.CountryCodeBJ,
+		"BL": coredata.CountryCodeBL,
+		"BM": coredata.CountryCodeBM,
+		"BN": coredata.CountryCodeBN,
+		"BO": coredata.CountryCodeBO,
+		"BQ": coredata.CountryCodeBQ,
+		"BR": coredata.CountryCodeBR,
+		"BS": coredata.CountryCodeBS,
+		"BT": coredata.CountryCodeBT,
+		"BV": coredata.CountryCodeBV,
+		"BW": coredata.CountryCodeBW,
+		"BY": coredata.CountryCodeBY,
+		"BZ": coredata.CountryCodeBZ,
+		"CA": coredata.CountryCodeCA,
+		"CC": coredata.CountryCodeCC,
+		"CD": coredata.CountryCodeCD,
+		"CF": coredata.CountryCodeCF,
+		"CG": coredata.CountryCodeCG,
+		"CH": coredata.CountryCodeCH,
+		"CI": coredata.CountryCodeCI,
+		"CK": coredata.CountryCodeCK,
+		"CL": coredata.CountryCodeCL,
+		"CM": coredata.CountryCodeCM,
+		"CN": coredata.CountryCodeCN,
+		"CO": coredata.CountryCodeCO,
+		"CR": coredata.CountryCodeCR,
+		"CU": coredata.CountryCodeCU,
+		"CV": coredata.CountryCodeCV,
+		"CW": coredata.CountryCodeCW,
+		"CX": coredata.CountryCodeCX,
+		"CY": coredata.CountryCodeCY,
+		"CZ": coredata.CountryCodeCZ,
+		"DE": coredata.CountryCodeDE,
+		"DJ": coredata.CountryCodeDJ,
+		"DK": coredata.CountryCodeDK,
+		"DM": coredata.CountryCodeDM,
+		"DO": coredata.CountryCodeDO,
+		"DZ": coredata.CountryCodeDZ,
+		"EC": coredata.CountryCodeEC,
+		"EE": coredata.CountryCodeEE,
+		"EG": coredata.CountryCodeEG,
+		"EH": coredata.CountryCodeEH,
+		"ER": coredata.CountryCodeER,
+		"ES": coredata.CountryCodeES,
+		"ET": coredata.CountryCodeET,
+		"FI": coredata.CountryCodeFI,
+		"FJ": coredata.CountryCodeFJ,
+		"FK": coredata.CountryCodeFK,
+		"FM": coredata.CountryCodeFM,
+		"FO": coredata.CountryCodeFO,
+		"FR": coredata.CountryCodeFR,
+		"GA": coredata.CountryCodeGA,
+		"GB": coredata.CountryCodeGB,
+		"GD": coredata.CountryCodeGD,
+		"GE": coredata.CountryCodeGE,
+		"GF": coredata.CountryCodeGF,
+		"GG": coredata.CountryCodeGG,
+		"GH": coredata.CountryCodeGH,
+		"GI": coredata.CountryCodeGI,
+		"GL": coredata.CountryCodeGL,
+		"GM": coredata.CountryCodeGM,
+		"GN": coredata.CountryCodeGN,
+		"GP": coredata.CountryCodeGP,
+		"GQ": coredata.CountryCodeGQ,
+		"GR": coredata.CountryCodeGR,
+		"GT": coredata.CountryCodeGT,
+		"GU": coredata.CountryCodeGU,
+		"GW": coredata.CountryCodeGW,
+		"GY": coredata.CountryCodeGY,
+		"HK": coredata.CountryCodeHK,
+		"HM": coredata.CountryCodeHM,
+		"HN": coredata.CountryCodeHN,
+		"HR": coredata.CountryCodeHR,
+		"HT": coredata.CountryCodeHT,
+		"HU": coredata.CountryCodeHU,
+		"ID": coredata.CountryCodeID,
+		"IE": coredata.CountryCodeIE,
+		"IL": coredata.CountryCodeIL,
+		"IM": coredata.CountryCodeIM,
+		"IN": coredata.CountryCodeIN,
+		"IO": coredata.CountryCodeIO,
+		"IQ": coredata.CountryCodeIQ,
+		"IR": coredata.CountryCodeIR,
+		"IS": coredata.CountryCodeIS,
+		"IT": coredata.CountryCodeIT,
+		"JE": coredata.CountryCodeJE,
+		"JM": coredata.CountryCodeJM,
+		"JO": coredata.CountryCodeJO,
+		"JP": coredata.CountryCodeJP,
+		"KE": coredata.CountryCodeKE,
+		"KG": coredata.CountryCodeKG,
+		"KH": coredata.CountryCodeKH,
+		"KI": coredata.CountryCodeKI,
+		"KM": coredata.CountryCodeKM,
+		"KN": coredata.CountryCodeKN,
+		"KP": coredata.CountryCodeKP,
+		"KR": coredata.CountryCodeKR,
+		"KW": coredata.CountryCodeKW,
+		"KY": coredata.CountryCodeKY,
+		"KZ": coredata.CountryCodeKZ,
+		"LA": coredata.CountryCodeLA,
+		"LB": coredata.CountryCodeLB,
+		"LC": coredata.CountryCodeLC,
+		"LI": coredata.CountryCodeLI,
+		"LK": coredata.CountryCodeLK,
+		"LR": coredata.CountryCodeLR,
+		"LS": coredata.CountryCodeLS,
+		"LT": coredata.CountryCodeLT,
+		"LU": coredata.CountryCodeLU,
+		"LV": coredata.CountryCodeLV,
+		"LY": coredata.CountryCodeLY,
+		"MA": coredata.CountryCodeMA,
+		"MC": coredata.CountryCodeMC,
+		"MD": coredata.CountryCodeMD,
+		"ME": coredata.CountryCodeME,
+		"MF": coredata.CountryCodeMF,
+		"MG": coredata.CountryCodeMG,
+		"MH": coredata.CountryCodeMH,
+		"MK": coredata.CountryCodeMK,
+		"ML": coredata.CountryCodeML,
+		"MM": coredata.CountryCodeMM,
+		"MN": coredata.CountryCodeMN,
+		"MO": coredata.CountryCodeMO,
+		"MP": coredata.CountryCodeMP,
+		"MQ": coredata.CountryCodeMQ,
+		"MR": coredata.CountryCodeMR,
+		"MS": coredata.CountryCodeMS,
+		"MT": coredata.CountryCodeMT,
+		"MU": coredata.CountryCodeMU,
+		"MV": coredata.CountryCodeMV,
+		"MW": coredata.CountryCodeMW,
+		"MX": coredata.CountryCodeMX,
+		"MY": coredata.CountryCodeMY,
+		"MZ": coredata.CountryCodeMZ,
+		"NA": coredata.CountryCodeNA,
+		"NC": coredata.CountryCodeNC,
+		"NE": coredata.CountryCodeNE,
+		"NF": coredata.CountryCodeNF,
+		"NG": coredata.CountryCodeNG,
+		"NI": coredata.CountryCodeNI,
+		"NL": coredata.CountryCodeNL,
+		"NO": coredata.CountryCodeNO,
+		"NP": coredata.CountryCodeNP,
+		"NR": coredata.CountryCodeNR,
+		"NU": coredata.CountryCodeNU,
+		"NZ": coredata.CountryCodeNZ,
+		"OM": coredata.CountryCodeOM,
+		"PA": coredata.CountryCodePA,
+		"PE": coredata.CountryCodePE,
+		"PF": coredata.CountryCodePF,
+		"PG": coredata.CountryCodePG,
+		"PH": coredata.CountryCodePH,
+		"PK": coredata.CountryCodePK,
+		"PL": coredata.CountryCodePL,
+		"PM": coredata.CountryCodePM,
+		"PN": coredata.CountryCodePN,
+		"PR": coredata.CountryCodePR,
+		"PS": coredata.CountryCodePS,
+		"PT": coredata.CountryCodePT,
+		"PW": coredata.CountryCodePW,
+		"PY": coredata.CountryCodePY,
+		"QA": coredata.CountryCodeQA,
+		"RE": coredata.CountryCodeRE,
+		"RO": coredata.CountryCodeRO,
+		"RS": coredata.CountryCodeRS,
+		"RU": coredata.CountryCodeRU,
+		"RW": coredata.CountryCodeRW,
+		"SA": coredata.CountryCodeSA,
+		"SB": coredata.CountryCodeSB,
+		"SC": coredata.CountryCodeSC,
+		"SD": coredata.CountryCodeSD,
+		"SE": coredata.CountryCodeSE,
+		"SG": coredata.CountryCodeSG,
+		"SH": coredata.CountryCodeSH,
+		"SI": coredata.CountryCodeSI,
+		"SJ": coredata.CountryCodeSJ,
+		"SK": coredata.CountryCodeSK,
+		"SL": coredata.CountryCodeSL,
+		"SM": coredata.CountryCodeSM,
+		"SN": coredata.CountryCodeSN,
+		"SO": coredata.CountryCodeSO,
+		"SR": coredata.CountryCodeSR,
+		"SS": coredata.CountryCodeSS,
+		"ST": coredata.CountryCodeST,
+		"SV": coredata.CountryCodeSV,
+		"SX": coredata.CountryCodeSX,
+		"SY": coredata.CountryCodeSY,
+		"SZ": coredata.CountryCodeSZ,
+		"TC": coredata.CountryCodeTC,
+		"TD": coredata.CountryCodeTD,
+		"TF": coredata.CountryCodeTF,
+		"TG": coredata.CountryCodeTG,
+		"TH": coredata.CountryCodeTH,
+		"TJ": coredata.CountryCodeTJ,
+		"TK": coredata.CountryCodeTK,
+		"TL": coredata.CountryCodeTL,
+		"TM": coredata.CountryCodeTM,
+		"TN": coredata.CountryCodeTN,
+		"TO": coredata.CountryCodeTO,
+		"TR": coredata.CountryCodeTR,
+		"TT": coredata.CountryCodeTT,
+		"TV": coredata.CountryCodeTV,
+		"TW": coredata.CountryCodeTW,
+		"TZ": coredata.CountryCodeTZ,
+		"UA": coredata.CountryCodeUA,
+		"UG": coredata.CountryCodeUG,
+		"UM": coredata.CountryCodeUM,
+		"US": coredata.CountryCodeUS,
+		"UY": coredata.CountryCodeUY,
+		"UZ": coredata.CountryCodeUZ,
+		"VA": coredata.CountryCodeVA,
+		"VC": coredata.CountryCodeVC,
+		"VE": coredata.CountryCodeVE,
+		"VG": coredata.CountryCodeVG,
+		"VI": coredata.CountryCodeVI,
+		"VN": coredata.CountryCodeVN,
+		"VU": coredata.CountryCodeVU,
+		"WF": coredata.CountryCodeWF,
+		"WS": coredata.CountryCodeWS,
+		"YE": coredata.CountryCodeYE,
+		"YT": coredata.CountryCodeYT,
+		"ZA": coredata.CountryCodeZA,
+		"ZM": coredata.CountryCodeZM,
+		"ZW": coredata.CountryCodeZW,
+	}
+	marshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ = map[coredata.CountryCode]string{
+		coredata.CountryCodeAD: "AD",
+		coredata.CountryCodeAE: "AE",
+		coredata.CountryCodeAF: "AF",
+		coredata.CountryCodeAG: "AG",
+		coredata.CountryCodeAI: "AI",
+		coredata.CountryCodeAL: "AL",
+		coredata.CountryCodeAM: "AM",
+		coredata.CountryCodeAO: "AO",
+		coredata.CountryCodeAQ: "AQ",
+		coredata.CountryCodeAR: "AR",
+		coredata.CountryCodeAS: "AS",
+		coredata.CountryCodeAT: "AT",
+		coredata.CountryCodeAU: "AU",
+		coredata.CountryCodeAW: "AW",
+		coredata.CountryCodeAX: "AX",
+		coredata.CountryCodeAZ: "AZ",
+		coredata.CountryCodeBA: "BA",
+		coredata.CountryCodeBB: "BB",
+		coredata.CountryCodeBD: "BD",
+		coredata.CountryCodeBE: "BE",
+		coredata.CountryCodeBF: "BF",
+		coredata.CountryCodeBG: "BG",
+		coredata.CountryCodeBH: "BH",
+		coredata.CountryCodeBI: "BI",
+		coredata.CountryCodeBJ: "BJ",
+		coredata.CountryCodeBL: "BL",
+		coredata.CountryCodeBM: "BM",
+		coredata.CountryCodeBN: "BN",
+		coredata.CountryCodeBO: "BO",
+		coredata.CountryCodeBQ: "BQ",
+		coredata.CountryCodeBR: "BR",
+		coredata.CountryCodeBS: "BS",
+		coredata.CountryCodeBT: "BT",
+		coredata.CountryCodeBV: "BV",
+		coredata.CountryCodeBW: "BW",
+		coredata.CountryCodeBY: "BY",
+		coredata.CountryCodeBZ: "BZ",
+		coredata.CountryCodeCA: "CA",
+		coredata.CountryCodeCC: "CC",
+		coredata.CountryCodeCD: "CD",
+		coredata.CountryCodeCF: "CF",
+		coredata.CountryCodeCG: "CG",
+		coredata.CountryCodeCH: "CH",
+		coredata.CountryCodeCI: "CI",
+		coredata.CountryCodeCK: "CK",
+		coredata.CountryCodeCL: "CL",
+		coredata.CountryCodeCM: "CM",
+		coredata.CountryCodeCN: "CN",
+		coredata.CountryCodeCO: "CO",
+		coredata.CountryCodeCR: "CR",
+		coredata.CountryCodeCU: "CU",
+		coredata.CountryCodeCV: "CV",
+		coredata.CountryCodeCW: "CW",
+		coredata.CountryCodeCX: "CX",
+		coredata.CountryCodeCY: "CY",
+		coredata.CountryCodeCZ: "CZ",
+		coredata.CountryCodeDE: "DE",
+		coredata.CountryCodeDJ: "DJ",
+		coredata.CountryCodeDK: "DK",
+		coredata.CountryCodeDM: "DM",
+		coredata.CountryCodeDO: "DO",
+		coredata.CountryCodeDZ: "DZ",
+		coredata.CountryCodeEC: "EC",
+		coredata.CountryCodeEE: "EE",
+		coredata.CountryCodeEG: "EG",
+		coredata.CountryCodeEH: "EH",
+		coredata.CountryCodeER: "ER",
+		coredata.CountryCodeES: "ES",
+		coredata.CountryCodeET: "ET",
+		coredata.CountryCodeFI: "FI",
+		coredata.CountryCodeFJ: "FJ",
+		coredata.CountryCodeFK: "FK",
+		coredata.CountryCodeFM: "FM",
+		coredata.CountryCodeFO: "FO",
+		coredata.CountryCodeFR: "FR",
+		coredata.CountryCodeGA: "GA",
+		coredata.CountryCodeGB: "GB",
+		coredata.CountryCodeGD: "GD",
+		coredata.CountryCodeGE: "GE",
+		coredata.CountryCodeGF: "GF",
+		coredata.CountryCodeGG: "GG",
+		coredata.CountryCodeGH: "GH",
+		coredata.CountryCodeGI: "GI",
+		coredata.CountryCodeGL: "GL",
+		coredata.CountryCodeGM: "GM",
+		coredata.CountryCodeGN: "GN",
+		coredata.CountryCodeGP: "GP",
+		coredata.CountryCodeGQ: "GQ",
+		coredata.CountryCodeGR: "GR",
+		coredata.CountryCodeGT: "GT",
+		coredata.CountryCodeGU: "GU",
+		coredata.CountryCodeGW: "GW",
+		coredata.CountryCodeGY: "GY",
+		coredata.CountryCodeHK: "HK",
+		coredata.CountryCodeHM: "HM",
+		coredata.CountryCodeHN: "HN",
+		coredata.CountryCodeHR: "HR",
+		coredata.CountryCodeHT: "HT",
+		coredata.CountryCodeHU: "HU",
+		coredata.CountryCodeID: "ID",
+		coredata.CountryCodeIE: "IE",
+		coredata.CountryCodeIL: "IL",
+		coredata.CountryCodeIM: "IM",
+		coredata.CountryCodeIN: "IN",
+		coredata.CountryCodeIO: "IO",
+		coredata.CountryCodeIQ: "IQ",
+		coredata.CountryCodeIR: "IR",
+		coredata.CountryCodeIS: "IS",
+		coredata.CountryCodeIT: "IT",
+		coredata.CountryCodeJE: "JE",
+		coredata.CountryCodeJM: "JM",
+		coredata.CountryCodeJO: "JO",
+		coredata.CountryCodeJP: "JP",
+		coredata.CountryCodeKE: "KE",
+		coredata.CountryCodeKG: "KG",
+		coredata.CountryCodeKH: "KH",
+		coredata.CountryCodeKI: "KI",
+		coredata.CountryCodeKM: "KM",
+		coredata.CountryCodeKN: "KN",
+		coredata.CountryCodeKP: "KP",
+		coredata.CountryCodeKR: "KR",
+		coredata.CountryCodeKW: "KW",
+		coredata.CountryCodeKY: "KY",
+		coredata.CountryCodeKZ: "KZ",
+		coredata.CountryCodeLA: "LA",
+		coredata.CountryCodeLB: "LB",
+		coredata.CountryCodeLC: "LC",
+		coredata.CountryCodeLI: "LI",
+		coredata.CountryCodeLK: "LK",
+		coredata.CountryCodeLR: "LR",
+		coredata.CountryCodeLS: "LS",
+		coredata.CountryCodeLT: "LT",
+		coredata.CountryCodeLU: "LU",
+		coredata.CountryCodeLV: "LV",
+		coredata.CountryCodeLY: "LY",
+		coredata.CountryCodeMA: "MA",
+		coredata.CountryCodeMC: "MC",
+		coredata.CountryCodeMD: "MD",
+		coredata.CountryCodeME: "ME",
+		coredata.CountryCodeMF: "MF",
+		coredata.CountryCodeMG: "MG",
+		coredata.CountryCodeMH: "MH",
+		coredata.CountryCodeMK: "MK",
+		coredata.CountryCodeML: "ML",
+		coredata.CountryCodeMM: "MM",
+		coredata.CountryCodeMN: "MN",
+		coredata.CountryCodeMO: "MO",
+		coredata.CountryCodeMP: "MP",
+		coredata.CountryCodeMQ: "MQ",
+		coredata.CountryCodeMR: "MR",
+		coredata.CountryCodeMS: "MS",
+		coredata.CountryCodeMT: "MT",
+		coredata.CountryCodeMU: "MU",
+		coredata.CountryCodeMV: "MV",
+		coredata.CountryCodeMW: "MW",
+		coredata.CountryCodeMX: "MX",
+		coredata.CountryCodeMY: "MY",
+		coredata.CountryCodeMZ: "MZ",
+		coredata.CountryCodeNA: "NA",
+		coredata.CountryCodeNC: "NC",
+		coredata.CountryCodeNE: "NE",
+		coredata.CountryCodeNF: "NF",
+		coredata.CountryCodeNG: "NG",
+		coredata.CountryCodeNI: "NI",
+		coredata.CountryCodeNL: "NL",
+		coredata.CountryCodeNO: "NO",
+		coredata.CountryCodeNP: "NP",
+		coredata.CountryCodeNR: "NR",
+		coredata.CountryCodeNU: "NU",
+		coredata.CountryCodeNZ: "NZ",
+		coredata.CountryCodeOM: "OM",
+		coredata.CountryCodePA: "PA",
+		coredata.CountryCodePE: "PE",
+		coredata.CountryCodePF: "PF",
+		coredata.CountryCodePG: "PG",
+		coredata.CountryCodePH: "PH",
+		coredata.CountryCodePK: "PK",
+		coredata.CountryCodePL: "PL",
+		coredata.CountryCodePM: "PM",
+		coredata.CountryCodePN: "PN",
+		coredata.CountryCodePR: "PR",
+		coredata.CountryCodePS: "PS",
+		coredata.CountryCodePT: "PT",
+		coredata.CountryCodePW: "PW",
+		coredata.CountryCodePY: "PY",
+		coredata.CountryCodeQA: "QA",
+		coredata.CountryCodeRE: "RE",
+		coredata.CountryCodeRO: "RO",
+		coredata.CountryCodeRS: "RS",
+		coredata.CountryCodeRU: "RU",
+		coredata.CountryCodeRW: "RW",
+		coredata.CountryCodeSA: "SA",
+		coredata.CountryCodeSB: "SB",
+		coredata.CountryCodeSC: "SC",
+		coredata.CountryCodeSD: "SD",
+		coredata.CountryCodeSE: "SE",
+		coredata.CountryCodeSG: "SG",
+		coredata.CountryCodeSH: "SH",
+		coredata.CountryCodeSI: "SI",
+		coredata.CountryCodeSJ: "SJ",
+		coredata.CountryCodeSK: "SK",
+		coredata.CountryCodeSL: "SL",
+		coredata.CountryCodeSM: "SM",
+		coredata.CountryCodeSN: "SN",
+		coredata.CountryCodeSO: "SO",
+		coredata.CountryCodeSR: "SR",
+		coredata.CountryCodeSS: "SS",
+		coredata.CountryCodeST: "ST",
+		coredata.CountryCodeSV: "SV",
+		coredata.CountryCodeSX: "SX",
+		coredata.CountryCodeSY: "SY",
+		coredata.CountryCodeSZ: "SZ",
+		coredata.CountryCodeTC: "TC",
+		coredata.CountryCodeTD: "TD",
+		coredata.CountryCodeTF: "TF",
+		coredata.CountryCodeTG: "TG",
+		coredata.CountryCodeTH: "TH",
+		coredata.CountryCodeTJ: "TJ",
+		coredata.CountryCodeTK: "TK",
+		coredata.CountryCodeTL: "TL",
+		coredata.CountryCodeTM: "TM",
+		coredata.CountryCodeTN: "TN",
+		coredata.CountryCodeTO: "TO",
+		coredata.CountryCodeTR: "TR",
+		coredata.CountryCodeTT: "TT",
+		coredata.CountryCodeTV: "TV",
+		coredata.CountryCodeTW: "TW",
+		coredata.CountryCodeTZ: "TZ",
+		coredata.CountryCodeUA: "UA",
+		coredata.CountryCodeUG: "UG",
+		coredata.CountryCodeUM: "UM",
+		coredata.CountryCodeUS: "US",
+		coredata.CountryCodeUY: "UY",
+		coredata.CountryCodeUZ: "UZ",
+		coredata.CountryCodeVA: "VA",
+		coredata.CountryCodeVC: "VC",
+		coredata.CountryCodeVE: "VE",
+		coredata.CountryCodeVG: "VG",
+		coredata.CountryCodeVI: "VI",
+		coredata.CountryCodeVN: "VN",
+		coredata.CountryCodeVU: "VU",
+		coredata.CountryCodeWF: "WF",
+		coredata.CountryCodeWS: "WS",
+		coredata.CountryCodeYE: "YE",
+		coredata.CountryCodeYT: "YT",
+		coredata.CountryCodeZA: "ZA",
+		coredata.CountryCodeZM: "ZM",
+		coredata.CountryCodeZW: "ZW",
+	}
+)
 
 func (ec *executionContext) unmarshalNCreateTrustCenterAccessInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐCreateTrustCenterAccessInput(ctx context.Context, v any) (types.CreateTrustCenterAccessInput, error) {
 	res, err := ec.unmarshalInputCreateTrustCenterAccessInput(ctx, v)

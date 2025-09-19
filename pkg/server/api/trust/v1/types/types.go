@@ -163,6 +163,7 @@ type Vendor struct {
 	Category         coredata.VendorCategory `json:"category"`
 	WebsiteURL       *string                 `json:"websiteUrl,omitempty"`
 	PrivacyPolicyURL *string                 `json:"privacyPolicyUrl,omitempty"`
+	Countries        []coredata.CountryCode  `json:"countries"`
 }
 
 func (Vendor) IsNode()             {}
