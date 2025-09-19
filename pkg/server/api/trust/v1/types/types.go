@@ -103,9 +103,13 @@ type Mutation struct {
 }
 
 type Organization struct {
-	ID      gid.GID `json:"id"`
-	Name    string  `json:"name"`
-	LogoURL *string `json:"logoUrl,omitempty"`
+	ID                 gid.GID `json:"id"`
+	Name               string  `json:"name"`
+	LogoURL            *string `json:"logoUrl,omitempty"`
+	Description        *string `json:"description,omitempty"`
+	WebsiteURL         *string `json:"websiteUrl,omitempty"`
+	Email              *string `json:"email,omitempty"`
+	HeadquarterAddress *string `json:"headquarterAddress,omitempty"`
 }
 
 func (Organization) IsNode()             {}

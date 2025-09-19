@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6dc30c35c9ce7367967d235b1a259179>>
+ * @generated SignedSource<<892a78db951d547b53d595d219b94e75>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,9 +10,13 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type UpdateOrganizationInput = {
+  description?: string | null | undefined;
+  email?: string | null | undefined;
+  headquarterAddress?: string | null | undefined;
   logo?: any | null | undefined;
   name?: string | null | undefined;
   organizationId: string;
+  websiteUrl?: string | null | undefined;
 };
 export type SettingsPage_UpdateMutation$variables = {
   input: UpdateOrganizationInput;
@@ -20,9 +24,13 @@ export type SettingsPage_UpdateMutation$variables = {
 export type SettingsPage_UpdateMutation$data = {
   readonly updateOrganization: {
     readonly organization: {
+      readonly description: string | null | undefined;
+      readonly email: string | null | undefined;
+      readonly headquarterAddress: string | null | undefined;
       readonly id: string;
       readonly logoUrl: string | null | undefined;
       readonly name: string;
+      readonly websiteUrl: string | null | undefined;
     };
   };
 };
@@ -82,6 +90,34 @@ v1 = [
             "kind": "ScalarField",
             "name": "logoUrl",
             "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "description",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "websiteUrl",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "email",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "headquarterAddress",
+            "storageKey": null
           }
         ],
         "storageKey": null
@@ -108,16 +144,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "ac8d86332fabe20dd7ea8fef4207b75e",
+    "cacheID": "3526d270f311db33e0563abc99c96978",
     "id": null,
     "metadata": {},
     "name": "SettingsPage_UpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation SettingsPage_UpdateMutation(\n  $input: UpdateOrganizationInput!\n) {\n  updateOrganization(input: $input) {\n    organization {\n      id\n      name\n      logoUrl\n    }\n  }\n}\n"
+    "text": "mutation SettingsPage_UpdateMutation(\n  $input: UpdateOrganizationInput!\n) {\n  updateOrganization(input: $input) {\n    organization {\n      id\n      name\n      logoUrl\n      description\n      websiteUrl\n      email\n      headquarterAddress\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "85f76939223253c1d102d05cd74f7538";
+(node as any).hash = "54949158defa7f1bb8e1e578db7cd7be";
 
 export default node;

@@ -11,6 +11,7 @@ import {
   Label,
   PageHeader,
   Spinner,
+  Textarea,
   useConfirm,
   useToast,
 } from "@probo/ui";
@@ -19,14 +20,15 @@ import type { PreloadedQuery } from "react-relay";
 import type { OrganizationGraph_ViewQuery } from "/hooks/graph/__generated__/OrganizationGraph_ViewQuery.graphql";
 import { useFragment, useMutation, usePreloadedQuery } from "react-relay";
 import { organizationViewQuery } from "/hooks/graph/OrganizationGraph";
-import { useDebounceCallback } from "usehooks-ts";
 import { graphql } from "relay-runtime";
 import type {
   SettingsPageFragment$data,
   SettingsPageFragment$key,
 } from "./__generated__/SettingsPageFragment.graphql";
-import { useState, type ChangeEventHandler } from "react";
+import { useState, type ChangeEventHandler, useEffect } from "react";
 import { sprintf } from "@probo/helpers";
+import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { z } from "zod";
 import type { NodeOf } from "/types";
 import clsx from "clsx";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
@@ -35,6 +37,16 @@ import { InviteUserDialog } from "/components/organizations/InviteUserDialog";
 import { useDeleteOrganizationMutation } from "/hooks/graph/OrganizationGraph";
 import { useNavigate } from "react-router";
 import { DeleteOrganizationDialog } from "/components/organizations/DeleteOrganizationDialog";
+
+const organizationSchema = z.object({
+  name: z.string().min(1, "Organization name is required"),
+  description: z.string().optional(),
+  websiteUrl: z.string().optional(),
+  email: z.string().optional(),
+  headquarterAddress: z.string().optional(),
+});
+
+type OrganizationFormData = z.infer<typeof organizationSchema>;
 
 type Props = {
   queryRef: PreloadedQuery<OrganizationGraph_ViewQuery>;
@@ -45,6 +57,10 @@ const organizationFragment = graphql`
     id
     name
     logoUrl
+    description
+    websiteUrl
+    email
+    headquarterAddress
     users(first: 100) {
       edges {
         node {
@@ -75,6 +91,10 @@ const updateOrganizationMutation = graphql`
         id
         name
         logoUrl
+        description
+        websiteUrl
+        email
+        headquarterAddress
       }
     }
   }
@@ -92,25 +112,59 @@ export default function SettingsPage({ queryRef }: Props) {
     organizationFragment,
     organizationKey
   );
-  const [updateOrganization, isUpdating] = useMutation(
-    updateOrganizationMutation
-  );
+  const [updateOrganization] = useMutation(updateOrganizationMutation);
   const [deleteOrganization, isDeleting] = useDeleteOrganizationMutation();
   const users = organization.users.edges.map((edge) => edge.node);
 
-  const updateOrganizationName = useDebounceCallback((name: string) => {
-    if (!name) {
-      return "";
-    }
+  const { formState, handleSubmit, register, reset } =
+    useFormWithSchema(organizationSchema, {
+      defaultValues: {
+        name: organization.name || "",
+        description: organization.description || "",
+        websiteUrl: organization.websiteUrl || "",
+        email: organization.email || "",
+        headquarterAddress: organization.headquarterAddress || "",
+      },
+    });
+
+  useEffect(() => {
+    reset({
+      name: organization.name || "",
+      description: organization.description || "",
+      websiteUrl: organization.websiteUrl || "",
+      email: organization.email || "",
+      headquarterAddress: organization.headquarterAddress || "",
+    });
+  }, [organization, reset]);
+
+  const onSubmit = handleSubmit((data: OrganizationFormData) => {
     updateOrganization({
       variables: {
         input: {
           organizationId: organization.id,
-          name,
+          name: data.name,
+          description: data.description || null,
+          websiteUrl: data.websiteUrl || null,
+          email: data.email || null,
+          headquarterAddress: data.headquarterAddress || null,
         },
       },
+      onError(error) {
+        toast({
+          title: __("Failed to update organization"),
+          description: error.message || __("Please try again."),
+          variant: "error",
+        });
+      },
+      onCompleted() {
+        toast({
+          title: __("Organization updated"),
+          description: __("Your organization details have been updated successfully."),
+          variant: "success",
+        });
+      },
     });
-  }, 500);
+  });
 
   const updateOrganizationLogo: ChangeEventHandler<HTMLInputElement> = (e) => {
     const file = e.target.files?.[0];
@@ -156,14 +210,15 @@ export default function SettingsPage({ queryRef }: Props) {
       <PageHeader title={__("Settings")} />
 
       {/* Organization settings */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium">
-            {__("Organization details")}
-          </h2>
-          {isUpdating && <Spinner />}
-        </div>
-        <Card padded className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-medium">
+              {__("Organization details")}
+            </h2>
+            {formState.isSubmitting && <Spinner />}
+          </div>
+          <Card padded className="space-y-4">
           <div>
             <Label>{__("Organization logo")}</Label>
             <div className="flex w-max items-center gap-4">
@@ -173,7 +228,7 @@ export default function SettingsPage({ queryRef }: Props) {
                 size="xl"
               />
               <FileButton
-                disabled={isUpdating}
+                disabled={formState.isSubmitting}
                 onChange={updateOrganizationLogo}
                 variant="secondary"
                 className="ml-auto"
@@ -183,16 +238,62 @@ export default function SettingsPage({ queryRef }: Props) {
             </div>
           </div>
           <Field
-            readOnly={isUpdating}
+            {...register("name")}
+            readOnly={formState.isSubmitting}
             name="name"
             type="text"
-            defaultValue={organization.name}
             label={__("Organization name")}
             placeholder={__("Organization name")}
-            onChange={(e) => updateOrganizationName(e.currentTarget.value)}
           />
+          <div>
+            <Label>{__("Description")}</Label>
+            <Textarea
+              {...register("description")}
+              readOnly={formState.isSubmitting}
+              name="description"
+              placeholder={__("Brief description of your organization")}
+              rows={3}
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Field
+              {...register("websiteUrl")}
+              readOnly={formState.isSubmitting}
+              name="websiteUrl"
+              type="url"
+              label={__("Website URL")}
+              placeholder={__("https://example.com")}
+            />
+            <Field
+              {...register("email")}
+              readOnly={formState.isSubmitting}
+              name="email"
+              type="email"
+              label={__("Email")}
+              placeholder={__("contact@example.com")}
+            />
+          </div>
+          <div>
+            <Label>{__("Headquarter Address")}</Label>
+            <Textarea
+              {...register("headquarterAddress")}
+              readOnly={formState.isSubmitting}
+              name="headquarterAddress"
+              placeholder={__("123 Main St, City, Country")}
+            />
+          </div>
+
+
+          {formState.isDirty && (
+            <div className="flex justify-end pt-6">
+              <Button type="submit" disabled={formState.isSubmitting}>
+                {formState.isSubmitting ? __("Updating...") : __("Update Organization")}
+              </Button>
+            </div>
+          )}
         </Card>
       </div>
+      </form>
 
       {/* Integrations */}
       <div className="space-y-4">
