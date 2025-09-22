@@ -84,7 +84,6 @@ type (
 
 	CreateVendorRiskAssessmentRequest struct {
 		VendorID        gid.GID
-		AssessedByID    gid.GID
 		ExpiresAt       time.Time
 		DataSensitivity coredata.DataSensitivity
 		BusinessImpact  coredata.BusinessImpact
@@ -536,8 +535,6 @@ func (s VendorService) CreateRiskAssessment(
 	vendorRiskAssessment := &coredata.VendorRiskAssessment{
 		ID:              vendorRiskAssessmentID,
 		VendorID:        req.VendorID,
-		AssessedBy:      req.AssessedByID,
-		AssessedAt:      now,
 		ExpiresAt:       req.ExpiresAt,
 		DataSensitivity: req.DataSensitivity,
 		BusinessImpact:  req.BusinessImpact,

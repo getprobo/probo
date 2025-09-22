@@ -134,8 +134,8 @@ function VendorRow({
           </div>
         </Td>
         <Td>
-          {latestAssessment?.assessedAt
-            ? formatDate(latestAssessment.assessedAt)
+          {latestAssessment?.createdAt
+            ? formatDate(latestAssessment.createdAt)
             : __("Not assessed")}
         </Td>
         <Td>

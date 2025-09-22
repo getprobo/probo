@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f877423fd1b767f837337e1b8a917e51>>
+ * @generated SignedSource<<2cd3f372cc571cec881b9762e381f1d5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ import { FragmentRefs } from "relay-runtime";
 export type BusinessImpact = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM";
 export type DataSensitivity = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM" | "NONE";
 export type CreateVendorRiskAssessmentInput = {
-  assessedBy: string;
   businessImpact: BusinessImpact;
   dataSensitivity: DataSensitivity;
   expiresAt: any;
@@ -55,14 +54,7 @@ v2 = [
     "name": "input",
     "variableName": "input"
   }
-],
-v3 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-};
+];
 return {
   "fragment": {
     "argumentDefinitions": [
@@ -148,31 +140,18 @@ return {
                 "name": "node",
                 "plural": false,
                 "selections": [
-                  (v3/*: any*/),
                   {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "assessedAt",
+                    "name": "id",
                     "storageKey": null
                   },
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "People",
-                    "kind": "LinkedField",
-                    "name": "assessedBy",
-                    "plural": false,
-                    "selections": [
-                      (v3/*: any*/),
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "fullName",
-                        "storageKey": null
-                      }
-                    ],
+                    "kind": "ScalarField",
+                    "name": "createdAt",
                     "storageKey": null
                   },
                   {
@@ -231,12 +210,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c55703ef9adb6c6aabf79aafe6cbeb89",
+    "cacheID": "1bd928ac46edc24d7b7cda3e5d7e2cb2",
     "id": null,
     "metadata": {},
     "name": "CreateRiskAssessmentDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateRiskAssessmentDialogMutation(\n  $input: CreateVendorRiskAssessmentInput!\n) {\n  createVendorRiskAssessment(input: $input) {\n    vendorRiskAssessmentEdge {\n      node {\n        ...VendorRiskAssessmentTabFragment_assessment\n        id\n      }\n    }\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment_assessment on VendorRiskAssessment {\n  id\n  assessedAt\n  assessedBy {\n    id\n    fullName\n  }\n  expiresAt\n  dataSensitivity\n  businessImpact\n  notes\n}\n"
+    "text": "mutation CreateRiskAssessmentDialogMutation(\n  $input: CreateVendorRiskAssessmentInput!\n) {\n  createVendorRiskAssessment(input: $input) {\n    vendorRiskAssessmentEdge {\n      node {\n        ...VendorRiskAssessmentTabFragment_assessment\n        id\n      }\n    }\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment_assessment on VendorRiskAssessment {\n  id\n  createdAt\n  expiresAt\n  dataSensitivity\n  businessImpact\n  notes\n}\n"
   }
 };
 })();

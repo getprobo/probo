@@ -3187,7 +3187,6 @@ input UpdateDocumentInput {
   title: String
   content: String
   ownerId: ID
-  createdBy: ID
   documentType: DocumentType
   showOnTrustCenter: Boolean
 }
@@ -3208,6 +3207,7 @@ input InviteUserInput {
   organizationId: ID!
   email: String!
   fullName: String!
+  createPeople: Boolean!
 }
 
 input RemoveUserInput {
@@ -3719,8 +3719,6 @@ input VendorRiskAssessmentOrder {
 type VendorRiskAssessment implements Node {
   id: ID!
   vendor: Vendor! @goField(forceResolver: true)
-  assessedAt: Datetime!
-  assessedBy: People! @goField(forceResolver: true)
   expiresAt: Datetime!
   dataSensitivity: DataSensitivity!
   businessImpact: BusinessImpact!
@@ -3741,15 +3739,10 @@ enum VendorRiskAssessmentOrderField
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.VendorRiskAssessmentOrderFieldExpiresAt"
     )
-  ASSESSED_AT
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorRiskAssessmentOrderFieldAssessedAt"
-    )
 }
 
 input CreateVendorRiskAssessmentInput {
   vendorId: ID!
-  assessedBy: ID!
   expiresAt: Datetime!
   dataSensitivity: DataSensitivity!
   businessImpact: BusinessImpact!
@@ -3786,7 +3779,6 @@ type DocumentVersion implements Node {
     orderBy: DocumentVersionSignatureOrder
   ): DocumentVersionSignatureConnection! @goField(forceResolver: true)
 
-  publishedBy: People @goField(forceResolver: true)
   publishedAt: Datetime
   createdAt: Datetime!
   updatedAt: Datetime!

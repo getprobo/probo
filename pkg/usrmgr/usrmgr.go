@@ -84,6 +84,7 @@ type (
 		OrganizationID gid.GID `json:"organization_id"`
 		Email          string  `json:"email"`
 		FullName       string  `json:"full_name"`
+		CreatePeople   bool    `json:"create_people"`
 	}
 
 	PasswordResetData struct {
@@ -661,6 +662,7 @@ func (s Service) InviteUser(
 	organizationID gid.GID,
 	fullName string,
 	emailAddress string,
+	createPeople bool,
 ) error {
 	if _, err := mail.ParseAddress(emailAddress); err != nil {
 		return &ErrInvalidEmail{emailAddress}
@@ -697,32 +699,34 @@ func (s Service) InviteUser(
 				return fmt.Errorf("cannot insert user organization: %w", err)
 			}
 
-			people := &coredata.People{}
-			scope := coredata.NewScope(organizationID.TenantID())
-			if err := people.LoadByEmail(ctx, tx, scope, emailAddress); err != nil {
-				var errPeopleNotFound *coredata.ErrPeopleNotFound
+			if createPeople {
+				people := &coredata.People{}
+				scope := coredata.NewScope(organizationID.TenantID())
+				if err := people.LoadByEmail(ctx, tx, scope, emailAddress); err != nil {
+					var errPeopleNotFound *coredata.ErrPeopleNotFound
 
-				if errors.As(err, &errPeopleNotFound) {
-					people = &coredata.People{
-						ID:                       gid.New(organizationID.TenantID(), coredata.PeopleEntityType),
-						OrganizationID:           organizationID,
-						UserID:                   &user.ID,
-						FullName:                 fullName,
-						PrimaryEmailAddress:      emailAddress,
-						Kind:                     coredata.PeopleKindContractor,
-						AdditionalEmailAddresses: []string{},
-						CreatedAt:                time.Now(),
-						UpdatedAt:                time.Now(),
+					if errors.As(err, &errPeopleNotFound) {
+						people = &coredata.People{
+							ID:                       gid.New(organizationID.TenantID(), coredata.PeopleEntityType),
+							OrganizationID:           organizationID,
+							UserID:                   &user.ID,
+							FullName:                 fullName,
+							PrimaryEmailAddress:      emailAddress,
+							Kind:                     coredata.PeopleKindContractor,
+							AdditionalEmailAddresses: []string{},
+							CreatedAt:                time.Now(),
+							UpdatedAt:                time.Now(),
+						}
+
+						if err := people.Insert(ctx, tx, scope); err != nil {
+							return fmt.Errorf("cannot insert people: %w", err)
+						}
+
+						return nil
 					}
 
-					if err := people.Insert(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot insert people: %w", err)
-					}
-
-					return nil
+					return fmt.Errorf("cannot load people by email: %w", err)
 				}
-
-				return fmt.Errorf("cannot load people by email: %w", err)
 			}
 
 			return nil
@@ -741,7 +745,7 @@ func (s Service) InviteUser(
 		s.tokenSecret,
 		TokenTypeOrganizationInvitation,
 		s.invitationTokenValidity,
-		InvitationData{OrganizationID: organizationID, Email: emailAddress, FullName: fullName},
+		InvitationData{OrganizationID: organizationID, Email: emailAddress, FullName: fullName, CreatePeople: createPeople},
 	)
 	if err != nil {
 		return fmt.Errorf("cannot generate confirmation token: %w", err)
@@ -832,39 +836,41 @@ func (s Service) ConfirmInvitation(ctx context.Context, tokenString string, pass
 				return fmt.Errorf("cannot insert user organization: %w", err)
 			}
 
-			people := &coredata.People{}
-			scope := coredata.NewScope(token.Data.OrganizationID.TenantID())
+			if token.Data.CreatePeople {
+				people := &coredata.People{}
+				scope := coredata.NewScope(token.Data.OrganizationID.TenantID())
 
-			if err := people.LoadByEmail(ctx, tx, scope, token.Data.Email); err != nil {
-				var errPeopleNotFound *coredata.ErrPeopleNotFound
+				if err := people.LoadByEmail(ctx, tx, scope, token.Data.Email); err != nil {
+					var errPeopleNotFound *coredata.ErrPeopleNotFound
 
-				if errors.As(err, &errPeopleNotFound) {
-					peopleID := gid.New(token.Data.OrganizationID.TenantID(), coredata.PeopleEntityType)
-					people = &coredata.People{
-						ID:                       peopleID,
-						OrganizationID:           token.Data.OrganizationID,
-						UserID:                   &user.ID,
-						FullName:                 token.Data.FullName,
-						PrimaryEmailAddress:      token.Data.Email,
-						Kind:                     coredata.PeopleKindEmployee,
-						AdditionalEmailAddresses: []string{},
-						CreatedAt:                now,
-						UpdatedAt:                now,
-					}
+					if errors.As(err, &errPeopleNotFound) {
+						peopleID := gid.New(token.Data.OrganizationID.TenantID(), coredata.PeopleEntityType)
+						people = &coredata.People{
+							ID:                       peopleID,
+							OrganizationID:           token.Data.OrganizationID,
+							UserID:                   &user.ID,
+							FullName:                 token.Data.FullName,
+							PrimaryEmailAddress:      token.Data.Email,
+							Kind:                     coredata.PeopleKindEmployee,
+							AdditionalEmailAddresses: []string{},
+							CreatedAt:                now,
+							UpdatedAt:                now,
+						}
 
-					if err := people.Insert(ctx, tx, scope); err != nil {
-						return fmt.Errorf("cannot insert people: %w", err)
+						if err := people.Insert(ctx, tx, scope); err != nil {
+							return fmt.Errorf("cannot insert people: %w", err)
+						}
+					} else {
+						return fmt.Errorf("cannot load people by email: %w", err)
 					}
 				} else {
-					return fmt.Errorf("cannot load people by email: %w", err)
-				}
-			} else {
-				people.UserID = &user.ID
-				people.FullName = token.Data.FullName
-				people.UpdatedAt = now
+					people.UserID = &user.ID
+					people.FullName = token.Data.FullName
+					people.UpdatedAt = now
 
-				if err := people.Update(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot update people: %w", err)
+					if err := people.Update(ctx, tx, scope); err != nil {
+						return fmt.Errorf("cannot update people: %w", err)
+					}
 				}
 			}
 

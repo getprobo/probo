@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8b1614888dac560deff871232f91995d>>
+ * @generated SignedSource<<554f3a594f825db3f7f7da0c5c1d8b1f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -198,7 +198,7 @@ return {
                                 "name": "orderBy",
                                 "value": {
                                   "direction": "DESC",
-                                  "field": "ASSESSED_AT"
+                                  "field": "CREATED_AT"
                                 }
                               }
                             ],
@@ -228,7 +228,7 @@ return {
                                         "alias": null,
                                         "args": null,
                                         "kind": "ScalarField",
-                                        "name": "assessedAt",
+                                        "name": "createdAt",
                                         "storageKey": null
                                       },
                                       {
@@ -259,7 +259,7 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": "riskAssessments(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"ASSESSED_AT\"})"
+                            "storageKey": "riskAssessments(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                           },
                           (v4/*: any*/)
                         ],
@@ -350,12 +350,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4b19f6f4be47c38d8b68601ec95315a6",
+    "cacheID": "998ad60d132157090312ac11e318b2e5",
     "id": null,
     "metadata": {},
     "name": "VendorGraphListQuery",
     "operationKind": "query",
-    "text": "query VendorGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...VendorGraphPaginatedFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment VendorGraphPaginatedFragment_3iomuz on Organization {\n  vendors(first: 50, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        websiteUrl\n        updatedAt\n        riskAssessments(first: 1, orderBy: {direction: DESC, field: ASSESSED_AT}) {\n          edges {\n            node {\n              id\n              assessedAt\n              expiresAt\n              dataSensitivity\n              businessImpact\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query VendorGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...VendorGraphPaginatedFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment VendorGraphPaginatedFragment_3iomuz on Organization {\n  vendors(first: 50, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        websiteUrl\n        updatedAt\n        riskAssessments(first: 1, orderBy: {direction: DESC, field: CREATED_AT}) {\n          edges {\n            node {\n              id\n              createdAt\n              expiresAt\n              dataSensitivity\n              businessImpact\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

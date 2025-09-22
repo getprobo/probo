@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0bca6db2c1a834fd326761b3544d00ae>>
+ * @generated SignedSource<<121b4497478f4b5ff67fb8a9daab3774>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type OrderDirection = "ASC" | "DESC";
-export type VendorRiskAssessmentOrderField = "ASSESSED_AT" | "CREATED_AT" | "EXPIRES_AT";
+export type VendorRiskAssessmentOrderField = "CREATED_AT" | "EXPIRES_AT";
 export type VendorRiskAssessmentOrder = {
   direction: OrderDirection;
   field: VendorRiskAssessmentOrderField;
@@ -216,26 +216,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "assessedAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "concreteType": "People",
-                            "kind": "LinkedField",
-                            "name": "assessedBy",
-                            "plural": false,
-                            "selections": [
-                              (v12/*: any*/),
-                              {
-                                "alias": null,
-                                "args": null,
-                                "kind": "ScalarField",
-                                "name": "fullName",
-                                "storageKey": null
-                              }
-                            ],
+                            "name": "createdAt",
                             "storageKey": null
                           },
                           {
@@ -355,12 +336,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "26ab0b864c4e22a21c078f70ed7caf93",
+    "cacheID": "5bf6eff01e3ca53e8da78cba59316a0c",
     "id": null,
     "metadata": {},
     "name": "VendorRiskAssessmentTabQuery",
     "operationKind": "query",
-    "text": "query VendorRiskAssessmentTabQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorRiskAssessmentOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorRiskAssessmentTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment_16fISc on Vendor {\n  id\n  riskAssessments(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...VendorRiskAssessmentTabFragment_assessment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment_assessment on VendorRiskAssessment {\n  id\n  assessedAt\n  assessedBy {\n    id\n    fullName\n  }\n  expiresAt\n  dataSensitivity\n  businessImpact\n  notes\n}\n"
+    "text": "query VendorRiskAssessmentTabQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorRiskAssessmentOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorRiskAssessmentTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment_16fISc on Vendor {\n  id\n  riskAssessments(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...VendorRiskAssessmentTabFragment_assessment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment_assessment on VendorRiskAssessment {\n  id\n  createdAt\n  expiresAt\n  dataSensitivity\n  businessImpact\n  notes\n}\n"
   }
 };
 })();

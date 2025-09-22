@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1cf40085b2959d7ebb48ee4a90be41b1>>
+ * @generated SignedSource<<9ed3f33dde5f6a00c742b8db245ba03b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,6 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type InviteUserInput = {
+  createPeople: boolean;
   email: string;
   fullName: string;
   organizationId: string;

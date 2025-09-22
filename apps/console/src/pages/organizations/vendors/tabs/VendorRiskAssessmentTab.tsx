@@ -59,11 +59,7 @@ const riskAssessmentsFragment = graphql`
 const riskAssessmentFragment = graphql`
   fragment VendorRiskAssessmentTabFragment_assessment on VendorRiskAssessment {
     id
-    assessedAt
-    assessedBy {
-      id
-      fullName
-    }
+    createdAt
     expiresAt
     dataSensitivity
     businessImpact
@@ -72,9 +68,9 @@ const riskAssessmentFragment = graphql`
 `;
 
 export default function VendorRiskAssessmentTab() {
-  const { vendor, peopleId } = useOutletContext<{
+  const { vendor, userId } = useOutletContext<{
     vendor: VendorRiskAssessmentTabFragment$key & { name: string; id: string };
-    peopleId: string;
+    userId: string;
   }>();
   const [data, refetch] = useRefetchableFragment(
     riskAssessmentsFragment,
@@ -96,7 +92,7 @@ export default function VendorRiskAssessmentTab() {
           <CreateRiskAssessmentDialog
             vendorId={vendor.id}
             connection={data.riskAssessments.__id}
-            peopleId={peopleId}
+            userId={userId}
           >
             <Button icon={IconPlusLarge} variant="secondary">
               {__("Add Risk Assessment")}
@@ -114,7 +110,7 @@ export default function VendorRiskAssessmentTab() {
         <SortableTable refetch={refetch}>
           <Thead>
             <Tr>
-              <SortableTh field="ASSESSED_AT">{__("Assessed By")}</SortableTh>
+              <SortableTh field="CREATED_AT">{__("Assessed By")}</SortableTh>
               <SortableTh field="EXPIRES_AT">{__("Expires")}</SortableTh>
               <Th>{__("Data sensitivity")}</Th>
               <Th>{__("Business impact")}</Th>
@@ -125,7 +121,7 @@ export default function VendorRiskAssessmentTab() {
               <CreateRiskAssessmentDialog
                 vendorId={vendor.id}
                 connection={data.riskAssessments.__id}
-                peopleId={peopleId}
+                userId={userId}
               >
                 <TrButton colspan={5} onClick={() => {}}>
                   {__("Add Risk Assessment")}
@@ -178,9 +174,8 @@ function AssessmentRow(props: AssessmentRowProps) {
         onClick={() => props.onClick(assessment.id)}
       >
         <Td>
-          {assessment.assessedBy?.fullName}
           <span className="text-xs text-txt-secondary ml-1">
-            ({relativeDateFormat(assessment.assessedAt)})
+            ({relativeDateFormat(assessment.createdAt)})
           </span>
         </Td>
         <Td>

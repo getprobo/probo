@@ -92,7 +92,6 @@ func (s *DocumentService) ExportPDF(
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
 	owner := &coredata.People{}
-	publishedBy := &coredata.People{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -107,12 +106,6 @@ func (s *DocumentService) ExportPDF(
 
 			if err := version.LoadLatestPublishedVersion(ctx, conn, s.svc.scope, documentID); err != nil {
 				return fmt.Errorf("cannot load latest published document version: %w", err)
-			}
-
-			if version.PublishedBy != nil {
-				if err := publishedBy.LoadByID(ctx, conn, s.svc.scope, *version.PublishedBy); err != nil {
-					return fmt.Errorf("cannot load published by person: %w", err)
-				}
 			}
 
 			if err := owner.LoadByID(ctx, conn, s.svc.scope, document.OwnerID); err != nil {
@@ -143,7 +136,6 @@ func (s *DocumentService) ExportPDF(
 		Approver:       owner.FullName,
 		Description:    version.Changelog,
 		PublishedAt:    version.PublishedAt,
-		PublishedBy:    publishedBy.FullName,
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)

@@ -46,7 +46,6 @@ func NewVendorRiskAssessmentEdge(c *coredata.VendorRiskAssessment, orderBy cored
 func NewVendorRiskAssessment(c *coredata.VendorRiskAssessment) *VendorRiskAssessment {
 	return &VendorRiskAssessment{
 		ID:              c.ID,
-		AssessedAt:      c.AssessedAt,
 		ExpiresAt:       c.ExpiresAt,
 		DataSensitivity: c.DataSensitivity,
 		BusinessImpact:  c.BusinessImpact,

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<68ddff15cd65f5367f7e9ae6b3c38f34>>
+ * @generated SignedSource<<b6963cdf0e4c8a5c6bb293cb53f8d404>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,12 +13,8 @@ export type BusinessImpact = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM";
 export type DataSensitivity = "CRITICAL" | "HIGH" | "LOW" | "MEDIUM" | "NONE";
 import { FragmentRefs } from "relay-runtime";
 export type VendorRiskAssessmentTabFragment_assessment$data = {
-  readonly assessedAt: any;
-  readonly assessedBy: {
-    readonly fullName: string;
-    readonly id: string;
-  };
   readonly businessImpact: BusinessImpact;
+  readonly createdAt: any;
   readonly dataSensitivity: DataSensitivity;
   readonly expiresAt: any;
   readonly id: string;
@@ -30,45 +26,24 @@ export type VendorRiskAssessmentTabFragment_assessment$key = {
   readonly " $fragmentSpreads": FragmentRefs<"VendorRiskAssessmentTabFragment_assessment">;
 };
 
-const node: ReaderFragment = (function(){
-var v0 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-};
-return {
+const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
   "name": "VendorRiskAssessmentTabFragment_assessment",
   "selections": [
-    (v0/*: any*/),
     {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "assessedAt",
+      "name": "id",
       "storageKey": null
     },
     {
       "alias": null,
       "args": null,
-      "concreteType": "People",
-      "kind": "LinkedField",
-      "name": "assessedBy",
-      "plural": false,
-      "selections": [
-        (v0/*: any*/),
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "fullName",
-          "storageKey": null
-        }
-      ],
+      "kind": "ScalarField",
+      "name": "createdAt",
       "storageKey": null
     },
     {
@@ -103,8 +78,7 @@ return {
   "type": "VendorRiskAssessment",
   "abstractKey": null
 };
-})();
 
-(node as any).hash = "08d6de198077f9b5985258466bbc33c0";
+(node as any).hash = "533771f5fac9e732556929fa2b1d0dc5";
 
 export default node;

@@ -42,7 +42,6 @@ type (
 		Title          string
 		Content        string
 		OwnerID        gid.GID
-		CreatedBy      gid.GID
 		DocumentType   coredata.DocumentType
 	}
 
@@ -186,13 +185,8 @@ func (s *DocumentService) BulkPublishVersions(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			people := &coredata.People{}
-			if err := people.LoadByID(ctx, tx, s.svc.scope, req.PublishedBy); err != nil {
-				return fmt.Errorf("cannot load people: %w", err)
-			}
-
 			for _, documentID := range req.DocumentIDs {
-				document, version, err := s.publishVersionInTx(ctx, tx, documentID, people, &req.Changelog, true)
+				document, version, err := s.publishVersionInTx(ctx, tx, documentID, req.PublishedBy, &req.Changelog, true)
 				if err != nil {
 					return fmt.Errorf("cannot publish document %q: %w", documentID, err)
 				}
@@ -226,12 +220,7 @@ func (s *DocumentService) PublishVersion(
 		func(tx pg.Conn) error {
 			var err error
 
-			people := &coredata.People{}
-			if err := people.LoadByID(ctx, tx, s.svc.scope, publishedBy); err != nil {
-				return fmt.Errorf("cannot load people: %w", err)
-			}
-
-			document, documentVersion, err = s.publishVersionInTx(ctx, tx, documentID, people, changelog, false)
+			document, documentVersion, err = s.publishVersionInTx(ctx, tx, documentID, publishedBy, changelog, false)
 			if err != nil {
 				return fmt.Errorf("cannot publish version: %w", err)
 			}
@@ -251,7 +240,7 @@ func (s *DocumentService) publishVersionInTx(
 	ctx context.Context,
 	tx pg.Conn,
 	documentID gid.GID,
-	publishedBy *coredata.People,
+	publishedBy gid.GID,
 	changelog *string,
 	ignoreExisting bool,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
@@ -296,7 +285,6 @@ func (s *DocumentService) publishVersionInTx(
 
 	documentVersion.Status = coredata.DocumentStatusPublished
 	documentVersion.PublishedAt = &now
-	documentVersion.PublishedBy = &publishedBy.ID
 	documentVersion.UpdatedAt = now
 
 	if err := document.Update(ctx, tx, s.svc.scope); err != nil {
@@ -338,7 +326,6 @@ func (s *DocumentService) Create(
 		VersionNumber: 1,
 		Content:       req.Content,
 		Status:        coredata.DocumentStatusDraft,
-		CreatedBy:     req.CreatedBy,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
@@ -745,7 +732,6 @@ func (s *DocumentService) ListSignatures(
 func (s *DocumentService) CreateDraft(
 	ctx context.Context,
 	documentID gid.GID,
-	createdBy gid.GID,
 ) (*coredata.DocumentVersion, error) {
 	draftVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
 
@@ -776,7 +762,6 @@ func (s *DocumentService) CreateDraft(
 			draftVersion.VersionNumber = latestVersion.VersionNumber + 1
 			draftVersion.Content = latestVersion.Content
 			draftVersion.Status = coredata.DocumentStatusDraft
-			draftVersion.CreatedBy = createdBy
 			draftVersion.CreatedAt = now
 			draftVersion.UpdatedAt = now
 
@@ -1314,7 +1299,6 @@ func exportDocumentPDF(
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
 	owner := &coredata.People{}
-	publishedBy := &coredata.People{}
 	signatures := coredata.DocumentVersionSignatures{}
 	peopleMap := make(map[gid.GID]*coredata.People)
 
@@ -1324,12 +1308,6 @@ func exportDocumentPDF(
 
 	if err := document.LoadByID(ctx, conn, scope, version.DocumentID); err != nil {
 		return nil, fmt.Errorf("cannot load document: %w", err)
-	}
-
-	if version.PublishedBy != nil {
-		if err := publishedBy.LoadByID(ctx, conn, scope, *version.PublishedBy); err != nil {
-			return nil, fmt.Errorf("cannot load published by person: %w", err)
-		}
 	}
 
 	cursor := page.NewCursor(
@@ -1385,7 +1363,6 @@ func exportDocumentPDF(
 		Approver:       owner.FullName,
 		Description:    version.Changelog,
 		PublishedAt:    version.PublishedAt,
-		PublishedBy:    publishedBy.FullName,
 		Signatures:     make([]docgen.SignatureData, len(signatures)),
 	}
 

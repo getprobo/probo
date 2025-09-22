@@ -574,7 +574,6 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		Owner       func(childComplexity int) int
 		PublishedAt func(childComplexity int) int
-		PublishedBy func(childComplexity int) int
 		Signatures  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) int
 		Status      func(childComplexity int) int
 		Title       func(childComplexity int) int
@@ -1422,8 +1421,6 @@ type ComplexityRoot struct {
 	}
 
 	VendorRiskAssessment struct {
-		AssessedAt      func(childComplexity int) int
-		AssessedBy      func(childComplexity int) int
 		BusinessImpact  func(childComplexity int) int
 		CreatedAt       func(childComplexity int) int
 		DataSensitivity func(childComplexity int) int
@@ -1533,7 +1530,6 @@ type DocumentVersionResolver interface {
 
 	Owner(ctx context.Context, obj *types.DocumentVersion) (*types.People, error)
 	Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) (*types.DocumentVersionSignatureConnection, error)
-	PublishedBy(ctx context.Context, obj *types.DocumentVersion) (*types.People, error)
 }
 type DocumentVersionSignatureResolver interface {
 	DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error)
@@ -1809,8 +1805,6 @@ type VendorDataPrivacyAgreementResolver interface {
 }
 type VendorRiskAssessmentResolver interface {
 	Vendor(ctx context.Context, obj *types.VendorRiskAssessment) (*types.Vendor, error)
-
-	AssessedBy(ctx context.Context, obj *types.VendorRiskAssessment) (*types.People, error)
 }
 type VendorServiceResolver interface {
 	Vendor(ctx context.Context, obj *types.VendorService) (*types.Vendor, error)
@@ -3296,13 +3290,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DocumentVersion.PublishedAt(childComplexity), true
-
-	case "DocumentVersion.publishedBy":
-		if e.complexity.DocumentVersion.PublishedBy == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersion.PublishedBy(childComplexity), true
 
 	case "DocumentVersion.signatures":
 		if e.complexity.DocumentVersion.Signatures == nil {
@@ -7710,20 +7697,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.VendorEdge.Node(childComplexity), true
 
-	case "VendorRiskAssessment.assessedAt":
-		if e.complexity.VendorRiskAssessment.AssessedAt == nil {
-			break
-		}
-
-		return e.complexity.VendorRiskAssessment.AssessedAt(childComplexity), true
-
-	case "VendorRiskAssessment.assessedBy":
-		if e.complexity.VendorRiskAssessment.AssessedBy == nil {
-			break
-		}
-
-		return e.complexity.VendorRiskAssessment.AssessedBy(childComplexity), true
-
 	case "VendorRiskAssessment.businessImpact":
 		if e.complexity.VendorRiskAssessment.BusinessImpact == nil {
 			break
@@ -11353,7 +11326,6 @@ input UpdateDocumentInput {
   title: String
   content: String
   ownerId: ID
-  createdBy: ID
   documentType: DocumentType
   showOnTrustCenter: Boolean
 }
@@ -11374,6 +11346,7 @@ input InviteUserInput {
   organizationId: ID!
   email: String!
   fullName: String!
+  createPeople: Boolean!
 }
 
 input RemoveUserInput {
@@ -11885,8 +11858,6 @@ input VendorRiskAssessmentOrder {
 type VendorRiskAssessment implements Node {
   id: ID!
   vendor: Vendor! @goField(forceResolver: true)
-  assessedAt: Datetime!
-  assessedBy: People! @goField(forceResolver: true)
   expiresAt: Datetime!
   dataSensitivity: DataSensitivity!
   businessImpact: BusinessImpact!
@@ -11907,15 +11878,10 @@ enum VendorRiskAssessmentOrderField
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.VendorRiskAssessmentOrderFieldExpiresAt"
     )
-  ASSESSED_AT
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorRiskAssessmentOrderFieldAssessedAt"
-    )
 }
 
 input CreateVendorRiskAssessmentInput {
   vendorId: ID!
-  assessedBy: ID!
   expiresAt: Datetime!
   dataSensitivity: DataSensitivity!
   businessImpact: BusinessImpact!
@@ -11952,7 +11918,6 @@ type DocumentVersion implements Node {
     orderBy: DocumentVersionSignatureOrder
   ): DocumentVersionSignatureConnection! @goField(forceResolver: true)
 
-  publishedBy: People @goField(forceResolver: true)
   publishedAt: Datetime
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -30012,69 +29977,6 @@ func (ec *executionContext) fieldContext_DocumentVersion_signatures(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _DocumentVersion_publishedBy(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.DocumentVersion().PublishedBy(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*types.People)
-	fc.Result = res
-	return ec.marshalOPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersion_publishedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersion",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_People_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_People_fullName(ctx, field)
-			case "primaryEmailAddress":
-				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_People_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_People_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_People_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_People_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_People_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_People_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _DocumentVersion_publishedAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 	if err != nil {
@@ -30409,8 +30311,6 @@ func (ec *executionContext) fieldContext_DocumentVersionEdge_node(_ context.Cont
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
-			case "publishedBy":
-				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
@@ -30525,8 +30425,6 @@ func (ec *executionContext) fieldContext_DocumentVersionSignature_documentVersio
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
-			case "publishedBy":
-				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
@@ -46514,8 +46412,6 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_documentV
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
-			case "publishedBy":
-				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
@@ -52026,8 +51922,6 @@ func (ec *executionContext) fieldContext_UpdateDocumentVersionPayload_documentVe
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
 				return ec.fieldContext_DocumentVersion_signatures(ctx, field)
-			case "publishedBy":
-				return ec.fieldContext_DocumentVersion_publishedBy(ctx, field)
 			case "publishedAt":
 				return ec.fieldContext_DocumentVersion_publishedAt(ctx, field)
 			case "createdAt":
@@ -58292,116 +58186,6 @@ func (ec *executionContext) fieldContext_VendorRiskAssessment_vendor(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _VendorRiskAssessment_assessedAt(ctx context.Context, field graphql.CollectedField, obj *types.VendorRiskAssessment) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VendorRiskAssessment_assessedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AssessedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VendorRiskAssessment_assessedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VendorRiskAssessment",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VendorRiskAssessment_assessedBy(ctx context.Context, field graphql.CollectedField, obj *types.VendorRiskAssessment) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VendorRiskAssessment_assessedBy(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.VendorRiskAssessment().AssessedBy(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.People)
-	fc.Result = res
-	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VendorRiskAssessment_assessedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VendorRiskAssessment",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_People_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_People_fullName(ctx, field)
-			case "primaryEmailAddress":
-				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_People_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_People_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_People_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_People_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_People_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_People_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _VendorRiskAssessment_expiresAt(ctx context.Context, field graphql.CollectedField, obj *types.VendorRiskAssessment) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VendorRiskAssessment_expiresAt(ctx, field)
 	if err != nil {
@@ -58854,10 +58638,6 @@ func (ec *executionContext) fieldContext_VendorRiskAssessmentEdge_node(_ context
 				return ec.fieldContext_VendorRiskAssessment_id(ctx, field)
 			case "vendor":
 				return ec.fieldContext_VendorRiskAssessment_vendor(ctx, field)
-			case "assessedAt":
-				return ec.fieldContext_VendorRiskAssessment_assessedAt(ctx, field)
-			case "assessedBy":
-				return ec.fieldContext_VendorRiskAssessment_assessedBy(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_VendorRiskAssessment_expiresAt(ctx, field)
 			case "dataSensitivity":
@@ -63702,7 +63482,7 @@ func (ec *executionContext) unmarshalInputCreateVendorRiskAssessmentInput(ctx co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"vendorId", "assessedBy", "expiresAt", "dataSensitivity", "businessImpact", "notes"}
+	fieldsInOrder := [...]string{"vendorId", "expiresAt", "dataSensitivity", "businessImpact", "notes"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63716,13 +63496,6 @@ func (ec *executionContext) unmarshalInputCreateVendorRiskAssessmentInput(ctx co
 				return it, err
 			}
 			it.VendorID = data
-		case "assessedBy":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assessedBy"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.AssessedBy = data
 		case "expiresAt":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("expiresAt"))
 			data, err := ec.unmarshalNDatetime2timeᚐTime(ctx, v)
@@ -65261,7 +65034,7 @@ func (ec *executionContext) unmarshalInputInviteUserInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "email", "fullName"}
+	fieldsInOrder := [...]string{"organizationId", "email", "fullName", "createPeople"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -65289,6 +65062,13 @@ func (ec *executionContext) unmarshalInputInviteUserInput(ctx context.Context, o
 				return it, err
 			}
 			it.FullName = data
+		case "createPeople":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createPeople"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CreatePeople = data
 		}
 	}
 
@@ -66373,7 +66153,7 @@ func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "title", "content", "ownerId", "createdBy", "documentType", "showOnTrustCenter"}
+	fieldsInOrder := [...]string{"id", "title", "content", "ownerId", "documentType", "showOnTrustCenter"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -66408,13 +66188,6 @@ func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Contex
 				return it, err
 			}
 			it.OwnerID = data
-		case "createdBy":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("createdBy"))
-			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.CreatedBy = data
 		case "documentType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentType"))
 			data, err := ec.unmarshalODocumentType2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx, v)
@@ -73461,39 +73234,6 @@ func (ec *executionContext) _DocumentVersion(ctx context.Context, sel ast.Select
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "publishedBy":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._DocumentVersion_publishedBy(ctx, field, obj)
 				return res
 			}
 
@@ -82390,47 +82130,6 @@ func (ec *executionContext) _VendorRiskAssessment(ctx context.Context, sel ast.S
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "assessedAt":
-			out.Values[i] = ec._VendorRiskAssessment_assessedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "assessedBy":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._VendorRiskAssessment_assessedBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "expiresAt":
 			out.Values[i] = ec._VendorRiskAssessment_expiresAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -90332,14 +90031,12 @@ func (ec *executionContext) marshalNVendorRiskAssessmentOrderField2githubᚗcom�
 
 var (
 	unmarshalNVendorRiskAssessmentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐVendorRiskAssessmentOrderField = map[string]coredata.VendorRiskAssessmentOrderField{
-		"CREATED_AT":  coredata.VendorRiskAssessmentOrderFieldCreatedAt,
-		"EXPIRES_AT":  coredata.VendorRiskAssessmentOrderFieldExpiresAt,
-		"ASSESSED_AT": coredata.VendorRiskAssessmentOrderFieldAssessedAt,
+		"CREATED_AT": coredata.VendorRiskAssessmentOrderFieldCreatedAt,
+		"EXPIRES_AT": coredata.VendorRiskAssessmentOrderFieldExpiresAt,
 	}
 	marshalNVendorRiskAssessmentOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐVendorRiskAssessmentOrderField = map[coredata.VendorRiskAssessmentOrderField]string{
-		coredata.VendorRiskAssessmentOrderFieldCreatedAt:  "CREATED_AT",
-		coredata.VendorRiskAssessmentOrderFieldExpiresAt:  "EXPIRES_AT",
-		coredata.VendorRiskAssessmentOrderFieldAssessedAt: "ASSESSED_AT",
+		coredata.VendorRiskAssessmentOrderFieldCreatedAt: "CREATED_AT",
+		coredata.VendorRiskAssessmentOrderFieldExpiresAt: "EXPIRES_AT",
 	}
 )
 

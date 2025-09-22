@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f98b10bd4f5fb03b55b46e2554480590>>
+ * @generated SignedSource<<f55e24dc95c48a67d7908bdd7f037272>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -274,7 +274,7 @@ return {
                                 "name": "orderBy",
                                 "value": {
                                   "direction": "DESC",
-                                  "field": "ASSESSED_AT"
+                                  "field": "CREATED_AT"
                                 }
                               }
                             ],
@@ -304,7 +304,7 @@ return {
                                         "alias": null,
                                         "args": null,
                                         "kind": "ScalarField",
-                                        "name": "assessedAt",
+                                        "name": "createdAt",
                                         "storageKey": null
                                       },
                                       {
@@ -335,7 +335,7 @@ return {
                                 "storageKey": null
                               }
                             ],
-                            "storageKey": "riskAssessments(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"ASSESSED_AT\"})"
+                            "storageKey": "riskAssessments(first:1,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                           },
                           (v13/*: any*/)
                         ],
@@ -426,16 +426,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "6570f4601f6dea5b7fe738d851a7f1ba",
+    "cacheID": "bf14bba14dba4fb544d431600ea31317",
     "id": null,
     "metadata": {},
     "name": "VendorsListQuery",
     "operationKind": "query",
-    "text": "query VendorsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorGraphPaginatedFragment_25MC8O\n    id\n  }\n}\n\nfragment VendorGraphPaginatedFragment_25MC8O on Organization {\n  vendors(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        websiteUrl\n        updatedAt\n        riskAssessments(first: 1, orderBy: {direction: DESC, field: ASSESSED_AT}) {\n          edges {\n            node {\n              id\n              assessedAt\n              expiresAt\n              dataSensitivity\n              businessImpact\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query VendorsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorGraphPaginatedFragment_25MC8O\n    id\n  }\n}\n\nfragment VendorGraphPaginatedFragment_25MC8O on Organization {\n  vendors(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        websiteUrl\n        updatedAt\n        riskAssessments(first: 1, orderBy: {direction: DESC, field: CREATED_AT}) {\n          edges {\n            node {\n              id\n              createdAt\n              expiresAt\n              dataSensitivity\n              businessImpact\n            }\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "578772ed7c83ae174d43b0be95a02fd2";
+(node as any).hash = "bf222e31d20ebe7c9dfdedff7d5a9c68";
 
 export default node;

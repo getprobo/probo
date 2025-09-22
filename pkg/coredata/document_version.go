@@ -35,9 +35,7 @@ type (
 		VersionNumber int            `db:"version_number"`
 		Content       string         `db:"content"`
 		Changelog     string         `db:"changelog"`
-		CreatedBy     gid.GID        `db:"created_by"`
 		Status        DocumentStatus `db:"status"`
-		PublishedBy   *gid.GID       `db:"published_by"`
 		PublishedAt   *time.Time     `db:"published_at"`
 		CreatedAt     time.Time      `db:"created_at"`
 		UpdatedAt     time.Time      `db:"updated_at"`
@@ -62,9 +60,7 @@ SELECT
 	version_number,
 	content,
 	changelog,
-	created_by,
 	status,
-	published_by,
 	published_at,
 	created_at,
 	updated_at
@@ -122,9 +118,7 @@ SELECT
 	version_number,
 	content,
 	changelog,
-	created_by,
 	status,
-	published_by,
 	published_at,
 	created_at,
 	updated_at
@@ -173,7 +167,6 @@ INSERT INTO document_versions (
 	version_number,
 	content,
 	changelog,
-	created_by,
 	status,
 	created_at,
 	updated_at
@@ -187,7 +180,6 @@ VALUES (
 	@version_number,
 	@content,
 	@changelog,
-	@created_by,
 	@status,
 	@created_at,
 	@updated_at
@@ -202,7 +194,6 @@ VALUES (
 		"version_number": p.VersionNumber,
 		"content":        p.Content,
 		"changelog":      p.Changelog,
-		"created_by":     p.CreatedBy,
 		"status":         p.Status,
 		"created_at":     p.CreatedAt,
 		"updated_at":     p.UpdatedAt,
@@ -232,9 +223,7 @@ SELECT
 	version_number,
 	content,
 	changelog,
-	created_by,
 	status,
-	published_by,
 	published_at,
 	created_at,
 	updated_at
@@ -285,9 +274,7 @@ SELECT
 	version_number,
 	content,
 	changelog,
-	created_by,
 	status,
-	published_by,
 	published_at,
 	created_at,
 	updated_at
@@ -336,9 +323,7 @@ SELECT
 	version_number,
 	content,
 	changelog,
-	created_by,
 	status,
-	published_by,
 	published_at,
 	created_at,
 	updated_at
@@ -386,7 +371,6 @@ UPDATE document_versions SET
 	changelog = @changelog,
 	status = @status,
 	content = @content,
-	published_by = @published_by,
 	published_at = @published_at,
 	updated_at = @updated_at
 WHERE %s
@@ -402,7 +386,6 @@ WHERE %s
 		"changelog":           p.Changelog,
 		"status":              p.Status,
 		"content":             p.Content,
-		"published_by":        p.PublishedBy,
 		"published_at":        p.PublishedAt,
 		"updated_at":          p.UpdatedAt,
 	}
