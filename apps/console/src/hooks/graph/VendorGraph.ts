@@ -128,12 +128,12 @@ export const paginatedVendorsFragment = graphql`
           updatedAt
           riskAssessments(
             first: 1
-            orderBy: { direction: DESC, field: ASSESSED_AT }
+            orderBy: { direction: DESC, field: CREATED_AT }
           ) {
             edges {
               node {
                 id
-                assessedAt
+                createdAt
                 expiresAt
                 dataSensitivity
                 businessImpact
@@ -165,6 +165,7 @@ export const vendorNodeQuery = graphql`
     }
     viewer {
       user {
+        id
         people(organizationId: $organizationId) {
           id
         }

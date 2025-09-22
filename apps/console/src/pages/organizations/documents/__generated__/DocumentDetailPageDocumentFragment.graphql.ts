@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8db0c7dcd7ff31c01ec5facd5a3b598a>>
+ * @generated SignedSource<<9bec5530e7a90ab3fb9f21c5c2d92286>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -31,9 +31,6 @@ export type DocumentDetailPageDocumentFragment$data = {
         readonly content: string;
         readonly id: string;
         readonly publishedAt: any | null | undefined;
-        readonly publishedBy: {
-          readonly fullName: string;
-        } | null | undefined;
         readonly signatures: {
           readonly __id: string;
           readonly edges: ReadonlyArray<{
@@ -73,24 +70,17 @@ v1 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "fullName",
+  "name": "__typename",
   "storageKey": null
 },
 v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "__typename",
-  "storageKey": null
-},
-v3 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v4 = {
+v3 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -115,7 +105,7 @@ v4 = {
   ],
   "storageKey": null
 },
-v5 = {
+v4 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -174,7 +164,13 @@ return {
       "plural": false,
       "selections": [
         (v0/*: any*/),
-        (v1/*: any*/)
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "fullName",
+          "storageKey": null
+        }
       ],
       "storageKey": null
     },
@@ -268,18 +264,6 @@ return {
                   "storageKey": null
                 },
                 {
-                  "alias": null,
-                  "args": null,
-                  "concreteType": "People",
-                  "kind": "LinkedField",
-                  "name": "publishedBy",
-                  "plural": false,
-                  "selections": [
-                    (v1/*: any*/)
-                  ],
-                  "storageKey": null
-                },
-                {
                   "alias": "signatures",
                   "args": null,
                   "concreteType": "DocumentVersionSignatureConnection",
@@ -328,29 +312,29 @@ return {
                               "kind": "FragmentSpread",
                               "name": "DocumentSignaturesTab_signature"
                             },
-                            (v2/*: any*/)
+                            (v1/*: any*/)
                           ],
                           "storageKey": null
                         },
-                        (v3/*: any*/)
+                        (v2/*: any*/)
                       ],
                       "storageKey": null
                     },
-                    (v4/*: any*/),
-                    (v5/*: any*/)
+                    (v3/*: any*/),
+                    (v4/*: any*/)
                   ],
                   "storageKey": null
                 },
-                (v2/*: any*/)
+                (v1/*: any*/)
               ],
               "storageKey": null
             },
-            (v3/*: any*/)
+            (v2/*: any*/)
           ],
           "storageKey": null
         },
-        (v4/*: any*/),
-        (v5/*: any*/)
+        (v3/*: any*/),
+        (v4/*: any*/)
       ],
       "storageKey": null
     }
@@ -360,6 +344,6 @@ return {
 };
 })();
 
-(node as any).hash = "1523ddad229ae2d6bf94d30de5579ae6";
+(node as any).hash = "1d06e505efa74bb0b564fcbfc57ce8c9";
 
 export default node;

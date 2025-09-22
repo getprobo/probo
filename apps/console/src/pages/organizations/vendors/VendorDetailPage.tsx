@@ -132,7 +132,7 @@ export default function VendorDetailPage(props: Props) {
         </TabLink>
       </Tabs>
 
-      <Outlet context={{ vendor, peopleId: data.viewer.user.people!.id }} />
+      <Outlet context={{ vendor }} />
     </div>
   );
 }

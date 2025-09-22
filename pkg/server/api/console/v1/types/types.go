@@ -578,7 +578,6 @@ type CreateVendorPayload struct {
 
 type CreateVendorRiskAssessmentInput struct {
 	VendorID        gid.GID                  `json:"vendorId"`
-	AssessedBy      gid.GID                  `json:"assessedBy"`
 	ExpiresAt       time.Time                `json:"expiresAt"`
 	DataSensitivity coredata.DataSensitivity `json:"dataSensitivity"`
 	BusinessImpact  coredata.BusinessImpact  `json:"businessImpact"`
@@ -938,7 +937,6 @@ type DocumentVersion struct {
 	Title       string                              `json:"title"`
 	Owner       *People                             `json:"owner"`
 	Signatures  *DocumentVersionSignatureConnection `json:"signatures"`
-	PublishedBy *People                             `json:"publishedBy,omitempty"`
 	PublishedAt *time.Time                          `json:"publishedAt,omitempty"`
 	CreatedAt   time.Time                           `json:"createdAt"`
 	UpdatedAt   time.Time                           `json:"updatedAt"`
@@ -1098,6 +1096,7 @@ type InviteUserInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Email          string  `json:"email"`
 	FullName       string  `json:"fullName"`
+	CreatePeople   bool    `json:"createPeople"`
 }
 
 type InviteUserPayload struct {
@@ -1590,7 +1589,6 @@ type UpdateDocumentInput struct {
 	Title             *string                `json:"title,omitempty"`
 	Content           *string                `json:"content,omitempty"`
 	OwnerID           *gid.GID               `json:"ownerId,omitempty"`
-	CreatedBy         *gid.GID               `json:"createdBy,omitempty"`
 	DocumentType      *coredata.DocumentType `json:"documentType,omitempty"`
 	ShowOnTrustCenter *bool                  `json:"showOnTrustCenter,omitempty"`
 }
@@ -2064,8 +2062,6 @@ type VendorFilter struct {
 type VendorRiskAssessment struct {
 	ID              gid.GID                  `json:"id"`
 	Vendor          *Vendor                  `json:"vendor"`
-	AssessedAt      time.Time                `json:"assessedAt"`
-	AssessedBy      *People                  `json:"assessedBy"`
 	ExpiresAt       time.Time                `json:"expiresAt"`
 	DataSensitivity coredata.DataSensitivity `json:"dataSensitivity"`
 	BusinessImpact  coredata.BusinessImpact  `json:"businessImpact"`

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e02cdda6c1c24ac700a79ed236c6dfdc>>
+ * @generated SignedSource<<aa94f8d2cc4c6a5c29de3029d5e6d2ca>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,6 @@ import { ConcreteRequest } from 'relay-runtime';
 export type DocumentType = "ISMS" | "OTHER" | "POLICY";
 export type UpdateDocumentInput = {
   content?: string | null | undefined;
-  createdBy?: string | null | undefined;
   documentType?: DocumentType | null | undefined;
   id: string;
   ownerId?: string | null | undefined;

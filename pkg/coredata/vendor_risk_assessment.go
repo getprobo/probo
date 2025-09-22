@@ -31,10 +31,6 @@ type (
 	VendorRiskAssessment struct {
 		ID              gid.GID         `db:"id"`
 		VendorID        gid.GID         `db:"vendor_id"`
-		AssessedAt      time.Time       `db:"assessed_at"`
-		AssessedBy      gid.GID         `db:"assessed_by"`
-		ApprovedBy      *gid.GID        `db:"approved_by"`
-		ApprovedAt      *time.Time      `db:"approved_at"`
 		ExpiresAt       time.Time       `db:"expires_at"`
 		DataSensitivity DataSensitivity `db:"data_sensitivity"`
 		BusinessImpact  BusinessImpact  `db:"business_impact"`
@@ -54,8 +50,6 @@ func (v VendorRiskAssessment) CursorKey(orderBy VendorRiskAssessmentOrderField) 
 		return page.NewCursorKey(v.ID, v.CreatedAt)
 	case VendorRiskAssessmentOrderFieldExpiresAt:
 		return page.NewCursorKey(v.ID, v.ExpiresAt)
-	case VendorRiskAssessmentOrderFieldAssessedAt:
-		return page.NewCursorKey(v.ID, v.AssessedAt)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
@@ -73,10 +67,6 @@ INSERT INTO
         tenant_id,
         id,
         vendor_id,
-        assessed_at,
-        assessed_by,
-        approved_by,
-        approved_at,
         expires_at,
         data_sensitivity,
         business_impact,
@@ -88,10 +78,6 @@ VALUES (
     @tenant_id,
     @id,
     @vendor_id,
-    @assessed_at,
-    @assessed_by,
-    @approved_by,
-    @approved_at,
     @expires_at,
     @data_sensitivity,
     @business_impact,
@@ -105,10 +91,6 @@ VALUES (
 		"tenant_id":        scope.GetTenantID(),
 		"id":               r.ID,
 		"vendor_id":        r.VendorID,
-		"assessed_at":      r.AssessedAt,
-		"assessed_by":      r.AssessedBy,
-		"approved_by":      r.ApprovedBy,
-		"approved_at":      r.ApprovedAt,
 		"expires_at":       r.ExpiresAt,
 		"data_sensitivity": r.DataSensitivity,
 		"business_impact":  r.BusinessImpact,
@@ -131,10 +113,6 @@ func (r *VendorRiskAssessment) LoadByID(
 SELECT
     id,
     vendor_id,
-    assessed_at,
-    assessed_by,
-    approved_by,
-    approved_at,
     expires_at,
     data_sensitivity,
     business_impact,
@@ -183,10 +161,6 @@ func (r *VendorRiskAssessment) LoadLatestByVendorID(
 SELECT
     id,
     vendor_id,
-    assessed_at,
-    assessed_by,
-    approved_by,
-    approved_at,
     expires_at,
     data_sensitivity,
     business_impact,
@@ -201,7 +175,7 @@ WHERE
     %s
     AND vendor_id = @vendor_id
 ORDER BY
-    assessed_at DESC
+    created_at DESC
 LIMIT 1;
 `
 
@@ -238,10 +212,6 @@ func (r *VendorRiskAssessments) LoadByVendorID(
 SELECT
     id,
     vendor_id,
-    assessed_at,
-    assessed_by,
-    approved_by,
-    approved_at,
     expires_at,
     data_sensitivity,
     business_impact,
@@ -299,10 +269,6 @@ INSERT INTO vendor_risk_assessments (
 	snapshot_id,
 	source_id,
 	vendor_id,
-	assessed_at,
-	assessed_by,
-	approved_by,
-	approved_at,
 	expires_at,
 	data_sensitivity,
 	business_impact,
@@ -316,10 +282,6 @@ SELECT
 	@snapshot_id,
 	vra.id,
 	sv.id,
-	vra.assessed_at,
-	vra.assessed_by,
-	vra.approved_by,
-	vra.approved_at,
 	vra.expires_at,
 	vra.data_sensitivity,
 	vra.business_impact,

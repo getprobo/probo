@@ -90,9 +90,6 @@ const documentFragment = graphql`
           publishedAt
           version
           updatedAt
-          publishedBy {
-            fullName
-          }
           signatures(first: 100)
             @connection(key: "DocumentDetailPage_signatures") {
             __id
@@ -707,9 +704,6 @@ function VersionItem({
         </div>
         <div className="flex-1 space-y-[2px] overflow-hidden">
           <div className="flex items-center gap-2 overflow-hidden">
-            <div className="text-sm text-txt-secondary whitespace-nowrap overflow-hidden text-ellipsis">
-              {version.publishedBy?.fullName ?? document.owner.fullName}
-            </div>
             {version.status === "DRAFT" && (
               <Badge variant="neutral" size="sm">
                 {__("Draft")}

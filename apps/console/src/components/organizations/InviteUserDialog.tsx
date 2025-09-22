@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogFooter,
   Field,
+  Checkbox,
   useDialogRef,
 } from "@probo/ui";
 import type { PropsWithChildren } from "react";
@@ -13,6 +14,7 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
+import { Controller } from "react-hook-form";
 
 const inviteMutation = graphql`
   mutation InviteUserDialogMutation($input: InviteUserInput!) {
@@ -25,6 +27,7 @@ const inviteMutation = graphql`
 const schema = z.object({
   email: z.string().email(),
   fullName: z.string(),
+  createPeople: z.boolean().default(false),
 });
 
 export function InviteUserDialog({ children }: PropsWithChildren) {
@@ -34,9 +37,9 @@ export function InviteUserDialog({ children }: PropsWithChildren) {
     successMessage: __("User invited successfully"),
     errorMessage: __("Failed to invite user"),
   });
-  const { register, handleSubmit, formState, reset } = useFormWithSchema(
+  const { register, handleSubmit, formState, reset, control } = useFormWithSchema(
     schema,
-    {},
+    { defaultValues: { createPeople: false } },
   );
 
   const dialogRef = useDialogRef();
@@ -48,6 +51,7 @@ export function InviteUserDialog({ children }: PropsWithChildren) {
           organizationId,
           email: data.email,
           fullName: data.fullName,
+          createPeople: data.createPeople,
         },
       },
       onSuccess: () => {
@@ -83,6 +87,31 @@ export function InviteUserDialog({ children }: PropsWithChildren) {
             {...register("fullName")}
             error={formState.errors.fullName?.message}
           />
+          <div className="space-y-2">
+            <div className="flex items-center space-x-3">
+              <Controller
+                name="createPeople"
+                control={control}
+                render={({ field }) => (
+                  <>
+                    <Checkbox
+                      checked={field.value}
+                      onChange={field.onChange}
+                    />
+                    <label
+                      className="text-sm font-medium cursor-pointer"
+                      onClick={() => field.onChange(!field.value)}
+                    >
+                      {__("Create people record")}
+                    </label>
+                  </>
+                )}
+              />
+            </div>
+            <p className="text-xs text-txt-secondary ml-7">
+              {__("Creates a people record for this user in addition to the user account")}
+            </p>
+          </div>
         </DialogContent>
         <DialogFooter>
           <Button type="submit" disabled={isInviting}>

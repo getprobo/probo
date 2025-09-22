@@ -16,7 +16,7 @@
                 color: #666;
             }
         }
-        
+
         body {
             font-family: 'Times New Roman', Times, serif;
             font-size: 11pt;
@@ -26,7 +26,7 @@
             padding: 20px 0;
             background: #f5f5f5;
         }
-        
+
         /* Document container that simulates A4 pages */
         .document-container {
             width: 21cm;
@@ -34,7 +34,7 @@
             background: white;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        
+
         /* Individual page sections */
         .page-section {
             padding: 2.5cm;
@@ -43,21 +43,21 @@
             border-bottom: 2px dashed #ddd;
             page-break-after: always;
         }
-        
+
         .page-section:last-child {
             border-bottom: none;
             page-break-after: auto;
         }
-        
 
-        
+
+
         .document-header {
             border-bottom: 1px solid #333;
             padding-bottom: 15px;
             margin-bottom: 25px;
             page-break-after: avoid;
         }
-        
+
         .document-title {
             font-size: 18pt;
             font-weight: bold;
@@ -65,7 +65,7 @@
             margin: 0 0 10px 0;
             text-align: center;
         }
-        
+
         .document-meta {
             background: #f9f9f9;
             padding: 12px;
@@ -73,35 +73,35 @@
             margin: 15px 0;
             font-size: 9pt;
         }
-        
+
         .meta-table {
             width: 100%;
             border-collapse: collapse;
         }
-        
+
         .meta-table td {
             padding: 4px 8px;
             border-bottom: 1px solid #eee;
             vertical-align: top;
         }
-        
+
         .meta-table td:first-child {
             font-weight: bold;
             color: #333;
             width: 120px;
         }
-        
+
         .classification {
             font-weight: bold;
             text-transform: uppercase;
         }
-        
+
         /* Content styling with page break controls */
         .document-content {
             orphans: 3;
             widows: 3;
         }
-        
+
         .document-content h1 {
             font-size: 14pt;
             font-weight: bold;
@@ -112,7 +112,7 @@
             page-break-after: avoid;
             page-break-inside: avoid;
         }
-        
+
         .document-content h2 {
             font-size: 13pt;
             font-weight: bold;
@@ -121,7 +121,7 @@
             page-break-after: avoid;
             page-break-inside: avoid;
         }
-        
+
         .document-content h3 {
             font-size: 12pt;
             font-weight: bold;
@@ -130,7 +130,7 @@
             page-break-after: avoid;
             page-break-inside: avoid;
         }
-        
+
         .document-content h4 {
             font-size: 11pt;
             font-weight: bold;
@@ -139,33 +139,33 @@
             page-break-after: avoid;
             page-break-inside: avoid;
         }
-        
+
         .document-content p {
             margin-bottom: 12px;
             text-align: justify;
             orphans: 3;
             widows: 3;
         }
-        
+
         .document-content ul,
         .document-content ol {
             padding-left: 20px;
             margin: 12px 0;
             page-break-inside: avoid;
         }
-        
+
         .document-content li {
             margin-bottom: 4px;
         }
-        
+
         .document-content strong {
             font-weight: bold;
         }
-        
+
         .document-content em {
             font-style: italic;
         }
-        
+
         /* Force page breaks at strategic points */
         .document-content h2:nth-of-type(3),
         .document-content h2:nth-of-type(5),
@@ -173,7 +173,7 @@
         .document-content h2:nth-of-type(9) {
             page-break-before: always;
         }
-        
+
         /* Signatures section */
         .signatures-section {
             margin-top: 30px;
@@ -182,7 +182,7 @@
             page-break-before: always;
             page-break-inside: avoid;
         }
-        
+
         .signatures-title {
             font-size: 13pt;
             font-weight: bold;
@@ -190,7 +190,7 @@
             margin-bottom: 15px;
             page-break-after: avoid;
         }
-        
+
         .signatures-table {
             width: 100%;
             border-collapse: collapse;
@@ -198,34 +198,34 @@
             margin-top: 10px;
             page-break-inside: avoid;
         }
-        
+
         .signatures-table th,
         .signatures-table td {
             padding: 6px 8px;
             text-align: left;
             border: 1px solid #ddd;
         }
-        
+
         .signatures-table th {
             background: #f5f5f5;
             font-weight: bold;
             color: #333;
         }
-        
+
         .signatures-table tr {
             page-break-inside: avoid;
         }
-        
+
         .signature-signed {
             color: #000;
             font-weight: bold;
         }
-        
+
         .signature-requested {
             color: #666;
             font-style: italic;
         }
-        
+
         .footer {
             margin-top: 30px;
             padding-top: 15px;
@@ -234,42 +234,42 @@
             color: #666;
             text-align: center;
         }
-        
+
         /* Prevent bad page breaks */
         h1, h2, h3, h4, h5, h6 {
             page-break-after: avoid;
             page-break-inside: avoid;
         }
-        
+
         p, li {
             page-break-inside: avoid;
         }
-        
+
         table, .signatures-section {
             page-break-inside: avoid;
         }
-        
+
         @media print {
             body {
                 background: white;
                 padding: 0;
             }
-            
+
             .document-container {
                 box-shadow: none;
                 width: auto;
             }
-            
+
             .page-section {
                 box-shadow: none;
                 border-bottom: none;
                 padding: 0;
                 min-height: auto;
             }
-            
+
 
         }
-        
+
         @media screen and (max-width: 21cm) {
             .document-container {
                 width: 95%;
@@ -313,7 +313,7 @@
         <div class="page-section">
             <div class="document-header">
                 <h1 class="document-title">{{.Title}}</h1>
-                
+
                 <div class="document-meta">
                     <table class="meta-table">
                         <tr>
@@ -337,7 +337,7 @@
                         {{- if .PublishedAt}}
                         <tr>
                             <td>Published:</td>
-                            <td>{{.PublishedAt.Format "January 2, 2006"}}{{if .PublishedBy}} ({{.PublishedBy}}){{end}}</td>
+                            <td>{{.PublishedAt.Format "January 2, 2006"}}</td>
                         </tr>
                         {{- end}}
                     </table>

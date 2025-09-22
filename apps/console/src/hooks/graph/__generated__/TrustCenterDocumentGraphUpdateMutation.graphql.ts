@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5b8f324da8c4dc9302cb6f821062757d>>
+ * @generated SignedSource<<46d46472ea11f58c00df8b8827afab98>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,6 @@ import { FragmentRefs } from "relay-runtime";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY";
 export type UpdateDocumentInput = {
   content?: string | null | undefined;
-  createdBy?: string | null | undefined;
   documentType?: DocumentType | null | undefined;
   id: string;
   ownerId?: string | null | undefined;

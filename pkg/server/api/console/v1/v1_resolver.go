@@ -700,27 +700,6 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 	return types.NewDocumentVersionSignatureConnection(page), nil
 }
 
-// PublishedBy is the resolver for the publishedBy field.
-func (r *documentVersionResolver) PublishedBy(ctx context.Context, obj *types.DocumentVersion) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	documentVersion, err := prb.Documents.GetVersion(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get document version: %w", err))
-	}
-
-	if documentVersion.PublishedBy == nil {
-		return nil, nil
-	}
-
-	people, err := prb.Peoples.Get(ctx, *documentVersion.PublishedBy)
-	if err != nil {
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
-	return types.NewPeople(people), nil
-}
-
 // DocumentVersion is the resolver for the documentVersion field.
 func (r *documentVersionSignatureResolver) DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -1272,7 +1251,9 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 
 	for _, organization := range organizations {
 		if organization.ID == input.OrganizationID {
-			err := r.usrmgrSvc.InviteUser(ctx, input.OrganizationID, input.FullName, input.Email)
+			createPeople := input.CreatePeople
+
+			err := r.usrmgrSvc.InviteUser(ctx, input.OrganizationID, input.FullName, input.Email, createPeople)
 			if err != nil {
 				return nil, err
 			}
@@ -2427,12 +2408,6 @@ func (r *mutationResolver) DeleteVendorDataPrivacyAgreement(ctx context.Context,
 func (r *mutationResolver) CreateDocument(ctx context.Context, input types.CreateDocumentInput) (*types.CreateDocumentPayload, error) {
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	user := UserFromContext(ctx)
-	people, err := prb.Peoples.GetByUserID(ctx, user.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
 	document, documentVersion, err := prb.Documents.Create(
 		ctx,
 		probo.CreateDocumentRequest{
@@ -2441,7 +2416,6 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			Title:          input.Title,
 			OwnerID:        input.OwnerID,
 			Content:        input.Content,
-			CreatedBy:      people.ID,
 		},
 	)
 	if err != nil {
@@ -2495,12 +2469,7 @@ func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input typ
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 	user := UserFromContext(ctx)
 
-	people, err := prb.Peoples.GetByUserID(ctx, user.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
-	document, documentVersion, err := prb.Documents.PublishVersion(ctx, input.DocumentID, people.ID, input.Changelog)
+	document, documentVersion, err := prb.Documents.PublishVersion(ctx, input.DocumentID, user.ID, input.Changelog)
 	if err != nil {
 		panic(fmt.Errorf("cannot publish document version: %w", err))
 	}
@@ -2524,16 +2493,11 @@ func (r *mutationResolver) BulkPublishDocumentVersions(ctx context.Context, inpu
 
 	user := UserFromContext(ctx)
 
-	people, err := prb.Peoples.GetByUserID(ctx, user.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
 	documentVersions, documents, err := prb.Documents.BulkPublishVersions(
 		ctx,
 		probo.BulkPublishVersionsRequest{
 			DocumentIDs: input.DocumentIds,
-			PublishedBy: people.ID,
+			PublishedBy: user.ID,
 			Changelog:   input.Changelog,
 		},
 	)
@@ -2608,13 +2572,7 @@ func (r *mutationResolver) GenerateDocumentChangelog(ctx context.Context, input 
 func (r *mutationResolver) CreateDraftDocumentVersion(ctx context.Context, input types.CreateDraftDocumentVersionInput) (*types.CreateDraftDocumentVersionPayload, error) {
 	prb := r.ProboService(ctx, input.DocumentID.TenantID())
 
-	user := UserFromContext(ctx)
-	people, err := prb.Peoples.GetByUserID(ctx, user.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
-	documentVersion, err := prb.Documents.CreateDraft(ctx, input.DocumentID, people.ID)
+	documentVersion, err := prb.Documents.CreateDraft(ctx, input.DocumentID)
 	if err != nil {
 		panic(fmt.Errorf("cannot create draft document version: %w", err))
 	}
@@ -2767,7 +2725,6 @@ func (r *mutationResolver) CreateVendorRiskAssessment(ctx context.Context, input
 		ctx,
 		probo.CreateVendorRiskAssessmentRequest{
 			VendorID:        input.VendorID,
-			AssessedByID:    input.AssessedBy,
 			ExpiresAt:       input.ExpiresAt,
 			DataSensitivity: input.DataSensitivity,
 			BusinessImpact:  input.BusinessImpact,
@@ -4601,6 +4558,10 @@ func (r *userResolver) People(ctx context.Context, obj *types.User, organization
 
 	people, err := prb.Peoples.GetByUserID(ctx, obj.ID)
 	if err != nil {
+		var errPeopleNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errPeopleNotFound) {
+			return nil, nil
+		}
 		panic(fmt.Errorf("failed to get people: %w", err))
 	}
 
@@ -4925,23 +4886,6 @@ func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.Ve
 	}
 
 	return types.NewVendor(vendor), nil
-}
-
-// AssessedBy is the resolver for the assessedBy field.
-func (r *vendorRiskAssessmentResolver) AssessedBy(ctx context.Context, obj *types.VendorRiskAssessment) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	vendorRiskAssessment, err := prb.Vendors.GetRiskAssessment(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("failed to get vendor risk assessment: %w", err))
-	}
-
-	people, err := prb.Peoples.Get(ctx, vendorRiskAssessment.AssessedBy)
-	if err != nil {
-		panic(fmt.Errorf("failed to get assessed by: %w", err))
-	}
-
-	return types.NewPeople(people), nil
 }
 
 // Vendor is the resolver for the vendor field.

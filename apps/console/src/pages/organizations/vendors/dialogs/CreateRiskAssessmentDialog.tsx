@@ -21,7 +21,6 @@ type Props = {
   children: ReactNode;
   connection: string;
   vendorId: string;
-  peopleId: string;
 };
 
 const createRiskAssessmentMutation = graphql`
@@ -52,7 +51,6 @@ export function CreateRiskAssessmentDialog({
   children,
   connection,
   vendorId,
-  peopleId,
 }: Props) {
   const { __ } = useTranslate();
 
@@ -79,7 +77,6 @@ export function CreateRiskAssessmentDialog({
         input: {
           ...data,
           vendorId,
-          assessedBy: peopleId,
           expiresAt: nextYear.toISOString(),
         },
         connections: [connection!],

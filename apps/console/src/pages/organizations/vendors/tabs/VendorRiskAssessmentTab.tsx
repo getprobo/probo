@@ -15,6 +15,7 @@ import {
   Badge,
   TrButton,
 } from "@probo/ui";
+import { formatDate } from "@probo/helpers";
 import { useFragment, useRefetchableFragment } from "react-relay";
 import type { VendorRiskAssessmentTabFragment_assessment$key } from "./__generated__/VendorRiskAssessmentTabFragment_assessment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
@@ -59,11 +60,7 @@ const riskAssessmentsFragment = graphql`
 const riskAssessmentFragment = graphql`
   fragment VendorRiskAssessmentTabFragment_assessment on VendorRiskAssessment {
     id
-    assessedAt
-    assessedBy {
-      id
-      fullName
-    }
+    createdAt
     expiresAt
     dataSensitivity
     businessImpact
@@ -72,9 +69,8 @@ const riskAssessmentFragment = graphql`
 `;
 
 export default function VendorRiskAssessmentTab() {
-  const { vendor, peopleId } = useOutletContext<{
+  const { vendor } = useOutletContext<{
     vendor: VendorRiskAssessmentTabFragment$key & { name: string; id: string };
-    peopleId: string;
   }>();
   const [data, refetch] = useRefetchableFragment(
     riskAssessmentsFragment,
@@ -96,7 +92,6 @@ export default function VendorRiskAssessmentTab() {
           <CreateRiskAssessmentDialog
             vendorId={vendor.id}
             connection={data.riskAssessments.__id}
-            peopleId={peopleId}
           >
             <Button icon={IconPlusLarge} variant="secondary">
               {__("Add Risk Assessment")}
@@ -114,7 +109,7 @@ export default function VendorRiskAssessmentTab() {
         <SortableTable refetch={refetch}>
           <Thead>
             <Tr>
-              <SortableTh field="ASSESSED_AT">{__("Assessed By")}</SortableTh>
+              <SortableTh field="CREATED_AT">{__("Created At")}</SortableTh>
               <SortableTh field="EXPIRES_AT">{__("Expires")}</SortableTh>
               <Th>{__("Data sensitivity")}</Th>
               <Th>{__("Business impact")}</Th>
@@ -125,7 +120,6 @@ export default function VendorRiskAssessmentTab() {
               <CreateRiskAssessmentDialog
                 vendorId={vendor.id}
                 connection={data.riskAssessments.__id}
-                peopleId={peopleId}
               >
                 <TrButton colspan={5} onClick={() => {}}>
                   {__("Add Risk Assessment")}
@@ -178,9 +172,8 @@ function AssessmentRow(props: AssessmentRowProps) {
         onClick={() => props.onClick(assessment.id)}
       >
         <Td>
-          {assessment.assessedBy?.fullName}
           <span className="text-xs text-txt-secondary ml-1">
-            ({relativeDateFormat(assessment.assessedAt)})
+            {formatDate(assessment.createdAt)}
           </span>
         </Td>
         <Td>
