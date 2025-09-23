@@ -92,6 +92,7 @@ export default function RiskDetailPage(props: Props) {
   const documentsCount = risk.documentsInfo?.totalCount ?? 0;
   const measuresCount = risk.measuresInfo?.totalCount ?? 0;
   const controlsCount = risk.controlsInfo?.totalCount ?? 0;
+  const obligationsCount = risk.obligationsInfo?.totalCount ?? 0;
 
   const risksUrl = isSnapshotMode && snapshotId
     ? `/organizations/${organizationId}/snapshots/${snapshotId}/risks`
@@ -158,6 +159,10 @@ export default function RiskDetailPage(props: Props) {
             <TabLink to={`${baseTabUrl}/controls`}>
               {__("Controls")}
               <TabBadge>{controlsCount}</TabBadge>
+            </TabLink>
+            <TabLink to={`${baseTabUrl}/obligations`}>
+              {__("Obligations")}
+              <TabBadge>{obligationsCount}</TabBadge>
             </TabLink>
           </>
         )}

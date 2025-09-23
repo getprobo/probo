@@ -303,6 +303,76 @@ func (s RiskService) DeleteMeasureMapping(
 	return risk, measure, nil
 }
 
+func (s RiskService) CreateObligationMapping(
+	ctx context.Context,
+	riskID gid.GID,
+	obligationID gid.GID,
+) (*coredata.Risk, *coredata.Obligation, error) {
+	risk := &coredata.Risk{}
+	obligation := &coredata.Obligation{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := risk.LoadByID(ctx, conn, s.svc.scope, riskID); err != nil {
+				return fmt.Errorf("cannot load risk: %w", err)
+			}
+
+			if err := obligation.LoadByID(ctx, conn, s.svc.scope, obligationID); err != nil {
+				return fmt.Errorf("cannot load obligation: %w", err)
+			}
+
+			riskObligation := &coredata.RiskObligation{
+				RiskID:       risk.ID,
+				ObligationID: obligation.ID,
+				CreatedAt:    time.Now(),
+			}
+
+			return riskObligation.Insert(ctx, conn, s.svc.scope)
+		},
+	)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot create risk obligation mapping: %w", err)
+	}
+
+	return risk, obligation, nil
+}
+
+func (s RiskService) DeleteObligationMapping(
+	ctx context.Context,
+	riskID gid.GID,
+	obligationID gid.GID,
+) (*coredata.Risk, *coredata.Obligation, error) {
+	riskObligation := &coredata.RiskObligation{}
+	risk := &coredata.Risk{}
+	obligation := &coredata.Obligation{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := risk.LoadByID(ctx, conn, s.svc.scope, riskID); err != nil {
+				return fmt.Errorf("cannot load risk: %w", err)
+			}
+
+			if err := obligation.LoadByID(ctx, conn, s.svc.scope, obligationID); err != nil {
+				return fmt.Errorf("cannot load obligation: %w", err)
+			}
+
+			riskObligation.RiskID = risk.ID
+			riskObligation.ObligationID = obligation.ID
+
+			return riskObligation.Delete(ctx, conn, s.svc.scope)
+		},
+	)
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot delete risk obligation mapping: %w", err)
+	}
+
+	return risk, obligation, nil
+}
+
 func (s RiskService) Create(
 	ctx context.Context,
 	req CreateRiskRequest,

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f54af2ebc7ab4d39662c5619a23532ac>>
+ * @generated SignedSource<<445c6cc243eadbe9e5eacdec0161ee62>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -180,13 +180,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "referenceId",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "area",
                             "storageKey": null
                           },
@@ -347,12 +340,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7e61419b20d9cf30e5dd31b4500bc324",
+    "cacheID": "9a4d2f4ac3be91001f8c9bb602cd599f",
     "id": null,
     "metadata": {},
     "name": "ObligationsPageQuery",
     "operationKind": "query",
-    "text": "query ObligationsPageQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ObligationsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ObligationsPageFragment_3iomuz on Organization {\n  id\n  obligations(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        referenceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query ObligationsPageQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...ObligationsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment ObligationsPageFragment_3iomuz on Organization {\n  id\n  obligations(first: 10, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
   }
 };
 })();

@@ -401,7 +401,6 @@ type CreateNonconformityPayload struct {
 
 type CreateObligationInput struct {
 	OrganizationID         gid.GID                   `json:"organizationId"`
-	ReferenceID            string                    `json:"referenceId"`
 	Area                   *string                   `json:"area,omitempty"`
 	Source                 *string                   `json:"source,omitempty"`
 	Requirement            *string                   `json:"requirement,omitempty"`
@@ -495,6 +494,16 @@ type CreateRiskMeasureMappingInput struct {
 type CreateRiskMeasureMappingPayload struct {
 	RiskEdge    *RiskEdge    `json:"riskEdge"`
 	MeasureEdge *MeasureEdge `json:"measureEdge"`
+}
+
+type CreateRiskObligationMappingInput struct {
+	RiskID       gid.GID `json:"riskId"`
+	ObligationID gid.GID `json:"obligationId"`
+}
+
+type CreateRiskObligationMappingPayload struct {
+	RiskEdge       *RiskEdge       `json:"riskEdge"`
+	ObligationEdge *ObligationEdge `json:"obligationEdge"`
 }
 
 type CreateRiskPayload struct {
@@ -826,6 +835,16 @@ type DeleteRiskMeasureMappingInput struct {
 type DeleteRiskMeasureMappingPayload struct {
 	DeletedMeasureID gid.GID `json:"deletedMeasureId"`
 	DeletedRiskID    gid.GID `json:"deletedRiskId"`
+}
+
+type DeleteRiskObligationMappingInput struct {
+	RiskID       gid.GID `json:"riskId"`
+	ObligationID gid.GID `json:"obligationId"`
+}
+
+type DeleteRiskObligationMappingPayload struct {
+	DeletedRiskID       gid.GID `json:"deletedRiskId"`
+	DeletedObligationID gid.GID `json:"deletedObligationId"`
 }
 
 type DeleteRiskPayload struct {
@@ -1187,7 +1206,6 @@ type Obligation struct {
 	SnapshotID             *gid.GID                  `json:"snapshotId,omitempty"`
 	SourceID               *gid.GID                  `json:"sourceId,omitempty"`
 	Organization           *Organization             `json:"organization"`
-	ReferenceID            string                    `json:"referenceId"`
 	Area                   *string                   `json:"area,omitempty"`
 	Source                 *string                   `json:"source,omitempty"`
 	Requirement            *string                   `json:"requirement,omitempty"`
@@ -1409,6 +1427,7 @@ type Risk struct {
 	Measures           *MeasureConnection     `json:"measures"`
 	Documents          *DocumentConnection    `json:"documents"`
 	Controls           *ControlConnection     `json:"controls"`
+	Obligations        *ObligationConnection  `json:"obligations"`
 	CreatedAt          time.Time              `json:"createdAt"`
 	UpdatedAt          time.Time              `json:"updatedAt"`
 }
@@ -1687,7 +1706,6 @@ type UpdateNonconformityPayload struct {
 
 type UpdateObligationInput struct {
 	ID                     gid.GID                    `json:"id"`
-	ReferenceID            *string                    `json:"referenceId,omitempty"`
 	Area                   *string                    `json:"area,omitempty"`
 	Source                 *string                    `json:"source,omitempty"`
 	Requirement            *string                    `json:"requirement,omitempty"`

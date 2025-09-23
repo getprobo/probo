@@ -19,6 +19,7 @@ export { getAssetTypeVariant, getCriticityVariant } from "./assets";
 export { getSnapshotTypeLabel, getSnapshotTypeUrlPath, snapshotTypes, validateSnapshotConsistency } from "./snapshots";
 export { getAuditStateLabel, getAuditStateVariant, auditStates } from "./audits";
 export { getStatusVariant, getStatusLabel, getStatusOptions } from "./registryStatus";
+export { getObligationStatusVariant, getObligationStatusLabel, getObligationStatusOptions } from "./obligationStatus";
 export { promisifyMutation } from "./relay";
 export { fileType, fileSize } from "./file";
 export { formatDatetime, formatDate } from "./date";

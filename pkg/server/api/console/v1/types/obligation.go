@@ -60,7 +60,6 @@ func NewObligation(cr *coredata.Obligation) *Obligation {
 		ID:                     cr.ID,
 		SnapshotID:             cr.SnapshotID,
 		SourceID:               cr.SourceID,
-		ReferenceID:            cr.ReferenceID,
 		Area:                   cr.Area,
 		Source:                 cr.Source,
 		Requirement:            cr.Requirement,

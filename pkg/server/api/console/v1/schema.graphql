@@ -169,17 +169,17 @@ enum NonconformityStatus
 
 enum ObligationStatus
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.ObligationStatus") {
-  OPEN
+  NON_COMPLIANT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusOpen"
+      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusNonCompliant"
     )
-  IN_PROGRESS
+  PARTIALLY_COMPLIANT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusInProgress"
+      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusPartiallyCompliant"
     )
-  CLOSED
+  COMPLIANT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusClosed"
+      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusCompliant"
     )
 }
 
@@ -1043,10 +1043,6 @@ enum ObligationOrderField
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldCreatedAt"
-    )
-  REFERENCE_ID
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldReferenceId"
     )
   LAST_REVIEW_DATE
     @goEnum(
@@ -2004,6 +2000,15 @@ type Risk implements Node {
     filter: ControlFilter
   ): ControlConnection! @goField(forceResolver: true)
 
+  obligations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: ObligationOrder
+    filter: ObligationFilter
+  ): ObligationConnection! @goField(forceResolver: true)
+
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -2056,7 +2061,6 @@ type Obligation implements Node {
   snapshotId: ID
   sourceId: ID
   organization: Organization! @goField(forceResolver: true)
-  referenceId: String!
   area: String
   source: String
   requirement: String
@@ -2669,6 +2673,13 @@ type Mutation {
     input: DeleteRiskDocumentMappingInput!
   ): DeleteRiskDocumentMappingPayload!
 
+  createRiskObligationMapping(
+    input: CreateRiskObligationMappingInput!
+  ): CreateRiskObligationMappingPayload!
+  deleteRiskObligationMapping(
+    input: DeleteRiskObligationMappingInput!
+  ): DeleteRiskObligationMappingPayload!
+
   # Evidence mutations
   requestEvidence(input: RequestEvidenceInput!): RequestEvidencePayload!
   fulfillEvidence(input: FulfillEvidenceInput!): FulfillEvidencePayload!
@@ -3187,6 +3198,16 @@ input DeleteRiskDocumentMappingInput {
   documentId: ID!
 }
 
+input CreateRiskObligationMappingInput {
+  riskId: ID!
+  obligationId: ID!
+}
+
+input DeleteRiskObligationMappingInput {
+  riskId: ID!
+  obligationId: ID!
+}
+
 input RequestEvidenceInput {
   taskId: ID!
   name: String!
@@ -3392,7 +3413,6 @@ input DeleteNonconformityInput {
 
 input CreateObligationInput {
   organizationId: ID!
-  referenceId: String!
   area: String
   source: String
   requirement: String
@@ -3406,7 +3426,6 @@ input CreateObligationInput {
 
 input UpdateObligationInput {
   id: ID!
-  referenceId: String
   area: String
   source: String
   requirement: String
@@ -3732,6 +3751,16 @@ type CreateRiskDocumentMappingPayload {
 type DeleteRiskDocumentMappingPayload {
   deletedRiskId: ID!
   deletedDocumentId: ID!
+}
+
+type CreateRiskObligationMappingPayload {
+  riskEdge: RiskEdge!
+  obligationEdge: ObligationEdge!
+}
+
+type DeleteRiskObligationMappingPayload {
+  deletedRiskId: ID!
+  deletedObligationId: ID!
 }
 
 type RequestEvidencePayload {

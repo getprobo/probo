@@ -30,7 +30,6 @@ type (
 	Obligation struct {
 		ID                     gid.GID          `db:"id"`
 		OrganizationID         gid.GID          `db:"organization_id"`
-		ReferenceID            string           `db:"reference_id"`
 		Area                   *string          `db:"area"`
 		Source                 *string          `db:"source"`
 		Requirement            *string          `db:"requirement"`
@@ -59,8 +58,6 @@ func (o *Obligation) CursorKey(field ObligationOrderField) page.CursorKey {
 		return page.NewCursorKey(o.ID, o.DueDate)
 	case ObligationOrderFieldStatus:
 		return page.NewCursorKey(o.ID, o.Status)
-	case ObligationOrderFieldReferenceId:
-		return page.NewCursorKey(o.ID, o.ReferenceID)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
@@ -78,7 +75,6 @@ SELECT
 	organization_id,
 	snapshot_id,
 	source_id,
-	reference_id,
 	area,
 	source,
 	requirement,
@@ -153,6 +149,52 @@ WHERE
 	return count, nil
 }
 
+func (os *Obligations) CountByRiskID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	riskID gid.GID,
+	filter *ObligationFilter,
+) (int, error) {
+	q := `
+WITH obls AS (
+	SELECT
+		o.id,
+		o.tenant_id,
+		o.snapshot_id,
+		o.search_vector
+	FROM
+		obligations o
+	INNER JOIN
+		risks_obligations ro ON o.id = ro.obligation_id
+	WHERE
+		ro.risk_id = @risk_id
+)
+SELECT
+	COUNT(id)
+FROM
+	obls
+WHERE %s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_id": riskID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count obligations: %w", err)
+	}
+
+	return count, nil
+}
+
 func (os *Obligations) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -165,7 +207,6 @@ func (os *Obligations) LoadByOrganizationID(
 SELECT
 	id,
 	organization_id,
-	reference_id,
 	area,
 	source,
 	requirement,
@@ -210,6 +251,86 @@ WHERE
 	return nil
 }
 
+func (os *Obligations) LoadByRiskID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	riskID gid.GID,
+	cursor *page.Cursor[ObligationOrderField],
+	filter *ObligationFilter,
+) error {
+	q := `
+WITH obls AS (
+	SELECT
+		o.id,
+		o.organization_id,
+		o.area,
+		o.source,
+		o.requirement,
+		o.actions_to_be_implemented,
+		o.regulator,
+		o.owner_id,
+		o.last_review_date,
+		o.due_date,
+		o.status,
+		o.snapshot_id,
+		o.source_id,
+		o.created_at,
+		o.updated_at,
+		o.tenant_id,
+		o.search_vector
+	FROM
+		obligations o
+	INNER JOIN
+		risks_obligations ro ON o.id = ro.obligation_id
+	WHERE
+		ro.risk_id = @risk_id
+)
+SELECT
+	id,
+	organization_id,
+	area,
+	source,
+	requirement,
+	actions_to_be_implemented,
+	regulator,
+	owner_id,
+	last_review_date,
+	due_date,
+	status,
+	snapshot_id,
+	source_id,
+	created_at,
+	updated_at
+FROM
+	obls
+WHERE %s
+	AND %s
+	AND %s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"risk_id": riskID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query obligations: %w", err)
+	}
+
+	obligations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Obligation])
+	if err != nil {
+		return fmt.Errorf("cannot collect obligations: %w", err)
+	}
+
+	*os = obligations
+
+	return nil
+}
+
 func (o *Obligation) Insert(
 	ctx context.Context,
 	conn pg.Conn,
@@ -220,7 +341,6 @@ INSERT INTO obligations (
 	id,
 	tenant_id,
 	organization_id,
-	reference_id,
 	area,
 	source,
 	requirement,
@@ -238,7 +358,6 @@ INSERT INTO obligations (
 	@id,
 	@tenant_id,
 	@organization_id,
-	@reference_id,
 	@area,
 	@source,
 	@requirement,
@@ -259,7 +378,6 @@ INSERT INTO obligations (
 		"id":                        o.ID,
 		"tenant_id":                 scope.GetTenantID(),
 		"organization_id":           o.OrganizationID,
-		"reference_id":              o.ReferenceID,
 		"area":                      o.Area,
 		"source":                    o.Source,
 		"requirement":               o.Requirement,
@@ -290,7 +408,6 @@ func (o *Obligation) Update(
 ) error {
 	q := `
 UPDATE obligations SET
-	reference_id = @reference_id,
 	area = @area,
 	source = @source,
 	requirement = @requirement,
@@ -311,7 +428,6 @@ WHERE
 
 	args := pgx.StrictNamedArgs{
 		"id":                        o.ID,
-		"reference_id":              o.ReferenceID,
 		"area":                      o.Area,
 		"source":                    o.Source,
 		"requirement":               o.Requirement,
@@ -367,7 +483,6 @@ INSERT INTO obligations (
 	snapshot_id,
 	source_id,
 	organization_id,
-	reference_id,
 	area,
 	source,
 	requirement,
@@ -386,7 +501,6 @@ SELECT
 	@snapshot_id,
 	o.id,
 	o.organization_id,
-	o.reference_id,
 	o.area,
 	o.source,
 	o.requirement,

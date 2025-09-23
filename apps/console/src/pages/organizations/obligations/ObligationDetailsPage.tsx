@@ -31,12 +31,11 @@ import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 import z from "zod";
-import { getStatusVariant, getStatusLabel, formatDatetime, getStatusOptions, validateSnapshotConsistency } from "@probo/helpers";
+import { getObligationStatusVariant, getObligationStatusLabel, formatDatetime, getObligationStatusOptions, validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ObligationGraphNodeQuery } from "/hooks/graph/__generated__/ObligationGraphNodeQuery.graphql";
 
 const updateObligationSchema = z.object({
-  referenceId: z.string().min(1, "Reference ID is required"),
   area: z.string().optional(),
   source: z.string().optional(),
   requirement: z.string().optional(),
@@ -44,7 +43,7 @@ const updateObligationSchema = z.object({
   regulator: z.string().optional(),
   lastReviewDate: z.string().optional(),
   dueDate: z.string().optional(),
-  status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED"]),
+  status: z.enum(["NON_COMPLIANT", "PARTIALLY_COMPLIANT", "COMPLIANT"]),
   ownerId: z.string().min(1, "Owner is required"),
 });
 
@@ -68,7 +67,7 @@ export default function ObligationDetailsPage(props: Props) {
   validateSnapshotConsistency(obligation, snapshotId);
 
   const updateObligation = useUpdateObligation();
-  const statusOptions = getStatusOptions(__);
+  const statusOptions = getObligationStatusOptions(__);
 
   const connectionId = ConnectionHandler.getConnectionID(
     organizationId,
@@ -76,7 +75,7 @@ export default function ObligationDetailsPage(props: Props) {
   );
 
   const deleteObligation = useDeleteObligation(
-    { id: obligation?.id!, referenceId: obligation?.referenceId! },
+    { id: obligation?.id! },
     connectionId
   );
 
@@ -84,7 +83,6 @@ export default function ObligationDetailsPage(props: Props) {
     updateObligationSchema,
     {
       defaultValues: {
-        referenceId: obligation?.referenceId || "",
         area: obligation?.area || "",
         source: obligation?.source || "",
         requirement: obligation?.requirement || "",
@@ -96,7 +94,7 @@ export default function ObligationDetailsPage(props: Props) {
         dueDate: obligation?.dueDate
           ? new Date(obligation.dueDate).toISOString().split("T")[0]
           : "",
-        status: obligation?.status || "OPEN",
+        status: obligation?.status ?? "NON_COMPLIANT",
         ownerId: obligation?.owner?.id || "",
       },
     }
@@ -106,7 +104,6 @@ export default function ObligationDetailsPage(props: Props) {
     try {
       await updateObligation({
         id: obligation.id!,
-        referenceId: formData.referenceId,
         area: formData.area || undefined,
         source: formData.source || undefined,
         requirement: formData.requirement || undefined,
@@ -116,7 +113,6 @@ export default function ObligationDetailsPage(props: Props) {
         dueDate: formatDatetime(formData.dueDate),
         status: formData.status,
         ownerId: formData.ownerId,
-
       });
 
       toast({
@@ -147,13 +143,13 @@ export default function ObligationDetailsPage(props: Props) {
                    <Breadcrumb
            items={[
              { label: __("Obligations"), to: breadcrumbObligationsUrl },
-             { label: obligation.referenceId! },
+             { label: __("Obligation Details") },
            ]}
          />
         <div className="flex items-center gap-3 mt-2">
-          <h1 className="text-2xl font-bold">{obligation.referenceId}</h1>
-          <Badge variant={getStatusVariant(obligation.status || "OPEN")}>
-            {getStatusLabel(obligation.status || "OPEN")}
+          <h1 className="text-2xl font-bold">{__("Obligation")}</h1>
+          <Badge variant={getObligationStatusVariant(obligation.status ?? "NON_COMPLIANT")}>
+            {getObligationStatusLabel(obligation.status ?? "NON_COMPLIANT")}
           </Badge>
         </div>
       </div>
@@ -169,19 +165,6 @@ export default function ObligationDetailsPage(props: Props) {
 
       <Card padded>
         <form onSubmit={onSubmit} className="space-y-6">
-          <Field
-            label={__("Reference ID")}
-            error={formState.errors.referenceId?.message}
-            required
-          >
-            <Input
-              {...register("referenceId")}
-              placeholder={__("Enter reference ID")}
-              disabled={isSnapshotMode}
-            />
-          </Field>
-
-
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Field

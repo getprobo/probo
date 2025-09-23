@@ -20,10 +20,9 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useCreateObligation } from "../../../../hooks/graph/ObligationGraph";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { Controller } from "react-hook-form";
-import { formatDatetime, getStatusOptions } from "@probo/helpers";
+import { formatDatetime, getObligationStatusOptions } from "@probo/helpers";
 
 const schema = z.object({
-  referenceId: z.string().min(1, "Reference ID is required"),
   area: z.string().optional(),
   source: z.string().optional(),
   requirement: z.string().optional(),
@@ -32,7 +31,7 @@ const schema = z.object({
   ownerId: z.string().min(1, "Owner is required"),
   lastReviewDate: z.string().optional(),
   dueDate: z.string().optional(),
-  status: z.enum(["OPEN", "IN_PROGRESS", "CLOSED"]),
+  status: z.enum(["NON_COMPLIANT", "PARTIALLY_COMPLIANT", "COMPLIANT"]),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -53,11 +52,10 @@ export function CreateObligationDialog({
   const dialogRef = useDialogRef();
 
   const createObligation = useCreateObligation(connection || "");
-  const statusOptions = getStatusOptions(__);
+  const statusOptions = getObligationStatusOptions(__);
 
   const { register, handleSubmit, formState, reset, control } = useFormWithSchema(schema, {
     defaultValues: {
-      referenceId: "",
       area: "",
       source: "",
       requirement: "",
@@ -66,7 +64,7 @@ export function CreateObligationDialog({
       ownerId: "",
       lastReviewDate: "",
       dueDate: "",
-      status: "OPEN" as const,
+      status: "NON_COMPLIANT" as const,
     },
   });
 
@@ -74,7 +72,6 @@ export function CreateObligationDialog({
     try {
       await createObligation({
         organizationId,
-        referenceId: formData.referenceId,
         area: formData.area || undefined,
         source: formData.source || undefined,
         requirement: formData.requirement || undefined,
@@ -112,14 +109,6 @@ export function CreateObligationDialog({
     >
       <form onSubmit={onSubmit}>
         <DialogContent padded className="space-y-4">
-          <Field
-            label={__("Reference ID")}
-            {...register("referenceId")}
-            placeholder="CR-001"
-            error={formState.errors.referenceId?.message}
-            required
-          />
-
           <div className="grid grid-cols-2 gap-4">
             <Field
               label={__("Area")}

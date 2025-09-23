@@ -32,7 +32,6 @@ type ObligationService struct {
 type (
 	CreateObligationRequest struct {
 		OrganizationID         gid.GID
-		ReferenceID            string
 		Area                   *string
 		Source                 *string
 		Requirement            *string
@@ -46,7 +45,6 @@ type (
 
 	UpdateObligationRequest struct {
 		ID                     gid.GID
-		ReferenceID            *string
 		Area                   **string
 		Source                 **string
 		Requirement            **string
@@ -92,7 +90,6 @@ func (s *ObligationService) Create(
 	obligation := &coredata.Obligation{
 		ID:                     gid.New(s.svc.scope.GetTenantID(), coredata.ObligationEntityType),
 		OrganizationID:         req.OrganizationID,
-		ReferenceID:            req.ReferenceID,
 		Area:                   req.Area,
 		Source:                 req.Source,
 		Requirement:            req.Requirement,
@@ -145,10 +142,6 @@ func (s *ObligationService) Update(
 		func(conn pg.Conn) error {
 			if err := obligation.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load obligation: %w", err)
-			}
-
-			if req.ReferenceID != nil {
-				obligation.ReferenceID = *req.ReferenceID
 			}
 
 			if req.Area != nil {
@@ -270,6 +263,60 @@ func (s ObligationService) ListForOrganizationID(
 		ctx,
 		func(conn pg.Conn) error {
 			err := obligations.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID, cursor, filter)
+			if err != nil {
+				return fmt.Errorf("cannot load obligations: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(obligations, cursor), nil
+}
+
+func (s ObligationService) CountForRiskID(
+	ctx context.Context,
+	riskID gid.GID,
+	filter *coredata.ObligationFilter,
+) (int, error) {
+	var count int
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) (err error) {
+			obligations := &coredata.Obligations{}
+			count, err = obligations.CountByRiskID(ctx, conn, s.svc.scope, riskID, filter)
+			if err != nil {
+				return fmt.Errorf("cannot count obligations: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s ObligationService) ListForRiskID(
+	ctx context.Context,
+	riskID gid.GID,
+	cursor *page.Cursor[coredata.ObligationOrderField],
+	filter *coredata.ObligationFilter,
+) (*page.Page[*coredata.Obligation, coredata.ObligationOrderField], error) {
+	var obligations coredata.Obligations
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := obligations.LoadByRiskID(ctx, conn, s.svc.scope, riskID, cursor, filter)
 			if err != nil {
 				return fmt.Errorf("cannot load obligations: %w", err)
 			}

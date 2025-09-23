@@ -125,11 +125,15 @@ export const riskNodeQuery = graphql`
         controlsInfo: controls(first: 0) {
           totalCount
         }
+        obligationsInfo: obligations(first: 0) {
+          totalCount
+        }
         ...useRiskFormFragment
         ...RiskOverviewTabFragment
         ...RiskMeasuresTabFragment
         ...RiskDocumentsTabFragment
         ...RiskControlsTabFragment
+        ...RiskObligationsTabFragment
       }
     }
   }

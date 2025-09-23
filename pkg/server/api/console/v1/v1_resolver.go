@@ -2209,6 +2209,36 @@ func (r *mutationResolver) DeleteRiskDocumentMapping(ctx context.Context, input 
 	}, nil
 }
 
+// CreateRiskObligationMapping is the resolver for the createRiskObligationMapping field.
+func (r *mutationResolver) CreateRiskObligationMapping(ctx context.Context, input types.CreateRiskObligationMappingInput) (*types.CreateRiskObligationMappingPayload, error) {
+	prb := r.ProboService(ctx, input.RiskID.TenantID())
+
+	risk, obligation, err := prb.Risks.CreateObligationMapping(ctx, input.RiskID, input.ObligationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot create risk obligation mapping: %w", err))
+	}
+
+	return &types.CreateRiskObligationMappingPayload{
+		RiskEdge:       types.NewRiskEdge(risk, coredata.RiskOrderFieldCreatedAt),
+		ObligationEdge: types.NewObligationEdge(obligation, coredata.ObligationOrderFieldCreatedAt),
+	}, nil
+}
+
+// DeleteRiskObligationMapping is the resolver for the deleteRiskObligationMapping field.
+func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, input types.DeleteRiskObligationMappingInput) (*types.DeleteRiskObligationMappingPayload, error) {
+	prb := r.ProboService(ctx, input.RiskID.TenantID())
+
+	risk, obligation, err := prb.Risks.DeleteObligationMapping(ctx, input.RiskID, input.ObligationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot delete risk obligation mapping: %w", err))
+	}
+
+	return &types.DeleteRiskObligationMappingPayload{
+		DeletedRiskID:       risk.ID,
+		DeletedObligationID: obligation.ID,
+	}, nil
+}
+
 // RequestEvidence is the resolver for the requestEvidence field.
 func (r *mutationResolver) RequestEvidence(ctx context.Context, input types.RequestEvidenceInput) (*types.RequestEvidencePayload, error) {
 	prb := r.ProboService(ctx, input.TaskID.TenantID())
@@ -3118,7 +3148,6 @@ func (r *mutationResolver) CreateObligation(ctx context.Context, input types.Cre
 
 	req := probo.CreateObligationRequest{
 		OrganizationID:         input.OrganizationID,
-		ReferenceID:            input.ReferenceID,
 		Area:                   input.Area,
 		Source:                 input.Source,
 		Requirement:            input.Requirement,
@@ -3146,7 +3175,6 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 
 	req := probo.UpdateObligationRequest{
 		ID:                     input.ID,
-		ReferenceID:            input.ReferenceID,
 		Area:                   &input.Area,
 		Source:                 &input.Source,
 		Requirement:            &input.Requirement,
@@ -3476,6 +3504,17 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 		count, err := prb.Obligations.CountForOrganizationID(ctx, obj.ParentID, obligationFilter)
 		if err != nil {
 			panic(fmt.Errorf("cannot count obligations: %w", err))
+		}
+		return count, nil
+	case *riskResolver:
+		obligationFilter := coredata.NewObligationFilter(nil)
+		if obj.Filter != nil {
+			obligationFilter = coredata.NewObligationFilter(&obj.Filter.SnapshotID)
+		}
+
+		count, err := prb.Obligations.CountForRiskID(ctx, obj.ParentID, obligationFilter)
+		if err != nil {
+			panic(fmt.Errorf("cannot count risk obligations: %w", err))
 		}
 		return count, nil
 	}
@@ -4386,6 +4425,36 @@ func (r *riskResolver) Controls(ctx context.Context, obj *types.Risk, first *int
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, filters), nil
+}
+
+// Obligations is the resolver for the obligations field.
+func (r *riskResolver) Obligations(ctx context.Context, obj *types.Risk, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ObligationOrderBy, filter *types.ObligationFilter) (*types.ObligationConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.ObligationOrderField]{
+		Field:     coredata.ObligationOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.ObligationOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	var obligationFilter = coredata.NewObligationFilter(nil)
+	if filter != nil {
+		obligationFilter = coredata.NewObligationFilter(&filter.SnapshotID)
+	}
+
+	page, err := prb.Obligations.ListForRiskID(ctx, obj.ID, cursor, obligationFilter)
+	if err != nil {
+		panic(fmt.Errorf("cannot list risk obligations: %w", err))
+	}
+
+	return types.NewObligationConnection(page, r, obj.ID, filter), nil
 }
 
 // TotalCount is the resolver for the totalCount field.

@@ -72,6 +72,13 @@ export const riskRoutes = [
           () => import("/pages/organizations/risks/tabs/RiskControlsTab.tsx")
         ),
       },
+      {
+        path: "obligations",
+        fallback: LinkCardSkeleton,
+        Component: lazy(
+          () => import("/pages/organizations/risks/tabs/RiskObligationsTab.tsx")
+        ),
+      },
     ],
   },
   {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3b2a48df3fdef9f91bc4520ed2448423>>
+ * @generated SignedSource<<3d2709f51866093bcc78ec14501dae31>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,20 +10,28 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type ObligationsPageRefetchQuery$variables = {
+export type ObligationOrderField = "CREATED_AT" | "DUE_DATE" | "LAST_REVIEW_DATE" | "STATUS";
+export type OrderDirection = "ASC" | "DESC";
+export type ObligationOrder = {
+  direction: OrderDirection;
+  field: ObligationOrderField;
+};
+export type LinkedObligationsDialogQuery_fragment$variables = {
   after?: any | null | undefined;
+  before?: any | null | undefined;
   first?: number | null | undefined;
   id: string;
-  snapshotId?: string | null | undefined;
+  last?: number | null | undefined;
+  order?: ObligationOrder | null | undefined;
 };
-export type ObligationsPageRefetchQuery$data = {
+export type LinkedObligationsDialogQuery_fragment$data = {
   readonly node: {
-    readonly " $fragmentSpreads": FragmentRefs<"ObligationsPageFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"LinkedObligationsDialogFragment">;
   };
 };
-export type ObligationsPageRefetchQuery = {
-  response: ObligationsPageRefetchQuery$data;
-  variables: ObligationsPageRefetchQuery$variables;
+export type LinkedObligationsDialogQuery_fragment = {
+  response: LinkedObligationsDialogQuery_fragment$data;
+  variables: LinkedObligationsDialogQuery_fragment$variables;
 };
 
 const node: ConcreteRequest = (function(){
@@ -33,66 +41,81 @@ var v0 = {
   "name": "after"
 },
 v1 = {
-  "defaultValue": 10,
-  "kind": "LocalArgument",
-  "name": "first"
-},
-v2 = {
   "defaultValue": null,
   "kind": "LocalArgument",
-  "name": "id"
+  "name": "before"
+},
+v2 = {
+  "defaultValue": 20,
+  "kind": "LocalArgument",
+  "name": "first"
 },
 v3 = {
   "defaultValue": null,
   "kind": "LocalArgument",
-  "name": "snapshotId"
+  "name": "id"
 },
-v4 = [
+v4 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "last"
+},
+v5 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "order"
+},
+v6 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "id"
   }
 ],
-v5 = {
+v7 = {
   "kind": "Variable",
   "name": "after",
   "variableName": "after"
 },
-v6 = {
+v8 = {
+  "kind": "Variable",
+  "name": "before",
+  "variableName": "before"
+},
+v9 = {
   "kind": "Variable",
   "name": "first",
   "variableName": "first"
 },
-v7 = {
+v10 = {
   "kind": "Variable",
-  "name": "snapshotId",
-  "variableName": "snapshotId"
+  "name": "last",
+  "variableName": "last"
 },
-v8 = {
+v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v9 = {
+v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v10 = [
-  (v5/*: any*/),
+v13 = [
+  (v7/*: any*/),
+  (v8/*: any*/),
+  (v9/*: any*/),
+  (v10/*: any*/),
   {
-    "fields": [
-      (v7/*: any*/)
-    ],
-    "kind": "ObjectValue",
-    "name": "filter"
-  },
-  (v6/*: any*/)
+    "kind": "Variable",
+    "name": "orderBy",
+    "variableName": "order"
+  }
 ];
 return {
   "fragment": {
@@ -100,15 +123,17 @@ return {
       (v0/*: any*/),
       (v1/*: any*/),
       (v2/*: any*/),
-      (v3/*: any*/)
+      (v3/*: any*/),
+      (v4/*: any*/),
+      (v5/*: any*/)
     ],
     "kind": "Fragment",
     "metadata": null,
-    "name": "ObligationsPageRefetchQuery",
+    "name": "LinkedObligationsDialogQuery_fragment",
     "selections": [
       {
         "alias": null,
-        "args": (v4/*: any*/),
+        "args": (v6/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
@@ -116,12 +141,18 @@ return {
         "selections": [
           {
             "args": [
-              (v5/*: any*/),
-              (v6/*: any*/),
-              (v7/*: any*/)
+              (v7/*: any*/),
+              (v8/*: any*/),
+              (v9/*: any*/),
+              (v10/*: any*/),
+              {
+                "kind": "Variable",
+                "name": "order",
+                "variableName": "order"
+              }
             ],
             "kind": "FragmentSpread",
-            "name": "ObligationsPageFragment"
+            "name": "LinkedObligationsDialogFragment"
           }
         ],
         "storageKey": null
@@ -135,40 +166,35 @@ return {
     "argumentDefinitions": [
       (v0/*: any*/),
       (v1/*: any*/),
-      (v3/*: any*/),
-      (v2/*: any*/)
+      (v2/*: any*/),
+      (v4/*: any*/),
+      (v5/*: any*/),
+      (v3/*: any*/)
     ],
     "kind": "Operation",
-    "name": "ObligationsPageRefetchQuery",
+    "name": "LinkedObligationsDialogQuery_fragment",
     "selections": [
       {
         "alias": null,
-        "args": (v4/*: any*/),
+        "args": (v6/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v8/*: any*/),
-          (v9/*: any*/),
+          (v11/*: any*/),
+          (v12/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v13/*: any*/),
                 "concreteType": "ObligationConnection",
                 "kind": "LinkedField",
                 "name": "obligations",
                 "plural": false,
                 "selections": [
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "totalCount",
-                    "storageKey": null
-                  },
                   {
                     "alias": null,
                     "args": null,
@@ -185,19 +211,12 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v9/*: any*/),
+                          (v12/*: any*/),
                           {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "snapshotId",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "sourceId",
+                            "name": "requirement",
                             "storageKey": null
                           },
                           {
@@ -218,42 +237,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "requirement",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "status",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "lastReviewDate",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "dueDate",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "actionsToBeImplemented",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "regulator",
                             "storageKey": null
                           },
                           {
@@ -264,32 +248,18 @@ return {
                             "name": "owner",
                             "plural": false,
                             "selections": [
-                              (v9/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
                                 "kind": "ScalarField",
                                 "name": "fullName",
                                 "storageKey": null
-                              }
+                              },
+                              (v12/*: any*/)
                             ],
                             "storageKey": null
                           },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "createdAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "updatedAt",
-                            "storageKey": null
-                          },
-                          (v8/*: any*/)
+                          (v11/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -315,6 +285,13 @@ return {
                         "alias": null,
                         "args": null,
                         "kind": "ScalarField",
+                        "name": "endCursor",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
                         "name": "hasNextPage",
                         "storageKey": null
                       },
@@ -322,35 +299,30 @@ return {
                         "alias": null,
                         "args": null,
                         "kind": "ScalarField",
-                        "name": "endCursor",
+                        "name": "hasPreviousPage",
                         "storageKey": null
-                      }
-                    ],
-                    "storageKey": null
-                  },
-                  {
-                    "kind": "ClientExtension",
-                    "selections": [
+                      },
                       {
                         "alias": null,
                         "args": null,
                         "kind": "ScalarField",
-                        "name": "__id",
+                        "name": "startCursor",
                         "storageKey": null
                       }
-                    ]
+                    ],
+                    "storageKey": null
                   }
                 ],
                 "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v10/*: any*/),
+                "args": (v13/*: any*/),
                 "filters": [
-                  "filter"
+                  "orderBy"
                 ],
                 "handle": "connection",
-                "key": "ObligationsPage_obligations",
+                "key": "LinkedObligationsDialogQuery_obligations",
                 "kind": "LinkedHandle",
                 "name": "obligations"
               }
@@ -364,16 +336,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0500f4aee677d8d1ec53cd189e350395",
+    "cacheID": "a4640b163a373e0420a9fb1108ce7b3a",
     "id": null,
     "metadata": {},
-    "name": "ObligationsPageRefetchQuery",
+    "name": "LinkedObligationsDialogQuery_fragment",
     "operationKind": "query",
-    "text": "query ObligationsPageRefetchQuery(\n  $after: CursorKey\n  $first: Int = 10\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...ObligationsPageFragment_35e0S5\n    id\n  }\n}\n\nfragment ObligationsPageFragment_35e0S5 on Organization {\n  id\n  obligations(first: $first, after: $after, filter: {snapshotId: $snapshotId}) {\n    totalCount\n    edges {\n      node {\n        id\n        snapshotId\n        sourceId\n        area\n        source\n        requirement\n        status\n        lastReviewDate\n        dueDate\n        actionsToBeImplemented\n        regulator\n        owner {\n          id\n          fullName\n        }\n        createdAt\n        updatedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query LinkedObligationsDialogQuery_fragment(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: ObligationOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...LinkedObligationsDialogFragment_16fISc\n    id\n  }\n}\n\nfragment LinkedObligationsDialogFragment_16fISc on Organization {\n  obligations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        requirement\n        area\n        source\n        status\n        owner {\n          fullName\n          id\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a5dda6d90c9205f7c7d6ea6d84d760f1";
+(node as any).hash = "6e686f2a4bce776146b1985df2863e73";
 
 export default node;

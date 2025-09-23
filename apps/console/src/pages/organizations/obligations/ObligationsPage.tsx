@@ -28,7 +28,7 @@ import { useParams } from "react-router";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateObligationDialog } from "./dialogs/CreateObligationDialog";
 import { deleteObligationMutation } from "../../../hooks/graph/ObligationGraph";
-import { sprintf, promisifyMutation, getStatusVariant, getStatusLabel, formatDate } from "@probo/helpers";
+import { promisifyMutation, getObligationStatusVariant, getObligationStatusLabel, formatDate } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 import type { ObligationsPageQuery } from "./__generated__/ObligationsPageQuery.graphql";
 import type {
@@ -64,7 +64,6 @@ const obligationsPageFragment = graphql`
           id
           snapshotId
           sourceId
-          referenceId
           area
           source
           requirement
@@ -152,7 +151,6 @@ export default function ObligationsPage({ queryRef }: ObligationsPageProps) {
           <Table>
             <Thead>
               <Tr>
-                <Th>{__("Reference ID")}</Th>
                 <Th>{__("Area")}</Th>
                 <Th>{__("Source")}</Th>
                 <Th>{__("Status")}</Th>
@@ -218,11 +216,8 @@ function ObligationRow({
           },
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the obligation %s. This action cannot be undone."
-          ),
-          obligation.referenceId
+        message: __(
+          "This will permanently delete this obligation. This action cannot be undone."
         ),
       }
     );
@@ -234,14 +229,11 @@ function ObligationRow({
 
   return (
     <Tr to={detailsUrl}>
-      <Td>
-        <span className="font-mono text-sm">{obligation.referenceId}</span>
-      </Td>
       <Td>{obligation.area || "-"}</Td>
       <Td>{obligation.source || "-"}</Td>
       <Td>
-        <Badge variant={getStatusVariant(obligation.status || "OPEN")}>
-          {getStatusLabel(obligation.status || "OPEN")}
+        <Badge variant={getObligationStatusVariant(obligation.status || "NON_COMPLIANT")}>
+          {getObligationStatusLabel(obligation.status || "NON_COMPLIANT")}
         </Badge>
       </Td>
       <Td>{obligation.owner?.fullName || "-"}</Td>

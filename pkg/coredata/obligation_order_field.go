@@ -25,7 +25,6 @@ const (
 	ObligationOrderFieldLastReviewDate ObligationOrderField = "LAST_REVIEW_DATE"
 	ObligationOrderFieldDueDate        ObligationOrderField = "DUE_DATE"
 	ObligationOrderFieldStatus         ObligationOrderField = "STATUS"
-	ObligationOrderFieldReferenceId    ObligationOrderField = "REFERENCE_ID"
 )
 
 func (p ObligationOrderField) Column() string {
@@ -46,8 +45,7 @@ func (p *ObligationOrderField) UnmarshalText(text []byte) error {
 	case string(ObligationOrderFieldCreatedAt),
 		string(ObligationOrderFieldLastReviewDate),
 		string(ObligationOrderFieldDueDate),
-		string(ObligationOrderFieldStatus),
-		string(ObligationOrderFieldReferenceId):
+		string(ObligationOrderFieldStatus):
 		*p = ObligationOrderField(val)
 		return nil
 	}

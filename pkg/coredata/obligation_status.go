@@ -22,9 +22,9 @@ import (
 type ObligationStatus string
 
 const (
-	ObligationStatusOpen       ObligationStatus = "OPEN"
-	ObligationStatusInProgress ObligationStatus = "IN_PROGRESS"
-	ObligationStatusClosed     ObligationStatus = "CLOSED"
+	ObligationStatusNonCompliant       ObligationStatus = "NON_COMPLIANT"
+	ObligationStatusPartiallyCompliant ObligationStatus = "PARTIALLY_COMPLIANT"
+	ObligationStatusCompliant          ObligationStatus = "COMPLIANT"
 )
 
 func (os ObligationStatus) String() string {
@@ -43,12 +43,12 @@ func (os *ObligationStatus) Scan(value any) error {
 	}
 
 	switch s {
-	case "OPEN":
-		*os = ObligationStatusOpen
-	case "IN_PROGRESS":
-		*os = ObligationStatusInProgress
-	case "CLOSED":
-		*os = ObligationStatusClosed
+	case "NON_COMPLIANT":
+		*os = ObligationStatusNonCompliant
+	case "PARTIALLY_COMPLIANT":
+		*os = ObligationStatusPartiallyCompliant
+	case "COMPLIANT":
+		*os = ObligationStatusCompliant
 	default:
 		return fmt.Errorf("invalid ObligationStatus value: %q", s)
 	}

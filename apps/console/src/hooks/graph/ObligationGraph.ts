@@ -2,7 +2,7 @@ import { graphql } from "relay-runtime";
 import { useMutation } from "react-relay";
 import { useConfirm } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { promisifyMutation, sprintf } from "@probo/helpers";
+import { promisifyMutation } from "@probo/helpers";
 import { useMutationWithToasts } from "../useMutationWithToasts";
 
 export const ObligationsConnectionKey = "ObligationsPage_obligations";
@@ -24,7 +24,6 @@ export const obligationNodeQuery = graphql`
         id
         snapshotId
         sourceId
-        referenceId
         area
         source
         requirement
@@ -57,7 +56,6 @@ export const createObligationMutation = graphql`
       obligationEdge @prependEdge(connections: $connections) {
         node {
           id
-          referenceId
           area
           source
           requirement
@@ -82,7 +80,6 @@ export const updateObligationMutation = graphql`
     updateObligation(input: $input) {
       obligation {
         id
-        referenceId
         area
         source
         requirement
@@ -113,7 +110,7 @@ export const deleteObligationMutation = graphql`
 `;
 
 export const useDeleteObligation = (
-  obligation: { id: string; referenceId: string },
+  obligation: { id: string },
   connectionId: string
 ) => {
   const { __ } = useTranslate();
@@ -135,11 +132,8 @@ export const useDeleteObligation = (
           },
         }),
       {
-        message: sprintf(
-          __(
-            "This will permanently delete the obligation %s. This action cannot be undone."
-          ),
-          obligation.referenceId
+        message: __(
+          "This will permanently delete this obligation. This action cannot be undone."
         ),
       }
     );
@@ -152,7 +146,6 @@ export const useCreateObligation = (connectionId: string) => {
 
   return (input: {
     organizationId: string;
-    referenceId: string;
     area?: string;
     source?: string;
     requirement?: string;
@@ -166,9 +159,6 @@ export const useCreateObligation = (connectionId: string) => {
     if (!input.organizationId) {
       return alert(__("Failed to create obligation: organization is required"));
     }
-    if (!input.referenceId) {
-      return alert(__("Failed to create obligation: reference ID is required"));
-    }
     if (!input.ownerId) {
       return alert(__("Failed to create obligation: owner is required"));
     }
@@ -177,7 +167,6 @@ export const useCreateObligation = (connectionId: string) => {
       variables: {
         input: {
           organizationId: input.organizationId,
-          referenceId: input.referenceId,
           area: input.area,
           source: input.source,
           requirement: input.requirement,
@@ -186,7 +175,7 @@ export const useCreateObligation = (connectionId: string) => {
           ownerId: input.ownerId,
           lastReviewDate: input.lastReviewDate,
           dueDate: input.dueDate,
-          status: input.status || "OPEN",
+          status: input.status || "NON_COMPLIANT",
         },
         connections: [connectionId],
       },
@@ -200,7 +189,6 @@ export const useUpdateObligation = () => {
 
   return (input: {
     id: string;
-    referenceId?: string;
     area?: string;
     source?: string;
     requirement?: string;
