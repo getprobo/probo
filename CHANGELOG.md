@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+# [0.61.0] - 2025-09-23
+
+### Added
+- Decouple users from people
+- Add more details to organization
+
 # [0.60.0] - 2025-09-18
 
 ### Added
