@@ -17,41 +17,166 @@ package watermarkpdf
 import (
 	"bytes"
 	"fmt"
-	"strings"
+	"image"
+	"image/color"
+	"image/png"
+	"math"
 	"time"
 
 	"github.com/pdfcpu/pdfcpu/pkg/api"
-	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/model"
+	"github.com/pdfcpu/pdfcpu/pkg/pdfcpu/types"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/gofont/goregular"
+	"golang.org/x/image/font/opentype"
+	"golang.org/x/image/math/fixed"
+)
+
+const (
+	watermarkFontSize       = 90
+	watermarkRotationDegree = -55.0
+	watermarkOpacity        = 0.1
+	watermarkScaleFactor    = 1.0
+	fontDPI                 = 80
+	charWidthRatio          = 0.6
+	lineSpacingRatio        = 1.5
+)
+
+var (
+	fontSizeRatio = 72.0 / float64(fontDPI)
+	fontColor     = color.RGBA{0, 0, 0, 255}
 )
 
 func AddConfidentialWithTimestamp(pdfData []byte, email string) ([]byte, error) {
 	reader := bytes.NewReader(pdfData)
-	var buf bytes.Buffer
 
-	// Replace email with invisible characters to prevent auto-linking
-	formattedEmail := strings.ReplaceAll(email, "@", "\u200B@\u200B")
-	formattedEmail = strings.ReplaceAll(formattedEmail, ".", "\u200B.\u200B")
-
-	watermarkText := strings.Join([]string{
+	watermarkLines := []string{
 		"Confidential",
-		formattedEmail,
-		time.Now().Format("02/01/2006"),
-	}, "\n")
+		email,
+		time.Now().Format("2006-01-02"),
+	}
 
-	watermarkConf := model.DefaultWatermarkConfig()
-	watermarkConf.Mode = model.WMText
-	watermarkConf.TextString = watermarkText
-	watermarkConf.FontName = "Helvetica"
-	watermarkConf.FontSize = 120
-	watermarkConf.Rotation = 55
-	watermarkConf.Opacity = 0.20
-	watermarkConf.OnTop = true
-	watermarkConf.ScaleAbs = true
-	watermarkConf.Update = false
+	textImage, err := generateTextImage(watermarkLines)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate watermark image: %w", err)
+	}
 
-	err := api.AddWatermarks(reader, &buf, nil, watermarkConf, nil)
+	// Apply rotation before pdfcpu scaling instead of using pdfcpu's rotation API
+	// to ensure the scaled watermark covers the full page properly
+	imageData, err := rotateImage(textImage, watermarkRotationDegree)
+	if err != nil {
+		return nil, fmt.Errorf("failed to rotate image: %w", err)
+	}
+
+	imageReader := bytes.NewReader(imageData)
+	desc := fmt.Sprintf(
+		"rotation:0,position:c,opacity:%.1f,scalefactor:%.1f rel",
+		watermarkOpacity,
+		watermarkScaleFactor,
+	)
+	watermarkConf, err := api.ImageWatermarkForReader(imageReader, desc, true, false, types.POINTS)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create watermark from reader: %w", err)
+	}
+
+	var buf bytes.Buffer
+	err = api.AddWatermarks(reader, &buf, nil, watermarkConf, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to add watermark: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
+func generateTextImage(lines []string) (*image.RGBA, error) {
+	maxLineLength := 0
+	for _, line := range lines {
+		maxLineLength = max(maxLineLength, len(line))
+	}
+
+	charWidth := int(float64(watermarkFontSize) * charWidthRatio)
+	charHeight := watermarkFontSize
+	lineSpacing := int(float64(charHeight) * lineSpacingRatio)
+
+	textWidth := maxLineLength * charWidth
+	textHeight := len(lines)*charHeight + (len(lines)-1)*lineSpacing
+
+	textImg := image.NewRGBA(image.Rect(0, 0, textWidth, textHeight))
+
+	ttf, err := opentype.Parse(goregular.TTF)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse font: %w", err)
+	}
+
+	face, err := opentype.NewFace(ttf, &opentype.FaceOptions{
+		Size:    float64(watermarkFontSize) * fontSizeRatio,
+		DPI:     fontDPI,
+		Hinting: font.HintingFull,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create font face: %w", err)
+	}
+
+	d := &font.Drawer{
+		Dst:  textImg,
+		Src:  image.NewUniform(fontColor),
+		Face: face,
+	}
+
+	for i, line := range lines {
+		y := charHeight + i*(charHeight+lineSpacing)
+
+		lineWidth := d.MeasureString(line)
+		centerX := textWidth/2 - int(lineWidth>>6)/2
+
+		d.Dot = fixed.Point26_6{
+			X: fixed.I(centerX),
+			Y: fixed.I(y),
+		}
+		d.DrawString(line)
+	}
+
+	return textImg, nil
+}
+
+func rotateImage(src image.Image, angleDegrees float64) ([]byte, error) {
+	srcBounds := src.Bounds()
+	srcWidth := srcBounds.Dx()
+	srcHeight := srcBounds.Dy()
+
+	angle := angleDegrees * math.Pi / 180.0
+	cosAngle := math.Cos(angle)
+	sinAngle := math.Sin(angle)
+	cos := math.Abs(cosAngle)
+	sin := math.Abs(sinAngle)
+
+	rotatedWidth := int(float64(srcWidth)*cos + float64(srcHeight)*sin)
+	rotatedHeight := int(float64(srcWidth)*sin + float64(srcHeight)*cos)
+
+	dst := image.NewRGBA(image.Rect(0, 0, rotatedWidth, rotatedHeight))
+
+	srcCenterX := float64(srcWidth) / 2
+	srcCenterY := float64(srcHeight) / 2
+	dstCenterX := float64(rotatedWidth) / 2
+	dstCenterY := float64(rotatedHeight) / 2
+
+	for y := range rotatedHeight {
+		for x := range rotatedWidth {
+			fx := float64(x) - dstCenterX
+			fy := float64(y) - dstCenterY
+
+			srcX := fx*cosAngle + fy*sinAngle + srcCenterX
+			srcY := -fx*sinAngle + fy*cosAngle + srcCenterY
+
+			if srcX >= 0 && srcY >= 0 && int(srcX) < srcWidth && int(srcY) < srcHeight {
+				srcColor := src.At(int(srcX), int(srcY))
+				dst.Set(x, y, srcColor)
+			}
+		}
+	}
+
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, dst); err != nil {
+		return nil, fmt.Errorf("failed to encode rotated image: %w", err)
 	}
 
 	return buf.Bytes(), nil
