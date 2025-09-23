@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { GraphQLError } from "graphql";
 import { buildEndpoint } from "/providers/RelayProviders";
+import { type CountryCode } from "@probo/helpers";
 
 export interface TrustCenterDocument {
   id: string;
@@ -25,6 +26,7 @@ export interface TrustCenterVendor {
   category: string;
   privacyPolicyUrl?: string | null;
   websiteUrl?: string | null;
+  countries: CountryCode[];
 }
 
 interface TrustCenterQueryData {

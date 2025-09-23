@@ -125,7 +125,7 @@ function VendorRow(props: {
   const { __ } = useTranslate();
 
   return (
-    <Tr to={`/organizations/${organizationId}/vendors/${vendor.id}`}>
+    <Tr to={`/organizations/${organizationId}/vendors/${vendor.id}/overview`}>
       <Td>
         <div className="flex gap-4 items-center">
           {vendor.name}

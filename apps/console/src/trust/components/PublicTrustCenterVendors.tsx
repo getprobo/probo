@@ -8,7 +8,7 @@ import {
   Th,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { faviconUrl, sprintf } from "@probo/helpers";
+import { faviconUrl, sprintf, getCountryName, type CountryCode } from "@probo/helpers";
 import type { TrustCenterVendor } from "../pages/PublicTrustCenterPage";
 
 type Props = {
@@ -18,6 +18,8 @@ type Props = {
 
 export function PublicTrustCenterVendors({ vendors, organizationName }: Props) {
   const { __ } = useTranslate();
+
+  const hasCountriesData = vendors.some(vendor => vendor.countries && vendor.countries.length > 0);
 
   if (vendors.length === 0) {
     return (
@@ -50,6 +52,7 @@ export function PublicTrustCenterVendors({ vendors, organizationName }: Props) {
           <Tr>
             <Th>{__("Company")}</Th>
             <Th>{__("Website")}</Th>
+            {hasCountriesData && <Th>{__("Countries")}</Th>}
           </Tr>
         </Thead>
         <Tbody>
@@ -64,6 +67,10 @@ export function PublicTrustCenterVendors({ vendors, organizationName }: Props) {
               } catch {
                 return url.replace(/^https?:\/\//, '');
               }
+            };
+
+            const formatCountries = (countries: CountryCode[]) => {
+              return countries.map(code => getCountryName(__, code)).join(", ");
             };
 
             return (
@@ -98,6 +105,13 @@ export function PublicTrustCenterVendors({ vendors, organizationName }: Props) {
                     </span>
                   )}
                 </Td>
+                {hasCountriesData && (
+                  <Td>
+                    <span className="text-txt-secondary text-sm">
+                      {formatCountries(vendor.countries)}
+                    </span>
+                  </Td>
+                )}
               </Tr>
             );
           })}
