@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+# [0.62.0] - 2025-09-24
+
+### Added
+- Add reference companies for trust center trusted by section
+
+### Fixed
+- Fix watermark display in trust center
+
 # [0.61.1] - 2025-09-23
 
 ### Added
