@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- Allow `.csv` file as evidences.
+
 # [0.62.0] - 2025-09-24
 
 ### Added
