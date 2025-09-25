@@ -46,20 +46,12 @@ type AuditEdge struct {
 	Node   *Audit         `json:"node"`
 }
 
-type CreateTrustCenterAccessInput struct {
-	TrustCenterID gid.GID `json:"trustCenterId"`
-	Email         string  `json:"email"`
-	Name          string  `json:"name"`
-}
-
-type CreateTrustCenterAccessPayload struct {
-	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
-}
-
 type Document struct {
-	ID           gid.GID               `json:"id"`
-	Title        string                `json:"title"`
-	DocumentType coredata.DocumentType `json:"documentType"`
+	ID                     gid.GID               `json:"id"`
+	Title                  string                `json:"title"`
+	DocumentType           coredata.DocumentType `json:"documentType"`
+	IsUserAuthorized       bool                  `json:"isUserAuthorized"`
+	HasUserRequestedAccess bool                  `json:"hasUserRequestedAccess"`
 }
 
 func (Document) IsNode()             {}
@@ -126,12 +118,38 @@ type Query struct {
 }
 
 type Report struct {
-	ID       gid.GID `json:"id"`
-	Filename string  `json:"filename"`
+	ID                     gid.GID `json:"id"`
+	Filename               string  `json:"filename"`
+	IsUserAuthorized       bool    `json:"isUserAuthorized"`
+	HasUserRequestedAccess bool    `json:"hasUserRequestedAccess"`
 }
 
 func (Report) IsNode()             {}
 func (this Report) GetID() gid.GID { return this.ID }
+
+type RequestAccessesPayload struct {
+	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
+}
+
+type RequestAllAccessesInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+	Email         *string `json:"email,omitempty"`
+	Name          *string `json:"name,omitempty"`
+}
+
+type RequestDocumentAccessInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+	DocumentID    gid.GID `json:"documentId"`
+	Email         *string `json:"email,omitempty"`
+	Name          *string `json:"name,omitempty"`
+}
+
+type RequestReportAccessInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+	ReportID      gid.GID `json:"reportId"`
+	Email         *string `json:"email,omitempty"`
+	Name          *string `json:"name,omitempty"`
+}
 
 type TrustCenter struct {
 	ID                                gid.GID                         `json:"id"`

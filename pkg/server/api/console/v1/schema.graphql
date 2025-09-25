@@ -1103,6 +1103,14 @@ enum TrustCenterAccessOrderField
     )
 }
 
+enum TrustCenterDocumentAccessOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterDocumentAccessOrderField") {
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterDocumentAccessOrderFieldCreatedAt"
+    )
+}
+
 enum TrustCenterReferenceOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderField") {
   NAME
@@ -1290,6 +1298,14 @@ input TrustCenterAccessOrder
   ) {
   direction: OrderDirection!
   field: TrustCenterAccessOrderField!
+}
+
+input TrustCenterDocumentAccessOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccessOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: TrustCenterDocumentAccessOrderField!
 }
 
 input TrustCenterReferenceOrder
@@ -2143,6 +2159,7 @@ type Report implements Node {
   downloadUrl: String @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
+  audit: Audit @goField(forceResolver: true)
 }
 
 type Session {
@@ -2193,6 +2210,38 @@ type TrustCenterAccess implements Node {
   hasAcceptedNonDisclosureAgreement: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
+
+  documentAccesses(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: TrustCenterDocumentAccessOrder
+  ): TrustCenterDocumentAccessConnection! @goField(forceResolver: true)
+}
+
+type TrustCenterDocumentAccess implements Node {
+  id: ID!
+  active: Boolean!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+  trustCenterAccess: TrustCenterAccess! @goField(forceResolver: true)
+  document: Document @goField(forceResolver: true)
+  report: Report @goField(forceResolver: true)
+}
+
+type TrustCenterDocumentAccessConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccessConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [TrustCenterDocumentAccessEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TrustCenterDocumentAccessEdge {
+  cursor: CursorKey!
+  node: TrustCenterDocumentAccess!
 }
 
 type TrustCenterAccessConnection {
@@ -2887,6 +2936,8 @@ input UpdateTrustCenterAccessInput {
   id: ID!
   name: String
   active: Boolean
+  documentIds: [ID!]
+  reportIds: [ID!]
 }
 
 input DeleteTrustCenterAccessInput {

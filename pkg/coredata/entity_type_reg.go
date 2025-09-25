@@ -57,4 +57,5 @@ const (
 	ProcessingActivityEntityType
 	ExportJobEntityType
 	TrustCenterReferenceEntityType
+	TrustCenterDocumentAccessEntityType
 )

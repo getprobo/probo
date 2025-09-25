@@ -1388,6 +1388,7 @@ type Report struct {
 	DownloadURL *string   `json:"downloadUrl,omitempty"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
+	Audit       *Audit    `json:"audit,omitempty"`
 }
 
 func (Report) IsNode()             {}
@@ -1521,13 +1522,14 @@ func (TrustCenter) IsNode()             {}
 func (this TrustCenter) GetID() gid.GID { return this.ID }
 
 type TrustCenterAccess struct {
-	ID                                gid.GID   `json:"id"`
-	Email                             string    `json:"email"`
-	Name                              string    `json:"name"`
-	Active                            bool      `json:"active"`
-	HasAcceptedNonDisclosureAgreement bool      `json:"hasAcceptedNonDisclosureAgreement"`
-	CreatedAt                         time.Time `json:"createdAt"`
-	UpdatedAt                         time.Time `json:"updatedAt"`
+	ID                                gid.GID                              `json:"id"`
+	Email                             string                               `json:"email"`
+	Name                              string                               `json:"name"`
+	Active                            bool                                 `json:"active"`
+	HasAcceptedNonDisclosureAgreement bool                                 `json:"hasAcceptedNonDisclosureAgreement"`
+	CreatedAt                         time.Time                            `json:"createdAt"`
+	UpdatedAt                         time.Time                            `json:"updatedAt"`
+	DocumentAccesses                  *TrustCenterDocumentAccessConnection `json:"documentAccesses"`
 }
 
 func (TrustCenterAccess) IsNode()             {}
@@ -1546,6 +1548,24 @@ type TrustCenterAccessEdge struct {
 type TrustCenterConnection struct {
 	Edges    []*TrustCenterEdge `json:"edges"`
 	PageInfo *PageInfo          `json:"pageInfo"`
+}
+
+type TrustCenterDocumentAccess struct {
+	ID                gid.GID            `json:"id"`
+	Active            bool               `json:"active"`
+	CreatedAt         time.Time          `json:"createdAt"`
+	UpdatedAt         time.Time          `json:"updatedAt"`
+	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
+	Document          *Document          `json:"document,omitempty"`
+	Report            *Report            `json:"report,omitempty"`
+}
+
+func (TrustCenterDocumentAccess) IsNode()             {}
+func (this TrustCenterDocumentAccess) GetID() gid.GID { return this.ID }
+
+type TrustCenterDocumentAccessEdge struct {
+	Cursor page.CursorKey             `json:"cursor"`
+	Node   *TrustCenterDocumentAccess `json:"node"`
 }
 
 type TrustCenterEdge struct {
@@ -1810,9 +1830,11 @@ type UpdateTaskPayload struct {
 }
 
 type UpdateTrustCenterAccessInput struct {
-	ID     gid.GID `json:"id"`
-	Name   *string `json:"name,omitempty"`
-	Active *bool   `json:"active,omitempty"`
+	ID          gid.GID   `json:"id"`
+	Name        *string   `json:"name,omitempty"`
+	Active      *bool     `json:"active,omitempty"`
+	DocumentIds []gid.GID `json:"documentIds,omitempty"`
+	ReportIds   []gid.GID `json:"reportIds,omitempty"`
 }
 
 type UpdateTrustCenterAccessPayload struct {

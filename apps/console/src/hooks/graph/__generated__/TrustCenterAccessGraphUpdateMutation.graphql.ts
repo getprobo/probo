@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d2f40d8fc2bd9c7627d308660dedb1e5>>
+ * @generated SignedSource<<4aef541df2f5673dd3694ca275f3164d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,10 +9,13 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type DocumentType = "ISMS" | "OTHER" | "POLICY";
 export type UpdateTrustCenterAccessInput = {
   active?: boolean | null | undefined;
+  documentIds?: ReadonlyArray<string> | null | undefined;
   id: string;
   name?: string | null | undefined;
+  reportIds?: ReadonlyArray<string> | null | undefined;
 };
 export type TrustCenterAccessGraphUpdateMutation$variables = {
   input: UpdateTrustCenterAccessInput;
@@ -22,6 +25,31 @@ export type TrustCenterAccessGraphUpdateMutation$data = {
     readonly trustCenterAccess: {
       readonly active: boolean;
       readonly createdAt: any;
+      readonly documentAccesses: {
+        readonly edges: ReadonlyArray<{
+          readonly node: {
+            readonly active: boolean;
+            readonly createdAt: any;
+            readonly document: {
+              readonly documentType: DocumentType;
+              readonly id: string;
+              readonly title: string;
+            } | null | undefined;
+            readonly id: string;
+            readonly report: {
+              readonly audit: {
+                readonly framework: {
+                  readonly name: string;
+                };
+                readonly id: string;
+              } | null | undefined;
+              readonly filename: string;
+              readonly id: string;
+            } | null | undefined;
+            readonly updatedAt: any;
+          };
+        }>;
+      };
       readonly email: string;
       readonly hasAcceptedNonDisclosureAgreement: boolean;
       readonly id: string;
@@ -45,90 +73,220 @@ var v0 = [
 ],
 v1 = [
   {
-    "alias": null,
-    "args": [
-      {
-        "kind": "Variable",
-        "name": "input",
-        "variableName": "input"
-      }
-    ],
-    "concreteType": "UpdateTrustCenterAccessPayload",
-    "kind": "LinkedField",
-    "name": "updateTrustCenterAccess",
-    "plural": false,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "concreteType": "TrustCenterAccess",
-        "kind": "LinkedField",
-        "name": "trustCenterAccess",
-        "plural": false,
-        "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "id",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "email",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "name",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "active",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "hasAcceptedNonDisclosureAgreement",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "createdAt",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "updatedAt",
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
+    "kind": "Variable",
+    "name": "input",
+    "variableName": "input"
   }
-];
+],
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "email",
+  "storageKey": null
+},
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v5 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "active",
+  "storageKey": null
+},
+v6 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "hasAcceptedNonDisclosureAgreement",
+  "storageKey": null
+},
+v7 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "createdAt",
+  "storageKey": null
+},
+v8 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "updatedAt",
+  "storageKey": null
+},
+v9 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 100
+  },
+  {
+    "kind": "Literal",
+    "name": "orderBy",
+    "value": {
+      "direction": "DESC",
+      "field": "CREATED_AT"
+    }
+  }
+],
+v10 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "Document",
+  "kind": "LinkedField",
+  "name": "document",
+  "plural": false,
+  "selections": [
+    (v2/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "title",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "documentType",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+},
+v11 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "filename",
+  "storageKey": null
+};
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
     "name": "TrustCenterAccessGraphUpdateMutation",
-    "selections": (v1/*: any*/),
+    "selections": [
+      {
+        "alias": null,
+        "args": (v1/*: any*/),
+        "concreteType": "UpdateTrustCenterAccessPayload",
+        "kind": "LinkedField",
+        "name": "updateTrustCenterAccess",
+        "plural": false,
+        "selections": [
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "TrustCenterAccess",
+            "kind": "LinkedField",
+            "name": "trustCenterAccess",
+            "plural": false,
+            "selections": [
+              (v2/*: any*/),
+              (v3/*: any*/),
+              (v4/*: any*/),
+              (v5/*: any*/),
+              (v6/*: any*/),
+              (v7/*: any*/),
+              (v8/*: any*/),
+              {
+                "alias": null,
+                "args": (v9/*: any*/),
+                "concreteType": "TrustCenterDocumentAccessConnection",
+                "kind": "LinkedField",
+                "name": "documentAccesses",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "TrustCenterDocumentAccessEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "TrustCenterDocumentAccess",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          (v5/*: any*/),
+                          (v7/*: any*/),
+                          (v8/*: any*/),
+                          (v10/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Report",
+                            "kind": "LinkedField",
+                            "name": "report",
+                            "plural": false,
+                            "selections": [
+                              (v2/*: any*/),
+                              (v11/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "concreteType": "Audit",
+                                "kind": "LinkedField",
+                                "name": "audit",
+                                "plural": false,
+                                "selections": [
+                                  (v2/*: any*/),
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "concreteType": "Framework",
+                                    "kind": "LinkedField",
+                                    "name": "framework",
+                                    "plural": false,
+                                    "selections": [
+                                      (v4/*: any*/)
+                                    ],
+                                    "storageKey": null
+                                  }
+                                ],
+                                "storageKey": null
+                              }
+                            ],
+                            "storageKey": null
+                          }
+                        ],
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": "documentAccesses(first:100,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+              }
+            ],
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      }
+    ],
     "type": "Mutation",
     "abstractKey": null
   },
@@ -137,19 +295,125 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "TrustCenterAccessGraphUpdateMutation",
-    "selections": (v1/*: any*/)
+    "selections": [
+      {
+        "alias": null,
+        "args": (v1/*: any*/),
+        "concreteType": "UpdateTrustCenterAccessPayload",
+        "kind": "LinkedField",
+        "name": "updateTrustCenterAccess",
+        "plural": false,
+        "selections": [
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "TrustCenterAccess",
+            "kind": "LinkedField",
+            "name": "trustCenterAccess",
+            "plural": false,
+            "selections": [
+              (v2/*: any*/),
+              (v3/*: any*/),
+              (v4/*: any*/),
+              (v5/*: any*/),
+              (v6/*: any*/),
+              (v7/*: any*/),
+              (v8/*: any*/),
+              {
+                "alias": null,
+                "args": (v9/*: any*/),
+                "concreteType": "TrustCenterDocumentAccessConnection",
+                "kind": "LinkedField",
+                "name": "documentAccesses",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "TrustCenterDocumentAccessEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "TrustCenterDocumentAccess",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          (v5/*: any*/),
+                          (v7/*: any*/),
+                          (v8/*: any*/),
+                          (v10/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "concreteType": "Report",
+                            "kind": "LinkedField",
+                            "name": "report",
+                            "plural": false,
+                            "selections": [
+                              (v2/*: any*/),
+                              (v11/*: any*/),
+                              {
+                                "alias": null,
+                                "args": null,
+                                "concreteType": "Audit",
+                                "kind": "LinkedField",
+                                "name": "audit",
+                                "plural": false,
+                                "selections": [
+                                  (v2/*: any*/),
+                                  {
+                                    "alias": null,
+                                    "args": null,
+                                    "concreteType": "Framework",
+                                    "kind": "LinkedField",
+                                    "name": "framework",
+                                    "plural": false,
+                                    "selections": [
+                                      (v4/*: any*/),
+                                      (v2/*: any*/)
+                                    ],
+                                    "storageKey": null
+                                  }
+                                ],
+                                "storageKey": null
+                              }
+                            ],
+                            "storageKey": null
+                          }
+                        ],
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": "documentAccesses(first:100,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+              }
+            ],
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      }
+    ]
   },
   "params": {
-    "cacheID": "223169ee8a4f65008047097ecff68fc5",
+    "cacheID": "de3ddd0058b8881667e47e2bf32c8b73",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAccessGraphUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      active\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterAccessGraphUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      active\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n      documentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            active\n            createdAt\n            updatedAt\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0da1f737e6ea1db7a1b9930c4b6cc545";
+(node as any).hash = "723058aacc2e04bd2df4cf04c6df0a3c";
 
 export default node;

@@ -186,6 +186,55 @@ WHERE
 	return nil
 }
 
+func (p *Documents) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	filter *DocumentFilter,
+) error {
+	q := `
+SELECT
+	id,
+    organization_id,
+    owner_id,
+    title,
+    document_type,
+    current_published_version,
+    show_on_trust_center,
+    created_at,
+    updated_at
+FROM
+    documents
+WHERE
+    %s
+    AND deleted_at IS NULL
+    AND organization_id = @organization_id
+    AND %s
+ORDER BY title ASC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.NamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query documents: %w", err)
+	}
+
+	documents, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Document])
+	if err != nil {
+		return fmt.Errorf("cannot collect documents: %w", err)
+	}
+
+	*p = documents
+
+	return nil
+}
+
 func (p Document) Insert(
 	ctx context.Context,
 	conn pg.Conn,

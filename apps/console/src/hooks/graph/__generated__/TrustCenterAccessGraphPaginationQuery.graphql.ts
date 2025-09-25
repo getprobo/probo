@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4fcca19ac1edb0d607a9682090e0cc3e>>
+ * @generated SignedSource<<bf8e5a74bfd588ad123f628009b6440e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,60 +10,61 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type TrustCenterAccessGraphQuery$variables = {
-  count: number;
+export type TrustCenterAccessGraphPaginationQuery$variables = {
+  count?: number | null | undefined;
   cursor?: any | null | undefined;
-  trustCenterId: string;
+  id: string;
 };
-export type TrustCenterAccessGraphQuery$data = {
+export type TrustCenterAccessGraphPaginationQuery$data = {
   readonly node: {
-    readonly id?: string;
     readonly " $fragmentSpreads": FragmentRefs<"TrustCenterAccessGraph_accesses">;
   };
 };
-export type TrustCenterAccessGraphQuery = {
-  response: TrustCenterAccessGraphQuery$data;
-  variables: TrustCenterAccessGraphQuery$variables;
+export type TrustCenterAccessGraphPaginationQuery = {
+  response: TrustCenterAccessGraphPaginationQuery$data;
+  variables: TrustCenterAccessGraphPaginationQuery$variables;
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "count"
-},
-v1 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "cursor"
-},
-v2 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "trustCenterId"
-},
-v3 = [
+var v0 = [
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "count"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "cursor"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "id"
+  }
+],
+v1 = [
   {
     "kind": "Variable",
     "name": "id",
-    "variableName": "trustCenterId"
+    "variableName": "id"
   }
 ],
-v4 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-},
-v5 = {
+v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v6 = {
+v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v4 = {
   "kind": "Literal",
   "name": "orderBy",
   "value": {
@@ -71,7 +72,7 @@ v6 = {
     "field": "CREATED_AT"
   }
 },
-v7 = [
+v5 = [
   {
     "kind": "Variable",
     "name": "after",
@@ -82,23 +83,23 @@ v7 = [
     "name": "first",
     "variableName": "count"
   },
-  (v6/*: any*/)
+  (v4/*: any*/)
 ],
-v8 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 },
-v9 = {
+v7 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "active",
   "storageKey": null
 },
-v10 = {
+v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -107,35 +108,23 @@ v10 = {
 };
 return {
   "fragment": {
-    "argumentDefinitions": [
-      (v0/*: any*/),
-      (v1/*: any*/),
-      (v2/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
-    "name": "TrustCenterAccessGraphQuery",
+    "name": "TrustCenterAccessGraphPaginationQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v3/*: any*/),
+        "args": (v1/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
           {
-            "kind": "InlineFragment",
-            "selections": [
-              (v4/*: any*/),
-              {
-                "args": null,
-                "kind": "FragmentSpread",
-                "name": "TrustCenterAccessGraph_accesses"
-              }
-            ],
-            "type": "TrustCenter",
-            "abstractKey": null
+            "args": null,
+            "kind": "FragmentSpread",
+            "name": "TrustCenterAccessGraph_accesses"
           }
         ],
         "storageKey": null
@@ -146,30 +135,26 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": [
-      (v2/*: any*/),
-      (v0/*: any*/),
-      (v1/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
-    "name": "TrustCenterAccessGraphQuery",
+    "name": "TrustCenterAccessGraphPaginationQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v3/*: any*/),
+        "args": (v1/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v5/*: any*/),
-          (v4/*: any*/),
+          (v2/*: any*/),
+          (v3/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
               {
                 "alias": null,
-                "args": (v7/*: any*/),
+                "args": (v5/*: any*/),
                 "concreteType": "TrustCenterAccessConnection",
                 "kind": "LinkedField",
                 "name": "accesses",
@@ -237,7 +222,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v4/*: any*/),
+                          (v3/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -245,8 +230,8 @@ return {
                             "name": "email",
                             "storageKey": null
                           },
-                          (v8/*: any*/),
-                          (v9/*: any*/),
+                          (v6/*: any*/),
+                          (v7/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -254,7 +239,7 @@ return {
                             "name": "hasAcceptedNonDisclosureAgreement",
                             "storageKey": null
                           },
-                          (v10/*: any*/),
+                          (v8/*: any*/),
                           {
                             "alias": null,
                             "args": [
@@ -263,7 +248,7 @@ return {
                                 "name": "first",
                                 "value": 100
                               },
-                              (v6/*: any*/)
+                              (v4/*: any*/)
                             ],
                             "concreteType": "TrustCenterDocumentAccessConnection",
                             "kind": "LinkedField",
@@ -286,9 +271,9 @@ return {
                                     "name": "node",
                                     "plural": false,
                                     "selections": [
-                                      (v4/*: any*/),
-                                      (v9/*: any*/),
-                                      (v10/*: any*/),
+                                      (v3/*: any*/),
+                                      (v7/*: any*/),
+                                      (v8/*: any*/),
                                       {
                                         "alias": null,
                                         "args": null,
@@ -304,7 +289,7 @@ return {
                                         "name": "document",
                                         "plural": false,
                                         "selections": [
-                                          (v4/*: any*/),
+                                          (v3/*: any*/),
                                           {
                                             "alias": null,
                                             "args": null,
@@ -330,7 +315,7 @@ return {
                                         "name": "report",
                                         "plural": false,
                                         "selections": [
-                                          (v4/*: any*/),
+                                          (v3/*: any*/),
                                           {
                                             "alias": null,
                                             "args": null,
@@ -346,7 +331,7 @@ return {
                                             "name": "audit",
                                             "plural": false,
                                             "selections": [
-                                              (v4/*: any*/),
+                                              (v3/*: any*/),
                                               {
                                                 "alias": null,
                                                 "args": null,
@@ -355,8 +340,8 @@ return {
                                                 "name": "framework",
                                                 "plural": false,
                                                 "selections": [
-                                                  (v8/*: any*/),
-                                                  (v4/*: any*/)
+                                                  (v6/*: any*/),
+                                                  (v3/*: any*/)
                                                 ],
                                                 "storageKey": null
                                               }
@@ -375,7 +360,7 @@ return {
                             ],
                             "storageKey": "documentAccesses(first:100,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
                           },
-                          (v5/*: any*/)
+                          (v2/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -399,7 +384,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v7/*: any*/),
+                "args": (v5/*: any*/),
                 "filters": [
                   "orderBy"
                 ],
@@ -418,16 +403,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4ca52668a68c0789aa73c0d680ec0abe",
+    "cacheID": "96e9906815501bb22bca79bb63a4a149",
     "id": null,
     "metadata": {},
-    "name": "TrustCenterAccessGraphQuery",
+    "name": "TrustCenterAccessGraphPaginationQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphQuery(\n  $trustCenterId: ID!\n  $count: Int!\n  $cursor: CursorKey\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      ...TrustCenterAccessGraph_accesses\n    }\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        documentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              active\n              createdAt\n              updatedAt\n              document {\n                id\n                title\n                documentType\n              }\n              report {\n                id\n                filename\n                audit {\n                  id\n                  framework {\n                    name\n                    id\n                  }\n                }\n              }\n            }\n          }\n        }\n        __typename\n      }\n    }\n  }\n  id\n}\n"
+    "text": "query TrustCenterAccessGraphPaginationQuery(\n  $count: Int\n  $cursor: CursorKey\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...TrustCenterAccessGraph_accesses\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        documentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              active\n              createdAt\n              updatedAt\n              document {\n                id\n                title\n                documentType\n              }\n              report {\n                id\n                filename\n                audit {\n                  id\n                  framework {\n                    name\n                    id\n                  }\n                }\n              }\n            }\n          }\n        }\n        __typename\n      }\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "da875d7c80a605898a30cf634d033380";
+(node as any).hash = "9e29aa4a382ca2d4bb9d1b014d8d81fd";
 
 export default node;

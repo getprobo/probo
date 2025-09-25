@@ -26,8 +26,8 @@ const schema = z.object({
 });
 
 const requestAccessMutation = graphql`
-  mutation RequestAccessDialogMutation($input: CreateTrustCenterAccessInput!) {
-    createTrustCenterAccess(input: $input) {
+  mutation RequestAccessDialogMutation($input: RequestAllAccessesInput!) {
+    requestAllAccesses(input: $input) {
       trustCenterAccess {
         id
       }

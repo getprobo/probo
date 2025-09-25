@@ -190,6 +190,56 @@ WHERE
 	return nil
 }
 
+func (a *Audits) LoadAllByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	filter *AuditFilter,
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	framework_id,
+	report_id,
+	valid_from,
+	valid_until,
+	state,
+	show_on_trust_center,
+	created_at,
+	updated_at
+FROM
+	audits
+WHERE
+	%s
+	AND organization_id = @organization_id
+	AND %s
+ORDER BY valid_from DESC
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audits: %w", err)
+	}
+
+	audits, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Audit])
+	if err != nil {
+		return fmt.Errorf("cannot collect audits: %w", err)
+	}
+
+	*a = audits
+
+	return nil
+}
+
 func (a *Audit) Insert(
 	ctx context.Context,
 	conn pg.Conn,
@@ -417,6 +467,51 @@ WHERE %s
 	}
 
 	*a = audits
+
+	return nil
+}
+
+func (a *Audit) LoadByReportID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	reportID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	framework_id,
+	report_id,
+	valid_from,
+	valid_until,
+	state,
+	show_on_trust_center,
+	created_at,
+	updated_at
+FROM
+	audits
+WHERE %s
+	AND report_id = @report_id
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"report_id": reportID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audit: %w", err)
+	}
+
+	audit, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Audit])
+	if err != nil {
+		return fmt.Errorf("cannot collect audit: %w", err)
+	}
+
+	*a = audit
 
 	return nil
 }

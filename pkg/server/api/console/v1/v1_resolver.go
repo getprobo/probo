@@ -1167,7 +1167,6 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 		TrustCenterID: input.TrustCenterID,
 		Email:         input.Email,
 		Name:          input.Name,
-		Active:        input.Active,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot create trust center access: %w", err)
@@ -1183,9 +1182,11 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	access, err := prb.TrustCenterAccesses.Update(ctx, &probo.UpdateTrustCenterAccessRequest{
-		ID:     input.ID,
-		Name:   input.Name,
-		Active: input.Active,
+		ID:          input.ID,
+		Name:        input.Name,
+		Active:      input.Active,
+		DocumentIDs: input.DocumentIds,
+		ReportIDs:   input.ReportIds,
 	})
 	if err != nil {
 		panic(fmt.Errorf("cannot update trust center access: %w", err))
@@ -4279,6 +4280,18 @@ func (r *reportResolver) DownloadURL(ctx context.Context, obj *types.Report) (*s
 	return url, nil
 }
 
+// Audit is the resolver for the audit field.
+func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.Audit, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	audit, err := prb.Audits.GetByReportID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load audit for report: %w", err)
+	}
+
+	return types.NewAudit(audit), nil
+}
+
 // Owner is the resolver for the owner field.
 func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.People, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -4694,6 +4707,91 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	}
 
 	return types.NewTrustCenterReferenceConnection(result, obj.ID), nil
+}
+
+// DocumentAccesses is the resolver for the documentAccesses field.
+func (r *trustCenterAccessResolver) DocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
+		Field:     coredata.TrustCenterDocumentAccessOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	result, err := prb.TrustCenterAccesses.ListDocumentAccesses(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list trust center document accesses: %w", err))
+	}
+
+	return types.NewTrustCenterDocumentAccessConnection(result, obj, obj.ID), nil
+}
+
+// TrustCenterAccess is the resolver for the trustCenterAccess field.
+func (r *trustCenterDocumentAccessResolver) TrustCenterAccess(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterAccess, error) {
+	// The TrustCenterAccess is already loaded from the connection resolver
+	return obj.TrustCenterAccess, nil
+}
+
+// Document is the resolver for the document field.
+func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	documentAccess, err := prb.TrustCenterAccesses.GetDocumentAccess(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load trust center document access: %w", err)
+	}
+
+	if documentAccess.DocumentID == nil {
+		return nil, nil
+	}
+
+	document, err := prb.Documents.Get(ctx, *documentAccess.DocumentID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load document: %w", err)
+	}
+
+	return types.NewDocument(document), nil
+}
+
+// Report is the resolver for the report field.
+func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Report, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	documentAccess, err := prb.TrustCenterAccesses.GetDocumentAccess(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load trust center document access: %w", err)
+	}
+
+	if documentAccess.ReportID == nil {
+		return nil, nil
+	}
+
+	report, err := prb.Reports.Get(ctx, *documentAccess.ReportID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load report: %w", err)
+	}
+
+	return types.NewReport(report), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterDocumentAccessConnection) (int, error) {
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	count, err := prb.TrustCenterAccesses.CountDocumentAccesses(ctx, obj.ParentID)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count trust center document accesses: %w", err)
+	}
+
+	return count, nil
 }
 
 // LogoURL is the resolver for the logoUrl field.
@@ -5249,6 +5347,21 @@ func (r *Resolver) TaskConnection() schema.TaskConnectionResolver { return &task
 // TrustCenter returns schema.TrustCenterResolver implementation.
 func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
 
+// TrustCenterAccess returns schema.TrustCenterAccessResolver implementation.
+func (r *Resolver) TrustCenterAccess() schema.TrustCenterAccessResolver {
+	return &trustCenterAccessResolver{r}
+}
+
+// TrustCenterDocumentAccess returns schema.TrustCenterDocumentAccessResolver implementation.
+func (r *Resolver) TrustCenterDocumentAccess() schema.TrustCenterDocumentAccessResolver {
+	return &trustCenterDocumentAccessResolver{r}
+}
+
+// TrustCenterDocumentAccessConnection returns schema.TrustCenterDocumentAccessConnectionResolver implementation.
+func (r *Resolver) TrustCenterDocumentAccessConnection() schema.TrustCenterDocumentAccessConnectionResolver {
+	return &trustCenterDocumentAccessConnectionResolver{r}
+}
+
 // TrustCenterReference returns schema.TrustCenterReferenceResolver implementation.
 func (r *Resolver) TrustCenterReference() schema.TrustCenterReferenceResolver {
 	return &trustCenterReferenceResolver{r}
@@ -5337,6 +5450,9 @@ type snapshotConnectionResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }
 type taskConnectionResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }
+type trustCenterAccessResolver struct{ *Resolver }
+type trustCenterDocumentAccessResolver struct{ *Resolver }
+type trustCenterDocumentAccessConnectionResolver struct{ *Resolver }
 type trustCenterReferenceResolver struct{ *Resolver }
 type trustCenterReferenceConnectionResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

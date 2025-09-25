@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<843902dd4fb6e2a5ee4d2d175ddcab03>>
+ * @generated SignedSource<<898167474e2680273ad8b588a63a47c5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,16 +9,16 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type CreateTrustCenterAccessInput = {
-  email: string;
-  name: string;
+export type RequestAllAccessesInput = {
+  email?: string | null | undefined;
+  name?: string | null | undefined;
   trustCenterId: string;
 };
 export type RequestAccessDialogMutation$variables = {
-  input: CreateTrustCenterAccessInput;
+  input: RequestAllAccessesInput;
 };
 export type RequestAccessDialogMutation$data = {
-  readonly createTrustCenterAccess: {
+  readonly requestAllAccesses: {
     readonly trustCenterAccess: {
       readonly id: string;
     };
@@ -47,9 +47,9 @@ v1 = [
         "variableName": "input"
       }
     ],
-    "concreteType": "CreateTrustCenterAccessPayload",
+    "concreteType": "RequestAccessesPayload",
     "kind": "LinkedField",
-    "name": "createTrustCenterAccess",
+    "name": "requestAllAccesses",
     "plural": false,
     "selections": [
       {
@@ -92,16 +92,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "13fedcfe7c72292417b76b3624c5434f",
+    "cacheID": "99eb2902ce5a921515d68db30f8a2189",
     "id": null,
     "metadata": {},
     "name": "RequestAccessDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation RequestAccessDialogMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n    }\n  }\n}\n"
+    "text": "mutation RequestAccessDialogMutation(\n  $input: RequestAllAccessesInput!\n) {\n  requestAllAccesses(input: $input) {\n    trustCenterAccess {\n      id\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "18075ac4298dd3ca05bbcf8fb1717a9d";
+(node as any).hash = "cc4d5c8753438eff23833b4182dd485d";
 
 export default node;

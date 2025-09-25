@@ -1,36 +1,67 @@
 import { graphql } from 'react-relay';
-import { useLazyLoadQuery } from 'react-relay';
+import { useLazyLoadQuery, usePaginationFragment } from 'react-relay';
 import type {
-  TrustCenterAccessGraphQuery,
-  TrustCenterAccessGraphQuery$data
+  TrustCenterAccessGraphQuery
 } from "./__generated__/TrustCenterAccessGraphQuery.graphql";
 
-export const trustCenterAccessesQuery = graphql`
-  query TrustCenterAccessGraphQuery($trustCenterId: ID!) {
-    node(id: $trustCenterId) {
-      ... on TrustCenter {
-        id
-        accesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC })
-          @connection(key: "TrustCenterAccessTab_accesses") {
-          __id
-          pageInfo {
-            hasNextPage
-            hasPreviousPage
-            startCursor
-            endCursor
-          }
-          edges {
-            cursor
-            node {
-              id
-              email
-              name
-              active
-              hasAcceptedNonDisclosureAgreement
-              createdAt
+export const trustCenterAccessesPaginationFragment = graphql`
+  fragment TrustCenterAccessGraph_accesses on TrustCenter
+  @refetchable(queryName: "TrustCenterAccessGraphPaginationQuery") {
+    accesses(first: $count, after: $cursor, orderBy: { field: CREATED_AT, direction: DESC })
+      @connection(key: "TrustCenterAccessGraph_accesses") {
+      __id
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      edges {
+        cursor
+        node {
+          id
+          email
+          name
+          active
+          hasAcceptedNonDisclosureAgreement
+          createdAt
+          documentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+            edges {
+              node {
+                id
+                active
+                createdAt
+                updatedAt
+                document {
+                  id
+                  title
+                  documentType
+                }
+                report {
+                  id
+                  filename
+                  audit {
+                    id
+                    framework {
+                      name
+                    }
+                  }
+                }
+              }
             }
           }
         }
+      }
+    }
+  }
+`;
+
+export const trustCenterAccessesQuery = graphql`
+  query TrustCenterAccessGraphQuery($trustCenterId: ID!, $count: Int!, $cursor: CursorKey) {
+    node(id: $trustCenterId) {
+      ... on TrustCenter {
+        id
+        ...TrustCenterAccessGraph_accesses
       }
     }
   }
@@ -51,6 +82,31 @@ export const createTrustCenterAccessMutation = graphql`
           active
           hasAcceptedNonDisclosureAgreement
           createdAt
+          documentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+            edges {
+              node {
+                id
+                active
+                createdAt
+                updatedAt
+                document {
+                  id
+                  title
+                  documentType
+                }
+            report {
+              id
+              filename
+              audit {
+                id
+                framework {
+                  name
+                }
+              }
+            }
+              }
+            }
+          }
         }
       }
     }
@@ -70,6 +126,31 @@ export const updateTrustCenterAccessMutation = graphql`
         hasAcceptedNonDisclosureAgreement
         createdAt
         updatedAt
+        documentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+          edges {
+            node {
+              id
+              active
+              createdAt
+              updatedAt
+              document {
+                id
+                title
+                documentType
+              }
+            report {
+              id
+              filename
+              audit {
+                id
+                framework {
+                  name
+                }
+              }
+            }
+            }
+          }
+        }
       }
     }
   }
@@ -86,15 +167,53 @@ export const deleteTrustCenterAccessMutation = graphql`
   }
 `;
 
-export function useTrustCenterAccesses(trustCenterId: string): TrustCenterAccessGraphQuery$data | null {
-  // Always call useLazyLoadQuery to maintain consistent hook order
-  // Use a placeholder value when trustCenterId is empty
+interface PaginatedData {
+  data: { node: any } | null;
+  hasNext: boolean;
+  loadMore: () => void;
+  isLoadingNext: boolean;
+}
+
+export function useTrustCenterAccesses(trustCenterId: string): PaginatedData {
   const data = useLazyLoadQuery<TrustCenterAccessGraphQuery>(
     trustCenterAccessesQuery,
-    { trustCenterId: trustCenterId || "" },
+    {
+      trustCenterId: trustCenterId || "",
+      count: 10,
+      cursor: null
+    },
     { fetchPolicy: 'network-only' }
   );
 
-  // Return null if trustCenterId was empty, otherwise return the data
-  return trustCenterId ? data : null;
+  if (!trustCenterId) {
+    return {
+      data: null,
+      hasNext: false,
+      loadMore: () => {},
+      isLoadingNext: false,
+    };
+  }
+
+  const trustCenter = data?.node as any;
+
+  const {
+    data: paginationData,
+    loadNext,
+    hasNext,
+    isLoadingNext,
+  } = usePaginationFragment(
+    trustCenterAccessesPaginationFragment,
+    trustCenter
+  );
+
+  const loadMore = () => {
+    loadNext(10);
+  };
+
+  return {
+    data: { node: paginationData },
+    hasNext,
+    loadMore,
+    isLoadingNext,
+  };
 }
