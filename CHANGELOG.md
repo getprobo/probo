@@ -4,9 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+# [0.63.0] - 2025-09-25
+
 ### Changed
 
 - Allow `.csv` file as evidences.
+- Remove section id from obligations
+- Change obligations status enum
+
+### Added
+- Add link between obligations and risks
 
 # [0.62.0] - 2025-09-24
 
