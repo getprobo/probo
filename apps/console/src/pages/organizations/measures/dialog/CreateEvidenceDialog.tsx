@@ -103,12 +103,13 @@ function EvidenceUpload({ measureId, connectionId }: Omit<Props, "ref">) {
       <DialogContent padded>
         <Dropzone
           description={__(
-            "Only PDF, DOCX, XLSX, PPTX, JPG, PNG, WEBP, URI files up to 10MB are allowed"
+            "Only PDF, DOCX, XLSX, PPTX, CSV, JPG, PNG, WEBP, URI files up to 10MB are allowed"
           )}
           isUploading={isUpdating}
           onDrop={handleDrop}
           accept={{
             "text/plain": [".uri"],
+            "text/csv": [".csv"],
             "application/pdf": [".pdf"],
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
               [".docx"],
