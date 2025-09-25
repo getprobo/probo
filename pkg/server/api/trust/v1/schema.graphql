@@ -57,6 +57,8 @@ type Document implements Node {
   id: ID!
   title: String!
   documentType: DocumentType!
+  isUserAuthorized: Boolean! @goField(forceResolver: true)
+  hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
 }
 
 type DocumentConnection {
@@ -78,6 +80,8 @@ type Framework implements Node {
 type Report implements Node {
   id: ID!
   filename: String!
+  isUserAuthorized: Boolean! @goField(forceResolver: true)
+  hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
 }
 
 type Audit implements Node {
@@ -539,6 +543,20 @@ input AcceptNonDisclosureAgreementInput {
   trustCenterId: ID!
 }
 
+input RequestDocumentAccessInput {
+  trustCenterId: ID!
+  documentId: ID!
+  email: String!
+  name: String
+}
+
+input RequestReportAccessInput {
+  trustCenterId: ID!
+  reportId: ID!
+  email: String!
+  name: String
+}
+
 type ExportDocumentPDFPayload {
   data: String!
 }
@@ -547,7 +565,15 @@ type ExportReportPDFPayload {
   data: String!
 }
 
-type  AcceptNonDisclosureAgreementPayload{
+type AcceptNonDisclosureAgreementPayload {
+  success: Boolean!
+}
+
+type RequestDocumentAccessPayload {
+  success: Boolean!
+}
+
+type RequestReportAccessPayload {
   success: Boolean!
 }
 
@@ -571,4 +597,12 @@ type Mutation {
   acceptNonDisclosureAgreement(
     input: AcceptNonDisclosureAgreementInput!
   ): AcceptNonDisclosureAgreementPayload! @mustBeAuthenticated(role: USER)
+
+  requestDocumentAccess(
+    input: RequestDocumentAccessInput!
+  ): RequestDocumentAccessPayload! @mustBeAuthenticated(role: NONE)
+
+  requestReportAccess(
+    input: RequestReportAccessInput!
+  ): RequestReportAccessPayload! @mustBeAuthenticated(role: NONE)
 }

@@ -15,6 +15,7 @@ import { useTranslate } from "@probo/i18n";
 import { sprintf } from "@probo/helpers";
 import { FrameworkLogo } from "/components/FrameworkLogo";
 import { PublicTrustCenterAccessRequestDialog } from "./PublicTrustCenterAccessRequestDialog";
+import { RequestReportAccessDialog } from "./RequestReportAccessDialog";
 import { useExportReportPDF } from "../../hooks/useTrustCenterQueries";
 import type { TrustCenterAudit } from "../pages/PublicTrustCenterPage";
 
@@ -127,7 +128,7 @@ export function PublicTrustCenterAudits({
                       trustCenterId={trustCenterId}
                       organizationName={organizationName}
                     />
-                  ) : (
+                  ) : audit.report!.isUserAuthorized ? (
                     <Button
                       variant="secondary"
                       icon={IconArrowDown}
@@ -136,6 +137,29 @@ export function PublicTrustCenterAudits({
                     >
                       {mutation.isPending ? __("Downloading...") : __("Download")}
                     </Button>
+                  ) : audit.report!.hasUserRequestedAccess ? (
+                    <Button
+                      variant="tertiary"
+                      disabled
+                    >
+                      {__("Access Requested")}
+                    </Button>
+                  ) : (
+                    <RequestReportAccessDialog
+                      trigger={
+                        <Button
+                          variant="secondary"
+                          icon={IconLock}
+                        >
+                          {__("Request Access")}
+                        </Button>
+                      }
+                      report={audit.report!}
+                      audit={audit}
+                      trustCenterId={trustCenterId}
+                      organizationName={organizationName}
+                      isAuthenticated={isAuthenticated}
+                    />
                   )}
                 </Td>
               </Tr>

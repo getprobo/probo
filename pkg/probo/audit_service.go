@@ -83,6 +83,26 @@ func (s AuditService) Get(
 	return audit, nil
 }
 
+func (s AuditService) GetByReportID(
+	ctx context.Context,
+	reportID gid.GID,
+) (*coredata.Audit, error) {
+	audit := &coredata.Audit{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return audit.LoadByReportID(ctx, conn, s.svc.scope, reportID)
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return audit, nil
+}
+
 func (s *AuditService) Create(
 	ctx context.Context,
 	req *CreateAuditRequest,

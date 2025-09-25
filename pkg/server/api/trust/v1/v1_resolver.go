@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
+	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/server/api/trust/v1/schema"
 	"github.com/getprobo/probo/pkg/server/api/trust/v1/types"
@@ -55,14 +56,88 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 	return types.NewReport(report), nil
 }
 
+// IsUserAuthorized is the resolver for the isUserAuthorized field.
+func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Document) (bool, error) {
+	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return false, nil
+	}
+
+	hasAcceptedNDA := false
+	userData := r.UserFromContext(ctx)
+	if userData != nil {
+		hasAcceptedNDA = true
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+		if err != nil {
+			return false, nil
+		}
+
+		documentAccess, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		if err != nil {
+			return false, nil
+		}
+
+		if !documentAccess.Active {
+			return false, nil
+		}
+	}
+
+	return hasAcceptedNDA, nil
+}
+
+// HasUserRequestedAccess is the resolver for the hasUserRequestedAccess field.
+func (r *documentResolver) HasUserRequestedAccess(ctx context.Context, obj *types.Document) (bool, error) {
+	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return false, nil
+	}
+
+	userData := r.UserFromContext(ctx)
+	if userData != nil {
+		return false, nil
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		// Try to load document access - if it exists (regardless of active status), user has requested it
+		_, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		if err != nil {
+			return false, nil // No access requested or error
+		}
+		return true, nil // Access exists (requested)
+	}
+
+	return false, nil
+}
+
 // CreateTrustCenterAccess is the resolver for the createTrustCenterAccess field.
 func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input types.CreateTrustCenterAccessInput) (*types.CreateTrustCenterAccessPayload, error) {
 	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
 
+	userData := r.UserFromContext(ctx)
+	if userData != nil {
+		return nil, fmt.Errorf("authenticated users cannot request trust center access")
+	}
+
+	email := input.Email
+	name := input.Name
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		email = tokenData.GetEmail()
+		name = ""
+	}
+
 	access, err := publicTrustService.TrustCenterAccesses.Create(ctx, &trust.CreateTrustCenterAccessRequest{
 		TrustCenterID: input.TrustCenterID,
-		Email:         input.Email,
-		Name:          input.Name,
+		Email:         email,
+		Name:          name,
+		DocumentIDs:   nil,
+		ReportIDs:     nil,
 	})
 	if err != nil {
 		panic(fmt.Errorf("cannot create trust center access: %w", err))
@@ -98,6 +173,15 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
 		if err != nil {
 			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+		}
+
+		documentAccess, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), input.DocumentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot check document access: %w", err))
+		}
+
+		if !documentAccess.Active {
+			return nil, fmt.Errorf("access denied: no permission to access this document")
 		}
 	}
 
@@ -141,6 +225,16 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
 		if err != nil {
 			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+		}
+
+		// Check report-level access for token users
+		reportAccess, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), input.ReportID)
+		if err != nil {
+			panic(fmt.Errorf("cannot check report access: %w", err))
+		}
+
+		if !reportAccess.Active {
+			return nil, fmt.Errorf("access denied: no permission to access this report")
 		}
 	}
 
@@ -186,6 +280,80 @@ func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context, inp
 	return &types.AcceptNonDisclosureAgreementPayload{Success: true}, nil
 }
 
+// RequestDocumentAccess is the resolver for the requestDocumentAccess field.
+func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestDocumentAccessPayload, error) {
+	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
+
+	userData := r.UserFromContext(ctx)
+	if userData != nil {
+		return nil, fmt.Errorf("authenticated users cannot request trust center access")
+	}
+
+	email := input.Email
+	name := ""
+	if input.Name != nil {
+		name = *input.Name
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		email = tokenData.GetEmail()
+		name = ""
+	}
+
+	_, err := publicTrustService.TrustCenterAccesses.Create(ctx, &trust.CreateTrustCenterAccessRequest{
+		TrustCenterID: input.TrustCenterID,
+		Email:         email,
+		Name:          name,
+		DocumentIDs:   []gid.GID{input.DocumentID},
+		ReportIDs:     []gid.GID{},
+	})
+	if err != nil {
+		panic(fmt.Errorf("cannot request document access: %w", err))
+	}
+
+	return &types.RequestDocumentAccessPayload{
+		Success: true,
+	}, nil
+}
+
+// RequestReportAccess is the resolver for the requestReportAccess field.
+func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestReportAccessPayload, error) {
+	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
+
+	userData := r.UserFromContext(ctx)
+	if userData != nil {
+		return nil, fmt.Errorf("authenticated users cannot request trust center access")
+	}
+
+	email := input.Email
+	name := ""
+	if input.Name != nil {
+		name = *input.Name
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		email = tokenData.GetEmail()
+		name = ""
+	}
+
+	_, err := publicTrustService.TrustCenterAccesses.Create(ctx, &trust.CreateTrustCenterAccessRequest{
+		TrustCenterID: input.TrustCenterID,
+		Email:         email,
+		Name:          name,
+		DocumentIDs:   []gid.GID{},
+		ReportIDs:     []gid.GID{input.ReportID},
+	})
+	if err != nil {
+		panic(fmt.Errorf("cannot request report access: %w", err))
+	}
+
+	return &types.RequestReportAccessPayload{
+		Success: true,
+	}, nil
+}
+
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
 	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
@@ -220,6 +388,64 @@ func (r *queryResolver) TrustCenterBySlug(ctx context.Context, slug string) (*ty
 	response.Organization = types.NewOrganization(org)
 
 	return response, nil
+}
+
+// IsUserAuthorized is the resolver for the isUserAuthorized field.
+func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error) {
+	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return false, nil
+	}
+
+	hasAcceptedNDA := false
+	userData := r.UserFromContext(ctx)
+	if userData != nil {
+		hasAcceptedNDA = true
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+		if err != nil {
+			return false, nil
+		}
+
+		reportAccess, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		if err != nil {
+			return false, nil
+		}
+
+		if !reportAccess.Active {
+			return false, nil
+		}
+	}
+
+	return hasAcceptedNDA, nil
+}
+
+// HasUserRequestedAccess is the resolver for the hasUserRequestedAccess field.
+func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.Report) (bool, error) {
+	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return false, nil
+	}
+
+	userData := r.UserFromContext(ctx)
+	if userData != nil {
+		return false, nil
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		// Try to load report access - if it exists (regardless of active status), user has requested it
+		_, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		if err != nil {
+			return false, nil // No access requested or error
+		}
+		return true, nil // Access exists (requested)
+	}
+
+	return false, nil
 }
 
 // NdaFileURL is the resolver for the ndaFileUrl field.
@@ -286,6 +512,7 @@ func (r *trustCenterResolver) Documents(ctx context.Context, obj *types.TrustCen
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
+	// Show all public documents - access control is only at download time
 	documentPage, err := publicTrustService.Documents.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list public documents: %w", err))
@@ -363,6 +590,9 @@ func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.T
 // Audit returns schema.AuditResolver implementation.
 func (r *Resolver) Audit() schema.AuditResolver { return &auditResolver{r} }
 
+// Document returns schema.DocumentResolver implementation.
+func (r *Resolver) Document() schema.DocumentResolver { return &documentResolver{r} }
+
 // Mutation returns schema.MutationResolver implementation.
 func (r *Resolver) Mutation() schema.MutationResolver { return &mutationResolver{r} }
 
@@ -371,6 +601,9 @@ func (r *Resolver) Organization() schema.OrganizationResolver { return &organiza
 
 // Query returns schema.QueryResolver implementation.
 func (r *Resolver) Query() schema.QueryResolver { return &queryResolver{r} }
+
+// Report returns schema.ReportResolver implementation.
+func (r *Resolver) Report() schema.ReportResolver { return &reportResolver{r} }
 
 // TrustCenter returns schema.TrustCenterResolver implementation.
 func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
@@ -381,8 +614,10 @@ func (r *Resolver) TrustCenterReference() schema.TrustCenterReferenceResolver {
 }
 
 type auditResolver struct{ *Resolver }
+type documentResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type organizationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type reportResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }
 type trustCenterReferenceResolver struct{ *Resolver }

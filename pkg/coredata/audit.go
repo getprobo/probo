@@ -420,3 +420,48 @@ WHERE %s
 
 	return nil
 }
+
+func (a *Audit) LoadByReportID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	reportID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	name,
+	organization_id,
+	framework_id,
+	report_id,
+	valid_from,
+	valid_until,
+	state,
+	show_on_trust_center,
+	created_at,
+	updated_at
+FROM
+	audits
+WHERE %s
+	AND report_id = @report_id
+LIMIT 1;
+`
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"report_id": reportID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query audit: %w", err)
+	}
+
+	audit, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Audit])
+	if err != nil {
+		return fmt.Errorf("cannot collect audit: %w", err)
+	}
+
+	*a = audit
+
+	return nil
+}

@@ -7,6 +7,8 @@ export interface TrustCenterDocument {
   id: string;
   title: string;
   documentType: string;
+  isUserAuthorized: boolean;
+  hasUserRequestedAccess: boolean;
 }
 
 export interface TrustCenterAudit {
@@ -17,6 +19,8 @@ export interface TrustCenterAudit {
   report: {
     id: string;
     filename: string;
+    isUserAuthorized: boolean;
+    hasUserRequestedAccess: boolean;
   } | null;
 }
 
@@ -118,13 +122,43 @@ interface AcceptNonDisclosureAgreementVariables {
   };
 }
 
+interface RequestDocumentAccessData {
+  requestDocumentAccess: {
+    success: boolean;
+  };
+}
+
+interface RequestDocumentAccessVariables {
+  input: {
+    trustCenterId: string;
+    email: string;
+    name: string;
+    documentId: string;
+  };
+}
+
+interface RequestReportAccessData {
+  requestReportAccess: {
+    success: boolean;
+  };
+}
+
+interface RequestReportAccessVariables {
+  input: {
+    trustCenterId: string;
+    email: string;
+    name: string;
+    reportId: string;
+  };
+}
+
 interface ExportReportPDFVariables {
   input: {
     reportId: string;
   };
 }
 
-type GraphQLVariables = TrustCenterQueryVariables | ExportDocumentPDFVariables | ExportReportPDFVariables | CreateTrustCenterAccessVariables | AcceptNonDisclosureAgreementVariables | Record<string, never>;
+type GraphQLVariables = TrustCenterQueryVariables | ExportDocumentPDFVariables | ExportReportPDFVariables | CreateTrustCenterAccessVariables | AcceptNonDisclosureAgreementVariables | RequestDocumentAccessVariables | RequestReportAccessVariables | Record<string, never>;
 
 async function trustCenterGraphQLRequest<T = unknown>(
   operationName: string,
@@ -193,6 +227,8 @@ const TRUST_CENTER_QUERY = `
             id
             title
             documentType
+            isUserAuthorized
+            hasUserRequestedAccess
           }
         }
       }
@@ -206,6 +242,8 @@ const TRUST_CENTER_QUERY = `
             report {
               id
               filename
+              isUserAuthorized
+              hasUserRequestedAccess
             }
           }
         }
@@ -276,6 +314,26 @@ const ACCEPT_NDA_MUTATION = `
     $input: AcceptNonDisclosureAgreementInput!
   ) {
     acceptNonDisclosureAgreement(input: $input) {
+      success
+    }
+  }
+`;
+
+const REQUEST_DOCUMENT_ACCESS_MUTATION = `
+  mutation RequestDocumentAccessMutation(
+    $input: RequestDocumentAccessInput!
+  ) {
+    requestDocumentAccess(input: $input) {
+      success
+    }
+  }
+`;
+
+const REQUEST_REPORT_ACCESS_MUTATION = `
+  mutation RequestReportAccessMutation(
+    $input: RequestReportAccessInput!
+  ) {
+    requestReportAccess(input: $input) {
       success
     }
   }
@@ -396,6 +454,54 @@ export function useAcceptNonDisclosureAgreement() {
       const result = await trustCenterGraphQLRequest<AcceptNonDisclosureAgreementData>(
         "AcceptNonDisclosureAgreementMutation",
         ACCEPT_NDA_MUTATION,
+        { input }
+      );
+
+      if (result.errors && result.errors.length > 0) {
+        throw new Error(
+          `GraphQL error: ${result.errors.map((e) => e.message).join(", ")}`
+        );
+      }
+
+      if (!result.data) {
+        throw new Error("No data returned from mutation");
+      }
+
+      return result.data;
+    },
+  });
+}
+
+export function useRequestDocumentAccess() {
+  return useMutation<RequestDocumentAccessData, Error, { trustCenterId: string; email: string; name: string; documentId: string }>({
+    mutationFn: async (input: { trustCenterId: string; email: string; name: string; documentId: string }) => {
+      const result = await trustCenterGraphQLRequest<RequestDocumentAccessData>(
+        "RequestDocumentAccessMutation",
+        REQUEST_DOCUMENT_ACCESS_MUTATION,
+        { input }
+      );
+
+      if (result.errors && result.errors.length > 0) {
+        throw new Error(
+          `GraphQL error: ${result.errors.map((e) => e.message).join(", ")}`
+        );
+      }
+
+      if (!result.data) {
+        throw new Error("No data returned from mutation");
+      }
+
+      return result.data;
+    },
+  });
+}
+
+export function useRequestReportAccess() {
+  return useMutation<RequestReportAccessData, Error, { trustCenterId: string; email: string; name: string; reportId: string }>({
+    mutationFn: async (input: { trustCenterId: string; email: string; name: string; reportId: string }) => {
+      const result = await trustCenterGraphQLRequest<RequestReportAccessData>(
+        "RequestReportAccessMutation",
+        REQUEST_REPORT_ACCESS_MUTATION,
         { input }
       );
 
