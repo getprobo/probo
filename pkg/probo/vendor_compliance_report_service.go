@@ -107,7 +107,7 @@ func (s VendorComplianceReportService) Upload(
 		ValidUntil: req.ValidUntil,
 		ReportName: req.ReportName,
 		FileKey:    objectKey.String(),
-		FileSize:   int(*headOutput.ContentLength),
+		FileSize:   *headOutput.ContentLength,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}
