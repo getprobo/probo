@@ -52,14 +52,12 @@ type (
 
 	RequestSignatureRequest struct {
 		DocumentVersionID gid.GID
-		RequestedBy       gid.GID
 		Signatory         gid.GID
 	}
 
 	BulkRequestSignaturesRequest struct {
 		DocumentIDs  []gid.GID
 		SignatoryIDs []gid.GID
-		RequestedBy  gid.GID
 	}
 
 	SigningRequestData struct {
@@ -605,13 +603,8 @@ func (s *DocumentService) BulkRequestSignatures(
 					return fmt.Errorf("cannot request signature for unpublished document %q", documentID)
 				}
 
-				requestedBy := &coredata.People{}
-				if err := requestedBy.LoadByID(ctx, tx, s.svc.scope, req.RequestedBy); err != nil {
-					return fmt.Errorf("cannot load requested by: %w", err)
-				}
-
 				for _, signatoryID := range req.SignatoryIDs {
-					signature, err := s.createSignatureRequestInTx(ctx, tx, documentVersion.ID, requestedBy, signatoryID, true)
+					signature, err := s.createSignatureRequestInTx(ctx, tx, documentVersion.ID, signatoryID, true)
 					if err != nil {
 						return fmt.Errorf("cannot create signature request for document %q and signatory %q: %w", documentID, signatoryID, err)
 					}
@@ -633,7 +626,6 @@ func (s *DocumentService) createSignatureRequestInTx(
 	ctx context.Context,
 	tx pg.Conn,
 	documentVersionID gid.GID,
-	requestedBy *coredata.People,
 	signatoryID gid.GID,
 	ignoreExisting bool,
 ) (*coredata.DocumentVersionSignature, error) {
@@ -655,7 +647,6 @@ func (s *DocumentService) createSignatureRequestInTx(
 		ID:                documentVersionSignatureID,
 		DocumentVersionID: documentVersionID,
 		State:             coredata.DocumentVersionSignatureStateRequested,
-		RequestedBy:       requestedBy.ID,
 		RequestedAt:       now,
 		SignedBy:          signatory.ID,
 		SignedAt:          nil,
@@ -687,12 +678,7 @@ func (s *DocumentService) RequestSignature(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			requestedBy := &coredata.People{}
-			if err := requestedBy.LoadByID(ctx, tx, s.svc.scope, req.RequestedBy); err != nil {
-				return fmt.Errorf("cannot load requested by %q: %w", req.RequestedBy, err)
-			}
-
-			signature, err = s.createSignatureRequestInTx(ctx, tx, req.DocumentVersionID, requestedBy, req.Signatory, false)
+			signature, err = s.createSignatureRequestInTx(ctx, tx, req.DocumentVersionID, req.Signatory, false)
 			if err != nil {
 				return fmt.Errorf("cannot create signature request: %w", err)
 			}
@@ -1337,14 +1323,6 @@ func exportDocumentPDF(
 			}
 			peopleMap[sig.SignedBy] = people
 		}
-
-		if _, ok := peopleMap[sig.RequestedBy]; !ok {
-			people := &coredata.People{}
-			if err := people.LoadByID(ctx, conn, scope, sig.RequestedBy); err != nil {
-				return nil, fmt.Errorf("cannot load people %q: %w", sig.RequestedBy, err)
-			}
-			peopleMap[sig.RequestedBy] = people
-		}
 	}
 
 	classification := docgen.ClassificationInternal
@@ -1372,7 +1350,6 @@ func exportDocumentPDF(
 			SignedAt:    sig.SignedAt,
 			State:       sig.State,
 			RequestedAt: sig.RequestedAt,
-			RequestedBy: peopleMap[sig.RequestedBy].FullName,
 		}
 	}
 

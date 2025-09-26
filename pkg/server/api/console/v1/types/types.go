@@ -1005,7 +1005,6 @@ type DocumentVersionSignature struct {
 	SignedBy        *People                                `json:"signedBy"`
 	SignedAt        *time.Time                             `json:"signedAt,omitempty"`
 	RequestedAt     time.Time                              `json:"requestedAt"`
-	RequestedBy     *People                                `json:"requestedBy"`
 	CreatedAt       time.Time                              `json:"createdAt"`
 	UpdatedAt       time.Time                              `json:"updatedAt"`
 }

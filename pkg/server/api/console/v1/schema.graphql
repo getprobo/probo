@@ -3963,7 +3963,6 @@ type DocumentVersionSignature implements Node {
   signedBy: People! @goField(forceResolver: true)
   signedAt: Datetime
   requestedAt: Datetime!
-  requestedBy: People! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }

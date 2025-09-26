@@ -616,7 +616,6 @@ type ComplexityRoot struct {
 		DocumentVersion func(childComplexity int) int
 		ID              func(childComplexity int) int
 		RequestedAt     func(childComplexity int) int
-		RequestedBy     func(childComplexity int) int
 		SignedAt        func(childComplexity int) int
 		SignedBy        func(childComplexity int) int
 		State           func(childComplexity int) int
@@ -1586,8 +1585,6 @@ type DocumentVersionSignatureResolver interface {
 	DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error)
 
 	SignedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error)
-
-	RequestedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error)
 }
 type EvidenceResolver interface {
 	FileURL(ctx context.Context, obj *types.Evidence) (*string, error)
@@ -3492,13 +3489,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DocumentVersionSignature.RequestedAt(childComplexity), true
-
-	case "DocumentVersionSignature.requestedBy":
-		if e.complexity.DocumentVersionSignature.RequestedBy == nil {
-			break
-		}
-
-		return e.complexity.DocumentVersionSignature.RequestedBy(childComplexity), true
 
 	case "DocumentVersionSignature.signedAt":
 		if e.complexity.DocumentVersionSignature.SignedAt == nil {
@@ -12382,7 +12372,6 @@ type DocumentVersionSignature implements Node {
   signedBy: People! @goField(forceResolver: true)
   signedAt: Datetime
   requestedAt: Datetime!
-  requestedBy: People! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -31649,72 +31638,6 @@ func (ec *executionContext) fieldContext_DocumentVersionSignature_requestedAt(_ 
 	return fc, nil
 }
 
-func (ec *executionContext) _DocumentVersionSignature_requestedBy(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_DocumentVersionSignature_requestedBy(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.DocumentVersionSignature().RequestedBy(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.People)
-	fc.Result = res
-	return ec.marshalNPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_DocumentVersionSignature_requestedBy(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "DocumentVersionSignature",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_People_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_People_fullName(ctx, field)
-			case "primaryEmailAddress":
-				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_People_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_People_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_People_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_People_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_People_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_People_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _DocumentVersionSignature_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersionSignature) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DocumentVersionSignature_createdAt(ctx, field)
 	if err != nil {
@@ -32002,8 +31925,6 @@ func (ec *executionContext) fieldContext_DocumentVersionSignatureEdge_node(_ con
 				return ec.fieldContext_DocumentVersionSignature_signedAt(ctx, field)
 			case "requestedAt":
 				return ec.fieldContext_DocumentVersionSignature_requestedAt(ctx, field)
-			case "requestedBy":
-				return ec.fieldContext_DocumentVersionSignature_requestedBy(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_DocumentVersionSignature_createdAt(ctx, field)
 			case "updatedAt":
@@ -75903,42 +75824,6 @@ func (ec *executionContext) _DocumentVersionSignature(ctx context.Context, sel a
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "requestedBy":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._DocumentVersionSignature_requestedBy(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "createdAt":
 			out.Values[i] = ec._DocumentVersionSignature_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

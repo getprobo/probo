@@ -34,7 +34,6 @@ type (
 		SignedBy          gid.GID                       `json:"signed_by"`
 		SignedAt          *time.Time                    `json:"signed_at"`
 		RequestedAt       time.Time                     `json:"requested_at"`
-		RequestedBy       gid.GID                       `json:"requested_by"`
 		CreatedAt         time.Time                     `json:"created_at"`
 		UpdatedAt         time.Time                     `json:"updated_at"`
 	}
@@ -68,7 +67,6 @@ SELECT
 	signed_by,
 	signed_at,
 	requested_at,
-	requested_by,
 	created_at,
 	updated_at
 FROM
@@ -114,7 +112,6 @@ SELECT
 	signed_by,
 	signed_at,
 	requested_at,
-	requested_by,
 	created_at,
 	updated_at
 FROM
@@ -158,7 +155,6 @@ INSERT INTO document_version_signatures (
 	signed_by,
 	signed_at,
 	requested_at,
-	requested_by,
 	created_at,
 	updated_at
 ) VALUES (
@@ -169,7 +165,6 @@ INSERT INTO document_version_signatures (
 	@signed_by,
 	@signed_at,
 	@requested_at,
-	@requested_by,
 	@created_at,
 	@updated_at
 )
@@ -183,7 +178,6 @@ INSERT INTO document_version_signatures (
 		"signed_by":           pvs.SignedBy,
 		"signed_at":           pvs.SignedAt,
 		"requested_at":        pvs.RequestedAt,
-		"requested_by":        pvs.RequestedBy,
 		"created_at":          pvs.CreatedAt,
 		"updated_at":          pvs.UpdatedAt,
 	}
@@ -211,7 +205,6 @@ SELECT
 	signed_by,
 	signed_at,
 	requested_at,
-	requested_by,
 	created_at,
 	updated_at
 FROM
