@@ -1,14 +1,21 @@
 import { graphql } from "relay-runtime";
-import type { AuditRowFragment$key } from "./__generated__/AuditRowFragment.graphql";
+import type {
+  AuditRowFragment$data,
+  AuditRowFragment$key,
+} from "./__generated__/AuditRowFragment.graphql";
 import { useFragment, useMutation } from "react-relay";
 import {
+  Breadcrumb,
   Button,
+  Dialog,
+  DialogContent,
   FrameworkLogo,
   IconArrowInbox,
   IconInboxEmpty,
   IconLock,
   IconMedal,
   Spinner,
+  Table,
   Td,
   Tr,
 } from "@probo/ui";
@@ -17,6 +24,8 @@ import { useIsAuthenticated } from "/hooks/useIsAuthenticated";
 import type { AuditRowDownloadMutation } from "./__generated__/AuditRowDownloadMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 import { downloadFile } from "@probo/helpers";
+import type { PropsWithChildren } from "react";
+import { useLocation, useNavigation } from "react-router";
 
 const downloadMutation = graphql`
   mutation AuditRowDownloadMutation($input: ExportReportPDFInput!) {
@@ -96,12 +105,52 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
 export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
   const audit = useFragment(auditRowFragment, props.audit);
   return (
-    <div>
-      <FrameworkLogo
-        alt={audit.framework.name}
-        name={audit.framework.name}
-        className="size-18"
-      />
-    </div>
+    <AuditDialog audit={props.audit}>
+      <button className="block cursor-pointer">
+        <FrameworkLogo
+          alt={audit.framework.name}
+          name={audit.framework.name}
+          className="size-18 block"
+        />
+      </button>
+    </AuditDialog>
+  );
+}
+
+function AuditDialog(
+  props: PropsWithChildren<{ audit: AuditRowFragment$key }>
+) {
+  const audit = useFragment(auditRowFragment, props.audit);
+  const location = useLocation();
+  const { __ } = useTranslate();
+  const items = [
+    {
+      label: __("Certifications"),
+      to: location.pathname,
+    },
+    {
+      label: audit.framework.name,
+      to: location.pathname,
+    },
+  ];
+  return (
+    <Dialog
+      trigger={props.children}
+      className="max-w-[500px]"
+      title={<Breadcrumb items={items} />}
+    >
+      <DialogContent className="p-4 lg:p-8 space-y-6">
+        <FrameworkLogo
+          alt={audit.framework.name}
+          name={audit.framework.name}
+          className="size-24 block mx-auto"
+        />
+        <h2 className="text-xl font-semibold mb-1">{audit.framework.name}</h2>
+        <p className="text-txt-secondary">Framework description</p>
+        <Table>
+          <AuditRow audit={props.audit} />
+        </Table>
+      </DialogContent>
+    </Dialog>
   );
 }
