@@ -30,3 +30,11 @@ export function slugify(str: string): string {
         .replace(/[^a-z0-9 ]/g, "") // remove all chars not letters, numbers and spaces (to be replaced)
         .replace(/\s+/g, "-");
 }
+
+export function domain(url: string): string {
+    const parts = url.split("//");
+    if (parts.length > 1) {
+        url = parts[1];
+    }
+    return url.split("/")[0];
+}
