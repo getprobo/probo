@@ -18,6 +18,7 @@ scalar Void
 scalar Datetime
 scalar Upload
 scalar Duration
+scalar BigInt
 
 # Interfaces
 interface Node {
@@ -1719,7 +1720,7 @@ type VendorComplianceReport implements Node {
   validUntil: Datetime
   reportName: String!
   fileUrl: String! @goField(forceResolver: true)
-  fileSize: Int!
+  fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -1731,7 +1732,7 @@ type VendorBusinessAssociateAgreement implements Node {
   validUntil: Datetime
   fileName: String!
   fileUrl: String! @goField(forceResolver: true)
-  fileSize: Int!
+  fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -1763,7 +1764,7 @@ type VendorDataPrivacyAgreement implements Node {
   validUntil: Datetime
   fileName: String!
   fileUrl: String! @goField(forceResolver: true)
-  fileSize: Int!
+  fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
 }

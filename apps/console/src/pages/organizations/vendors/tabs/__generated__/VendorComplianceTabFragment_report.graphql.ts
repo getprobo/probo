@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8f56e9dbd8ce8cf0c81d8f2e9f1ad06e>>
+ * @generated SignedSource<<4c861a832ad2f79bd9d6ddcc364f6898>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type VendorComplianceTabFragment_report$data = {
-  readonly fileSize: number;
+  readonly fileSize: any;
   readonly fileUrl: string;
   readonly id: string;
   readonly reportDate: any;

@@ -30,3 +30,6 @@ models:
   Duration:
     model:
       - "github.com/99designs/gqlgen/graphql.Duration"
+  BigInt:
+    model:
+      - "github.com/getprobo/probo/pkg/server/graphql/types/bigint.BigIntScalar"

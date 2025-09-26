@@ -18,6 +18,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/server/api/console/v1/types"
+	"github.com/getprobo/probo/pkg/server/graphql/types/bigint"
 	"github.com/getprobo/probo/pkg/server/graphql/types/cursor"
 	gid1 "github.com/getprobo/probo/pkg/server/graphql/types/gid"
 	gqlparser "github.com/vektah/gqlparser/v2"
@@ -8427,6 +8428,7 @@ scalar Void
 scalar Datetime
 scalar Upload
 scalar Duration
+scalar BigInt
 
 # Interfaces
 interface Node {
@@ -10128,7 +10130,7 @@ type VendorComplianceReport implements Node {
   validUntil: Datetime
   reportName: String!
   fileUrl: String! @goField(forceResolver: true)
-  fileSize: Int!
+  fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -10140,7 +10142,7 @@ type VendorBusinessAssociateAgreement implements Node {
   validUntil: Datetime
   fileName: String!
   fileUrl: String! @goField(forceResolver: true)
-  fileSize: Int!
+  fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -10172,7 +10174,7 @@ type VendorDataPrivacyAgreement implements Node {
   validUntil: Datetime
   fileName: String!
   fileUrl: String! @goField(forceResolver: true)
-  fileSize: Int!
+  fileSize: BigInt!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -57837,9 +57839,9 @@ func (ec *executionContext) _VendorBusinessAssociateAgreement_fileSize(ctx conte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNBigInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VendorBusinessAssociateAgreement_fileSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -57849,7 +57851,7 @@ func (ec *executionContext) fieldContext_VendorBusinessAssociateAgreement_fileSi
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type BigInt does not have child fields")
 		},
 	}
 	return fc, nil
@@ -58294,9 +58296,9 @@ func (ec *executionContext) _VendorComplianceReport_fileSize(ctx context.Context
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNBigInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VendorComplianceReport_fileSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -58306,7 +58308,7 @@ func (ec *executionContext) fieldContext_VendorComplianceReport_fileSize(_ conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type BigInt does not have child fields")
 		},
 	}
 	return fc, nil
@@ -59722,9 +59724,9 @@ func (ec *executionContext) _VendorDataPrivacyAgreement_fileSize(ctx context.Con
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNBigInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VendorDataPrivacyAgreement_fileSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -59734,7 +59736,7 @@ func (ec *executionContext) fieldContext_VendorDataPrivacyAgreement_fileSize(_ c
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type BigInt does not have child fields")
 		},
 	}
 	return fc, nil
@@ -85857,6 +85859,22 @@ var (
 		coredata.AuditStateOutdated:   "OUTDATED",
 	}
 )
+
+func (ec *executionContext) unmarshalNBigInt2int64(ctx context.Context, v any) (int64, error) {
+	res, err := bigint.UnmarshalBigIntScalar(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBigInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	_ = sel
+	res := bigint.MarshalBigIntScalar(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
