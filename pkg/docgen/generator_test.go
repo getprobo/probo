@@ -50,7 +50,6 @@ func TestRenderHTML(t *testing.T) {
 						SignedAt:    &now,
 						State:       coredata.DocumentVersionSignatureStateSigned,
 						RequestedAt: now,
-						RequestedBy: "Bob Johnson",
 					},
 				},
 			},
@@ -64,7 +63,6 @@ func TestRenderHTML(t *testing.T) {
 				"John Doe",
 				"Test document description",
 				"Alice Smith",
-				"Bob Johnson",
 			},
 		},
 		{
@@ -76,9 +74,8 @@ func TestRenderHTML(t *testing.T) {
 				Description: "Description with & symbols and <tags>",
 				Signatures: []SignatureData{
 					{
-						SignedBy:    "Alice & <Bob>",
-						RequestedBy: "Carol <script>",
-						State:       coredata.DocumentVersionSignatureStateRequested,
+						SignedBy: "Alice & <Bob>",
+						State:    coredata.DocumentVersionSignatureStateRequested,
 					},
 				},
 			},
@@ -87,7 +84,6 @@ func TestRenderHTML(t *testing.T) {
 				"John &amp;lt;script&amp;gt;alert(&amp;#39;xss&amp;#39;)&amp;lt;/script&amp;gt; Doe",
 				"Description with &amp;amp; symbols and &amp;lt;tags&amp;gt;",
 				"Alice &amp;amp; &amp;lt;Bob&amp;gt;",
-				"Carol &amp;lt;script&amp;gt;",
 			},
 			wantNotContains: []string{
 				"<script>alert('xss')</script>",
@@ -138,21 +134,17 @@ func TestRenderHTML(t *testing.T) {
 						SignedAt:    &now,
 						State:       coredata.DocumentVersionSignatureStateSigned,
 						RequestedAt: now,
-						RequestedBy: "Requester 1",
 					},
 					{
 						SignedBy:    "Signer 2",
 						State:       coredata.DocumentVersionSignatureStateRequested,
 						RequestedAt: now,
-						RequestedBy: "Requester 2",
 					},
 				},
 			},
 			wantContains: []string{
 				"Signer 1",
 				"Signer 2",
-				"Requester 1",
-				"Requester 2",
 			},
 		},
 	}
@@ -268,9 +260,8 @@ func TestHTMLEscaping(t *testing.T) {
 		Description: "Text with 'quotes' & \"double quotes\"",
 		Signatures: []SignatureData{
 			{
-				SignedBy:    "<malicious>tag",
-				RequestedBy: "User & Company",
-				State:       coredata.DocumentVersionSignatureStateRequested,
+				SignedBy: "<malicious>tag",
+				State:    coredata.DocumentVersionSignatureStateRequested,
 			},
 		},
 	}
@@ -357,7 +348,6 @@ func TestDocumentVersionSignatureStates(t *testing.T) {
 						SignedBy:    "Test User",
 						State:       state,
 						RequestedAt: now,
-						RequestedBy: "Requester",
 					},
 				},
 			}
@@ -407,7 +397,6 @@ func BenchmarkGenerateHTML(b *testing.B) {
 				SignedAt:    &now,
 				State:       coredata.DocumentVersionSignatureStateSigned,
 				RequestedAt: now,
-				RequestedBy: "Bob Johnson",
 			},
 		},
 	}

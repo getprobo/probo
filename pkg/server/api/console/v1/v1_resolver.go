@@ -734,23 +734,6 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 	return types.NewPeople(people), nil
 }
 
-// RequestedBy is the resolver for the requestedBy field.
-func (r *documentVersionSignatureResolver) RequestedBy(ctx context.Context, obj *types.DocumentVersionSignature) (*types.People, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	documentVersionSignature, err := prb.Documents.GetVersionSignature(ctx, obj.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get document version signature: %w", err))
-	}
-
-	people, err := prb.Peoples.Get(ctx, documentVersionSignature.RequestedBy)
-	if err != nil {
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
-	return types.NewPeople(people), nil
-}
-
 // FileURL is the resolver for the fileUrl field.
 func (r *evidenceResolver) FileURL(ctx context.Context, obj *types.Evidence) (*string, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -2718,18 +2701,10 @@ func (r *mutationResolver) UpdateDocumentVersion(ctx context.Context, input type
 func (r *mutationResolver) RequestSignature(ctx context.Context, input types.RequestSignatureInput) (*types.RequestSignaturePayload, error) {
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
-	user := UserFromContext(ctx)
-
-	people, err := prb.Peoples.GetByUserID(ctx, user.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
 	documentVersionSignature, err := prb.Documents.RequestSignature(
 		ctx,
 		probo.RequestSignatureRequest{
 			DocumentVersionID: input.DocumentVersionID,
-			RequestedBy:       people.ID,
 			Signatory:         input.SignatoryID,
 		},
 	)
@@ -2752,19 +2727,11 @@ func (r *mutationResolver) BulkRequestSignatures(ctx context.Context, input type
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
 
-	user := UserFromContext(ctx)
-
-	people, err := prb.Peoples.GetByUserID(ctx, user.ID)
-	if err != nil {
-		panic(fmt.Errorf("cannot get people: %w", err))
-	}
-
 	documentVersionSignatures, err := prb.Documents.BulkRequestSignatures(
 		ctx,
 		probo.BulkRequestSignaturesRequest{
 			DocumentIDs:  input.DocumentIds,
 			SignatoryIDs: input.SignatoryIds,
-			RequestedBy:  people.ID,
 		},
 	)
 	if err != nil {

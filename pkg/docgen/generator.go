@@ -77,7 +77,6 @@ type (
 		SignedAt    *time.Time
 		State       coredata.DocumentVersionSignatureState
 		RequestedAt time.Time
-		RequestedBy string
 	}
 )
 
@@ -95,7 +94,6 @@ func RenderHTML(data DocumentData) ([]byte, error) {
 
 	for i := range data.Signatures {
 		data.Signatures[i].SignedBy = html.EscapeString(data.Signatures[i].SignedBy)
-		data.Signatures[i].RequestedBy = html.EscapeString(data.Signatures[i].RequestedBy)
 	}
 
 	var buf bytes.Buffer
