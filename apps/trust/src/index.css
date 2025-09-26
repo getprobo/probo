@@ -1,0 +1,10 @@
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap");
+@import "tailwindcss";
+@import "@probo/ui/src/theme.css";
+@import "tw-animate-css";
+@source "../../../packages/ui/src";
+@source "../../../packages/helpers/src";
+
+.react-pdf__Page__annotations.annotationLayer {
+    display: none;
+}

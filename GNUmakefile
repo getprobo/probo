@@ -176,3 +176,4 @@ goreleaser-snapshot: ## Build a snapshot release with goreleaser
 .PHONY: goreleaser-check
 goreleaser-check: ## Check goreleaser configuration
 	goreleaser check
+

@@ -1,6 +1,8 @@
 export { IconArrowUp } from "./IconArrowUp.tsx";
 export { IconBox } from "./IconBox.tsx";
 export { IconBell2 } from "./IconBell2.tsx";
+export { IconMedal } from "./IconMedal.tsx";
+export { IconMail } from "./IconMail.tsx";
 export { IconArrowInbox1 } from "./IconArrowInbox1.tsx";
 export { IconCircleX } from "./IconCircleX.tsx";
 export { IconFire3 } from "./IconFire3.tsx";
@@ -79,3 +81,5 @@ export { IconBlock } from "./IconBlock.tsx";
 export { IconChevronDown } from "./IconChevronDown.tsx";
 export { IconPageCross } from "./IconPageCross.tsx";
 export { IconRotateCw } from "./IconRotateCw.tsx";
+export { IconPin } from "./IconPin.tsx";
+export { IconMinusLarge } from "./IconMinusLarge.tsx";

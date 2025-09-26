@@ -23,9 +23,17 @@ export function Table({
     );
 }
 
-export function Thead({ children }: PropsWithChildren) {
+export function Thead({
+    children,
+    className,
+}: PropsWithChildren<{ className?: string }>) {
     return (
-        <thead className="text-xs text-txt-tertiary font-semibold border-border-low border-b">
+        <thead
+            className={clsx(
+                "text-xs text-txt-tertiary font-semibold border-border-low border-b",
+                className,
+            )}
+        >
             {children}
         </thead>
     );
