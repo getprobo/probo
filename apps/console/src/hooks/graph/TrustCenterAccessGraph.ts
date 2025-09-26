@@ -28,6 +28,31 @@ export const trustCenterAccessesQuery = graphql`
               active
               hasAcceptedNonDisclosureAgreement
               createdAt
+              documentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+                edges {
+                  node {
+                    id
+                    active
+                    createdAt
+                    updatedAt
+                    document {
+                      id
+                      title
+                      documentType
+                    }
+                    report {
+                      id
+                      filename
+                      audit {
+                        id
+                        framework {
+                          name
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -51,6 +76,31 @@ export const createTrustCenterAccessMutation = graphql`
           active
           hasAcceptedNonDisclosureAgreement
           createdAt
+          documentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+            edges {
+              node {
+                id
+                active
+                createdAt
+                updatedAt
+                document {
+                  id
+                  title
+                  documentType
+                }
+            report {
+              id
+              filename
+              audit {
+                id
+                framework {
+                  name
+                }
+              }
+            }
+              }
+            }
+          }
         }
       }
     }
@@ -70,6 +120,31 @@ export const updateTrustCenterAccessMutation = graphql`
         hasAcceptedNonDisclosureAgreement
         createdAt
         updatedAt
+        documentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+          edges {
+            node {
+              id
+              active
+              createdAt
+              updatedAt
+              document {
+                id
+                title
+                documentType
+              }
+            report {
+              id
+              filename
+              audit {
+                id
+                framework {
+                  name
+                }
+              }
+            }
+            }
+          }
+        }
       }
     }
   }
@@ -82,6 +157,35 @@ export const deleteTrustCenterAccessMutation = graphql`
   ) {
     deleteTrustCenterAccess(input: $input) {
       deletedTrustCenterAccessId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
+export const updateTrustCenterDocumentAccessStatusMutation = graphql`
+  mutation TrustCenterAccessGraphUpdateDocumentAccessStatusMutation(
+    $input: UpdateTrustCenterDocumentAccessStatusInput!
+  ) {
+    updateTrustCenterDocumentAccessStatus(input: $input) {
+      trustCenterDocumentAccess {
+        id
+        active
+        updatedAt
+        document {
+          id
+          title
+          documentType
+        }
+            report {
+              id
+              filename
+              audit {
+                id
+                framework {
+                  name
+                }
+              }
+            }
+      }
     }
   }
 `;

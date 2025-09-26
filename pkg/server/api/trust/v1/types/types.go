@@ -57,9 +57,11 @@ type CreateTrustCenterAccessPayload struct {
 }
 
 type Document struct {
-	ID           gid.GID               `json:"id"`
-	Title        string                `json:"title"`
-	DocumentType coredata.DocumentType `json:"documentType"`
+	ID                     gid.GID               `json:"id"`
+	Title                  string                `json:"title"`
+	DocumentType           coredata.DocumentType `json:"documentType"`
+	IsUserAuthorized       bool                  `json:"isUserAuthorized"`
+	HasUserRequestedAccess bool                  `json:"hasUserRequestedAccess"`
 }
 
 func (Document) IsNode()             {}
@@ -126,12 +128,36 @@ type Query struct {
 }
 
 type Report struct {
-	ID       gid.GID `json:"id"`
-	Filename string  `json:"filename"`
+	ID                     gid.GID `json:"id"`
+	Filename               string  `json:"filename"`
+	IsUserAuthorized       bool    `json:"isUserAuthorized"`
+	HasUserRequestedAccess bool    `json:"hasUserRequestedAccess"`
 }
 
 func (Report) IsNode()             {}
 func (this Report) GetID() gid.GID { return this.ID }
+
+type RequestDocumentAccessInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+	DocumentID    gid.GID `json:"documentId"`
+	Email         string  `json:"email"`
+	Name          *string `json:"name,omitempty"`
+}
+
+type RequestDocumentAccessPayload struct {
+	Success bool `json:"success"`
+}
+
+type RequestReportAccessInput struct {
+	TrustCenterID gid.GID `json:"trustCenterId"`
+	ReportID      gid.GID `json:"reportId"`
+	Email         string  `json:"email"`
+	Name          *string `json:"name,omitempty"`
+}
+
+type RequestReportAccessPayload struct {
+	Success bool `json:"success"`
+}
 
 type TrustCenter struct {
 	ID                                gid.GID                         `json:"id"`

@@ -15,6 +15,7 @@ import {
 import { useTranslate } from "@probo/i18n";
 import { useExportDocumentPDF, type TrustCenterDocument } from "/hooks/useTrustCenterQueries";
 import { PublicTrustCenterAccessRequestDialog } from "./PublicTrustCenterAccessRequestDialog";
+import { RequestDocumentAccessDialog } from "./RequestDocumentAccessDialog";
 
 type Props = {
   documents: TrustCenterDocument[];
@@ -116,7 +117,7 @@ export function PublicTrustCenterDocuments({
                       trustCenterId={trustCenterId}
                       organizationName={organizationName}
                     />
-                  ) : (
+                  ) : document.isUserAuthorized ? (
                     <Button
                       variant="secondary"
                       icon={IconArrowDown}
@@ -125,6 +126,28 @@ export function PublicTrustCenterDocuments({
                     >
                       {mutation.isPending ? __("Downloading...") : __("Download")}
                     </Button>
+                  ) : document.hasUserRequestedAccess ? (
+                    <Button
+                      variant="tertiary"
+                      disabled
+                    >
+                      {__("Access Requested")}
+                    </Button>
+                  ) : (
+                    <RequestDocumentAccessDialog
+                      trigger={
+                        <Button
+                          variant="secondary"
+                          icon={IconLock}
+                        >
+                          {__("Request Access")}
+                        </Button>
+                      }
+                      document={document}
+                      trustCenterId={trustCenterId}
+                      organizationName={organizationName}
+                      isAuthenticated={isAuthenticated}
+                    />
                   )}
                 </Td>
               </Tr>

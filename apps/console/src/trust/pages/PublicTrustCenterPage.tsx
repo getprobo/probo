@@ -5,8 +5,9 @@ import { PublicTrustCenterLayout } from "/layouts/PublicTrustCenterLayout";
 import { PublicTrustCenterAudits } from "../components/PublicTrustCenterAudits";
 import { PublicTrustCenterVendors } from "../components/PublicTrustCenterVendors";
 import { PublicTrustCenterDocuments } from "../components/PublicTrustCenterDocuments";
+import { PublicTrustCenterAccessRequestDialog } from "../components/PublicTrustCenterAccessRequestDialog";
 import { NDAAcceptanceDialog } from "../components/NDAAcceptanceDialog";
-import { Spinner } from "@probo/ui";
+import { Spinner, Button, IconLock } from "@probo/ui";
 import { useTrustCenterQuery, type TrustCenterDocument, type TrustCenterAudit, type TrustCenterVendor } from "/hooks/useTrustCenterQueries";
 
 export type { TrustCenterDocument, TrustCenterAudit, TrustCenterVendor };
@@ -75,6 +76,25 @@ export default function PublicTrustCenterPage() {
 
   const showNdaDialog = isUserAuthenticated && !hasAcceptedNonDisclosureAgreement;
 
+  let showRequestAllButton = false;
+
+  for (const doc of trustCenterDocuments) {
+    if (!doc.isUserAuthorized && !doc.hasUserRequestedAccess) {
+      showRequestAllButton = true;
+      break;
+    }
+  }
+
+  if (!showRequestAllButton) {
+    const reportsWithData = trustCenterAudits.filter(audit => audit.report !== null);
+    for (const audit of reportsWithData) {
+      if (!audit.report!.isUserAuthorized && !audit.report!.hasUserRequestedAccess) {
+        showRequestAllButton = true;
+        break;
+      }
+    }
+  }
+
   return (
     <>
       {showNdaDialog && (
@@ -89,9 +109,25 @@ export default function PublicTrustCenterPage() {
       <PublicTrustCenterLayout
         organizationName={organizationName}
         organizationLogo={organization?.logoUrl}
-        isAuthenticated={isUserAuthenticated}
       >
         <div className="space-y-12">
+          {showRequestAllButton && (
+            <div className="flex justify-end">
+              <PublicTrustCenterAccessRequestDialog
+                trigger={
+                  <Button
+                    variant="primary"
+                    icon={IconLock}
+                  >
+                    {__("Request All Access")}
+                  </Button>
+                }
+                trustCenterId={trustCenterBySlug.id}
+                organizationName={organizationName}
+              />
+            </div>
+          )}
+
           <PublicTrustCenterAudits
             audits={trustCenterAudits}
             organizationName={organizationName}
