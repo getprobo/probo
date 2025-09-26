@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+# [0.63.1] - 2025-09-26
+
+### Fixed
+- Fix request document signature
+
 # [0.63.0] - 2025-09-25
 
 ### Changed
