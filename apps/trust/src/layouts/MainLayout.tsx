@@ -7,6 +7,7 @@ import { OrganizationSidebar } from "/components/OrganizationSidebar";
 import { Outlet } from "react-router";
 import { NDADialog } from "/components/NDADialog";
 import { useState } from "react";
+import { AuthProvider } from "/providers/AuthProvider";
 
 type Props = {
   queryRef: PreloadedQuery<TrustGraphQuery>;
@@ -30,7 +31,7 @@ export function MainLayout(props: Props) {
   );
 
   return (
-    <>
+    <AuthProvider isAuthenticated={trustCenter.isUserAuthenticated}>
       {showNDADialog && (
         <NDADialog
           name={trustCenter.organization.name}
@@ -56,6 +57,6 @@ export function MainLayout(props: Props) {
       <div className="flex gap-1 text-sm font-medium text-txt-tertiary items-center w-max mx-auto my-10">
         Powered by <Logo withPicto className="h-6" />
       </div>
-    </>
+    </AuthProvider>
   );
 }

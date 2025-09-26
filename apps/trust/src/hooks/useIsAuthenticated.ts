@@ -1,6 +1,6 @@
-import { useOutletContext } from "react-router";
+import { useContext } from "react";
+import { AuthContext } from "/providers/AuthProvider";
 
 export function useIsAuthenticated(): boolean {
-  return useOutletContext<{ trustCenter: { isUserAuthenticated: boolean } }>()
-    .trustCenter.isUserAuthenticated;
+  return useContext(AuthContext).isAuthenticated;
 }
