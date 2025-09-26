@@ -5,6 +5,7 @@ type Props = {
     src?: string | null;
     size?: "s" | "m" | "l" | "xl";
     className?: string;
+    alt?: string;
 };
 
 const avatar = tv({
