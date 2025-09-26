@@ -226,7 +226,8 @@ func (r *queryResolver) TrustCenterBySlug(ctx context.Context, slug string) (*ty
 func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
 	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get private trust service: %w", err)
+		// Return nil but no error if the user is not authenticated
+		return nil, nil
 	}
 
 	fileURL, err := privateTrustService.TrustCenters.GenerateNDAFileURL(ctx, obj.ID, 15*time.Minute)
