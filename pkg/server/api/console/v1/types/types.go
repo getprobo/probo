@@ -2046,7 +2046,7 @@ type VendorBusinessAssociateAgreement struct {
 	ValidUntil *time.Time `json:"validUntil,omitempty"`
 	FileName   string     `json:"fileName"`
 	FileURL    string     `json:"fileUrl"`
-	FileSize   int        `json:"fileSize"`
+	FileSize   int64      `json:"fileSize"`
 	CreatedAt  time.Time  `json:"createdAt"`
 	UpdatedAt  time.Time  `json:"updatedAt"`
 }
@@ -2061,7 +2061,7 @@ type VendorComplianceReport struct {
 	ValidUntil *time.Time `json:"validUntil,omitempty"`
 	ReportName string     `json:"reportName"`
 	FileURL    string     `json:"fileUrl"`
-	FileSize   int        `json:"fileSize"`
+	FileSize   int64      `json:"fileSize"`
 	CreatedAt  time.Time  `json:"createdAt"`
 	UpdatedAt  time.Time  `json:"updatedAt"`
 }
@@ -2110,7 +2110,7 @@ type VendorDataPrivacyAgreement struct {
 	ValidUntil *time.Time `json:"validUntil,omitempty"`
 	FileName   string     `json:"fileName"`
 	FileURL    string     `json:"fileUrl"`
-	FileSize   int        `json:"fileSize"`
+	FileSize   int64      `json:"fileSize"`
 	CreatedAt  time.Time  `json:"createdAt"`
 	UpdatedAt  time.Time  `json:"updatedAt"`
 }

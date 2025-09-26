@@ -220,7 +220,7 @@ func (s TrustCenterService) UploadNDA(
 				MimeType:   mimeType,
 				FileName:   req.FileName,
 				FileKey:    objectKey.String(),
-				FileSize:   int(*headOutput.ContentLength),
+				FileSize:   *headOutput.ContentLength,
 				CreatedAt:  now,
 				UpdatedAt:  now,
 			}

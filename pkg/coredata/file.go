@@ -32,7 +32,7 @@ type (
 		MimeType   string     `db:"mime_type"`
 		FileName   string     `db:"file_name"`
 		FileKey    string     `db:"file_key"`
-		FileSize   int        `db:"file_size"`
+		FileSize   int64      `db:"file_size"`
 		CreatedAt  time.Time  `db:"created_at"`
 		UpdatedAt  time.Time  `db:"updated_at"`
 		DeletedAt  *time.Time `db:"deleted_at"`

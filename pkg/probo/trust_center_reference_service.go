@@ -384,7 +384,7 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 		MimeType:   contentType,
 		FileName:   filename,
 		FileKey:    objectKey.String(),
-		FileSize:   int(fileSize),
+		FileSize:   fileSize,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}

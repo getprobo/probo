@@ -1251,7 +1251,7 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID 
 				MimeType:   "application/zip",
 				FileName:   fmt.Sprintf("Documents Export %s.zip", now.Format("2006-01-02")),
 				FileKey:    uuid.String(),
-				FileSize:   int(fileInfo.Size()),
+				FileSize:   fileInfo.Size(),
 				CreatedAt:  now,
 				UpdatedAt:  now,
 			}

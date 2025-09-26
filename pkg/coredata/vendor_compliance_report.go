@@ -34,7 +34,7 @@ type (
 		ValidUntil *time.Time
 		ReportName string
 		FileKey    string
-		FileSize   int
+		FileSize   int64
 		SnapshotID *gid.GID
 		SourceID   *gid.GID
 		CreatedAt  time.Time

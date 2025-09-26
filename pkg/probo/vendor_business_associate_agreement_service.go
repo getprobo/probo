@@ -132,7 +132,7 @@ func (s VendorBusinessAssociateAgreementService) Upload(
 				MimeType:   mimeType,
 				FileName:   req.FileName,
 				FileKey:    objectKey.String(),
-				FileSize:   int(*headOutput.ContentLength),
+				FileSize:   *headOutput.ContentLength,
 				CreatedAt:  now,
 				UpdatedAt:  now,
 			}
