@@ -69,6 +69,7 @@ export { DocumentTypeBadge } from "./Molecules/Badge/DocumentTypeBadge";
 export { SentitivityOptions } from "./Molecules/Select/SentitivityOptions";
 export { ImpactOptions } from "./Molecules/Select/ImpactOptions";
 export { DurationPicker } from "./Molecules/DurationPicker/DurationPicker";
+export { FrameworkLogo } from "./Molecules/Badge/FrameworkLogo";
 
 // Hooks
 export { useToast, Toasts } from "./Atoms/Toasts/Toasts";
