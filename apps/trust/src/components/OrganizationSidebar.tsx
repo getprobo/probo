@@ -2,7 +2,6 @@ import { useTranslate } from "@probo/i18n";
 import {
   Button,
   Card,
-  FrameworkLogo,
   IconBlock,
   IconLock,
   IconMail,
@@ -12,6 +11,8 @@ import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuer
 import type { PropsWithChildren } from "react";
 import { domain } from "@probo/helpers";
 import { AuditRowAvatar } from "./AuditRow";
+import { RequestAccessDialog } from "./RequestAccessDialog";
+import { useIsAuthenticated } from "/hooks/useIsAuthenticated";
 
 export function OrganizationSidebar({
   trustCenter,
@@ -19,6 +20,7 @@ export function OrganizationSidebar({
   trustCenter: TrustGraphQuery$data["trustCenterBySlug"];
 }) {
   const { __ } = useTranslate();
+  const isAuthenticated = useIsAuthenticated();
 
   if (!trustCenter) {
     return null;
@@ -77,7 +79,7 @@ export function OrganizationSidebar({
             <IconMedal size={16} />
             {__("Certifications")}
           </h2>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-4 gap-4 ">
             {trustCenter.audits.edges.map((audit) => (
               <AuditRowAvatar key={audit.node.id} audit={audit.node} />
             ))}
@@ -87,9 +89,13 @@ export function OrganizationSidebar({
         <hr className="my-6 -mx-6 h-[1px] bg-border-low border-none" />
 
         {/* Actions */}
-        <Button variant="primary" icon={IconLock} className="w-full h-10">
-          {__("Request access")}
-        </Button>
+        {!isAuthenticated && (
+          <RequestAccessDialog>
+            <Button variant="primary" icon={IconLock} className="w-full h-10">
+              {__("Request access")}
+            </Button>
+          </RequestAccessDialog>
+        )}
         <Button variant="secondary" icon={IconMail} className="w-full h-10">
           {__("Subscribe to updates")}
         </Button>

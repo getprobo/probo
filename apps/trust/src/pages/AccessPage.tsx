@@ -8,7 +8,7 @@ import { Spinner } from "@probo/ui";
 /**
  * Page requested with an access token to authenticate the user for the Trust center
  */
-export function Access() {
+export function AccessPage() {
   const { __ } = useTranslate();
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
@@ -16,7 +16,6 @@ export function Access() {
   const navigate = useNavigate();
 
   const isValidRequest = !!(slug && token);
-  const [loading, setLoading] = useState(isValidRequest);
   const [error, setError] = useState<string | null>(() => {
     if (!slug) {
       return __("Invalid trust center");
@@ -27,7 +26,7 @@ export function Access() {
     return null;
   });
 
-  // Initiate authentication attempt
+  // Initiate an authentication attempt
   useEffect(() => {
     if (!isValidRequest) {
       return;
@@ -65,9 +64,6 @@ export function Access() {
       })
       .catch((error) => {
         setError(error.message);
-      })
-      .finally(() => {
-        setLoading(false);
       });
   }, [isValidRequest]);
 

@@ -20,10 +20,10 @@ import {
   trustDocumentsQuery,
   trustVendorsQuery,
 } from "/queries/TrustGraph";
-import { Overview } from "/pages/Overview";
-import { Documents } from "/pages/Documents";
-import { Subprocessors } from "/pages/Subprocessors";
-import { Access } from "./pages/Access";
+import { OverviewPage } from "/pages/OverviewPage";
+import { DocumentsPage } from "/pages/DocumentsPage";
+import { SubprocessorsPage } from "/pages/SubprocessorsPage";
+import { AccessPage } from "./pages/AccessPage.tsx";
 import { TabSkeleton } from "./components/Skeletons/TabSkeleton";
 import { MainSkeleton } from "./components/Skeletons/MainSkeleton";
 
@@ -51,10 +51,12 @@ const routes = [
   {
     path: "/",
     Component: Fragment,
+    ErrorBoundary: ErrorBoundary,
   },
   {
     path: "/trust/:slug/access",
-    Component: Access,
+    Component: AccessPage,
+    ErrorBoundary: ErrorBoundary,
   },
   {
     path: "/trust/:slug",
@@ -62,6 +64,7 @@ const routes = [
       loadQuery(relayEnvironment, trustGraphQuery, { slug: slug }),
     Component: MainLayout,
     fallback: MainSkeleton,
+    ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
@@ -72,19 +75,19 @@ const routes = [
       {
         path: "overview",
         fallback: TabSkeleton,
-        Component: Overview,
+        Component: OverviewPage,
       },
       {
         path: "documents",
         fallback: TabSkeleton,
-        Component: Documents,
+        Component: DocumentsPage,
         queryLoader: ({ slug }) =>
           loadQuery(relayEnvironment, trustDocumentsQuery, { slug: slug }),
       },
       {
         path: "subprocessors",
         fallback: TabSkeleton,
-        Component: Subprocessors,
+        Component: SubprocessorsPage,
         queryLoader: ({ slug }) =>
           loadQuery(relayEnvironment, trustVendorsQuery, { slug: slug }),
       },

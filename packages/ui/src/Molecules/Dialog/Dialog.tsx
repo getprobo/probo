@@ -91,11 +91,13 @@ export function Dialog({
         }
     };
 
-    const contentProps = closable ? {} : {
-        onEscapeKeyDown: (e: Event) => e.preventDefault(),
-        onPointerDownOutside: (e: Event) => e.preventDefault(),
-        onInteractOutside: (e: Event) => e.preventDefault(),
-    };
+    const contentProps = closable
+        ? {}
+        : {
+              onEscapeKeyDown: (e: Event) => e.preventDefault(),
+              onPointerDownOutside: (e: Event) => e.preventDefault(),
+              onInteractOutside: (e: Event) => e.preventDefault(),
+          };
 
     return (
         <Root open={open} onOpenChange={closable ? onOpenChange : undefined}>
@@ -142,14 +144,16 @@ export function Dialog({
 export function DialogFooter({
     children,
     exitLabel,
+    className,
 }: {
     children?: ReactNode;
     exitLabel?: string;
+    className?: string;
 }) {
     const { __ } = useTranslate();
     const { footer } = dialog();
     return (
-        <footer className={footer()}>
+        <footer className={footer({ className })}>
             <Close asChild>
                 <Button variant="secondary">{exitLabel ?? __("Cancel")}</Button>
             </Close>

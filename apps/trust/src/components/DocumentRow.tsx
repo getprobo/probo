@@ -3,7 +3,6 @@ import type { DocumentRowFragment$key } from "./__generated__/DocumentRowFragmen
 import { useFragment } from "react-relay";
 import {
   Button,
-  FrameworkLogo,
   IconArrowInbox,
   IconLock,
   IconPageTextLine,
@@ -16,6 +15,7 @@ import { useIsAuthenticated } from "/hooks/useIsAuthenticated";
 import type { DocumentRowDownloadMutation } from "./__generated__/DocumentRowDownloadMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 import { downloadFile } from "@probo/helpers";
+import { RequestAccessDialog } from "/components/RequestAccessDialog.tsx";
 
 const downloadMutation = graphql`
   mutation DocumentRowDownloadMutation($input: ExportDocumentPDFInput!) {
@@ -70,26 +70,13 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
             {__("Download")}
           </Button>
         ) : (
-          <Button className="ml-auto" variant="secondary" icon={IconLock}>
-            {__("Request access")}
-          </Button>
+          <RequestAccessDialog>
+            <Button className="ml-auto" variant="secondary" icon={IconLock}>
+              {__("Request access")}
+            </Button>
+          </RequestAccessDialog>
         )}
       </Td>
     </Tr>
-  );
-}
-
-export function DocumentRowAvatar(props: {
-  document: DocumentRowFragment$key;
-}) {
-  const document = useFragment(documentRowFragment, props.document);
-  return (
-    <div>
-      <FrameworkLogo
-        alt={document.framework.name}
-        name={document.framework.name}
-        className="size-18"
-      />
-    </div>
   );
 }

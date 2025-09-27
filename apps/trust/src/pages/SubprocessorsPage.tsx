@@ -10,7 +10,7 @@ type Props = {
   queryRef: PreloadedQuery<TrustGraphVendorsQuery>;
 };
 
-export function Subprocessors({ queryRef }: Props) {
+export function SubprocessorsPage({ queryRef }: Props) {
   const { __ } = useTranslate();
   const data = usePreloadedQuery(trustVendorsQuery, queryRef);
   console.log(data);
@@ -22,7 +22,7 @@ export function Subprocessors({ queryRef }: Props) {
       <p className="text-sm text-txt-secondary mb-4">
         {sprintf(
           __("Third-party subprocessors %s work with:"),
-          data.trustCenterBySlug?.organization.name ?? ""
+          data.trustCenterBySlug?.organization.name ?? "",
         )}
       </p>
       <Table>
