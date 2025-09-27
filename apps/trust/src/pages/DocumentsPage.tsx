@@ -12,13 +12,13 @@ type Props = {
   queryRef: PreloadedQuery<TrustGraphDocumentsQuery>;
 };
 
-export function Documents({ queryRef }: Props) {
+export function DocumentsPage({ queryRef }: Props) {
   const { __ } = useTranslate();
   const data = usePreloadedQuery(trustDocumentsQuery, queryRef);
   const documents =
     data.trustCenterBySlug?.documents.edges.map((edge) => edge.node) ?? [];
   const documentsPerType = groupBy(documents, (document) =>
-    documentTypeLabel(document.documentType, __)
+    documentTypeLabel(document.documentType, __),
   );
   return (
     <div>

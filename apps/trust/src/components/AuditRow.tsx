@@ -1,9 +1,6 @@
 import { graphql } from "relay-runtime";
-import type {
-  AuditRowFragment$data,
-  AuditRowFragment$key,
-} from "./__generated__/AuditRowFragment.graphql";
-import { useFragment, useMutation } from "react-relay";
+import type { AuditRowFragment$key } from "./__generated__/AuditRowFragment.graphql";
+import { useFragment } from "react-relay";
 import {
   Breadcrumb,
   Button,
@@ -11,7 +8,6 @@ import {
   DialogContent,
   FrameworkLogo,
   IconArrowInbox,
-  IconInboxEmpty,
   IconLock,
   IconMedal,
   Spinner,
@@ -25,7 +21,8 @@ import type { AuditRowDownloadMutation } from "./__generated__/AuditRowDownloadM
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 import { downloadFile } from "@probo/helpers";
 import type { PropsWithChildren } from "react";
-import { useLocation, useNavigation } from "react-router";
+import { useLocation } from "react-router";
+import { RequestAccessDialog } from "/components/RequestAccessDialog.tsx";
 
 const downloadMutation = graphql`
   mutation AuditRowDownloadMutation($input: ExportReportPDFInput!) {
@@ -90,9 +87,11 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
               {__("Download")}
             </Button>
           ) : (
-            <Button className="ml-auto" variant="secondary" icon={IconLock}>
-              {__("Request access")}
-            </Button>
+            <RequestAccessDialog>
+              <Button className="ml-auto" variant="secondary" icon={IconLock}>
+                {__("Request access")}
+              </Button>
+            </RequestAccessDialog>
           )
         ) : (
           <span className=" text-txt-secondary">{__("No report")}</span>
@@ -118,7 +117,7 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
 }
 
 function AuditDialog(
-  props: PropsWithChildren<{ audit: AuditRowFragment$key }>
+  props: PropsWithChildren<{ audit: AuditRowFragment$key }>,
 ) {
   const audit = useFragment(auditRowFragment, props.audit);
   const location = useLocation();

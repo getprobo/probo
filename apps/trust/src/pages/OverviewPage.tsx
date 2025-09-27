@@ -6,7 +6,6 @@ import { groupBy, objectEntries, sprintf } from "@probo/helpers";
 import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
-  Button,
   Card,
   IconChevronRight,
   Table,
@@ -54,7 +53,7 @@ const overviewFragment = graphql`
   }
 `;
 
-export function Overview() {
+export function OverviewPage() {
   const { trustCenter } = useOutletContext<{
     trustCenter: OverviewFragment$key &
       TrustGraphQuery$data["trustCenterBySlug"];
@@ -63,7 +62,7 @@ export function Overview() {
   const fragment = useFragment(overviewFragment, trustCenter);
   const documentsPerType = groupBy(
     fragment.documents.edges.map((edge) => edge.node),
-    (node) => documentTypeLabel(node.documentType, __)
+    (node) => documentTypeLabel(node.documentType, __),
   );
   return (
     <div>
@@ -96,41 +95,45 @@ export function Overview() {
             </Tbody>
           </Fragment>
         ))}
-        <Tr>
-          <Td colSpan={2}>
-            <Link
-              to={`/trust/${trustCenter.slug}/documents`}
-              className="text-sm font-medium flex gap-2 items-center h-8"
-            >
-              {__("See all documents")}
-              <IconChevronRight size={16} />
-            </Link>
-          </Td>
-        </Tr>
+        <Tbody>
+          <Tr>
+            <Td colSpan={2}>
+              <Link
+                to={`/trust/${trustCenter.slug}/documents`}
+                className="text-sm font-medium flex gap-2 items-center h-8"
+              >
+                {__("See all documents")}
+                <IconChevronRight size={16} />
+              </Link>
+            </Td>
+          </Tr>
+        </Tbody>
       </Table>
 
       <h2 className="font-medium mb-1">{__("Subprocessors")}</h2>
       <p className="text-sm text-txt-secondary mb-4">
         {sprintf(
           __("Third-party subprocessors %s work with:"),
-          trustCenter.organization.name
+          trustCenter.organization.name,
         )}
       </p>
       <Table className="mb-8">
-        {fragment.vendors.edges.map((edge) => (
-          <VendorRow key={edge.node.id} vendor={edge.node} />
-        ))}
-        <Tr>
-          <Td colSpan={3}>
-            <Link
-              to={`/trust/${trustCenter.slug}/subprocessors`}
-              className="text-sm font-medium flex gap-2 items-center h-8"
-            >
-              {__("See all subprocessors")}
-              <IconChevronRight size={16} />
-            </Link>
-          </Td>
-        </Tr>
+        <Tbody>
+          {fragment.vendors.edges.map((edge) => (
+            <VendorRow key={edge.node.id} vendor={edge.node} />
+          ))}
+          <Tr>
+            <Td colSpan={3}>
+              <Link
+                to={`/trust/${trustCenter.slug}/subprocessors`}
+                className="text-sm font-medium flex gap-2 items-center h-8"
+              >
+                {__("See all subprocessors")}
+                <IconChevronRight size={16} />
+              </Link>
+            </Td>
+          </Tr>
+        </Tbody>
       </Table>
 
       <References
