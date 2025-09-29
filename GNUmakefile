@@ -177,10 +177,3 @@ goreleaser-snapshot: ## Build a snapshot release with goreleaser
 goreleaser-check: ## Check goreleaser configuration
 	goreleaser check
 
-demo:
-	mkdir -p apps/trust/public/pdfjs
-	curl -L https://github.com/mozilla/pdf.js/releases/download/v5.4.149/pdfjs-5.4.149-dist.zip -o apps/trust/public/pdfjs/pdfjs.zip
-	unzip -o apps/trust/public/pdfjs/pdfjs.zip -d apps/trust/public/pdfjs
-	sed -i 's|const ex = new Error("file origin does not match viewer'\''s");|return;|' apps/trust/public/pdfjs/web/viewer.mjs
-	rm apps/trust/public/pdfjs/pdfjs.zip
-

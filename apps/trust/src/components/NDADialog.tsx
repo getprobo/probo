@@ -54,11 +54,11 @@ export function NDADialog({
   };
 
   return (
-    <div className="fixed inset-0 bg-level-2 z-100 flex flex-col">
+    <div className="fixed inset-0 bg-level-2 z-100 flex flex-col lg:h-screen">
       <header className="flex items-center h-12 justify-between border-b border-border-solid px-4 flex-none">
         <Logo />
       </header>
-      <div className="grid lg:grid-cols-2 h-full">
+      <div className="grid lg:grid-cols-2 min-h-0 h-full">
         <div className="max-w-[440px] mx-auto py-20">
           <h1 className="text-2xl font-semibold mb-4">
             {__("Review & Sign NDA")}
@@ -66,9 +66,9 @@ export function NDADialog({
           <p className="text-txt-secondary">
             {sprintf(
               __(
-                "Access to %s Trust Center documents requires signing a Non-Disclosure Agreement (NDA). Please review the agreement below. Once signed, you’ll receive immediate access to the requested documents."
+                "Access to %s Trust Center documents requires signing a Non-Disclosure Agreement (NDA). Please review the agreement below. Once signed, you’ll receive immediate access to the requested documents.",
               ),
-              name
+              name,
             )}
           </p>
           {isMobile && url && (
@@ -89,20 +89,22 @@ export function NDADialog({
           </Button>
           <p className="text-xs text-txt-secondary">
             {__(
-              "By clicking Review & Sign, you agree to the terms of this NDA. If you have questions about the NDA, please contact security@probo.com."
+              "By clicking Review & Sign, you agree to the terms of this NDA. If you have questions about the NDA, please contact security@probo.com.",
             )}
           </p>
           <div
             className={clsx(
               "flex gap-1 text-sm font-medium text-txt-tertiary items-center w-max mx-auto",
-              isMobile ? "mt-15" : "mt-30"
+              isMobile ? "mt-15" : "mt-30",
             )}
           >
             Powered by <Logo withPicto className="h-6" />
           </div>
         </div>
         {isDesktop && (
-          <div className="bg-subtle">{url && <PDFPreview src={url} />}</div>
+          <div className="bg-subtle h-full border-l border-border-solid min-h-0">
+            {url && <PDFPreview src={url} name={fileName ?? ""} />}
+          </div>
         )}
       </div>
     </div>
