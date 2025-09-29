@@ -12,8 +12,6 @@ import {
   IconMedal,
   Spinner,
   Table,
-  Td,
-  Tr,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useIsAuthenticated } from "/hooks/useIsAuthenticated";
@@ -67,37 +65,37 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
     });
   };
   return (
-    <Tr className="text-sm *:border-border-solid *:border-b-1">
-      <Td>
-        <div className="flex items-center gap-2">
-          <IconMedal size={16} />
-          {audit.framework.name}
-        </div>
-      </Td>
-      <Td className="text-end">
-        {audit.report ? (
-          isAuthenticated ? (
-            <Button
-              className="ml-auto"
-              variant="secondary"
-              disabled={downloading}
-              icon={downloading ? Spinner : IconArrowInbox}
-              onClick={handleDownload}
-            >
-              {__("Download")}
-            </Button>
-          ) : (
-            <RequestAccessDialog>
-              <Button className="ml-auto" variant="secondary" icon={IconLock}>
-                {__("Request access")}
-              </Button>
-            </RequestAccessDialog>
-          )
+    <div className="text-sm border-1 border-border-solid -mt-[1px] flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
+      <div className="flex items-center gap-2">
+        <IconMedal size={16} className="flex-none" />
+        {audit.framework.name}
+      </div>
+      {audit.report ? (
+        isAuthenticated ? (
+          <Button
+            className="w-full md:w-max"
+            variant="secondary"
+            disabled={downloading}
+            icon={downloading ? Spinner : IconArrowInbox}
+            onClick={handleDownload}
+          >
+            {__("Download")}
+          </Button>
         ) : (
-          <span className=" text-txt-secondary">{__("No report")}</span>
-        )}
-      </Td>
-    </Tr>
+          <RequestAccessDialog>
+            <Button
+              className="w-full md:w-max"
+              variant="secondary"
+              icon={IconLock}
+            >
+              {__("Request access")}
+            </Button>
+          </RequestAccessDialog>
+        )
+      ) : (
+        <span className=" text-txt-secondary">{__("No report")}</span>
+      )}
+    </div>
   );
 }
 
@@ -105,11 +103,11 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
   const audit = useFragment(auditRowFragment, props.audit);
   return (
     <AuditDialog audit={props.audit}>
-      <button className="block cursor-pointer">
+      <button className="block cursor-pointer aspect-square">
         <FrameworkLogo
           alt={audit.framework.name}
           name={audit.framework.name}
-          className="size-18 block"
+          className="size-full"
         />
       </button>
     </AuditDialog>

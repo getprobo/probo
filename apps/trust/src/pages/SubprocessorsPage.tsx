@@ -2,9 +2,9 @@ import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import { trustVendorsQuery } from "/queries/TrustGraph";
 import { sprintf } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
-import { Table } from "@probo/ui";
 import type { TrustGraphVendorsQuery } from "/queries/__generated__/TrustGraphVendorsQuery.graphql";
 import { VendorRow } from "/components/VendorRow";
+import { Rows } from "/components/Rows.tsx";
 
 type Props = {
   queryRef: PreloadedQuery<TrustGraphVendorsQuery>;
@@ -25,11 +25,11 @@ export function SubprocessorsPage({ queryRef }: Props) {
           data.trustCenterBySlug?.organization.name ?? "",
         )}
       </p>
-      <Table>
+      <Rows>
         {vendors.map((vendor) => (
           <VendorRow key={vendor.id} vendor={vendor} />
         ))}
-      </Table>
+      </Rows>
     </div>
   );
 }

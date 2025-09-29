@@ -4,9 +4,10 @@ import type { TrustGraphDocumentsQuery } from "/queries/__generated__/TrustGraph
 import { groupBy, objectEntries } from "@probo/helpers";
 import { documentTypeLabel } from "/helpers/documents";
 import { useTranslate } from "@probo/i18n";
-import { Table, Tbody, Th, Thead, Tr } from "@probo/ui";
 import { Fragment } from "react";
 import { DocumentRow } from "/components/DocumentRow";
+import { Rows } from "/components/Rows.tsx";
+import { RowHeader } from "/components/RowHeader.tsx";
 
 type Props = {
   queryRef: PreloadedQuery<TrustGraphDocumentsQuery>;
@@ -26,22 +27,16 @@ export function DocumentsPage({ queryRef }: Props) {
       <p className="text-sm text-txt-secondary mb-4">
         {__("Security and compliance documentation:")}
       </p>
-      <Table className="mb-8">
+      <Rows className="mb-8">
         {objectEntries(documentsPerType).map(([label, documents]) => (
           <Fragment key={label}>
-            <Thead>
-              <Tr className="bg-subtle">
-                <Th colSpan={2}>{label}</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {documents.map((document) => (
-                <DocumentRow key={document.id} document={document} />
-              ))}
-            </Tbody>
+            <RowHeader>{label}</RowHeader>
+            {documents.map((document) => (
+              <DocumentRow key={document.id} document={document} />
+            ))}
           </Fragment>
         ))}
-      </Table>
+      </Rows>
     </div>
   );
 }

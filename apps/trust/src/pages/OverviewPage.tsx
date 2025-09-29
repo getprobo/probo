@@ -5,21 +5,14 @@ import { Link, useOutletContext } from "react-router";
 import { groupBy, objectEntries, sprintf } from "@probo/helpers";
 import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
 import { useTranslate } from "@probo/i18n";
-import {
-  Card,
-  IconChevronRight,
-  Table,
-  Tbody,
-  Td,
-  Th,
-  Thead,
-  Tr,
-} from "@probo/ui";
+import { Card, IconChevronRight } from "@probo/ui";
 import { AuditRow } from "/components/AuditRow";
 import { documentTypeLabel } from "/helpers/documents";
 import { Fragment } from "react";
 import { DocumentRow } from "/components/DocumentRow";
 import { VendorRow } from "/components/VendorRow";
+import { RowHeader } from "/components/RowHeader.tsx";
+import { Rows } from "/components/Rows.tsx";
 
 const overviewFragment = graphql`
   fragment OverviewFragment on TrustCenter {
@@ -70,45 +63,27 @@ export function OverviewPage() {
       <p className="text-sm text-txt-secondary mb-4">
         {__("Security and compliance documentation:")}
       </p>
-      <Table className="mb-8">
-        <Thead>
-          <Tr className="bg-subtle">
-            <Th colSpan={2}>{__("Certifications")}</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {trustCenter.audits.edges.map((edge) => (
-            <AuditRow key={edge.node.id} audit={edge.node} />
-          ))}
-        </Tbody>
+      <Rows className="mb-8">
+        <RowHeader>{__("Certifications")}</RowHeader>
+        {trustCenter.audits.edges.map((edge) => (
+          <AuditRow key={edge.node.id} audit={edge.node} />
+        ))}
         {objectEntries(documentsPerType).map(([label, documents]) => (
           <Fragment key={label}>
-            <Thead>
-              <Tr className="bg-subtle">
-                <Th colSpan={2}>{label}</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {documents.map((document) => (
-                <DocumentRow key={document.id} document={document} />
-              ))}
-            </Tbody>
+            <RowHeader>{label}</RowHeader>
+            {documents.map((document) => (
+              <DocumentRow key={document.id} document={document} />
+            ))}
           </Fragment>
         ))}
-        <Tbody>
-          <Tr>
-            <Td colSpan={2}>
-              <Link
-                to={`/trust/${trustCenter.slug}/documents`}
-                className="text-sm font-medium flex gap-2 items-center h-8"
-              >
-                {__("See all documents")}
-                <IconChevronRight size={16} />
-              </Link>
-            </Td>
-          </Tr>
-        </Tbody>
-      </Table>
+        <Link
+          to={`/trust/${trustCenter.slug}/documents`}
+          className="text-sm font-medium flex gap-2 items-center"
+        >
+          {__("See all documents")}
+          <IconChevronRight size={16} />
+        </Link>
+      </Rows>
 
       <h2 className="font-medium mb-1">{__("Subprocessors")}</h2>
       <p className="text-sm text-txt-secondary mb-4">
@@ -117,24 +92,18 @@ export function OverviewPage() {
           trustCenter.organization.name,
         )}
       </p>
-      <Table className="mb-8">
-        <Tbody>
-          {fragment.vendors.edges.map((edge) => (
-            <VendorRow key={edge.node.id} vendor={edge.node} />
-          ))}
-          <Tr>
-            <Td colSpan={3}>
-              <Link
-                to={`/trust/${trustCenter.slug}/subprocessors`}
-                className="text-sm font-medium flex gap-2 items-center h-8"
-              >
-                {__("See all subprocessors")}
-                <IconChevronRight size={16} />
-              </Link>
-            </Td>
-          </Tr>
-        </Tbody>
-      </Table>
+      <Rows className="mb-8 *:py-5">
+        {fragment.vendors.edges.map((edge) => (
+          <VendorRow key={edge.node.id} vendor={edge.node} />
+        ))}
+        <Link
+          to={`/trust/${trustCenter.slug}/subprocessors`}
+          className="text-sm font-medium flex gap-2 items-center"
+        >
+          {__("See all subprocessors")}
+          <IconChevronRight size={16} />
+        </Link>
+      </Rows>
 
       <References
         references={fragment.references.edges.map((edge) => edge.node)}

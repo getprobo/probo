@@ -92,14 +92,15 @@ export function NDADialog({
               "By clicking Review & Sign, you agree to the terms of this NDA. If you have questions about the NDA, please contact security@probo.com.",
             )}
           </p>
-          <div
+          <a
+            href="https://www.getprobo.com/"
             className={clsx(
               "flex gap-1 text-sm font-medium text-txt-tertiary items-center w-max mx-auto",
               isMobile ? "mt-15" : "mt-30",
             )}
           >
             Powered by <Logo withPicto className="h-6" />
-          </div>
+          </a>
         </div>
         {isDesktop && (
           <div className="bg-subtle h-full border-l border-border-solid min-h-0">

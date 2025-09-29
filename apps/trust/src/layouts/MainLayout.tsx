@@ -18,7 +18,7 @@ export function MainLayout(props: Props) {
   const { __ } = useTranslate();
   const trustCenter = usePreloadedQuery(
     trustGraphQuery,
-    props.queryRef
+    props.queryRef,
   ).trustCenterBySlug;
 
   if (!trustCenter) {
@@ -28,7 +28,7 @@ export function MainLayout(props: Props) {
   const baseTabUrl = `/trust/${trustCenter.slug}`;
   const [showNDADialog] = useState(
     trustCenter.isUserAuthenticated &&
-      !trustCenter.hasAcceptedNonDisclosureAgreement
+      !trustCenter.hasAcceptedNonDisclosureAgreement,
   );
 
   return (
@@ -58,9 +58,12 @@ export function MainLayout(props: Props) {
           </main>
         </div>
 
-        <div className="flex gap-2 text-sm font-medium text-txt-tertiary items-center w-max mx-auto my-10">
+        <a
+          href="https://www.getprobo.com/"
+          className="flex gap-2 text-sm font-medium text-txt-tertiary items-center w-max mx-auto my-10"
+        >
           {__("Powered by")} <Logo withPicto className="h-6" />
-        </div>
+        </a>
       </TrustCenterProvider>
     </AuthProvider>
   );

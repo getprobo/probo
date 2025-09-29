@@ -1,7 +1,7 @@
 import { graphql } from "relay-runtime";
 import type { VendorRowFragment$key } from "./__generated__/VendorRowFragment.graphql";
 import { useFragment } from "react-relay";
-import { IconPin, Td, Tr } from "@probo/ui";
+import { IconPin } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { faviconUrl, getCountryName } from "@probo/helpers";
 
@@ -22,30 +22,32 @@ export function VendorRow(props: { vendor: VendorRowFragment$key }) {
   const { __ } = useTranslate();
 
   return (
-    <Tr className="text-sm *:border-border-solid *:border-b-1">
-      <Td className="">
-        <div className="flex items-center gap-3 py-1">
-          {logo ? <img src={logo} className="size-6" alt="" /> : null}
-          {vendor.name}
-        </div>
-      </Td>
-      <Td className=" text-txt-info">
+    <div className="flex text-sm leading-tight gap-3 md:items-center">
+      {logo ? (
+        <img src={logo} className="size-8 md:size-6 flex-none" alt="" />
+      ) : (
+        <div className="size-8 md:size-6 flex-none" />
+      )}
+      <div className="flex flex-col md:flex-row flex-1 gap-0.5">
+        <div>{vendor.name}</div>
         {vendor.privacyPolicyUrl && (
-          <a href={vendor.privacyPolicyUrl} target="_blank">
+          <a
+            href={vendor.privacyPolicyUrl}
+            target="_blank"
+            className="text-txt-info md:mx-auto"
+          >
             {vendor.privacyPolicyUrl.split("//").at(-1)}
           </a>
         )}
-      </Td>
-      <Td className="text-end">
-        <div className="flex gap-2 text-txt-secondary items-center text-sm justify-end">
-          <IconPin size={16} />
+        <div className="flex gap-1 text-txt-secondary items-center">
+          <IconPin size={16} className="flex-none" />
           <span>
             {vendor.countries
               .map((country) => getCountryName(__, country))
               .join(", ")}
           </span>
         </div>
-      </Td>
-    </Tr>
+      </div>
+    </div>
   );
 }

@@ -72,7 +72,18 @@ export function OrganizationSidebar({
             <IconMedal size={16} />
             {__("Certifications")}
           </h2>
-          <div className="grid grid-cols-4 gap-4 ">
+          <div
+            className="grid grid-cols-4 gap-4"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, 75px",
+            }}
+          >
+            {trustCenter.audits.edges.map((audit) => (
+              <AuditRowAvatar key={audit.node.id} audit={audit.node} />
+            ))}
+            {trustCenter.audits.edges.map((audit) => (
+              <AuditRowAvatar key={audit.node.id} audit={audit.node} />
+            ))}
             {trustCenter.audits.edges.map((audit) => (
               <AuditRowAvatar key={audit.node.id} audit={audit.node} />
             ))}
