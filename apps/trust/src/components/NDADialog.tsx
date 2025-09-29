@@ -74,8 +74,10 @@ export function NDADialog({
           {isMobile && url && (
             <Card className="flex justify-between py-3 px-4 text-sm items-center my-6">
               {fileName}
-              <Button variant="secondary" href={url}>
-                {__("View document")}
+              <Button variant="secondary" asChild>
+                <a target="_blank" rel="noopener noreferrer" href={url}>
+                  {__("View document")}
+                </a>
               </Button>
             </Card>
           )}

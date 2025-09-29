@@ -65,7 +65,7 @@ export function AccessPage() {
       .catch((error) => {
         setError(error.message);
       });
-  }, [isValidRequest]);
+  }, [isValidRequest, slug, token, __, navigate]);
 
   if (error) {
     return <PageError error={error} />;

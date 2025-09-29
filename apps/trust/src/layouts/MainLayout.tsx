@@ -1,12 +1,11 @@
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
 import type { TrustGraphQuery } from "/queries/__generated__/TrustGraphQuery.graphql.ts";
 import { trustGraphQuery } from "/queries/TrustGraph.ts";
-import { Tabs, TabLink, Logo } from "@probo/ui";
+import { Logo, TabLink, Tabs } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { OrganizationSidebar } from "/components/OrganizationSidebar";
 import { Outlet } from "react-router";
 import { NDADialog } from "/components/NDADialog";
-import { useState } from "react";
 import { AuthProvider } from "/providers/AuthProvider";
 import { TrustCenterProvider } from "/providers/TrustCenterProvider";
 
@@ -26,11 +25,9 @@ export function MainLayout(props: Props) {
   }
 
   const baseTabUrl = `/trust/${trustCenter.slug}`;
-  const [showNDADialog] = useState(
+  const showNDADialog =
     trustCenter.isUserAuthenticated &&
-      !trustCenter.hasAcceptedNonDisclosureAgreement,
-  );
-
+    !trustCenter.hasAcceptedNonDisclosureAgreement;
   return (
     <AuthProvider isAuthenticated={trustCenter.isUserAuthenticated}>
       <TrustCenterProvider trustCenter={trustCenter}>

@@ -46,7 +46,11 @@ export function OrganizationSidebar({
         </h2>
         {trustCenter.organization.websiteUrl && (
           <BusinessInfo label={__("Website")}>
-            <a href={trustCenter.organization.websiteUrl} target="_blank">
+            <a
+              href={trustCenter.organization.websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <span className="text-txt-info hover:underline ">
                 {domain(trustCenter.organization.websiteUrl)}
               </span>

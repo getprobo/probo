@@ -57,7 +57,7 @@ export function RequestAccessDialog({ children }: Props) {
         });
         dialogRef.current?.close();
       },
-    }
+    },
   );
 
   const onSubmit = handleSubmit((data) => {
@@ -85,9 +85,9 @@ export function RequestAccessDialog({ children }: Props) {
           <p className="text-txt-secondary mb-4">
             {sprintf(
               __(
-                "Request access to %s's Trust Center. Your request will be reviewed and you will receive an email notification with access instructions if approved."
+                "Request access to %s's Trust Center. Your request will be reviewed and you will receive an email notification with access instructions if approved.",
               ),
-              name
+              trustCenter.organization.name,
             )}
           </p>
           <div className="space-y-4">

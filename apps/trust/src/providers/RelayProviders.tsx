@@ -117,13 +117,7 @@ const fetchRelay: FetchFunction = async (
       throw new UnAuthenticatedError();
     }
 
-    throw new Error(
-      `Error fetching GraphQL query '${
-        request.name
-      }' with variables '${JSON.stringify(variables)}': ${JSON.stringify(
-        json.errors,
-      )}`,
-    );
+    throw new Error(`Error fetching GraphQL query '${request.name}'`);
   }
 
   return json;
@@ -139,13 +133,6 @@ export const relayEnvironment = new Environment({
   network: Network.create(fetchRelay),
   store,
 });
-
-export const clearRelayStore = () => {
-  const source = relayEnvironment.getStore().getSource();
-  if (source instanceof Map) {
-    source.clear();
-  }
-};
 
 /**
  * Provider for relay with the probo environment

@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { useId } from "react";
 
 type Props = {
     className?: string;
@@ -6,6 +7,7 @@ type Props = {
 };
 
 export function Logo({ className, withPicto }: Props) {
+    const id = useId();
     if (withPicto) {
         return (
             <svg
@@ -14,7 +16,7 @@ export function Logo({ className, withPicto }: Props) {
                 className={clsx(className, "aspect-[88/24]")}
                 viewBox="0 0 90 24"
             >
-                <g clipPath="url(#a)">
+                <g clipPath={`url(#${id}-a)`}>
                     <rect
                         width="24"
                         height="24"
@@ -28,7 +30,7 @@ export function Logo({ className, withPicto }: Props) {
                         d="M20.57 6.17c2.96 4.47-6.43 13.97-20.32 5.66"
                     />
                     <path
-                        stroke="url(#b)"
+                        stroke={`url(#${id}-b)`}
                         strokeWidth="3.53"
                         d="M20.57 6.17c2.96 4.47-6.43 13.97-20.32 5.66"
                     />
@@ -43,7 +45,7 @@ export function Logo({ className, withPicto }: Props) {
                 />
                 <defs>
                     <linearGradient
-                        id="b"
+                        id={`${id}-b`}
                         x1="18.77"
                         x2="1.2"
                         y1="13.56"
@@ -53,7 +55,7 @@ export function Logo({ className, withPicto }: Props) {
                         <stop stopColor="#101E1C" stopOpacity="0" />
                         <stop offset="1" stopColor="var(--color-level-0)" />
                     </linearGradient>
-                    <clipPath id="a">
+                    <clipPath id={`${id}-a`}>
                         <rect
                             width="24"
                             height="24"

@@ -13,7 +13,6 @@ type Props = {
 export function SubprocessorsPage({ queryRef }: Props) {
   const { __ } = useTranslate();
   const data = usePreloadedQuery(trustVendorsQuery, queryRef);
-  console.log(data);
   const vendors =
     data.trustCenterBySlug?.vendors.edges.map((edge) => edge.node) ?? [];
   return (

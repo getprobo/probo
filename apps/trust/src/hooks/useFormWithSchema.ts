@@ -1,10 +1,10 @@
 import { useForm } from "react-hook-form";
-import type { z, ZodType } from "zod";
+import type { z, ZodTypeAny } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-export function useFormWithSchema<T extends ZodType<any, any, any>>(
+export function useFormWithSchema<T extends ZodTypeAny>(
   schema: T,
-  options: Parameters<typeof useForm<z.infer<T>>>[0]
+  options: Parameters<typeof useForm<z.infer<T>>>[0],
 ) {
   return useForm<z.infer<T>>({
     ...options,
