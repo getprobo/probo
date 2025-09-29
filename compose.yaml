@@ -103,6 +103,26 @@ services:
       - "--disable-background-timer-throttling"
       - "--disable-extensions"
 
+  pebble:
+    image: "letsencrypt/pebble:latest"
+    ports:
+      - "14000:14000" # ACME server
+      - "15000:15000" # Management interface
+    environment:
+      PEBBLE_VA_NOSLEEP: "1" # Don't sleep during validation for faster testing
+      PEBBLE_WFE_NONCEREJECT: "0" # Don't reject reused nonces
+    command: pebble -config /test/config/pebble-config.json -dnsserver 127.0.0.1:8053
+    volumes:
+      - "./compose/pebble:/test/config:ro"
+
+  pebble-challtestsrv:
+    image: "letsencrypt/pebble-challtestsrv:latest"
+    ports:
+      - "8055:8055" # HTTP-01 challenge test server
+      - "8053:8053" # DNS server
+      - "8056:8056" # Management API
+    command: pebble-challtestsrv -dns01 ":8053" -http01 ":8055" -management ":8056"
+
 volumes:
   postgres-data:
   minio-data:
