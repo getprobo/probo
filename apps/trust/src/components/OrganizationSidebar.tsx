@@ -1,12 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import {
-  Button,
-  Card,
-  IconBlock,
-  IconLock,
-  IconMail,
-  IconMedal,
-} from "@probo/ui";
+import { Button, Card, IconBlock, IconLock, IconMedal } from "@probo/ui";
 import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
 import type { PropsWithChildren } from "react";
 import { domain } from "@probo/helpers";
@@ -96,9 +89,9 @@ export function OrganizationSidebar({
             </Button>
           </RequestAccessDialog>
         )}
-        <Button variant="secondary" icon={IconMail} className="w-full h-10">
+        {/* <Button variant="secondary" icon={IconMail} className="w-full h-10">
           {__("Subscribe to updates")}
-        </Button>
+        </Button>*/}
       </div>
     </Card>
   );
