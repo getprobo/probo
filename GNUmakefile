@@ -176,3 +176,11 @@ goreleaser-snapshot: ## Build a snapshot release with goreleaser
 .PHONY: goreleaser-check
 goreleaser-check: ## Check goreleaser configuration
 	goreleaser check
+
+apps/trust/public/pdfjs:
+	mkdir -p apps/trust/public/pdfjs
+	curl -L https://github.com/mozilla/pdf.js/releases/download/v5.4.149/pdfjs-5.4.149-dist.zip -o apps/trust/public/pdfjs/pdfjs.zip
+	unzip -o apps/trust/public/pdfjs/pdfjs.zip "web/*" -d apps/trust/public/pdfjs
+	mv apps/trust/public/pdfjs/web/* apps/trust/public/pdfjs/
+	rmdir apps/trust/public/pdfjs/web
+	rm apps/trust/public/pdfjs/pdfjs.zip
