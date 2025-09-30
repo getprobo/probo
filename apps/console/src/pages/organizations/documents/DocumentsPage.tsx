@@ -26,8 +26,10 @@ import {
   useFragment,
   usePaginationFragment,
   usePreloadedQuery,
+  useLazyLoadQuery,
   type PreloadedQuery,
 } from "react-relay";
+import { useRef } from "react";
 import { graphql } from "relay-runtime";
 import type { DocumentGraphListQuery } from "/hooks/graph/__generated__/DocumentGraphListQuery.graphql";
 import {
@@ -45,6 +47,8 @@ import type { DocumentsPageRowFragment$key } from "./__generated__/DocumentsPage
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { PublishDocumentsDialog } from "./dialogs/PublishDocumentsDialog.tsx";
 import { SignatureDocumentsDialog } from "./dialogs/SignatureDocumentsDialog.tsx";
+import { BulkExportDialog, type BulkExportDialogRef } from "/components/documents/BulkExportDialog";
+import type { DocumentsPageUserEmailQuery } from "./__generated__/DocumentsPageUserEmailQuery.graphql";
 
 const documentsFragment = graphql`
   fragment DocumentsPageListFragment on Organization
@@ -81,6 +85,16 @@ type Props = {
   queryRef: PreloadedQuery<DocumentGraphListQuery>;
 };
 
+const UserEmailQuery = graphql`
+  query DocumentsPageUserEmailQuery {
+    viewer {
+      user {
+        email
+      }
+    }
+  }
+`;
+
 export default function DocumentsPage(props: Props) {
   const { __ } = useTranslate();
 
@@ -88,6 +102,9 @@ export default function DocumentsPage(props: Props) {
     documentsQuery,
     props.queryRef
   ).organization;
+
+  const userEmailData = useLazyLoadQuery<DocumentsPageUserEmailQuery>(UserEmailQuery, {});
+  const defaultEmail = userEmailData.viewer.user.email;
   const pagination = usePaginationFragment(
     documentsFragment,
     organization as DocumentsPageListFragment$key
@@ -99,9 +116,10 @@ export default function DocumentsPage(props: Props) {
   const connectionId = pagination.data.documents.__id;
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
   const [bulkDeleteDocuments] = useBulkDeleteDocumentsMutation();
-  const [bulkExportDocuments] = useBulkExportDocumentsMutation();
+  const [bulkExportDocuments, isBulkExporting] = useBulkExportDocumentsMutation();
   const { list: selection, toggle, clear, reset } = useList<string>([]);
   const confirm = useConfirm();
+  const bulkExportDialogRef = useRef<BulkExportDialogRef>(null);
 
   usePageTitle(__("Documents"));
 
@@ -136,11 +154,16 @@ export default function DocumentsPage(props: Props) {
     );
   };
 
-  const handleBulkExport = () => {
+  const handleBulkExport = (options: { withWatermark: boolean; withSignatures: boolean; watermarkEmail?: string }) => {
+    const input = {
+      documentIds: selection,
+      withWatermark: options.withWatermark,
+      withSignatures: options.withSignatures,
+      ...(options.withWatermark && options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
+    };
+
     bulkExportDocuments({
-      variables: {
-        input: { documentIds: selection },
-      },
+      variables: { input },
     }).then(() => {
       clear();
     });
@@ -216,14 +239,21 @@ export default function DocumentsPage(props: Props) {
                         {__("Request signature")}
                       </Button>
                     </SignatureDocumentsDialog>
-                    <Button
-                      variant="secondary"
-                      icon={IconArrowDown}
-                      onClick={handleBulkExport}
-                      className="py-0.5 px-2 text-xs h-6 min-h-6"
+                    <BulkExportDialog
+                      ref={bulkExportDialogRef}
+                      onExport={handleBulkExport}
+                      isLoading={isBulkExporting}
+                      defaultEmail={defaultEmail}
+                      selectedCount={selection.length}
                     >
-                      {__("Export")}
-                    </Button>
+                      <Button
+                        variant="secondary"
+                        icon={IconArrowDown}
+                        className="py-0.5 px-2 text-xs h-6 min-h-6"
+                      >
+                        {__("Export")}
+                      </Button>
+                    </BulkExportDialog>
                     <Button
                       variant="danger"
                       icon={IconTrashCan}

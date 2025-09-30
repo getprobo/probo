@@ -3303,6 +3303,9 @@ input UpdateDocumentInput {
 
 input ExportDocumentVersionPDFInput {
   documentVersionId: ID!
+  withWatermark: Boolean!
+  watermarkEmail: String
+  withSignatures: Boolean!
 }
 
 input DeleteDocumentInput {
@@ -4002,6 +4005,9 @@ input BulkDeleteDocumentsInput {
 
 input BulkExportDocumentsInput {
   documentIds: [ID!]!
+  withWatermark: Boolean!
+  watermarkEmail: String
+  withSignatures: Boolean!
 }
 
 type BulkDeleteDocumentsPayload {

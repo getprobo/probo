@@ -11713,6 +11713,9 @@ input UpdateDocumentInput {
 
 input ExportDocumentVersionPDFInput {
   documentVersionId: ID!
+  withWatermark: Boolean!
+  watermarkEmail: String
+  withSignatures: Boolean!
 }
 
 input DeleteDocumentInput {
@@ -12412,6 +12415,9 @@ input BulkDeleteDocumentsInput {
 
 input BulkExportDocumentsInput {
   documentIds: [ID!]!
+  withWatermark: Boolean!
+  watermarkEmail: String
+  withSignatures: Boolean!
 }
 
 type BulkDeleteDocumentsPayload {
@@ -63447,7 +63453,7 @@ func (ec *executionContext) unmarshalInputBulkExportDocumentsInput(ctx context.C
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"documentIds"}
+	fieldsInOrder := [...]string{"documentIds", "withWatermark", "watermarkEmail", "withSignatures"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -63461,6 +63467,27 @@ func (ec *executionContext) unmarshalInputBulkExportDocumentsInput(ctx context.C
 				return it, err
 			}
 			it.DocumentIds = data
+		case "withWatermark":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("withWatermark"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WithWatermark = data
+		case "watermarkEmail":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("watermarkEmail"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WatermarkEmail = data
+		case "withSignatures":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("withSignatures"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WithSignatures = data
 		}
 	}
 
@@ -66867,7 +66894,7 @@ func (ec *executionContext) unmarshalInputExportDocumentVersionPDFInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"documentVersionId"}
+	fieldsInOrder := [...]string{"documentVersionId", "withWatermark", "watermarkEmail", "withSignatures"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -66881,6 +66908,27 @@ func (ec *executionContext) unmarshalInputExportDocumentVersionPDFInput(ctx cont
 				return it, err
 			}
 			it.DocumentVersionID = data
+		case "withWatermark":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("withWatermark"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WithWatermark = data
+		case "watermarkEmail":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("watermarkEmail"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WatermarkEmail = data
+		case "withSignatures":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("withSignatures"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WithSignatures = data
 		}
 	}
 

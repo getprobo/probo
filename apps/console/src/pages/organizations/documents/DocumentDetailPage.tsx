@@ -4,6 +4,7 @@ import {
   loadQuery,
   useFragment,
   usePreloadedQuery,
+  useLazyLoadQuery,
 } from "react-relay";
 import type { DocumentGraphNodeQuery } from "/hooks/graph/__generated__/DocumentGraphNodeQuery.graphql";
 import {
@@ -18,6 +19,7 @@ import type {
 } from "./__generated__/DocumentDetailPageDocumentFragment.graphql";
 import type { DocumentDetailPageExportPDFMutation } from "./__generated__/DocumentDetailPageExportPDFMutation.graphql";
 import type { DocumentDetailPageUpdateMutation } from "./__generated__/DocumentDetailPageUpdateMutation.graphql";
+import type { DocumentDetailPageUserEmailQuery } from "./__generated__/DocumentDetailPageUserEmailQuery.graphql";
 import { useTranslate } from "@probo/i18n";
 import {
   ActionDropdown,
@@ -54,6 +56,7 @@ import {
   useParams,
 } from "react-router";
 import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
+import { PdfDownloadDialog, type PdfDownloadDialogRef } from "/components/documents/PdfDownloadDialog";
 import { useRef, useState } from "react";
 import type { NodeOf } from "/types.ts";
 import clsx from "clsx";
@@ -185,6 +188,16 @@ const documentUpdateSchema = z.object({
   documentType: z.enum(documentTypes),
 });
 
+const UserEmailQuery = graphql`
+  query DocumentDetailPageUserEmailQuery {
+    viewer {
+      user {
+        email
+      }
+    }
+  }
+`;
+
 export default function DocumentDetailPage(props: Props) {
   const { versionId } = useParams<{ versionId?: string }>();
   const node = usePreloadedQuery(documentNodeQuery, props.queryRef).node;
@@ -223,6 +236,9 @@ export default function DocumentDetailPage(props: Props) {
         errorMessage: __("Failed to generate PDF. Please try again."),
       }
     );
+
+  const userEmailData = useLazyLoadQuery<DocumentDetailPageUserEmailQuery>(UserEmailQuery, {});
+  const defaultEmail = userEmailData.viewer.user.email;
   const [updateDocument, isUpdatingDocument] = useMutationWithToasts<DocumentDetailPageUpdateMutation>(
     updateDocumentMutation,
     {
@@ -360,11 +376,16 @@ export default function DocumentDetailPage(props: Props) {
     );
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = (options: { withWatermark: boolean; withSignatures: boolean; watermarkEmail?: string }) => {
+    const input = {
+      documentVersionId: currentVersion.id,
+      withWatermark: options.withWatermark,
+      withSignatures: options.withSignatures,
+      ...(options.withWatermark && options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
+    };
+
     exportDocumentVersionPDF({
-      variables: {
-        input: { documentVersionId: currentVersion.id },
-      },
+      variables: { input },
       onCompleted: (data) => {
         if (data.exportDocumentVersionPDF?.data) {
           const link = window.document.createElement("a");
@@ -379,6 +400,7 @@ export default function DocumentDetailPage(props: Props) {
   };
 
   const updateDialogRef = useRef<{ open: () => void }>(null);
+  const pdfDownloadDialogRef = useRef<PdfDownloadDialogRef>(null);
   const controlsCount = document.controlsInfo.totalCount;
   const urlPrefix = versionId
     ? `/organizations/${organizationId}/documents/${document.id}/versions/${versionId}`
@@ -391,6 +413,14 @@ export default function DocumentDetailPage(props: Props) {
         document={document}
         connectionId={versionConnectionId}
       />
+      <PdfDownloadDialog
+        ref={pdfDownloadDialogRef}
+        onDownload={handleDownloadPdf}
+        isLoading={isExporting}
+        defaultEmail={defaultEmail}
+      >
+        {null}
+      </PdfDownloadDialog>
       <div className="space-y-6">
         <div className="flex justify-between items-center mb-4">
           <Breadcrumb
@@ -451,7 +481,7 @@ export default function DocumentDetailPage(props: Props) {
                 </DropdownItem>
               )}
               <DropdownItem
-                onClick={handleDownloadPdf}
+                onClick={() => pdfDownloadDialogRef.current?.open()}
                 icon={IconArrowDown}
                 disabled={isExporting}
               >

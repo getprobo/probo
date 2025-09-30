@@ -94,7 +94,10 @@ type BulkDeleteDocumentsPayload struct {
 }
 
 type BulkExportDocumentsInput struct {
-	DocumentIds []gid.GID `json:"documentIds"`
+	DocumentIds    []gid.GID `json:"documentIds"`
+	WithWatermark  bool      `json:"withWatermark"`
+	WatermarkEmail *string   `json:"watermarkEmail,omitempty"`
+	WithSignatures bool      `json:"withSignatures"`
 }
 
 type BulkExportDocumentsPayload struct {
@@ -1053,6 +1056,9 @@ type EvidenceEdge struct {
 
 type ExportDocumentVersionPDFInput struct {
 	DocumentVersionID gid.GID `json:"documentVersionId"`
+	WithWatermark     bool    `json:"withWatermark"`
+	WatermarkEmail    *string `json:"watermarkEmail,omitempty"`
+	WithSignatures    bool    `json:"withSignatures"`
 }
 
 type ExportDocumentVersionPDFPayload struct {

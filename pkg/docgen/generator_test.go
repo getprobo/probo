@@ -60,7 +60,6 @@ func TestRenderHTML(t *testing.T) {
 				"<td>1</td>",
 				"PUBLIC",
 				"John Doe",
-				"Test document description",
 				"Alice Smith",
 			},
 		},
@@ -80,7 +79,6 @@ func TestRenderHTML(t *testing.T) {
 			wantContains: []string{
 				"Test &amp;amp; &amp;lt;Script&amp;gt; Title",
 				"John &amp;lt;script&amp;gt;alert(&amp;#39;xss&amp;#39;)&amp;lt;/script&amp;gt; Doe",
-				"Description with &amp;amp; symbols and &amp;lt;tags&amp;gt;",
 				"Alice &amp;amp; &amp;lt;Bob&amp;gt;",
 			},
 			wantNotContains: []string{

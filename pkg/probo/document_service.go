@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/mail"
 	"net/url"
 	"os"
 	"regexp"
@@ -20,6 +21,7 @@ import (
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/statelesstoken"
+	"github.com/getprobo/probo/pkg/watermarkpdf"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
@@ -833,9 +835,19 @@ func (s *DocumentService) RequestExport(
 	documentIDs []gid.GID,
 	recipientEmail string,
 	recipientName string,
+	options BulkExportOptions,
 ) (*coredata.ExportJob, error) {
 	var exportJobID gid.GID
 	exportJob := &coredata.ExportJob{}
+
+	if options.WithWatermark {
+		if options.WatermarkEmail == nil {
+			return nil, fmt.Errorf("watermark email is required when with watermark is true")
+		}
+		if _, err := mail.ParseAddress(*options.WatermarkEmail); err != nil {
+			return nil, fmt.Errorf("invalid email address")
+		}
+	}
 
 	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
 		for _, documentID := range documentIDs {
@@ -849,7 +861,10 @@ func (s *DocumentService) RequestExport(
 		exportJobID = gid.New(s.svc.scope.GetTenantID(), coredata.ExportJobEntityType)
 
 		args := coredata.DocumentExportArguments{
-			DocumentIDs: documentIDs,
+			DocumentIDs:    documentIDs,
+			WithWatermark:  options.WithWatermark,
+			WatermarkEmail: options.WatermarkEmail,
+			WithSignatures: options.WithSignatures,
 		}
 		argsJSON, err := json.Marshal(args)
 		if err != nil {
@@ -1159,16 +1174,29 @@ func (s *DocumentService) CancelSignatureRequest(
 	)
 }
 
+type ExportPDFOptions struct {
+	WithWatermark  bool
+	WatermarkEmail *string
+	WithSignatures bool
+}
+
+type BulkExportOptions struct {
+	WithWatermark  bool
+	WatermarkEmail *string
+	WithSignatures bool
+}
+
 func (s *DocumentService) ExportPDF(
 	ctx context.Context,
 	documentVersionID gid.GID,
+	options ExportPDFOptions,
 ) ([]byte, error) {
 	var data []byte
 
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) (err error) {
-			data, err = exportDocumentPDF(ctx, s.html2pdfConverter, conn, s.svc.scope, documentVersionID)
+			data, err = exportDocumentPDF(ctx, s.html2pdfConverter, conn, s.svc.scope, documentVersionID, options)
 			if err != nil {
 				return fmt.Errorf("cannot export document PDF: %w", err)
 			}
@@ -1206,7 +1234,18 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID 
 			defer tempFile.Close()
 			defer os.Remove(tempFile.Name())
 
-			err = s.Export(ctx, documentIDs, tempFile)
+			exportArgs, err := exportJob.GetDocumentExportArguments()
+			if err != nil {
+				return fmt.Errorf("cannot get export arguments: %w", err)
+			}
+
+			exportOptions := BulkExportOptions{
+				WithWatermark:  exportArgs.WithWatermark,
+				WatermarkEmail: exportArgs.WatermarkEmail,
+				WithSignatures: exportArgs.WithSignatures,
+			}
+
+			err = s.Export(ctx, documentIDs, tempFile, exportOptions)
 			if err != nil {
 				return fmt.Errorf("cannot export documents: %w", err)
 			}
@@ -1281,6 +1320,7 @@ func exportDocumentPDF(
 	conn pg.Conn,
 	scope coredata.Scoper,
 	documentVersionID gid.GID,
+	options ExportPDFOptions,
 ) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
@@ -1296,32 +1336,45 @@ func exportDocumentPDF(
 		return nil, fmt.Errorf("cannot load document: %w", err)
 	}
 
-	cursor := page.NewCursor(
-		100,
-		nil,
-		page.Head,
-		page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
-			Field:     coredata.DocumentVersionSignatureOrderFieldCreatedAt,
-			Direction: page.OrderDirectionAsc,
-		},
-	)
-
-	if err := signatures.LoadByDocumentVersionID(ctx, conn, scope, documentVersionID, cursor); err != nil {
-		return nil, fmt.Errorf("cannot load document version signatures: %w", err)
-	}
-
 	if err := owner.LoadByID(ctx, conn, scope, document.OwnerID); err != nil {
 		return nil, fmt.Errorf("cannot load document owner: %w", err)
 	}
 
-	// TODO: refactor this to use a single query
-	for _, sig := range signatures {
-		if _, ok := peopleMap[sig.SignedBy]; !ok {
-			people := &coredata.People{}
-			if err := people.LoadByID(ctx, conn, scope, sig.SignedBy); err != nil {
-				return nil, fmt.Errorf("cannot load people %q: %w", sig.SignedBy, err)
+	var signatureData []docgen.SignatureData
+	if options.WithSignatures {
+		cursor := page.NewCursor(
+			100,
+			nil,
+			page.Head,
+			page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
+				Field:     coredata.DocumentVersionSignatureOrderFieldCreatedAt,
+				Direction: page.OrderDirectionAsc,
+			},
+		)
+
+		if err := signatures.LoadByDocumentVersionID(ctx, conn, scope, documentVersionID, cursor); err != nil {
+			return nil, fmt.Errorf("cannot load document version signatures: %w", err)
+		}
+
+		// TODO: refactor this to use a single query
+		for _, sig := range signatures {
+			if _, ok := peopleMap[sig.SignedBy]; !ok {
+				people := &coredata.People{}
+				if err := people.LoadByID(ctx, conn, scope, sig.SignedBy); err != nil {
+					return nil, fmt.Errorf("cannot load people %q: %w", sig.SignedBy, err)
+				}
+				peopleMap[sig.SignedBy] = people
 			}
-			peopleMap[sig.SignedBy] = people
+		}
+
+		signatureData = make([]docgen.SignatureData, len(signatures))
+		for i, sig := range signatures {
+			signatureData[i] = docgen.SignatureData{
+				SignedBy:    peopleMap[sig.SignedBy].FullName,
+				SignedAt:    sig.SignedAt,
+				State:       sig.State,
+				RequestedAt: sig.RequestedAt,
+			}
 		}
 	}
 
@@ -1340,16 +1393,7 @@ func exportDocumentPDF(
 		Classification: classification,
 		Approver:       owner.FullName,
 		PublishedAt:    version.PublishedAt,
-		Signatures:     make([]docgen.SignatureData, len(signatures)),
-	}
-
-	for i, sig := range signatures {
-		docData.Signatures[i] = docgen.SignatureData{
-			SignedBy:    peopleMap[sig.SignedBy].FullName,
-			SignedAt:    sig.SignedAt,
-			State:       sig.State,
-			RequestedAt: sig.RequestedAt,
-		}
+		Signatures:     signatureData,
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)
@@ -1377,6 +1421,22 @@ func exportDocumentPDF(
 	if err != nil {
 		return nil, fmt.Errorf("cannot read PDF data: %w", err)
 	}
+
+	if options.WithWatermark {
+		if options.WatermarkEmail == nil {
+			return nil, fmt.Errorf("watermark email is required with watermark enabled")
+		}
+		if _, err := mail.ParseAddress(*options.WatermarkEmail); err != nil {
+			return nil, fmt.Errorf("invalid email address")
+		}
+
+		watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, *options.WatermarkEmail)
+		if err != nil {
+			return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
+		}
+		return watermarkedPDF, nil
+	}
+
 	return pdfData, nil
 }
 
@@ -1384,6 +1444,7 @@ func (s *DocumentService) Export(
 	ctx context.Context,
 	documentIDs []gid.GID,
 	file io.Writer,
+	options BulkExportOptions,
 ) (err error) {
 	archive := zip.NewWriter(file)
 	defer func() {
@@ -1406,12 +1467,19 @@ func (s *DocumentService) Export(
 					return fmt.Errorf("cannot load document version for %q: %w", documentID, err)
 				}
 
+				pdfOptions := ExportPDFOptions{
+					WithWatermark:  options.WithWatermark,
+					WatermarkEmail: options.WatermarkEmail,
+					WithSignatures: options.WithSignatures,
+				}
+
 				exportedPDF, err := exportDocumentPDF(
 					ctx,
 					s.html2pdfConverter,
 					conn,
 					s.svc.scope,
 					documentVersion.ID,
+					pdfOptions,
 				)
 				if err != nil {
 					return fmt.Errorf("cannot export document PDF for %q: %w", documentID, err)

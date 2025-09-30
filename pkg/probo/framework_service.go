@@ -284,6 +284,7 @@ func (s FrameworkService) Export(
 						conn,
 						s.svc.scope,
 						documentVersion.ID,
+						ExportPDFOptions{WithSignatures: true},
 					)
 					if err != nil {
 						return fmt.Errorf("cannot export document PDF: %w", err)

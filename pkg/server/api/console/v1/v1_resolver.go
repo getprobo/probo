@@ -2628,7 +2628,13 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 		panic(fmt.Errorf("user not found"))
 	}
 
-	documentExport, err := prb.Documents.RequestExport(ctx, input.DocumentIds, user.EmailAddress, user.FullName)
+	options := probo.BulkExportOptions{
+		WithWatermark:  input.WithWatermark,
+		WithSignatures: input.WithSignatures,
+		WatermarkEmail: input.WatermarkEmail,
+	}
+
+	documentExport, err := prb.Documents.RequestExport(ctx, input.DocumentIds, user.EmailAddress, user.FullName, options)
 	if err != nil {
 		panic(fmt.Errorf("cannot request document export: %w", err))
 	}
@@ -2775,7 +2781,13 @@ func (r *mutationResolver) CancelSignatureRequest(ctx context.Context, input typ
 func (r *mutationResolver) ExportDocumentVersionPDF(ctx context.Context, input types.ExportDocumentVersionPDFInput) (*types.ExportDocumentVersionPDFPayload, error) {
 	prb := r.ProboService(ctx, input.DocumentVersionID.TenantID())
 
-	pdf, err := prb.Documents.ExportPDF(ctx, input.DocumentVersionID)
+	options := probo.ExportPDFOptions{
+		WithSignatures: input.WithSignatures,
+		WithWatermark:  input.WithWatermark,
+		WatermarkEmail: input.WatermarkEmail,
+	}
+
+	pdf, err := prb.Documents.ExportPDF(ctx, input.DocumentVersionID, options)
 	if err != nil {
 		panic(fmt.Errorf("cannot export document version PDF: %w", err))
 	}

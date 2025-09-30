@@ -31,7 +31,10 @@ type (
 	ExportJobs []*ExportJob
 
 	DocumentExportArguments struct {
-		DocumentIDs []gid.GID `json:"document_ids"`
+		DocumentIDs    []gid.GID `json:"document_ids"`
+		WithWatermark  bool      `json:"with_watermark"`
+		WatermarkEmail *string   `json:"watermark_email"`
+		WithSignatures bool      `json:"with_signatures"`
 	}
 
 	FrameworkExportArguments struct {
