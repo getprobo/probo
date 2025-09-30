@@ -12,7 +12,6 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Package keys provides utilities for generating cryptographic keys
 package keys
 
 import (
@@ -24,7 +23,6 @@ import (
 	"fmt"
 )
 
-// Type represents the type of cryptographic key
 type Type string
 
 const (
