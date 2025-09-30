@@ -15,7 +15,6 @@
 package cert
 
 import (
-	"bytes"
 	"context"
 	"crypto"
 	"crypto/rand"
@@ -26,6 +25,9 @@ import (
 
 	"github.com/getprobo/probo/pkg/crypto/keys"
 	cryptopem "github.com/getprobo/probo/pkg/crypto/pem"
+	"github.com/getprobo/probo/pkg/version"
+	"go.gearno.de/kit/httpclient"
+	"go.gearno.de/kit/log"
 	"golang.org/x/crypto/acme"
 )
 
@@ -41,6 +43,7 @@ type (
 		client  *acme.Client
 		email   string
 		keyType keys.Type
+		logger  *log.Logger
 	}
 
 	DNSChallenge struct {
@@ -51,20 +54,41 @@ type (
 		URL         string
 		OrderURL    string
 	}
+
+	ErrDNSChallengeRequired struct {
+		Domain    string
+		Challenge *DNSChallenge
+	}
 )
 
-func NewACMEService(email string, keyType keys.Type, directoryURL string) (*ACMEService, error) {
+func (e *ErrDNSChallengeRequired) Error() string {
+	return fmt.Sprintf("DNS challenge required for domain %s", e.Domain)
+}
+
+func NewACMEService(email string, keyType keys.Type, directoryURL string, logger *log.Logger) (*ACMEService, error) {
 	accountKey, err := keys.Generate(keyType)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate account key: %w", err)
 	}
 
-	client := &acme.Client{Key: accountKey, DirectoryURL: directoryURL}
+	httpClient := httpclient.DefaultPooledClient(
+		httpclient.WithLogger(logger),
+		// httpclient.WithTracerProvider(tp),
+		// httpclient.WithRegisterer(r),
+	)
+
+	client := &acme.Client{
+		Key:          accountKey,
+		DirectoryURL: directoryURL,
+		UserAgent:    version.UserAgent("acme"),
+		HTTPClient:   httpClient,
+	}
 
 	service := &ACMEService{
 		client:  client,
 		email:   email,
 		keyType: keyType,
+		logger:  logger.Named("acme"),
 	}
 
 	ctx := context.Background()
@@ -180,41 +204,99 @@ func (s *ACMEService) CompleteDNSChallenge(
 		return nil, fmt.Errorf("cannot encode key: %w", err)
 	}
 
-	var buf bytes.Buffer
-	for i := 1; i < len(der); i++ {
-		buf.Write(cryptopem.EncodeCertificate(der[i]))
+	var chainDER [][]byte
+	if len(der) > 1 {
+		chainDER = der[1:]
 	}
+	chainPEM := cryptopem.EncodeCertificateChain(chainDER)
 
 	return &Certificate{
 		CertPEM:   certPEM,
 		KeyPEM:    keyPEM,
-		ChainPEM:  buf.Bytes(),
+		ChainPEM:  chainPEM,
 		ExpiresAt: cert.NotAfter,
 	}, nil
 }
 
-func (s *ACMEService) InitiateRenewal(
+func (s *ACMEService) RenewCertificate(
 	ctx context.Context,
 	domain string,
-) (*DNSChallenge, error) {
+) (*Certificate, error) {
+	cert, err := s.renewWithExistingAuth(ctx, domain)
+	if err == nil {
+		return cert, nil
+	}
+
+	// If renewal with existing auth fails, it might mean:
+	// 1. The authorization has expired (usually after 30-90 days of no renewal)
+	// 2. This is a first-time certificate request
+	// In these cases, we need a new challenge
+	s.logger.WarnCtx(ctx, "renewal with existing authorization failed, initiating new challenge",
+		log.String("domain", domain),
+		log.Error(err))
+
 	challenge, err := s.GetDNSChallenge(ctx, domain)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get DNS challenge for renewal: %w", err)
 	}
 
-	return challenge, nil
+	return nil, &ErrDNSChallengeRequired{
+		Domain:    domain,
+		Challenge: challenge,
+	}
 }
 
-func (s *ACMEService) CompleteRenewal(
-	ctx context.Context,
-	challenge *DNSChallenge,
-) (*Certificate, error) {
-	cert, err := s.CompleteDNSChallenge(ctx, challenge)
+func (s *ACMEService) renewWithExistingAuth(ctx context.Context, domain string) (*Certificate, error) {
+	order, err := s.client.AuthorizeOrder(ctx, acme.DomainIDs(domain))
 	if err != nil {
-		return nil, fmt.Errorf("cannot complete renewal challenge: %w", err)
+		return nil, fmt.Errorf("cannot create renewal order: %w", err)
 	}
 
-	return cert, nil
+	if order.Status != acme.StatusReady {
+		order, err = s.client.WaitOrder(ctx, order.URI)
+		if err != nil {
+			return nil, fmt.Errorf("authorization not valid or expired: %w", err)
+		}
+	}
+
+	certKey, err := keys.Generate(s.keyType)
+	if err != nil {
+		return nil, fmt.Errorf("cannot generate certificate key: %w", err)
+	}
+
+	csr, err := createCSR(domain, certKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create CSR: %w", err)
+	}
+
+	der, _, err := s.client.CreateOrderCert(ctx, order.FinalizeURL, csr, true)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create certificate: %w", err)
+	}
+
+	cert, err := x509.ParseCertificate(der[0])
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse certificate: %w", err)
+	}
+
+	certPEM := cryptopem.EncodeCertificate(der[0])
+	keyPEM, err := cryptopem.EncodePrivateKey(certKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot encode key: %w", err)
+	}
+
+	var chainDER [][]byte
+	if len(der) > 1 {
+		chainDER = der[1:]
+	}
+	chainPEM := cryptopem.EncodeCertificateChain(chainDER)
+
+	return &Certificate{
+		CertPEM:   certPEM,
+		KeyPEM:    keyPEM,
+		ChainPEM:  chainPEM,
+		ExpiresAt: cert.NotAfter,
+	}, nil
 }
 
 func (s *ACMEService) CheckRenewalNeeded(expiresAt time.Time, threshold time.Duration) bool {

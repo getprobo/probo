@@ -33,6 +33,15 @@ func EncodeCertificate(der []byte) []byte {
 	return pem.EncodeToMemory(block)
 }
 
+// EncodeCertificateChain encodes multiple DER-encoded certificates into a single PEM chain
+func EncodeCertificateChain(derCerts [][]byte) []byte {
+	var chain []byte
+	for _, der := range derCerts {
+		chain = append(chain, EncodeCertificate(der)...)
+	}
+	return chain
+}
+
 func EncodePrivateKey(key crypto.Signer) ([]byte, error) {
 	var keyDER []byte
 	var keyType string
