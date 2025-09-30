@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package cert
+package certmanager
 
 import (
 	"context"
@@ -26,26 +26,26 @@ import (
 )
 
 type (
-	CacheWarmer struct {
+	CacheStore struct {
 		pg            *pg.Client
 		encryptionKey cipher.EncryptionKey
 		logger        *log.Logger
 	}
 )
 
-func NewCacheWarmer(
+func NewCacheStore(
 	pg *pg.Client,
 	encryptionKey cipher.EncryptionKey,
 	logger *log.Logger,
-) *CacheWarmer {
-	return &CacheWarmer{
+) *CacheStore {
+	return &CacheStore{
 		pg:            pg,
 		encryptionKey: encryptionKey,
-		logger:        logger.Named("cert.cache_warmer"),
+		logger:        logger.Named("certmanager.cache-store"),
 	}
 }
 
-func (w *CacheWarmer) WarmCache(ctx context.Context) error {
+func (w *CacheStore) WarmCache(ctx context.Context) error {
 	w.logger.InfoCtx(ctx, "warming certificate cache")
 	startTime := time.Now()
 
@@ -93,7 +93,7 @@ func (w *CacheWarmer) WarmCache(ctx context.Context) error {
 	return nil
 }
 
-func (w *CacheWarmer) warmDomain(ctx context.Context, conn pg.Conn, domain *coredata.CustomDomain) error {
+func (w *CacheStore) warmDomain(ctx context.Context, conn pg.Conn, domain *coredata.CustomDomain) error {
 	var loadedDomain coredata.CustomDomain
 	scope := coredata.NewScope(domain.OrganizationID.TenantID())
 	if err := loadedDomain.LoadByID(ctx, conn, scope, w.encryptionKey, domain.ID); err != nil {
@@ -137,7 +137,7 @@ func (w *CacheWarmer) warmDomain(ctx context.Context, conn pg.Conn, domain *core
 	return nil
 }
 
-func (w *CacheWarmer) RefreshCache(ctx context.Context) error {
+func (w *CacheStore) RefreshCache(ctx context.Context) error {
 	w.logger.InfoCtx(ctx, "refreshing certificate cache")
 
 	return w.pg.WithConn(
@@ -153,7 +153,7 @@ func (w *CacheWarmer) RefreshCache(ctx context.Context) error {
 	)
 }
 
-func (w *CacheWarmer) WarmSingleDomain(ctx context.Context, domainName string) error {
+func (w *CacheStore) WarmSingleDomain(ctx context.Context, domainName string) error {
 	return w.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {

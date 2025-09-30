@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package cert
+package certmanager
 
 import (
 	"context"
@@ -28,7 +28,7 @@ import (
 )
 
 type (
-	CertificateRenewer struct {
+	Renewer struct {
 		pg            *pg.Client
 		acmeService   *ACMEService
 		encryptionKey cipher.EncryptionKey
@@ -37,24 +37,24 @@ type (
 	}
 )
 
-func NewCertificateRenewer(
+func NewRenewer(
 	pg *pg.Client,
 	acmeService *ACMEService,
 	encryptionKey cipher.EncryptionKey,
 	interval time.Duration,
 	logger *log.Logger,
-) *CertificateRenewer {
-	return &CertificateRenewer{
+) *Renewer {
+	return &Renewer{
 		pg:            pg,
 		acmeService:   acmeService,
 		encryptionKey: encryptionKey,
 		interval:      interval,
-		logger:        logger.Named("cert.certificate-renewer"),
+		logger:        logger.Named("certmanager.renewer"),
 	}
 }
 
-func (r *CertificateRenewer) Run(ctx context.Context) error {
-	r.logger.InfoCtx(ctx, "certificate certificate-renewer starting")
+func (r *Renewer) Run(ctx context.Context) error {
+	r.logger.InfoCtx(ctx, "certificate renewer starting")
 
 	if err := r.checkAndRenew(ctx); err != nil {
 		r.logger.ErrorCtx(ctx, "cannot perform initial renewal check", log.Error(err))
@@ -63,7 +63,7 @@ func (r *CertificateRenewer) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-ctx.Done():
-			r.logger.InfoCtx(ctx, "certificate certificate-renewer shutting down")
+			r.logger.InfoCtx(ctx, "certificate renewer shutting down")
 			return ctx.Err()
 		case <-time.After(r.interval):
 			if err := r.checkAndRenew(ctx); err != nil {
@@ -73,7 +73,7 @@ func (r *CertificateRenewer) Run(ctx context.Context) error {
 	}
 }
 
-func (r *CertificateRenewer) checkAndRenew(ctx context.Context) error {
+func (r *Renewer) checkAndRenew(ctx context.Context) error {
 	return r.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
@@ -84,7 +84,7 @@ func (r *CertificateRenewer) checkAndRenew(ctx context.Context) error {
 			} else if cacheCount == 0 {
 				r.logger.InfoCtx(ctx, "certificate cache is empty, rebuilding from custom_domains")
 
-				warmer := NewCacheWarmer(r.pg, r.encryptionKey, r.logger)
+				warmer := NewCacheStore(r.pg, r.encryptionKey, r.logger)
 				if err := warmer.WarmCache(ctx); err != nil {
 					r.logger.ErrorCtx(ctx, "cannot rebuild certificate cache", log.Error(err))
 				} else {
@@ -128,7 +128,7 @@ func (r *CertificateRenewer) checkAndRenew(ctx context.Context) error {
 	)
 }
 
-func (r *CertificateRenewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredata.CustomDomain) error {
+func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredata.CustomDomain) error {
 	scope := coredata.NewScope(domain.OrganizationID.TenantID())
 
 	lockedDomain := &coredata.CustomDomain{}
