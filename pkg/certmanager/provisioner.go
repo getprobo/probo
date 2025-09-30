@@ -85,7 +85,7 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 			return nil
 		}
 
-		p.logger.InfoCtx(ctx, "found domains with pending challenges", log.Int("count", len(domains)))
+		p.logger.InfoCtx(ctx, "found domains needing SSL provisioning", log.Int("count", len(domains)))
 
 		for _, domain := range domains {
 			select {
@@ -94,10 +94,10 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 			default:
 			}
 
-			if err := p.completeDomainCertificate(ctx, conn, domain); err != nil {
+			if err := p.provisionDomainCertificate(ctx, conn, domain); err != nil {
 				p.logger.ErrorCtx(
 					ctx,
-					"cannot complete certificate for domain",
+					"cannot provision certificate for domain",
 					log.String("domain", domain.Domain),
 					log.Error(err),
 				)
@@ -108,11 +108,53 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 	})
 }
 
-func (p *Provisioner) completeDomainCertificate(
+func (p *Provisioner) provisionDomainCertificate(
 	ctx context.Context,
 	conn pg.Conn,
 	domain *coredata.CustomDomain,
 ) error {
+	if domain.SSLStatus == coredata.CustomDomainSSLStatusPending {
+		p.logger.InfoCtx(ctx, "initiating HTTP challenge for domain", log.String("domain", domain.Domain))
+
+		challenge, err := p.acmeService.GetHTTPChallenge(ctx, domain.Domain)
+		if err != nil {
+			p.logger.ErrorCtx(
+				ctx,
+				"failed to get HTTP challenge",
+				log.String("domain", domain.Domain),
+				log.Error(err),
+			)
+			return err
+		}
+
+		// Update domain with challenge details and set to PROVISIONING
+		scope := coredata.NewScope(domain.OrganizationID.TenantID())
+		fullDomain := &coredata.CustomDomain{}
+		if err := fullDomain.LoadByIDForUpdate(ctx, conn, scope, p.encryptionKey, domain.ID); err != nil {
+			return fmt.Errorf("cannot load domain for update: %w", err)
+		}
+
+		fullDomain.HTTPChallengeToken = &challenge.Token
+		fullDomain.HTTPChallengeKeyAuth = &challenge.KeyAuth
+		fullDomain.HTTPChallengeURL = &challenge.URL
+		fullDomain.HTTPOrderURL = &challenge.OrderURL
+		fullDomain.SSLStatus = coredata.CustomDomainSSLStatusProvisioning
+
+		if err := fullDomain.Update(ctx, conn, scope, p.encryptionKey); err != nil {
+			return fmt.Errorf("failed to update domain with challenge: %w", err)
+		}
+
+		p.logger.InfoCtx(
+			ctx,
+			"HTTP challenge initiated, will complete in next cycle",
+			log.String("domain", domain.Domain),
+			log.String("token", challenge.Token),
+		)
+
+		return nil
+	}
+
+	// Domain already has challenge details, complete it
 	challenge := &HTTPChallenge{
 		Domain:   domain.Domain,
 		Token:    *domain.HTTPChallengeToken,
@@ -151,8 +193,7 @@ func (p *Provisioner) completeDomainCertificate(
 	chainStr := string(cert.ChainPEM)
 	fullDomain.SSLCertificateChain = &chainStr
 	fullDomain.SSLExpiresAt = &cert.ExpiresAt
-	status := coredata.CustomDomainSSLStatusActive
-	fullDomain.SSLStatus = &status
+	fullDomain.SSLStatus = coredata.CustomDomainSSLStatusActive
 
 	fullDomain.HTTPChallengeToken = nil
 	fullDomain.HTTPChallengeKeyAuth = nil
