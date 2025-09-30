@@ -134,7 +134,6 @@ func (s *DocumentService) ExportPDF(
 		Version:        version.VersionNumber,
 		Classification: classification,
 		Approver:       owner.FullName,
-		Description:    version.Changelog,
 		PublishedAt:    version.PublishedAt,
 	}
 

@@ -1339,7 +1339,6 @@ func exportDocumentPDF(
 		Version:        version.VersionNumber,
 		Classification: classification,
 		Approver:       owner.FullName,
-		Description:    version.Changelog,
 		PublishedAt:    version.PublishedAt,
 		Signatures:     make([]docgen.SignatureData, len(signatures)),
 	}
