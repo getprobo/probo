@@ -46,24 +46,14 @@ type (
 		logger  *log.Logger
 	}
 
-	DNSChallenge struct {
-		Domain      string
-		RecordName  string
-		RecordValue string
-		Token       string
-		URL         string
-		OrderURL    string
-	}
-
-	ErrDNSChallengeRequired struct {
-		Domain    string
-		Challenge *DNSChallenge
+	HTTPChallenge struct {
+		Domain   string
+		Token    string
+		KeyAuth  string
+		URL      string
+		OrderURL string
 	}
 )
-
-func (e *ErrDNSChallengeRequired) Error() string {
-	return fmt.Sprintf("DNS challenge required for domain %s", e.Domain)
-}
 
 func NewACMEService(email string, keyType keys.Type, directoryURL string, logger *log.Logger) (*ACMEService, error) {
 	accountKey, err := keys.Generate(keyType)
@@ -111,7 +101,7 @@ func (s *ACMEService) registerAccount(ctx context.Context) error {
 	return nil
 }
 
-func (s *ACMEService) GetDNSChallenge(ctx context.Context, domain string) (*DNSChallenge, error) {
+func (s *ACMEService) GetHTTPChallenge(ctx context.Context, domain string) (*HTTPChallenge, error) {
 	order, err := s.client.AuthorizeOrder(ctx, acme.DomainIDs(domain))
 	if err != nil {
 		return nil, fmt.Errorf("cannot create order: %w", err)
@@ -125,13 +115,9 @@ func (s *ACMEService) GetDNSChallenge(ctx context.Context, domain string) (*DNSC
 		}
 
 		for _, ch := range authz.Challenges {
-			if ch.Type == "dns-01" {
+			if ch.Type == "http-01" {
 				challenge = ch
 				break
-			}
-
-			if ch.Type == "http-01" {
-				return nil, fmt.Errorf("http-01 challenges are not supported")
 			}
 		}
 
@@ -141,27 +127,26 @@ func (s *ACMEService) GetDNSChallenge(ctx context.Context, domain string) (*DNSC
 	}
 
 	if challenge == nil {
-		return nil, fmt.Errorf("no DNS-01 challenge found")
+		return nil, fmt.Errorf("no HTTP-01 challenge found")
 	}
 
-	recordValue, err := s.client.DNS01ChallengeRecord(challenge.Token)
+	keyAuth, err := s.client.HTTP01ChallengeResponse(challenge.Token)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get DNS record value: %w", err)
+		return nil, fmt.Errorf("cannot get challenge response: %w", err)
 	}
 
-	return &DNSChallenge{
-		Domain:      domain,
-		RecordName:  fmt.Sprintf("_acme-challenge.%s", domain),
-		RecordValue: recordValue,
-		Token:       challenge.Token,
-		URL:         challenge.URI,
-		OrderURL:    order.URI,
+	return &HTTPChallenge{
+		Domain:   domain,
+		Token:    challenge.Token,
+		KeyAuth:  keyAuth,
+		URL:      challenge.URI,
+		OrderURL: order.URI,
 	}, nil
 }
 
-func (s *ACMEService) CompleteDNSChallenge(
+func (s *ACMEService) CompleteHTTPChallenge(
 	ctx context.Context,
-	challenge0 *DNSChallenge,
+	challenge0 *HTTPChallenge,
 ) (*Certificate, error) {
 
 	challenge1 := &acme.Challenge{
@@ -218,6 +203,22 @@ func (s *ACMEService) CompleteDNSChallenge(
 	}, nil
 }
 
+func (s *ACMEService) ObtainCertificate(
+	ctx context.Context,
+	domain string,
+) (*Certificate, error) {
+	// For HTTP-01, we always need to serve the challenge
+	challenge, err := s.GetHTTPChallenge(ctx, domain)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get HTTP challenge: %w", err)
+	}
+
+	// The challenge token and key auth will be stored and served via HTTP
+	// The caller is responsible for ensuring the HTTP endpoint is ready
+	// before calling CompleteHTTPChallenge
+	return nil, fmt.Errorf("HTTP challenge ready: token=%s", challenge.Token)
+}
+
 func (s *ACMEService) RenewCertificate(
 	ctx context.Context,
 	domain string,
@@ -227,23 +228,11 @@ func (s *ACMEService) RenewCertificate(
 		return cert, nil
 	}
 
-	// If renewal with existing auth fails, it might mean:
-	// 1. The authorization has expired (usually after 30-90 days of no renewal)
-	// 2. This is a first-time certificate request
-	// In these cases, we need a new challenge
-	s.logger.WarnCtx(ctx, "renewal with existing authorization failed, initiating new challenge",
+	s.logger.WarnCtx(ctx, "renewal with existing authorization failed, need new HTTP challenge",
 		log.String("domain", domain),
 		log.Error(err))
 
-	challenge, err := s.GetDNSChallenge(ctx, domain)
-	if err != nil {
-		return nil, fmt.Errorf("cannot get DNS challenge for renewal: %w", err)
-	}
-
-	return nil, &ErrDNSChallengeRequired{
-		Domain:    domain,
-		Challenge: challenge,
-	}
+	return s.ObtainCertificate(ctx, domain)
 }
 
 func (s *ACMEService) renewWithExistingAuth(ctx context.Context, domain string) (*Certificate, error) {

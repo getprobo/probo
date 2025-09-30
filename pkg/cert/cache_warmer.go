@@ -53,7 +53,7 @@ func (w *CacheWarmer) WarmCache(ctx context.Context) error {
 		ctx,
 		func(conn pg.Conn) error {
 			domains := coredata.CustomDomains{}
-			if err := domains.LoadActiveCertificates(ctx, conn, coredata.NewNoScope()); err != nil {
+			if err := domains.LoadActiveCertificates(ctx, conn, coredata.NewNoScope(), w.encryptionKey); err != nil {
 				return fmt.Errorf("cannot load active certificates: %w", err)
 			}
 
