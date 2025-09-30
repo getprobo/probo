@@ -11,10 +11,12 @@ import (
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
+	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/server/api/trust/v1/schema"
 	"github.com/getprobo/probo/pkg/server/api/trust/v1/types"
 	"github.com/getprobo/probo/pkg/trust"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // Framework is the resolver for the framework field.
@@ -191,6 +193,72 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
 
 	return publicTrustService.Organizations.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+}
+
+// Node is the resolver for the node field.
+func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error) {
+	publicTrustService := r.PublicTrustService(ctx, id.TenantID())
+
+	switch id.EntityType() {
+	case coredata.OrganizationEntityType:
+		organization, err := publicTrustService.Organizations.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("failed to get organization: %w", err))
+		}
+		return types.NewOrganization(organization), nil
+
+	case coredata.DocumentEntityType:
+		document, err := publicTrustService.Documents.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("failed to get document: %w", err))
+		}
+		return types.NewDocument(document), nil
+
+	case coredata.FrameworkEntityType:
+		framework, err := publicTrustService.Frameworks.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("failed to get framework: %w", err))
+		}
+		return types.NewFramework(framework), nil
+
+	case coredata.ReportEntityType:
+		report, err := publicTrustService.Reports.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("failed to get report: %w", err))
+		}
+		return types.NewReport(report), nil
+
+	case coredata.AuditEntityType:
+		audit, err := publicTrustService.Audits.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("failed to get audit: %w", err))
+		}
+		return types.NewAudit(audit), nil
+
+	case coredata.VendorEntityType:
+		vendor, err := publicTrustService.Vendors.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("failed to get vendor: %w", err))
+		}
+		return types.NewVendor(vendor), nil
+
+	case coredata.TrustCenterEntityType:
+		trustCenter, file, err := publicTrustService.TrustCenters.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("failed to get trust center: %w", err))
+		}
+		return types.NewTrustCenter(trustCenter, file), nil
+
+	case coredata.TrustCenterReferenceEntityType:
+		reference, err := publicTrustService.TrustCenterReferences.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("failed to get trust center reference: %w", err))
+		}
+		return types.NewTrustCenterReference(reference), nil
+
+	default:
+		return nil, gqlerror.Errorf("node %q not found", id)
+	}
 }
 
 // TrustCenterBySlug is the resolver for the trustCenterBySlug field.

@@ -171,3 +171,28 @@ func (s *DocumentService) ExportPDF(
 
 	return watermarkedPDF, nil
 }
+
+func (s DocumentService) Get(
+	ctx context.Context,
+	documentID gid.GID,
+) (*coredata.Document, error) {
+	document := &coredata.Document{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := document.LoadByID(ctx, conn, s.svc.scope, documentID)
+			if err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return document, nil
+}

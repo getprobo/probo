@@ -100,3 +100,28 @@ func (s TrustCenterReferenceService) GenerateLogoURL(
 
 	return presignedReq.URL, nil
 }
+
+func (s TrustCenterReferenceService) Get(
+	ctx context.Context,
+	referenceID gid.GID,
+) (*coredata.TrustCenterReference, error) {
+	reference := &coredata.TrustCenterReference{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := reference.LoadByID(ctx, conn, s.svc.scope, referenceID)
+			if err != nil {
+				return fmt.Errorf("cannot load trust center reference: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return reference, nil
+}
