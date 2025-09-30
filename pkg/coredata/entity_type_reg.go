@@ -58,4 +58,5 @@ const (
 	ExportJobEntityType
 	TrustCenterReferenceEntityType
 	TrustCenterDocumentAccessEntityType
+	CustomDomainEntityType
 )
