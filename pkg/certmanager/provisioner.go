@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package cert
+package certmanager
 
 import (
 	"context"
@@ -26,7 +26,7 @@ import (
 )
 
 type (
-	CertificateProvisioner struct {
+	Provisioner struct {
 		pg            *pg.Client
 		acmeService   *ACMEService
 		encryptionKey cipher.EncryptionKey
@@ -35,23 +35,23 @@ type (
 	}
 )
 
-func NewCertificateProvisioner(
+func NewProvisioner(
 	pg *pg.Client,
 	acmeService *ACMEService,
 	encryptionKey cipher.EncryptionKey,
 	interval time.Duration,
 	logger *log.Logger,
-) *CertificateProvisioner {
-	return &CertificateProvisioner{
+) *Provisioner {
+	return &Provisioner{
 		pg:            pg,
 		acmeService:   acmeService,
 		encryptionKey: encryptionKey,
 		interval:      interval,
-		logger:        logger.Named("cert.provisioner"),
+		logger:        logger.Named("certmanager.provisioner"),
 	}
 }
 
-func (p *CertificateProvisioner) Run(ctx context.Context) error {
+func (p *Provisioner) Run(ctx context.Context) error {
 	p.logger.InfoCtx(ctx, "certificate provisioner starting", log.Duration("interval", p.interval))
 
 	if err := p.checkPendingDomains(ctx); err != nil {
@@ -74,7 +74,7 @@ func (p *CertificateProvisioner) Run(ctx context.Context) error {
 	}
 }
 
-func (p *CertificateProvisioner) checkPendingDomains(ctx context.Context) error {
+func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 	return p.pg.WithConn(ctx, func(conn pg.Conn) error {
 		var domains coredata.CustomDomains
 		if err := domains.ListDomainsWithPendingHTTPChallenges(ctx, conn, coredata.NewNoScope()); err != nil {
@@ -108,7 +108,7 @@ func (p *CertificateProvisioner) checkPendingDomains(ctx context.Context) error 
 	})
 }
 
-func (p *CertificateProvisioner) completeDomainCertificate(
+func (p *Provisioner) completeDomainCertificate(
 	ctx context.Context,
 	conn pg.Conn,
 	domain *coredata.CustomDomain,

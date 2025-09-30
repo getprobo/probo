@@ -12,7 +12,7 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package cert
+package certmanager
 
 import (
 	"context"
@@ -30,37 +30,27 @@ type (
 	Selector struct {
 		pg               *pg.Client
 		cache            sync.Map
-		defaultDomain    string
 		encryptionKey    cipher.EncryptionKey
-		defaultCert      *tls.Certificate
-		defaultCertMutex sync.RWMutex
 	}
 )
 
 func NewSelector(
 	pg *pg.Client,
-	defaultDomain string,
 	encryptionKey cipher.EncryptionKey,
 ) *Selector {
 	return &Selector{
 		pg:            pg,
-		defaultDomain: defaultDomain,
 		encryptionKey: encryptionKey,
 	}
 }
 
-func (s *Selector) SetDefaultCertificate(cert *tls.Certificate) {
-	s.defaultCertMutex.Lock()
-	defer s.defaultCertMutex.Unlock()
-	s.defaultCert = cert
-}
 
 func (s *Selector) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domain := hello.ServerName
 
-	// Empty domain, use default
+	// Empty domain, return error
 	if domain == "" {
-		return s.getDefaultCertificate()
+		return nil, fmt.Errorf("no SNI provided")
 	}
 
 	if cached, ok := s.cache.Load(domain); ok {
@@ -71,7 +61,7 @@ func (s *Selector) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate,
 
 	cert, err := s.loadFromDatabase(domain)
 	if err != nil {
-		return s.getDefaultCertificate()
+		return nil, err
 	}
 
 	s.cache.Store(domain, cert)
@@ -163,17 +153,6 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Conn, domain s
 	return nil
 }
 
-// getDefaultCertificate returns the default wildcard certificate
-func (s *Selector) getDefaultCertificate() (*tls.Certificate, error) {
-	s.defaultCertMutex.RLock()
-	defer s.defaultCertMutex.RUnlock()
-
-	if s.defaultCert == nil {
-		return nil, fmt.Errorf("no default certificate configured")
-	}
-
-	return s.defaultCert, nil
-}
 
 func (s *Selector) ClearCache() {
 	s.cache.Range(

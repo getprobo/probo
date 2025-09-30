@@ -12,19 +12,21 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package cert
+package certmanager
 
 import (
 	"context"
 	"crypto"
 	"crypto/rand"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/getprobo/probo/pkg/crypto/keys"
-	cryptopem "github.com/getprobo/probo/pkg/crypto/pem"
+	"github.com/getprobo/probo/pkg/crypto/pem"
 	"github.com/getprobo/probo/pkg/version"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
@@ -55,17 +57,28 @@ type (
 	}
 )
 
-func NewACMEService(email string, keyType keys.Type, directoryURL string, logger *log.Logger) (*ACMEService, error) {
+func NewACMEService(email string, keyType keys.Type, directoryURL string, insecureTLS bool, logger *log.Logger) (*ACMEService, error) {
 	accountKey, err := keys.Generate(keyType)
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate account key: %w", err)
 	}
 
-	httpClient := httpclient.DefaultPooledClient(
-		httpclient.WithLogger(logger),
-		// httpclient.WithTracerProvider(tp),
-		// httpclient.WithRegisterer(r),
-	)
+	var httpClient *http.Client
+
+	if insecureTLS {
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		httpClient = &http.Client{
+			Transport: transport,
+			Timeout:   30 * time.Second,
+		}
+		logger.Warn("ACME service configured with insecure TLS - use only for local testing")
+	} else {
+		httpClient = httpclient.DefaultPooledClient(
+			httpclient.WithLogger(logger),
+		)
+	}
 
 	client := &acme.Client{
 		Key:          accountKey,
@@ -183,8 +196,8 @@ func (s *ACMEService) CompleteHTTPChallenge(
 		return nil, fmt.Errorf("cannot parse certificate: %w", err)
 	}
 
-	certPEM := cryptopem.EncodeCertificate(der[0])
-	keyPEM, err := cryptopem.EncodePrivateKey(certKey)
+	certPEM := pem.EncodeCertificate(der[0])
+	keyPEM, err := pem.EncodePrivateKey(certKey)
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode key: %w", err)
 	}
@@ -193,7 +206,7 @@ func (s *ACMEService) CompleteHTTPChallenge(
 	if len(der) > 1 {
 		chainDER = der[1:]
 	}
-	chainPEM := cryptopem.EncodeCertificateChain(chainDER)
+	chainPEM := pem.EncodeCertificateChain(chainDER)
 
 	return &Certificate{
 		CertPEM:   certPEM,
@@ -268,8 +281,8 @@ func (s *ACMEService) renewWithExistingAuth(ctx context.Context, domain string) 
 		return nil, fmt.Errorf("cannot parse certificate: %w", err)
 	}
 
-	certPEM := cryptopem.EncodeCertificate(der[0])
-	keyPEM, err := cryptopem.EncodePrivateKey(certKey)
+	certPEM := pem.EncodeCertificate(der[0])
+	keyPEM, err := pem.EncodePrivateKey(certKey)
 	if err != nil {
 		return nil, fmt.Errorf("cannot encode key: %w", err)
 	}
@@ -278,7 +291,7 @@ func (s *ACMEService) renewWithExistingAuth(ctx context.Context, domain string) 
 	if len(der) > 1 {
 		chainDER = der[1:]
 	}
-	chainPEM := cryptopem.EncodeCertificateChain(chainDER)
+	chainPEM := pem.EncodeCertificateChain(chainDER)
 
 	return &Certificate{
 		CertPEM:   certPEM,
