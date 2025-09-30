@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0767a7e9f6fb3f0464027b92a5239521>>
+ * @generated SignedSource<<9f96c62a3e185fed5c07415cf6fa85d1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 export type DocumentType = "ISMS" | "OTHER" | "POLICY";
 import { FragmentRefs } from "relay-runtime";
-export type OverviewFragment$data = {
+export type OverviewPageFragment$data = {
   readonly documents: {
     readonly edges: ReadonlyArray<{
       readonly node: {
@@ -39,11 +39,11 @@ export type OverviewFragment$data = {
       };
     }>;
   };
-  readonly " $fragmentType": "OverviewFragment";
+  readonly " $fragmentType": "OverviewPageFragment";
 };
-export type OverviewFragment$key = {
-  readonly " $data"?: OverviewFragment$data;
-  readonly " $fragmentSpreads": FragmentRefs<"OverviewFragment">;
+export type OverviewPageFragment$key = {
+  readonly " $data"?: OverviewPageFragment$data;
+  readonly " $fragmentSpreads": FragmentRefs<"OverviewPageFragment">;
 };
 
 const node: ReaderFragment = (function(){
@@ -58,7 +58,7 @@ return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
-  "name": "OverviewFragment",
+  "name": "OverviewPageFragment",
   "selections": [
     {
       "alias": null,
@@ -224,6 +224,6 @@ return {
 };
 })();
 
-(node as any).hash = "2f42031d2017248051c8dfea72b4e502";
+(node as any).hash = "df15ec9b9040d1f4314e04085a932ecb";
 
 export default node;

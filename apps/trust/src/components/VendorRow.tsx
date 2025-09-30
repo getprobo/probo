@@ -39,14 +39,16 @@ export function VendorRow(props: { vendor: VendorRowFragment$key }) {
             {vendor.privacyPolicyUrl.split("//").at(-1)}
           </a>
         )}
-        <div className="flex gap-1 text-txt-secondary items-center">
-          <IconPin size={16} className="flex-none" />
-          <span>
-            {vendor.countries
-              .map((country) => getCountryName(__, country))
-              .join(", ")}
-          </span>
-        </div>
+        {vendor.countries.length > 0 && (
+          <div className="flex gap-1 text-txt-secondary items-center">
+            <IconPin size={16} className="flex-none" />
+            <span>
+              {vendor.countries
+                .map((country) => getCountryName(__, country))
+                .join(", ")}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

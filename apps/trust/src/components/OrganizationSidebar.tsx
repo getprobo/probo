@@ -85,12 +85,6 @@ export function OrganizationSidebar({
             {trustCenter.audits.edges.map((audit) => (
               <AuditRowAvatar key={audit.node.id} audit={audit.node} />
             ))}
-            {trustCenter.audits.edges.map((audit) => (
-              <AuditRowAvatar key={audit.node.id} audit={audit.node} />
-            ))}
-            {trustCenter.audits.edges.map((audit) => (
-              <AuditRowAvatar key={audit.node.id} audit={audit.node} />
-            ))}
           </div>
         </div>
 

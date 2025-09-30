@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<669a97d59bae0528905d34c18586ce11>>
+ * @generated SignedSource<<25d09fc2d93d9fbbcde08bd8a8d48214>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -37,7 +37,7 @@ export type TrustGraphQuery$data = {
       readonly websiteUrl: string | null | undefined;
     };
     readonly slug: string;
-    readonly " $fragmentSpreads": FragmentRefs<"OverviewFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"OverviewPageFragment">;
   } | null | undefined;
 };
 export type TrustGraphQuery = {
@@ -192,7 +192,7 @@ return {
           {
             "args": null,
             "kind": "FragmentSpread",
-            "name": "OverviewFragment"
+            "name": "OverviewPageFragment"
           },
           {
             "alias": null,
@@ -510,16 +510,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "00f2723e0dac553f037af3570903fb51",
+    "cacheID": "3303b20452c558a107492263e7fc0c61",
     "id": null,
     "metadata": {},
     "name": "TrustGraphQuery",
     "operationKind": "query",
-    "text": "query TrustGraphQuery(\n  $slug: String!\n) {\n  trustCenterBySlug(slug: $slug) {\n    id\n    slug\n    isUserAuthenticated\n    hasAcceptedNonDisclosureAgreement\n    ndaFileName\n    ndaFileUrl\n    organization {\n      name\n      description\n      websiteUrl\n      logoUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewFragment\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  report {\n    id\n    filename\n  }\n  framework {\n    id\n    name\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n}\n\nfragment OverviewFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n}\n\nfragment VendorRowFragment on Vendor {\n  id\n  name\n  category\n  websiteUrl\n  privacyPolicyUrl\n  countries\n}\n"
+    "text": "query TrustGraphQuery(\n  $slug: String!\n) {\n  trustCenterBySlug(slug: $slug) {\n    id\n    slug\n    isUserAuthenticated\n    hasAcceptedNonDisclosureAgreement\n    ndaFileName\n    ndaFileUrl\n    organization {\n      name\n      description\n      websiteUrl\n      logoUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  report {\n    id\n    filename\n  }\n  framework {\n    id\n    name\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n}\n\nfragment VendorRowFragment on Vendor {\n  id\n  name\n  category\n  websiteUrl\n  privacyPolicyUrl\n  countries\n}\n"
   }
 };
 })();
 
-(node as any).hash = "192a8d21a41871de201009a2dae65870";
+(node as any).hash = "fd44a0d5fcda45aaa0fe02b3051643c0";
 
 export default node;

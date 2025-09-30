@@ -1,6 +1,6 @@
 import { useFragment } from "react-relay";
 import { graphql } from "relay-runtime";
-import type { OverviewFragment$key } from "./__generated__/OverviewFragment.graphql";
+import type { OverviewPageFragment$key } from "./__generated__/OverviewPageFragment.graphql";
 import { Link, useOutletContext } from "react-router";
 import { groupBy, objectEntries, sprintf } from "@probo/helpers";
 import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
@@ -15,7 +15,7 @@ import { RowHeader } from "/components/RowHeader.tsx";
 import { Rows } from "/components/Rows.tsx";
 
 const overviewFragment = graphql`
-  fragment OverviewFragment on TrustCenter {
+  fragment OverviewPageFragment on TrustCenter {
     references(first: 14) {
       edges {
         node {
@@ -48,7 +48,7 @@ const overviewFragment = graphql`
 
 export function OverviewPage() {
   const { trustCenter } = useOutletContext<{
-    trustCenter: OverviewFragment$key &
+    trustCenter: OverviewPageFragment$key &
       TrustGraphQuery$data["trustCenterBySlug"];
   }>();
   const { __ } = useTranslate();

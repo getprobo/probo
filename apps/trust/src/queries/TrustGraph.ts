@@ -17,7 +17,7 @@ export const trustGraphQuery = graphql`
         email
         headquarterAddress
       }
-      ...OverviewFragment
+      ...OverviewPageFragment
       audits(first: 50) {
         edges {
           node {
