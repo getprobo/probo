@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+ [0.64.1] - 2025-09-30
+
+### Fixed
+- Remove document description and footer in template
+
 # [0.64.0] - 2025-09-30
 
 ### Added
