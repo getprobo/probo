@@ -551,7 +551,7 @@ FROM
 WHERE
 	%s
 	AND organization_id = @organization_id
-	%s
+	AND %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
