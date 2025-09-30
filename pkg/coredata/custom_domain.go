@@ -58,6 +58,7 @@ func NewCustomDomain(orgID gid.GID, domain string) *CustomDomain {
 	return &CustomDomain{
 		ID:             gid.New(orgID.TenantID(), CustomDomainEntityType),
 		OrganizationID: orgID,
+		SSLStatus:      CustomDomainSSLStatusPending,
 		Domain:         domain,
 		IsActive:       false,
 		CreatedAt:      now,
