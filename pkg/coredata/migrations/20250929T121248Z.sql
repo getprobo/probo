@@ -28,7 +28,7 @@ CREATE TABLE custom_domains (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-CREATE UNLOGGED TABLE certificate_cache (
+CREATE UNLOGGED TABLE cached_certificates (
     domain CITEXT PRIMARY KEY,
     certificate_pem TEXT NOT NULL,
     private_key_pem TEXT NOT NULL,
@@ -44,4 +44,4 @@ CREATE INDEX idx_custom_domains_ssl_expires ON custom_domains(ssl_expires_at)
     WHERE ssl_status = 'ACTIVE' AND is_active = true;
 CREATE INDEX idx_custom_domains_http_challenge_token ON custom_domains(http_challenge_token)
     WHERE http_challenge_token IS NOT NULL;
-CREATE INDEX idx_certificate_cache_expires ON certificate_cache(expires_at);
+CREATE INDEX idx_certificate_cache_expires ON cached_certificates(expires_at);
