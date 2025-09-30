@@ -39,7 +39,7 @@ func NewACMEChallengeHandler(
 	return &ACMEChallengeHandler{
 		pg:            pg,
 		encryptionKey: encryptionKey,
-		logger:        logger.Named("acme-challenge-handler"),
+		logger:        logger.Named("certmanager.acme-challenge-handler"),
 	}
 }
 
