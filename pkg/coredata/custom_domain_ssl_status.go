@@ -19,7 +19,6 @@ import (
 	"fmt"
 )
 
-// CustomDomainSSLStatus represents the SSL status of a custom domain
 type CustomDomainSSLStatus string
 
 const (
