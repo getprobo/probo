@@ -118,7 +118,7 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Conn, domain s
 		return fmt.Errorf("domain is not active")
 	}
 
-	if customDomain.SSLStatus == nil || *customDomain.SSLStatus != coredata.CustomDomainSSLStatusActive {
+	if customDomain.SSLStatus != coredata.CustomDomainSSLStatusActive {
 		return fmt.Errorf("domain does not have active SSL certificate")
 	}
 

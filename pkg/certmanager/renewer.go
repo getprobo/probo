@@ -24,7 +24,6 @@ import (
 	"github.com/getprobo/probo/pkg/crypto/cipher"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 )
 
 type (
@@ -136,7 +135,7 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 		return fmt.Errorf("cannot lock domain for renewal: %w", err)
 	}
 
-	if lockedDomain.SSLStatus == nil || *lockedDomain.SSLStatus != coredata.CustomDomainSSLStatusActive {
+	if lockedDomain.SSLStatus != coredata.CustomDomainSSLStatusActive {
 		r.logger.InfoCtx(
 			ctx,
 			"domain status changed, skipping renewal",
@@ -164,7 +163,7 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 		lockedDomain.HTTPChallengeKeyAuth = &challenge.KeyAuth
 		lockedDomain.HTTPChallengeURL = &challenge.URL
 		lockedDomain.HTTPOrderURL = &challenge.OrderURL
-		lockedDomain.SSLStatus = ref.Ref(coredata.CustomDomainSSLStatusRenewing)
+		lockedDomain.SSLStatus = coredata.CustomDomainSSLStatusRenewing
 
 		if err := lockedDomain.Update(ctx, conn, scope, r.encryptionKey); err != nil {
 			return fmt.Errorf("cannot update domain with renewal challenge: %w", err)
@@ -189,7 +188,7 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 	chainStr := string(cert.ChainPEM)
 	lockedDomain.SSLCertificateChain = &chainStr
 	lockedDomain.SSLExpiresAt = &cert.ExpiresAt
-	lockedDomain.SSLStatus = ref.Ref(coredata.CustomDomainSSLStatusActive)
+	lockedDomain.SSLStatus = coredata.CustomDomainSSLStatusActive
 
 	lockedDomain.HTTPChallengeToken = nil
 	lockedDomain.HTTPChallengeKeyAuth = nil

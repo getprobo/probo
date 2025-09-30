@@ -30,24 +30,24 @@ import (
 
 type (
 	CustomDomain struct {
-		ID                      gid.GID                `db:"id"`
-		OrganizationID          gid.GID                `db:"organization_id"`
-		Domain                  string                 `db:"domain"`
-		HTTPChallengeToken      *string                `db:"http_challenge_token"`
-		HTTPChallengeKeyAuth    *string                `db:"http_challenge_key_auth"`
-		HTTPChallengeURL        *string                `db:"http_challenge_url"`
-		HTTPOrderURL            *string                `db:"http_order_url"`
-		SSLCertificate          *tls.Certificate       `db:"-"` // Parsed certificate
-		SSLCertificatePEM       []byte                 `db:"-"` // Decrypted PEM
-		EncryptedSSLCertificate []byte                 `db:"encrypted_ssl_certificate"`
-		SSLPrivateKeyPEM        []byte                 `db:"-"` // Decrypted PEM
-		EncryptedSSLPrivateKey  []byte                 `db:"encrypted_ssl_private_key"`
-		SSLCertificateChain     *string                `db:"ssl_certificate_chain"`
-		SSLStatus               *CustomDomainSSLStatus `db:"ssl_status"`
-		SSLExpiresAt            *time.Time             `db:"ssl_expires_at"`
-		IsActive                bool                   `db:"is_active"`
-		CreatedAt               time.Time              `db:"created_at"`
-		UpdatedAt               time.Time              `db:"updated_at"`
+		ID                      gid.GID               `db:"id"`
+		OrganizationID          gid.GID               `db:"organization_id"`
+		Domain                  string                `db:"domain"`
+		HTTPChallengeToken      *string               `db:"http_challenge_token"`
+		HTTPChallengeKeyAuth    *string               `db:"http_challenge_key_auth"`
+		HTTPChallengeURL        *string               `db:"http_challenge_url"`
+		HTTPOrderURL            *string               `db:"http_order_url"`
+		SSLCertificate          *tls.Certificate      `db:"-"` // Parsed certificate
+		SSLCertificatePEM       []byte                `db:"-"` // Decrypted PEM
+		EncryptedSSLCertificate []byte                `db:"encrypted_ssl_certificate"`
+		SSLPrivateKeyPEM        []byte                `db:"-"` // Decrypted PEM
+		EncryptedSSLPrivateKey  []byte                `db:"encrypted_ssl_private_key"`
+		SSLCertificateChain     *string               `db:"ssl_certificate_chain"`
+		SSLStatus               CustomDomainSSLStatus `db:"ssl_status"`
+		SSLExpiresAt            *time.Time            `db:"ssl_expires_at"`
+		IsActive                bool                  `db:"is_active"`
+		CreatedAt               time.Time             `db:"created_at"`
+		UpdatedAt               time.Time             `db:"updated_at"`
 	}
 
 	CustomDomains []*CustomDomain
@@ -762,10 +762,10 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{
-		"statuses": []CustomDomainSSLStatus{
-			CustomDomainSSLStatusPending,
-			CustomDomainSSLStatusProvisioning,
-			CustomDomainSSLStatusRenewing,
+		"statuses": []string{
+			string(CustomDomainSSLStatusPending),
+			string(CustomDomainSSLStatusProvisioning),
+			string(CustomDomainSSLStatusRenewing),
 		},
 	}
 	maps.Copy(args, scope.SQLArguments())
