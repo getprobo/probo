@@ -24,8 +24,9 @@ import (
 	"github.com/getprobo/probo/pkg/probo"
 	"github.com/getprobo/probo/pkg/saferedirect"
 	"github.com/getprobo/probo/pkg/server/api"
+	"github.com/getprobo/probo/pkg/server/trust"
 	"github.com/getprobo/probo/pkg/server/web"
-	"github.com/getprobo/probo/pkg/trust"
+	trust_pkg "github.com/getprobo/probo/pkg/trust"
 	"github.com/getprobo/probo/pkg/usrmgr"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
@@ -37,7 +38,7 @@ type Config struct {
 	ExtraHeaderFields map[string]string
 	Probo             *probo.Service
 	Usrmgr            *usrmgr.Service
-	Trust             *trust.Service
+	Trust             *trust_pkg.Service
 	Auth              api.ConsoleAuthConfig
 	TrustAuth         api.TrustAuthConfig
 	ConnectorRegistry *connector.ConnectorRegistry
@@ -50,6 +51,7 @@ type Config struct {
 type Server struct {
 	apiServer         *api.Server
 	webServer         *web.Server
+	trustServer       *trust.Server
 	router            *chi.Mux
 	extraHeaderFields map[string]string
 }
@@ -73,8 +75,14 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
-	// Create web server for SPA
+	// Create web server for console SPA
 	webServer, err := web.NewServer()
+	if err != nil {
+		return nil, err
+	}
+
+	// Create trust server for trust SPA
+	trustServer, err := trust.NewServer()
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +93,7 @@ func NewServer(cfg Config) (*Server, error) {
 	server := &Server{
 		apiServer:         apiServer,
 		webServer:         webServer,
+		trustServer:       trustServer,
 		router:            router,
 		extraHeaderFields: cfg.ExtraHeaderFields,
 	}
@@ -107,7 +116,18 @@ func (s *Server) setupRoutes() {
 		s.apiServer.ServeHTTP(w, r)
 	}))
 
-	// All other routes go to the SPA frontend
+	// Trust routes go to the trust SPA
+	s.router.Route("/trust", func(r chi.Router) {
+		r.Mount("/", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			req.URL.Path = strings.TrimPrefix(req.URL.Path, "/trust")
+			if req.URL.Path == "" {
+				req.URL.Path = "/"
+			}
+			s.trustServer.ServeHTTP(w, req)
+		}))
+	})
+
+	// All other routes go to the console SPA frontend
 	s.router.Mount("/", s.webServer)
 }
 

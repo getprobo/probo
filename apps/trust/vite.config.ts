@@ -6,6 +6,10 @@ import { fileURLToPath, URL } from "node:url";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react({ babel: { plugins: ["relay"] } }), tailwindcss()],
+  build: {
+    assetsDir: "assets",
+  },
+  base: "/trust/",
   server: {
     port: 5174,
     proxy: {

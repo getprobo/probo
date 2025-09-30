@@ -69,7 +69,7 @@ test-bench: TEST_FLAGS+=-bench=.
 test-bench: test ## Run benchmark tests
 
 .PHONY: build
-build: @probo/console bin/probod
+build: @probo/console @probo/trust bin/probod
 
 .PHONY: sbom-docker
 sbom-docker: docker-build
@@ -120,6 +120,12 @@ bin/probod: pkg/server/api/console/v1/schema/schema.go \
 	$(NPM) --workspace $@ run check
 	$(NPM) --workspace $@ run build
 
+.PHONY: @probo/trust
+@probo/trust: NODE_ENV=production
+@probo/trust:
+	$(NPM) --workspace $@ run check
+	$(NPM) --workspace $@ run build
+
 pkg/server/api/console/v1/schema/schema.go \
 pkg/server/api/console/v1/types/types.go \
 pkg/server/api/console/v1/v1_resolver.go: pkg/server/api/console/v1/gqlgen.yaml pkg/server/api/console/v1/schema.graphql
@@ -149,7 +155,7 @@ fmt-go: ## Format Go code
 clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf bin/*
 	$(RM) -rf node_modules
-	$(RM) -rf apps/console/{dist,node_modules}
+	$(RM) -rf apps/{console,trust}/{dist,node_modules}
 	$(RM) -rf sbom-docker.json sbom.json
 	$(RM) -rf coverage.out coverage.html
 
@@ -176,4 +182,3 @@ goreleaser-snapshot: ## Build a snapshot release with goreleaser
 .PHONY: goreleaser-check
 goreleaser-check: ## Check goreleaser configuration
 	goreleaser check
-

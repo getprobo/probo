@@ -12,38 +12,9 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package web
+package truststatics
 
-import (
-	"net/http"
+import "embed"
 
-	"github.com/getprobo/probo/apps/console"
-	"github.com/getprobo/probo/pkg/server/statichandler"
-)
-
-type Server struct {
-	*statichandler.Server
-}
-
-func NewServer() (*Server, error) {
-	gzipOptions := statichandler.GzipOptions{
-		EnableFileTypeCheck: false,
-	}
-
-	spaServer, err := statichandler.NewServer(console.StaticFiles, "dist", gzipOptions)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Server{
-		Server: spaServer,
-	}, nil
-}
-
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.Server.ServeHTTP(w, r)
-}
-
-func (s *Server) ServeSPA(w http.ResponseWriter, r *http.Request) {
-	s.Server.ServeSPA(w, r)
-}
+//go:embed dist
+var StaticFiles embed.FS

@@ -12,12 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package web
+// Package trust provides functionality for serving the trust center SPA frontend.
+package trust
 
 import (
 	"net/http"
 
-	"github.com/getprobo/probo/apps/console"
+	truststatics "github.com/getprobo/probo/apps/trust"
 	"github.com/getprobo/probo/pkg/server/statichandler"
 )
 
@@ -27,10 +28,11 @@ type Server struct {
 
 func NewServer() (*Server, error) {
 	gzipOptions := statichandler.GzipOptions{
-		EnableFileTypeCheck: false,
+		EnableFileTypeCheck: true,
+		FileTypes:           []string{".js", ".css", ".html"},
 	}
 
-	spaServer, err := statichandler.NewServer(console.StaticFiles, "dist", gzipOptions)
+	spaServer, err := statichandler.NewServer(truststatics.StaticFiles, "dist", gzipOptions)
 	if err != nil {
 		return nil, err
 	}
