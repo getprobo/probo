@@ -75,10 +75,10 @@ func TestEncodeCertificate(t *testing.T) {
 
 func TestEncodePrivateKey(t *testing.T) {
 	tests := []struct {
-		name          string
-		generateKey   func() (crypto.Signer, error)
-		expectedType  string
-		parseFunc     func([]byte) (crypto.Signer, error)
+		name         string
+		generateKey  func() (crypto.Signer, error)
+		expectedType string
+		parseFunc    func([]byte) (crypto.Signer, error)
 	}{
 		{
 			name: "ECDSA P256",
