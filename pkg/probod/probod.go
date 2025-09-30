@@ -16,6 +16,7 @@ package probod
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net"
@@ -26,9 +27,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/agents"
 	"github.com/getprobo/probo/pkg/awsconfig"
+	"github.com/getprobo/probo/pkg/certmanager"
 	"github.com/getprobo/probo/pkg/connector"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/cipher"
+	"github.com/getprobo/probo/pkg/crypto/keys"
 	"github.com/getprobo/probo/pkg/crypto/passwdhash"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/mailer"
@@ -46,6 +49,7 @@ import (
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/kit/unit"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 )
 
 type (
@@ -65,6 +69,7 @@ type (
 		Connectors    []connectorConfig    `json:"connectors"`
 		OpenAI        openaiConfig         `json:"openai"`
 		ChromeDPAddr  string               `json:"chrome-dp-addr"`
+		CustomDomains customDomainsConfig  `json:"custom-domains"`
 	}
 )
 
@@ -121,6 +126,15 @@ func New() *Implm {
 				SenderName:  "Probo",
 				SMTP: smtpConfig{
 					Addr: "localhost:1025",
+				},
+			},
+			CustomDomains: customDomainsConfig{
+				RenewalInterval:   3600,
+				ProvisionInterval: 30,
+				ACME: acmeConfig{
+					Directory: "https://acme-v02.api.letsencrypt.org/directory",
+					Email:     "admin@getprobo.com",
+					KeyType:   "EC256",
 				},
 			},
 		},
@@ -242,6 +256,20 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create usrmgr service: %w", err)
 	}
 
+	var acmeService *certmanager.ACMEService
+	if impl.cfg.CustomDomains.ACME.Directory != "" {
+		acmeService, err = certmanager.NewACMEService(
+			impl.cfg.CustomDomains.ACME.Email,
+			keys.Type(impl.cfg.CustomDomains.ACME.KeyType),
+			impl.cfg.CustomDomains.ACME.Directory,
+			impl.cfg.CustomDomains.ACME.InsecureTLS,
+			l,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to initialize ACME service: %w", err)
+		}
+	}
+
 	proboService, err := probo.NewService(
 		ctx,
 		impl.cfg.EncryptionKey,
@@ -254,6 +282,8 @@ func (impl *Implm) Run(
 		agentConfig,
 		html2pdfConverter,
 		usrmgrService,
+		acmeService,
+		l.Named("probo"),
 	)
 	if err != nil {
 		return fmt.Errorf("cannot create probo service: %w", err)
@@ -280,6 +310,8 @@ func (impl *Implm) Run(
 			Agent:             agent,
 			SafeRedirect:      &saferedirect.SafeRedirect{AllowedHost: impl.cfg.Hostname},
 			Logger:            l.Named("http.server"),
+			PgClient:          pgClient,
+			EncryptionKey:     impl.cfg.EncryptionKey,
 			Auth: api.ConsoleAuthConfig{
 				CookieName:      impl.cfg.Auth.Cookie.Name,
 				CookieDomain:    impl.cfg.Auth.Cookie.Domain,
@@ -339,11 +371,22 @@ func (impl *Implm) Run(
 		}
 	}()
 
+	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
+	defer stopTrustCenterServer()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := impl.runTrustCenterServer(trustCenterServerCtx, l, r, tp, pgClient, serverHandler, acmeService); err != nil {
+			cancel(fmt.Errorf("trust center server crashed: %w", err))
+		}
+	}()
+
 	<-ctx.Done()
 
 	stopMailer()
 	stopExportJobExporter()
 	stopApiServer()
+	stopTrustCenterServer()
 
 	wg.Wait()
 
@@ -434,5 +477,171 @@ func (impl *Implm) runApiServer(
 	}
 
 	span.AddEvent("API server shutdown complete")
+	return ctx.Err()
+}
+
+func (impl *Implm) runTrustCenterServer(
+	ctx context.Context,
+	l *log.Logger,
+	r prometheus.Registerer,
+	tp trace.TracerProvider,
+	pgClient *pg.Client,
+	trustRouter http.Handler,
+	acmeService *certmanager.ACMEService,
+) error {
+	tracer := tp.Tracer("github.com/getprobo/probo/pkg/probod")
+	ctx, span := tracer.Start(ctx, "probod.runTrustCenterServer")
+	defer span.End()
+
+	certSelector := certmanager.NewSelector(pgClient, impl.cfg.EncryptionKey)
+
+	warmer := certmanager.NewCacheStore(pgClient, impl.cfg.EncryptionKey, l)
+	if err := warmer.WarmCache(ctx); err != nil {
+		span.RecordError(err)
+		l.ErrorCtx(ctx, "cannot warm certificate cache", log.Error(err))
+	}
+
+	renewalInterval := time.Duration(impl.cfg.CustomDomains.RenewalInterval) * time.Second
+	if renewalInterval == 0 {
+		renewalInterval = time.Hour
+	}
+
+	renewer := certmanager.NewRenewer(pgClient, acmeService, impl.cfg.EncryptionKey, renewalInterval, l)
+
+	certProvisioningInterval := time.Duration(impl.cfg.CustomDomains.ProvisionInterval) * time.Second
+	if certProvisioningInterval == 0 {
+		certProvisioningInterval = 30 * time.Second
+	}
+	certProvisioner := certmanager.NewProvisioner(pgClient, acmeService, impl.cfg.EncryptionKey, certProvisioningInterval, l)
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	l.Info("starting trust center services")
+	span.AddEvent("Trust center services starting")
+
+	g.Go(
+		func() error {
+			l.Info("starting certificate renewer")
+			return renewer.Run(ctx)
+		},
+	)
+
+	g.Go(
+		func() error {
+			l.Info("starting certificate provisioner")
+			return certProvisioner.Run(ctx)
+		},
+	)
+
+	httpACMEHandler := certmanager.NewACMEChallengeHandler(
+		pgClient,
+		impl.cfg.EncryptionKey,
+		l.Named("http_acme_handler"),
+	)
+
+	httpServer := httpserver.NewServer(
+		":80",
+		httpACMEHandler.Handle(http.NotFoundHandler()),
+		httpserver.WithLogger(l),
+		httpserver.WithRegisterer(r),
+		httpserver.WithTracerProvider(tp),
+	)
+
+	g.Go(
+		func() error {
+			l.InfoCtx(ctx, "starting HTTP server for ACME challenges", log.String("addr", httpServer.Addr))
+			span.AddEvent("HTTP server starting")
+
+			listener, err := net.Listen("tcp", httpServer.Addr)
+			if err != nil {
+				return fmt.Errorf("cannot listen on %q: %w", httpServer.Addr, err)
+			}
+			defer listener.Close()
+
+			if err := httpServer.Serve(listener); err != nil && err != http.ErrServerClosed {
+				return fmt.Errorf("cannot serve http requests: %w", err)
+			}
+			return nil
+		},
+	)
+
+	acmeHandler := certmanager.NewACMEChallengeHandler(
+		pgClient,
+		impl.cfg.EncryptionKey,
+		l.Named("acme_handler"),
+	)
+
+	handler := acmeHandler.Handle(trustRouter)
+
+	httpsServer := httpserver.NewServer(
+		":443",
+		handler,
+		httpserver.WithLogger(l),
+		httpserver.WithRegisterer(r),
+		httpserver.WithTracerProvider(tp),
+	)
+
+	httpsServer.TLSConfig = &tls.Config{
+		GetCertificate: certSelector.GetCertificate,
+		MinVersion:     tls.VersionTLS12,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		},
+	}
+	httpsServer.ReadTimeout = 30 * time.Second
+	httpsServer.WriteTimeout = 30 * time.Second
+
+	g.Go(
+		func() error {
+			l.InfoCtx(ctx, "starting trust center https server", log.String("addr", httpsServer.Addr))
+			span.AddEvent("HTTPS server starting")
+
+			listener, err := net.Listen("tcp", httpsServer.Addr)
+			if err != nil {
+				return fmt.Errorf("cannot listen on %q: %w", httpsServer.Addr, err)
+			}
+			defer listener.Close()
+
+			if err := httpsServer.ServeTLS(listener, "", ""); err != nil && err != http.ErrServerClosed {
+				return fmt.Errorf("cannot serve https requests: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	l.Info("trust center servers started")
+	span.AddEvent("Trust center servers started")
+
+	go func() {
+		<-ctx.Done()
+
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		l.InfoCtx(ctx, "shutting down trust center servers...")
+		span.AddEvent("Trust center servers shutting down")
+
+		if err := httpsServer.Shutdown(shutdownCtx); err != nil {
+			span.RecordError(err)
+			l.ErrorCtx(ctx, "cannot shutdown HTTPS server", log.Error(err))
+		}
+
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			span.RecordError(err)
+			l.ErrorCtx(ctx, "cannot shutdown HTTP server", log.Error(err))
+		}
+
+		span.AddEvent("Trust center servers shutdown complete")
+	}()
+
+	if err := g.Wait(); err != nil {
+		span.RecordError(err)
+		return err
+	}
+
 	return ctx.Err()
 }
