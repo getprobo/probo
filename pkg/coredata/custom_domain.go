@@ -756,13 +756,18 @@ FROM
 	custom_domains
 WHERE
 	%s
-	AND http_challenge_token IS NOT NULL
-	AND ssl_status IN ('PROVISIONING', 'RENEWING')
+	AND ssl_status = ANY(@statuses)
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{}
+	args := pgx.NamedArgs{
+		"statuses": []CustomDomainSSLStatus{
+			CustomDomainSSLStatusPending,
+			CustomDomainSSLStatusProvisioning,
+			CustomDomainSSLStatusRenewing,
+		},
+	}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
