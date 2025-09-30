@@ -21,6 +21,7 @@ type CustomDomainOrderField string
 const (
 	CustomDomainOrderFieldCreatedAt CustomDomainOrderField = "CREATED_AT"
 	CustomDomainOrderFieldDomain    CustomDomainOrderField = "DOMAIN"
+	CustomDomainOrderFieldUpdatedAt CustomDomainOrderField = "UPDATED_AT"
 )
 
 func (f CustomDomainOrderField) Column() string {
@@ -29,6 +30,8 @@ func (f CustomDomainOrderField) Column() string {
 		return "created_at"
 	case CustomDomainOrderFieldDomain:
 		return "domain"
+	case CustomDomainOrderFieldUpdatedAt:
+		return "updated_at"
 	default:
 		panic(fmt.Sprintf("unsupported order by: %s", f))
 	}
