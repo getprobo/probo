@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+# [0.64.0] - 2025-09-30
+
+### Added
+- Add trust center v2
+- Add optional watermark and signatures in pdf export
+
+### Changed
+- Remove description from pdf export
+
+
 # [0.63.1] - 2025-09-26
 
 ### Fixed
