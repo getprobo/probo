@@ -28,9 +28,9 @@ import (
 
 type (
 	Selector struct {
-		pg               *pg.Client
-		cache            sync.Map
-		encryptionKey    cipher.EncryptionKey
+		pg            *pg.Client
+		cache         sync.Map
+		encryptionKey cipher.EncryptionKey
 	}
 )
 
@@ -43,7 +43,6 @@ func NewSelector(
 		encryptionKey: encryptionKey,
 	}
 }
-
 
 func (s *Selector) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domain := hello.ServerName
@@ -114,10 +113,6 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Conn, domain s
 		return fmt.Errorf("cannot load domain: %w", err)
 	}
 
-	if !customDomain.IsActive {
-		return fmt.Errorf("domain is not active")
-	}
-
 	if customDomain.SSLStatus != coredata.CustomDomainSSLStatusActive {
 		return fmt.Errorf("domain does not have active SSL certificate")
 	}
@@ -152,7 +147,6 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Conn, domain s
 
 	return nil
 }
-
 
 func (s *Selector) ClearCache() {
 	s.cache.Range(

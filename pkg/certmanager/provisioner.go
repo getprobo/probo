@@ -130,10 +130,8 @@ func (p *Provisioner) provisionDomainCertificate(
 			return err
 		}
 
-		// Update domain with challenge details and set to PROVISIONING
-		scope := coredata.NewScope(domain.OrganizationID.TenantID())
 		fullDomain := &coredata.CustomDomain{}
-		if err := fullDomain.LoadByIDForUpdate(ctx, conn, scope, p.encryptionKey, domain.ID); err != nil {
+		if err := fullDomain.LoadByIDForUpdate(ctx, conn, coredata.NewNoScope(), p.encryptionKey, domain.ID); err != nil {
 			return fmt.Errorf("cannot load domain for update: %w", err)
 		}
 
@@ -143,7 +141,7 @@ func (p *Provisioner) provisionDomainCertificate(
 		fullDomain.HTTPOrderURL = &challenge.OrderURL
 		fullDomain.SSLStatus = coredata.CustomDomainSSLStatusProvisioning
 
-		if err := fullDomain.Update(ctx, conn, scope, p.encryptionKey); err != nil {
+		if err := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); err != nil {
 			return fmt.Errorf("failed to update domain with challenge: %w", err)
 		}
 
@@ -157,7 +155,6 @@ func (p *Provisioner) provisionDomainCertificate(
 		return nil
 	}
 
-	// Domain already has challenge details, complete it
 	challenge := &HTTPChallenge{
 		Domain:   domain.Domain,
 		Token:    *domain.HTTPChallengeToken,
@@ -185,9 +182,8 @@ func (p *Provisioner) provisionDomainCertificate(
 		log.Time("expires_at", cert.ExpiresAt),
 	)
 
-	scope := coredata.NewScope(domain.OrganizationID.TenantID())
 	fullDomain := &coredata.CustomDomain{}
-	if err := fullDomain.LoadByID(ctx, conn, scope, p.encryptionKey, domain.ID); err != nil {
+	if err := fullDomain.LoadByID(ctx, conn, coredata.NewNoScope(), p.encryptionKey, domain.ID); err != nil {
 		return fmt.Errorf("cannot load domain: %w", err)
 	}
 
@@ -203,7 +199,7 @@ func (p *Provisioner) provisionDomainCertificate(
 	fullDomain.HTTPChallengeURL = nil
 	fullDomain.HTTPOrderURL = nil
 
-	if err := fullDomain.Update(ctx, conn, scope, p.encryptionKey); err != nil {
+	if err := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); err != nil {
 		return fmt.Errorf("cannot update domain: %w", err)
 	}
 
