@@ -26,4 +26,5 @@ type acmeConfig struct {
 	Email       string `json:"email"`
 	KeyType     string `json:"key-type"`
 	InsecureTLS bool   `json:"insecure-tls"`
+	AccountKey  string `json:"account-key"`
 }

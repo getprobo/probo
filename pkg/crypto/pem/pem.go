@@ -12,7 +12,6 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Package pem provides utilities for encoding certificates and keys in PEM format
 package pem
 
 import (
@@ -25,15 +24,21 @@ import (
 	"fmt"
 )
 
+const (
+	BlockTypeCertificate     = "CERTIFICATE"
+	BlockTypeECPrivateKey    = "EC PRIVATE KEY"
+	BlockTypeRSAPrivateKey   = "RSA PRIVATE KEY"
+	BlockTypePKCS8PrivateKey = "PRIVATE KEY"
+)
+
 func EncodeCertificate(der []byte) []byte {
 	block := &pem.Block{
-		Type:  "CERTIFICATE",
+		Type:  BlockTypeCertificate,
 		Bytes: der,
 	}
 	return pem.EncodeToMemory(block)
 }
 
-// EncodeCertificateChain encodes multiple DER-encoded certificates into a single PEM chain
 func EncodeCertificateChain(derCerts [][]byte) []byte {
 	var chain []byte
 	for _, der := range derCerts {
@@ -53,17 +58,17 @@ func EncodePrivateKey(key crypto.Signer) ([]byte, error) {
 			return nil, fmt.Errorf("cannot marshal EC private key: %w", err)
 		}
 		keyDER = der
-		keyType = "EC PRIVATE KEY"
+		keyType = BlockTypeECPrivateKey
 	case *rsa.PrivateKey:
 		keyDER = x509.MarshalPKCS1PrivateKey(k)
-		keyType = "RSA PRIVATE KEY"
+		keyType = BlockTypeRSAPrivateKey
 	case ed25519.PrivateKey:
 		der, err := x509.MarshalPKCS8PrivateKey(k)
 		if err != nil {
 			return nil, fmt.Errorf("cannot marshal ED25519 private key: %w", err)
 		}
 		keyDER = der
-		keyType = "PRIVATE KEY"
+		keyType = BlockTypePKCS8PrivateKey
 	default:
 		return nil, fmt.Errorf("unsupported key type: %T", key)
 	}
@@ -74,4 +79,30 @@ func EncodePrivateKey(key crypto.Signer) ([]byte, error) {
 	}
 
 	return pem.EncodeToMemory(block), nil
+}
+
+func DecodePrivateKey(pemData []byte) (crypto.Signer, error) {
+	block, _ := pem.Decode(pemData)
+	if block == nil {
+		return nil, fmt.Errorf("cannot to decode PEM block")
+	}
+
+	switch block.Type {
+	case BlockTypeECPrivateKey:
+		return x509.ParseECPrivateKey(block.Bytes)
+	case BlockTypeRSAPrivateKey:
+		return x509.ParsePKCS1PrivateKey(block.Bytes)
+	case BlockTypePKCS8PrivateKey:
+		key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse PKCS8 private key: %w", err)
+		}
+		signer, ok := key.(crypto.Signer)
+		if !ok {
+			return nil, fmt.Errorf("key is not a crypto.Signer")
+		}
+		return signer, nil
+	default:
+		return nil, fmt.Errorf("unsupported PEM block type: %s", block.Type)
+	}
 }
