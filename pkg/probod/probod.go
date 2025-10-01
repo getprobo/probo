@@ -309,9 +309,8 @@ func (impl *Implm) Run(
 			ConnectorRegistry: defaultConnectorRegistry,
 			Agent:             agent,
 			SafeRedirect:      &saferedirect.SafeRedirect{AllowedHost: impl.cfg.Hostname},
+			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
 			Logger:            l.Named("http.server"),
-			PgClient:          pgClient,
-			EncryptionKey:     impl.cfg.EncryptionKey,
 			Auth: api.ConsoleAuthConfig{
 				CookieName:      impl.cfg.Auth.Cookie.Name,
 				CookieDomain:    impl.cfg.Auth.Cookie.Domain,
