@@ -334,3 +334,28 @@ func (s *Service) commitSuccessfulExport(ctx context.Context, exportJob *coredat
 		},
 	)
 }
+
+func (s *Service) LoadOrganizationByDomain(ctx context.Context, domain string) (gid.GID, error) {
+	var organizationID gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var customDomain coredata.CustomDomain
+			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), s.encryptionKey, domain); err != nil {
+				return fmt.Errorf("cannot load custom domain: %w", err)
+			}
+
+			var org coredata.Organization
+			if err := org.LoadByCustomDomainID(ctx, conn, coredata.NewNoScope(), customDomain.ID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			organizationID = org.ID
+
+			return nil
+		},
+	)
+
+	return organizationID, err
+}

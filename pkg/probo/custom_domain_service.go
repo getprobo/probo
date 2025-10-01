@@ -22,7 +22,6 @@ import (
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/cipher"
 	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/page"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 )
@@ -61,13 +60,23 @@ func (s *CustomDomainService) CreateCustomDomain(
 ) (*coredata.CustomDomain, error) {
 	var domain *coredata.CustomDomain
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			domain = coredata.NewCustomDomain(req.OrganizationID, req.Domain)
+		func(tx pg.Conn) error {
+			domain = coredata.NewCustomDomain(s.svc.scope.GetTenantID(), req.Domain)
 
-			if err := domain.Insert(ctx, conn, s.svc.scope, s.encryptionKey); err != nil {
+			if err := domain.Insert(ctx, tx, s.svc.scope, s.encryptionKey); err != nil {
 				return fmt.Errorf("cannot insert custom domain: %w", err)
+			}
+
+			var org coredata.Organization
+			if err := org.LoadByID(ctx, tx, s.svc.scope, req.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			org.CustomDomainID = &domain.ID
+			if err := org.Update(ctx, s.svc.scope, tx); err != nil {
+				return fmt.Errorf("cannot update organization: %w", err)
 			}
 
 			return nil
@@ -83,18 +92,32 @@ func (s *CustomDomainService) CreateCustomDomain(
 
 func (s *CustomDomainService) DeleteCustomDomain(
 	ctx context.Context,
-	domainID gid.GID,
+	organizationID gid.GID,
 ) error {
-	return s.svc.pg.WithConn(
+	return s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
+		func(tx pg.Conn) error {
+			var org coredata.Organization
+			if err := org.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			if org.CustomDomainID == nil {
+				return fmt.Errorf("organization has no custom domain")
+			}
+
 			domain := &coredata.CustomDomain{}
-			if err := domain.LoadByID(ctx, conn, s.svc.scope, s.encryptionKey, domainID); err != nil {
+			if err := domain.LoadByID(ctx, tx, s.svc.scope, s.encryptionKey, *org.CustomDomainID); err != nil {
 				return fmt.Errorf("cannot load domain: %w", err)
 			}
 
-			if err := domain.Delete(ctx, conn, s.svc.scope); err != nil {
+			if err := domain.Delete(ctx, tx, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot delete domain: %w", err)
+			}
+
+			org.CustomDomainID = nil
+			if err := org.Update(ctx, s.svc.scope, tx); err != nil {
+				return fmt.Errorf("cannot update organization: %w", err)
 			}
 
 			return nil
@@ -102,19 +125,27 @@ func (s *CustomDomainService) DeleteCustomDomain(
 	)
 }
 
-func (s *CustomDomainService) ListOrganizationDomains(
+func (s *CustomDomainService) GetOrganizationCustomDomain(
 	ctx context.Context,
 	organizationID gid.GID,
-	cursor *page.Cursor[coredata.CustomDomainOrderField],
-) (*page.Page[*coredata.CustomDomain, coredata.CustomDomainOrderField], error) {
-	var domains coredata.CustomDomains
+) (*coredata.CustomDomain, error) {
+	var domain *coredata.CustomDomain
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			err := domains.LoadByOrganizationID(ctx, conn, s.svc.scope, s.encryptionKey, organizationID, cursor)
-			if err != nil {
-				return fmt.Errorf("cannot list domains: %w", err)
+			var org coredata.Organization
+			if err := org.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			if org.CustomDomainID == nil {
+				return nil
+			}
+
+			domain = &coredata.CustomDomain{}
+			if err := domain.LoadByID(ctx, conn, s.svc.scope, s.encryptionKey, *org.CustomDomainID); err != nil {
+				return fmt.Errorf("cannot load custom domain: %w", err)
 			}
 
 			return nil
@@ -125,5 +156,5 @@ func (s *CustomDomainService) ListOrganizationDomains(
 		return nil, err
 	}
 
-	return page.NewPage(domains, cursor), nil
+	return domain, nil
 }
