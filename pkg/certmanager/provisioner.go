@@ -75,37 +75,40 @@ func (p *Provisioner) Run(ctx context.Context) error {
 }
 
 func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
-	return p.pg.WithConn(ctx, func(conn pg.Conn) error {
-		var domains coredata.CustomDomains
-		if err := domains.ListDomainsWithPendingHTTPChallenges(ctx, conn, coredata.NewNoScope()); err != nil {
-			return fmt.Errorf("cannot load domains with pending challenges: %w", err)
-		}
+	return p.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var domains coredata.CustomDomains
+			if err := domains.ListDomainsWithPendingHTTPChallenges(ctx, conn, coredata.NewNoScope()); err != nil {
+				return fmt.Errorf("cannot load domains with pending challenges: %w", err)
+			}
 
-		if len(domains) == 0 {
+			if len(domains) == 0 {
+				return nil
+			}
+
+			p.logger.InfoCtx(ctx, "found domains needing SSL provisioning", log.Int("count", len(domains)))
+
+			for _, domain := range domains {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				default:
+				}
+
+				if err := p.provisionDomainCertificate(ctx, conn, domain); err != nil {
+					p.logger.ErrorCtx(
+						ctx,
+						"cannot provision certificate for domain",
+						log.String("domain", domain.Domain),
+						log.Error(err),
+					)
+				}
+			}
+
 			return nil
-		}
-
-		p.logger.InfoCtx(ctx, "found domains needing SSL provisioning", log.Int("count", len(domains)))
-
-		for _, domain := range domains {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-			}
-
-			if err := p.provisionDomainCertificate(ctx, conn, domain); err != nil {
-				p.logger.ErrorCtx(
-					ctx,
-					"cannot provision certificate for domain",
-					log.String("domain", domain.Domain),
-					log.Error(err),
-				)
-			}
-		}
-
-		return nil
-	})
+		},
+	)
 }
 
 func (p *Provisioner) provisionDomainCertificate(
