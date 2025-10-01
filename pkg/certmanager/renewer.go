@@ -128,10 +128,8 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 }
 
 func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredata.CustomDomain) error {
-	scope := coredata.NewScope(domain.OrganizationID.TenantID())
-
 	lockedDomain := &coredata.CustomDomain{}
-	if err := lockedDomain.LoadByIDForUpdate(ctx, conn, scope, r.encryptionKey, domain.ID); err != nil {
+	if err := lockedDomain.LoadByIDForUpdate(ctx, conn, coredata.NewNoScope(), r.encryptionKey, domain.ID); err != nil {
 		return fmt.Errorf("cannot lock domain for renewal: %w", err)
 	}
 
@@ -166,7 +164,7 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 			lockedDomain.HTTPOrderURL = &challenge.OrderURL
 			lockedDomain.SSLStatus = coredata.CustomDomainSSLStatusRenewing
 
-			if err := lockedDomain.Update(ctx, conn, scope, r.encryptionKey); err != nil {
+			if err := lockedDomain.Update(ctx, conn, coredata.NewNoScope(), r.encryptionKey); err != nil {
 				return fmt.Errorf("cannot update domain with renewal challenge: %w", err)
 			}
 
@@ -195,7 +193,7 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 	lockedDomain.HTTPChallengeURL = nil
 	lockedDomain.HTTPOrderURL = nil
 
-	if err := lockedDomain.Update(ctx, conn, scope, r.encryptionKey); err != nil {
+	if err := lockedDomain.Update(ctx, conn, coredata.NewNoScope(), r.encryptionKey); err != nil {
 		return fmt.Errorf("cannot update domain with renewed certificate: %w", err)
 	}
 

@@ -95,8 +95,7 @@ func (w *CacheStore) WarmCache(ctx context.Context) error {
 
 func (w *CacheStore) warmDomain(ctx context.Context, conn pg.Conn, domain *coredata.CustomDomain) error {
 	var loadedDomain coredata.CustomDomain
-	scope := coredata.NewScope(domain.OrganizationID.TenantID())
-	if err := loadedDomain.LoadByID(ctx, conn, scope, w.encryptionKey, domain.ID); err != nil {
+	if err := loadedDomain.LoadByID(ctx, conn, coredata.NewNoScope(), w.encryptionKey, domain.ID); err != nil {
 		return fmt.Errorf("cannot load domain with decrypted values: %w", err)
 	}
 
