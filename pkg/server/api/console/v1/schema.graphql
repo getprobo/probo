@@ -139,17 +139,11 @@ enum AuditState
       value: "github.com/getprobo/probo/pkg/coredata.AuditStateInProgress"
     )
   COMPLETED
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditStateCompleted"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AuditStateCompleted")
   REJECTED
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditStateRejected"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AuditStateRejected")
   OUTDATED
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditStateOutdated"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AuditStateOutdated")
 }
 
 enum TrustCenterVisibility
@@ -169,7 +163,9 @@ enum TrustCenterVisibility
 }
 
 enum NonconformityStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityStatus") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.NonconformityStatus"
+  ) {
   OPEN
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.NonconformityStatusOpen"
@@ -201,7 +197,9 @@ enum ObligationStatus
 }
 
 enum ContinualImprovementStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatus") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatus"
+  ) {
   OPEN
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatusOpen"
@@ -217,7 +215,9 @@ enum ContinualImprovementStatus
 }
 
 enum ContinualImprovementPriority
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriority") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriority"
+  ) {
   LOW
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriorityLow"
@@ -233,7 +233,9 @@ enum ContinualImprovementPriority
 }
 
 enum ProcessingActivitySpecialOrCriminalData
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalData") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalData"
+  ) {
   YES
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataYes"
@@ -249,7 +251,9 @@ enum ProcessingActivitySpecialOrCriminalData
 }
 
 enum ProcessingActivityLawfulBasis
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasis") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasis"
+  ) {
   LEGITIMATE_INTEREST
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisLegitimateInterest"
@@ -277,7 +281,9 @@ enum ProcessingActivityLawfulBasis
 }
 
 enum ProcessingActivityTransferSafeguards
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguards") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguards"
+  ) {
   STANDARD_CONTRACTUAL_CLAUSES
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsStandardContractualClauses"
@@ -305,7 +311,9 @@ enum ProcessingActivityTransferSafeguards
 }
 
 enum ProcessingActivityDataProtectionImpactAssessment
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessment") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessment"
+  ) {
   NEEDED
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessmentNeeded"
@@ -317,7 +325,9 @@ enum ProcessingActivityDataProtectionImpactAssessment
 }
 
 enum ProcessingActivityTransferImpactAssessment
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessment") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessment"
+  ) {
   NEEDED
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessmentNeeded"
@@ -1036,7 +1046,9 @@ enum AuditOrderField
 }
 
 enum NonconformityOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldCreatedAt"
@@ -1060,7 +1072,9 @@ enum NonconformityOrderField
 }
 
 enum ObligationOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ObligationOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ObligationOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldCreatedAt"
@@ -1080,7 +1094,9 @@ enum ObligationOrderField
 }
 
 enum ContinualImprovementOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldCreatedAt"
@@ -1104,7 +1120,9 @@ enum ContinualImprovementOrderField
 }
 
 enum ProcessingActivityOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderFieldCreatedAt"
@@ -1116,7 +1134,9 @@ enum ProcessingActivityOrderField
 }
 
 enum TrustCenterAccessOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderFieldCreatedAt"
@@ -1132,7 +1152,9 @@ enum TrustCenterDocumentAccessOrderField
 }
 
 enum TrustCenterReferenceOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderField"
+  ) {
   NAME
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldName"
@@ -1150,21 +1172,15 @@ enum TrustCenterReferenceOrderField
 enum SnapshotsType
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.SnapshotsType") {
   RISKS
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeRisks"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeRisks")
   VENDORS
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeVendors"
     )
   ASSETS
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeAssets"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeAssets")
   DATA
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeData"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeData")
   NONCONFORMITIES
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeNonconformities"
@@ -1648,6 +1664,13 @@ type Organization implements Node {
 
   trustCenter: TrustCenter @goField(forceResolver: true)
 
+  customDomains(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): CustomDomainConnection! @goField(forceResolver: true)
+
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -1700,7 +1723,8 @@ type Vendor implements Node {
     orderBy: VendorComplianceReportOrder
   ): VendorComplianceReportConnection! @goField(forceResolver: true)
 
-  businessAssociateAgreement: VendorBusinessAssociateAgreement @goField(forceResolver: true)
+  businessAssociateAgreement: VendorBusinessAssociateAgreement
+    @goField(forceResolver: true)
   dataPrivacyAgreement: VendorDataPrivacyAgreement @goField(forceResolver: true)
 
   contacts(
@@ -2281,9 +2305,10 @@ type TrustCenterReference implements Node {
   updatedAt: Datetime!
 }
 
-type TrustCenterReferenceConnection @goModel(
+type TrustCenterReferenceConnection
+  @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterReferenceConnection"
-  ){
+  ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [TrustCenterReferenceEdge!]!
   pageInfo: PageInfo!
@@ -2615,9 +2640,7 @@ type Mutation {
     input: DeleteOrganizationInput!
   ): DeleteOrganizationPayload!
 
-  updateTrustCenter(
-    input: UpdateTrustCenterInput!
-  ): UpdateTrustCenterPayload!
+  updateTrustCenter(input: UpdateTrustCenterInput!): UpdateTrustCenterPayload!
 
   uploadTrustCenterNDA(
     input: UploadTrustCenterNDAInput!
@@ -2669,14 +2692,26 @@ type Mutation {
   deleteVendor(input: DeleteVendorInput!): DeleteVendorPayload!
 
   # Vendor Contact mutations
-  createVendorContact(input: CreateVendorContactInput!): CreateVendorContactPayload!
-  updateVendorContact(input: UpdateVendorContactInput!): UpdateVendorContactPayload!
-  deleteVendorContact(input: DeleteVendorContactInput!): DeleteVendorContactPayload!
+  createVendorContact(
+    input: CreateVendorContactInput!
+  ): CreateVendorContactPayload!
+  updateVendorContact(
+    input: UpdateVendorContactInput!
+  ): UpdateVendorContactPayload!
+  deleteVendorContact(
+    input: DeleteVendorContactInput!
+  ): DeleteVendorContactPayload!
 
   # Vendor Service mutations
-  createVendorService(input: CreateVendorServiceInput!): CreateVendorServicePayload!
-  updateVendorService(input: UpdateVendorServiceInput!): UpdateVendorServicePayload!
-  deleteVendorService(input: DeleteVendorServiceInput!): DeleteVendorServicePayload!
+  createVendorService(
+    input: CreateVendorServiceInput!
+  ): CreateVendorServicePayload!
+  updateVendorService(
+    input: UpdateVendorServiceInput!
+  ): UpdateVendorServicePayload!
+  deleteVendorService(
+    input: DeleteVendorServiceInput!
+  ): DeleteVendorServicePayload!
 
   # Framework mutations
   createFramework(input: CreateFrameworkInput!): CreateFrameworkPayload!
@@ -2867,15 +2902,9 @@ type Mutation {
   ): DeleteNonconformityPayload!
 
   # Obligation mutations
-  createObligation(
-    input: CreateObligationInput!
-  ): CreateObligationPayload!
-  updateObligation(
-    input: UpdateObligationInput!
-  ): UpdateObligationPayload!
-  deleteObligation(
-    input: DeleteObligationInput!
-  ): DeleteObligationPayload!
+  createObligation(input: CreateObligationInput!): CreateObligationPayload!
+  updateObligation(input: UpdateObligationInput!): UpdateObligationPayload!
+  deleteObligation(input: DeleteObligationInput!): DeleteObligationPayload!
 
   # Continual Improvement mutations
   createContinualImprovement(
@@ -2902,6 +2931,14 @@ type Mutation {
   # Snapshot mutations
   createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
   deleteSnapshot(input: DeleteSnapshotInput!): DeleteSnapshotPayload!
+
+  # Custom Domain mutations
+  createCustomDomain(
+    input: CreateCustomDomainInput!
+  ): CreateCustomDomainPayload!
+  deleteCustomDomain(
+    input: DeleteCustomDomainInput!
+  ): DeleteCustomDomainPayload!
 }
 
 # Input Types
@@ -4384,4 +4421,83 @@ type CreateSnapshotPayload {
 
 type DeleteSnapshotPayload {
   deletedSnapshotId: ID!
+}
+
+enum SSLStatus
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatus"
+  ) {
+  PENDING
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusPending"
+    )
+  PROVISIONING
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusProvisioning"
+    )
+  ACTIVE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusActive"
+    )
+  RENEWING
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusRenewing"
+    )
+  EXPIRED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusExpired"
+    )
+  FAILED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusFailed"
+    )
+}
+
+type CustomDomain implements Node {
+  id: ID!
+  organization: Organization!
+  domain: String!
+  sslStatus: SSLStatus!
+  sslExpiresAt: Datetime
+  isActive: Boolean!
+  dnsRecords: [DNSRecordInstruction!]!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+  verifiedAt: Datetime
+}
+
+type DNSRecordInstruction {
+  type: String!
+  name: String!
+  value: String!
+  ttl: Int!
+  purpose: String!
+}
+
+type CustomDomainConnection {
+  edges: [CustomDomainEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type CustomDomainEdge {
+  cursor: CursorKey!
+  node: CustomDomain!
+}
+
+input CreateCustomDomainInput {
+  organizationId: ID!
+  domain: String!
+}
+
+input DeleteCustomDomainInput {
+  domainId: ID!
+}
+
+type CreateCustomDomainPayload {
+  customDomainEdge: CustomDomainEdge!
+}
+
+type DeleteCustomDomainPayload {
+  deletedCustomDomainId: ID!
 }

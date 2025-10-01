@@ -318,6 +318,15 @@ type CreateControlSnapshotMappingPayload struct {
 	SnapshotEdge *SnapshotEdge `json:"snapshotEdge"`
 }
 
+type CreateCustomDomainInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+	Domain         string  `json:"domain"`
+}
+
+type CreateCustomDomainPayload struct {
+	CustomDomainEdge *CustomDomainEdge `json:"customDomainEdge"`
+}
+
 type CreateDatumInput struct {
 	OrganizationID     gid.GID                     `json:"organizationId"`
 	Name               string                      `json:"name"`
@@ -626,6 +635,41 @@ type CreateVendorServicePayload struct {
 	VendorServiceEdge *VendorServiceEdge `json:"vendorServiceEdge"`
 }
 
+type CustomDomain struct {
+	ID           gid.GID                        `json:"id"`
+	Organization *Organization                  `json:"organization"`
+	Domain       string                         `json:"domain"`
+	SslStatus    coredata.CustomDomainSSLStatus `json:"sslStatus"`
+	SslExpiresAt *time.Time                     `json:"sslExpiresAt,omitempty"`
+	IsActive     bool                           `json:"isActive"`
+	DNSRecords   []*DNSRecordInstruction        `json:"dnsRecords"`
+	CreatedAt    time.Time                      `json:"createdAt"`
+	UpdatedAt    time.Time                      `json:"updatedAt"`
+	VerifiedAt   *time.Time                     `json:"verifiedAt,omitempty"`
+}
+
+func (CustomDomain) IsNode()             {}
+func (this CustomDomain) GetID() gid.GID { return this.ID }
+
+type CustomDomainConnection struct {
+	Edges      []*CustomDomainEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount int                 `json:"totalCount"`
+}
+
+type CustomDomainEdge struct {
+	Cursor page.CursorKey `json:"cursor"`
+	Node   *CustomDomain  `json:"node"`
+}
+
+type DNSRecordInstruction struct {
+	Type    string `json:"type"`
+	Name    string `json:"name"`
+	Value   string `json:"value"`
+	TTL     int    `json:"ttl"`
+	Purpose string `json:"purpose"`
+}
+
 type Datum struct {
 	ID                 gid.GID                     `json:"id"`
 	SnapshotID         *gid.GID                    `json:"snapshotId,omitempty"`
@@ -728,6 +772,14 @@ type DeleteControlSnapshotMappingInput struct {
 type DeleteControlSnapshotMappingPayload struct {
 	DeletedControlID  gid.GID `json:"deletedControlId"`
 	DeletedSnapshotID gid.GID `json:"deletedSnapshotId"`
+}
+
+type DeleteCustomDomainInput struct {
+	DomainID gid.GID `json:"domainId"`
+}
+
+type DeleteCustomDomainPayload struct {
+	DeletedCustomDomainID gid.GID `json:"deletedCustomDomainId"`
 }
 
 type DeleteDatumInput struct {
@@ -1273,6 +1325,7 @@ type Organization struct {
 	ProcessingActivities  *ProcessingActivityConnection   `json:"processingActivities"`
 	Snapshots             *SnapshotConnection             `json:"snapshots"`
 	TrustCenter           *TrustCenter                    `json:"trustCenter,omitempty"`
+	CustomDomains         *CustomDomainConnection         `json:"customDomains"`
 	CreatedAt             time.Time                       `json:"createdAt"`
 	UpdatedAt             time.Time                       `json:"updatedAt"`
 }
