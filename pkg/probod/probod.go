@@ -335,13 +335,13 @@ func (impl *Implm) Run(
 
 	apiServerCtx, stopApiServer := context.WithCancel(context.Background())
 	defer stopApiServer()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := impl.runApiServer(apiServerCtx, l, r, tp, serverHandler); err != nil {
-			cancel(fmt.Errorf("api server crashed: %w", err))
-		}
-	}()
+	wg.Go(
+		func() {
+			if err := impl.runApiServer(apiServerCtx, l, r, tp, serverHandler); err != nil {
+				cancel(fmt.Errorf("api server crashed: %w", err))
+			}
+		},
+	)
 
 	mailerCtx, stopMailer := context.WithCancel(context.Background())
 	mailer := mailer.NewMailer(pgClient, l, mailer.Config{
@@ -353,32 +353,32 @@ func (impl *Implm) Run(
 		TLSRequired: impl.cfg.Mailer.SMTP.TLSRequired,
 		Timeout:     time.Second * 10,
 	})
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := mailer.Run(mailerCtx); err != nil {
-			cancel(fmt.Errorf("mailer crashed: %w", err))
-		}
-	}()
+	wg.Go(
+		func() {
+			if err := mailer.Run(mailerCtx); err != nil {
+				cancel(fmt.Errorf("mailer crashed: %w", err))
+			}
+		},
+	)
 
 	exportJobExporterCtx, stopExportJobExporter := context.WithCancel(context.Background())
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := impl.runExportJob(exportJobExporterCtx, proboService, l.Named("export-job-exporter")); err != nil {
-			cancel(fmt.Errorf("export job exporter crashed: %w", err))
-		}
-	}()
+	wg.Go(
+		func() {
+			if err := impl.runExportJob(exportJobExporterCtx, proboService, l.Named("export-job-exporter")); err != nil {
+				cancel(fmt.Errorf("export job exporter crashed: %w", err))
+			}
+		},
+	)
 
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if err := impl.runTrustCenterServer(trustCenterServerCtx, l, r, tp, pgClient, serverHandler, acmeService); err != nil {
-			cancel(fmt.Errorf("trust center server crashed: %w", err))
-		}
-	}()
+	wg.Go(
+		func() {
+			if err := impl.runTrustCenterServer(trustCenterServerCtx, l, r, tp, pgClient, serverHandler, acmeService); err != nil {
+				cancel(fmt.Errorf("trust center server crashed: %w", err))
+			}
+		},
+	)
 
 	<-ctx.Done()
 
