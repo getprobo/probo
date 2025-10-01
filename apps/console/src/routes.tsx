@@ -112,18 +112,6 @@ const routes = [
     ],
   },
   {
-    path: "/trust/:slug",
-    ErrorBoundary: ErrorBoundary,
-    fallback: PageSkeleton,
-    Component: lazy(() => import("./trust/pages/PublicTrustCenterPage")),
-  },
-  {
-    path: "/trust/:slug/access",
-    ErrorBoundary: ErrorBoundary,
-    fallback: PageSkeleton,
-    Component: lazy(() => import("./pages/TrustCenterAccessPage")),
-  },
-  {
     path: "/organizations/:organizationId",
     Component: MainLayout,
     ErrorBoundary: ErrorBoundary,
