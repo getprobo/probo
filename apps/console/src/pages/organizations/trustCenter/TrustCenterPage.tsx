@@ -276,9 +276,30 @@ export default function TrustCenterPage({ queryRef }: Props) {
         <Card padded className="space-y-4">
           <div className="space-y-2">
             {!organization.trustCenter?.ndaFileName ?  (
-              <p className="text-sm text-txt-tertiary">
-                {__("Upload a Non-Disclosure Agreement that visitors must accept before accessing your trust center")}
-              </p>
+              <div className="space-y-3">
+                <p className="text-sm text-txt-tertiary">
+                  {__("Upload a Non-Disclosure Agreement that visitors must accept before accessing your trust center")}
+                </p>
+                <div className="p-4 bg-tertiary rounded-lg border border-border-solid">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-txt-secondary">
+                        {__("Default NDA Template")}
+                      </p>
+                      <p className="text-xs text-txt-tertiary">
+                        {__("If no custom NDA is uploaded, visitors will see our default template")}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => window.open("/trust/documents/nda.pdf", "_blank")}
+                    >
+                      {__("Preview PDF")}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             ) : (<></>)}
             {organization.trustCenter?.ndaFileName ? (
               <div className="space-y-3">

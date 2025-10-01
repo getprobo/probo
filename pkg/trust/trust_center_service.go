@@ -31,6 +31,8 @@ type TrustCenterService struct {
 	svc *TenantService
 }
 
+const defaultNDAFileURL = "/trust/documents/nda.pdf"
+
 func (s TrustCenterService) GetBySlug(
 	ctx context.Context,
 	slug string,
@@ -95,6 +97,7 @@ func (s TrustCenterService) GenerateNDAFileURL(
 	expiresIn time.Duration,
 ) (string, error) {
 	var file *coredata.File
+	var hasNDAFile bool
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -105,9 +108,11 @@ func (s TrustCenterService) GenerateNDAFileURL(
 			}
 
 			if trustCenter.NonDisclosureAgreementFileID == nil {
-				return fmt.Errorf("no NDA file found")
+				hasNDAFile = false
+				return nil
 			}
 
+			hasNDAFile = true
 			file = &coredata.File{}
 			if err := file.LoadByID(ctx, conn, s.svc.scope, *trustCenter.NonDisclosureAgreementFileID); err != nil {
 				return fmt.Errorf("cannot load file: %w", err)
@@ -118,6 +123,10 @@ func (s TrustCenterService) GenerateNDAFileURL(
 	)
 	if err != nil {
 		return "", err
+	}
+
+	if !hasNDAFile {
+		return defaultNDAFileURL, nil
 	}
 
 	presignClient := s3.NewPresignClient(s.svc.s3)
