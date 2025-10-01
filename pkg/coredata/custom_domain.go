@@ -31,7 +31,6 @@ import (
 type (
 	CustomDomain struct {
 		ID                     gid.GID               `db:"id"`
-		OrganizationID         gid.GID               `db:"organization_id"`
 		Domain                 string                `db:"domain"`
 		HTTPChallengeToken     *string               `db:"http_challenge_token"`
 		HTTPChallengeKeyAuth   *string               `db:"http_challenge_key_auth"`
@@ -44,7 +43,6 @@ type (
 		SSLCertificateChain    *string               `db:"ssl_certificate_chain"`
 		SSLStatus              CustomDomainSSLStatus `db:"ssl_status"`
 		SSLExpiresAt           *time.Time            `db:"ssl_expires_at"`
-		IsActive               bool                  `db:"is_active"`
 		CreatedAt              time.Time             `db:"created_at"`
 		UpdatedAt              time.Time             `db:"updated_at"`
 	}
@@ -52,16 +50,14 @@ type (
 	CustomDomains []*CustomDomain
 )
 
-func NewCustomDomain(orgID gid.GID, domain string) *CustomDomain {
+func NewCustomDomain(tenantID gid.TenantID, domain string) *CustomDomain {
 	now := time.Now()
 	return &CustomDomain{
-		ID:             gid.New(orgID.TenantID(), CustomDomainEntityType),
-		OrganizationID: orgID,
-		SSLStatus:      CustomDomainSSLStatusPending,
-		Domain:         domain,
-		IsActive:       false,
-		CreatedAt:      now,
-		UpdatedAt:      now,
+		ID:        gid.New(tenantID, CustomDomainEntityType),
+		SSLStatus: CustomDomainSSLStatusPending,
+		Domain:    domain,
+		CreatedAt: now,
+		UpdatedAt: now,
 	}
 }
 
@@ -88,7 +84,6 @@ func (cd *CustomDomain) LoadByID(
 	q := `
 SELECT
 	id,
-	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -99,20 +94,19 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
-	is_active,
 	created_at,
 	updated_at
 FROM
 	custom_domains
 WHERE
 	%s
-	AND id = @domain_id
+	id = @id
 LIMIT 1
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{"domain_id": domainID}
+	args := pgx.NamedArgs{"id": domainID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -163,7 +157,6 @@ func (cd *CustomDomain) LoadByIDForUpdate(
 	q := `
 SELECT
 	id,
-	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -174,21 +167,19 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
-	is_active,
 	created_at,
 	updated_at
 FROM
 	custom_domains
 WHERE
 	%s
-	AND id = @domain_id
+	id = @id
 LIMIT 1
 FOR UPDATE
 `
-
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{"domain_id": domainID}
+	args := pgx.NamedArgs{"id": domainID}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -239,7 +230,6 @@ func (cd *CustomDomain) LoadByDomain(
 	q := `
 SELECT
 	id,
-	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -250,14 +240,13 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
-	is_active,
 	created_at,
 	updated_at
 FROM
 	custom_domains
 WHERE
 	%s
-	AND domain = @domain
+	domain = @domain
 LIMIT 1
 `
 
@@ -323,7 +312,6 @@ func (cd *CustomDomain) Insert(
 INSERT INTO custom_domains (
 	id,
 	tenant_id,
-	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -334,13 +322,11 @@ INSERT INTO custom_domains (
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
-	is_active,
 	created_at,
 	updated_at
 ) VALUES (
 	@id,
 	@tenant_id,
-	@organization_id,
 	@domain,
 	@http_challenge_token,
 	@http_challenge_key_auth,
@@ -351,7 +337,6 @@ INSERT INTO custom_domains (
 	@ssl_certificate_chain,
 	@ssl_status,
 	@ssl_expires_at,
-	@is_active,
 	@created_at,
 	@updated_at
 )
@@ -360,7 +345,6 @@ INSERT INTO custom_domains (
 	args := pgx.NamedArgs{
 		"id":                        cd.ID,
 		"tenant_id":                 scope.GetTenantID(),
-		"organization_id":           cd.OrganizationID,
 		"domain":                    cd.Domain,
 		"http_challenge_token":      cd.HTTPChallengeToken,
 		"http_challenge_key_auth":   cd.HTTPChallengeKeyAuth,
@@ -371,7 +355,6 @@ INSERT INTO custom_domains (
 		"ssl_certificate_chain":     cd.SSLCertificateChain,
 		"ssl_status":                cd.SSLStatus,
 		"ssl_expires_at":            cd.SSLExpiresAt,
-		"is_active":                 cd.IsActive,
 		"created_at":                cd.CreatedAt,
 		"updated_at":                cd.UpdatedAt,
 	}
@@ -414,7 +397,6 @@ SET
 	ssl_certificate_chain = @ssl_certificate_chain,
 	ssl_status = @ssl_status,
 	ssl_expires_at = @ssl_expires_at,
-	is_active = @is_active,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -434,7 +416,6 @@ WHERE
 		"ssl_certificate_chain":     cd.SSLCertificateChain,
 		"ssl_status":                cd.SSLStatus,
 		"ssl_expires_at":            cd.SSLExpiresAt,
-		"is_active":                 cd.IsActive,
 		"updated_at":                time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -461,7 +442,6 @@ WHERE
 	%s
 	AND id = @id
 `
-
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.NamedArgs{"id": cd.ID}
@@ -475,84 +455,6 @@ WHERE
 	return nil
 }
 
-func (domains *CustomDomains) LoadByOrganizationID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	encryptionKey cipher.EncryptionKey,
-	orgID gid.GID,
-	cursor *page.Cursor[CustomDomainOrderField],
-) error {
-	q := `
-SELECT
-	id,
-	organization_id,
-	domain,
-	http_challenge_token,
-	http_challenge_key_auth,
-	http_challenge_url,
-	http_order_url,
-	ssl_certificate,
-	encrypted_ssl_private_key,
-	ssl_certificate_chain,
-	ssl_status,
-	ssl_expires_at,
-	is_active,
-	created_at,
-	updated_at
-FROM
-	custom_domains
-WHERE
-	%s
-	AND organization_id = @organization_id
-	AND %s
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
-
-	args := pgx.NamedArgs{"organization_id": orgID}
-	maps.Copy(args, scope.SQLArguments())
-	maps.Copy(args, cursor.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query custom domains: %w", err)
-	}
-
-	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CustomDomain])
-	if err != nil {
-		return fmt.Errorf("cannot collect custom domains: %w", err)
-	}
-
-	for _, cd := range result {
-		// Decrypt SSL private key
-		if len(cd.EncryptedSSLPrivateKey) > 0 {
-			decrypted, err := cipher.Decrypt(cd.EncryptedSSLPrivateKey, encryptionKey)
-			if err != nil {
-				return fmt.Errorf("cannot decrypt SSL private key: %w", err)
-			}
-			cd.SSLPrivateKeyPEM = decrypted
-		}
-
-		// Parse certificate and key into tls.Certificate if both are present
-		if len(cd.SSLCertificatePEM) > 0 && len(cd.SSLPrivateKeyPEM) > 0 {
-			fullCertPEM := string(cd.SSLCertificatePEM)
-			if cd.SSLCertificateChain != nil && *cd.SSLCertificateChain != "" {
-				fullCertPEM += "\n" + *cd.SSLCertificateChain
-			}
-
-			tlsCert, err := tls.X509KeyPair([]byte(fullCertPEM), cd.SSLPrivateKeyPEM)
-			if err != nil {
-				return fmt.Errorf("cannot parse certificate and key: %w", err)
-			}
-			cd.SSLCertificate = &tlsCert
-		}
-	}
-
-	*domains = result
-	return nil
-}
-
 func (cd *CustomDomain) LoadByHTTPChallengeToken(
 	ctx context.Context,
 	conn pg.Conn,
@@ -563,7 +465,6 @@ func (cd *CustomDomain) LoadByHTTPChallengeToken(
 	q := `
 SELECT
 	id,
-	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -574,7 +475,6 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
-	is_active,
 	created_at,
 	updated_at
 FROM
@@ -602,7 +502,6 @@ LIMIT 1
 
 	*cd = customDomain
 
-	// No need to decrypt anything for challenge validation
 	return nil
 }
 
@@ -614,7 +513,6 @@ func (domains *CustomDomains) ListDomainsForRenewal(
 	q := `
 SELECT
 	id,
-	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -625,14 +523,13 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
-	is_active,
 	created_at,
 	updated_at
 FROM
 	custom_domains
 WHERE
 	%s
-	AND ssl_status = 'ACTIVE'
+	AND ssl_status = @status
 	AND ssl_expires_at IS NOT NULL
 	AND ssl_expires_at <= CURRENT_TIMESTAMP + INTERVAL '30 days'
 ORDER BY
@@ -641,7 +538,7 @@ ORDER BY
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{}
+	args := pgx.NamedArgs{"status": string(CustomDomainSSLStatusActive)}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
@@ -666,7 +563,6 @@ func (domains *CustomDomains) ListDomainsWithPendingHTTPChallenges(
 	q := `
 SELECT
 	id,
-	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -677,7 +573,6 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
-	is_active,
 	created_at,
 	updated_at
 FROM
@@ -721,7 +616,6 @@ func (domains *CustomDomains) LoadActiveCertificates(
 	q := `
 SELECT
 	id,
-	organization_id,
 	domain,
 	http_challenge_token,
 	http_challenge_key_auth,
@@ -732,20 +626,19 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
-	is_active,
 	created_at,
 	updated_at
 FROM
 	custom_domains
 WHERE
 	%s
-	AND ssl_status = 'ACTIVE'
+	AND ssl_status = @status
 	AND ssl_certificate IS NOT NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
-	args := pgx.NamedArgs{}
+	args := pgx.NamedArgs{"status": string(CustomDomainSSLStatusActive)}
 	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
