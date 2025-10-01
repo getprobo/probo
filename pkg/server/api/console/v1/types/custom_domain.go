@@ -16,45 +16,12 @@ package types
 
 import (
 	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/page"
 )
-
-func NewCustomDomainConnection(
-	p *page.Page[*coredata.CustomDomain, coredata.CustomDomainOrderField],
-	parentType any,
-	parentID gid.GID,
-	cnameTarget string,
-) *CustomDomainConnection {
-	var edges = make([]*CustomDomainEdge, len(p.Data))
-
-	for i := range edges {
-		edges[i] = NewCustomDomainEdge(p.Data[i], p.Cursor.OrderBy.Field, cnameTarget)
-	}
-
-	return &CustomDomainConnection{
-		Edges:      edges,
-		PageInfo:   NewPageInfo(p),
-		TotalCount: len(p.Data),
-	}
-}
-
-func NewCustomDomainEdge(
-	d *coredata.CustomDomain,
-	orderBy coredata.CustomDomainOrderField,
-	cnameTarget string,
-) *CustomDomainEdge {
-	return &CustomDomainEdge{
-		Cursor: d.CursorKey(orderBy),
-		Node:   NewCustomDomain(d, cnameTarget),
-	}
-}
 
 func NewCustomDomain(d *coredata.CustomDomain, cnameTarget string) *CustomDomain {
 	result := &CustomDomain{
 		ID:           d.ID,
 		Domain:       d.Domain,
-		IsActive:     d.IsActive,
 		SslStatus:    d.SSLStatus,
 		CreatedAt:    d.CreatedAt,
 		UpdatedAt:    d.UpdatedAt,
