@@ -30,24 +30,23 @@ import (
 
 type (
 	CustomDomain struct {
-		ID                      gid.GID               `db:"id"`
-		OrganizationID          gid.GID               `db:"organization_id"`
-		Domain                  string                `db:"domain"`
-		HTTPChallengeToken      *string               `db:"http_challenge_token"`
-		HTTPChallengeKeyAuth    *string               `db:"http_challenge_key_auth"`
-		HTTPChallengeURL        *string               `db:"http_challenge_url"`
-		HTTPOrderURL            *string               `db:"http_order_url"`
-		SSLCertificate          *tls.Certificate      `db:"-"` // Parsed certificate
-		SSLCertificatePEM       []byte                `db:"-"` // Decrypted PEM
-		EncryptedSSLCertificate []byte                `db:"encrypted_ssl_certificate"`
-		SSLPrivateKeyPEM        []byte                `db:"-"` // Decrypted PEM
-		EncryptedSSLPrivateKey  []byte                `db:"encrypted_ssl_private_key"`
-		SSLCertificateChain     *string               `db:"ssl_certificate_chain"`
-		SSLStatus               CustomDomainSSLStatus `db:"ssl_status"`
-		SSLExpiresAt            *time.Time            `db:"ssl_expires_at"`
-		IsActive                bool                  `db:"is_active"`
-		CreatedAt               time.Time             `db:"created_at"`
-		UpdatedAt               time.Time             `db:"updated_at"`
+		ID                     gid.GID               `db:"id"`
+		OrganizationID         gid.GID               `db:"organization_id"`
+		Domain                 string                `db:"domain"`
+		HTTPChallengeToken     *string               `db:"http_challenge_token"`
+		HTTPChallengeKeyAuth   *string               `db:"http_challenge_key_auth"`
+		HTTPChallengeURL       *string               `db:"http_challenge_url"`
+		HTTPOrderURL           *string               `db:"http_order_url"`
+		SSLCertificate         *tls.Certificate      `db:"-"`
+		SSLCertificatePEM      []byte                `db:"ssl_certificate"`
+		SSLPrivateKeyPEM       []byte                `db:"-"`
+		EncryptedSSLPrivateKey []byte                `db:"encrypted_ssl_private_key"`
+		SSLCertificateChain    *string               `db:"ssl_certificate_chain"`
+		SSLStatus              CustomDomainSSLStatus `db:"ssl_status"`
+		SSLExpiresAt           *time.Time            `db:"ssl_expires_at"`
+		IsActive               bool                  `db:"is_active"`
+		CreatedAt              time.Time             `db:"created_at"`
+		UpdatedAt              time.Time             `db:"updated_at"`
 	}
 
 	CustomDomains []*CustomDomain
@@ -95,7 +94,7 @@ SELECT
 	http_challenge_key_auth,
 	http_challenge_url,
 	http_order_url,
-	encrypted_ssl_certificate,
+	ssl_certificate,
 	encrypted_ssl_private_key,
 	ssl_certificate_chain,
 	ssl_status,
@@ -127,15 +126,6 @@ LIMIT 1
 	}
 
 	*cd = customDomain
-
-	// Decrypt SSL certificate
-	if len(cd.EncryptedSSLCertificate) > 0 {
-		decrypted, err := cipher.Decrypt(cd.EncryptedSSLCertificate, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt SSL certificate: %w", err)
-		}
-		cd.SSLCertificatePEM = decrypted
-	}
 
 	// Decrypt SSL private key
 	if len(cd.EncryptedSSLPrivateKey) > 0 {
@@ -179,7 +169,7 @@ SELECT
 	http_challenge_key_auth,
 	http_challenge_url,
 	http_order_url,
-	encrypted_ssl_certificate,
+	ssl_certificate,
 	encrypted_ssl_private_key,
 	ssl_certificate_chain,
 	ssl_status,
@@ -212,15 +202,6 @@ FOR UPDATE
 	}
 
 	*cd = customDomain
-
-	// Decrypt SSL certificate
-	if len(cd.EncryptedSSLCertificate) > 0 {
-		decrypted, err := cipher.Decrypt(cd.EncryptedSSLCertificate, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt SSL certificate: %w", err)
-		}
-		cd.SSLCertificatePEM = decrypted
-	}
 
 	// Decrypt SSL private key
 	if len(cd.EncryptedSSLPrivateKey) > 0 {
@@ -264,7 +245,7 @@ SELECT
 	http_challenge_key_auth,
 	http_challenge_url,
 	http_order_url,
-	encrypted_ssl_certificate,
+	ssl_certificate,
 	encrypted_ssl_private_key,
 	ssl_certificate_chain,
 	ssl_status,
@@ -296,15 +277,6 @@ LIMIT 1
 	}
 
 	*cd = customDomain
-
-	// Decrypt SSL certificate
-	if len(cd.EncryptedSSLCertificate) > 0 {
-		decrypted, err := cipher.Decrypt(cd.EncryptedSSLCertificate, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt SSL certificate: %w", err)
-		}
-		cd.SSLCertificatePEM = decrypted
-	}
 
 	// Decrypt SSL private key
 	if len(cd.EncryptedSSLPrivateKey) > 0 {
@@ -338,17 +310,9 @@ func (cd *CustomDomain) Insert(
 	scope Scoper,
 	encryptionKey cipher.EncryptionKey,
 ) error {
-	var err error
-	var encryptedCert []byte
-	if len(cd.SSLCertificatePEM) > 0 {
-		encryptedCert, err = cipher.Encrypt(cd.SSLCertificatePEM, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot encrypt SSL certificate: %w", err)
-		}
-	}
-
 	var encryptedKey []byte
 	if len(cd.SSLPrivateKeyPEM) > 0 {
+		var err error
 		encryptedKey, err = cipher.Encrypt(cd.SSLPrivateKeyPEM, encryptionKey)
 		if err != nil {
 			return fmt.Errorf("cannot encrypt SSL private key: %w", err)
@@ -365,7 +329,7 @@ INSERT INTO custom_domains (
 	http_challenge_key_auth,
 	http_challenge_url,
 	http_order_url,
-	encrypted_ssl_certificate,
+	ssl_certificate,
 	encrypted_ssl_private_key,
 	ssl_certificate_chain,
 	ssl_status,
@@ -382,7 +346,7 @@ INSERT INTO custom_domains (
 	@http_challenge_key_auth,
 	@http_challenge_url,
 	@http_order_url,
-	@encrypted_ssl_certificate,
+	@ssl_certificate,
 	@encrypted_ssl_private_key,
 	@ssl_certificate_chain,
 	@ssl_status,
@@ -402,7 +366,7 @@ INSERT INTO custom_domains (
 		"http_challenge_key_auth":   cd.HTTPChallengeKeyAuth,
 		"http_challenge_url":        cd.HTTPChallengeURL,
 		"http_order_url":            cd.HTTPOrderURL,
-		"encrypted_ssl_certificate": encryptedCert,
+		"ssl_certificate":           cd.SSLCertificatePEM,
 		"encrypted_ssl_private_key": encryptedKey,
 		"ssl_certificate_chain":     cd.SSLCertificateChain,
 		"ssl_status":                cd.SSLStatus,
@@ -412,12 +376,11 @@ INSERT INTO custom_domains (
 		"updated_at":                cd.UpdatedAt,
 	}
 
-	_, err = conn.Exec(ctx, q, args)
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot insert custom domain: %w", err)
 	}
 
-	cd.EncryptedSSLCertificate = encryptedCert
 	cd.EncryptedSSLPrivateKey = encryptedKey
 
 	return nil
@@ -429,15 +392,6 @@ func (cd *CustomDomain) Update(
 	scope Scoper,
 	encryptionKey cipher.EncryptionKey,
 ) error {
-	var encryptedCert []byte
-	if len(cd.SSLCertificatePEM) > 0 {
-		var err error
-		encryptedCert, err = cipher.Encrypt(cd.SSLCertificatePEM, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot encrypt SSL certificate: %w", err)
-		}
-	}
-
 	var encryptedKey []byte
 	if len(cd.SSLPrivateKeyPEM) > 0 {
 		var err error
@@ -455,7 +409,7 @@ SET
 	http_challenge_key_auth = @http_challenge_key_auth,
 	http_challenge_url = @http_challenge_url,
 	http_order_url = @http_order_url,
-	encrypted_ssl_certificate = @encrypted_ssl_certificate,
+	ssl_certificate = @ssl_certificate,
 	encrypted_ssl_private_key = @encrypted_ssl_private_key,
 	ssl_certificate_chain = @ssl_certificate_chain,
 	ssl_status = @ssl_status,
@@ -475,7 +429,7 @@ WHERE
 		"http_challenge_key_auth":   cd.HTTPChallengeKeyAuth,
 		"http_challenge_url":        cd.HTTPChallengeURL,
 		"http_order_url":            cd.HTTPOrderURL,
-		"encrypted_ssl_certificate": encryptedCert,
+		"ssl_certificate":           cd.SSLCertificatePEM,
 		"encrypted_ssl_private_key": encryptedKey,
 		"ssl_certificate_chain":     cd.SSLCertificateChain,
 		"ssl_status":                cd.SSLStatus,
@@ -490,7 +444,6 @@ WHERE
 		return fmt.Errorf("cannot update custom domain: %w", err)
 	}
 
-	cd.EncryptedSSLCertificate = encryptedCert
 	cd.EncryptedSSLPrivateKey = encryptedKey
 
 	return nil
@@ -539,7 +492,7 @@ SELECT
 	http_challenge_key_auth,
 	http_challenge_url,
 	http_order_url,
-	encrypted_ssl_certificate,
+	ssl_certificate,
 	encrypted_ssl_private_key,
 	ssl_certificate_chain,
 	ssl_status,
@@ -572,15 +525,6 @@ WHERE
 	}
 
 	for _, cd := range result {
-		// Decrypt SSL certificate
-		if len(cd.EncryptedSSLCertificate) > 0 {
-			decrypted, err := cipher.Decrypt(cd.EncryptedSSLCertificate, encryptionKey)
-			if err != nil {
-				return fmt.Errorf("cannot decrypt SSL certificate: %w", err)
-			}
-			cd.SSLCertificatePEM = decrypted
-		}
-
 		// Decrypt SSL private key
 		if len(cd.EncryptedSSLPrivateKey) > 0 {
 			decrypted, err := cipher.Decrypt(cd.EncryptedSSLPrivateKey, encryptionKey)
@@ -625,7 +569,7 @@ SELECT
 	http_challenge_key_auth,
 	http_challenge_url,
 	http_order_url,
-	encrypted_ssl_certificate,
+	ssl_certificate,
 	encrypted_ssl_private_key,
 	ssl_certificate_chain,
 	ssl_status,
@@ -658,24 +602,7 @@ LIMIT 1
 
 	*cd = customDomain
 
-	// Decrypt SSL certificate
-	if len(cd.EncryptedSSLCertificate) > 0 {
-		decrypted, err := cipher.Decrypt(cd.EncryptedSSLCertificate, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt SSL certificate: %w", err)
-		}
-		cd.SSLCertificatePEM = decrypted
-	}
-
-	// Decrypt SSL private key
-	if len(cd.EncryptedSSLPrivateKey) > 0 {
-		decrypted, err := cipher.Decrypt(cd.EncryptedSSLPrivateKey, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt SSL private key: %w", err)
-		}
-		cd.SSLPrivateKeyPEM = decrypted
-	}
-
+	// No need to decrypt anything for challenge validation
 	return nil
 }
 
@@ -693,7 +620,7 @@ SELECT
 	http_challenge_key_auth,
 	http_challenge_url,
 	http_order_url,
-	encrypted_ssl_certificate,
+	ssl_certificate,
 	encrypted_ssl_private_key,
 	ssl_certificate_chain,
 	ssl_status,
@@ -745,7 +672,7 @@ SELECT
 	http_challenge_key_auth,
 	http_challenge_url,
 	http_order_url,
-	encrypted_ssl_certificate,
+	ssl_certificate,
 	encrypted_ssl_private_key,
 	ssl_certificate_chain,
 	ssl_status,
@@ -800,7 +727,7 @@ SELECT
 	http_challenge_key_auth,
 	http_challenge_url,
 	http_order_url,
-	encrypted_ssl_certificate,
+	ssl_certificate,
 	encrypted_ssl_private_key,
 	ssl_certificate_chain,
 	ssl_status,
@@ -813,7 +740,7 @@ FROM
 WHERE
 	%s
 	AND ssl_status = 'ACTIVE'
-	AND encrypted_ssl_certificate IS NOT NULL
+	AND ssl_certificate IS NOT NULL
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -832,15 +759,6 @@ WHERE
 	}
 
 	for _, cd := range result {
-		// Decrypt SSL certificate
-		if len(cd.EncryptedSSLCertificate) > 0 {
-			decrypted, err := cipher.Decrypt(cd.EncryptedSSLCertificate, encryptionKey)
-			if err != nil {
-				return fmt.Errorf("cannot decrypt SSL certificate: %w", err)
-			}
-			cd.SSLCertificatePEM = decrypted
-		}
-
 		// Decrypt SSL private key
 		if len(cd.EncryptedSSLPrivateKey) > 0 {
 			decrypted, err := cipher.Decrypt(cd.EncryptedSSLPrivateKey, encryptionKey)
