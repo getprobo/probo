@@ -38,7 +38,6 @@ type (
 		HTTPOrderURL           *string               `db:"http_order_url"`
 		SSLCertificate         *tls.Certificate      `db:"-"`
 		SSLCertificatePEM      []byte                `db:"ssl_certificate"`
-		SSLPrivateKeyPEM       []byte                `db:"-"`
 		EncryptedSSLPrivateKey []byte                `db:"encrypted_ssl_private_key"`
 		SSLCertificateChain    *string               `db:"ssl_certificate_chain"`
 		SSLStatus              CustomDomainSSLStatus `db:"ssl_status"`
@@ -72,6 +71,62 @@ func (cd *CustomDomain) CursorKey(field CustomDomainOrderField) page.CursorKey {
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
+}
+
+func (cd *CustomDomain) DecryptPrivateKey(encryptionKey cipher.EncryptionKey) ([]byte, error) {
+	if len(cd.EncryptedSSLPrivateKey) == 0 {
+		return nil, nil
+	}
+
+	decrypted, err := cipher.Decrypt(cd.EncryptedSSLPrivateKey, encryptionKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot decrypt SSL private key: %w", err)
+	}
+
+	return decrypted, nil
+}
+
+func (cd *CustomDomain) EncryptPrivateKey(privateKeyPEM []byte, encryptionKey cipher.EncryptionKey) error {
+	if len(privateKeyPEM) == 0 {
+		cd.EncryptedSSLPrivateKey = nil
+		return nil
+	}
+
+	encrypted, err := cipher.Encrypt(privateKeyPEM, encryptionKey)
+	if err != nil {
+		return fmt.Errorf("cannot encrypt SSL private key: %w", err)
+	}
+
+	cd.EncryptedSSLPrivateKey = encrypted
+	return nil
+}
+
+func (cd *CustomDomain) ParseCertificate(encryptionKey cipher.EncryptionKey) error {
+	if len(cd.SSLCertificatePEM) == 0 {
+		return fmt.Errorf("no certificate PEM data")
+	}
+
+	privateKeyPEM, err := cd.DecryptPrivateKey(encryptionKey)
+	if err != nil {
+		return fmt.Errorf("cannot decrypt private key: %w", err)
+	}
+
+	if len(privateKeyPEM) == 0 {
+		return fmt.Errorf("no private key data")
+	}
+
+	fullCertPEM := string(cd.SSLCertificatePEM)
+	if cd.SSLCertificateChain != nil && *cd.SSLCertificateChain != "" {
+		fullCertPEM += "\n" + *cd.SSLCertificateChain
+	}
+
+	tlsCert, err := tls.X509KeyPair([]byte(fullCertPEM), privateKeyPEM)
+	if err != nil {
+		return fmt.Errorf("cannot parse certificate and key: %w", err)
+	}
+
+	cd.SSLCertificate = &tlsCert
+	return nil
 }
 
 func (cd *CustomDomain) LoadByID(
@@ -120,29 +175,6 @@ LIMIT 1
 	}
 
 	*cd = customDomain
-
-	// Decrypt SSL private key
-	if len(cd.EncryptedSSLPrivateKey) > 0 {
-		decrypted, err := cipher.Decrypt(cd.EncryptedSSLPrivateKey, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt SSL private key: %w", err)
-		}
-		cd.SSLPrivateKeyPEM = decrypted
-	}
-
-	// Parse certificate and key into tls.Certificate if both are present
-	if len(cd.SSLCertificatePEM) > 0 && len(cd.SSLPrivateKeyPEM) > 0 {
-		fullCertPEM := string(cd.SSLCertificatePEM)
-		if cd.SSLCertificateChain != nil && *cd.SSLCertificateChain != "" {
-			fullCertPEM += "\n" + *cd.SSLCertificateChain
-		}
-
-		tlsCert, err := tls.X509KeyPair([]byte(fullCertPEM), cd.SSLPrivateKeyPEM)
-		if err != nil {
-			return fmt.Errorf("cannot parse certificate and key: %w", err)
-		}
-		cd.SSLCertificate = &tlsCert
-	}
 
 	return nil
 }
@@ -194,29 +226,6 @@ FOR UPDATE
 
 	*cd = customDomain
 
-	// Decrypt SSL private key
-	if len(cd.EncryptedSSLPrivateKey) > 0 {
-		decrypted, err := cipher.Decrypt(cd.EncryptedSSLPrivateKey, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt SSL private key: %w", err)
-		}
-		cd.SSLPrivateKeyPEM = decrypted
-	}
-
-	// Parse certificate and key into tls.Certificate if both are present
-	if len(cd.SSLCertificatePEM) > 0 && len(cd.SSLPrivateKeyPEM) > 0 {
-		fullCertPEM := string(cd.SSLCertificatePEM)
-		if cd.SSLCertificateChain != nil && *cd.SSLCertificateChain != "" {
-			fullCertPEM += "\n" + *cd.SSLCertificateChain
-		}
-
-		tlsCert, err := tls.X509KeyPair([]byte(fullCertPEM), cd.SSLPrivateKeyPEM)
-		if err != nil {
-			return fmt.Errorf("cannot parse certificate and key: %w", err)
-		}
-		cd.SSLCertificate = &tlsCert
-	}
-
 	return nil
 }
 
@@ -267,29 +276,6 @@ LIMIT 1
 
 	*cd = customDomain
 
-	// Decrypt SSL private key
-	if len(cd.EncryptedSSLPrivateKey) > 0 {
-		decrypted, err := cipher.Decrypt(cd.EncryptedSSLPrivateKey, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot decrypt SSL private key: %w", err)
-		}
-		cd.SSLPrivateKeyPEM = decrypted
-	}
-
-	// Parse certificate and key into tls.Certificate if both are present
-	if len(cd.SSLCertificatePEM) > 0 && len(cd.SSLPrivateKeyPEM) > 0 {
-		fullCertPEM := string(cd.SSLCertificatePEM)
-		if cd.SSLCertificateChain != nil && *cd.SSLCertificateChain != "" {
-			fullCertPEM += "\n" + *cd.SSLCertificateChain
-		}
-
-		tlsCert, err := tls.X509KeyPair([]byte(fullCertPEM), cd.SSLPrivateKeyPEM)
-		if err != nil {
-			return fmt.Errorf("cannot parse certificate and key: %w", err)
-		}
-		cd.SSLCertificate = &tlsCert
-	}
-
 	return nil
 }
 
@@ -300,12 +286,8 @@ func (cd *CustomDomain) Insert(
 	encryptionKey cipher.EncryptionKey,
 ) error {
 	var encryptedKey []byte
-	if len(cd.SSLPrivateKeyPEM) > 0 {
-		var err error
-		encryptedKey, err = cipher.Encrypt(cd.SSLPrivateKeyPEM, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot encrypt SSL private key: %w", err)
-		}
+	if len(cd.EncryptedSSLPrivateKey) > 0 {
+		encryptedKey = cd.EncryptedSSLPrivateKey
 	}
 
 	q := `
@@ -376,12 +358,8 @@ func (cd *CustomDomain) Update(
 	encryptionKey cipher.EncryptionKey,
 ) error {
 	var encryptedKey []byte
-	if len(cd.SSLPrivateKeyPEM) > 0 {
-		var err error
-		encryptedKey, err = cipher.Encrypt(cd.SSLPrivateKeyPEM, encryptionKey)
-		if err != nil {
-			return fmt.Errorf("cannot encrypt SSL private key: %w", err)
-		}
+	if len(cd.EncryptedSSLPrivateKey) > 0 {
+		encryptedKey = cd.EncryptedSSLPrivateKey
 	}
 
 	q := `
@@ -649,17 +627,6 @@ WHERE
 	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CustomDomain])
 	if err != nil {
 		return fmt.Errorf("cannot collect custom domains: %w", err)
-	}
-
-	for _, cd := range result {
-		// Decrypt SSL private key
-		if len(cd.EncryptedSSLPrivateKey) > 0 {
-			decrypted, err := cipher.Decrypt(cd.EncryptedSSLPrivateKey, encryptionKey)
-			if err != nil {
-				return fmt.Errorf("cannot decrypt SSL private key: %w", err)
-			}
-			cd.SSLPrivateKeyPEM = decrypted
-		}
 	}
 
 	*domains = result

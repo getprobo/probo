@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/getprobo/probo/pkg/crypto/cipher"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
@@ -169,7 +170,7 @@ WHERE
 	return nil
 }
 
-func (cc *CachedCertificate) RefreshFromDomain(ctx context.Context, conn pg.Conn, domain *CustomDomain) error {
+func (cc *CachedCertificate) RefreshFromDomain(ctx context.Context, conn pg.Conn, domain *CustomDomain, encryptionKey cipher.EncryptionKey) error {
 	if domain.SSLCertificate == nil {
 		return fmt.Errorf("domain has no parsed certificate")
 	}
@@ -178,7 +179,12 @@ func (cc *CachedCertificate) RefreshFromDomain(ctx context.Context, conn pg.Conn
 		return fmt.Errorf("domain has no certificate PEM")
 	}
 
-	if len(domain.SSLPrivateKeyPEM) == 0 {
+	privateKeyPEM, err := domain.DecryptPrivateKey(encryptionKey)
+	if err != nil {
+		return fmt.Errorf("cannot decrypt private key: %w", err)
+	}
+
+	if len(privateKeyPEM) == 0 {
 		return fmt.Errorf("domain has no private key PEM")
 	}
 
@@ -189,7 +195,7 @@ func (cc *CachedCertificate) RefreshFromDomain(ctx context.Context, conn pg.Conn
 	cache := &CachedCertificate{
 		Domain:           domain.Domain,
 		CertificatePEM:   string(domain.SSLCertificatePEM),
-		PrivateKeyPEM:    string(domain.SSLPrivateKeyPEM),
+		PrivateKeyPEM:    string(privateKeyPEM),
 		CertificateChain: domain.SSLCertificateChain,
 		ExpiresAt:        *domain.SSLExpiresAt,
 		CachedAt:         time.Now(),

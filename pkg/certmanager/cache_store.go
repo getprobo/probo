@@ -99,15 +99,20 @@ func (w *CacheStore) warmDomain(ctx context.Context, conn pg.Conn, domain *cored
 		return fmt.Errorf("cannot load domain with decrypted values: %w", err)
 	}
 
-	if loadedDomain.SSLCertificate == nil {
-		return fmt.Errorf("domain has no parsed certificate")
+	if err := loadedDomain.ParseCertificate(w.encryptionKey); err != nil {
+		return fmt.Errorf("cannot parse certificate: %w", err)
 	}
 
 	if len(loadedDomain.SSLCertificatePEM) == 0 {
 		return fmt.Errorf("domain has no certificate PEM")
 	}
 
-	if len(loadedDomain.SSLPrivateKeyPEM) == 0 {
+	privateKeyPEM, err := loadedDomain.DecryptPrivateKey(w.encryptionKey)
+	if err != nil {
+		return fmt.Errorf("cannot decrypt private key: %w", err)
+	}
+
+	if len(privateKeyPEM) == 0 {
 		return fmt.Errorf("domain has no private key PEM")
 	}
 
@@ -122,7 +127,7 @@ func (w *CacheStore) warmDomain(ctx context.Context, conn pg.Conn, domain *cored
 	cache := &coredata.CachedCertificate{
 		Domain:           loadedDomain.Domain,
 		CertificatePEM:   string(loadedDomain.SSLCertificatePEM),
-		PrivateKeyPEM:    string(loadedDomain.SSLPrivateKeyPEM),
+		PrivateKeyPEM:    string(privateKeyPEM),
 		CertificateChain: loadedDomain.SSLCertificateChain,
 		ExpiresAt:        *loadedDomain.SSLExpiresAt,
 		CachedAt:         time.Now(),

@@ -117,16 +117,21 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Conn, domain s
 		return fmt.Errorf("domain does not have active SSL certificate")
 	}
 
-	if customDomain.SSLCertificate == nil {
-		return fmt.Errorf("domain has no parsed certificate")
+	if err := customDomain.ParseCertificate(s.encryptionKey); err != nil {
+		return fmt.Errorf("cannot parse certificate: %w", err)
 	}
 
 	if len(customDomain.SSLCertificatePEM) == 0 {
 		return fmt.Errorf("domain has no certificate PEM data")
 	}
 
-	if len(customDomain.SSLPrivateKeyPEM) == 0 {
-		return fmt.Errorf("domain has no private key PEM data")
+	if len(customDomain.EncryptedSSLPrivateKey) == 0 {
+		return fmt.Errorf("domain has no encrypted private key data")
+	}
+
+	privateKeyPEM, err := customDomain.DecryptPrivateKey(s.encryptionKey)
+	if err != nil {
+		return fmt.Errorf("cannot decrypt private key: %w", err)
 	}
 
 	s.cache.Store(domain, customDomain.SSLCertificate)
@@ -134,7 +139,7 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Conn, domain s
 	cache := &coredata.CachedCertificate{
 		Domain:           customDomain.Domain,
 		CertificatePEM:   string(customDomain.SSLCertificatePEM),
-		PrivateKeyPEM:    string(customDomain.SSLPrivateKeyPEM),
+		PrivateKeyPEM:    string(privateKeyPEM),
 		CertificateChain: customDomain.SSLCertificateChain,
 		ExpiresAt:        *customDomain.SSLExpiresAt,
 		CachedAt:         time.Now(),

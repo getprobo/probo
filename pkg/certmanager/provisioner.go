@@ -188,7 +188,9 @@ func (p *Provisioner) provisionDomainCertificate(
 	}
 
 	fullDomain.SSLCertificatePEM = cert.CertPEM
-	fullDomain.SSLPrivateKeyPEM = cert.KeyPEM
+	if err := fullDomain.EncryptPrivateKey(cert.KeyPEM, p.encryptionKey); err != nil {
+		return fmt.Errorf("cannot encrypt private key: %w", err)
+	}
 	chainStr := string(cert.ChainPEM)
 	fullDomain.SSLCertificateChain = &chainStr
 	fullDomain.SSLExpiresAt = &cert.ExpiresAt
