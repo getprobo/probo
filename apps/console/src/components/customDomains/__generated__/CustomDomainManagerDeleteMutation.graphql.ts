@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<869106a8eb759c253f8578a596b748a0>>
+ * @generated SignedSource<<b25e2b88094ba632cc451508af4df1e3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type DeleteCustomDomainInput = {
-  domainId: string;
+  organizationId: string;
 };
 export type CustomDomainManagerDeleteMutation$variables = {
   input: DeleteCustomDomainInput;

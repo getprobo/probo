@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c071187d5ef9cecb128621c57f97393b>>
+ * @generated SignedSource<<75e8a41e9d070472ff42d71e17c47fa6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type SSLStatus = "ACTIVE" | "EXPIRED" | "FAILED" | "PENDING" | "PROVISIONING" | "RENEWING";
 import { FragmentRefs } from "relay-runtime";
 export type SettingsPageFragment$data = {
   readonly connectors: {
@@ -21,6 +22,22 @@ export type SettingsPageFragment$data = {
       };
     }>;
   };
+  readonly customDomain: {
+    readonly createdAt: any;
+    readonly dnsRecords: ReadonlyArray<{
+      readonly name: string;
+      readonly purpose: string;
+      readonly ttl: number;
+      readonly type: string;
+      readonly value: string;
+    }>;
+    readonly domain: string;
+    readonly id: string;
+    readonly sslExpiresAt: any | null | undefined;
+    readonly sslStatus: SSLStatus;
+    readonly updatedAt: any;
+    readonly verifiedAt: any | null | undefined;
+  } | null | undefined;
   readonly description: string | null | undefined;
   readonly email: string | null | undefined;
   readonly headquarterAddress: string | null | undefined;
@@ -67,20 +84,27 @@ v2 = {
   "name": "email",
   "storageKey": null
 },
-v3 = [
-  {
-    "kind": "Literal",
-    "name": "first",
-    "value": 100
-  }
-],
+v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "type",
+  "storageKey": null
+},
 v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
-};
+},
+v5 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 100
+  }
+];
 return {
   "argumentDefinitions": [],
   "kind": "Fragment",
@@ -120,7 +144,89 @@ return {
     },
     {
       "alias": null,
-      "args": (v3/*: any*/),
+      "args": null,
+      "concreteType": "CustomDomain",
+      "kind": "LinkedField",
+      "name": "customDomain",
+      "plural": false,
+      "selections": [
+        (v0/*: any*/),
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "domain",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "sslStatus",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "DNSRecordInstruction",
+          "kind": "LinkedField",
+          "name": "dnsRecords",
+          "plural": true,
+          "selections": [
+            (v3/*: any*/),
+            (v1/*: any*/),
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "value",
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "ttl",
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "purpose",
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        },
+        (v4/*: any*/),
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "updatedAt",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "verifiedAt",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "sslExpiresAt",
+          "storageKey": null
+        }
+      ],
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": (v5/*: any*/),
       "concreteType": "UserConnection",
       "kind": "LinkedField",
       "name": "users",
@@ -163,7 +269,7 @@ return {
     },
     {
       "alias": null,
-      "args": (v3/*: any*/),
+      "args": (v5/*: any*/),
       "concreteType": "ConnectorConnection",
       "kind": "LinkedField",
       "name": "connectors",
@@ -187,13 +293,7 @@ return {
               "selections": [
                 (v0/*: any*/),
                 (v1/*: any*/),
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "type",
-                  "storageKey": null
-                },
+                (v3/*: any*/),
                 (v4/*: any*/)
               ],
               "storageKey": null
@@ -210,6 +310,6 @@ return {
 };
 })();
 
-(node as any).hash = "bdd548b7b3fa4c1cfef32569dc63d45d";
+(node as any).hash = "9786965352e1978c1171509fcce34b56";
 
 export default node;

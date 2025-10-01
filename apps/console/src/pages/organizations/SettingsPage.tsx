@@ -62,6 +62,22 @@ const organizationFragment = graphql`
     websiteUrl
     email
     headquarterAddress
+    customDomain {
+      id
+      domain
+      sslStatus
+      dnsRecords {
+        type
+        name
+        value
+        ttl
+        purpose
+      }
+      createdAt
+      updatedAt
+      verifiedAt
+      sslExpiresAt
+    }
     users(first: 100) {
       edges {
         node {
@@ -117,8 +133,9 @@ export default function SettingsPage({ queryRef }: Props) {
   const [deleteOrganization, isDeleting] = useDeleteOrganizationMutation();
   const users = organization.users.edges.map((edge) => edge.node);
 
-  const { formState, handleSubmit, register, reset } =
-    useFormWithSchema(organizationSchema, {
+  const { formState, handleSubmit, register, reset } = useFormWithSchema(
+    organizationSchema,
+    {
       defaultValues: {
         name: organization.name || "",
         description: organization.description || "",
@@ -126,7 +143,8 @@ export default function SettingsPage({ queryRef }: Props) {
         email: organization.email || "",
         headquarterAddress: organization.headquarterAddress || "",
       },
-    });
+    }
+  );
 
   useEffect(() => {
     reset({
@@ -160,7 +178,9 @@ export default function SettingsPage({ queryRef }: Props) {
       onCompleted() {
         toast({
           title: __("Organization updated"),
-          description: __("Your organization details have been updated successfully."),
+          description: __(
+            "Your organization details have been updated successfully."
+          ),
           variant: "success",
         });
       },
@@ -220,80 +240,81 @@ export default function SettingsPage({ queryRef }: Props) {
             {formState.isSubmitting && <Spinner />}
           </div>
           <Card padded className="space-y-4">
-          <div>
-            <Label>{__("Organization logo")}</Label>
-            <div className="flex w-max items-center gap-4">
-              <Avatar
-                src={organization.logoUrl}
-                name={organization.name}
-                size="xl"
+            <div>
+              <Label>{__("Organization logo")}</Label>
+              <div className="flex w-max items-center gap-4">
+                <Avatar
+                  src={organization.logoUrl}
+                  name={organization.name}
+                  size="xl"
+                />
+                <FileButton
+                  disabled={formState.isSubmitting}
+                  onChange={updateOrganizationLogo}
+                  variant="secondary"
+                  className="ml-auto"
+                >
+                  {__("Change logo")}
+                </FileButton>
+              </div>
+            </div>
+            <Field
+              {...register("name")}
+              readOnly={formState.isSubmitting}
+              name="name"
+              type="text"
+              label={__("Organization name")}
+              placeholder={__("Organization name")}
+            />
+            <div>
+              <Label>{__("Description")}</Label>
+              <Textarea
+                {...register("description")}
+                readOnly={formState.isSubmitting}
+                name="description"
+                placeholder={__("Brief description of your organization")}
+                rows={3}
               />
-              <FileButton
-                disabled={formState.isSubmitting}
-                onChange={updateOrganizationLogo}
-                variant="secondary"
-                className="ml-auto"
-              >
-                {__("Change logo")}
-              </FileButton>
             </div>
-          </div>
-          <Field
-            {...register("name")}
-            readOnly={formState.isSubmitting}
-            name="name"
-            type="text"
-            label={__("Organization name")}
-            placeholder={__("Organization name")}
-          />
-          <div>
-            <Label>{__("Description")}</Label>
-            <Textarea
-              {...register("description")}
-              readOnly={formState.isSubmitting}
-              name="description"
-              placeholder={__("Brief description of your organization")}
-              rows={3}
-            />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field
-              {...register("websiteUrl")}
-              readOnly={formState.isSubmitting}
-              name="websiteUrl"
-              type="url"
-              label={__("Website URL")}
-              placeholder={__("https://example.com")}
-            />
-            <Field
-              {...register("email")}
-              readOnly={formState.isSubmitting}
-              name="email"
-              type="email"
-              label={__("Email")}
-              placeholder={__("contact@example.com")}
-            />
-          </div>
-          <div>
-            <Label>{__("Headquarter Address")}</Label>
-            <Textarea
-              {...register("headquarterAddress")}
-              readOnly={formState.isSubmitting}
-              name="headquarterAddress"
-              placeholder={__("123 Main St, City, Country")}
-            />
-          </div>
-
-
-          {formState.isDirty && (
-            <div className="flex justify-end pt-6">
-              <Button type="submit" disabled={formState.isSubmitting}>
-                {formState.isSubmitting ? __("Updating...") : __("Update Organization")}
-              </Button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field
+                {...register("websiteUrl")}
+                readOnly={formState.isSubmitting}
+                name="websiteUrl"
+                type="url"
+                label={__("Website URL")}
+                placeholder={__("https://example.com")}
+              />
+              <Field
+                {...register("email")}
+                readOnly={formState.isSubmitting}
+                name="email"
+                type="email"
+                label={__("Email")}
+                placeholder={__("contact@example.com")}
+              />
             </div>
-          )}
-        </Card>
-      </div>
+            <div>
+              <Label>{__("Headquarter Address")}</Label>
+              <Textarea
+                {...register("headquarterAddress")}
+                readOnly={formState.isSubmitting}
+                name="headquarterAddress"
+                placeholder={__("123 Main St, City, Country")}
+              />
+            </div>
+
+            {formState.isDirty && (
+              <div className="flex justify-end pt-6">
+                <Button type="submit" disabled={formState.isSubmitting}>
+                  {formState.isSubmitting
+                    ? __("Updating...")
+                    : __("Update Organization")}
+                </Button>
+              </div>
+            )}
+          </Card>
+        </div>
       </form>
 
       {/* Integrations */}
@@ -322,14 +343,18 @@ export default function SettingsPage({ queryRef }: Props) {
         </Card>
       </div>
 
-      {/* Custom Domains */}
       <div className="space-y-4">
-        <h2 className="text-base font-medium">{__("Custom Domains")}</h2>
-        <CustomDomainManager />
+        <h2 className="text-base font-medium">{__("Custom Domain")}</h2>
+        <CustomDomainManager
+          organizationId={organization.id}
+          customDomain={organization.customDomain}
+        />
       </div>
 
       <div className="space-y-4">
-        <h2 className="text-base font-medium text-red-600">{__("Danger Zone")}</h2>
+        <h2 className="text-base font-medium text-red-600">
+          {__("Danger Zone")}
+        </h2>
         <Card padded className="border-red-200 flex items-center gap-3">
           <div className="mr-auto">
             <h3 className="text-base font-semibold text-red-700">
@@ -347,11 +372,7 @@ export default function SettingsPage({ queryRef }: Props) {
             onConfirm={handleDeleteOrganization}
             isDeleting={isDeleting}
           >
-            <Button
-              variant="danger"
-              icon={IconTrashCan}
-              disabled={isDeleting}
-            >
+            <Button variant="danger" icon={IconTrashCan} disabled={isDeleting}>
               {isDeleting ? __("Deleting...") : __("Delete Organization")}
             </Button>
           </DeleteOrganizationDialog>
