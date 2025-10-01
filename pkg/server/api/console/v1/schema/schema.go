@@ -300,7 +300,7 @@ type ComplexityRoot struct {
 	}
 
 	CreateCustomDomainPayload struct {
-		CustomDomainEdge func(childComplexity int) int
+		CustomDomain func(childComplexity int) int
 	}
 
 	CreateDatumPayload struct {
@@ -404,23 +404,11 @@ type ComplexityRoot struct {
 		DNSRecords   func(childComplexity int) int
 		Domain       func(childComplexity int) int
 		ID           func(childComplexity int) int
-		IsActive     func(childComplexity int) int
 		Organization func(childComplexity int) int
 		SslExpiresAt func(childComplexity int) int
 		SslStatus    func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
 		VerifiedAt   func(childComplexity int) int
-	}
-
-	CustomDomainConnection struct {
-		Edges      func(childComplexity int) int
-		PageInfo   func(childComplexity int) int
-		TotalCount func(childComplexity int) int
-	}
-
-	CustomDomainEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
 	}
 
 	DNSRecordInstruction struct {
@@ -975,7 +963,7 @@ type ComplexityRoot struct {
 		ContinualImprovements func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) int
 		Controls              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
 		CreatedAt             func(childComplexity int) int
-		CustomDomains         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
+		CustomDomain          func(childComplexity int) int
 		Data                  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) int
 		Description           func(childComplexity int) int
 		Documents             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
@@ -1844,7 +1832,7 @@ type OrganizationResolver interface {
 	ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error)
 	Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
-	CustomDomains(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.CustomDomainConnection, error)
+	CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error)
 }
 type PeopleConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error)
@@ -2717,12 +2705,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateControlSnapshotMappingPayload.SnapshotEdge(childComplexity), true
 
-	case "CreateCustomDomainPayload.customDomainEdge":
-		if e.complexity.CreateCustomDomainPayload.CustomDomainEdge == nil {
+	case "CreateCustomDomainPayload.customDomain":
+		if e.complexity.CreateCustomDomainPayload.CustomDomain == nil {
 			break
 		}
 
-		return e.complexity.CreateCustomDomainPayload.CustomDomainEdge(childComplexity), true
+		return e.complexity.CreateCustomDomainPayload.CustomDomain(childComplexity), true
 
 	case "CreateDatumPayload.datumEdge":
 		if e.complexity.CreateDatumPayload.DatumEdge == nil {
@@ -2941,13 +2929,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CustomDomain.ID(childComplexity), true
 
-	case "CustomDomain.isActive":
-		if e.complexity.CustomDomain.IsActive == nil {
-			break
-		}
-
-		return e.complexity.CustomDomain.IsActive(childComplexity), true
-
 	case "CustomDomain.organization":
 		if e.complexity.CustomDomain.Organization == nil {
 			break
@@ -2982,41 +2963,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CustomDomain.VerifiedAt(childComplexity), true
-
-	case "CustomDomainConnection.edges":
-		if e.complexity.CustomDomainConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.CustomDomainConnection.Edges(childComplexity), true
-
-	case "CustomDomainConnection.pageInfo":
-		if e.complexity.CustomDomainConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.CustomDomainConnection.PageInfo(childComplexity), true
-
-	case "CustomDomainConnection.totalCount":
-		if e.complexity.CustomDomainConnection.TotalCount == nil {
-			break
-		}
-
-		return e.complexity.CustomDomainConnection.TotalCount(childComplexity), true
-
-	case "CustomDomainEdge.cursor":
-		if e.complexity.CustomDomainEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.CustomDomainEdge.Cursor(childComplexity), true
-
-	case "CustomDomainEdge.node":
-		if e.complexity.CustomDomainEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.CustomDomainEdge.Node(childComplexity), true
 
 	case "DNSRecordInstruction.name":
 		if e.complexity.DNSRecordInstruction.Name == nil {
@@ -5976,17 +5922,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Organization.CreatedAt(childComplexity), true
 
-	case "Organization.customDomains":
-		if e.complexity.Organization.CustomDomains == nil {
+	case "Organization.customDomain":
+		if e.complexity.Organization.CustomDomain == nil {
 			break
 		}
 
-		args, err := ec.field_Organization_customDomains_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Organization.CustomDomains(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
+		return e.complexity.Organization.CustomDomain(childComplexity), true
 
 	case "Organization.data":
 		if e.complexity.Organization.Data == nil {
@@ -10440,12 +10381,7 @@ type Organization implements Node {
 
   trustCenter: TrustCenter @goField(forceResolver: true)
 
-  customDomains(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-  ): CustomDomainConnection! @goField(forceResolver: true)
+  customDomain: CustomDomain @goField(forceResolver: true)
 
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -13235,7 +13171,6 @@ type CustomDomain implements Node {
   domain: String!
   sslStatus: SSLStatus!
   sslExpiresAt: Datetime
-  isActive: Boolean!
   dnsRecords: [DNSRecordInstruction!]!
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -13250,28 +13185,17 @@ type DNSRecordInstruction {
   purpose: String!
 }
 
-type CustomDomainConnection {
-  edges: [CustomDomainEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type CustomDomainEdge {
-  cursor: CursorKey!
-  node: CustomDomain!
-}
-
 input CreateCustomDomainInput {
   organizationId: ID!
   domain: String!
 }
 
 input DeleteCustomDomainInput {
-  domainId: ID!
+  organizationId: ID!
 }
 
 type CreateCustomDomainPayload {
-  customDomainEdge: CustomDomainEdge!
+  customDomain: CustomDomain!
 }
 
 type DeleteCustomDomainPayload {
@@ -18074,83 +17998,6 @@ func (ec *executionContext) field_Organization_controls_argsFilter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_customDomains_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Organization_customDomains_argsFirst(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg0
-	arg1, err := ec.field_Organization_customDomains_argsAfter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := ec.field_Organization_customDomains_argsLast(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg2
-	arg3, err := ec.field_Organization_customDomains_argsBefore(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg3
-	return args, nil
-}
-func (ec *executionContext) field_Organization_customDomains_argsFirst(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-	if tmp, ok := rawArgs["first"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_customDomains_argsAfter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_customDomains_argsLast(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-	if tmp, ok := rawArgs["last"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_customDomains_argsBefore(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Organization_data_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -21788,8 +21635,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -22397,8 +22244,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -24124,8 +23971,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -26335,8 +26182,8 @@ func (ec *executionContext) fieldContext_CreateControlSnapshotMappingPayload_sna
 	return fc, nil
 }
 
-func (ec *executionContext) _CreateCustomDomainPayload_customDomainEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateCustomDomainPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CreateCustomDomainPayload_customDomainEdge(ctx, field)
+func (ec *executionContext) _CreateCustomDomainPayload_customDomain(ctx context.Context, field graphql.CollectedField, obj *types.CreateCustomDomainPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateCustomDomainPayload_customDomain(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -26349,7 +26196,7 @@ func (ec *executionContext) _CreateCustomDomainPayload_customDomainEdge(ctx cont
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CustomDomainEdge, nil
+		return obj.CustomDomain, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -26361,12 +26208,12 @@ func (ec *executionContext) _CreateCustomDomainPayload_customDomainEdge(ctx cont
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.CustomDomainEdge)
+	res := resTmp.(*types.CustomDomain)
 	fc.Result = res
-	return ec.marshalNCustomDomainEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomainEdge(ctx, field.Selections, res)
+	return ec.marshalNCustomDomain2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CreateCustomDomainPayload_customDomainEdge(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CreateCustomDomainPayload_customDomain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreateCustomDomainPayload",
 		Field:      field,
@@ -26374,12 +26221,26 @@ func (ec *executionContext) fieldContext_CreateCustomDomainPayload_customDomainE
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_CustomDomainEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_CustomDomainEdge_node(ctx, field)
+			case "id":
+				return ec.fieldContext_CustomDomain_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_CustomDomain_organization(ctx, field)
+			case "domain":
+				return ec.fieldContext_CustomDomain_domain(ctx, field)
+			case "sslStatus":
+				return ec.fieldContext_CustomDomain_sslStatus(ctx, field)
+			case "sslExpiresAt":
+				return ec.fieldContext_CustomDomain_sslExpiresAt(ctx, field)
+			case "dnsRecords":
+				return ec.fieldContext_CustomDomain_dnsRecords(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CustomDomain_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CustomDomain_updatedAt(ctx, field)
+			case "verifiedAt":
+				return ec.fieldContext_CustomDomain_verifiedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CustomDomainEdge", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CustomDomain", field.Name)
 		},
 	}
 	return fc, nil
@@ -27870,8 +27731,8 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -28007,50 +27868,6 @@ func (ec *executionContext) fieldContext_CustomDomain_sslExpiresAt(_ context.Con
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CustomDomain_isActive(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CustomDomain_isActive(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IsActive, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CustomDomain_isActive(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CustomDomain",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -28236,264 +28053,6 @@ func (ec *executionContext) fieldContext_CustomDomain_verifiedAt(_ context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CustomDomainConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomainConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CustomDomainConnection_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*types.CustomDomainEdge)
-	fc.Result = res
-	return ec.marshalNCustomDomainEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomainEdgeᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CustomDomainConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CustomDomainConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_CustomDomainEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_CustomDomainEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type CustomDomainEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CustomDomainConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomainConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CustomDomainConnection_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.PageInfo)
-	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CustomDomainConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CustomDomainConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CustomDomainConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomainConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CustomDomainConnection_totalCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TotalCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CustomDomainConnection_totalCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CustomDomainConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CustomDomainEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomainEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CustomDomainEdge_cursor(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(page.CursorKey)
-	fc.Result = res
-	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CustomDomainEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CustomDomainEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CursorKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CustomDomainEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomainEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CustomDomainEdge_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.CustomDomain)
-	fc.Result = res
-	return ec.marshalNCustomDomain2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomain(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CustomDomainEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CustomDomainEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_CustomDomain_id(ctx, field)
-			case "organization":
-				return ec.fieldContext_CustomDomain_organization(ctx, field)
-			case "domain":
-				return ec.fieldContext_CustomDomain_domain(ctx, field)
-			case "sslStatus":
-				return ec.fieldContext_CustomDomain_sslStatus(ctx, field)
-			case "sslExpiresAt":
-				return ec.fieldContext_CustomDomain_sslExpiresAt(ctx, field)
-			case "isActive":
-				return ec.fieldContext_CustomDomain_isActive(ctx, field)
-			case "dnsRecords":
-				return ec.fieldContext_CustomDomain_dnsRecords(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_CustomDomain_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_CustomDomain_updatedAt(ctx, field)
-			case "verifiedAt":
-				return ec.fieldContext_CustomDomain_verifiedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type CustomDomain", field.Name)
 		},
 	}
 	return fc, nil
@@ -29112,8 +28671,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -31829,8 +31388,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -35151,8 +34710,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -43527,8 +43086,8 @@ func (ec *executionContext) fieldContext_Mutation_createCustomDomain(ctx context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "customDomainEdge":
-				return ec.fieldContext_CreateCustomDomainPayload_customDomainEdge(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_CreateCustomDomainPayload_customDomain(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CreateCustomDomainPayload", field.Name)
 		},
@@ -43782,8 +43341,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -44843,8 +44402,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -47095,8 +46654,8 @@ func (ec *executionContext) fieldContext_Organization_trustCenter(_ context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _Organization_customDomains(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Organization_customDomains(ctx, field)
+func (ec *executionContext) _Organization_customDomain(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_customDomain(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -47109,24 +46668,21 @@ func (ec *executionContext) _Organization_customDomains(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organization().CustomDomains(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
+		return ec.resolvers.Organization().CustomDomain(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.CustomDomainConnection)
+	res := resTmp.(*types.CustomDomain)
 	fc.Result = res
-	return ec.marshalNCustomDomainConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomainConnection(ctx, field.Selections, res)
+	return ec.marshalOCustomDomain2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomain(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Organization_customDomains(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Organization_customDomain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Organization",
 		Field:      field,
@@ -47134,26 +46690,27 @@ func (ec *executionContext) fieldContext_Organization_customDomains(ctx context.
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "edges":
-				return ec.fieldContext_CustomDomainConnection_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_CustomDomainConnection_pageInfo(ctx, field)
-			case "totalCount":
-				return ec.fieldContext_CustomDomainConnection_totalCount(ctx, field)
+			case "id":
+				return ec.fieldContext_CustomDomain_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_CustomDomain_organization(ctx, field)
+			case "domain":
+				return ec.fieldContext_CustomDomain_domain(ctx, field)
+			case "sslStatus":
+				return ec.fieldContext_CustomDomain_sslStatus(ctx, field)
+			case "sslExpiresAt":
+				return ec.fieldContext_CustomDomain_sslExpiresAt(ctx, field)
+			case "dnsRecords":
+				return ec.fieldContext_CustomDomain_dnsRecords(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CustomDomain_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CustomDomain_updatedAt(ctx, field)
+			case "verifiedAt":
+				return ec.fieldContext_CustomDomain_verifiedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type CustomDomainConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type CustomDomain", field.Name)
 		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Organization_customDomains_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
 	}
 	return fc, nil
 }
@@ -47485,8 +47042,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -48574,8 +48131,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -51251,8 +50808,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -52151,8 +51708,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -53064,8 +52621,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -53948,8 +53505,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -56989,8 +56546,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -59029,8 +58586,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
-			case "customDomains":
-				return ec.fieldContext_Organization_customDomains(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -68745,20 +68302,20 @@ func (ec *executionContext) unmarshalInputDeleteCustomDomainInput(ctx context.Co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"domainId"}
+	fieldsInOrder := [...]string{"organizationId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "domainId":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domainId"))
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
 			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.DomainID = data
+			it.OrganizationID = data
 		}
 	}
 
@@ -75383,8 +74940,8 @@ func (ec *executionContext) _CreateCustomDomainPayload(ctx context.Context, sel 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreateCustomDomainPayload")
-		case "customDomainEdge":
-			out.Values[i] = ec._CreateCustomDomainPayload_customDomainEdge(ctx, field, obj)
+		case "customDomain":
+			out.Values[i] = ec._CreateCustomDomainPayload_customDomain(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -76361,11 +75918,6 @@ func (ec *executionContext) _CustomDomain(ctx context.Context, sel ast.Selection
 			}
 		case "sslExpiresAt":
 			out.Values[i] = ec._CustomDomain_sslExpiresAt(ctx, field, obj)
-		case "isActive":
-			out.Values[i] = ec._CustomDomain_isActive(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		case "dnsRecords":
 			out.Values[i] = ec._CustomDomain_dnsRecords(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -76383,99 +75935,6 @@ func (ec *executionContext) _CustomDomain(ctx context.Context, sel ast.Selection
 			}
 		case "verifiedAt":
 			out.Values[i] = ec._CustomDomain_verifiedAt(ctx, field, obj)
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var customDomainConnectionImplementors = []string{"CustomDomainConnection"}
-
-func (ec *executionContext) _CustomDomainConnection(ctx context.Context, sel ast.SelectionSet, obj *types.CustomDomainConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, customDomainConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CustomDomainConnection")
-		case "edges":
-			out.Values[i] = ec._CustomDomainConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "pageInfo":
-			out.Values[i] = ec._CustomDomainConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "totalCount":
-			out.Values[i] = ec._CustomDomainConnection_totalCount(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var customDomainEdgeImplementors = []string{"CustomDomainEdge"}
-
-func (ec *executionContext) _CustomDomainEdge(ctx context.Context, sel ast.SelectionSet, obj *types.CustomDomainEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, customDomainEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("CustomDomainEdge")
-		case "cursor":
-			out.Values[i] = ec._CustomDomainEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._CustomDomainEdge_node(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -82603,19 +82062,16 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "customDomains":
+		case "customDomain":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Organization_customDomains(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
+				res = ec._Organization_customDomain(ctx, field, obj)
 				return res
 			}
 
@@ -91773,74 +91229,6 @@ func (ec *executionContext) marshalNCustomDomain2ᚖgithubᚗcomᚋgetproboᚋpr
 	return ec._CustomDomain(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNCustomDomainConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomainConnection(ctx context.Context, sel ast.SelectionSet, v types.CustomDomainConnection) graphql.Marshaler {
-	return ec._CustomDomainConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCustomDomainConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomainConnection(ctx context.Context, sel ast.SelectionSet, v *types.CustomDomainConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CustomDomainConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNCustomDomainEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomainEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.CustomDomainEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNCustomDomainEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomainEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNCustomDomainEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomainEdge(ctx context.Context, sel ast.SelectionSet, v *types.CustomDomainEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._CustomDomainEdge(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNDNSRecordInstruction2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDNSRecordInstructionᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DNSRecordInstruction) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -98067,6 +97455,13 @@ func (ec *executionContext) marshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋprobo
 	_ = ctx
 	res := cursor.MarshalCursorKeyScalar(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOCustomDomain2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomain(ctx context.Context, sel ast.SelectionSet, v *types.CustomDomain) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CustomDomain(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalODataClassification2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataClassification(ctx context.Context, v any) (*coredata.DataClassification, error) {

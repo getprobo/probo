@@ -324,7 +324,7 @@ type CreateCustomDomainInput struct {
 }
 
 type CreateCustomDomainPayload struct {
-	CustomDomainEdge *CustomDomainEdge `json:"customDomainEdge"`
+	CustomDomain *CustomDomain `json:"customDomain"`
 }
 
 type CreateDatumInput struct {
@@ -641,7 +641,6 @@ type CustomDomain struct {
 	Domain       string                         `json:"domain"`
 	SslStatus    coredata.CustomDomainSSLStatus `json:"sslStatus"`
 	SslExpiresAt *time.Time                     `json:"sslExpiresAt,omitempty"`
-	IsActive     bool                           `json:"isActive"`
 	DNSRecords   []*DNSRecordInstruction        `json:"dnsRecords"`
 	CreatedAt    time.Time                      `json:"createdAt"`
 	UpdatedAt    time.Time                      `json:"updatedAt"`
@@ -650,17 +649,6 @@ type CustomDomain struct {
 
 func (CustomDomain) IsNode()             {}
 func (this CustomDomain) GetID() gid.GID { return this.ID }
-
-type CustomDomainConnection struct {
-	Edges      []*CustomDomainEdge `json:"edges"`
-	PageInfo   *PageInfo           `json:"pageInfo"`
-	TotalCount int                 `json:"totalCount"`
-}
-
-type CustomDomainEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *CustomDomain  `json:"node"`
-}
 
 type DNSRecordInstruction struct {
 	Type    string `json:"type"`
@@ -775,7 +763,7 @@ type DeleteControlSnapshotMappingPayload struct {
 }
 
 type DeleteCustomDomainInput struct {
-	DomainID gid.GID `json:"domainId"`
+	OrganizationID gid.GID `json:"organizationId"`
 }
 
 type DeleteCustomDomainPayload struct {
@@ -1325,7 +1313,7 @@ type Organization struct {
 	ProcessingActivities  *ProcessingActivityConnection   `json:"processingActivities"`
 	Snapshots             *SnapshotConnection             `json:"snapshots"`
 	TrustCenter           *TrustCenter                    `json:"trustCenter,omitempty"`
-	CustomDomains         *CustomDomainConnection         `json:"customDomains"`
+	CustomDomain          *CustomDomain                   `json:"customDomain,omitempty"`
 	CreatedAt             time.Time                       `json:"createdAt"`
 	UpdatedAt             time.Time                       `json:"updatedAt"`
 }

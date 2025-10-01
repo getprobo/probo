@@ -1664,12 +1664,7 @@ type Organization implements Node {
 
   trustCenter: TrustCenter @goField(forceResolver: true)
 
-  customDomains(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-  ): CustomDomainConnection! @goField(forceResolver: true)
+  customDomain: CustomDomain @goField(forceResolver: true)
 
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -4459,7 +4454,6 @@ type CustomDomain implements Node {
   domain: String!
   sslStatus: SSLStatus!
   sslExpiresAt: Datetime
-  isActive: Boolean!
   dnsRecords: [DNSRecordInstruction!]!
   createdAt: Datetime!
   updatedAt: Datetime!
@@ -4474,28 +4468,17 @@ type DNSRecordInstruction {
   purpose: String!
 }
 
-type CustomDomainConnection {
-  edges: [CustomDomainEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type CustomDomainEdge {
-  cursor: CursorKey!
-  node: CustomDomain!
-}
-
 input CreateCustomDomainInput {
   organizationId: ID!
   domain: String!
 }
 
 input DeleteCustomDomainInput {
-  domainId: ID!
+  organizationId: ID!
 }
 
 type CreateCustomDomainPayload {
-  customDomainEdge: CustomDomainEdge!
+  customDomain: CustomDomain!
 }
 
 type DeleteCustomDomainPayload {

@@ -3324,26 +3324,33 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 		return nil, fmt.Errorf("failed to create custom domain: %w", err)
 	}
 
-	edge := &types.CustomDomainEdge{
-		Node:   types.NewCustomDomain(domain, r.customDomainCname),
-		Cursor: page.NewCursorKey(domain.ID, domain.CreatedAt),
-	}
-
 	return &types.CreateCustomDomainPayload{
-		CustomDomainEdge: edge,
+		CustomDomain: types.NewCustomDomain(domain, r.customDomainCname),
 	}, nil
 }
 
 // DeleteCustomDomain is the resolver for the deleteCustomDomain field.
 func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.DeleteCustomDomainInput) (*types.DeleteCustomDomainPayload, error) {
-	prb := r.ProboService(ctx, input.DomainID.TenantID())
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
-	if err := prb.CustomDomains.DeleteCustomDomain(ctx, input.DomainID); err != nil {
+	// Get the current custom domain ID before deleting
+	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get custom domain: %w", err)
+	}
+
+	if domain == nil {
+		return nil, fmt.Errorf("organization has no custom domain")
+	}
+
+	deletedDomainID := domain.ID
+
+	if err := prb.CustomDomains.DeleteCustomDomain(ctx, input.OrganizationID); err != nil {
 		return nil, fmt.Errorf("failed to delete custom domain: %w", err)
 	}
 
 	return &types.DeleteCustomDomainPayload{
-		DeletedCustomDomainID: input.DomainID,
+		DeletedCustomDomainID: deletedDomainID,
 	}, nil
 }
 
@@ -4016,23 +4023,20 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 	return types.NewTrustCenter(trustCenter, file), nil
 }
 
-// CustomDomains is the resolver for the customDomains field.
-func (r *organizationResolver) CustomDomains(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.CustomDomainConnection, error) {
+// CustomDomain is the resolver for the customDomain field.
+func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	pageOrderBy := page.OrderBy[coredata.CustomDomainOrderField]{
-		Field:     coredata.CustomDomainOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	page, err := prb.CustomDomains.ListOrganizationDomains(ctx, obj.ID, cursor)
+	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list custom domains: %w", err)
+		return nil, fmt.Errorf("failed to get custom domain: %w", err)
 	}
 
-	return types.NewCustomDomainConnection(page, r, obj.ID, r.customDomainCname), nil
+	if domain == nil {
+		return nil, nil
+	}
+
+	return types.NewCustomDomain(domain, r.customDomainCname), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
