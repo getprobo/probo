@@ -60,7 +60,7 @@ func (s *Selector) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate,
 
 	cert, err := s.loadFromDatabase(domain)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot load certificate from database: %w", err)
 	}
 
 	s.cache.Store(domain, cert)
