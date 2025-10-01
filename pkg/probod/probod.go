@@ -16,6 +16,7 @@ package probod
 
 import (
 	"context"
+	"crypto"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -33,6 +34,7 @@ import (
 	"github.com/getprobo/probo/pkg/crypto/cipher"
 	"github.com/getprobo/probo/pkg/crypto/keys"
 	"github.com/getprobo/probo/pkg/crypto/passwdhash"
+	"github.com/getprobo/probo/pkg/crypto/pem"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/mailer"
 	"github.com/getprobo/probo/pkg/probo"
@@ -256,18 +258,25 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create usrmgr service: %w", err)
 	}
 
-	var acmeService *certmanager.ACMEService
-	if impl.cfg.CustomDomains.ACME.Directory != "" {
-		acmeService, err = certmanager.NewACMEService(
-			impl.cfg.CustomDomains.ACME.Email,
-			keys.Type(impl.cfg.CustomDomains.ACME.KeyType),
-			impl.cfg.CustomDomains.ACME.Directory,
-			impl.cfg.CustomDomains.ACME.InsecureTLS,
-			l,
-		)
+	var accountKey crypto.Signer
+	if impl.cfg.CustomDomains.ACME.AccountKey != "" {
+		accountKey, err = pem.DecodePrivateKey([]byte(impl.cfg.CustomDomains.ACME.AccountKey))
 		if err != nil {
-			return fmt.Errorf("failed to initialize ACME service: %w", err)
+			return fmt.Errorf("failed to decode ACME account key: %w", err)
 		}
+		l.Info("using configured ACME account key")
+	}
+
+	acmeService, err := certmanager.NewACMEService(
+		impl.cfg.CustomDomains.ACME.Email,
+		keys.Type(impl.cfg.CustomDomains.ACME.KeyType),
+		impl.cfg.CustomDomains.ACME.Directory,
+		impl.cfg.CustomDomains.ACME.InsecureTLS,
+		accountKey,
+		l,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to initialize ACME service: %w", err)
 	}
 
 	proboService, err := probo.NewService(

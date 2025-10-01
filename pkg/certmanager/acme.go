@@ -62,10 +62,22 @@ type (
 // completed before the certificate can be issued or renewed.
 var ErrHTTPChallengeRequired = errors.New("HTTP challenge required")
 
-func NewACMEService(email string, keyType keys.Type, directoryURL string, insecureTLS bool, logger *log.Logger) (*ACMEService, error) {
-	accountKey, err := keys.Generate(keyType)
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate account key: %w", err)
+func NewACMEService(
+	email string,
+	keyType keys.Type,
+	directoryURL string,
+	insecureTLS bool,
+	accountKey crypto.Signer,
+	logger *log.Logger,
+) (*ACMEService, error) {
+	if accountKey == nil {
+		var err error
+		accountKey, err = keys.Generate(keyType)
+		if err != nil {
+			return nil, fmt.Errorf("cannot generate account key: %w", err)
+		}
+
+		logger.Warn("no account key provided, generating new ACME account - this will create a new account on each restart")
 	}
 
 	var httpClient *http.Client
@@ -78,6 +90,7 @@ func NewACMEService(email string, keyType keys.Type, directoryURL string, insecu
 			Transport: transport,
 			Timeout:   30 * time.Second,
 		}
+
 		logger.Warn("ACME service configured with insecure TLS - use only for local testing")
 	} else {
 		httpClient = httpclient.DefaultPooledClient(
@@ -225,7 +238,6 @@ func (s *ACMEService) ObtainCertificate(
 	ctx context.Context,
 	domain string,
 ) (*Certificate, error) {
-	// For HTTP-01, we always need to serve the challenge
 	challenge, err := s.GetHTTPChallenge(ctx, domain)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get HTTP challenge: %w", err)
