@@ -238,8 +238,12 @@ func TestRoundTrip(t *testing.T) {
 			case ed25519.PrivateKey:
 				dataToSign = testData
 				hashFunc = crypto.Hash(0) // ED25519 requires zero hash
+			case *ecdsa.PrivateKey:
+				// ECDSA requires pre-hashed data
+				dataToSign = hashed
+				hashFunc = crypto.SHA256
 			default:
-				dataToSign = testData
+				dataToSign = hashed
 				hashFunc = crypto.SHA256
 			}
 
@@ -253,8 +257,12 @@ func TestRoundTrip(t *testing.T) {
 			case ed25519.PrivateKey:
 				dataToSign = testData
 				hashFunc = crypto.Hash(0) // ED25519 requires zero hash
+			case *ecdsa.PrivateKey:
+				// ECDSA requires pre-hashed data
+				dataToSign = hashed
+				hashFunc = crypto.SHA256
 			default:
-				dataToSign = testData
+				dataToSign = hashed
 				hashFunc = crypto.SHA256
 			}
 
