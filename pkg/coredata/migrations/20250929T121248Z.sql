@@ -14,7 +14,7 @@ CREATE TABLE custom_domains (
     tenant_id TEXT NOT NULL,
     organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     domain CITEXT NOT NULL UNIQUE,
-    encrypted_ssl_certificate BYTEA,
+    ssl_certificate BYTEA,
     encrypted_ssl_private_key BYTEA,
     ssl_certificate_chain TEXT,
     ssl_status custom_domain_ssl_status,
