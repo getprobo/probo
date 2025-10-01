@@ -44,6 +44,7 @@ type Config struct {
 	ConnectorRegistry *connector.ConnectorRegistry
 	Agent             *agents.Agent
 	SafeRedirect      *saferedirect.SafeRedirect
+	CustomDomainCname string
 	Logger            *log.Logger
 }
 
@@ -68,6 +69,7 @@ func NewServer(cfg Config) (*Server, error) {
 		TrustAuth:         cfg.TrustAuth,
 		ConnectorRegistry: cfg.ConnectorRegistry,
 		SafeRedirect:      cfg.SafeRedirect,
+		CustomDomainCname: cfg.CustomDomainCname,
 		Logger:            cfg.Logger.Named("api"),
 	}
 	apiServer, err := api.NewServer(apiCfg)

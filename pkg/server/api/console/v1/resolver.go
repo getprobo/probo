@@ -53,9 +53,10 @@ type (
 	}
 
 	Resolver struct {
-		proboSvc  *probo.Service
-		usrmgrSvc *usrmgr.Service
-		authCfg   AuthConfig
+		proboSvc          *probo.Service
+		usrmgrSvc         *usrmgr.Service
+		authCfg           AuthConfig
+		customDomainCname string
 	}
 
 	ctxKey struct{ name string }
@@ -84,6 +85,7 @@ func NewMux(
 	authCfg AuthConfig,
 	connectorRegistry *connector.ConnectorRegistry,
 	safeRedirect *saferedirect.SafeRedirect,
+	customDomainCname string,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -204,20 +206,21 @@ func NewMux(
 	}))
 
 	r.Get("/", playground.Handler("GraphQL", "/api/console/v1/query"))
-	r.Post("/query", graphqlHandler(logger, proboSvc, usrmgrSvc, authCfg))
+	r.Post("/query", graphqlHandler(logger, proboSvc, usrmgrSvc, authCfg, customDomainCname))
 
 	return r
 }
 
-func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFunc {
+func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrmgr.Service, authCfg AuthConfig, customDomainCname string) http.HandlerFunc {
 	var mb int64 = 1 << 20
 
 	es := schema.NewExecutableSchema(
 		schema.Config{
 			Resolvers: &Resolver{
-				proboSvc:  proboSvc,
-				usrmgrSvc: usrmgrSvc,
-				authCfg:   authCfg,
+				proboSvc:          proboSvc,
+				usrmgrSvc:         usrmgrSvc,
+				authCfg:           authCfg,
+				customDomainCname: customDomainCname,
 			},
 		},
 	)

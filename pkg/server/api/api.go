@@ -53,15 +53,16 @@ type (
 	}
 
 	Config struct {
-		AllowedOrigins    []string
-		Probo             *probo.Service
-		Usrmgr            *usrmgr.Service
-		Trust             *trust.Service
-		Auth              ConsoleAuthConfig
-		TrustAuth         TrustAuthConfig
-		ConnectorRegistry *connector.ConnectorRegistry
-		SafeRedirect      *saferedirect.SafeRedirect
-		Logger            *log.Logger
+		AllowedOrigins      []string
+		Probo               *probo.Service
+		Usrmgr              *usrmgr.Service
+		Trust               *trust.Service
+		Auth                ConsoleAuthConfig
+		TrustAuth           TrustAuthConfig
+		ConnectorRegistry   *connector.ConnectorRegistry
+		SafeRedirect        *saferedirect.SafeRedirect
+		CustomDomainCname   string
+		Logger              *log.Logger
 	}
 
 	Server struct {
@@ -154,6 +155,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			},
 			s.cfg.ConnectorRegistry,
 			s.cfg.SafeRedirect,
+			s.cfg.CustomDomainCname,
 		),
 	)
 

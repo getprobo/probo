@@ -3325,7 +3325,7 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 	}
 
 	edge := &types.CustomDomainEdge{
-		Node:   types.NewCustomDomain(domain),
+		Node:   types.NewCustomDomain(domain, r.customDomainCname),
 		Cursor: page.NewCursorKey(domain.ID, domain.CreatedAt),
 	}
 
@@ -4032,7 +4032,7 @@ func (r *organizationResolver) CustomDomains(ctx context.Context, obj *types.Org
 		return nil, fmt.Errorf("failed to list custom domains: %w", err)
 	}
 
-	return types.NewCustomDomainConnection(page, r, obj.ID), nil
+	return types.NewCustomDomainConnection(page, r, obj.ID, r.customDomainCname), nil
 }
 
 // TotalCount is the resolver for the totalCount field.
