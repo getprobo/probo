@@ -21,6 +21,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -56,6 +57,10 @@ type (
 		OrderURL string
 	}
 )
+
+// ErrHTTPChallengeRequired indicates that an HTTP-01 challenge needs to be
+// completed before the certificate can be issued or renewed.
+var ErrHTTPChallengeRequired = errors.New("HTTP challenge required")
 
 func NewACMEService(email string, keyType keys.Type, directoryURL string, insecureTLS bool, logger *log.Logger) (*ACMEService, error) {
 	accountKey, err := keys.Generate(keyType)
@@ -229,7 +234,7 @@ func (s *ACMEService) ObtainCertificate(
 	// The challenge token and key auth will be stored and served via HTTP
 	// The caller is responsible for ensuring the HTTP endpoint is ready
 	// before calling CompleteHTTPChallenge
-	return nil, fmt.Errorf("HTTP challenge ready: token=%s", challenge.Token)
+	return nil, fmt.Errorf("%w: token=%s", ErrHTTPChallengeRequired, challenge.Token)
 }
 
 func (s *ACMEService) RenewCertificate(

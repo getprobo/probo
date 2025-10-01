@@ -16,8 +16,8 @@ package certmanager
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
@@ -146,33 +146,33 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 	}
 
 	cert, err := r.acmeService.RenewCertificate(ctx, lockedDomain.Domain)
-	if err != nil && strings.Contains(err.Error(), "HTTP challenge ready") {
-		challenge, err := r.acmeService.GetHTTPChallenge(ctx, lockedDomain.Domain)
-		if err != nil {
-			return fmt.Errorf("cannot get HTTP challenge for renewal: %w", err)
-		}
-
-		r.logger.WarnCtx(
-			ctx,
-			"HTTP challenge required for renewal",
-			log.String("domain", lockedDomain.Domain),
-			log.String("token", challenge.Token),
-		)
-
-		lockedDomain.HTTPChallengeToken = &challenge.Token
-		lockedDomain.HTTPChallengeKeyAuth = &challenge.KeyAuth
-		lockedDomain.HTTPChallengeURL = &challenge.URL
-		lockedDomain.HTTPOrderURL = &challenge.OrderURL
-		lockedDomain.SSLStatus = coredata.CustomDomainSSLStatusRenewing
-
-		if err := lockedDomain.Update(ctx, conn, scope, r.encryptionKey); err != nil {
-			return fmt.Errorf("cannot update domain with renewal challenge: %w", err)
-		}
-
-		return nil
-	}
-
 	if err != nil {
+		if errors.Is(err, ErrHTTPChallengeRequired) {
+			challenge, err := r.acmeService.GetHTTPChallenge(ctx, lockedDomain.Domain)
+			if err != nil {
+				return fmt.Errorf("cannot get HTTP challenge for renewal: %w", err)
+			}
+
+			r.logger.WarnCtx(
+				ctx,
+				"HTTP challenge required for renewal",
+				log.String("domain", lockedDomain.Domain),
+				log.String("token", challenge.Token),
+			)
+
+			lockedDomain.HTTPChallengeToken = &challenge.Token
+			lockedDomain.HTTPChallengeKeyAuth = &challenge.KeyAuth
+			lockedDomain.HTTPChallengeURL = &challenge.URL
+			lockedDomain.HTTPOrderURL = &challenge.OrderURL
+			lockedDomain.SSLStatus = coredata.CustomDomainSSLStatusRenewing
+
+			if err := lockedDomain.Update(ctx, conn, scope, r.encryptionKey); err != nil {
+				return fmt.Errorf("cannot update domain with renewal challenge: %w", err)
+			}
+
+			return nil
+		}
+
 		return fmt.Errorf("cannot renew certificate: %w", err)
 	}
 
