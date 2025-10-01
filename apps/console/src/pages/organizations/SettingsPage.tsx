@@ -37,6 +37,7 @@ import { InviteUserDialog } from "/components/organizations/InviteUserDialog";
 import { useDeleteOrganizationMutation } from "/hooks/graph/OrganizationGraph";
 import { useNavigate } from "react-router";
 import { DeleteOrganizationDialog } from "/components/organizations/DeleteOrganizationDialog";
+import { CustomDomainManager } from "/components/customDomains/CustomDomainManager";
 
 const organizationSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
@@ -319,6 +320,12 @@ export default function SettingsPage({ queryRef }: Props) {
             connectors={organization.connectors.edges.map((edge) => edge.node)}
           />
         </Card>
+      </div>
+
+      {/* Custom Domains */}
+      <div className="space-y-4">
+        <h2 className="text-base font-medium">{__("Custom Domains")}</h2>
+        <CustomDomainManager />
       </div>
 
       <div className="space-y-4">
