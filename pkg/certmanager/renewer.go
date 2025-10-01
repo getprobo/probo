@@ -182,7 +182,9 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 	)
 
 	lockedDomain.SSLCertificatePEM = cert.CertPEM
-	lockedDomain.SSLPrivateKeyPEM = cert.KeyPEM
+	if err := lockedDomain.EncryptPrivateKey(cert.KeyPEM, r.encryptionKey); err != nil {
+		return fmt.Errorf("cannot encrypt private key: %w", err)
+	}
 	chainStr := string(cert.ChainPEM)
 	lockedDomain.SSLCertificateChain = &chainStr
 	lockedDomain.SSLExpiresAt = &cert.ExpiresAt
