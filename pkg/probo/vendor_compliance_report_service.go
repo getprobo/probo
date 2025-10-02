@@ -76,45 +76,56 @@ func (s VendorComplianceReportService) Upload(
 		return nil, fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	mimeType := mime.TypeByExtension(filepath.Ext(req.ReportName))
+	var vendorComplianceReport *coredata.VendorComplianceReport
 
-	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      &s.svc.bucket,
-		Key:         aws.String(objectKey.String()),
-		Body:        req.File,
-		ContentType: &mimeType,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot upload file to S3: %w", err)
-	}
-
-	headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
-		Bucket: aws.String(s.svc.bucket),
-		Key:    aws.String(objectKey.String()),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot get object metadata: %w", err)
-	}
-
-	now := time.Now()
-
-	vendorComplianceReportID := gid.New(s.svc.scope.GetTenantID(), coredata.VendorComplianceReportEntityType)
-
-	vendorComplianceReport := &coredata.VendorComplianceReport{
-		ID:         vendorComplianceReportID,
-		VendorID:   vendorID,
-		ReportDate: req.ReportDate,
-		ValidUntil: req.ValidUntil,
-		ReportName: req.ReportName,
-		FileKey:    objectKey.String(),
-		FileSize:   *headOutput.ContentLength,
-		CreatedAt:  now,
-		UpdatedAt:  now,
-	}
-
-	err = s.svc.pg.WithConn(
+	err = s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
+			vendor := &coredata.Vendor{}
+			if err := vendor.LoadByID(ctx, conn, s.svc.scope, vendorID); err != nil {
+				return fmt.Errorf("cannot load vendor: %w", err)
+			}
+
+			mimeType := mime.TypeByExtension(filepath.Ext(req.ReportName))
+
+			_, err := s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
+				Bucket:      &s.svc.bucket,
+				Key:         aws.String(objectKey.String()),
+				Body:        req.File,
+				ContentType: &mimeType,
+				Metadata: map[string]string{
+					"type":            "vendor-compliance-report",
+					"vendor-id":       vendorID.String(),
+					"organization-id": vendor.OrganizationID.String(),
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("cannot upload file to S3: %w", err)
+			}
+
+			headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
+				Bucket: aws.String(s.svc.bucket),
+				Key:    aws.String(objectKey.String()),
+			})
+			if err != nil {
+				return fmt.Errorf("cannot get object metadata: %w", err)
+			}
+
+			now := time.Now()
+			vendorComplianceReportID := gid.New(s.svc.scope.GetTenantID(), coredata.VendorComplianceReportEntityType)
+
+			vendorComplianceReport = &coredata.VendorComplianceReport{
+				ID:         vendorComplianceReportID,
+				VendorID:   vendorID,
+				ReportDate: req.ReportDate,
+				ValidUntil: req.ValidUntil,
+				ReportName: req.ReportName,
+				FileKey:    objectKey.String(),
+				FileSize:   *headOutput.ContentLength,
+				CreatedAt:  now,
+				UpdatedAt:  now,
+			}
+
 			return vendorComplianceReport.Insert(ctx, conn, s.svc.scope)
 		},
 	)

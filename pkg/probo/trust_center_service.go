@@ -175,34 +175,6 @@ func (s TrustCenterService) UploadNDA(
 		return nil, nil, fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	mimeType := mime.TypeByExtension(filepath.Ext(req.FileName))
-
-	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      &s.svc.bucket,
-		Key:         aws.String(objectKey.String()),
-		Body:        req.File,
-		ContentType: &mimeType,
-		Metadata: map[string]string{
-			"type":            "trust-center-nda",
-			"trust-center-id": req.TrustCenterID.String(),
-		},
-	})
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot upload file to S3: %w", err)
-	}
-
-	headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
-		Bucket: aws.String(s.svc.bucket),
-		Key:    aws.String(objectKey.String()),
-	})
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot get object metadata: %w", err)
-	}
-
-	now := time.Now()
-
-	fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
-
 	var trustCenter *coredata.TrustCenter
 	var file *coredata.File
 
@@ -213,6 +185,34 @@ func (s TrustCenterService) UploadNDA(
 			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, req.TrustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
+
+			mimeType := mime.TypeByExtension(filepath.Ext(req.FileName))
+
+			_, err := s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
+				Bucket:      &s.svc.bucket,
+				Key:         aws.String(objectKey.String()),
+				Body:        req.File,
+				ContentType: &mimeType,
+				Metadata: map[string]string{
+					"type":            "trust-center-nda",
+					"trust-center-id": req.TrustCenterID.String(),
+					"organization-id": trustCenter.OrganizationID.String(),
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("cannot upload file to S3: %w", err)
+			}
+
+			headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
+				Bucket: aws.String(s.svc.bucket),
+				Key:    aws.String(objectKey.String()),
+			})
+			if err != nil {
+				return fmt.Errorf("cannot get object metadata: %w", err)
+			}
+
+			now := time.Now()
+			fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
 
 			file = &coredata.File{
 				ID:         fileID,

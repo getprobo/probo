@@ -23,7 +23,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
-	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 )
 
@@ -48,57 +47,6 @@ func (s ReportService) Get(
 			return nil
 		},
 	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return report, nil
-}
-
-func (s ReportService) Create(
-	ctx context.Context,
-	file File,
-) (*coredata.Report, error) {
-	reportID := gid.New(s.svc.scope.GetTenantID(), coredata.ReportEntityType)
-	now := time.Now()
-
-	objectKey, err := uuid.NewV7()
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate object key: %w", err)
-	}
-
-	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      aws.String(s.svc.bucket),
-		Key:         aws.String(objectKey.String()),
-		Body:        file.Content,
-		ContentType: aws.String(file.ContentType),
-		Metadata: map[string]string{
-			"report-id": reportID.String(),
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("cannot upload report to S3: %w", err)
-	}
-
-	report := &coredata.Report{
-		ID:        reportID,
-		ObjectKey: objectKey.String(),
-		MimeType:  file.ContentType,
-		Filename:  file.Filename,
-		Size:      file.Size,
-		CreatedAt: now,
-		UpdatedAt: now,
-	}
-
-	err = s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		err := report.Insert(ctx, conn, s.svc.scope)
-		if err != nil {
-			return fmt.Errorf("cannot insert report: %w", err)
-		}
-
-		return nil
-	})
 
 	if err != nil {
 		return nil, err

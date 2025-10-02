@@ -90,42 +90,44 @@ func (s VendorDataPrivacyAgreementService) Upload(
 		return nil, nil, fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	mimeType := mime.TypeByExtension(filepath.Ext(req.FileName))
-
-	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      &s.svc.bucket,
-		Key:         aws.String(objectKey.String()),
-		Body:        req.File,
-		ContentType: &mimeType,
-	})
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot upload file to S3: %w", err)
-	}
-
-	headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
-		Bucket: aws.String(s.svc.bucket),
-		Key:    aws.String(objectKey.String()),
-	})
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot get object metadata: %w", err)
-	}
-
-	now := time.Now()
-
-	fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
-	vendorDataPrivacyAgreementID := gid.New(s.svc.scope.GetTenantID(), coredata.VendorDataPrivacyAgreementEntityType)
-
 	var vendorDataPrivacyAgreement *coredata.VendorDataPrivacyAgreement
 	var file *coredata.File
+	var vendor *coredata.Vendor
 
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			vendor := &coredata.Vendor{}
+			vendor = &coredata.Vendor{}
 			if err := vendor.LoadByID(ctx, conn, s.svc.scope, vendorID); err != nil {
 				return fmt.Errorf("cannot load vendor: %w", err)
 			}
 
+			mimeType := mime.TypeByExtension(filepath.Ext(req.FileName))
+			_, err := s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
+				Bucket:      &s.svc.bucket,
+				Key:         aws.String(objectKey.String()),
+				Body:        req.File,
+				ContentType: &mimeType,
+				Metadata: map[string]string{
+					"type":            "vendor-data-privacy-agreement",
+					"vendor-id":       vendorID.String(),
+					"organization-id": vendor.OrganizationID.String(),
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("cannot upload file to S3: %w", err)
+			}
+			headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
+				Bucket: aws.String(s.svc.bucket),
+				Key:    aws.String(objectKey.String()),
+			})
+			if err != nil {
+				return fmt.Errorf("cannot get object metadata: %w", err)
+			}
+
+			now := time.Now()
+			fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+			vendorDataPrivacyAgreementID := gid.New(s.svc.scope.GetTenantID(), coredata.VendorDataPrivacyAgreementEntityType)
 			file = &coredata.File{
 				ID:         fileID,
 				BucketName: s.svc.bucket,
