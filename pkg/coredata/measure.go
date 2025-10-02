@@ -47,6 +47,8 @@ func (m Measure) CursorKey(orderBy MeasureOrderField) page.CursorKey {
 	switch orderBy {
 	case MeasureOrderFieldCreatedAt:
 		return page.NewCursorKey(m.ID, m.CreatedAt)
+	case MeasureOrderFieldName:
+		return page.NewCursorKey(m.ID, m.Name)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))

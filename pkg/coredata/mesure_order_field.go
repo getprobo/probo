@@ -20,6 +20,7 @@ type (
 
 const (
 	MeasureOrderFieldCreatedAt MeasureOrderField = "CREATED_AT"
+	MeasureOrderFieldName      MeasureOrderField = "NAME"
 )
 
 func (p MeasureOrderField) Column() string {

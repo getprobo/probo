@@ -381,6 +381,10 @@ enum MeasureOrderField
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.MeasureOrderFieldCreatedAt"
     )
+  NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureOrderFieldName"
+    )
 }
 
 enum TaskOrderField

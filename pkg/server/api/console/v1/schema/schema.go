@@ -8934,6 +8934,10 @@ enum MeasureOrderField
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.MeasureOrderFieldCreatedAt"
     )
+  NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.MeasureOrderFieldName"
+    )
 }
 
 enum TaskOrderField
@@ -91489,9 +91493,11 @@ func (ec *executionContext) marshalNMeasureOrderField2githubᚗcomᚋgetproboᚋ
 var (
 	unmarshalNMeasureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureOrderField = map[string]coredata.MeasureOrderField{
 		"CREATED_AT": coredata.MeasureOrderFieldCreatedAt,
+		"NAME":       coredata.MeasureOrderFieldName,
 	}
 	marshalNMeasureOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureOrderField = map[coredata.MeasureOrderField]string{
 		coredata.MeasureOrderFieldCreatedAt: "CREATED_AT",
+		coredata.MeasureOrderFieldName:      "NAME",
 	}
 )
 
