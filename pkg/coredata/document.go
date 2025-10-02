@@ -28,15 +28,15 @@ import (
 
 type (
 	Document struct {
-		ID                      gid.GID      `db:"id"`
-		OrganizationID          gid.GID      `db:"organization_id"`
-		OwnerID                 gid.GID      `db:"owner_id"`
-		Title                   string       `db:"title"`
-		DocumentType            DocumentType `db:"document_type"`
-		CurrentPublishedVersion *int         `db:"current_published_version"`
-		ShowOnTrustCenter       bool         `db:"show_on_trust_center"`
-		CreatedAt               time.Time    `db:"created_at"`
-		UpdatedAt               time.Time    `db:"updated_at"`
+		ID                      gid.GID               `db:"id"`
+		OrganizationID          gid.GID               `db:"organization_id"`
+		OwnerID                 gid.GID               `db:"owner_id"`
+		Title                   string                `db:"title"`
+		DocumentType            DocumentType          `db:"document_type"`
+		CurrentPublishedVersion *int                  `db:"current_published_version"`
+		TrustCenterVisibility   TrustCenterVisibility `db:"trust_center_visibility"`
+		CreatedAt               time.Time             `db:"created_at"`
+		UpdatedAt               time.Time             `db:"updated_at"`
 	}
 
 	Documents []*Document
@@ -69,7 +69,7 @@ SELECT
     title,
     document_type,
     current_published_version,
-    show_on_trust_center,
+    trust_center_visibility,
     created_at,
     updated_at
 FROM
@@ -151,7 +151,7 @@ SELECT
     title,
     document_type,
     current_published_version,
-    show_on_trust_center,
+    trust_center_visibility,
     created_at,
     updated_at
 FROM
@@ -201,7 +201,7 @@ SELECT
     title,
     document_type,
     current_published_version,
-    show_on_trust_center,
+    trust_center_visibility,
     created_at,
     updated_at
 FROM
@@ -250,7 +250,7 @@ INSERT INTO
 		title,
 		document_type,
 		current_published_version,
-		show_on_trust_center,
+		trust_center_visibility,
 		created_at,
 		updated_at
     )
@@ -262,7 +262,7 @@ VALUES (
     @title,
     @document_type,
     @current_published_version,
-    @show_on_trust_center,
+    @trust_center_visibility,
     @created_at,
     @updated_at
 );
@@ -276,7 +276,7 @@ VALUES (
 		"title":                     p.Title,
 		"document_type":             p.DocumentType,
 		"current_published_version": p.CurrentPublishedVersion,
-		"show_on_trust_center":      p.ShowOnTrustCenter,
+		"trust_center_visibility":   p.TrustCenterVisibility,
 		"created_at":                p.CreatedAt,
 		"updated_at":                p.UpdatedAt,
 	}
@@ -334,7 +334,7 @@ SET
 	current_published_version = @current_published_version,
 	owner_id = @owner_id,
 	document_type = @document_type,
-	show_on_trust_center = @show_on_trust_center,
+	trust_center_visibility = @trust_center_visibility,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -350,7 +350,7 @@ WHERE
 		"current_published_version": p.CurrentPublishedVersion,
 		"owner_id":                  p.OwnerID,
 		"document_type":             p.DocumentType,
-		"show_on_trust_center":      p.ShowOnTrustCenter,
+		"trust_center_visibility":   p.TrustCenterVisibility,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -375,7 +375,7 @@ WITH plcs AS (
 		p.id,
 		p.tenant_id,
 		p.search_vector,
-		p.show_on_trust_center,
+		p.trust_center_visibility,
 		p.deleted_at
 	FROM
 		documents p
@@ -428,7 +428,7 @@ WITH plcs AS (
 		p.title,
 		p.document_type,
 		p.current_published_version,
-		p.show_on_trust_center,
+		p.trust_center_visibility,
 		p.created_at,
 		p.updated_at,
 		p.deleted_at
@@ -446,7 +446,7 @@ SELECT
 	title,
 	document_type,
 	current_published_version,
-	show_on_trust_center,
+	trust_center_visibility,
 	created_at,
 	updated_at
 FROM
@@ -492,7 +492,7 @@ WITH plcs AS (
 		p.id,
 		p.tenant_id,
 		p.search_vector,
-		p.show_on_trust_center,
+		p.trust_center_visibility,
 		p.deleted_at
 	FROM
 		documents p
@@ -544,7 +544,7 @@ WITH plcs AS (
 		p.title,
 		p.document_type,
 		p.current_published_version,
-		p.show_on_trust_center,
+		p.trust_center_visibility,
 		p.created_at,
 		p.updated_at,
 		p.search_vector,
@@ -563,7 +563,7 @@ SELECT
 	title,
 	document_type,
 	current_published_version,
-	show_on_trust_center,
+	trust_center_visibility,
 	created_at,
 	updated_at
 FROM

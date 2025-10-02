@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4255866a0c7fe3c9c3416fe2603b5f63>>
+ * @generated SignedSource<<014a8f33bc7d6674a2a93e8b3dde8edf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,11 +10,12 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type AuditState = "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED" | "OUTDATED" | "REJECTED";
+export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateAuditInput = {
   id: string;
   name?: string | null | undefined;
-  showOnTrustCenter?: boolean | null | undefined;
   state?: AuditState | null | undefined;
+  trustCenterVisibility?: TrustCenterVisibility | null | undefined;
   validFrom?: any | null | undefined;
   validUntil?: any | null | undefined;
 };

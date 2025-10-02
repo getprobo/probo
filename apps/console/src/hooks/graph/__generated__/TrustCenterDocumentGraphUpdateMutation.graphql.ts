@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<46d46472ea11f58c00df8b8827afab98>>
+ * @generated SignedSource<<64b79a80214710d6c3e4676cd63136e4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,13 +11,14 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateDocumentInput = {
   content?: string | null | undefined;
   documentType?: DocumentType | null | undefined;
   id: string;
   ownerId?: string | null | undefined;
-  showOnTrustCenter?: boolean | null | undefined;
   title?: string | null | undefined;
+  trustCenterVisibility?: TrustCenterVisibility | null | undefined;
 };
 export type TrustCenterDocumentGraphUpdateMutation$variables = {
   input: UpdateDocumentInput;
@@ -26,7 +27,7 @@ export type TrustCenterDocumentGraphUpdateMutation$data = {
   readonly updateDocument: {
     readonly document: {
       readonly id: string;
-      readonly showOnTrustCenter: boolean;
+      readonly trustCenterVisibility: TrustCenterVisibility;
       readonly " $fragmentSpreads": FragmentRefs<"TrustCenterDocumentsCardFragment">;
     };
   };
@@ -62,7 +63,7 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "showOnTrustCenter",
+  "name": "trustCenterVisibility",
   "storageKey": null
 };
 return {
@@ -206,16 +207,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b112314d6ef35feebf49bd2f8c636b33",
+    "cacheID": "04cb2a4e83386dfffce8c12eae320cfe",
     "id": null,
     "metadata": {},
     "name": "TrustCenterDocumentGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterDocumentGraphUpdateMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      id\n      showOnTrustCenter\n      ...TrustCenterDocumentsCardFragment\n    }\n  }\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  showOnTrustCenter\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterDocumentGraphUpdateMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      id\n      trustCenterVisibility\n      ...TrustCenterDocumentsCardFragment\n    }\n  }\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "46f72a664d3edb0e5665b1ecea69e31a";
+(node as any).hash = "293896dbfec4de53d0fe30a2462f833b";
 
 export default node;

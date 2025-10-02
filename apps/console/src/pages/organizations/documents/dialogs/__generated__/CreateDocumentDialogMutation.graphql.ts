@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ce2f4f138b340f04b4e413ecbfff2ea1>>
+ * @generated SignedSource<<7f9d3e67d06cbf2aaf21c61be65bc7ee>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,12 +11,14 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type CreateDocumentInput = {
   content: string;
   documentType: DocumentType;
   organizationId: string;
   ownerId: string;
   title: string;
+  trustCenterVisibility?: TrustCenterVisibility | null | undefined;
 };
 export type CreateDocumentDialogMutation$variables = {
   connections: ReadonlyArray<string>;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5773d0630d11596682d41b4df95716c3>>
+ * @generated SignedSource<<0d25ae690e5016a27d889ed1c4a1667f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,11 +11,12 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type AuditState = "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED" | "OUTDATED" | "REJECTED";
+export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateAuditInput = {
   id: string;
   name?: string | null | undefined;
-  showOnTrustCenter?: boolean | null | undefined;
   state?: AuditState | null | undefined;
+  trustCenterVisibility?: TrustCenterVisibility | null | undefined;
   validFrom?: any | null | undefined;
   validUntil?: any | null | undefined;
 };
@@ -26,7 +27,7 @@ export type TrustCenterAuditGraphUpdateMutation$data = {
   readonly updateAudit: {
     readonly audit: {
       readonly id: string;
-      readonly showOnTrustCenter: boolean;
+      readonly trustCenterVisibility: TrustCenterVisibility;
       readonly " $fragmentSpreads": FragmentRefs<"TrustCenterAuditsCardFragment">;
     };
   };
@@ -62,7 +63,7 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "showOnTrustCenter",
+  "name": "trustCenterVisibility",
   "storageKey": null
 },
 v4 = {
@@ -187,16 +188,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d27b79a065314a22dbcbd8216de1268b",
+    "cacheID": "70742901eeb45d5e00e4e61d83b2f828",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAuditGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAuditGraphUpdateMutation(\n  $input: UpdateAuditInput!\n) {\n  updateAudit(input: $input) {\n    audit {\n      id\n      showOnTrustCenter\n      ...TrustCenterAuditsCardFragment\n    }\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  showOnTrustCenter\n  createdAt\n}\n"
+    "text": "mutation TrustCenterAuditGraphUpdateMutation(\n  $input: UpdateAuditInput!\n) {\n  updateAudit(input: $input) {\n    audit {\n      id\n      trustCenterVisibility\n      ...TrustCenterAuditsCardFragment\n    }\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  trustCenterVisibility\n  createdAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1e92374989ecf8f439d069eb003e4e4e";
+(node as any).hash = "c958ccce67f79bb75593e9fcb31ee9d8";
 
 export default node;

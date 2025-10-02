@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6676a9b480eeef26f00ff97963b39b86>>
+ * @generated SignedSource<<1135bf3b786a26466e2763cbeecb7b5b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -204,7 +204,7 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "showOnTrustCenter",
+                            "name": "trustCenterVisibility",
                             "storageKey": null
                           },
                           {
@@ -273,12 +273,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f8e5f4d7adcf1e794bc046ef21317f89",
+    "cacheID": "1df18b182ace4562ffa876b7e8073a22",
     "id": null,
     "metadata": {},
     "name": "TrustCenterDocumentGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterDocumentGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  showOnTrustCenter\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
+    "text": "query TrustCenterDocumentGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n"
   }
 };
 })();

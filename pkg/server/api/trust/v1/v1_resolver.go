@@ -59,6 +59,17 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Document) (bool, error) {
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+
+	document, err := publicTrustService.Documents.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load document: %w", err))
+	}
+
+	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		return true, nil
+	}
+
 	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
 	if err != nil {
 		return false, nil
@@ -153,9 +164,27 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context, input types.R
 
 // ExportDocumentPDF is the resolver for the exportDocumentPDF field.
 func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.ExportDocumentPDFInput) (*types.ExportDocumentPDFPayload, error) {
+	publicTrustService := r.PublicTrustService(ctx, input.DocumentID.TenantID())
+
+	document, err := publicTrustService.Documents.Get(ctx, input.DocumentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load document: %w", err))
+	}
+
+	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		pdf, err := publicTrustService.Documents.ExportPDFWithoutWatermark(ctx, input.DocumentID)
+		if err != nil {
+			panic(fmt.Errorf("cannot export document PDF: %w", err))
+		}
+
+		return &types.ExportDocumentPDFPayload{
+			Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+		}, nil
+	}
+
 	privateTrustService, err := r.PrivateTrustService(ctx, input.DocumentID.TenantID())
 	if err != nil {
-		return nil, fmt.Errorf("cannot export document PDF: %w", err)
+		panic(fmt.Errorf("cannot export document PDF: %w", err))
 	}
 
 	tokenData := TokenAccessFromContext(ctx)
@@ -214,6 +243,24 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 
 // ExportReportPDF is the resolver for the exportReportPDF field.
 func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.ExportReportPDFInput) (*types.ExportReportPDFPayload, error) {
+	publicTrustService := r.PublicTrustService(ctx, input.ReportID.TenantID())
+
+	audit, err := publicTrustService.Audits.GetByReportID(ctx, input.ReportID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load audit: %w", err))
+	}
+
+	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		pdf, err := publicTrustService.Reports.ExportPDFWithoutWatermark(ctx, input.ReportID)
+		if err != nil {
+			panic(fmt.Errorf("cannot export report PDF: %w", err))
+		}
+
+		return &types.ExportReportPDFPayload{
+			Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(pdf)),
+		}, nil
+	}
+
 	privateTrustService, err := r.PrivateTrustService(ctx, input.ReportID.TenantID())
 	if err != nil {
 		return nil, fmt.Errorf("cannot export report PDF: %w", err)
@@ -296,6 +343,15 @@ func (r *mutationResolver) AcceptNonDisclosureAgreement(ctx context.Context, inp
 func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input types.RequestDocumentAccessInput) (*types.RequestAccessesPayload, error) {
 	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
 
+	document, err := publicTrustService.Documents.Get(ctx, input.DocumentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load document: %w", err))
+	}
+
+	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		return nil, fmt.Errorf("document is publicly available and does not require access request")
+	}
+
 	userData := r.UserFromContext(ctx)
 	if userData != nil {
 		return nil, fmt.Errorf("sessions users cannot request trust center access")
@@ -339,6 +395,15 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 // RequestReportAccess is the resolver for the requestReportAccess field.
 func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.RequestReportAccessInput) (*types.RequestAccessesPayload, error) {
 	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
+
+	audit, err := publicTrustService.Audits.GetByReportID(ctx, input.ReportID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load audit: %w", err))
+	}
+
+	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		return nil, fmt.Errorf("report is publicly available and does not require access request")
+	}
 
 	userData := r.UserFromContext(ctx)
 	if userData != nil {
@@ -484,6 +549,17 @@ func (r *queryResolver) TrustCenterBySlug(ctx context.Context, slug string) (*ty
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error) {
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+
+	audit, err := publicTrustService.Audits.GetByReportID(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load document: %w", err))
+	}
+
+	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		return true, nil
+	}
+
 	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
 	if err != nil {
 		return false, nil

@@ -139,19 +139,19 @@ type ComplexityRoot struct {
 	}
 
 	Audit struct {
-		Controls          func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
-		CreatedAt         func(childComplexity int) int
-		Framework         func(childComplexity int) int
-		ID                func(childComplexity int) int
-		Name              func(childComplexity int) int
-		Organization      func(childComplexity int) int
-		Report            func(childComplexity int) int
-		ReportURL         func(childComplexity int) int
-		ShowOnTrustCenter func(childComplexity int) int
-		State             func(childComplexity int) int
-		UpdatedAt         func(childComplexity int) int
-		ValidFrom         func(childComplexity int) int
-		ValidUntil        func(childComplexity int) int
+		Controls              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
+		CreatedAt             func(childComplexity int) int
+		Framework             func(childComplexity int) int
+		ID                    func(childComplexity int) int
+		Name                  func(childComplexity int) int
+		Organization          func(childComplexity int) int
+		Report                func(childComplexity int) int
+		ReportURL             func(childComplexity int) int
+		State                 func(childComplexity int) int
+		TrustCenterVisibility func(childComplexity int) int
+		UpdatedAt             func(childComplexity int) int
+		ValidFrom             func(childComplexity int) int
+		ValidUntil            func(childComplexity int) int
 	}
 
 	AuditConnection struct {
@@ -573,8 +573,8 @@ type ComplexityRoot struct {
 		ID                      func(childComplexity int) int
 		Organization            func(childComplexity int) int
 		Owner                   func(childComplexity int) int
-		ShowOnTrustCenter       func(childComplexity int) int
 		Title                   func(childComplexity int) int
+		TrustCenterVisibility   func(childComplexity int) int
 		UpdatedAt               func(childComplexity int) int
 		Versions                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionOrderBy, filter *types.DocumentVersionFilter) int
 	}
@@ -2132,19 +2132,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Audit.ReportURL(childComplexity), true
 
-	case "Audit.showOnTrustCenter":
-		if e.complexity.Audit.ShowOnTrustCenter == nil {
-			break
-		}
-
-		return e.complexity.Audit.ShowOnTrustCenter(childComplexity), true
-
 	case "Audit.state":
 		if e.complexity.Audit.State == nil {
 			break
 		}
 
 		return e.complexity.Audit.State(childComplexity), true
+
+	case "Audit.trustCenterVisibility":
+		if e.complexity.Audit.TrustCenterVisibility == nil {
+			break
+		}
+
+		return e.complexity.Audit.TrustCenterVisibility(childComplexity), true
 
 	case "Audit.updatedAt":
 		if e.complexity.Audit.UpdatedAt == nil {
@@ -3317,19 +3317,19 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Document.Owner(childComplexity), true
 
-	case "Document.showOnTrustCenter":
-		if e.complexity.Document.ShowOnTrustCenter == nil {
-			break
-		}
-
-		return e.complexity.Document.ShowOnTrustCenter(childComplexity), true
-
 	case "Document.title":
 		if e.complexity.Document.Title == nil {
 			break
 		}
 
 		return e.complexity.Document.Title(childComplexity), true
+
+	case "Document.trustCenterVisibility":
+		if e.complexity.Document.TrustCenterVisibility == nil {
+			break
+		}
+
+		return e.complexity.Document.TrustCenterVisibility(childComplexity), true
 
 	case "Document.updatedAt":
 		if e.complexity.Document.UpdatedAt == nil {
@@ -8705,6 +8705,22 @@ enum AuditState
     )
 }
 
+enum TrustCenterVisibility
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibility") {
+  NONE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibilityNone"
+    )
+  PRIVATE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibilityPrivate"
+    )
+  PUBLIC
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibilityPublic"
+    )
+}
+
 enum NonconformityStatus
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityStatus") {
   OPEN
@@ -10503,7 +10519,7 @@ type Document implements Node {
   description: String!
   documentType: DocumentType!
   currentPublishedVersion: Int
-  showOnTrustCenter: Boolean!
+  trustCenterVisibility: TrustCenterVisibility!
   owner: People! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
 
@@ -10607,7 +10623,7 @@ type Audit implements Node {
     filter: ControlFilter
   ): ControlConnection! @goField(forceResolver: true)
 
-  showOnTrustCenter: Boolean!
+  trustCenterVisibility: TrustCenterVisibility!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -11898,6 +11914,7 @@ input CreateDocumentInput {
   content: String!
   ownerId: ID!
   documentType: DocumentType!
+  trustCenterVisibility: TrustCenterVisibility
 }
 
 input UpdateDocumentInput {
@@ -11906,7 +11923,7 @@ input UpdateDocumentInput {
   content: String
   ownerId: ID
   documentType: DocumentType
-  showOnTrustCenter: Boolean
+  trustCenterVisibility: TrustCenterVisibility
 }
 
 input ExportDocumentVersionPDFInput {
@@ -11966,6 +11983,7 @@ input CreateAuditInput {
   validFrom: Datetime
   validUntil: Datetime
   state: AuditState
+  trustCenterVisibility: TrustCenterVisibility
 }
 
 input UpdateAuditInput {
@@ -11974,7 +11992,7 @@ input UpdateAuditInput {
   validFrom: Datetime
   validUntil: Datetime
   state: AuditState
-  showOnTrustCenter: Boolean
+  trustCenterVisibility: TrustCenterVisibility
 }
 
 input DeleteAuditInput {
@@ -22353,8 +22371,8 @@ func (ec *executionContext) fieldContext_Audit_controls(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Audit_showOnTrustCenter(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
+func (ec *executionContext) _Audit_trustCenterVisibility(ctx context.Context, field graphql.CollectedField, obj *types.Audit) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Audit_trustCenterVisibility(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -22367,7 +22385,7 @@ func (ec *executionContext) _Audit_showOnTrustCenter(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ShowOnTrustCenter, nil
+		return obj.TrustCenterVisibility, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -22379,19 +22397,19 @@ func (ec *executionContext) _Audit_showOnTrustCenter(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(coredata.TrustCenterVisibility)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNTrustCenterVisibility2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Audit_showOnTrustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Audit_trustCenterVisibility(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Audit",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			return nil, errors.New("field of type TrustCenterVisibility does not have child fields")
 		},
 	}
 	return fc, nil
@@ -22736,8 +22754,8 @@ func (ec *executionContext) fieldContext_AuditEdge_node(_ context.Context, field
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
+			case "trustCenterVisibility":
+				return ec.fieldContext_Audit_trustCenterVisibility(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
@@ -28170,8 +28188,8 @@ func (ec *executionContext) fieldContext_DeleteAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
+			case "trustCenterVisibility":
+				return ec.fieldContext_Audit_trustCenterVisibility(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
@@ -30138,8 +30156,8 @@ func (ec *executionContext) fieldContext_Document_currentPublishedVersion(_ cont
 	return fc, nil
 }
 
-func (ec *executionContext) _Document_showOnTrustCenter(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Document_showOnTrustCenter(ctx, field)
+func (ec *executionContext) _Document_trustCenterVisibility(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_trustCenterVisibility(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -30152,7 +30170,7 @@ func (ec *executionContext) _Document_showOnTrustCenter(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ShowOnTrustCenter, nil
+		return obj.TrustCenterVisibility, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -30164,19 +30182,19 @@ func (ec *executionContext) _Document_showOnTrustCenter(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(coredata.TrustCenterVisibility)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNTrustCenterVisibility2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Document_showOnTrustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Document_trustCenterVisibility(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Document",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			return nil, errors.New("field of type TrustCenterVisibility does not have child fields")
 		},
 	}
 	return fc, nil
@@ -30803,8 +30821,8 @@ func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, fi
 				return ec.fieldContext_Document_documentType(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Document_showOnTrustCenter(ctx, field)
+			case "trustCenterVisibility":
+				return ec.fieldContext_Document_trustCenterVisibility(ctx, field)
 			case "owner":
 				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
@@ -30917,8 +30935,8 @@ func (ec *executionContext) fieldContext_DocumentVersion_document(_ context.Cont
 				return ec.fieldContext_Document_documentType(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Document_showOnTrustCenter(ctx, field)
+			case "trustCenterVisibility":
+				return ec.fieldContext_Document_trustCenterVisibility(ctx, field)
 			case "owner":
 				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
@@ -42270,8 +42288,8 @@ func (ec *executionContext) fieldContext_Nonconformity_audit(_ context.Context, 
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
+			case "trustCenterVisibility":
+				return ec.fieldContext_Audit_trustCenterVisibility(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
@@ -47969,8 +47987,8 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_document(
 				return ec.fieldContext_Document_documentType(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Document_showOnTrustCenter(ctx, field)
+			case "trustCenterVisibility":
+				return ec.fieldContext_Document_trustCenterVisibility(ctx, field)
 			case "owner":
 				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
@@ -48677,8 +48695,8 @@ func (ec *executionContext) fieldContext_Report_audit(_ context.Context, field g
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
+			case "trustCenterVisibility":
+				return ec.fieldContext_Audit_trustCenterVisibility(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
@@ -53308,8 +53326,8 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_document(_ co
 				return ec.fieldContext_Document_documentType(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Document_showOnTrustCenter(ctx, field)
+			case "trustCenterVisibility":
+				return ec.fieldContext_Document_trustCenterVisibility(ctx, field)
 			case "owner":
 				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
@@ -54511,8 +54529,8 @@ func (ec *executionContext) fieldContext_UpdateAuditPayload_audit(_ context.Cont
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
+			case "trustCenterVisibility":
+				return ec.fieldContext_Audit_trustCenterVisibility(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
@@ -54781,8 +54799,8 @@ func (ec *executionContext) fieldContext_UpdateDocumentPayload_document(_ contex
 				return ec.fieldContext_Document_documentType(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Document_showOnTrustCenter(ctx, field)
+			case "trustCenterVisibility":
+				return ec.fieldContext_Document_trustCenterVisibility(ctx, field)
 			case "owner":
 				return ec.fieldContext_Document_owner(ctx, field)
 			case "organization":
@@ -56169,8 +56187,8 @@ func (ec *executionContext) fieldContext_UploadAuditReportPayload_audit(_ contex
 				return ec.fieldContext_Audit_state(ctx, field)
 			case "controls":
 				return ec.fieldContext_Audit_controls(ctx, field)
-			case "showOnTrustCenter":
-				return ec.fieldContext_Audit_showOnTrustCenter(ctx, field)
+			case "trustCenterVisibility":
+				return ec.fieldContext_Audit_trustCenterVisibility(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Audit_createdAt(ctx, field)
 			case "updatedAt":
@@ -64908,7 +64926,7 @@ func (ec *executionContext) unmarshalInputCreateAuditInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "frameworkId", "name", "validFrom", "validUntil", "state"}
+	fieldsInOrder := [...]string{"organizationId", "frameworkId", "name", "validFrom", "validUntil", "state", "trustCenterVisibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -64957,6 +64975,13 @@ func (ec *executionContext) unmarshalInputCreateAuditInput(ctx context.Context, 
 				return it, err
 			}
 			it.State = data
+		case "trustCenterVisibility":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterVisibility"))
+			data, err := ec.unmarshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrustCenterVisibility = data
 		}
 	}
 
@@ -65299,7 +65324,7 @@ func (ec *executionContext) unmarshalInputCreateDocumentInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "title", "content", "ownerId", "documentType"}
+	fieldsInOrder := [...]string{"organizationId", "title", "content", "ownerId", "documentType", "trustCenterVisibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -65341,6 +65366,13 @@ func (ec *executionContext) unmarshalInputCreateDocumentInput(ctx context.Contex
 				return it, err
 			}
 			it.DocumentType = data
+		case "trustCenterVisibility":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterVisibility"))
+			data, err := ec.unmarshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TrustCenterVisibility = data
 		}
 	}
 
@@ -69154,7 +69186,7 @@ func (ec *executionContext) unmarshalInputUpdateAuditInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "validFrom", "validUntil", "state", "showOnTrustCenter"}
+	fieldsInOrder := [...]string{"id", "name", "validFrom", "validUntil", "state", "trustCenterVisibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -69196,13 +69228,13 @@ func (ec *executionContext) unmarshalInputUpdateAuditInput(ctx context.Context, 
 				return it, err
 			}
 			it.State = data
-		case "showOnTrustCenter":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showOnTrustCenter"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		case "trustCenterVisibility":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterVisibility"))
+			data, err := ec.unmarshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ShowOnTrustCenter = data
+			it.TrustCenterVisibility = data
 		}
 	}
 
@@ -69409,7 +69441,7 @@ func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "title", "content", "ownerId", "documentType", "showOnTrustCenter"}
+	fieldsInOrder := [...]string{"id", "title", "content", "ownerId", "documentType", "trustCenterVisibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -69451,13 +69483,13 @@ func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Contex
 				return it, err
 			}
 			it.DocumentType = data
-		case "showOnTrustCenter":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showOnTrustCenter"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		case "trustCenterVisibility":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterVisibility"))
+			data, err := ec.unmarshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ShowOnTrustCenter = data
+			it.TrustCenterVisibility = data
 		}
 	}
 
@@ -72132,8 +72164,8 @@ func (ec *executionContext) _Audit(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "showOnTrustCenter":
-			out.Values[i] = ec._Audit_showOnTrustCenter(ctx, field, obj)
+		case "trustCenterVisibility":
+			out.Values[i] = ec._Audit_trustCenterVisibility(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -76300,8 +76332,8 @@ func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "currentPublishedVersion":
 			out.Values[i] = ec._Document_currentPublishedVersion(ctx, field, obj)
-		case "showOnTrustCenter":
-			out.Values[i] = ec._Document_showOnTrustCenter(ctx, field, obj)
+		case "trustCenterVisibility":
+			out.Values[i] = ec._Document_trustCenterVisibility(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -93295,6 +93327,36 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNTrustCenterVisibility2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx context.Context, v any) (coredata.TrustCenterVisibility, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNTrustCenterVisibility2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTrustCenterVisibility2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx context.Context, sel ast.SelectionSet, v coredata.TrustCenterVisibility) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNTrustCenterVisibility2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNTrustCenterVisibility2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility = map[string]coredata.TrustCenterVisibility{
+		"NONE":    coredata.TrustCenterVisibilityNone,
+		"PRIVATE": coredata.TrustCenterVisibilityPrivate,
+		"PUBLIC":  coredata.TrustCenterVisibilityPublic,
+	}
+	marshalNTrustCenterVisibility2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility = map[coredata.TrustCenterVisibility]string{
+		coredata.TrustCenterVisibilityNone:    "NONE",
+		coredata.TrustCenterVisibilityPrivate: "PRIVATE",
+		coredata.TrustCenterVisibilityPublic:  "PUBLIC",
+	}
+)
+
 func (ec *executionContext) unmarshalNUnassignTaskInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐUnassignTaskInput(ctx context.Context, v any) (types.UnassignTaskInput, error) {
 	res, err := ec.unmarshalInputUnassignTaskInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -96680,6 +96742,38 @@ func (ec *executionContext) unmarshalOTrustCenterReferenceOrder2ᚖgithubᚗcom�
 	res, err := ec.unmarshalInputTrustCenterReferenceOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
+
+func (ec *executionContext) unmarshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx context.Context, v any) (*coredata.TrustCenterVisibility, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx context.Context, sel ast.SelectionSet, v *coredata.TrustCenterVisibility) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility[*v])
+	return res
+}
+
+var (
+	unmarshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility = map[string]coredata.TrustCenterVisibility{
+		"NONE":    coredata.TrustCenterVisibilityNone,
+		"PRIVATE": coredata.TrustCenterVisibilityPrivate,
+		"PUBLIC":  coredata.TrustCenterVisibilityPublic,
+	}
+	marshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility = map[coredata.TrustCenterVisibility]string{
+		coredata.TrustCenterVisibilityNone:    "NONE",
+		coredata.TrustCenterVisibilityPrivate: "PRIVATE",
+		coredata.TrustCenterVisibilityPublic:  "PUBLIC",
+	}
+)
 
 func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (*graphql.Upload, error) {
 	if v == nil {

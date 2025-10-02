@@ -9,14 +9,14 @@ import {
   Tbody,
   Th,
   IconChevronDown,
-  IconCheckmark1,
-  IconCrossLargeX,
   Badge,
+  Field,
+  Option,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useFragment } from "react-relay";
-import { useMemo, useState } from "react";
-import { sprintf, getAuditStateVariant, getAuditStateLabel, formatDate } from "@probo/helpers";
+import { useMemo, useState, useCallback, useEffect } from "react";
+import { sprintf, getAuditStateVariant, getAuditStateLabel, formatDate, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import clsx from "clsx";
 import type { TrustCenterAuditsCardFragment$key } from "./__generated__/TrustCenterAuditsCardFragment.graphql";
@@ -31,7 +31,7 @@ const trustCenterAuditFragment = graphql`
     validFrom
     validUntil
     state
-    showOnTrustCenter
+    trustCenterVisibility
     createdAt
   }
 `;
@@ -40,7 +40,7 @@ type Mutation<Params> = (p: {
   variables: {
     input: {
       id: string;
-      showOnTrustCenter: boolean;
+      trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC";
     } & Params;
   };
 }) => void;
@@ -49,7 +49,7 @@ type Props<Params> = {
   audits: TrustCenterAuditsCardFragment$key[];
   params: Params;
   disabled?: boolean;
-  onToggleVisibility: Mutation<Params>;
+  onChangeVisibility: Mutation<Params>;
   variant?: "card" | "table";
 };
 
@@ -62,12 +62,12 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
   const showMoreButton = limit !== null && props.audits.length > limit;
   const variant = props.variant ?? "table";
 
-  const onToggleVisibility = (auditId: string, showOnTrustCenter: boolean) => {
-    props.onToggleVisibility({
+  const onChangeVisibility = (auditId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => {
+    props.onChangeVisibility({
       variables: {
         input: {
           id: auditId,
-          showOnTrustCenter,
+          trustCenterVisibility,
           ...props.params,
         },
       },
@@ -86,7 +86,6 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
             <Th>{__("Valid Until")}</Th>
             <Th>{__("State")}</Th>
             <Th>{__("Visibility")}</Th>
-            <Th></Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -101,7 +100,7 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
             <AuditRow
               key={index}
               audit={audit}
-              onToggleVisibility={onToggleVisibility}
+              onChangeVisibility={onChangeVisibility}
               disabled={props.disabled}
             />
           ))}
@@ -123,12 +122,30 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
 
 function AuditRow(props: {
   audit: TrustCenterAuditsCardFragment$key;
-  onToggleVisibility: (auditId: string, showOnTrustCenter: boolean) => void;
+  onChangeVisibility: (auditId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => void;
   disabled?: boolean;
 }) {
   const audit = useFragment(trustCenterAuditFragment, props.audit);
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
+  const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
+
+  const handleValueChange = useCallback((value: string | {}) => {
+    const stringValue = typeof value === 'string' ? value : '';
+    const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
+    setOptimisticValue(typedValue);
+    props.onChangeVisibility(audit.id, typedValue);
+  }, [audit.id, props.onChangeVisibility]);
+
+  useEffect(() => {
+    if (optimisticValue && audit.trustCenterVisibility === optimisticValue) {
+      setOptimisticValue(null);
+    }
+  }, [audit.trustCenterVisibility, optimisticValue]);
+
+  const currentValue = optimisticValue || audit.trustCenterVisibility;
+
+  const visibilityOptions = getTrustCenterVisibilityOptions(__);
 
   const validUntilFormatted = audit.validUntil
     ? formatDate(audit.validUntil)
@@ -148,30 +165,24 @@ function AuditRow(props: {
           {getAuditStateLabel(__, audit.state)}
         </Badge>
       </Td>
-      <Td>
-        <div className="flex items-center gap-2">
-          {audit.showOnTrustCenter ? (
-            <>
-              <IconCheckmark1 className="w-4 h-4 text-txt-primary" />
-              <span className="text-txt-primary">{__("Visible")}</span>
-            </>
-          ) : (
-            <>
-              <IconCrossLargeX className="w-4 h-4 text-txt-tertiary" />
-              <span className="text-txt-tertiary">{__("Hidden")}</span>
-            </>
-          )}
-        </div>
-      </Td>
-      <Td noLink width={100} className="text-end">
-        <Button
-          variant="secondary"
-          onClick={() => props.onToggleVisibility(audit.id, !audit.showOnTrustCenter)}
-          icon={audit.showOnTrustCenter ? IconCrossLargeX : IconCheckmark1}
+      <Td noLink width={130} className="pr-0">
+        <Field
+          type="select"
+          value={currentValue}
+          onValueChange={handleValueChange}
           disabled={props.disabled}
+          className="w-[105px]"
         >
-          {audit.showOnTrustCenter ? __("Hide") : __("Show")}
-        </Button>
+          {visibilityOptions.map((option) => (
+            <Option key={option.value} value={option.value}>
+              <div className="flex items-center justify-between w-full">
+                <Badge variant={option.variant}>
+                  {option.label}
+                </Badge>
+              </div>
+            </Option>
+          ))}
+        </Field>
       </Td>
     </Tr>
   );

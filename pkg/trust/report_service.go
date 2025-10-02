@@ -90,6 +90,30 @@ func (s ReportService) ExportPDF(
 	reportID gid.GID,
 	email string,
 ) ([]byte, error) {
+	pdfData, err := s.exportPDFData(ctx, reportID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot export report PDF: %w", err)
+	}
+
+	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
+	if err != nil {
+		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
+	}
+
+	return watermarkedPDF, nil
+}
+
+func (s ReportService) ExportPDFWithoutWatermark(
+	ctx context.Context,
+	reportID gid.GID,
+) ([]byte, error) {
+	return s.exportPDFData(ctx, reportID)
+}
+
+func (s ReportService) exportPDFData(
+	ctx context.Context,
+	reportID gid.GID,
+) ([]byte, error) {
 	report, err := s.Get(ctx, reportID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get report: %w", err)
@@ -109,10 +133,5 @@ func (s ReportService) ExportPDF(
 		return nil, fmt.Errorf("cannot read PDF data: %w", err)
 	}
 
-	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
-	if err != nil {
-		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
-	}
-
-	return watermarkedPDF, nil
+	return pdfData, nil
 }

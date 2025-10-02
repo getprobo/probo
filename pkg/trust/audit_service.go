@@ -53,6 +53,31 @@ func (s AuditService) Get(
 	return audit, nil
 }
 
+func (s AuditService) GetByReportID(
+	ctx context.Context,
+	reportID gid.GID,
+) (*coredata.Audit, error) {
+	audit := &coredata.Audit{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := audit.LoadByReportID(ctx, conn, s.svc.scope, reportID)
+			if err != nil {
+				return fmt.Errorf("cannot load audit: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return audit, nil
+}
+
 func (s AuditService) ListForOrganizationId(
 	ctx context.Context,
 	organizationID gid.GID,

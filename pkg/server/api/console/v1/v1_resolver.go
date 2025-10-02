@@ -2500,11 +2500,12 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 	document, documentVersion, err := prb.Documents.Create(
 		ctx,
 		probo.CreateDocumentRequest{
-			OrganizationID: input.OrganizationID,
-			DocumentType:   input.DocumentType,
-			Title:          input.Title,
-			OwnerID:        input.OwnerID,
-			Content:        input.Content,
+			OrganizationID:        input.OrganizationID,
+			DocumentType:          input.DocumentType,
+			Title:                 input.Title,
+			OwnerID:               input.OwnerID,
+			Content:               input.Content,
+			TrustCenterVisibility: input.TrustCenterVisibility,
 		},
 	)
 	if err != nil {
@@ -2527,7 +2528,7 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 		input.OwnerID,
 		input.DocumentType,
 		input.Title,
-		input.ShowOnTrustCenter,
+		input.TrustCenterVisibility,
 	)
 
 	if err != nil {
@@ -2963,12 +2964,13 @@ func (r *mutationResolver) CreateAudit(ctx context.Context, input types.CreateAu
 	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
 
 	req := probo.CreateAuditRequest{
-		OrganizationID: input.OrganizationID,
-		FrameworkID:    input.FrameworkID,
-		Name:           input.Name,
-		ValidFrom:      input.ValidFrom,
-		ValidUntil:     input.ValidUntil,
-		State:          input.State,
+		OrganizationID:        input.OrganizationID,
+		FrameworkID:           input.FrameworkID,
+		Name:                  input.Name,
+		ValidFrom:             input.ValidFrom,
+		ValidUntil:            input.ValidUntil,
+		State:                 input.State,
+		TrustCenterVisibility: input.TrustCenterVisibility,
 	}
 
 	audit, err := prb.Audits.Create(ctx, &req)
@@ -2986,12 +2988,12 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	req := probo.UpdateAuditRequest{
-		ID:                input.ID,
-		Name:              &input.Name,
-		ValidFrom:         input.ValidFrom,
-		ValidUntil:        input.ValidUntil,
-		State:             input.State,
-		ShowOnTrustCenter: input.ShowOnTrustCenter,
+		ID:                    input.ID,
+		Name:                  &input.Name,
+		ValidFrom:             input.ValidFrom,
+		ValidUntil:            input.ValidUntil,
+		State:                 input.State,
+		TrustCenterVisibility: input.TrustCenterVisibility,
 	}
 
 	audit, err := prb.Audits.Update(ctx, &req)

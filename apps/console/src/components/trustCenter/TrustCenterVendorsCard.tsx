@@ -137,19 +137,9 @@ function VendorRow(props: {
         </Badge>
       </Td>
       <Td>
-        <div className="flex items-center gap-2">
-          {vendor.showOnTrustCenter ? (
-            <>
-              <IconCheckmark1 className="w-4 h-4 text-txt-primary" />
-              <span className="text-txt-primary">{__("Visible")}</span>
-            </>
-          ) : (
-            <>
-              <IconCrossLargeX className="w-4 h-4 text-txt-tertiary" />
-              <span className="text-txt-tertiary">{__("Hidden")}</span>
-            </>
-          )}
-        </div>
+        <Badge variant={vendor.showOnTrustCenter ? "success" : "danger"}>
+          {vendor.showOnTrustCenter ? __("Visible") : __("None")}
+        </Badge>
       </Td>
       <Td noLink width={100} className="text-end">
         <Button

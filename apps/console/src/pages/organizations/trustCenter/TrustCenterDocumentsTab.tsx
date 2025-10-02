@@ -30,7 +30,7 @@ export default function TrustCenterDocumentsTab() {
           documents={documents}
           params={{}}
           disabled={isUpdatingDocuments}
-          onToggleVisibility={updateDocumentVisibility}
+          onChangeVisibility={updateDocumentVisibility}
           variant="table"
         />
       </Card>

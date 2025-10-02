@@ -79,7 +79,7 @@ func NewDocument(document *coredata.Document) *Document {
 		Title:                   document.Title,
 		DocumentType:            document.DocumentType,
 		CurrentPublishedVersion: document.CurrentPublishedVersion,
-		ShowOnTrustCenter:       document.ShowOnTrustCenter,
+		TrustCenterVisibility:   document.TrustCenterVisibility,
 		CreatedAt:               document.CreatedAt,
 		UpdatedAt:               document.UpdatedAt,
 	}

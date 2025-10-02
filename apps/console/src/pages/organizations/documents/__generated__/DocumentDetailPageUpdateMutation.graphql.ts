@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<aa94f8d2cc4c6a5c29de3029d5e6d2ca>>
+ * @generated SignedSource<<efe95ef5290fa021d00c7f32922ae801>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,13 +10,14 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateDocumentInput = {
   content?: string | null | undefined;
   documentType?: DocumentType | null | undefined;
   id: string;
   ownerId?: string | null | undefined;
-  showOnTrustCenter?: boolean | null | undefined;
   title?: string | null | undefined;
+  trustCenterVisibility?: TrustCenterVisibility | null | undefined;
 };
 export type DocumentDetailPageUpdateMutation$variables = {
   input: UpdateDocumentInput;

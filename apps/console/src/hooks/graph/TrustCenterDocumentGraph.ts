@@ -26,7 +26,7 @@ export const updateDocumentVisibilityMutation = graphql`
     updateDocument(input: $input) {
       document {
         id
-        showOnTrustCenter
+        trustCenterVisibility
         ...TrustCenterDocumentsCardFragment
       }
     }

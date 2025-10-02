@@ -89,6 +89,55 @@ func (s *DocumentService) ExportPDF(
 	documentID gid.GID,
 	email string,
 ) ([]byte, error) {
+	pdfData, err := s.exportPDFData(ctx, documentID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot export document PDF: %w", err)
+	}
+
+	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
+	if err != nil {
+		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
+	}
+
+	return watermarkedPDF, nil
+}
+
+func (s *DocumentService) ExportPDFWithoutWatermark(
+	ctx context.Context,
+	documentID gid.GID,
+) ([]byte, error) {
+	return s.exportPDFData(ctx, documentID)
+}
+
+func (s DocumentService) Get(
+	ctx context.Context,
+	documentID gid.GID,
+) (*coredata.Document, error) {
+	document := &coredata.Document{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := document.LoadByID(ctx, conn, s.svc.scope, documentID)
+			if err != nil {
+				return fmt.Errorf("cannot load document: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return document, nil
+}
+
+func (s *DocumentService) exportPDFData(
+	ctx context.Context,
+	documentID gid.GID,
+) ([]byte, error) {
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
 	owner := &coredata.People{}
@@ -100,7 +149,7 @@ func (s *DocumentService) ExportPDF(
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
-			if !document.ShowOnTrustCenter {
+			if document.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
 				return fmt.Errorf("document not visible on trust center")
 			}
 
@@ -163,35 +212,5 @@ func (s *DocumentService) ExportPDF(
 		return nil, fmt.Errorf("cannot read PDF data: %w", err)
 	}
 
-	watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, email)
-	if err != nil {
-		return nil, fmt.Errorf("cannot add watermark to PDF: %w", err)
-	}
-
-	return watermarkedPDF, nil
-}
-
-func (s DocumentService) Get(
-	ctx context.Context,
-	documentID gid.GID,
-) (*coredata.Document, error) {
-	document := &coredata.Document{}
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			err := document.LoadByID(ctx, conn, s.svc.scope, documentID)
-			if err != nil {
-				return fmt.Errorf("cannot load document: %w", err)
-			}
-
-			return nil
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return document, nil
+	return pdfData, nil
 }
