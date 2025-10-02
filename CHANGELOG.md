@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Add access by document on trust center
+
  [0.64.1] - 2025-09-30
 
 ### Fixed
