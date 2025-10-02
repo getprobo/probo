@@ -78,11 +78,11 @@ export default function MeasureFormDialog(props: Props) {
 
   const { control, handleSubmit, register, formState, reset } =
     useFormWithSchema(measureSchema, {
-      defaultValues: {
+      values: {
         name: measure?.name ?? "",
         description: measure?.description ?? "",
         category: measure?.category ?? "",
-        state: "NOT_STARTED",
+        state: measure?.state ?? "NOT_STARTED",
       },
     });
 
