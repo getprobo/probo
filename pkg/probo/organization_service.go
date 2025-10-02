@@ -248,6 +248,10 @@ func (s OrganizationService) Update(
 					Key:         aws.String(objectKey.String()),
 					Body:        fileContent,
 					ContentType: aws.String(contentType),
+					Metadata: map[string]string{
+						"type":            "organization-logo",
+						"organization-id": organization.ID.String(),
+					},
 				})
 
 				if err != nil {

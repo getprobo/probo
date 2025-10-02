@@ -807,8 +807,9 @@ func (s *FrameworkService) BuildAndUploadExport(ctx context.Context, exportJobID
 					ContentLength: ref.Ref(fileInfo.Size()),
 					ContentType:   ref.Ref("application/zip"),
 					Metadata: map[string]string{
-						"type":          "framework-export",
-						"export-job-id": exportJob.ID.String(),
+						"type":            "framework-export",
+						"export-job-id":   exportJob.ID.String(),
+						"organization-id": framework.OrganizationID.String(),
 					},
 				},
 			)

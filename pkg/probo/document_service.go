@@ -1226,6 +1226,17 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID 
 				return fmt.Errorf("cannot get document IDs: %w", err)
 			}
 
+			if len(documentIDs) == 0 {
+				return fmt.Errorf("no document IDs found")
+			}
+
+			var organizationID gid.GID
+			firstDocument := &coredata.Document{}
+			if err := firstDocument.LoadByID(ctx, tx, s.svc.scope, documentIDs[0]); err != nil {
+				return fmt.Errorf("cannot load document for organization ID: %w", err)
+			}
+			organizationID = firstDocument.OrganizationID
+
 			tempDir := os.TempDir()
 			tempFile, err := os.CreateTemp(tempDir, "probo-document-export-*.zip")
 			if err != nil {
@@ -1273,8 +1284,9 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID 
 					ContentLength: ref.Ref(fileInfo.Size()),
 					ContentType:   ref.Ref("application/zip"),
 					Metadata: map[string]string{
-						"type":          "document-export",
-						"export-job-id": exportJob.ID.String(),
+						"type":            "document-export",
+						"export-job-id":   exportJob.ID.String(),
+						"organization-id": organizationID.String(),
 					},
 				},
 			)

@@ -148,7 +148,7 @@ func (s TrustCenterReferenceService) Create(
 	var logoKey string
 
 	err := s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
-		fileID, s3Key, err := s.uploadLogoFile(ctx, tx, req.LogoFile, referenceID, now)
+		fileID, s3Key, err := s.uploadLogoFile(ctx, tx, req.LogoFile, referenceID, req.TrustCenterID, now)
 		if err != nil {
 			return fmt.Errorf("cannot upload logo file: %w", err)
 		}
@@ -200,19 +200,19 @@ func (s TrustCenterReferenceService) Update(
 	var logoKey string
 
 	err := s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
+		reference = &coredata.TrustCenterReference{}
+
+		if err := reference.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+			return fmt.Errorf("cannot load trust center reference: %w", err)
+		}
+
 		if req.LogoFile != nil {
-			fileID, s3Key, err := s.uploadLogoFile(ctx, tx, *req.LogoFile, req.ID, now)
+			fileID, s3Key, err := s.uploadLogoFile(ctx, tx, *req.LogoFile, req.ID, reference.TrustCenterID, now)
 			if err != nil {
 				return fmt.Errorf("cannot upload logo file: %w", err)
 			}
 			newFileID = &fileID
 			logoKey = s3Key
-		}
-
-		reference = &coredata.TrustCenterReference{}
-
-		if err := reference.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
-			return fmt.Errorf("cannot load trust center reference: %w", err)
 		}
 
 		if req.Name != nil {
@@ -316,6 +316,7 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 	tx pg.Conn,
 	file File,
 	referenceID gid.GID,
+	trustCenterID gid.GID,
 	now time.Time,
 ) (gid.GID, string, error) {
 	fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
@@ -323,6 +324,11 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 	objectKey, err := uuid.NewV7()
 	if err != nil {
 		return gid.GID{}, "", fmt.Errorf("cannot generate object key: %w", err)
+	}
+
+	trustCenter := &coredata.TrustCenter{}
+	if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, trustCenterID); err != nil {
+		return gid.GID{}, "", fmt.Errorf("cannot load trust center: %w", err)
 	}
 
 	var fileSize int64
@@ -372,6 +378,7 @@ func (s TrustCenterReferenceService) uploadLogoFile(
 		Metadata: map[string]string{
 			"type":                      "trust-center-reference-logo",
 			"trust-center-reference-id": referenceID.String(),
+			"organization-id":           trustCenter.OrganizationID.String(),
 		},
 	})
 	if err != nil {

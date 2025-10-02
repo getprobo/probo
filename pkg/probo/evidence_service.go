@@ -155,6 +155,11 @@ func (s EvidenceService) Fulfill(
 				return fmt.Errorf("cannot load evidence: %w", err)
 			}
 
+			measure := &coredata.Measure{}
+			if err := measure.LoadByID(ctx, conn, s.svc.scope, evidence.MeasureID); err != nil {
+				return fmt.Errorf("cannot load measure: %w", err)
+			}
+
 			evidence.State = coredata.EvidenceStateFulfilled
 
 			if req.File != nil {
@@ -206,6 +211,11 @@ func (s EvidenceService) Fulfill(
 					Key:         aws.String(objectKey.String()),
 					Body:        fileContent,
 					ContentType: aws.String(contentType),
+					Metadata: map[string]string{
+						"type":            "evidence",
+						"evidence-id":     req.EvidenceID.String(),
+						"organization-id": measure.OrganizationID.String(),
+					},
 				})
 				if err != nil {
 					return fmt.Errorf("cannot upload file to S3: %w", err)
@@ -271,27 +281,7 @@ func (s EvidenceService) UploadTaskEvidence(
 		return nil, err
 	}
 
-	objectKey, err := uuid.NewV7()
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate object key: %w", err)
-	}
-
-	_, err = s.svc.s3.PutObject(
-		ctx,
-		&s3.PutObjectInput{
-			Bucket:      aws.String(s.svc.bucket),
-			Key:         aws.String(objectKey.String()),
-			Body:        req.File.Content,
-			ContentType: aws.String(req.File.ContentType),
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot upload file to S3: %w", err)
-	}
-
-	evidence.ObjectKey = objectKey.String()
-	evidence.MimeType = req.File.ContentType
-	evidence.Size = uint64(req.File.Size)
+	var measureOrganizationID gid.GID
 
 	err = s.svc.pg.WithTx(
 		ctx,
@@ -306,6 +296,38 @@ func (s EvidenceService) UploadTaskEvidence(
 				return fmt.Errorf("task %q has no measure", req.TaskID)
 			}
 
+			measure := &coredata.Measure{}
+			if err := measure.LoadByID(ctx, conn, s.svc.scope, *task.MeasureID); err != nil {
+				return fmt.Errorf("cannot load measure: %w", err)
+			}
+			measureOrganizationID = measure.OrganizationID
+
+			objectKey, err := uuid.NewV7()
+			if err != nil {
+				return fmt.Errorf("cannot generate object key: %w", err)
+			}
+
+			_, err = s.svc.s3.PutObject(
+				ctx,
+				&s3.PutObjectInput{
+					Bucket:      aws.String(s.svc.bucket),
+					Key:         aws.String(objectKey.String()),
+					Body:        req.File.Content,
+					ContentType: aws.String(req.File.ContentType),
+					Metadata: map[string]string{
+						"type":            "evidence",
+						"evidence-id":     evidenceID.String(),
+						"organization-id": measureOrganizationID.String(),
+					},
+				},
+			)
+			if err != nil {
+				return fmt.Errorf("cannot upload file to S3: %w", err)
+			}
+
+			evidence.ObjectKey = objectKey.String()
+			evidence.MimeType = req.File.ContentType
+			evidence.Size = uint64(req.File.Size)
 			evidence.MeasureID = *task.MeasureID
 
 			if err := evidence.Insert(ctx, conn, s.svc.scope); err != nil {
@@ -355,37 +377,40 @@ func (s EvidenceService) UploadMeasureEvidence(
 		return nil, err
 	}
 
-	objectKey, err := uuid.NewV7()
-	if err != nil {
-		return nil, fmt.Errorf("cannot generate object key: %w", err)
-	}
-
-	_, err = s.svc.s3.PutObject(
-		ctx,
-		&s3.PutObjectInput{
-			Bucket:      aws.String(s.svc.bucket),
-			Key:         aws.String(objectKey.String()),
-			Body:        req.File.Content,
-			ContentType: aws.String(req.File.ContentType),
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot upload file to S3: %w", err)
-	}
-
-	evidence.ObjectKey = objectKey.String()
-	evidence.MimeType = req.File.ContentType
-	evidence.Size = uint64(req.File.Size)
-
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
 			measure := &coredata.Measure{}
-
 			if err := measure.LoadByID(ctx, conn, s.svc.scope, req.MeasureID); err != nil {
 				return fmt.Errorf("cannot load measure %q: %w", req.MeasureID, err)
 			}
 
+			objectKey, err := uuid.NewV7()
+			if err != nil {
+				return fmt.Errorf("cannot generate object key: %w", err)
+			}
+
+			_, err = s.svc.s3.PutObject(
+				ctx,
+				&s3.PutObjectInput{
+					Bucket:      aws.String(s.svc.bucket),
+					Key:         aws.String(objectKey.String()),
+					Body:        req.File.Content,
+					ContentType: aws.String(req.File.ContentType),
+					Metadata: map[string]string{
+						"type":            "evidence",
+						"evidence-id":     evidenceID.String(),
+						"organization-id": measure.OrganizationID.String(),
+					},
+				},
+			)
+			if err != nil {
+				return fmt.Errorf("cannot upload file to S3: %w", err)
+			}
+
+			evidence.ObjectKey = objectKey.String()
+			evidence.MimeType = req.File.ContentType
+			evidence.Size = uint64(req.File.Size)
 			evidence.MeasureID = req.MeasureID
 
 			if err := evidence.Insert(ctx, conn, s.svc.scope); err != nil {
