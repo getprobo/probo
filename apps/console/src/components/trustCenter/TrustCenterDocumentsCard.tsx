@@ -9,16 +9,17 @@ import {
   Tbody,
   Th,
   IconChevronDown,
-  IconCheckmark1,
-  IconCrossLargeX,
   DocumentVersionBadge,
   DocumentTypeBadge,
+  Field,
+  Option,
+  Badge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { TrustCenterDocumentsCardFragment$key } from "./__generated__/TrustCenterDocumentsCardFragment.graphql";
 import { useFragment } from "react-relay";
-import { useMemo, useState } from "react";
-import { sprintf } from "@probo/helpers";
+import { useMemo, useState, useCallback, useEffect } from "react";
+import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import clsx from "clsx";
 
@@ -28,7 +29,7 @@ const trustCenterDocumentFragment = graphql`
     title
     createdAt
     documentType
-    showOnTrustCenter
+    trustCenterVisibility
     versions(first: 1) {
       edges {
         node {
@@ -44,7 +45,7 @@ type Mutation<Params> = (p: {
   variables: {
     input: {
       id: string;
-      showOnTrustCenter: boolean;
+      trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC";
     } & Params;
   };
 }) => void;
@@ -53,7 +54,7 @@ type Props<Params> = {
   documents: TrustCenterDocumentsCardFragment$key[];
   params: Params;
   disabled?: boolean;
-  onToggleVisibility: Mutation<Params>;
+  onChangeVisibility: Mutation<Params>;
   variant?: "card" | "table";
 };
 
@@ -66,12 +67,12 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
   const showMoreButton = limit !== null && props.documents.length > limit;
   const variant = props.variant ?? "table";
 
-  const onToggleVisibility = (documentId: string, showOnTrustCenter: boolean) => {
-    props.onToggleVisibility({
+  const onChangeVisibility = (documentId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => {
+    props.onChangeVisibility({
       variables: {
         input: {
           id: documentId,
-          showOnTrustCenter,
+          trustCenterVisibility,
           ...props.params,
         },
       },
@@ -89,7 +90,6 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
             <Th>{__("Type")}</Th>
             <Th>{__("State")}</Th>
             <Th>{__("Visibility")}</Th>
-            <Th></Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -104,7 +104,7 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
             <DocumentRow
               key={index}
               document={document}
-              onToggleVisibility={onToggleVisibility}
+              onChangeVisibility={onChangeVisibility}
               disabled={props.disabled}
             />
           ))}
@@ -127,12 +127,30 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
 
 function DocumentRow(props: {
   document: TrustCenterDocumentsCardFragment$key;
-  onToggleVisibility: (documentId: string, showOnTrustCenter: boolean) => void;
+  onChangeVisibility: (documentId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => void;
   disabled?: boolean;
 }) {
   const document = useFragment(trustCenterDocumentFragment, props.document);
   const organizationId = useOrganizationId();
   const { __ } = useTranslate();
+  const [optimisticValue, setOptimisticValue] = useState<string | null>(null);
+
+  const handleValueChange = useCallback((value: string | {}) => {
+    const stringValue = typeof value === 'string' ? value : '';
+    const typedValue = stringValue as "NONE" | "PRIVATE" | "PUBLIC";
+    setOptimisticValue(typedValue);
+    props.onChangeVisibility(document.id, typedValue);
+  }, [document.id, props.onChangeVisibility]);
+
+  useEffect(() => {
+    if (optimisticValue && document.trustCenterVisibility === optimisticValue) {
+      setOptimisticValue(null);
+    }
+  }, [document.trustCenterVisibility, optimisticValue]);
+
+  const currentValue = optimisticValue || document.trustCenterVisibility;
+
+  const visibilityOptions = getTrustCenterVisibilityOptions(__);
 
   return (
     <Tr to={`/organizations/${organizationId}/documents/${document.id}`}>
@@ -147,30 +165,24 @@ function DocumentRow(props: {
       <Td>
         <DocumentVersionBadge state={document.versions?.edges?.[0]?.node?.status} />
       </Td>
-      <Td>
-        <div className="flex items-center gap-2">
-          {document.showOnTrustCenter ? (
-            <>
-              <IconCheckmark1 className="w-4 h-4 text-txt-primary" />
-              <span className="text-txt-primary">{__("Visible")}</span>
-            </>
-          ) : (
-            <>
-              <IconCrossLargeX className="w-4 h-4 text-txt-tertiary" />
-              <span className="text-txt-tertiary">{__("Hidden")}</span>
-            </>
-          )}
-        </div>
-      </Td>
-      <Td noLink width={100} className="text-end">
-        <Button
-          variant="secondary"
-          onClick={() => props.onToggleVisibility(document.id, !document.showOnTrustCenter)}
-          icon={document.showOnTrustCenter ? IconCrossLargeX : IconCheckmark1}
+      <Td noLink width={130} className="pr-0">
+        <Field
+          type="select"
+          value={currentValue}
+          onValueChange={handleValueChange}
           disabled={props.disabled}
+          className="w-[105px]"
         >
-          {document.showOnTrustCenter ? __("Hide") : __("Show")}
-        </Button>
+          {visibilityOptions.map((option) => (
+            <Option key={option.value} value={option.value}>
+              <div className="flex items-center justify-between w-full">
+                <Badge variant={option.variant}>
+                  {option.label}
+                </Badge>
+              </div>
+            </Option>
+          ))}
+        </Field>
       </Td>
     </Tr>
   );

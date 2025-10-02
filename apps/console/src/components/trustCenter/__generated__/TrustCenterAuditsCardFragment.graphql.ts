@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b29f60aeb151f0b4ded9ebb02829b67f>>
+ * @generated SignedSource<<155c0b8eda88507e66eb65e060ded192>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,6 +10,7 @@
 
 import { ReaderFragment } from 'relay-runtime';
 export type AuditState = "COMPLETED" | "IN_PROGRESS" | "NOT_STARTED" | "OUTDATED" | "REJECTED";
+export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 import { FragmentRefs } from "relay-runtime";
 export type TrustCenterAuditsCardFragment$data = {
   readonly createdAt: any;
@@ -18,8 +19,8 @@ export type TrustCenterAuditsCardFragment$data = {
   };
   readonly id: string;
   readonly name: string | null | undefined;
-  readonly showOnTrustCenter: boolean;
   readonly state: AuditState;
+  readonly trustCenterVisibility: TrustCenterVisibility;
   readonly validFrom: any | null | undefined;
   readonly validUntil: any | null | undefined;
   readonly " $fragmentType": "TrustCenterAuditsCardFragment";
@@ -88,7 +89,7 @@ return {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "showOnTrustCenter",
+      "name": "trustCenterVisibility",
       "storageKey": null
     },
     {
@@ -104,6 +105,6 @@ return {
 };
 })();
 
-(node as any).hash = "1c5db1ae603a40619342702f790adfeb";
+(node as any).hash = "c0f615fcad79ad39f60b48daacabdbbd";
 
 export default node;

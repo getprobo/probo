@@ -152,6 +152,22 @@ enum AuditState
     )
 }
 
+enum TrustCenterVisibility
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibility") {
+  NONE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibilityNone"
+    )
+  PRIVATE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibilityPrivate"
+    )
+  PUBLIC
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibilityPublic"
+    )
+}
+
 enum NonconformityStatus
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityStatus") {
   OPEN
@@ -1950,7 +1966,7 @@ type Document implements Node {
   description: String!
   documentType: DocumentType!
   currentPublishedVersion: Int
-  showOnTrustCenter: Boolean!
+  trustCenterVisibility: TrustCenterVisibility!
   owner: People! @goField(forceResolver: true)
   organization: Organization! @goField(forceResolver: true)
 
@@ -2054,7 +2070,7 @@ type Audit implements Node {
     filter: ControlFilter
   ): ControlConnection! @goField(forceResolver: true)
 
-  showOnTrustCenter: Boolean!
+  trustCenterVisibility: TrustCenterVisibility!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -3345,6 +3361,7 @@ input CreateDocumentInput {
   content: String!
   ownerId: ID!
   documentType: DocumentType!
+  trustCenterVisibility: TrustCenterVisibility
 }
 
 input UpdateDocumentInput {
@@ -3353,7 +3370,7 @@ input UpdateDocumentInput {
   content: String
   ownerId: ID
   documentType: DocumentType
-  showOnTrustCenter: Boolean
+  trustCenterVisibility: TrustCenterVisibility
 }
 
 input ExportDocumentVersionPDFInput {
@@ -3413,6 +3430,7 @@ input CreateAuditInput {
   validFrom: Datetime
   validUntil: Datetime
   state: AuditState
+  trustCenterVisibility: TrustCenterVisibility
 }
 
 input UpdateAuditInput {
@@ -3421,7 +3439,7 @@ input UpdateAuditInput {
   validFrom: Datetime
   validUntil: Datetime
   state: AuditState
-  showOnTrustCenter: Boolean
+  trustCenterVisibility: TrustCenterVisibility
 }
 
 input DeleteAuditInput {

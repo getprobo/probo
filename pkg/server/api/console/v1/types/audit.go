@@ -54,14 +54,14 @@ func NewAuditConnection(
 
 func NewAudit(a *coredata.Audit) *Audit {
 	return &Audit{
-		ID:                a.ID,
-		ValidFrom:         a.ValidFrom,
-		ValidUntil:        a.ValidUntil,
-		State:             a.State,
-		Name:              a.Name,
-		ShowOnTrustCenter: a.ShowOnTrustCenter,
-		CreatedAt:         a.CreatedAt,
-		UpdatedAt:         a.UpdatedAt,
+		ID:                    a.ID,
+		ValidFrom:             a.ValidFrom,
+		ValidUntil:            a.ValidUntil,
+		State:                 a.State,
+		Name:                  a.Name,
+		TrustCenterVisibility: a.TrustCenterVisibility,
+		CreatedAt:             a.CreatedAt,
+		UpdatedAt:             a.UpdatedAt,
 	}
 }
 

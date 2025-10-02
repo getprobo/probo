@@ -59,6 +59,17 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *documentResolver) IsUserAuthorized(ctx context.Context, obj *types.Document) (bool, error) {
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+
+	document, err := publicTrustService.Documents.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load document: %w", err))
+	}
+
+	if document.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		return true, nil
+	}
+
 	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
 	if err != nil {
 		return false, nil
@@ -468,6 +479,17 @@ func (r *queryResolver) TrustCenterBySlug(ctx context.Context, slug string) (*ty
 
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error) {
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+
+	audit, err := publicTrustService.Audits.GetByReportID(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load document: %w", err))
+	}
+
+	if audit.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		return true, nil
+	}
+
 	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
 	if err != nil {
 		return false, nil

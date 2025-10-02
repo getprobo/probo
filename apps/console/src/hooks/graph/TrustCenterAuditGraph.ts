@@ -8,7 +8,7 @@ export const trustCenterAuditUpdateMutation = graphql`
     updateAudit(input: $input) {
       audit {
         id
-        showOnTrustCenter
+        trustCenterVisibility
         ...TrustCenterAuditsCardFragment
       }
     }

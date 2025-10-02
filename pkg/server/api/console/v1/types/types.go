@@ -62,19 +62,19 @@ type AssignTaskPayload struct {
 }
 
 type Audit struct {
-	ID                gid.GID             `json:"id"`
-	Name              *string             `json:"name,omitempty"`
-	Organization      *Organization       `json:"organization"`
-	Framework         *Framework          `json:"framework"`
-	ValidFrom         *time.Time          `json:"validFrom,omitempty"`
-	ValidUntil        *time.Time          `json:"validUntil,omitempty"`
-	Report            *Report             `json:"report,omitempty"`
-	ReportURL         *string             `json:"reportUrl,omitempty"`
-	State             coredata.AuditState `json:"state"`
-	Controls          *ControlConnection  `json:"controls"`
-	ShowOnTrustCenter bool                `json:"showOnTrustCenter"`
-	CreatedAt         time.Time           `json:"createdAt"`
-	UpdatedAt         time.Time           `json:"updatedAt"`
+	ID                    gid.GID                        `json:"id"`
+	Name                  *string                        `json:"name,omitempty"`
+	Organization          *Organization                  `json:"organization"`
+	Framework             *Framework                     `json:"framework"`
+	ValidFrom             *time.Time                     `json:"validFrom,omitempty"`
+	ValidUntil            *time.Time                     `json:"validUntil,omitempty"`
+	Report                *Report                        `json:"report,omitempty"`
+	ReportURL             *string                        `json:"reportUrl,omitempty"`
+	State                 coredata.AuditState            `json:"state"`
+	Controls              *ControlConnection             `json:"controls"`
+	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
+	CreatedAt             time.Time                      `json:"createdAt"`
+	UpdatedAt             time.Time                      `json:"updatedAt"`
 }
 
 func (Audit) IsNode()             {}
@@ -237,12 +237,13 @@ type CreateAssetPayload struct {
 }
 
 type CreateAuditInput struct {
-	OrganizationID gid.GID              `json:"organizationId"`
-	FrameworkID    gid.GID              `json:"frameworkId"`
-	Name           *string              `json:"name,omitempty"`
-	ValidFrom      *time.Time           `json:"validFrom,omitempty"`
-	ValidUntil     *time.Time           `json:"validUntil,omitempty"`
-	State          *coredata.AuditState `json:"state,omitempty"`
+	OrganizationID        gid.GID                         `json:"organizationId"`
+	FrameworkID           gid.GID                         `json:"frameworkId"`
+	Name                  *string                         `json:"name,omitempty"`
+	ValidFrom             *time.Time                      `json:"validFrom,omitempty"`
+	ValidUntil            *time.Time                      `json:"validUntil,omitempty"`
+	State                 *coredata.AuditState            `json:"state,omitempty"`
+	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
 }
 
 type CreateAuditPayload struct {
@@ -330,11 +331,12 @@ type CreateDatumPayload struct {
 }
 
 type CreateDocumentInput struct {
-	OrganizationID gid.GID               `json:"organizationId"`
-	Title          string                `json:"title"`
-	Content        string                `json:"content"`
-	OwnerID        gid.GID               `json:"ownerId"`
-	DocumentType   coredata.DocumentType `json:"documentType"`
+	OrganizationID        gid.GID                         `json:"organizationId"`
+	Title                 string                          `json:"title"`
+	Content               string                          `json:"content"`
+	OwnerID               gid.GID                         `json:"ownerId"`
+	DocumentType          coredata.DocumentType           `json:"documentType"`
+	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
 }
 
 type CreateDocumentPayload struct {
@@ -943,18 +945,18 @@ type DeleteVendorServicePayload struct {
 }
 
 type Document struct {
-	ID                      gid.GID                    `json:"id"`
-	Title                   string                     `json:"title"`
-	Description             string                     `json:"description"`
-	DocumentType            coredata.DocumentType      `json:"documentType"`
-	CurrentPublishedVersion *int                       `json:"currentPublishedVersion,omitempty"`
-	ShowOnTrustCenter       bool                       `json:"showOnTrustCenter"`
-	Owner                   *People                    `json:"owner"`
-	Organization            *Organization              `json:"organization"`
-	Versions                *DocumentVersionConnection `json:"versions"`
-	Controls                *ControlConnection         `json:"controls"`
-	CreatedAt               time.Time                  `json:"createdAt"`
-	UpdatedAt               time.Time                  `json:"updatedAt"`
+	ID                      gid.GID                        `json:"id"`
+	Title                   string                         `json:"title"`
+	Description             string                         `json:"description"`
+	DocumentType            coredata.DocumentType          `json:"documentType"`
+	CurrentPublishedVersion *int                           `json:"currentPublishedVersion,omitempty"`
+	TrustCenterVisibility   coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
+	Owner                   *People                        `json:"owner"`
+	Organization            *Organization                  `json:"organization"`
+	Versions                *DocumentVersionConnection     `json:"versions"`
+	Controls                *ControlConnection             `json:"controls"`
+	CreatedAt               time.Time                      `json:"createdAt"`
+	UpdatedAt               time.Time                      `json:"updatedAt"`
 }
 
 func (Document) IsNode()             {}
@@ -1615,12 +1617,12 @@ type UpdateAssetPayload struct {
 }
 
 type UpdateAuditInput struct {
-	ID                gid.GID              `json:"id"`
-	Name              *string              `json:"name,omitempty"`
-	ValidFrom         *time.Time           `json:"validFrom,omitempty"`
-	ValidUntil        *time.Time           `json:"validUntil,omitempty"`
-	State             *coredata.AuditState `json:"state,omitempty"`
-	ShowOnTrustCenter *bool                `json:"showOnTrustCenter,omitempty"`
+	ID                    gid.GID                         `json:"id"`
+	Name                  *string                         `json:"name,omitempty"`
+	ValidFrom             *time.Time                      `json:"validFrom,omitempty"`
+	ValidUntil            *time.Time                      `json:"validUntil,omitempty"`
+	State                 *coredata.AuditState            `json:"state,omitempty"`
+	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
 }
 
 type UpdateAuditPayload struct {
@@ -1668,12 +1670,12 @@ type UpdateDatumPayload struct {
 }
 
 type UpdateDocumentInput struct {
-	ID                gid.GID                `json:"id"`
-	Title             *string                `json:"title,omitempty"`
-	Content           *string                `json:"content,omitempty"`
-	OwnerID           *gid.GID               `json:"ownerId,omitempty"`
-	DocumentType      *coredata.DocumentType `json:"documentType,omitempty"`
-	ShowOnTrustCenter *bool                  `json:"showOnTrustCenter,omitempty"`
+	ID                    gid.GID                         `json:"id"`
+	Title                 *string                         `json:"title,omitempty"`
+	Content               *string                         `json:"content,omitempty"`
+	OwnerID               *gid.GID                        `json:"ownerId,omitempty"`
+	DocumentType          *coredata.DocumentType          `json:"documentType,omitempty"`
+	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
 }
 
 type UpdateDocumentPayload struct {
