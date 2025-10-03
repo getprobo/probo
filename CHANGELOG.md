@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - Add access by document on trust center
+- Add ordering measures by name in the API
+
+### Fixed
+- Fix resetting state during measure editing
 
  [0.64.1] - 2025-09-30
 
