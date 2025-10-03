@@ -59,6 +59,9 @@ export function OverviewPage() {
   );
   return (
     <div>
+      <References
+        references={fragment.references.edges.map((edge) => edge.node)}
+      />
       <h2 className="font-medium mb-1">{__("Documents")}</h2>
       <p className="text-sm text-txt-secondary mb-4">
         {__("Security and compliance documentation:")}
@@ -104,10 +107,6 @@ export function OverviewPage() {
           <IconChevronRight size={16} />
         </Link>
       </Rows>
-
-      <References
-        references={fragment.references.edges.map((edge) => edge.node)}
-      />
     </div>
   );
 }
@@ -121,8 +120,13 @@ type Reference = {
 
 function References({ references }: { references: Reference[] }) {
   const { __ } = useTranslate();
+
+  if (references.length === 0) {
+    return null;
+  }
+
   return (
-    <div>
+    <div className="mb-8">
       <h2 className="font-medium mb-4">{__("Trusted by")}</h2>
       <Card className="grid grid-cols-2 flex-wrap p-6 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
         {references.map((reference) => (
