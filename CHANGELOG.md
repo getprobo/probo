@@ -4,14 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+# [0.65.0] - 2025-10-03
+
 ### Added
 - Add access by document on trust center
 - Add ordering measures by name in the API
 
 ### Fixed
 - Fix resetting state during measure editing
+- Handle document mapping conflict error
 
- [0.64.1] - 2025-09-30
+# [0.64.1] - 2025-09-30
 
 ### Fixed
 - Remove document description and footer in template
