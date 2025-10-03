@@ -28,20 +28,17 @@ import (
 
 type (
 	Evidence struct {
-		ID          gid.GID       `db:"id"`
-		MeasureID   gid.GID       `db:"measure_id"`
-		TaskID      *gid.GID      `db:"task_id"`
-		State       EvidenceState `db:"state"`
-		ReferenceID string        `db:"reference_id"`
-		Type        EvidenceType  `db:"type"`
-		ObjectKey   string        `db:"object_key"`
-		MimeType    string        `db:"mime_type"`
-		Size        uint64        `db:"size"`
-		Filename    string        `db:"filename"`
-		URL         string        `db:"url"`
-		Description string        `db:"description"`
-		CreatedAt   time.Time     `db:"created_at"`
-		UpdatedAt   time.Time     `db:"updated_at"`
+		ID             gid.GID       `db:"id"`
+		MeasureID      gid.GID       `db:"measure_id"`
+		TaskID         *gid.GID      `db:"task_id"`
+		State          EvidenceState `db:"state"`
+		ReferenceID    string        `db:"reference_id"`
+		Type           EvidenceType  `db:"type"`
+		URL            string        `db:"url"`
+		EvidenceFileId *gid.GID      `db:"evidence_file_id"`
+		Description    string        `db:"description"`
+		CreatedAt      time.Time     `db:"created_at"`
+		UpdatedAt      time.Time     `db:"updated_at"`
 	}
 
 	Evidences []*Evidence
@@ -69,13 +66,10 @@ INSERT INTO
         measure_id,
         task_id,
         reference_id,
-        object_key,
-        mime_type,
-        size,
         state,
         type,
-        filename,
         url,
+        evidence_file_id,
         description,
         created_at,
         updated_at
@@ -86,13 +80,10 @@ VALUES (
     @measure_id,
     @task_id,
     @reference_id,
-    @object_key,
-    @mime_type,
-    @size,
     @state,
     @type,
-    @filename,
     @url,
+    @evidence_file_id,
     @description,
     @created_at,
     @updated_at
@@ -105,21 +96,18 @@ WHERE evidences.state = 'REQUESTED';
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":    scope.GetTenantID(),
-		"evidence_id":  e.ID,
-		"measure_id":   e.MeasureID,
-		"task_id":      e.TaskID,
-		"reference_id": e.ReferenceID,
-		"object_key":   e.ObjectKey,
-		"mime_type":    e.MimeType,
-		"size":         e.Size,
-		"filename":     e.Filename,
-		"created_at":   e.CreatedAt,
-		"updated_at":   e.UpdatedAt,
-		"state":        e.State,
-		"type":         e.Type,
-		"url":          e.URL,
-		"description":  e.Description,
+		"tenant_id":        scope.GetTenantID(),
+		"evidence_id":      e.ID,
+		"measure_id":       e.MeasureID,
+		"task_id":          e.TaskID,
+		"reference_id":     e.ReferenceID,
+		"evidence_file_id": e.EvidenceFileId,
+		"created_at":       e.CreatedAt,
+		"updated_at":       e.UpdatedAt,
+		"state":            e.State,
+		"type":             e.Type,
+		"url":              e.URL,
+		"description":      e.Description,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	return err
@@ -138,13 +126,10 @@ INSERT INTO
         measure_id,
         task_id,
         reference_id,
-        object_key,
-        mime_type,
-        size,
         state,
         type,
-        filename,
         url,
+        evidence_file_id,
         description,
         created_at,
         updated_at
@@ -155,13 +140,10 @@ VALUES (
     @measure_id,
     @task_id,
     @reference_id,
-    @object_key,
-    @mime_type,
-    @size,
     @state,
     @type,
-    @filename,
     @url,
+    @evidence_file_id,
     @description,
     @created_at,
     @updated_at
@@ -169,21 +151,18 @@ VALUES (
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":    scope.GetTenantID(),
-		"evidence_id":  e.ID,
-		"measure_id":   e.MeasureID,
-		"task_id":      e.TaskID,
-		"reference_id": e.ReferenceID,
-		"object_key":   e.ObjectKey,
-		"mime_type":    e.MimeType,
-		"size":         e.Size,
-		"filename":     e.Filename,
-		"created_at":   e.CreatedAt,
-		"updated_at":   e.UpdatedAt,
-		"state":        e.State,
-		"type":         e.Type,
-		"url":          e.URL,
-		"description":  e.Description,
+		"tenant_id":        scope.GetTenantID(),
+		"evidence_id":      e.ID,
+		"measure_id":       e.MeasureID,
+		"task_id":          e.TaskID,
+		"reference_id":     e.ReferenceID,
+		"evidence_file_id": e.EvidenceFileId,
+		"created_at":       e.CreatedAt,
+		"updated_at":       e.UpdatedAt,
+		"state":            e.State,
+		"type":             e.Type,
+		"url":              e.URL,
+		"description":      e.Description,
 	}
 	_, err := conn.Exec(ctx, q, args)
 	return err
@@ -203,11 +182,8 @@ SELECT
     reference_id,
     state,
     type,
-    object_key,
-    mime_type,
-    size,
-    filename,
     url,
+    evidence_file_id,
     description,
     created_at,
     updated_at
@@ -286,11 +262,8 @@ SELECT
 	reference_id,
 	state,
 	type,
-	object_key,
-	mime_type,
-	size,
-	filename,
 	url,
+	evidence_file_id,
 	description,
 	created_at,
 	updated_at
@@ -370,11 +343,8 @@ SELECT
     reference_id,
     state,
     type,
-    object_key,
-    mime_type,
-    size,
-    filename,
     url,
+    evidence_file_id,
     description,
     created_at,
     updated_at
@@ -418,10 +388,7 @@ UPDATE
 SET
 	type = @type,
 	state = @state,
-	object_key = @object_key,
-	mime_type = @mime_type,
-	size = @size,
-	filename = @filename,
+	evidence_file_id = @evidence_file_id,
 	url = @url,
 	description = @description,
 	updated_at = @updated_at
@@ -433,16 +400,13 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"evidence_id": e.ID,
-		"type":        e.Type,
-		"state":       e.State,
-		"object_key":  e.ObjectKey,
-		"mime_type":   e.MimeType,
-		"size":        e.Size,
-		"filename":    e.Filename,
-		"url":         e.URL,
-		"description": e.Description,
-		"updated_at":  e.UpdatedAt,
+		"evidence_id":      e.ID,
+		"type":             e.Type,
+		"state":            e.State,
+		"evidence_file_id": e.EvidenceFileId,
+		"url":              e.URL,
+		"description":      e.Description,
+		"updated_at":       e.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())
 
@@ -454,13 +418,14 @@ func (e Evidence) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-) error {
+) (*string, error) {
 	q := `
 DELETE FROM
     evidences
 WHERE
-	%s
+    %s
     AND id = @evidence_id
+RETURNING evidence_file_id;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -468,6 +433,23 @@ WHERE
 	args := pgx.StrictNamedArgs{"evidence_id": e.ID}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
-	return err
+	var evidenceFileId *gid.GID
+	err := conn.QueryRow(ctx, q, args).Scan(&evidenceFileId)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete evidence: %w", err)
+	}
+
+	if evidenceFileId != nil {
+		var err error
+		var fileKey *string
+		file := &File{ID: *evidenceFileId}
+		if fileKey, err = file.HardDelete(ctx, conn, scope); err != nil {
+			return nil, fmt.Errorf("failed to hard delete evidence file: %w", err)
+		}
+		return fileKey, nil
+
+	}
+
+	return nil, err
 }

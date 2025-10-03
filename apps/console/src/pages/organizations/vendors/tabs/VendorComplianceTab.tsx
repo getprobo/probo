@@ -55,8 +55,11 @@ const complianceReportFragment = graphql`
     reportDate
     validUntil
     reportName
-    fileUrl
-    fileSize
+    file {
+          fileName
+          mimeType
+          size
+    }
   }
 `;
 
@@ -208,7 +211,7 @@ function ReportRow(props: ReportRowProps) {
       <Td>{report.reportName}</Td>
       <Td>{formatDate(report.reportDate)}</Td>
       <Td>{formatDate(report.validUntil)}</Td>
-      <Td>{fileSize(__, report.fileSize)}</Td>
+      <Td>{fileSize(__, report.file?.size)}</Td>
       {!props.isSnapshotMode && (
         <Td width={50} className="text-end">
           <ActionDropdown>

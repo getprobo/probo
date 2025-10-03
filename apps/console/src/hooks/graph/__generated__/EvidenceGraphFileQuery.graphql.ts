@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0c4d6a4bd477e15ae3c627cf338a99dd>>
+ * @generated SignedSource<<843df409ed1ee9ba19760921dbd6e8df>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,10 +14,13 @@ export type EvidenceGraphFileQuery$variables = {
 };
 export type EvidenceGraphFileQuery$data = {
   readonly node: {
-    readonly fileUrl?: string | null | undefined;
-    readonly filename?: string;
+    readonly file?: {
+      readonly downloadUrl: string;
+      readonly fileName: string;
+      readonly mimeType: string;
+      readonly size: any;
+    } | null | undefined;
     readonly id?: string;
-    readonly mimeType?: string;
   };
 };
 export type EvidenceGraphFileQuery = {
@@ -58,14 +61,21 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "filename",
+  "name": "fileName",
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "fileUrl",
+  "name": "size",
+  "storageKey": null
+},
+v6 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "downloadUrl",
   "storageKey": null
 };
 return {
@@ -87,9 +97,21 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v2/*: any*/),
-              (v3/*: any*/),
-              (v4/*: any*/),
-              (v5/*: any*/)
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "File",
+                "kind": "LinkedField",
+                "name": "file",
+                "plural": false,
+                "selections": [
+                  (v3/*: any*/),
+                  (v4/*: any*/),
+                  (v5/*: any*/),
+                  (v6/*: any*/)
+                ],
+                "storageKey": null
+              }
             ],
             "type": "Evidence",
             "abstractKey": null
@@ -126,9 +148,22 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
-              (v3/*: any*/),
-              (v4/*: any*/),
-              (v5/*: any*/)
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "File",
+                "kind": "LinkedField",
+                "name": "file",
+                "plural": false,
+                "selections": [
+                  (v3/*: any*/),
+                  (v4/*: any*/),
+                  (v5/*: any*/),
+                  (v6/*: any*/),
+                  (v2/*: any*/)
+                ],
+                "storageKey": null
+              }
             ],
             "type": "Evidence",
             "abstractKey": null
@@ -139,16 +174,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "db46f9bf993514c7bc89845e6d6459f8",
+    "cacheID": "780e108a52d2fcbde6653de5d2ee058b",
     "id": null,
     "metadata": {},
     "name": "EvidenceGraphFileQuery",
     "operationKind": "query",
-    "text": "query EvidenceGraphFileQuery(\n  $evidenceId: ID!\n) {\n  node(id: $evidenceId) {\n    __typename\n    ... on Evidence {\n      id\n      mimeType\n      filename\n      fileUrl\n    }\n    id\n  }\n}\n"
+    "text": "query EvidenceGraphFileQuery(\n  $evidenceId: ID!\n) {\n  node(id: $evidenceId) {\n    __typename\n    ... on Evidence {\n      id\n      file {\n        mimeType\n        fileName\n        size\n        downloadUrl\n        id\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3c9aa6ff338d2380a7a03b8ea61e83e0";
+(node as any).hash = "186386e82f82feb9c5b5a54f9d937903";
 
 export default node;

@@ -28,17 +28,16 @@ import (
 
 type (
 	VendorComplianceReport struct {
-		ID         gid.GID
-		VendorID   gid.GID
-		ReportDate time.Time
-		ValidUntil *time.Time
-		ReportName string
-		FileKey    string
-		FileSize   int64
-		SnapshotID *gid.GID
-		SourceID   *gid.GID
-		CreatedAt  time.Time
-		UpdatedAt  time.Time
+		ID           gid.GID
+		VendorID     gid.GID
+		ReportDate   time.Time
+		ValidUntil   *time.Time
+		ReportName   string
+		ReportFileId *gid.GID
+		SnapshotID   *gid.GID
+		SourceID     *gid.GID
+		CreatedAt    time.Time
+		UpdatedAt    time.Time
 	}
 
 	VendorComplianceReports []*VendorComplianceReport
@@ -69,8 +68,7 @@ SELECT
 	report_date,
 	valid_until,
 	report_name,
-	file_key,
-	file_size,
+	report_file_id,
 	snapshot_id,
 	source_id,
 	created_at,
@@ -117,8 +115,7 @@ SELECT
 	report_date,
 	valid_until,
 	report_name,
-	file_key,
-	file_size,
+	report_file_id,
 	snapshot_id,
 	source_id,
 	created_at,
@@ -165,8 +162,7 @@ INSERT INTO
 		report_date,
 		valid_until,
 		report_name,
-		file_key,
-		file_size,
+		report_file_id,
 		created_at,
 		updated_at
 	)
@@ -177,23 +173,21 @@ VALUES (
 	@report_date,
 	@valid_until,
 	@report_name,
-	@file_key,
-	@file_size,
+	@report_file_id,
 	@created_at,
 	@updated_at
 )
 `
 	args := pgx.NamedArgs{
-		"id":          vcr.ID,
-		"tenant_id":   scope.GetTenantID(),
-		"vendor_id":   vcr.VendorID,
-		"report_date": vcr.ReportDate,
-		"valid_until": vcr.ValidUntil,
-		"report_name": vcr.ReportName,
-		"file_key":    vcr.FileKey,
-		"file_size":   vcr.FileSize,
-		"created_at":  vcr.CreatedAt,
-		"updated_at":  vcr.UpdatedAt,
+		"id":             vcr.ID,
+		"tenant_id":      scope.GetTenantID(),
+		"vendor_id":      vcr.VendorID,
+		"report_date":    vcr.ReportDate,
+		"valid_until":    vcr.ValidUntil,
+		"report_name":    vcr.ReportName,
+		"report_file_id": vcr.ReportFileId,
+		"created_at":     vcr.CreatedAt,
+		"updated_at":     vcr.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -213,6 +207,7 @@ WHERE
 	%s
 	AND id = @id
 	AND snapshot_id IS NULL
+RETURNING report_file_id
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -220,8 +215,20 @@ WHERE
 	args := pgx.StrictNamedArgs{"id": vcr.ID}
 	maps.Copy(args, scope.SQLArguments())
 
-	_, err := conn.Exec(ctx, q, args)
-	return err
+	var vcrFileId *gid.GID
+	err := conn.QueryRow(ctx, q, args).Scan(&vcrFileId)
+
+	if err != nil {
+		return fmt.Errorf("failed to delete vendor compliance report: %w", err)
+	}
+
+	if vcrFileId != nil {
+		file := &File{ID: *vcrFileId}
+		if err = file.SoftDelete(ctx, conn, scope); err != nil {
+			return fmt.Errorf("failed to soft delete vendor compliance file: %w", err)
+		}
+	}
+	return nil
 }
 
 func (vcrs VendorComplianceReports) InsertVendorSnapshots(
@@ -247,8 +254,7 @@ INSERT INTO vendor_compliance_reports (
 	report_date,
 	valid_until,
 	report_name,
-	file_key,
-	file_size,
+	report_file_id,
 	created_at,
 	updated_at
 )
@@ -261,8 +267,7 @@ SELECT
 	vcr.report_date,
 	vcr.valid_until,
 	vcr.report_name,
-	vcr.file_key,
-	vcr.file_size,
+	vcr.report_file_id,
 	vcr.created_at,
 	vcr.updated_at
 FROM vendor_compliance_reports vcr

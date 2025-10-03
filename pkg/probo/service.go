@@ -94,6 +94,7 @@ type (
 		Snapshots                         *SnapshotService
 		ContinualImprovements             *ContinualImprovementService
 		ProcessingActivities              *ProcessingActivityService
+		Files                             *FileService
 	}
 )
 
@@ -175,7 +176,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 	tenantService.Controls = &ControlService{svc: tenantService}
 	tenantService.Risks = &RiskService{svc: tenantService}
-	tenantService.VendorComplianceReports = &VendorComplianceReportService{svc: tenantService}
+	tenantService.VendorComplianceReports = &VendorComplianceReportService{svc: tenantService, fileValidator: filevalidation.NewValidator(filevalidation.CategoryDocument)}
 	tenantService.VendorBusinessAssociateAgreements = &VendorBusinessAssociateAgreementService{svc: tenantService}
 	tenantService.VendorContacts = &VendorContactService{svc: tenantService}
 	tenantService.VendorDataPrivacyAgreements = &VendorDataPrivacyAgreementService{svc: tenantService}
@@ -193,6 +194,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Snapshots = &SnapshotService{svc: tenantService}
 	tenantService.ContinualImprovements = &ContinualImprovementService{svc: tenantService}
 	tenantService.ProcessingActivities = &ProcessingActivityService{svc: tenantService}
+	tenantService.Files = &FileService{svc: tenantService}
 	return tenantService
 }
 

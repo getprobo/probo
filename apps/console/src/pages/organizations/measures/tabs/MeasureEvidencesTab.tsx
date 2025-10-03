@@ -56,8 +56,11 @@ export const evidencesFragment = graphql`
       edges {
         node {
           id
-          filename
-          mimeType
+          file {
+              fileName
+              mimeType
+              size
+          }
           ...MeasureEvidencesTabFragment_evidence
         }
       }
@@ -68,11 +71,13 @@ export const evidencesFragment = graphql`
 export const evidenceFragment = graphql`
   fragment MeasureEvidencesTabFragment_evidence on Evidence {
     id
-    filename
-    size
+    file {
+        fileName
+        mimeType
+        size
+    }
     type
     createdAt
-    mimeType
   }
 `;
 
@@ -150,7 +155,7 @@ export default function MeasureEvidencesTab() {
             navigate(baseUrl);
           }}
           evidenceId={evidence.id}
-          filename={evidence.filename}
+          filename={evidence.file?.fileName || ""}
         />
       )}
       {!isSnapshotMode && (
@@ -207,7 +212,7 @@ function EvidenceRow(props: {
           __(
             'This will permanently delete the evidence "%s". This action cannot be undone.'
           ),
-          evidence.filename
+          evidence.file?.fileName
         ),
       }
     );
@@ -226,9 +231,9 @@ function EvidenceRow(props: {
         />
       )}
       <Tr to={evidenceUrl}>
-        <Td>{evidence.filename}</Td>
-        <Td>{fileType(__, evidence)}</Td>
-        <Td>{fileSize(__, evidence.size)}</Td>
+        <Td>{evidence.file?.fileName}</Td>
+        <Td>{fileType(__, {type: evidence.type, mimeType: evidence.file?.mimeType || ''})}</Td>
+        <Td>{fileSize(__, evidence.file?.size || 0)}</Td>
         <Td>{formatDate(evidence.createdAt)}</Td>
         <Td noLink>
           {!props.hideActions && (

@@ -223,15 +223,20 @@ func (s FrameworkService) Export(
 					for _, evidence := range evidences {
 						if evidence.Type != coredata.EvidenceTypeFile ||
 							evidence.State != coredata.EvidenceStateFulfilled ||
-							evidence.ObjectKey == "" {
+							evidence.EvidenceFileId == nil {
 							continue
+						}
+
+						evidence_file := &coredata.File{}
+						if err := evidence_file.LoadByID(ctx, conn, s.svc.scope, *evidence.EvidenceFileId); err != nil {
+							return fmt.Errorf("cannot load evidence file: %w", err)
 						}
 
 						object, err := s.svc.s3.GetObject(
 							ctx,
 							&s3.GetObjectInput{
 								Bucket: aws.String(s.svc.bucket),
-								Key:    aws.String(evidence.ObjectKey),
+								Key:    aws.String(evidence_file.FileKey),
 							},
 						)
 						if err != nil {
@@ -239,7 +244,7 @@ func (s FrameworkService) Export(
 						}
 						defer object.Body.Close()
 
-						w, err := archive.Create(fmt.Sprintf("%s/%s/%s/%s", framework.Name, control.SectionTitle, measure.Name, evidence.Filename))
+						w, err := archive.Create(fmt.Sprintf("%s/%s/%s/%s", framework.Name, control.SectionTitle, measure.Name, evidence_file.FileName))
 						if err != nil {
 							return fmt.Errorf("cannot create evidence in archive: %w", err)
 						}

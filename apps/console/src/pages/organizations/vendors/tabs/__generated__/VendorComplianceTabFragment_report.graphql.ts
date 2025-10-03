@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4c861a832ad2f79bd9d6ddcc364f6898>>
+ * @generated SignedSource<<8cf7478142bb658e6c8d189652bbdfea>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,8 +11,11 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type VendorComplianceTabFragment_report$data = {
-  readonly fileSize: any;
-  readonly fileUrl: string;
+  readonly file: {
+    readonly fileName: string;
+    readonly mimeType: string;
+    readonly size: any;
+  } | null | undefined;
   readonly id: string;
   readonly reportDate: any;
   readonly reportName: string;
@@ -61,15 +64,33 @@ const node: ReaderFragment = {
     {
       "alias": null,
       "args": null,
-      "kind": "ScalarField",
-      "name": "fileUrl",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "fileSize",
+      "concreteType": "File",
+      "kind": "LinkedField",
+      "name": "file",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "fileName",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "mimeType",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "size",
+          "storageKey": null
+        }
+      ],
       "storageKey": null
     }
   ],
@@ -77,6 +98,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "92ad78c9e4b4add9b1f622485d81a6ff";
+(node as any).hash = "18f52de61577c8b1c61784d2404c24ae";
 
 export default node;

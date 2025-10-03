@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<10fdd09e95fc5f2995b91c73cf9fb945>>
+ * @generated SignedSource<<5fd3a3293bd92112440eef3fd292fdc1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -236,15 +236,34 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "kind": "ScalarField",
-                            "name": "fileUrl",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "fileSize",
+                            "concreteType": "File",
+                            "kind": "LinkedField",
+                            "name": "file",
+                            "plural": false,
+                            "selections": [
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "fileName",
+                                "storageKey": null
+                              },
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "mimeType",
+                                "storageKey": null
+                              },
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "size",
+                                "storageKey": null
+                              },
+                              (v12/*: any*/)
+                            ],
                             "storageKey": null
                           },
                           (v11/*: any*/)
@@ -336,12 +355,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "c819e002dfe9f20004fb5bfb4f95b143",
+    "cacheID": "594e7edf24b110430566c9a21d1b5d29",
     "id": null,
     "metadata": {},
     "name": "ComplianceReportListQuery",
     "operationKind": "query",
-    "text": "query ComplianceReportListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorComplianceReportOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorComplianceTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment_16fISc on Vendor {\n  complianceReports(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  fileUrl\n  fileSize\n}\n"
+    "text": "query ComplianceReportListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: VendorComplianceReportOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...VendorComplianceTabFragment_16fISc\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment_16fISc on Vendor {\n  complianceReports(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n}\n"
   }
 };
 })();
