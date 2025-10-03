@@ -24,23 +24,27 @@ export function VendorRow(props: { vendor: VendorRowFragment$key }) {
   return (
     <div className="flex text-sm leading-tight gap-3 md:items-center">
       {logo ? (
-        <img src={logo} className="size-8 md:size-6 flex-none" alt="" />
+        <img
+          src={logo}
+          className="size-8 md:size-6 flex-none rounded-lg"
+          alt=""
+        />
       ) : (
-        <div className="size-8 md:size-6 flex-none" />
+        <div className="size-8 md:size-6 flex-none rounded-lg" />
       )}
-      <div className="flex flex-col md:flex-row flex-1 gap-0.5">
+      <div className="flex flex-col md:grid grid-cols-[1fr_1fr_1fr] flex-1 gap-0.5">
         <div>{vendor.name}</div>
         {vendor.privacyPolicyUrl && (
           <a
             href={vendor.privacyPolicyUrl}
             target="_blank"
-            className="text-txt-info md:mx-auto"
+            className="text-txt-info"
           >
             {vendor.privacyPolicyUrl.split("//").at(-1)}
           </a>
         )}
         {vendor.countries.length > 0 && (
-          <div className="flex gap-1 text-txt-secondary items-center">
+          <div className="flex gap-1 text-txt-secondary items-center md:justify-end">
             <IconPin size={16} className="flex-none" />
             <span>
               {vendor.countries

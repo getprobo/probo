@@ -9,11 +9,11 @@ import {
   Spinner,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useIsAuthenticated } from "/hooks/useIsAuthenticated";
 import type { DocumentRowDownloadMutation } from "./__generated__/DocumentRowDownloadMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 import { downloadFile } from "@probo/helpers";
 import { RequestAccessDialog } from "/components/RequestAccessDialog.tsx";
+import { useState } from "react";
 
 const downloadMutation = graphql`
   mutation DocumentRowDownloadMutation($input: ExportDocumentPDFInput!) {
@@ -27,13 +27,14 @@ const documentRowFragment = graphql`
   fragment DocumentRowFragment on Document {
     id
     title
+    isUserAuthorized
+    hasUserRequestedAccess
   }
 `;
 
 export function DocumentRow(props: { document: DocumentRowFragment$key }) {
   const document = useFragment(documentRowFragment, props.document);
   const { __ } = useTranslate();
-  const isAuthenticated = useIsAuthenticated();
   const [commitDownload, downloading] =
     useMutationWithToasts<DocumentRowDownloadMutation>(downloadMutation);
   const handleDownload = () => {
@@ -48,13 +49,16 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
       },
     });
   };
+  const [hasRequested, setHasRequested] = useState(
+    document.hasUserRequestedAccess,
+  );
   return (
     <div className="text-sm border-1 border-border-solid -mt-[1px] flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
       <div className="flex items-center gap-2">
-        <IconPageTextLine size={16} className=" flex-none" />
+        <IconPageTextLine size={16} className=" flex-none text-txt-tertiary" />
         {document.title}
       </div>
-      {isAuthenticated ? (
+      {document.isUserAuthorized ? (
         <Button
           className="w-full md:w-max"
           variant="secondary"
@@ -65,13 +69,17 @@ export function DocumentRow(props: { document: DocumentRowFragment$key }) {
           {__("Download")}
         </Button>
       ) : (
-        <RequestAccessDialog>
+        <RequestAccessDialog
+          documentId={document.id}
+          onSuccess={() => setHasRequested(true)}
+        >
           <Button
+            disabled={hasRequested}
             className="w-full md:w-max"
             variant="secondary"
             icon={IconLock}
           >
-            {__("Request access")}
+            {hasRequested ? __("Access requested") : __("Request access")}
           </Button>
         </RequestAccessDialog>
       )}

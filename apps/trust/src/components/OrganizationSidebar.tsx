@@ -26,10 +26,10 @@ export function OrganizationSidebar({
         <img
           alt=""
           src={trustCenter.organization.logoUrl}
-          className="size-24 rounded-2xl border border-border-mid shadow-mid"
+          className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1"
         />
       ) : (
-        <div className="size-24 rounded-2xl border border-border-mid bg-level-1 shadow-mid" />
+        <div className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1" />
       )}
       <h1 className="text-2xl mt-6">{trustCenter.organization.name}</h1>
       <p className="text-sm text-txt-secondary mt-1">
@@ -71,24 +71,28 @@ export function OrganizationSidebar({
         <hr className="my-6 -mx-6 h-[1px] bg-border-low border-none" />
 
         {/* Certifications */}
-        <div className="space-y-4">
-          <h2 className="text-xs text-txt-secondary flex gap-1 items-center">
-            <IconMedal size={16} />
-            {__("Certifications")}
-          </h2>
-          <div
-            className="grid grid-cols-4 gap-4"
-            style={{
-              gridTemplateColumns: "repeat(auto-fit, 75px",
-            }}
-          >
-            {trustCenter.audits.edges.map((audit) => (
-              <AuditRowAvatar key={audit.node.id} audit={audit.node} />
-            ))}
-          </div>
-        </div>
+        {trustCenter.audits.edges.length > 0 && (
+          <>
+            <div className="space-y-4">
+              <h2 className="text-xs text-txt-secondary flex gap-1 items-center">
+                <IconMedal size={16} />
+                {__("Certifications")}
+              </h2>
+              <div
+                className="grid grid-cols-4 gap-4"
+                style={{
+                  gridTemplateColumns: "repeat(auto-fit, 75px",
+                }}
+              >
+                {trustCenter.audits.edges.map((audit) => (
+                  <AuditRowAvatar key={audit.node.id} audit={audit.node} />
+                ))}
+              </div>
+            </div>
 
-        <hr className="my-6 -mx-6 h-[1px] bg-border-low border-none" />
+            <hr className="my-6 -mx-6 h-[1px] bg-border-low border-none" />
+          </>
+        )}
 
         {/* Actions */}
         {!isAuthenticated && (
