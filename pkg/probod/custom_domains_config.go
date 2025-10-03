@@ -22,9 +22,9 @@ type customDomainsConfig struct {
 }
 
 type acmeConfig struct {
-	Directory   string `json:"directory"`
-	Email       string `json:"email"`
-	KeyType     string `json:"key-type"`
-	InsecureTLS bool   `json:"insecure-tls"`
-	AccountKey  string `json:"account-key"`
+	Directory  string `json:"directory"`
+	Email      string `json:"email"`
+	KeyType    string `json:"key-type"`
+	AccountKey string `json:"account-key"`
+	RootCA     string `json:"root-ca"`
 }

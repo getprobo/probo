@@ -18,6 +18,7 @@ import (
 	"context"
 	"crypto"
 	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"net"
@@ -267,12 +268,20 @@ func (impl *Implm) Run(
 		l.Info("using configured ACME account key")
 	}
 
+	var rootCAs *x509.CertPool
+	if impl.cfg.CustomDomains.ACME.RootCA != "" {
+		rootCAs = x509.NewCertPool()
+		if !rootCAs.AppendCertsFromPEM([]byte(impl.cfg.CustomDomains.ACME.RootCA)) {
+			return fmt.Errorf("failed to parse ACME root CA certificate")
+		}
+	}
+
 	acmeService, err := certmanager.NewACMEService(
 		impl.cfg.CustomDomains.ACME.Email,
 		keys.Type(impl.cfg.CustomDomains.ACME.KeyType),
 		impl.cfg.CustomDomains.ACME.Directory,
-		impl.cfg.CustomDomains.ACME.InsecureTLS,
 		accountKey,
+		rootCAs,
 		l,
 	)
 	if err != nil {

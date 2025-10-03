@@ -23,7 +23,6 @@ import (
 	"crypto/x509/pkix"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/getprobo/probo/pkg/crypto/keys"
@@ -66,8 +65,8 @@ func NewACMEService(
 	email string,
 	keyType keys.Type,
 	directoryURL string,
-	insecureTLS bool,
 	accountKey crypto.Signer,
+	rootCAs *x509.CertPool,
 	logger *log.Logger,
 ) (*ACMEService, error) {
 	if accountKey == nil {
@@ -80,23 +79,20 @@ func NewACMEService(
 		logger.Warn("no account key provided, generating new ACME account - this will create a new account on each restart")
 	}
 
-	var httpClient *http.Client
-
-	if insecureTLS {
-		transport := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		httpClient = &http.Client{
-			Transport: transport,
-			Timeout:   30 * time.Second,
-		}
-
-		logger.Warn("ACME service configured with insecure TLS - use only for local testing")
-	} else {
-		httpClient = httpclient.DefaultPooledClient(
-			httpclient.WithLogger(logger),
-		)
+	httpClientOpts := []httpclient.Option{
+		httpclient.WithLogger(logger),
 	}
+
+	if rootCAs != nil {
+		httpClientOpts = append(
+			httpClientOpts,
+			httpclient.WithTLSConfig(&tls.Config{RootCAs: rootCAs}),
+		)
+
+		logger.Info("ACME service configured with custom root CA")
+	}
+
+	httpClient := httpclient.DefaultPooledClient(httpClientOpts...)
 
 	client := &acme.Client{
 		Key:          accountKey,
