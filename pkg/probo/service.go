@@ -21,12 +21,14 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/agents"
+	"github.com/getprobo/probo/pkg/certmanager"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/cipher"
 	"github.com/getprobo/probo/pkg/filevalidation"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/usrmgr"
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 )
@@ -54,6 +56,8 @@ type (
 		agentConfig       agents.Config
 		html2pdfConverter *html2pdf.Converter
 		usrmgr            *usrmgr.Service
+		acmeService       *certmanager.ACMEService
+		logger            *log.Logger
 	}
 
 	TenantService struct {
@@ -94,6 +98,7 @@ type (
 		Snapshots                         *SnapshotService
 		ContinualImprovements             *ContinualImprovementService
 		ProcessingActivities              *ProcessingActivityService
+		CustomDomains                     *CustomDomainService
 	}
 )
 
@@ -109,6 +114,8 @@ func NewService(
 	agentConfig agents.Config,
 	html2pdfConverter *html2pdf.Converter,
 	usrmgrService *usrmgr.Service,
+	acmeService *certmanager.ACMEService,
+	logger *log.Logger,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -125,6 +132,8 @@ func NewService(
 		agentConfig:       agentConfig,
 		html2pdfConverter: html2pdfConverter,
 		usrmgr:            usrmgrService,
+		acmeService:       acmeService,
+		logger:            logger,
 	}
 
 	return svc, nil
@@ -193,6 +202,12 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Snapshots = &SnapshotService{svc: tenantService}
 	tenantService.ContinualImprovements = &ContinualImprovementService{svc: tenantService}
 	tenantService.ProcessingActivities = &ProcessingActivityService{svc: tenantService}
+	tenantService.CustomDomains = &CustomDomainService{
+		svc:           tenantService,
+		encryptionKey: s.encryptionKey,
+		acmeService:   s.acmeService,
+		logger:        s.logger.Named("custom_domains"),
+	}
 	return tenantService
 }
 
@@ -312,4 +327,29 @@ func (s *Service) commitSuccessfulExport(ctx context.Context, exportJob *coredat
 			return nil
 		},
 	)
+}
+
+func (s *Service) LoadOrganizationByDomain(ctx context.Context, domain string) (gid.GID, error) {
+	var organizationID gid.GID
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var customDomain coredata.CustomDomain
+			if err := customDomain.LoadByDomain(ctx, conn, coredata.NewNoScope(), s.encryptionKey, domain); err != nil {
+				return fmt.Errorf("cannot load custom domain: %w", err)
+			}
+
+			var org coredata.Organization
+			if err := org.LoadByCustomDomainID(ctx, conn, coredata.NewNoScope(), customDomain.ID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			organizationID = org.ID
+
+			return nil
+		},
+	)
+
+	return organizationID, err
 }

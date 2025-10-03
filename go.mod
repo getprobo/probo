@@ -25,12 +25,13 @@ require (
 	github.com/xuri/excelize/v2 v2.9.1
 	github.com/yuin/goldmark v1.7.12
 	go.gearno.de/crypto/uuid v0.1.0
-	go.gearno.de/kit v0.0.0-20250623163305-45b4f6905899
+	go.gearno.de/kit v0.0.0-20250930204623-af70ea5798d9
 	go.gearno.de/x/ref v0.0.0-20240502200927-d74926fcb14c
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/trace v1.37.0
 	golang.org/x/crypto v0.39.0
 	golang.org/x/image v0.27.0
+	golang.org/x/sync v0.15.0
 )
 
 require (
@@ -103,7 +104,6 @@ require (
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect

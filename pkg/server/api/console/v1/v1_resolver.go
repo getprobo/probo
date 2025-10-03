@@ -3368,6 +3368,48 @@ func (r *mutationResolver) DeleteSnapshot(ctx context.Context, input types.Delet
 	}, nil
 }
 
+// CreateCustomDomain is the resolver for the createCustomDomain field.
+func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.CreateCustomDomainInput) (*types.CreateCustomDomainPayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	domain, err := prb.CustomDomains.CreateCustomDomain(ctx, probo.CreateCustomDomainRequest{
+		OrganizationID: input.OrganizationID,
+		Domain:         input.Domain,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create custom domain: %w", err)
+	}
+
+	return &types.CreateCustomDomainPayload{
+		CustomDomain: types.NewCustomDomain(domain, r.customDomainCname),
+	}, nil
+}
+
+// DeleteCustomDomain is the resolver for the deleteCustomDomain field.
+func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.DeleteCustomDomainInput) (*types.DeleteCustomDomainPayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	// Get the current custom domain ID before deleting
+	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get custom domain: %w", err)
+	}
+
+	if domain == nil {
+		return nil, fmt.Errorf("organization has no custom domain")
+	}
+
+	deletedDomainID := domain.ID
+
+	if err := prb.CustomDomains.DeleteCustomDomain(ctx, input.OrganizationID); err != nil {
+		return nil, fmt.Errorf("failed to delete custom domain: %w", err)
+	}
+
+	return &types.DeleteCustomDomainPayload{
+		DeletedCustomDomainID: deletedDomainID,
+	}, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Nonconformity) (*types.Organization, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -4035,6 +4077,22 @@ func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organ
 	}
 
 	return types.NewTrustCenter(trustCenter, file), nil
+}
+
+// CustomDomain is the resolver for the customDomain field.
+func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get custom domain: %w", err)
+	}
+
+	if domain == nil {
+		return nil, nil
+	}
+
+	return types.NewCustomDomain(domain, r.customDomainCname), nil
 }
 
 // TotalCount is the resolver for the totalCount field.

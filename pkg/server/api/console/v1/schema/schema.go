@@ -298,6 +298,10 @@ type ComplexityRoot struct {
 		SnapshotEdge func(childComplexity int) int
 	}
 
+	CreateCustomDomainPayload struct {
+		CustomDomain func(childComplexity int) int
+	}
+
 	CreateDatumPayload struct {
 		DatumEdge func(childComplexity int) int
 	}
@@ -394,6 +398,26 @@ type ComplexityRoot struct {
 		VendorServiceEdge func(childComplexity int) int
 	}
 
+	CustomDomain struct {
+		CreatedAt    func(childComplexity int) int
+		DNSRecords   func(childComplexity int) int
+		Domain       func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Organization func(childComplexity int) int
+		SslExpiresAt func(childComplexity int) int
+		SslStatus    func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
+		VerifiedAt   func(childComplexity int) int
+	}
+
+	DNSRecordInstruction struct {
+		Name    func(childComplexity int) int
+		Purpose func(childComplexity int) int
+		TTL     func(childComplexity int) int
+		Type    func(childComplexity int) int
+		Value   func(childComplexity int) int
+	}
+
 	Datum struct {
 		CreatedAt          func(childComplexity int) int
 		DataClassification func(childComplexity int) int
@@ -455,6 +479,10 @@ type ComplexityRoot struct {
 	DeleteControlSnapshotMappingPayload struct {
 		DeletedControlID  func(childComplexity int) int
 		DeletedSnapshotID func(childComplexity int) int
+	}
+
+	DeleteCustomDomainPayload struct {
+		DeletedCustomDomainID func(childComplexity int) int
 	}
 
 	DeleteDatumPayload struct {
@@ -758,6 +786,7 @@ type ComplexityRoot struct {
 		CreateControlDocumentMapping           func(childComplexity int, input types.CreateControlDocumentMappingInput) int
 		CreateControlMeasureMapping            func(childComplexity int, input types.CreateControlMeasureMappingInput) int
 		CreateControlSnapshotMapping           func(childComplexity int, input types.CreateControlSnapshotMappingInput) int
+		CreateCustomDomain                     func(childComplexity int, input types.CreateCustomDomainInput) int
 		CreateDatum                            func(childComplexity int, input types.CreateDatumInput) int
 		CreateDocument                         func(childComplexity int, input types.CreateDocumentInput) int
 		CreateDraftDocumentVersion             func(childComplexity int, input types.CreateDraftDocumentVersionInput) int
@@ -789,6 +818,7 @@ type ComplexityRoot struct {
 		DeleteControlDocumentMapping           func(childComplexity int, input types.DeleteControlDocumentMappingInput) int
 		DeleteControlMeasureMapping            func(childComplexity int, input types.DeleteControlMeasureMappingInput) int
 		DeleteControlSnapshotMapping           func(childComplexity int, input types.DeleteControlSnapshotMappingInput) int
+		DeleteCustomDomain                     func(childComplexity int, input types.DeleteCustomDomainInput) int
 		DeleteDatum                            func(childComplexity int, input types.DeleteDatumInput) int
 		DeleteDocument                         func(childComplexity int, input types.DeleteDocumentInput) int
 		DeleteDraftDocumentVersion             func(childComplexity int, input types.DeleteDraftDocumentVersionInput) int
@@ -927,6 +957,7 @@ type ComplexityRoot struct {
 		ContinualImprovements func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) int
 		Controls              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
 		CreatedAt             func(childComplexity int) int
+		CustomDomain          func(childComplexity int) int
 		Data                  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DatumOrderBy, filter *types.DatumFilter) int
 		Description           func(childComplexity int) int
 		Documents             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentOrderBy, filter *types.DocumentFilter) int
@@ -1757,6 +1788,8 @@ type MutationResolver interface {
 	DeleteProcessingActivity(ctx context.Context, input types.DeleteProcessingActivityInput) (*types.DeleteProcessingActivityPayload, error)
 	CreateSnapshot(ctx context.Context, input types.CreateSnapshotInput) (*types.CreateSnapshotPayload, error)
 	DeleteSnapshot(ctx context.Context, input types.DeleteSnapshotInput) (*types.DeleteSnapshotPayload, error)
+	CreateCustomDomain(ctx context.Context, input types.CreateCustomDomainInput) (*types.CreateCustomDomainPayload, error)
+	DeleteCustomDomain(ctx context.Context, input types.DeleteCustomDomainInput) (*types.DeleteCustomDomainPayload, error)
 }
 type NonconformityResolver interface {
 	Organization(ctx context.Context, obj *types.Nonconformity) (*types.Organization, error)
@@ -1798,6 +1831,7 @@ type OrganizationResolver interface {
 	ProcessingActivities(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) (*types.ProcessingActivityConnection, error)
 	Snapshots(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) (*types.SnapshotConnection, error)
 	TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error)
+	CustomDomain(ctx context.Context, obj *types.Organization) (*types.CustomDomain, error)
 }
 type PeopleConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error)
@@ -2670,6 +2704,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.CreateControlSnapshotMappingPayload.SnapshotEdge(childComplexity), true
 
+	case "CreateCustomDomainPayload.customDomain":
+		if e.complexity.CreateCustomDomainPayload.CustomDomain == nil {
+			break
+		}
+
+		return e.complexity.CreateCustomDomainPayload.CustomDomain(childComplexity), true
+
 	case "CreateDatumPayload.datumEdge":
 		if e.complexity.CreateDatumPayload.DatumEdge == nil {
 			break
@@ -2858,6 +2899,104 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CreateVendorServicePayload.VendorServiceEdge(childComplexity), true
+
+	case "CustomDomain.createdAt":
+		if e.complexity.CustomDomain.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.CustomDomain.CreatedAt(childComplexity), true
+
+	case "CustomDomain.dnsRecords":
+		if e.complexity.CustomDomain.DNSRecords == nil {
+			break
+		}
+
+		return e.complexity.CustomDomain.DNSRecords(childComplexity), true
+
+	case "CustomDomain.domain":
+		if e.complexity.CustomDomain.Domain == nil {
+			break
+		}
+
+		return e.complexity.CustomDomain.Domain(childComplexity), true
+
+	case "CustomDomain.id":
+		if e.complexity.CustomDomain.ID == nil {
+			break
+		}
+
+		return e.complexity.CustomDomain.ID(childComplexity), true
+
+	case "CustomDomain.organization":
+		if e.complexity.CustomDomain.Organization == nil {
+			break
+		}
+
+		return e.complexity.CustomDomain.Organization(childComplexity), true
+
+	case "CustomDomain.sslExpiresAt":
+		if e.complexity.CustomDomain.SslExpiresAt == nil {
+			break
+		}
+
+		return e.complexity.CustomDomain.SslExpiresAt(childComplexity), true
+
+	case "CustomDomain.sslStatus":
+		if e.complexity.CustomDomain.SslStatus == nil {
+			break
+		}
+
+		return e.complexity.CustomDomain.SslStatus(childComplexity), true
+
+	case "CustomDomain.updatedAt":
+		if e.complexity.CustomDomain.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.CustomDomain.UpdatedAt(childComplexity), true
+
+	case "CustomDomain.verifiedAt":
+		if e.complexity.CustomDomain.VerifiedAt == nil {
+			break
+		}
+
+		return e.complexity.CustomDomain.VerifiedAt(childComplexity), true
+
+	case "DNSRecordInstruction.name":
+		if e.complexity.DNSRecordInstruction.Name == nil {
+			break
+		}
+
+		return e.complexity.DNSRecordInstruction.Name(childComplexity), true
+
+	case "DNSRecordInstruction.purpose":
+		if e.complexity.DNSRecordInstruction.Purpose == nil {
+			break
+		}
+
+		return e.complexity.DNSRecordInstruction.Purpose(childComplexity), true
+
+	case "DNSRecordInstruction.ttl":
+		if e.complexity.DNSRecordInstruction.TTL == nil {
+			break
+		}
+
+		return e.complexity.DNSRecordInstruction.TTL(childComplexity), true
+
+	case "DNSRecordInstruction.type":
+		if e.complexity.DNSRecordInstruction.Type == nil {
+			break
+		}
+
+		return e.complexity.DNSRecordInstruction.Type(childComplexity), true
+
+	case "DNSRecordInstruction.value":
+		if e.complexity.DNSRecordInstruction.Value == nil {
+			break
+		}
+
+		return e.complexity.DNSRecordInstruction.Value(childComplexity), true
 
 	case "Datum.createdAt":
 		if e.complexity.Datum.CreatedAt == nil {
@@ -3052,6 +3191,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteControlSnapshotMappingPayload.DeletedSnapshotID(childComplexity), true
+
+	case "DeleteCustomDomainPayload.deletedCustomDomainId":
+		if e.complexity.DeleteCustomDomainPayload.DeletedCustomDomainID == nil {
+			break
+		}
+
+		return e.complexity.DeleteCustomDomainPayload.DeletedCustomDomainID(childComplexity), true
 
 	case "DeleteDatumPayload.deletedDatumId":
 		if e.complexity.DeleteDatumPayload.DeletedDatumID == nil {
@@ -4181,6 +4327,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.CreateControlSnapshotMapping(childComplexity, args["input"].(types.CreateControlSnapshotMappingInput)), true
 
+	case "Mutation.createCustomDomain":
+		if e.complexity.Mutation.CreateCustomDomain == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createCustomDomain_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateCustomDomain(childComplexity, args["input"].(types.CreateCustomDomainInput)), true
+
 	case "Mutation.createDatum":
 		if e.complexity.Mutation.CreateDatum == nil {
 			break
@@ -4552,6 +4710,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteControlSnapshotMapping(childComplexity, args["input"].(types.DeleteControlSnapshotMappingInput)), true
+
+	case "Mutation.deleteCustomDomain":
+		if e.complexity.Mutation.DeleteCustomDomain == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteCustomDomain_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteCustomDomain(childComplexity, args["input"].(types.DeleteCustomDomainInput)), true
 
 	case "Mutation.deleteDatum":
 		if e.complexity.Mutation.DeleteDatum == nil {
@@ -5751,6 +5921,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.CreatedAt(childComplexity), true
+
+	case "Organization.customDomain":
+		if e.complexity.Organization.CustomDomain == nil {
+			break
+		}
+
+		return e.complexity.Organization.CustomDomain(childComplexity), true
 
 	case "Organization.data":
 		if e.complexity.Organization.Data == nil {
@@ -8316,6 +8493,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateControlInput,
 		ec.unmarshalInputCreateControlMeasureMappingInput,
 		ec.unmarshalInputCreateControlSnapshotMappingInput,
+		ec.unmarshalInputCreateCustomDomainInput,
 		ec.unmarshalInputCreateDatumInput,
 		ec.unmarshalInputCreateDocumentInput,
 		ec.unmarshalInputCreateDraftDocumentVersionInput,
@@ -8350,6 +8528,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteControlInput,
 		ec.unmarshalInputDeleteControlMeasureMappingInput,
 		ec.unmarshalInputDeleteControlSnapshotMappingInput,
+		ec.unmarshalInputDeleteCustomDomainInput,
 		ec.unmarshalInputDeleteDatumInput,
 		ec.unmarshalInputDeleteDocumentInput,
 		ec.unmarshalInputDeleteDraftDocumentVersionInput,
@@ -8692,21 +8871,17 @@ enum AuditState
       value: "github.com/getprobo/probo/pkg/coredata.AuditStateInProgress"
     )
   COMPLETED
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditStateCompleted"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AuditStateCompleted")
   REJECTED
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditStateRejected"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AuditStateRejected")
   OUTDATED
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditStateOutdated"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AuditStateOutdated")
 }
 
 enum NonconformityStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityStatus") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.NonconformityStatus"
+  ) {
   OPEN
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.NonconformityStatusOpen"
@@ -8738,7 +8913,9 @@ enum ObligationStatus
 }
 
 enum ContinualImprovementStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatus") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatus"
+  ) {
   OPEN
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatusOpen"
@@ -8754,7 +8931,9 @@ enum ContinualImprovementStatus
 }
 
 enum ContinualImprovementPriority
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriority") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriority"
+  ) {
   LOW
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriorityLow"
@@ -8770,7 +8949,9 @@ enum ContinualImprovementPriority
 }
 
 enum ProcessingActivitySpecialOrCriminalData
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalData") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalData"
+  ) {
   YES
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataYes"
@@ -8786,7 +8967,9 @@ enum ProcessingActivitySpecialOrCriminalData
 }
 
 enum ProcessingActivityLawfulBasis
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasis") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasis"
+  ) {
   LEGITIMATE_INTEREST
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisLegitimateInterest"
@@ -8814,7 +8997,9 @@ enum ProcessingActivityLawfulBasis
 }
 
 enum ProcessingActivityTransferSafeguards
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguards") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguards"
+  ) {
   STANDARD_CONTRACTUAL_CLAUSES
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsStandardContractualClauses"
@@ -8842,7 +9027,9 @@ enum ProcessingActivityTransferSafeguards
 }
 
 enum ProcessingActivityDataProtectionImpactAssessment
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessment") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessment"
+  ) {
   NEEDED
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessmentNeeded"
@@ -8854,7 +9041,9 @@ enum ProcessingActivityDataProtectionImpactAssessment
 }
 
 enum ProcessingActivityTransferImpactAssessment
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessment") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessment"
+  ) {
   NEEDED
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessmentNeeded"
@@ -9573,7 +9762,9 @@ enum AuditOrderField
 }
 
 enum NonconformityOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldCreatedAt"
@@ -9597,7 +9788,9 @@ enum NonconformityOrderField
 }
 
 enum ObligationOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ObligationOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ObligationOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldCreatedAt"
@@ -9617,7 +9810,9 @@ enum ObligationOrderField
 }
 
 enum ContinualImprovementOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldCreatedAt"
@@ -9641,7 +9836,9 @@ enum ContinualImprovementOrderField
 }
 
 enum ProcessingActivityOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderFieldCreatedAt"
@@ -9653,7 +9850,9 @@ enum ProcessingActivityOrderField
 }
 
 enum TrustCenterAccessOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderFieldCreatedAt"
@@ -9669,7 +9868,9 @@ enum TrustCenterDocumentAccessOrderField
 }
 
 enum TrustCenterReferenceOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderField"
+  ) {
   NAME
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldName"
@@ -9687,21 +9888,15 @@ enum TrustCenterReferenceOrderField
 enum SnapshotsType
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.SnapshotsType") {
   RISKS
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeRisks"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeRisks")
   VENDORS
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeVendors"
     )
   ASSETS
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeAssets"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeAssets")
   DATA
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeData"
-    )
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeData")
   NONCONFORMITIES
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeNonconformities"
@@ -10185,6 +10380,8 @@ type Organization implements Node {
 
   trustCenter: TrustCenter @goField(forceResolver: true)
 
+  customDomain: CustomDomain @goField(forceResolver: true)
+
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -10237,7 +10434,8 @@ type Vendor implements Node {
     orderBy: VendorComplianceReportOrder
   ): VendorComplianceReportConnection! @goField(forceResolver: true)
 
-  businessAssociateAgreement: VendorBusinessAssociateAgreement @goField(forceResolver: true)
+  businessAssociateAgreement: VendorBusinessAssociateAgreement
+    @goField(forceResolver: true)
   dataPrivacyAgreement: VendorDataPrivacyAgreement @goField(forceResolver: true)
 
   contacts(
@@ -10821,9 +11019,10 @@ type TrustCenterReference implements Node {
   updatedAt: Datetime!
 }
 
-type TrustCenterReferenceConnection @goModel(
+type TrustCenterReferenceConnection
+  @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterReferenceConnection"
-  ){
+  ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [TrustCenterReferenceEdge!]!
   pageInfo: PageInfo!
@@ -11145,9 +11344,7 @@ type Mutation {
     input: DeleteOrganizationInput!
   ): DeleteOrganizationPayload!
 
-  updateTrustCenter(
-    input: UpdateTrustCenterInput!
-  ): UpdateTrustCenterPayload!
+  updateTrustCenter(input: UpdateTrustCenterInput!): UpdateTrustCenterPayload!
 
   uploadTrustCenterNDA(
     input: UploadTrustCenterNDAInput!
@@ -11199,14 +11396,26 @@ type Mutation {
   deleteVendor(input: DeleteVendorInput!): DeleteVendorPayload!
 
   # Vendor Contact mutations
-  createVendorContact(input: CreateVendorContactInput!): CreateVendorContactPayload!
-  updateVendorContact(input: UpdateVendorContactInput!): UpdateVendorContactPayload!
-  deleteVendorContact(input: DeleteVendorContactInput!): DeleteVendorContactPayload!
+  createVendorContact(
+    input: CreateVendorContactInput!
+  ): CreateVendorContactPayload!
+  updateVendorContact(
+    input: UpdateVendorContactInput!
+  ): UpdateVendorContactPayload!
+  deleteVendorContact(
+    input: DeleteVendorContactInput!
+  ): DeleteVendorContactPayload!
 
   # Vendor Service mutations
-  createVendorService(input: CreateVendorServiceInput!): CreateVendorServicePayload!
-  updateVendorService(input: UpdateVendorServiceInput!): UpdateVendorServicePayload!
-  deleteVendorService(input: DeleteVendorServiceInput!): DeleteVendorServicePayload!
+  createVendorService(
+    input: CreateVendorServiceInput!
+  ): CreateVendorServicePayload!
+  updateVendorService(
+    input: UpdateVendorServiceInput!
+  ): UpdateVendorServicePayload!
+  deleteVendorService(
+    input: DeleteVendorServiceInput!
+  ): DeleteVendorServicePayload!
 
   # Framework mutations
   createFramework(input: CreateFrameworkInput!): CreateFrameworkPayload!
@@ -11402,15 +11611,9 @@ type Mutation {
   ): DeleteNonconformityPayload!
 
   # Obligation mutations
-  createObligation(
-    input: CreateObligationInput!
-  ): CreateObligationPayload!
-  updateObligation(
-    input: UpdateObligationInput!
-  ): UpdateObligationPayload!
-  deleteObligation(
-    input: DeleteObligationInput!
-  ): DeleteObligationPayload!
+  createObligation(input: CreateObligationInput!): CreateObligationPayload!
+  updateObligation(input: UpdateObligationInput!): UpdateObligationPayload!
+  deleteObligation(input: DeleteObligationInput!): DeleteObligationPayload!
 
   # Continual Improvement mutations
   createContinualImprovement(
@@ -11437,6 +11640,14 @@ type Mutation {
   # Snapshot mutations
   createSnapshot(input: CreateSnapshotInput!): CreateSnapshotPayload!
   deleteSnapshot(input: DeleteSnapshotInput!): DeleteSnapshotPayload!
+
+  # Custom Domain mutations
+  createCustomDomain(
+    input: CreateCustomDomainInput!
+  ): CreateCustomDomainPayload!
+  deleteCustomDomain(
+    input: DeleteCustomDomainInput!
+  ): DeleteCustomDomainPayload!
 }
 
 # Input Types
@@ -12926,6 +13137,73 @@ type CreateSnapshotPayload {
 
 type DeleteSnapshotPayload {
   deletedSnapshotId: ID!
+}
+
+enum SSLStatus
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatus"
+  ) {
+  PENDING
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusPending"
+    )
+  PROVISIONING
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusProvisioning"
+    )
+  ACTIVE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusActive"
+    )
+  RENEWING
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusRenewing"
+    )
+  EXPIRED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusExpired"
+    )
+  FAILED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusFailed"
+    )
+}
+
+type CustomDomain implements Node {
+  id: ID!
+  organization: Organization!
+  domain: String!
+  sslStatus: SSLStatus!
+  sslExpiresAt: Datetime
+  dnsRecords: [DNSRecordInstruction!]!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+  verifiedAt: Datetime
+}
+
+type DNSRecordInstruction {
+  type: String!
+  name: String!
+  value: String!
+  ttl: Int!
+  purpose: String!
+}
+
+input CreateCustomDomainInput {
+  organizationId: ID!
+  domain: String!
+}
+
+input DeleteCustomDomainInput {
+  organizationId: ID!
+}
+
+type CreateCustomDomainPayload {
+  customDomain: CustomDomain!
+}
+
+type DeleteCustomDomainPayload {
+  deletedCustomDomainId: ID!
 }
 `, BuiltIn: false},
 }
@@ -14872,6 +15150,29 @@ func (ec *executionContext) field_Mutation_createControl_argsInput(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Mutation_createCustomDomain_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_createCustomDomain_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_createCustomDomain_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.CreateCustomDomainInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNCreateCustomDomainInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateCustomDomainInput(ctx, tmp)
+	}
+
+	var zeroVal types.CreateCustomDomainInput
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Mutation_createDatum_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -15582,6 +15883,29 @@ func (ec *executionContext) field_Mutation_deleteControl_argsInput(
 	}
 
 	var zeroVal types.DeleteControlInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteCustomDomain_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteCustomDomain_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteCustomDomain_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.DeleteCustomDomainInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNDeleteCustomDomainInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteCustomDomainInput(ctx, tmp)
+	}
+
+	var zeroVal types.DeleteCustomDomainInput
 	return zeroVal, nil
 }
 
@@ -21384,6 +21708,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -21991,6 +22317,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -23716,6 +24044,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -25925,6 +26255,70 @@ func (ec *executionContext) fieldContext_CreateControlSnapshotMappingPayload_sna
 	return fc, nil
 }
 
+func (ec *executionContext) _CreateCustomDomainPayload_customDomain(ctx context.Context, field graphql.CollectedField, obj *types.CreateCustomDomainPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CreateCustomDomainPayload_customDomain(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CustomDomain, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.CustomDomain)
+	fc.Result = res
+	return ec.marshalNCustomDomain2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomain(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CreateCustomDomainPayload_customDomain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CreateCustomDomainPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CustomDomain_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_CustomDomain_organization(ctx, field)
+			case "domain":
+				return ec.fieldContext_CustomDomain_domain(ctx, field)
+			case "sslStatus":
+				return ec.fieldContext_CustomDomain_sslStatus(ctx, field)
+			case "sslExpiresAt":
+				return ec.fieldContext_CustomDomain_sslExpiresAt(ctx, field)
+			case "dnsRecords":
+				return ec.fieldContext_CustomDomain_dnsRecords(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CustomDomain_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CustomDomain_updatedAt(ctx, field)
+			case "verifiedAt":
+				return ec.fieldContext_CustomDomain_verifiedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CustomDomain", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CreateDatumPayload_datumEdge(ctx context.Context, field graphql.CollectedField, obj *types.CreateDatumPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreateDatumPayload_datumEdge(ctx, field)
 	if err != nil {
@@ -27275,6 +27669,688 @@ func (ec *executionContext) fieldContext_CreateVendorServicePayload_vendorServic
 	return fc, nil
 }
 
+func (ec *executionContext) _CustomDomain_id(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomDomain_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomDomain_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomDomain",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomDomain_organization(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomDomain_organization(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Organization, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Organization)
+	fc.Result = res
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomDomain",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "users":
+				return ec.fieldContext_Organization_users(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformities":
+				return ec.fieldContext_Organization_nonconformities(ctx, field)
+			case "obligations":
+				return ec.fieldContext_Organization_obligations(ctx, field)
+			case "continualImprovements":
+				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "processingActivities":
+				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomDomain_domain(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomDomain_domain(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Domain, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomDomain_domain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomDomain",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomDomain_sslStatus(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomDomain_sslStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SslStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.CustomDomainSSLStatus)
+	fc.Result = res
+	return ec.marshalNSSLStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCustomDomainSSLStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomDomain_sslStatus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomDomain",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type SSLStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomDomain_sslExpiresAt(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomDomain_sslExpiresAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SslExpiresAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomDomain_sslExpiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomDomain",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomDomain_dnsRecords(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomDomain_dnsRecords(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DNSRecords, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.DNSRecordInstruction)
+	fc.Result = res
+	return ec.marshalNDNSRecordInstruction2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDNSRecordInstructionᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomDomain_dnsRecords(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomDomain",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_DNSRecordInstruction_type(ctx, field)
+			case "name":
+				return ec.fieldContext_DNSRecordInstruction_name(ctx, field)
+			case "value":
+				return ec.fieldContext_DNSRecordInstruction_value(ctx, field)
+			case "ttl":
+				return ec.fieldContext_DNSRecordInstruction_ttl(ctx, field)
+			case "purpose":
+				return ec.fieldContext_DNSRecordInstruction_purpose(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DNSRecordInstruction", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomDomain_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomDomain_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomDomain_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomDomain",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomDomain_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomDomain_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomDomain_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomDomain",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CustomDomain_verifiedAt(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CustomDomain_verifiedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.VerifiedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CustomDomain_verifiedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CustomDomain",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DNSRecordInstruction_type(ctx context.Context, field graphql.CollectedField, obj *types.DNSRecordInstruction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DNSRecordInstruction_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DNSRecordInstruction_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DNSRecordInstruction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DNSRecordInstruction_name(ctx context.Context, field graphql.CollectedField, obj *types.DNSRecordInstruction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DNSRecordInstruction_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DNSRecordInstruction_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DNSRecordInstruction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DNSRecordInstruction_value(ctx context.Context, field graphql.CollectedField, obj *types.DNSRecordInstruction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DNSRecordInstruction_value(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Value, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DNSRecordInstruction_value(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DNSRecordInstruction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DNSRecordInstruction_ttl(ctx context.Context, field graphql.CollectedField, obj *types.DNSRecordInstruction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DNSRecordInstruction_ttl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TTL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DNSRecordInstruction_ttl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DNSRecordInstruction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DNSRecordInstruction_purpose(ctx context.Context, field graphql.CollectedField, obj *types.DNSRecordInstruction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DNSRecordInstruction_purpose(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Purpose, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DNSRecordInstruction_purpose(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DNSRecordInstruction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Datum_id(ctx context.Context, field graphql.CollectedField, obj *types.Datum) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Datum_id(ctx, field)
 	if err != nil {
@@ -27668,6 +28744,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -28613,6 +29691,50 @@ func (ec *executionContext) _DeleteControlSnapshotMappingPayload_deletedSnapshot
 func (ec *executionContext) fieldContext_DeleteControlSnapshotMappingPayload_deletedSnapshotId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "DeleteControlSnapshotMappingPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DeleteCustomDomainPayload_deletedCustomDomainId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteCustomDomainPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteCustomDomainPayload_deletedCustomDomainId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedCustomDomainID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteCustomDomainPayload_deletedCustomDomainId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteCustomDomainPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -30339,6 +31461,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -33427,6 +34551,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -41939,6 +43065,124 @@ func (ec *executionContext) fieldContext_Mutation_deleteSnapshot(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createCustomDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createCustomDomain(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateCustomDomain(rctx, fc.Args["input"].(types.CreateCustomDomainInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.CreateCustomDomainPayload)
+	fc.Result = res
+	return ec.marshalNCreateCustomDomainPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateCustomDomainPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createCustomDomain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "customDomain":
+				return ec.fieldContext_CreateCustomDomainPayload_customDomain(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CreateCustomDomainPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createCustomDomain_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteCustomDomain(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteCustomDomain(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteCustomDomain(rctx, fc.Args["input"].(types.DeleteCustomDomainInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DeleteCustomDomainPayload)
+	fc.Result = res
+	return ec.marshalNDeleteCustomDomainPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteCustomDomainPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteCustomDomain(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "deletedCustomDomainId":
+				return ec.fieldContext_DeleteCustomDomainPayload_deletedCustomDomainId(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteCustomDomainPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteCustomDomain_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Nonconformity_id(ctx context.Context, field graphql.CollectedField, obj *types.Nonconformity) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Nonconformity_id(ctx, field)
 	if err != nil {
@@ -42115,6 +43359,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -43174,6 +44420,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -45424,6 +46672,67 @@ func (ec *executionContext) fieldContext_Organization_trustCenter(_ context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Organization_customDomain(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_customDomain(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Organization().CustomDomain(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*types.CustomDomain)
+	fc.Result = res
+	return ec.marshalOCustomDomain2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomain(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_customDomain(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CustomDomain_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_CustomDomain_organization(ctx, field)
+			case "domain":
+				return ec.fieldContext_CustomDomain_domain(ctx, field)
+			case "sslStatus":
+				return ec.fieldContext_CustomDomain_sslStatus(ctx, field)
+			case "sslExpiresAt":
+				return ec.fieldContext_CustomDomain_sslExpiresAt(ctx, field)
+			case "dnsRecords":
+				return ec.fieldContext_CustomDomain_dnsRecords(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_CustomDomain_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_CustomDomain_updatedAt(ctx, field)
+			case "verifiedAt":
+				return ec.fieldContext_CustomDomain_verifiedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CustomDomain", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Organization_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Organization_createdAt(ctx, field)
 	if err != nil {
@@ -45751,6 +47060,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -46838,6 +48149,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -49513,6 +50826,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -50411,6 +51726,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -51322,6 +52639,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -52204,6 +53523,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -55243,6 +56564,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -57331,6 +58654,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_snapshots(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -65237,6 +66562,40 @@ func (ec *executionContext) unmarshalInputCreateControlSnapshotMappingInput(ctx 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateCustomDomainInput(ctx context.Context, obj any) (types.CreateCustomDomainInput, error) {
+	var it types.CreateCustomDomainInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId", "domain"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		case "domain":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("domain"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Domain = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateDatumInput(ctx context.Context, obj any) (types.CreateDatumInput, error) {
 	var it types.CreateDatumInput
 	asMap := map[string]any{}
@@ -67017,6 +68376,33 @@ func (ec *executionContext) unmarshalInputDeleteControlSnapshotMappingInput(ctx 
 				return it, err
 			}
 			it.SnapshotID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeleteCustomDomainInput(ctx context.Context, obj any) (types.DeleteCustomDomainInput, error) {
+	var it types.DeleteCustomDomainInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
 		}
 	}
 
@@ -71470,6 +72856,13 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._Datum(ctx, sel, obj)
+	case types.CustomDomain:
+		return ec._CustomDomain(ctx, sel, &obj)
+	case *types.CustomDomain:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._CustomDomain(ctx, sel, obj)
 	case types.Control:
 		return ec._Control(ctx, sel, &obj)
 	case *types.Control:
@@ -73657,6 +75050,45 @@ func (ec *executionContext) _CreateControlSnapshotMappingPayload(ctx context.Con
 	return out
 }
 
+var createCustomDomainPayloadImplementors = []string{"CreateCustomDomainPayload"}
+
+func (ec *executionContext) _CreateCustomDomainPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateCustomDomainPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, createCustomDomainPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CreateCustomDomainPayload")
+		case "customDomain":
+			out.Values[i] = ec._CreateCustomDomainPayload_customDomain(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var createDatumPayloadImplementors = []string{"CreateDatumPayload"}
 
 func (ec *executionContext) _CreateDatumPayload(ctx context.Context, sel ast.SelectionSet, obj *types.CreateDatumPayload) graphql.Marshaler {
@@ -74574,6 +76006,138 @@ func (ec *executionContext) _CreateVendorServicePayload(ctx context.Context, sel
 	return out
 }
 
+var customDomainImplementors = []string{"CustomDomain", "Node"}
+
+func (ec *executionContext) _CustomDomain(ctx context.Context, sel ast.SelectionSet, obj *types.CustomDomain) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, customDomainImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CustomDomain")
+		case "id":
+			out.Values[i] = ec._CustomDomain_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "organization":
+			out.Values[i] = ec._CustomDomain_organization(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "domain":
+			out.Values[i] = ec._CustomDomain_domain(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sslStatus":
+			out.Values[i] = ec._CustomDomain_sslStatus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "sslExpiresAt":
+			out.Values[i] = ec._CustomDomain_sslExpiresAt(ctx, field, obj)
+		case "dnsRecords":
+			out.Values[i] = ec._CustomDomain_dnsRecords(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._CustomDomain_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._CustomDomain_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "verifiedAt":
+			out.Values[i] = ec._CustomDomain_verifiedAt(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var dNSRecordInstructionImplementors = []string{"DNSRecordInstruction"}
+
+func (ec *executionContext) _DNSRecordInstruction(ctx context.Context, sel ast.SelectionSet, obj *types.DNSRecordInstruction) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, dNSRecordInstructionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DNSRecordInstruction")
+		case "type":
+			out.Values[i] = ec._DNSRecordInstruction_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._DNSRecordInstruction_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "value":
+			out.Values[i] = ec._DNSRecordInstruction_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "ttl":
+			out.Values[i] = ec._DNSRecordInstruction_ttl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "purpose":
+			out.Values[i] = ec._DNSRecordInstruction_purpose(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var datumImplementors = []string{"Datum", "Node"}
 
 func (ec *executionContext) _Datum(ctx context.Context, sel ast.SelectionSet, obj *types.Datum) graphql.Marshaler {
@@ -75212,6 +76776,45 @@ func (ec *executionContext) _DeleteControlSnapshotMappingPayload(ctx context.Con
 			}
 		case "deletedSnapshotId":
 			out.Values[i] = ec._DeleteControlSnapshotMappingPayload_deletedSnapshotId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var deleteCustomDomainPayloadImplementors = []string{"DeleteCustomDomainPayload"}
+
+func (ec *executionContext) _DeleteCustomDomainPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteCustomDomainPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteCustomDomainPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteCustomDomainPayload")
+		case "deletedCustomDomainId":
+			out.Values[i] = ec._DeleteCustomDomainPayload_deletedCustomDomainId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -79155,6 +80758,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createCustomDomain":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createCustomDomain(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteCustomDomain":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteCustomDomain(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -80474,6 +82091,39 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._Organization_trustCenter(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "customDomain":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_customDomain(ctx, field, obj)
 				return res
 			}
 
@@ -89185,6 +90835,25 @@ func (ec *executionContext) marshalNCreateControlSnapshotMappingPayload2ᚖgithu
 	return ec._CreateControlSnapshotMappingPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCreateCustomDomainInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateCustomDomainInput(ctx context.Context, v any) (types.CreateCustomDomainInput, error) {
+	res, err := ec.unmarshalInputCreateCustomDomainInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreateCustomDomainPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateCustomDomainPayload(ctx context.Context, sel ast.SelectionSet, v types.CreateCustomDomainPayload) graphql.Marshaler {
+	return ec._CreateCustomDomainPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCreateCustomDomainPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateCustomDomainPayload(ctx context.Context, sel ast.SelectionSet, v *types.CreateCustomDomainPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CreateCustomDomainPayload(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNCreateDatumInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCreateDatumInput(ctx context.Context, v any) (types.CreateDatumInput, error) {
 	res, err := ec.unmarshalInputCreateDatumInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -89649,6 +91318,70 @@ func (ec *executionContext) marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋ
 	return res
 }
 
+func (ec *executionContext) marshalNCustomDomain2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomain(ctx context.Context, sel ast.SelectionSet, v *types.CustomDomain) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CustomDomain(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNDNSRecordInstruction2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDNSRecordInstructionᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DNSRecordInstruction) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDNSRecordInstruction2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDNSRecordInstruction(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNDNSRecordInstruction2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDNSRecordInstruction(ctx context.Context, sel ast.SelectionSet, v *types.DNSRecordInstruction) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DNSRecordInstruction(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNDataClassification2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataClassification(ctx context.Context, v any) (coredata.DataClassification, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := unmarshalNDataClassification2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataClassification[tmp]
@@ -90008,6 +91741,25 @@ func (ec *executionContext) marshalNDeleteControlSnapshotMappingPayload2ᚖgithu
 		return graphql.Null
 	}
 	return ec._DeleteControlSnapshotMappingPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteCustomDomainInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteCustomDomainInput(ctx context.Context, v any) (types.DeleteCustomDomainInput, error) {
+	res, err := ec.unmarshalInputDeleteCustomDomainInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteCustomDomainPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteCustomDomainPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteCustomDomainPayload) graphql.Marshaler {
+	return ec._DeleteCustomDomainPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteCustomDomainPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteCustomDomainPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteCustomDomainPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteCustomDomainPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteDatumInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteDatumInput(ctx context.Context, v any) (types.DeleteDatumInput, error) {
@@ -92572,6 +94324,42 @@ var (
 		coredata.RiskTreatmentAccepted:    "ACCEPTED",
 		coredata.RiskTreatmentAvoided:     "AVOIDED",
 		coredata.RiskTreatmentTransferred: "TRANSFERRED",
+	}
+)
+
+func (ec *executionContext) unmarshalNSSLStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCustomDomainSSLStatus(ctx context.Context, v any) (coredata.CustomDomainSSLStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNSSLStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCustomDomainSSLStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSSLStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCustomDomainSSLStatus(ctx context.Context, sel ast.SelectionSet, v coredata.CustomDomainSSLStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNSSLStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCustomDomainSSLStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNSSLStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCustomDomainSSLStatus = map[string]coredata.CustomDomainSSLStatus{
+		"PENDING":      coredata.CustomDomainSSLStatusPending,
+		"PROVISIONING": coredata.CustomDomainSSLStatusProvisioning,
+		"ACTIVE":       coredata.CustomDomainSSLStatusActive,
+		"RENEWING":     coredata.CustomDomainSSLStatusRenewing,
+		"EXPIRED":      coredata.CustomDomainSSLStatusExpired,
+		"FAILED":       coredata.CustomDomainSSLStatusFailed,
+	}
+	marshalNSSLStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCustomDomainSSLStatus = map[coredata.CustomDomainSSLStatus]string{
+		coredata.CustomDomainSSLStatusPending:      "PENDING",
+		coredata.CustomDomainSSLStatusProvisioning: "PROVISIONING",
+		coredata.CustomDomainSSLStatusActive:       "ACTIVE",
+		coredata.CustomDomainSSLStatusRenewing:     "RENEWING",
+		coredata.CustomDomainSSLStatusExpired:      "EXPIRED",
+		coredata.CustomDomainSSLStatusFailed:       "FAILED",
 	}
 )
 
@@ -95793,6 +97581,13 @@ func (ec *executionContext) marshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋprobo
 	_ = ctx
 	res := cursor.MarshalCursorKeyScalar(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOCustomDomain2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐCustomDomain(ctx context.Context, sel ast.SelectionSet, v *types.CustomDomain) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CustomDomain(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalODataClassification2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDataClassification(ctx context.Context, v any) (*coredata.DataClassification, error) {

@@ -8,3 +8,6 @@ sbom-docker.json
 *_sbom.json
 *.out
 *.DS_Store
+*.pem
+*.crt
+*.key

@@ -5,6 +5,9 @@ GO?=	go
 DOCKER?=	docker
 SYFT ?= syft
 GRYPE ?= grype
+CP ?= cp
+MKDIR ?= mkdir -p
+MKCERT ?= mkcert
 
 DOCKER_BUILD_FLAGS?=
 DOCKER_BUILD=	DOCKER_BUILDKIT=1 $(DOCKER) build $(DOCKER_BUILD_FLAGS)
@@ -160,7 +163,7 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf coverage.out coverage.html
 
 .PHONY: stack-up
-stack-up: ## Start the docker stack as a deamon
+stack-up: compose/pebble/certs/rootCA.pem ## Start the docker stack as a deamon
 	$(DOCKER_COMPOSE) up -d
 
 .PHONY: stack-down
@@ -182,3 +185,11 @@ goreleaser-snapshot: ## Build a snapshot release with goreleaser
 .PHONY: goreleaser-check
 goreleaser-check: ## Check goreleaser configuration
 	goreleaser check
+
+compose/pebble/certs/rootCA.pem:
+	@$(MKDIR) -p compose/pebble/certs
+	$(MKCERT) -cert-file compose/pebble/certs/pebble.crt \
+		-key-file compose/pebble/certs/pebble.key \
+		localhost 127.0.0.1 ::1 pebble
+	$(CP) "$$($(MKCERT) -CAROOT)/rootCA.pem" compose/pebble/certs/rootCA.pem
+	$(CP) "$$($(MKCERT) -CAROOT)/rootCA-key.pem" compose/pebble/certs/rootCA-key.pem

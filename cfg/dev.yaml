@@ -66,3 +66,13 @@ probod:
     api-key: "thisisnotasecret"
     temperature: 0.1
     model-name: "gpt-4o"
+
+  custom-domains:
+    renewal-interval: 3600
+    provision-interval: 30
+    cname-target: "custom.getprobo.com"
+    acme:
+      directory: "https://localhost:14000/dir"
+      email: "admin@getprobo.com"
+      key-type: "EC256"
+      insecure-tls: true
