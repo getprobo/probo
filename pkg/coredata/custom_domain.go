@@ -155,7 +155,7 @@ FROM
 	custom_domains
 WHERE
 	%s
-	id = @id
+	AND id = @id
 LIMIT 1
 `
 
@@ -205,7 +205,7 @@ FROM
 	custom_domains
 WHERE
 	%s
-	id = @id
+	AND id = @id
 LIMIT 1
 FOR UPDATE
 `
@@ -255,7 +255,7 @@ FROM
 	custom_domains
 WHERE
 	%s
-	domain = @domain
+	AND domain = @domain
 LIMIT 1
 `
 
