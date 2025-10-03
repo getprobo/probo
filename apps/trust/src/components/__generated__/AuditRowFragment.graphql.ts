@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5ad8bcd5ca3b7635248d13cef0a24edf>>
+ * @generated SignedSource<<2f595b4efd5e7b13207d433830a64c98>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,9 @@ export type AuditRowFragment$data = {
   };
   readonly report: {
     readonly filename: string;
+    readonly hasUserRequestedAccess: boolean;
     readonly id: string;
+    readonly isUserAuthorized: boolean;
   } | null | undefined;
   readonly " $fragmentType": "AuditRowFragment";
 };
@@ -55,6 +57,20 @@ return {
           "kind": "ScalarField",
           "name": "filename",
           "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "isUserAuthorized",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "hasUserRequestedAccess",
+          "storageKey": null
         }
       ],
       "storageKey": null
@@ -84,6 +100,6 @@ return {
 };
 })();
 
-(node as any).hash = "255e447eb5ac9b4cb889e7a8f0463902";
+(node as any).hash = "3aabed006b65dc913c81a63f0f6f4523";
 
 export default node;

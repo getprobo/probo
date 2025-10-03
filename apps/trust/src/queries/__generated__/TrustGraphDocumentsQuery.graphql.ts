@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<55d256287ee091b57754d2d76080ad25>>
+ * @generated SignedSource<<f592abfc32b9882d40bdfd0d91908ea2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -214,6 +214,20 @@ return {
                         "kind": "ScalarField",
                         "name": "title",
                         "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "isUserAuthorized",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "hasUserRequestedAccess",
+                        "storageKey": null
                       }
                     ],
                     "storageKey": null
@@ -230,12 +244,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "71e1dc4102d19cdd2fb8d0ff60a391ca",
+    "cacheID": "8a333723782b24714393e89240704cf2",
     "id": null,
     "metadata": {},
     "name": "TrustGraphDocumentsQuery",
     "operationKind": "query",
-    "text": "query TrustGraphDocumentsQuery(\n  $slug: String!\n) {\n  trustCenterBySlug(slug: $slug) {\n    id\n    organization {\n      name\n      id\n    }\n    documents(first: 50) {\n      edges {\n        node {\n          id\n          documentType\n          ...DocumentRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n}\n"
+    "text": "query TrustGraphDocumentsQuery(\n  $slug: String!\n) {\n  trustCenterBySlug(slug: $slug) {\n    id\n    organization {\n      name\n      id\n    }\n    documents(first: 50) {\n      edges {\n        node {\n          id\n          documentType\n          ...DocumentRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n"
   }
 };
 })();
