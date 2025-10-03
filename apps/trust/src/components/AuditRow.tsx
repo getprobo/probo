@@ -92,25 +92,62 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
             </Button>
           </RequestAccessDialog>
         )
-      ) : (
-        <span className=" text-txt-secondary">{__("No report")}</span>
-      )}
+      ) : null}
     </div>
   );
 }
 
+const logos = {
+  "ISO 27001 (2022)": "/trust/logos/iso27001.svg",
+  "SOC 2": "/trust/logos/soc2.svg",
+  HIPAA: "/trust/logos/hipaa.svg",
+  GDPR: "/trust/logos/gdpr.svg",
+};
+
 export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
   const audit = useFragment(auditRowFragment, props.audit);
   return (
-    <AuditDialog audit={props.audit}>
-      <button className="block cursor-pointer aspect-square">
-        <FrameworkLogo
-          alt={audit.framework.name}
-          name={audit.framework.name}
-          className="size-full"
-        />
-      </button>
-    </AuditDialog>
+    <>
+      <AuditDialog audit={props.audit}>
+        <button
+          className="block cursor-pointer aspect-square"
+          title={`Logo ${audit.framework.name}`}
+        >
+          <div
+            className="bg-[#F0F7E2] aspect-square w-full rounded-full text-xs text-[#000] font-bold flex items-center justify-center pb-6 px-2"
+            style={{ background: "url(/trust/logos/blank.svg) no-repeat" }}
+          >
+            <span className="line-clamp-2 overflow-hidden">
+              {" "}
+              {audit.framework.name}
+            </span>
+          </div>
+        </button>
+      </AuditDialog>
+      <AuditDialog audit={props.audit}>
+        <button
+          className="block cursor-pointer aspect-square"
+          title={`Logo ${audit.framework.name}`}
+        >
+          {audit.framework.name in logos ? (
+            <img
+              className="block aspect-square w-full"
+              width={75}
+              height={75}
+              src={logos[audit.framework.name as keyof typeof logos]}
+              alt={`Logo ${audit.framework.name}`}
+            />
+          ) : (
+            <div
+              className="bg-[#F0F7E2] aspect-square w-full rounded-full text-xs text-[#000] font-bold flex items-center justify-center pb-4 px-2"
+              style={{ background: "url(/trust/logos/blank.png)" }}
+            >
+              {audit.framework.name}
+            </div>
+          )}
+        </button>
+      </AuditDialog>
+    </>
   );
 }
 

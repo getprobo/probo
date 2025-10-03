@@ -26,10 +26,10 @@ export function OrganizationSidebar({
         <img
           alt=""
           src={trustCenter.organization.logoUrl}
-          className="size-24 rounded-2xl border border-border-mid shadow-mid"
+          className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1"
         />
       ) : (
-        <div className="size-24 rounded-2xl border border-border-mid bg-level-1 shadow-mid" />
+        <div className="size-24 rounded-2xl border border-border-mid shadow-mid bg-level-1" />
       )}
       <h1 className="text-2xl mt-6">{trustCenter.organization.name}</h1>
       <p className="text-sm text-txt-secondary mt-1">
