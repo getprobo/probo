@@ -16,12 +16,14 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
 
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -34,7 +36,16 @@ type (
 	}
 
 	ControlDocuments []*ControlDocument
+
+	ErrControlDocumentMappingAlreadyExists struct {
+		ControlID  gid.GID
+		DocumentID gid.GID
+	}
 )
+
+func (e ErrControlDocumentMappingAlreadyExists) Error() string {
+	return fmt.Sprintf("control %s is already mapped to document %s", e.ControlID, e.DocumentID)
+}
 
 func (cp ControlDocument) Insert(
 	ctx context.Context,
@@ -64,7 +75,22 @@ VALUES (
 		"created_at":  cp.CreatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
-	return err
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_policies_pkey" {
+				return &ErrControlDocumentMappingAlreadyExists{
+					ControlID:  cp.ControlID,
+					DocumentID: cp.DocumentID,
+				}
+			}
+		}
+
+		return fmt.Errorf("cannot insert control document: %w", err)
+	}
+
+	return nil
 }
 
 func (cp ControlDocument) Delete(

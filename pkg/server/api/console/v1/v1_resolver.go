@@ -1878,6 +1878,10 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 
 	control, document, err := prb.Controls.CreateDocumentMapping(ctx, input.ControlID, input.DocumentID)
 	if err != nil {
+		var errMappingExists *coredata.ErrControlDocumentMappingAlreadyExists
+		if errors.As(err, &errMappingExists) {
+			return nil, errors.New(errMappingExists.Error())
+		}
 		panic(fmt.Errorf("cannot create control document mapping: %w", err))
 	}
 
