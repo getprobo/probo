@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6c96b0b565302f1ec1601561087b30bd>>
+ * @generated SignedSource<<95a549108a1a26ccfaf2d8aae42cea73>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,9 +15,12 @@ export type MeasureEvidencesTabFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
-        readonly filename: string;
+        readonly file: {
+          readonly fileName: string;
+          readonly mimeType: string;
+          readonly size: any;
+        } | null | undefined;
         readonly id: string;
-        readonly mimeType: string;
         readonly " $fragmentSpreads": FragmentRefs<"MeasureEvidencesTabFragment_evidence">;
       };
     }>;
@@ -140,15 +143,33 @@ return {
                 {
                   "alias": null,
                   "args": null,
-                  "kind": "ScalarField",
-                  "name": "filename",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "mimeType",
+                  "concreteType": "File",
+                  "kind": "LinkedField",
+                  "name": "file",
+                  "plural": false,
+                  "selections": [
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "fileName",
+                      "storageKey": null
+                    },
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "mimeType",
+                      "storageKey": null
+                    },
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "size",
+                      "storageKey": null
+                    }
+                  ],
                   "storageKey": null
                 },
                 {
@@ -236,6 +257,6 @@ return {
 };
 })();
 
-(node as any).hash = "8e97649ca88af04aa1184e68a126cc36";
+(node as any).hash = "c80a159cbb4ac8b8855875eff00d1255";
 
 export default node;

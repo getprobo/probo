@@ -5,9 +5,12 @@ export const evidenceFileQuery = graphql`
     node(id: $evidenceId) {
       ... on Evidence {
         id
-        mimeType
-        filename
-        fileUrl
+        file {
+            mimeType
+            fileName
+            size
+            downloadUrl
+        }
       }
     }
   }

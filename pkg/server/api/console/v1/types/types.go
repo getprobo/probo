@@ -1034,12 +1034,10 @@ type DocumentVersionSignatureOrder struct {
 
 type Evidence struct {
 	ID          gid.GID                `json:"id"`
-	FileURL     *string                `json:"fileUrl,omitempty"`
-	MimeType    string                 `json:"mimeType"`
 	Size        int                    `json:"size"`
 	State       coredata.EvidenceState `json:"state"`
 	Type        coredata.EvidenceType  `json:"type"`
-	Filename    string                 `json:"filename"`
+	File        *File                  `json:"file,omitempty"`
 	URL         *string                `json:"url,omitempty"`
 	Description string                 `json:"description"`
 	Task        *Task                  `json:"task,omitempty"`
@@ -1073,6 +1071,16 @@ type ExportFrameworkInput struct {
 
 type ExportFrameworkPayload struct {
 	ExportJobID gid.GID `json:"exportJobId"`
+}
+
+type File struct {
+	ID          gid.GID   `json:"id"`
+	MimeType    string    `json:"mimeType"`
+	FileName    string    `json:"fileName"`
+	Size        int64     `json:"size"`
+	DownloadURL string    `json:"downloadUrl"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type Framework struct {
@@ -1952,15 +1960,6 @@ type UploadMeasureEvidenceInput struct {
 }
 
 type UploadMeasureEvidencePayload struct {
-	EvidenceEdge *EvidenceEdge `json:"evidenceEdge"`
-}
-
-type UploadTaskEvidenceInput struct {
-	TaskID gid.GID        `json:"taskId"`
-	File   graphql.Upload `json:"file"`
-}
-
-type UploadTaskEvidencePayload struct {
 	EvidenceEdge *EvidenceEdge `json:"evidenceEdge"`
 }
 

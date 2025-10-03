@@ -1944,12 +1944,10 @@ type Task implements Node {
 
 type Evidence implements Node {
   id: ID!
-  fileUrl: String @goField(forceResolver: true)
-  mimeType: String!
   size: Int!
   state: EvidenceState!
   type: EvidenceType!
-  filename: String!
+  file: File @goField(forceResolver: true)
   url: String
   description: String!
 
@@ -2590,6 +2588,16 @@ type SnapshotEdge {
   node: Snapshot!
 }
 
+type File {
+    id: ID!
+    mimeType: String!
+    fileName: String!
+    size: BigInt!
+    downloadUrl: String! @goField(forceResolver: true)
+    createdAt: Datetime!
+    updatedAt: Datetime!
+}
+
 # Root Types
 type Query {
   node(id: ID!): Node!
@@ -2751,12 +2759,7 @@ type Mutation {
   ): DeleteRiskObligationMappingPayload!
 
   # Evidence mutations
-  requestEvidence(input: RequestEvidenceInput!): RequestEvidencePayload!
-  fulfillEvidence(input: FulfillEvidenceInput!): FulfillEvidencePayload!
   deleteEvidence(input: DeleteEvidenceInput!): DeleteEvidencePayload!
-  uploadTaskEvidence(
-    input: UploadTaskEvidenceInput!
-  ): UploadTaskEvidencePayload!
   uploadMeasureEvidence(
     input: UploadMeasureEvidenceInput!
   ): UploadMeasureEvidencePayload!
@@ -4142,17 +4145,8 @@ type CancelSignatureRequestPayload {
   deletedDocumentVersionSignatureId: ID!
 }
 
-type UploadTaskEvidencePayload {
-  evidenceEdge: EvidenceEdge!
-}
-
 type UploadMeasureEvidencePayload {
   evidenceEdge: EvidenceEdge!
-}
-
-input UploadTaskEvidenceInput {
-  taskId: ID!
-  file: Upload!
 }
 
 input UploadMeasureEvidenceInput {

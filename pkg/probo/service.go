@@ -94,6 +94,7 @@ type (
 		Snapshots                         *SnapshotService
 		ContinualImprovements             *ContinualImprovementService
 		ProcessingActivities              *ProcessingActivityService
+		Files                             *FileService
 	}
 )
 
@@ -193,6 +194,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Snapshots = &SnapshotService{svc: tenantService}
 	tenantService.ContinualImprovements = &ContinualImprovementService{svc: tenantService}
 	tenantService.ProcessingActivities = &ProcessingActivityService{svc: tenantService}
+	tenantService.Files = &FileService{svc: tenantService}
 	return tenantService
 }
 

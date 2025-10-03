@@ -135,3 +135,21 @@ VALUES (
 	_, err := conn.Exec(ctx, q, args)
 	return err
 }
+
+func (f File) SoftDelete(ctx context.Context, conn pg.Conn, scope Scoper) error {
+	q := `
+UPDATE files
+SET deleted_at = NOW()
+WHERE %s
+    AND id = @file_id
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"file_id": f.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+
+	return err
+}

@@ -734,21 +734,25 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 	return types.NewPeople(people), nil
 }
 
-// FileURL is the resolver for the fileUrl field.
-func (r *evidenceResolver) FileURL(ctx context.Context, obj *types.Evidence) (*string, error) {
+// File is the resolver for the file field.
+func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*types.File, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	if obj.Type == coredata.EvidenceTypeLink {
-		return obj.URL, nil
-	}
-
-	fileURL, err := prb.Evidences.GenerateFileURL(ctx, obj.ID, 15*time.Minute)
+	evidence, err := prb.Evidences.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate file URL: %w", err)
+		return nil, fmt.Errorf("cannot load evidence: %w", err)
 	}
 
-	result := *fileURL
-	return &result, nil
+	if evidence.EvidenceFileId == nil {
+		return nil, fmt.Errorf("evidence is not associated with a file")
+	}
+
+	file, err := prb.Files.Get(ctx, *evidence.EvidenceFileId)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load evidence file: %w", err)
+	}
+
+	return types.NewFile(file), nil
 }
 
 // Task is the resolver for the task field.
@@ -809,6 +813,18 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+}
+
+// DownloadURL is the resolver for the downloadUrl field.
+func (r *fileResolver) DownloadURL(ctx context.Context, obj *types.File) (string, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	downloadUrl, err := prb.Files.GenerateFileTempURL(ctx, obj.ID, 60*time.Second)
+	if err != nil {
+		return "", fmt.Errorf("cannot generate download url: %w", err)
+	}
+
+	return downloadUrl, nil
 }
 
 // Organization is the resolver for the organization field.
@@ -2227,55 +2243,6 @@ func (r *mutationResolver) DeleteRiskObligationMapping(ctx context.Context, inpu
 	}, nil
 }
 
-// RequestEvidence is the resolver for the requestEvidence field.
-func (r *mutationResolver) RequestEvidence(ctx context.Context, input types.RequestEvidenceInput) (*types.RequestEvidencePayload, error) {
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
-
-	evidence, err := prb.Evidences.Request(
-		ctx,
-		probo.RequestEvidenceRequest{
-			TaskID:      &input.TaskID,
-			Name:        input.Name,
-			Type:        input.Type,
-			Description: input.Description,
-		},
-	)
-	if err != nil {
-		panic(fmt.Errorf("cannot request evidence: %w", err))
-	}
-
-	return &types.RequestEvidencePayload{
-		EvidenceEdge: types.NewEvidenceEdge(evidence, coredata.EvidenceOrderFieldCreatedAt),
-	}, nil
-}
-
-// FulfillEvidence is the resolver for the fulfillEvidence field.
-func (r *mutationResolver) FulfillEvidence(ctx context.Context, input types.FulfillEvidenceInput) (*types.FulfillEvidencePayload, error) {
-	prb := r.ProboService(ctx, input.EvidenceID.TenantID())
-
-	req := probo.FulfilledEvidenceRequest{
-		EvidenceID: input.EvidenceID,
-	}
-
-	if input.File != nil {
-		req.File = input.File.File
-		req.Filename = &input.File.Filename
-	}
-
-	if input.URL != nil {
-		req.URL = input.URL
-	}
-
-	evidence, err := prb.Evidences.Fulfill(ctx, req)
-	if err != nil {
-		panic(fmt.Errorf("cannot fulfill evidence: %w", err))
-	}
-
-	return &types.FulfillEvidencePayload{
-		EvidenceEdge: types.NewEvidenceEdge(evidence, coredata.EvidenceOrderFieldCreatedAt),
-	}, nil
-}
-
 // DeleteEvidence is the resolver for the deleteEvidence field.
 func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.DeleteEvidenceInput) (*types.DeleteEvidencePayload, error) {
 	prb := r.ProboService(ctx, input.EvidenceID.TenantID())
@@ -2290,31 +2257,6 @@ func (r *mutationResolver) DeleteEvidence(ctx context.Context, input types.Delet
 	}, nil
 }
 
-// UploadTaskEvidence is the resolver for the uploadTaskEvidence field.
-func (r *mutationResolver) UploadTaskEvidence(ctx context.Context, input types.UploadTaskEvidenceInput) (*types.UploadTaskEvidencePayload, error) {
-	prb := r.ProboService(ctx, input.TaskID.TenantID())
-
-	evidence, err := prb.Evidences.UploadTaskEvidence(
-		ctx,
-		probo.UploadTaskEvidenceRequest{
-			TaskID: input.TaskID,
-			File: probo.File{
-				Content:     input.File.File,
-				Filename:    input.File.Filename,
-				Size:        input.File.Size,
-				ContentType: input.File.ContentType,
-			},
-		},
-	)
-	if err != nil {
-		panic(fmt.Errorf("cannot upload task evidence: %w", err))
-	}
-
-	return &types.UploadTaskEvidencePayload{
-		EvidenceEdge: types.NewEvidenceEdge(evidence, coredata.EvidenceOrderFieldCreatedAt),
-	}, nil
-}
-
 // UploadMeasureEvidence is the resolver for the uploadMeasureEvidence field.
 func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input types.UploadMeasureEvidenceInput) (*types.UploadMeasureEvidencePayload, error) {
 	prb := r.ProboService(ctx, input.MeasureID.TenantID())
@@ -2323,7 +2265,7 @@ func (r *mutationResolver) UploadMeasureEvidence(ctx context.Context, input type
 		ctx,
 		probo.UploadMeasureEvidenceRequest{
 			MeasureID: input.MeasureID,
-			File: probo.File{
+			File: probo.FileUpload{
 				Content:     input.File.File,
 				Filename:    input.File.Filename,
 				Size:        input.File.Size,
@@ -5271,6 +5213,9 @@ func (r *Resolver) EvidenceConnection() schema.EvidenceConnectionResolver {
 	return &evidenceConnectionResolver{r}
 }
 
+// File returns schema.FileResolver implementation.
+func (r *Resolver) File() schema.FileResolver { return &fileResolver{r} }
+
 // Framework returns schema.FrameworkResolver implementation.
 func (r *Resolver) Framework() schema.FrameworkResolver { return &frameworkResolver{r} }
 
@@ -5434,6 +5379,7 @@ type documentVersionResolver struct{ *Resolver }
 type documentVersionSignatureResolver struct{ *Resolver }
 type evidenceResolver struct{ *Resolver }
 type evidenceConnectionResolver struct{ *Resolver }
+type fileResolver struct{ *Resolver }
 type frameworkResolver struct{ *Resolver }
 type frameworkConnectionResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }

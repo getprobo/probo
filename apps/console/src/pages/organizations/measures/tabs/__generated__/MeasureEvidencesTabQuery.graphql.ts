@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b2d32283d91e7ef9da2eeda3c789867f>>
+ * @generated SignedSource<<b182b11e656579608aba8fb03faa0ef6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -215,22 +215,34 @@ return {
                           {
                             "alias": null,
                             "args": null,
-                            "kind": "ScalarField",
-                            "name": "filename",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "mimeType",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "size",
+                            "concreteType": "File",
+                            "kind": "LinkedField",
+                            "name": "file",
+                            "plural": false,
+                            "selections": [
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "fileName",
+                                "storageKey": null
+                              },
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "mimeType",
+                                "storageKey": null
+                              },
+                              {
+                                "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "size",
+                                "storageKey": null
+                              },
+                              (v12/*: any*/)
+                            ],
                             "storageKey": null
                           },
                           {
@@ -336,16 +348,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "9899e64b590ff4c76ca994845611d77a",
+    "cacheID": "45ba257dabcf1cc7dd4aa05b699c280e",
     "id": null,
     "metadata": {},
     "name": "MeasureEvidencesTabQuery",
     "operationKind": "query",
-    "text": "query MeasureEvidencesTabQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: EvidenceOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureEvidencesTabFragment_16fISc\n    id\n  }\n}\n\nfragment MeasureEvidencesTabFragment_16fISc on Measure {\n  id\n  evidences(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        filename\n        mimeType\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  filename\n  size\n  type\n  createdAt\n  mimeType\n}\n"
+    "text": "query MeasureEvidencesTabQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: EvidenceOrder = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...MeasureEvidencesTabFragment_16fISc\n    id\n  }\n}\n\nfragment MeasureEvidencesTabFragment_16fISc on Measure {\n  id\n  evidences(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        file {\n          fileName\n          mimeType\n          size\n          id\n        }\n        ...MeasureEvidencesTabFragment_evidence\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment MeasureEvidencesTabFragment_evidence on Evidence {\n  id\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n  type\n  createdAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "8e97649ca88af04aa1184e68a126cc36";
+(node as any).hash = "c80a159cbb4ac8b8855875eff00d1255";
 
 export default node;
