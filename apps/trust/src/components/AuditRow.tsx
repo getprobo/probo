@@ -175,7 +175,6 @@ function AuditDialog(
           />
         )}
         <h2 className="text-xl font-semibold mb-1">{audit.framework.name}</h2>
-        <p className="text-txt-secondary">Framework description</p>
         <Table>
           <AuditRow audit={props.audit} />
         </Table>
