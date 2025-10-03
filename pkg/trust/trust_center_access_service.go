@@ -203,6 +203,11 @@ func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Conte
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
+		trustCenter := &coredata.TrustCenter{}
+		if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, trustCenterID); err != nil {
+			return fmt.Errorf("cannot load trust center: %w", err)
+		}
+
 		acceptationLogs, err := json.Marshal(map[string]string{
 			"email":     email,
 			"timestamp": time.Now().Format(time.RFC3339),
@@ -215,6 +220,7 @@ func (s TrustCenterAccessService) AcceptNonDisclosureAgreement(ctx context.Conte
 		access.HasAcceptedNonDisclosureAgreement = true
 		access.UpdatedAt = time.Now()
 		access.HasAcceptedNonDisclosureAgreementMetadata = acceptationLogs
+		access.NDAFileID = trustCenter.NonDisclosureAgreementFileID
 		if err := access.Update(ctx, tx, s.svc.scope); err != nil {
 			return fmt.Errorf("cannot update trust center access: %w", err)
 		}

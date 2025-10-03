@@ -158,18 +158,25 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 		return nil, fmt.Errorf("cannot export document PDF: %w", err)
 	}
 
-	hasAcceptedNDA := false
-	userData := UserFromContext(ctx)
-	if userData != nil {
-		hasAcceptedNDA = true
-	}
-
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		tokenData := TokenAccessFromContext(ctx)
-		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+		ndaExists := true
+		hasAcceptedNDA := false
+
+		trustCenter, _, err := privateTrustService.TrustCenters.Get(ctx, tokenData.TrustCenterID)
 		if err != nil {
-			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+			panic(fmt.Errorf("cannot get trust center: %w", err))
+		}
+		if trustCenter.NonDisclosureAgreementFileID == nil {
+			ndaExists = false
+		}
+
+		if ndaExists {
+			tokenData := TokenAccessFromContext(ctx)
+			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+			if err != nil {
+				panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+			}
 		}
 
 		documentAccess, err := privateTrustService.TrustCenterAccesses.LoadDocumentAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), input.DocumentID)
@@ -180,12 +187,13 @@ func (r *mutationResolver) ExportDocumentPDF(ctx context.Context, input types.Ex
 		if !documentAccess.Active {
 			return nil, fmt.Errorf("access denied: no permission to access this document")
 		}
+
+		if ndaExists && !hasAcceptedNDA {
+			return nil, fmt.Errorf("user has not accepted NDA")
+		}
 	}
 
-	if !hasAcceptedNDA {
-		return nil, fmt.Errorf("user has not accepted NDA")
-	}
-
+	userData := UserFromContext(ctx)
 	userEmail := ""
 	if userData != nil {
 		userEmail = userData.EmailAddress
@@ -211,17 +219,24 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		return nil, fmt.Errorf("cannot export report PDF: %w", err)
 	}
 
-	hasAcceptedNDA := false
-	userData := r.UserFromContext(ctx)
-	if userData != nil {
-		hasAcceptedNDA = true
-	}
-
 	tokenData := TokenAccessFromContext(ctx)
 	if tokenData != nil {
-		hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+		ndaExists := true
+		hasAcceptedNDA := false
+
+		trustCenter, _, err := privateTrustService.TrustCenters.Get(ctx, tokenData.TrustCenterID)
 		if err != nil {
-			panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+			panic(fmt.Errorf("cannot get trust center: %w", err))
+		}
+		if trustCenter.NonDisclosureAgreementFileID == nil {
+			ndaExists = false
+		}
+
+		if ndaExists {
+			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+			if err != nil {
+				panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+			}
 		}
 
 		reportAccess, err := privateTrustService.TrustCenterAccesses.LoadReportAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), input.ReportID)
@@ -232,12 +247,13 @@ func (r *mutationResolver) ExportReportPDF(ctx context.Context, input types.Expo
 		if !reportAccess.Active {
 			return nil, fmt.Errorf("access denied: no permission to access this report")
 		}
+
+		if ndaExists && !hasAcceptedNDA {
+			return nil, fmt.Errorf("user has not accepted NDA")
+		}
 	}
 
-	if !hasAcceptedNDA {
-		return nil, fmt.Errorf("user has not accepted NDA")
-	}
-
+	userData := UserFromContext(ctx)
 	userEmail := ""
 	if userData != nil {
 		userEmail = userData.EmailAddress
@@ -519,13 +535,12 @@ func (r *reportResolver) HasUserRequestedAccess(ctx context.Context, obj *types.
 func (r *trustCenterResolver) NdaFileURL(ctx context.Context, obj *types.TrustCenter) (*string, error) {
 	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
 	if err != nil {
-		// Return nil but no error if the user is not authenticated
 		return nil, nil
 	}
 
 	fileURL, err := privateTrustService.TrustCenters.GenerateNDAFileURL(ctx, obj.ID, 15*time.Minute)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate NDA file URL: %w", err)
+		return nil, nil
 	}
 
 	return &fileURL, nil
