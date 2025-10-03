@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+# [0.65.1] - 2025-10-03
+
 ### Fixed
 - Restrict deletion of users who have assets
 
