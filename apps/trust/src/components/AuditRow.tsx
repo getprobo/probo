@@ -6,7 +6,6 @@ import {
   Button,
   Dialog,
   DialogContent,
-  FrameworkLogo,
   IconArrowInbox,
   IconLock,
   IconMedal,
@@ -14,11 +13,10 @@ import {
   Table,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { useIsAuthenticated } from "/hooks/useIsAuthenticated";
 import type { AuditRowDownloadMutation } from "./__generated__/AuditRowDownloadMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
 import { downloadFile } from "@probo/helpers";
-import type { PropsWithChildren } from "react";
+import { type PropsWithChildren, useState } from "react";
 import { useLocation } from "react-router";
 import { RequestAccessDialog } from "/components/RequestAccessDialog.tsx";
 
@@ -35,6 +33,8 @@ const auditRowFragment = graphql`
     report {
       id
       filename
+      isUserAuthorized
+      hasUserRequestedAccess
     }
     framework {
       id
@@ -46,7 +46,6 @@ const auditRowFragment = graphql`
 export function AuditRow(props: { audit: AuditRowFragment$key }) {
   const audit = useFragment(auditRowFragment, props.audit);
   const { __ } = useTranslate();
-  const isAuthenticated = useIsAuthenticated();
   const [commitDownload, downloading] =
     useMutationWithToasts<AuditRowDownloadMutation>(downloadMutation);
   const handleDownload = () => {
@@ -64,35 +63,42 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
       },
     });
   };
+
+  const [hasRequested, setHasRequested] = useState(
+    audit.report?.hasUserRequestedAccess,
+  );
   return (
     <div className="text-sm border-1 border-border-solid -mt-[1px] flex gap-3 flex-col md:flex-row md:justify-between px-6 py-3">
       <div className="flex items-center gap-2">
-        <IconMedal size={16} className="flex-none" />
+        <IconMedal size={16} className="flex-none text-txt-tertiary" />
         {audit.framework.name}
       </div>
-      {audit.report ? (
-        isAuthenticated ? (
+      {audit.report && audit.report.isUserAuthorized && (
+        <Button
+          className="w-full md:w-max"
+          variant="secondary"
+          disabled={downloading}
+          icon={downloading ? Spinner : IconArrowInbox}
+          onClick={handleDownload}
+        >
+          {__("Download")}
+        </Button>
+      )}
+      {audit.report && !audit.report.isUserAuthorized && (
+        <RequestAccessDialog
+          reportId={audit.report.id}
+          onSuccess={() => setHasRequested(true)}
+        >
           <Button
+            disabled={hasRequested}
             className="w-full md:w-max"
             variant="secondary"
-            disabled={downloading}
-            icon={downloading ? Spinner : IconArrowInbox}
-            onClick={handleDownload}
+            icon={IconLock}
           >
-            {__("Download")}
+            {hasRequested ? __("Access requested") : __("Request access")}
           </Button>
-        ) : (
-          <RequestAccessDialog>
-            <Button
-              className="w-full md:w-max"
-              variant="secondary"
-              icon={IconLock}
-            >
-              {__("Request access")}
-            </Button>
-          </RequestAccessDialog>
-        )
-      ) : null}
+        </RequestAccessDialog>
+      )}
     </div>
   );
 }
@@ -108,41 +114,28 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
   const audit = useFragment(auditRowFragment, props.audit);
   return (
     <>
-      <AuditDialog audit={props.audit}>
-        <button
-          className="block cursor-pointer aspect-square"
-          title={`Logo ${audit.framework.name}`}
-        >
-          <div
-            className="bg-[#F0F7E2] aspect-square w-full rounded-full text-xs text-[#000] font-bold flex items-center justify-center pb-6 px-2"
-            style={{ background: "url(/trust/logos/blank.svg) no-repeat" }}
-          >
-            <span className="line-clamp-2 overflow-hidden">
-              {" "}
-              {audit.framework.name}
-            </span>
-          </div>
-        </button>
-      </AuditDialog>
-      <AuditDialog audit={props.audit}>
+      <AuditDialog
+        audit={props.audit}
+        logo={logos[audit.framework.name as keyof typeof logos]}
+      >
         <button
           className="block cursor-pointer aspect-square"
           title={`Logo ${audit.framework.name}`}
         >
           {audit.framework.name in logos ? (
             <img
-              className="block aspect-square w-full"
-              width={75}
-              height={75}
               src={logos[audit.framework.name as keyof typeof logos]}
-              alt={`Logo ${audit.framework.name}`}
+              alt={`${audit.framework.name} Logo`}
             />
           ) : (
             <div
-              className="bg-[#F0F7E2] aspect-square w-full rounded-full text-xs text-[#000] font-bold flex items-center justify-center pb-4 px-2"
-              style={{ background: "url(/trust/logos/blank.png)" }}
+              className="bg-[#F0F7E2] aspect-square w-full rounded-full text-xs text-[#000] font-bold flex items-center justify-center pb-6 px-2"
+              style={{ background: "url(/trust/logos/blank.svg) no-repeat" }}
             >
-              {audit.framework.name}
+              <span className="line-clamp-2 overflow-hidden">
+                {" "}
+                {audit.framework.name}
+              </span>
             </div>
           )}
         </button>
@@ -152,7 +145,7 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
 }
 
 function AuditDialog(
-  props: PropsWithChildren<{ audit: AuditRowFragment$key }>,
+  props: PropsWithChildren<{ audit: AuditRowFragment$key; logo?: string }>,
 ) {
   const audit = useFragment(auditRowFragment, props.audit);
   const location = useLocation();
@@ -174,11 +167,13 @@ function AuditDialog(
       title={<Breadcrumb items={items} />}
     >
       <DialogContent className="p-4 lg:p-8 space-y-6">
-        <FrameworkLogo
-          alt={audit.framework.name}
-          name={audit.framework.name}
-          className="size-24 block mx-auto"
-        />
+        {props.logo && (
+          <img
+            alt={audit.framework.name}
+            src={props.logo}
+            className="size-24 block mx-auto"
+          />
+        )}
         <h2 className="text-xl font-semibold mb-1">{audit.framework.name}</h2>
         <p className="text-txt-secondary">Framework description</p>
         <Table>

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<25d09fc2d93d9fbbcde08bd8a8d48214>>
+ * @generated SignedSource<<a763db35fb72256cc3905206fc18e60b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -150,7 +150,21 @@ v14 = [
     "name": "first",
     "value": 50
   }
-];
+],
+v15 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "isUserAuthorized",
+  "storageKey": null
+},
+v16 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "hasUserRequestedAccess",
+  "storageKey": null
+};
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -422,6 +436,8 @@ return {
                         "name": "title",
                         "storageKey": null
                       },
+                      (v15/*: any*/),
+                      (v16/*: any*/),
                       {
                         "alias": null,
                         "args": null,
@@ -478,7 +494,9 @@ return {
                             "kind": "ScalarField",
                             "name": "filename",
                             "storageKey": null
-                          }
+                          },
+                          (v15/*: any*/),
+                          (v16/*: any*/)
                         ],
                         "storageKey": null
                       },
@@ -510,12 +528,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3303b20452c558a107492263e7fc0c61",
+    "cacheID": "512205bc2cccff46b097cabaab4ec338",
     "id": null,
     "metadata": {},
     "name": "TrustGraphQuery",
     "operationKind": "query",
-    "text": "query TrustGraphQuery(\n  $slug: String!\n) {\n  trustCenterBySlug(slug: $slug) {\n    id\n    slug\n    isUserAuthenticated\n    hasAcceptedNonDisclosureAgreement\n    ndaFileName\n    ndaFileUrl\n    organization {\n      name\n      description\n      websiteUrl\n      logoUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  report {\n    id\n    filename\n  }\n  framework {\n    id\n    name\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n}\n\nfragment VendorRowFragment on Vendor {\n  id\n  name\n  category\n  websiteUrl\n  privacyPolicyUrl\n  countries\n}\n"
+    "text": "query TrustGraphQuery(\n  $slug: String!\n) {\n  trustCenterBySlug(slug: $slug) {\n    id\n    slug\n    isUserAuthenticated\n    hasAcceptedNonDisclosureAgreement\n    ndaFileName\n    ndaFileUrl\n    organization {\n      name\n      description\n      websiteUrl\n      logoUrl\n      email\n      headquarterAddress\n      id\n    }\n    ...OverviewPageFragment\n    audits(first: 50) {\n      edges {\n        node {\n          id\n          ...AuditRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment AuditRowFragment on Audit {\n  report {\n    id\n    filename\n    isUserAuthorized\n    hasUserRequestedAccess\n  }\n  framework {\n    id\n    name\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment OverviewPageFragment on TrustCenter {\n  references(first: 14) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        websiteUrl\n      }\n    }\n  }\n  vendors(first: 3) {\n    edges {\n      node {\n        id\n        ...VendorRowFragment\n      }\n    }\n  }\n  documents(first: 5) {\n    edges {\n      node {\n        id\n        ...DocumentRowFragment\n        documentType\n      }\n    }\n  }\n}\n\nfragment VendorRowFragment on Vendor {\n  id\n  name\n  category\n  websiteUrl\n  privacyPolicyUrl\n  countries\n}\n"
   }
 };
 })();
