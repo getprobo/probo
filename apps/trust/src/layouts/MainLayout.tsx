@@ -27,7 +27,8 @@ export function MainLayout(props: Props) {
   const baseTabUrl = `/trust/${trustCenter.slug}`;
   const showNDADialog =
     trustCenter.isUserAuthenticated &&
-    !trustCenter.hasAcceptedNonDisclosureAgreement;
+    !trustCenter.hasAcceptedNonDisclosureAgreement &&
+    trustCenter.ndaFileUrl;
   return (
     <AuthProvider isAuthenticated={trustCenter.isUserAuthenticated}>
       <TrustCenterProvider trustCenter={trustCenter}>
