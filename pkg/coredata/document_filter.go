@@ -20,8 +20,8 @@ import (
 
 type (
 	DocumentFilter struct {
-		query             *string
-		showOnTrustCenter *bool
+		query                   *string
+		trustCenterVisibilities []TrustCenterVisibility
 	}
 )
 
@@ -32,16 +32,18 @@ func NewDocumentFilter(query *string) *DocumentFilter {
 }
 
 func NewDocumentTrustCenterFilter() *DocumentFilter {
-	showOnTrustCenter := true
 	return &DocumentFilter{
-		showOnTrustCenter: &showOnTrustCenter,
+		trustCenterVisibilities: []TrustCenterVisibility{
+			TrustCenterVisibilityPrivate,
+			TrustCenterVisibilityPublic,
+		},
 	}
 }
 
 func (f *DocumentFilter) SQLArguments() pgx.StrictNamedArgs {
 	return pgx.StrictNamedArgs{
-		"query":                f.query,
-		"show_on_trust_center": f.showOnTrustCenter,
+		"query":                     f.query,
+		"trust_center_visibilities": f.trustCenterVisibilities,
 	}
 }
 
@@ -58,8 +60,8 @@ func (f *DocumentFilter) SQLFragment() string {
 	END
 	AND
 	CASE
-		WHEN @show_on_trust_center::boolean IS NOT NULL THEN
-			show_on_trust_center = @show_on_trust_center::boolean
+		WHEN @trust_center_visibilities::trust_center_visibility[] IS NOT NULL THEN
+			trust_center_visibility = ANY(@trust_center_visibilities::trust_center_visibility[])
 		ELSE TRUE
 	END
 )`

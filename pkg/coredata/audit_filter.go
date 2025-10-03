@@ -20,7 +20,7 @@ import (
 
 type (
 	AuditFilter struct {
-		showOnTrustCenter *bool
+		trustCenterVisibilities []TrustCenterVisibility
 	}
 )
 
@@ -29,25 +29,27 @@ func NewAuditFilter() *AuditFilter {
 }
 
 func NewAuditTrustCenterFilter() *AuditFilter {
-	showOnTrustCenter := true
 	return &AuditFilter{
-		showOnTrustCenter: &showOnTrustCenter,
+		trustCenterVisibilities: []TrustCenterVisibility{
+			TrustCenterVisibilityPrivate,
+			TrustCenterVisibilityPublic,
+		},
 	}
 }
 
 func (f *AuditFilter) SQLArguments() pgx.NamedArgs {
 	args := pgx.NamedArgs{}
 
-	if f.showOnTrustCenter != nil {
-		args["show_on_trust_center"] = *f.showOnTrustCenter
+	if f.trustCenterVisibilities != nil {
+		args["trust_center_visibilities"] = f.trustCenterVisibilities
 	}
 
 	return args
 }
 
 func (f *AuditFilter) SQLFragment() string {
-	if f.showOnTrustCenter != nil {
-		return "show_on_trust_center = @show_on_trust_center"
+	if f.trustCenterVisibilities != nil {
+		return "trust_center_visibility = ANY(@trust_center_visibilities::trust_center_visibility[])"
 	}
 
 	return "TRUE"

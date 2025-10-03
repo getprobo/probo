@@ -34,21 +34,22 @@ type AuditService struct {
 
 type (
 	CreateAuditRequest struct {
-		OrganizationID gid.GID
-		FrameworkID    gid.GID
-		Name           *string
-		ValidFrom      *time.Time
-		ValidUntil     *time.Time
-		State          *coredata.AuditState
+		OrganizationID        gid.GID
+		FrameworkID           gid.GID
+		Name                  *string
+		ValidFrom             *time.Time
+		ValidUntil            *time.Time
+		State                 *coredata.AuditState
+		TrustCenterVisibility *coredata.TrustCenterVisibility
 	}
 
 	UpdateAuditRequest struct {
-		ID                gid.GID
-		Name              **string
-		ValidFrom         *time.Time
-		ValidUntil        *time.Time
-		State             *coredata.AuditState
-		ShowOnTrustCenter *bool
+		ID                    gid.GID
+		Name                  **string
+		ValidFrom             *time.Time
+		ValidUntil            *time.Time
+		State                 *coredata.AuditState
+		TrustCenterVisibility *coredata.TrustCenterVisibility
 	}
 
 	UpdateAuditStateRequest struct {
@@ -113,20 +114,24 @@ func (s *AuditService) Create(
 	now := time.Now()
 
 	audit := &coredata.Audit{
-		ID:                gid.New(s.svc.scope.GetTenantID(), coredata.AuditEntityType),
-		Name:              req.Name,
-		OrganizationID:    req.OrganizationID,
-		FrameworkID:       req.FrameworkID,
-		ValidFrom:         req.ValidFrom,
-		ValidUntil:        req.ValidUntil,
-		State:             coredata.AuditStateNotStarted,
-		ShowOnTrustCenter: false,
-		CreatedAt:         now,
-		UpdatedAt:         now,
+		ID:                    gid.New(s.svc.scope.GetTenantID(), coredata.AuditEntityType),
+		Name:                  req.Name,
+		OrganizationID:        req.OrganizationID,
+		FrameworkID:           req.FrameworkID,
+		ValidFrom:             req.ValidFrom,
+		ValidUntil:            req.ValidUntil,
+		State:                 coredata.AuditStateNotStarted,
+		TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
+		CreatedAt:             now,
+		UpdatedAt:             now,
 	}
 
 	if req.State != nil {
 		audit.State = *req.State
+	}
+
+	if req.TrustCenterVisibility != nil {
+		audit.TrustCenterVisibility = *req.TrustCenterVisibility
 	}
 
 	err := s.svc.pg.WithTx(
@@ -182,8 +187,8 @@ func (s *AuditService) Update(
 			if req.State != nil {
 				audit.State = *req.State
 			}
-			if req.ShowOnTrustCenter != nil {
-				audit.ShowOnTrustCenter = *req.ShowOnTrustCenter
+			if req.TrustCenterVisibility != nil {
+				audit.TrustCenterVisibility = *req.TrustCenterVisibility
 			}
 
 			audit.UpdatedAt = time.Now()

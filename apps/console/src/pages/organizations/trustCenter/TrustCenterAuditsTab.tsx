@@ -30,7 +30,7 @@ export default function TrustCenterAuditsTab() {
           audits={audits}
           params={{}}
           disabled={isUpdatingAudits}
-          onToggleVisibility={updateAuditVisibility}
+          onChangeVisibility={updateAuditVisibility}
           variant="table"
         />
       </Card>

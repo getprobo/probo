@@ -100,7 +100,7 @@ func (s *DocumentService) ExportPDF(
 				return fmt.Errorf("cannot load document: %w", err)
 			}
 
-			if !document.ShowOnTrustCenter {
+			if document.TrustCenterVisibility == coredata.TrustCenterVisibilityNone {
 				return fmt.Errorf("document not visible on trust center")
 			}
 

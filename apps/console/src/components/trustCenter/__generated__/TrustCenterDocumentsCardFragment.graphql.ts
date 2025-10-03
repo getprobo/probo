@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<711a0b67f3e93814ae3297a2578373c6>>
+ * @generated SignedSource<<869852416d522b3851e516a543454edb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,13 +11,14 @@
 import { ReaderFragment } from 'relay-runtime';
 export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 import { FragmentRefs } from "relay-runtime";
 export type TrustCenterDocumentsCardFragment$data = {
   readonly createdAt: any;
   readonly documentType: DocumentType;
   readonly id: string;
-  readonly showOnTrustCenter: boolean;
   readonly title: string;
+  readonly trustCenterVisibility: TrustCenterVisibility;
   readonly versions: {
     readonly edges: ReadonlyArray<{
       readonly node: {
@@ -73,7 +74,7 @@ return {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "showOnTrustCenter",
+      "name": "trustCenterVisibility",
       "storageKey": null
     },
     {
@@ -129,6 +130,6 @@ return {
 };
 })();
 
-(node as any).hash = "88d5e5e3a2d9f4b730428efcea644f25";
+(node as any).hash = "a90715444be8a289eae6615ce44e244d";
 
 export default node;

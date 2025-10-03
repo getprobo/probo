@@ -40,11 +40,12 @@ type (
 	}
 
 	CreateDocumentRequest struct {
-		OrganizationID gid.GID
-		Title          string
-		Content        string
-		OwnerID        gid.GID
-		DocumentType   coredata.DocumentType
+		OrganizationID        gid.GID
+		Title                 string
+		Content               string
+		OwnerID               gid.GID
+		DocumentType          coredata.DocumentType
+		TrustCenterVisibility *coredata.TrustCenterVisibility
 	}
 
 	UpdateDocumentVersionRequest struct {
@@ -310,12 +311,16 @@ func (s *DocumentService) Create(
 	people := &coredata.People{}
 
 	document := &coredata.Document{
-		ID:                documentID,
-		Title:             req.Title,
-		DocumentType:      req.DocumentType,
-		ShowOnTrustCenter: false,
-		CreatedAt:         now,
-		UpdatedAt:         now,
+		ID:                    documentID,
+		Title:                 req.Title,
+		DocumentType:          req.DocumentType,
+		TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
+		CreatedAt:             now,
+		UpdatedAt:             now,
+	}
+
+	if req.TrustCenterVisibility != nil {
+		document.TrustCenterVisibility = *req.TrustCenterVisibility
 	}
 
 	documentVersion := &coredata.DocumentVersion{
@@ -1096,7 +1101,7 @@ func (s *DocumentService) Update(
 	newOwnerID *gid.GID,
 	documentType *coredata.DocumentType,
 	title *string,
-	showOnTrustCenter *bool,
+	trustCenterVisibility *coredata.TrustCenterVisibility,
 ) (*coredata.Document, error) {
 	document := &coredata.Document{}
 	people := &coredata.People{}
@@ -1124,8 +1129,8 @@ func (s *DocumentService) Update(
 				document.Title = *title
 			}
 
-			if showOnTrustCenter != nil {
-				document.ShowOnTrustCenter = *showOnTrustCenter
+			if trustCenterVisibility != nil {
+				document.TrustCenterVisibility = *trustCenterVisibility
 			}
 
 			document.UpdatedAt = now
