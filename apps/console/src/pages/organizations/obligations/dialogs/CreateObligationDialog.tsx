@@ -20,6 +20,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useCreateObligation } from "../../../../hooks/graph/ObligationGraph";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { Controller } from "react-hook-form";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { formatDatetime, getObligationStatusOptions } from "@probo/helpers";
 
 const schema = z.object({
@@ -91,10 +92,10 @@ export function CreateObligationDialog({
 
       reset();
       dialogRef.current?.close();
-    } catch {
+    } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to create obligation"),
+        description: formatError(__("Failed to create obligation"), error as GraphQLError),
         variant: "error",
       });
     }

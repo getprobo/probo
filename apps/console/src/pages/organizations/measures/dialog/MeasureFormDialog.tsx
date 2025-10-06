@@ -3,11 +3,11 @@ import {
   Dialog,
   DialogContent,
   DialogFooter,
+  Field,
   Input,
   Label,
   Option,
   PropertyRow,
-  Textarea,
   useDialogRef,
   type DialogRef,
 } from "@probo/ui";
@@ -51,9 +51,9 @@ const measureCreateMutation = graphql`
 `;
 
 const measureSchema = z.object({
-  name: z.string(),
-  description: z.string(),
-  category: z.string(),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().min(1, "Description is required"),
+  category: z.string().min(1, "Category is required"),
   state: z.enum(measureStates),
 });
 
@@ -73,7 +73,7 @@ export default function MeasureFormDialog(props: Props) {
     ? useUpdateMeasure()
     : useMutationWithToasts(measureCreateMutation, {
         successMessage: __("Measure created successfully."),
-        errorMessage: __("Failed to create measure. Please try again."),
+        errorMessage: __("Failed to create measure"),
       });
 
   const { control, handleSubmit, register, formState, reset } =
@@ -131,20 +131,21 @@ export default function MeasureFormDialog(props: Props) {
     >
       <form onSubmit={onSubmit}>
         <DialogContent className="grid grid-cols-[1fr_420px]">
-          <div className="py-8 px-10 space-y-4">
-            <Input
-              id="title"
-              required
-              variant="title"
-              placeholder={__("Measure title")}
+          <div className="py-8 px-10 space-y-6">
+            <Field
               {...register("name")}
+              error={formState.errors.name?.message}
+              label={__("Measure name")}
+              placeholder={__("Measure title")}
+              required
             />
-            <Textarea
-              id="content"
-              variant="ghost"
-              autogrow
-              placeholder={__("Add description")}
+            <Field
               {...register("description")}
+              error={formState.errors.description?.message}
+              label={__("Description")}
+              placeholder={__("Add description")}
+              type="textarea"
+              required
             />
           </div>
           {/* Properties form */}

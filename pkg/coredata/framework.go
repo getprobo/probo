@@ -40,16 +40,7 @@ type (
 	}
 
 	Frameworks []*Framework
-
-	ErrFrameworkReferenceIDAlreadyExists struct {
-		ReferenceID    string
-		OrganizationID gid.GID
-	}
 )
-
-func (e ErrFrameworkReferenceIDAlreadyExists) Error() string {
-	return fmt.Sprintf("framework with reference ID %q already exists for organization %s", e.ReferenceID, e.OrganizationID)
-}
 
 func (f *Framework) CursorKey(orderBy FrameworkOrderField) page.CursorKey {
 	switch orderBy {
@@ -264,9 +255,9 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "frameworks_org_ref_unique" {
-				return &ErrFrameworkReferenceIDAlreadyExists{
-					ReferenceID:    f.ReferenceID,
-					OrganizationID: f.OrganizationID,
+				return &ErrResourceAlreadyExists{
+					Resource: "framework",
+					Message:  "same reference ID",
 				}
 			}
 		}
@@ -311,7 +302,7 @@ SET
   name = @name,
   description = @description,
   updated_at = @updated_at
-WHERE 
+WHERE
   %s
   AND id = @framework_id
 `

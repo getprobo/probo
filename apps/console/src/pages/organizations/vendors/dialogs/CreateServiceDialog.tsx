@@ -61,7 +61,7 @@ export function CreateServiceDialog({
     createServiceMutation,
     {
       successMessage: __("Service created successfully."),
-      errorMessage: __("Failed to create service. Please try again."),
+      errorMessage: __("Failed to create service"),
     }
   );
 

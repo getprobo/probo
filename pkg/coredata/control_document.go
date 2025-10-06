@@ -36,16 +36,7 @@ type (
 	}
 
 	ControlDocuments []*ControlDocument
-
-	ErrControlDocumentMappingAlreadyExists struct {
-		ControlID  gid.GID
-		DocumentID gid.GID
-	}
 )
-
-func (e ErrControlDocumentMappingAlreadyExists) Error() string {
-	return fmt.Sprintf("control %s is already mapped to document %s", e.ControlID, e.DocumentID)
-}
 
 func (cp ControlDocument) Insert(
 	ctx context.Context,
@@ -80,9 +71,8 @@ VALUES (
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_policies_pkey" {
-				return &ErrControlDocumentMappingAlreadyExists{
-					ControlID:  cp.ControlID,
-					DocumentID: cp.DocumentID,
+				return &ErrResourceAlreadyExists{
+					Resource: "control document mapping",
 				}
 			}
 		}

@@ -273,7 +273,9 @@ func (s *DocumentService) publishVersionInTx(
 		if publishedVersion.Content == documentVersion.Content &&
 			publishedVersion.Title == documentVersion.Title &&
 			publishedVersion.OwnerID == documentVersion.OwnerID {
-			return nil, nil, fmt.Errorf("cannot publish version: no changes detected")
+			return nil, nil, &coredata.ErrNoChange{
+				Resource: "document version",
+			}
 		}
 	}
 
@@ -847,10 +849,10 @@ func (s *DocumentService) RequestExport(
 
 	if options.WithWatermark {
 		if options.WatermarkEmail == nil {
-			return nil, fmt.Errorf("watermark email is required when with watermark is true")
+			return nil, &coredata.ErrInvalidValue{Field: "watermark email", Message: "watermark email is required when with watermark is true"}
 		}
 		if _, err := mail.ParseAddress(*options.WatermarkEmail); err != nil {
-			return nil, fmt.Errorf("invalid email address")
+			return nil, &coredata.ErrInvalidValue{Field: "watermark email"}
 		}
 	}
 
@@ -1441,10 +1443,10 @@ func exportDocumentPDF(
 
 	if options.WithWatermark {
 		if options.WatermarkEmail == nil {
-			return nil, fmt.Errorf("watermark email is required with watermark enabled")
+			return nil, &coredata.ErrInvalidValue{Field: "watermark email", Message: "watermark email is required with watermark enabled"}
 		}
 		if _, err := mail.ParseAddress(*options.WatermarkEmail); err != nil {
-			return nil, fmt.Errorf("invalid email address")
+			return nil, &coredata.ErrInvalidValue{Field: "watermark email"}
 		}
 
 		watermarkedPDF, err := watermarkpdf.AddConfidentialWithTimestamp(pdfData, *options.WatermarkEmail)

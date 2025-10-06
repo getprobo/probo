@@ -119,17 +119,17 @@ func (s TrustCenterAccessService) Request(
 		if err == nil {
 			access = existingAccess
 		} else {
-			var notFoundErr *coredata.ErrTrustCenterAccessNotFound
+			var notFoundErr *coredata.ErrResourceNotFound
 			if !errors.As(err, &notFoundErr) {
 				return fmt.Errorf("cannot load trust center access: %w", err)
 			}
 
 			if req.Name == nil || *req.Name == "" {
-				return fmt.Errorf("name is required for new access requests")
+				return &coredata.ErrInvalidValue{Field: "name", Message: "name is required for new access requests"}
 			}
 
 			if _, err := mail.ParseAddress(req.Email); err != nil {
-				return fmt.Errorf("invalid email address")
+				return &coredata.ErrInvalidValue{Field: "email"}
 			}
 
 			access = &coredata.TrustCenterAccess{

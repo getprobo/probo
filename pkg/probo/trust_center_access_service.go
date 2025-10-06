@@ -193,11 +193,11 @@ func (s TrustCenterAccessService) Create(
 	req *CreateTrustCenterAccessRequest,
 ) (*coredata.TrustCenterAccess, error) {
 	if _, err := mail.ParseAddress(req.Email); err != nil {
-		return nil, fmt.Errorf("invalid email address")
+		return nil, &coredata.ErrInvalidValue{Field: "email"}
 	}
 
 	if req.Name == "" {
-		return nil, fmt.Errorf("name is required")
+		return nil, &coredata.ErrInvalidValue{Field: "name", Message: "name is required"}
 	}
 
 	now := time.Now()

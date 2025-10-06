@@ -44,19 +44,6 @@ type (
 		message string
 	}
 
-	ErrInvalidEmail struct {
-		email string
-	}
-
-	ErrInvalidPassword struct {
-		minLength int
-		maxLength int
-	}
-
-	ErrInvalidFullName struct {
-		fullName string
-	}
-
 	ErrUserAlreadyExists struct {
 		message string
 	}
@@ -143,18 +130,6 @@ func (e ErrSessionExpired) Error() string {
 	return e.message
 }
 
-func (e ErrInvalidEmail) Error() string {
-	return fmt.Sprintf("invalid email: %s", e.email)
-}
-
-func (e ErrInvalidPassword) Error() string {
-	return fmt.Sprintf("invalid password: the length must be between %d and %d characters", e.minLength, e.maxLength)
-}
-
-func (e ErrInvalidFullName) Error() string {
-	return fmt.Sprintf("invalid full name: %s", e.fullName)
-}
-
 func (e ErrInvalidTokenType) Error() string {
 	return e.message
 }
@@ -213,7 +188,7 @@ func (s Service) ForgetPassword(
 		ctx,
 		func(tx pg.Conn) error {
 			if err := user.LoadByEmail(ctx, tx, email); err != nil {
-				var errUserNotFound *coredata.ErrUserNotFound
+				var errUserNotFound *coredata.ErrResourceNotFound
 
 				if errors.As(err, &errUserNotFound) {
 					// We don't want to leak information about existing emails
@@ -253,15 +228,15 @@ func (s Service) SignUp(
 	}
 
 	if _, err := mail.ParseAddress(email); err != nil {
-		return nil, nil, &ErrInvalidEmail{email}
+		return nil, nil, &coredata.ErrInvalidValue{Field: "email"}
 	}
 
 	if len(password) < 8 || len(password) > 128 {
-		return nil, nil, &ErrInvalidPassword{minLength: 8, maxLength: 128}
+		return nil, nil, &coredata.ErrInvalidValue{Field: "password", Message: "the length must be between 8 and 128 characters"}
 	}
 
 	if fullName == "" {
-		return nil, nil, &ErrInvalidFullName{fullName}
+		return nil, nil, &coredata.ErrInvalidValue{Field: "full name"}
 	}
 
 	hashedPassword, err := s.hp.HashPassword([]byte(password))
@@ -354,7 +329,7 @@ func (s Service) SignIn(
 	}
 
 	if len(password) < 8 || len(password) > 128 {
-		return nil, nil, &ErrInvalidPassword{minLength: 8, maxLength: 128}
+		return nil, nil, &coredata.ErrInvalidValue{Field: "password", Message: "the length must be between 8 and 128 characters"}
 	}
 
 	err := s.pg.WithTx(
@@ -363,7 +338,7 @@ func (s Service) SignIn(
 			if err := user.LoadByEmail(ctx, tx, email); err != nil {
 				_, _ = s.hp.ComparePasswordAndHash([]byte("this-compare-should-never-succeed"), []byte("it-just-to-prevent-timing-attack"))
 
-				var errUserNotFound *coredata.ErrUserNotFound
+				var errUserNotFound *coredata.ErrResourceNotFound
 
 				if errors.As(err, &errUserNotFound) {
 					return &ErrInvalidCredentials{message: "invalid email or password"}
@@ -665,10 +640,10 @@ func (s Service) InviteUser(
 	createPeople bool,
 ) error {
 	if _, err := mail.ParseAddress(emailAddress); err != nil {
-		return &ErrInvalidEmail{emailAddress}
+		return &coredata.ErrInvalidValue{Field: "email"}
 	}
 	if fullName == "" {
-		return &ErrInvalidFullName{fullName}
+		return &coredata.ErrInvalidValue{Field: "full name"}
 	}
 
 	var userExists bool
@@ -678,7 +653,7 @@ func (s Service) InviteUser(
 			user := &coredata.User{}
 
 			if err := user.LoadByEmail(ctx, tx, emailAddress); err != nil {
-				var errUserNotFound *coredata.ErrUserNotFound
+				var errUserNotFound *coredata.ErrResourceNotFound
 
 				if errors.As(err, &errUserNotFound) {
 					userExists = false
@@ -703,7 +678,7 @@ func (s Service) InviteUser(
 				people := &coredata.People{}
 				scope := coredata.NewScope(organizationID.TenantID())
 				if err := people.LoadByEmail(ctx, tx, scope, emailAddress); err != nil {
-					var errPeopleNotFound *coredata.ErrPeopleNotFound
+					var errPeopleNotFound *coredata.ErrResourceNotFound
 
 					if errors.As(err, &errPeopleNotFound) {
 						people = &coredata.People{
@@ -796,7 +771,7 @@ func (s Service) ConfirmInvitation(ctx context.Context, tokenString string, pass
 	}
 
 	if len(password) < 8 || len(password) > 128 {
-		return nil, &ErrInvalidPassword{minLength: 8, maxLength: 128}
+		return nil, &coredata.ErrInvalidValue{Field: "password", Message: "the length must be between 8 and 128 characters"}
 	}
 
 	now := time.Now()
@@ -813,7 +788,7 @@ func (s Service) ConfirmInvitation(ctx context.Context, tokenString string, pass
 		func(tx pg.Conn) error {
 
 			if err := user.LoadByEmail(ctx, tx, token.Data.Email); err != nil {
-				var errUserNotFound *coredata.ErrUserNotFound
+				var errUserNotFound *coredata.ErrResourceNotFound
 
 				if errors.As(err, &errUserNotFound) {
 					user = &coredata.User{
@@ -847,7 +822,7 @@ func (s Service) ConfirmInvitation(ctx context.Context, tokenString string, pass
 				scope := coredata.NewScope(token.Data.OrganizationID.TenantID())
 
 				if err := people.LoadByEmail(ctx, tx, scope, token.Data.Email); err != nil {
-					var errPeopleNotFound *coredata.ErrPeopleNotFound
+					var errPeopleNotFound *coredata.ErrResourceNotFound
 
 					if errors.As(err, &errPeopleNotFound) {
 						peopleID := gid.New(token.Data.OrganizationID.TenantID(), coredata.PeopleEntityType)
@@ -920,7 +895,7 @@ func (s Service) ResetPassword(ctx context.Context, tokenString string, newPassw
 	}
 
 	if len(newPassword) < 8 || len(newPassword) > 128 {
-		return &ErrInvalidPassword{minLength: 8, maxLength: 128}
+		return &coredata.ErrInvalidValue{Field: "password", Message: "the length must be between 8 and 128 characters"}
 	}
 
 	hashedPassword, err := s.hp.HashPassword([]byte(newPassword))
@@ -934,7 +909,7 @@ func (s Service) ResetPassword(ctx context.Context, tokenString string, newPassw
 			user := &coredata.User{}
 
 			if err := user.LoadByEmail(ctx, tx, token.Data.Email); err != nil {
-				var errUserNotFound *coredata.ErrUserNotFound
+				var errUserNotFound *coredata.ErrResourceNotFound
 
 				if errors.As(err, &errUserNotFound) {
 					return fmt.Errorf("user not found: %w", err)

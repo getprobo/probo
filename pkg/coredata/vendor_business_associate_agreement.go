@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -92,6 +93,9 @@ LIMIT 1;
 
 	vendorBusinessAssociateAgreement, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[VendorBusinessAssociateAgreement])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrResourceNotFound{Resource: "vendor business associate agreement", Identifier: vendorID.String()}
+		}
 		return fmt.Errorf("cannot collect vendor business associate agreement: %w", err)
 	}
 

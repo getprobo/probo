@@ -78,6 +78,7 @@ export default function DocumentControlsTab() {
     {
       ...incrementOptions,
       value: -1,
+      errorMessage: "Failed to unlink control",
     },
   );
   const [attachControl, isAttaching] = useMutationWithIncrement(
@@ -85,6 +86,7 @@ export default function DocumentControlsTab() {
     {
       ...incrementOptions,
       value: 1,
+      errorMessage: "Failed to link control",
     },
   );
   const isLoading = isDetaching || isAttaching;

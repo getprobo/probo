@@ -232,6 +232,7 @@ func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrm
 	srv.Use(extension.Introspection{})
 	srv.Use(tracingExtension{})
 	srv.SetRecoverFunc(gqlutils.RecoverFunc)
+	srv.SetErrorPresenter(gqlutils.ErrorPresenter)
 
 	srv.AroundOperations(
 		func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {

@@ -30,6 +30,7 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import z from "zod";
 import { getStatusVariant, getStatusLabel, formatDatetime, validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
@@ -113,7 +114,7 @@ export default function ContinualImprovementDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to update continual improvement entry"),
+        description: formatError(__("Failed to update continual improvement"), error as GraphQLError),
         variant: "error",
       });
     }

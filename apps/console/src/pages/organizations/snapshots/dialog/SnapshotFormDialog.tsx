@@ -57,7 +57,7 @@ export default function SnapshotFormDialog(props: Props) {
   const organizationId = useOrganizationId();
   const [mutate] = useMutationWithToasts(snapshotCreateMutation, {
     successMessage: __("Snapshot created successfully."),
-    errorMessage: __("Failed to create snapshot. Please try again."),
+    errorMessage: __("Failed to create snapshot"),
   });
 
   const { handleSubmit, register, reset, control, formState: { errors } } =

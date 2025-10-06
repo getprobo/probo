@@ -6,6 +6,7 @@ import type { NewOrganizationPageQuery as NewOrganizationPageQueryType } from ".
 import type { NewOrganizationPageMutation as NewOrganizationPageMutationType } from "./__generated__/NewOrganizationPageMutation.graphql";
 import { useState, type FormEventHandler } from "react";
 import { useNavigate } from "react-router";
+import { formatError, type GraphQLError } from "@probo/helpers";
 
 const createOrganizationMutation = graphql`
   mutation NewOrganizationPageMutation(
@@ -75,11 +76,12 @@ export default function NewOrganizationPage() {
           variant: "success",
         });
       },
-      onError: (e) => {
+      onError: (e: GraphQLError) => {
         setIsFetching(false);
+
         toast({
           title: __("Error"),
-          description: e.message ?? __("Failed to create organization"),
+          description: formatError(__("Failed to create organization"), e),
           variant: "error",
         });
       },

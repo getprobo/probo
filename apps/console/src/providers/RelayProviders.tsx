@@ -23,6 +23,13 @@ export class InternalServerError extends Error {
   }
 }
 
+export class UnauthorizedError extends Error {
+  constructor() {
+    super("UNAUTHORIZED");
+    this.name = "UnauthorizedError";
+  }
+}
+
 export function buildEndpoint(path: string): string {
   const host = import.meta.env.VITE_API_URL;
 
@@ -46,6 +53,9 @@ export function buildEndpoint(path: string): string {
 
 const hasUnauthenticatedError = (error: GraphQLError) =>
   error.extensions?.code == "UNAUTHENTICATED";
+
+const hasUnauthorizedError = (error: GraphQLError) =>
+  error.extensions?.code == "UNAUTHORIZED";
 
 const fetchRelay: FetchFunction = async (
   request,
@@ -117,13 +127,10 @@ const fetchRelay: FetchFunction = async (
       throw new UnAuthenticatedError();
     }
 
-    throw new Error(
-      `Error fetching GraphQL query '${
-        request.name
-      }' with variables '${JSON.stringify(variables)}': ${JSON.stringify(
-        json.errors
-      )}`
-    );
+    if (errors.find(hasUnauthorizedError)) {
+      throw new UnauthorizedError();
+    }
+
   }
 
   return json;

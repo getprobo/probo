@@ -46,6 +46,20 @@ export function PageError({ resetErrorBoundary, error: propsError }: Props) {
     );
   }
 
+  if (error && error.toString().includes("UNAUTHORIZED")) {
+    return (
+      <div className={classNames.wrapper}>
+        <h1 className={classNames.title}>
+          <IconPageCross size={26} />
+          {__("Access denied")}
+        </h1>
+        <p className={classNames.description}>
+          {__("You don't have permission to access this organization")}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className={classNames.wrapper}>
       <h1 className={classNames.title}>{__("Unexpected error :(")}</h1>

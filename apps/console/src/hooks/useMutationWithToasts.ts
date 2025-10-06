@@ -3,6 +3,7 @@ import { useMutation, type UseMutationConfig } from "react-relay";
 import { useToast } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { MutationParameters, GraphQLTaggedNode } from "relay-runtime";
+import { formatError, type GraphQLError } from "@probo/helpers";
 
 /**
  * A decorated useMutation hook that emits toast notifications on success or error.
@@ -32,11 +33,10 @@ export function useMutationWithToasts<T extends MutationParameters>(
           onCompleted: (response, error) => {
             options.onCompleted?.(response, error);
             if (error) {
+              const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
               toast({
                 title: __("Error"),
-                description:
-                  options.errorMessage ??
-                  __("Failed to commit this operation."),
+                description: formatError(errorTitle, error as GraphQLError),
                 variant: "error",
               });
               reject(error);
@@ -57,10 +57,10 @@ export function useMutationWithToasts<T extends MutationParameters>(
             resolve();
           },
           onError: (error) => {
+            const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
             toast({
               title: __("Error"),
-              description:
-                options.errorMessage ?? __("Failed to commit this operation."),
+              description: formatError(errorTitle, error as GraphQLError),
               variant: "error",
             });
             reject(error);

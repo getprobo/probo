@@ -86,11 +86,11 @@ export function FrameworkControlDialog(props: Props) {
   const [mutate, isMutating] = props.control
     ? useMutationWithToasts(updateMutation, {
         successMessage: __("Control updated successfully."),
-        errorMessage: __("Failed to update control. Please try again."),
+        errorMessage: __("Failed to update control"),
       })
     : useMutationWithToasts(createMutation, {
         successMessage: __("Control created successfully."),
-        errorMessage: __("Failed to create control. Please try again."),
+        errorMessage: __("Failed to create control"),
       });
 
   const defaultValues = useMemo(() => ({

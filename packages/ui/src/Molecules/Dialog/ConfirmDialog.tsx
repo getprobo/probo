@@ -85,6 +85,9 @@ export function ConfirmDialog() {
             .then(() => {
                 close();
             })
+            .catch(() => {
+                close();
+            })
             .finally(() => {
                 setLoading(false);
             });

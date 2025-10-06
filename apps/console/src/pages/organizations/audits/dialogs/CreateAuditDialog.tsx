@@ -16,7 +16,7 @@ import z from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { ControlledField } from "/components/form/ControlledField";
 import { useCreateAudit } from "/hooks/graph/AuditGraph";
-import { auditStates, getAuditStateLabel, formatDatetime } from "@probo/helpers";
+import { auditStates, getAuditStateLabel, formatDatetime, formatError, type GraphQLError } from "@probo/helpers";
 import { useLazyLoadQuery } from "react-relay";
 import { graphql } from "relay-runtime";
 import { Suspense } from "react";
@@ -94,7 +94,7 @@ export function CreateAuditDialog({
     } catch (error) {
       toast({
         title: __("Error"),
-        description: error instanceof Error ? error.message : __("Failed to create audit"),
+        description: formatError(__("Failed to create audit"), error as GraphQLError),
         variant: "error",
       });
     }

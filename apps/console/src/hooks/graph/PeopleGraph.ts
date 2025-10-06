@@ -10,9 +10,9 @@ import {
 import { useMemo } from "react";
 import type { PeopleGraphPaginatedQuery } from "./__generated__/PeopleGraphPaginatedQuery.graphql";
 import type { PeopleGraphPaginatedFragment$key } from "./__generated__/PeopleGraphPaginatedFragment.graphql";
-import { useConfirm } from "@probo/ui";
+import { useConfirm, useToast } from "@probo/ui";
 import type { PeopleGraphDeleteMutation } from "./__generated__/PeopleGraphDeleteMutation.graphql";
-import { promisifyMutation, sprintf } from "@probo/helpers";
+import { promisifyMutation, sprintf, formatError, type GraphQLError } from "@probo/helpers";
 import { useTranslate } from "@probo/i18n";
 
 const peopleQuery = graphql`
@@ -132,6 +132,7 @@ export const useDeletePeople = (
 ) => {
   const [mutate] = useMutation<PeopleGraphDeleteMutation>(deletePeopleMutation);
   const confirm = useConfirm();
+  const { toast } = useToast();
   const { __ } = useTranslate();
 
   return () => {
@@ -147,6 +148,12 @@ export const useDeletePeople = (
             },
             connections: [connectionId],
           },
+        }).catch((error) => {
+          toast({
+            title: __("Error"),
+            description: formatError(__("Failed to delete people"), error as GraphQLError),
+            variant: "error",
+          });
         }),
       {
         message: sprintf(

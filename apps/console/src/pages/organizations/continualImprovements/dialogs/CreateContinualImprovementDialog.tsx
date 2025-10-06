@@ -20,6 +20,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useCreateContinualImprovement } from "../../../../hooks/graph/ContinualImprovementGraph";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { Controller } from "react-hook-form";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { formatDatetime } from "@probo/helpers";
 
 const schema = z.object({
@@ -87,7 +88,7 @@ export function CreateContinualImprovementDialog({
     } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to create continual improvement entry"),
+        description: formatError(__("Failed to create continual improvement"), error as GraphQLError),
         variant: "error",
       });
     }

@@ -113,7 +113,7 @@ export default function FormRiskDialog({
           },
         },
         successMessage: __("Risk updated successfully."),
-        errorMessage: __("Failed to update risk. Please try again."),
+        errorMessage: __("Failed to update risk"),
         onSuccess: () => {
           ref?.current?.close();
         },
@@ -129,7 +129,7 @@ export default function FormRiskDialog({
         connections: [connection!],
       },
       successMessage: __("Risk created successfully."),
-      errorMessage: __("Failed to create risk. Please try again."),
+      errorMessage: __("Failed to create risk"),
       onSuccess: () => {
         ref?.current?.close();
         reset();

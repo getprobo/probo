@@ -56,7 +56,7 @@ export function EditServiceDialog({ serviceId, service, onClose }: Props) {
     updateServiceMutation,
     {
       successMessage: __("Service updated successfully."),
-      errorMessage: __("Failed to update service. Please try again."),
+      errorMessage: __("Failed to update service"),
     }
   );
 

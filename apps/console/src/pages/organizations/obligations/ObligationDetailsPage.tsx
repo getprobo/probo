@@ -30,6 +30,7 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import z from "zod";
 import { getObligationStatusVariant, getObligationStatusLabel, formatDatetime, getObligationStatusOptions, validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
@@ -120,10 +121,10 @@ export default function ObligationDetailsPage(props: Props) {
         description: __("Obligation updated successfully"),
         variant: "success",
       });
-    } catch {
+    } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to update obligation"),
+        description: formatError(__("Failed to update obligation"), error as GraphQLError),
         variant: "error",
       });
     }

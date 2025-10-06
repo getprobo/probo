@@ -135,6 +135,7 @@ func graphqlHandler(logger *log.Logger, usrmgrSvc *usrmgr.Service, trustSvc *tru
 	srv.Use(extension.Introspection{})
 
 	srv.SetRecoverFunc(gqlutils.RecoverFunc)
+	srv.SetErrorPresenter(gqlutils.ErrorPresenter)
 
 	return WithSession(usrmgrSvc, trustSvc, authCfg, trustAuthCfg, srv.ServeHTTP)
 }

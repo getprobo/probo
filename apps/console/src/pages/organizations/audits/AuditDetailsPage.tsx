@@ -32,7 +32,7 @@ import { FrameworkLogo } from "/components/FrameworkLogo";
 import { ControlledField } from "/components/form/ControlledField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
-import { getAuditStateLabel, getAuditStateVariant, auditStates, fileSize, sprintf, formatDatetime, formatDate } from "@probo/helpers";
+import { getAuditStateLabel, getAuditStateVariant, auditStates, fileSize, sprintf, formatDatetime, formatError, formatDate, type GraphQLError } from "@probo/helpers";
 import type { AuditGraphNodeQuery } from "/hooks/graph/__generated__/AuditGraphNodeQuery.graphql";
 
 const updateAuditSchema = z.object({
@@ -96,7 +96,7 @@ export default function AuditDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: error instanceof Error ? error.message : __("Failed to update audit"),
+        description: formatError(__("Failed to update audit"), error as GraphQLError),
         variant: "error",
       });
     }

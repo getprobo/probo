@@ -8,21 +8,21 @@ import { useTranslate } from "@probo/i18n";
 import { useEffect, useMemo } from "react";
 
 const schema = z.object({
-  name: z.string(),
-  description: z.string(),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().min(1, "Description is required"),
   category: z.string().nullish(),
-  statusPageUrl: z.string(),
-  termsOfServiceUrl: z.string(),
-  privacyPolicyUrl: z.string(),
-  serviceLevelAgreementUrl: z.string(),
-  dataProcessingAgreementUrl: z.string(),
-  websiteUrl: z.string(),
-  legalName: z.string(),
-  headquarterAddress: z.string(),
+  statusPageUrl: z.string().optional(),
+  termsOfServiceUrl: z.string().optional(),
+  privacyPolicyUrl: z.string().optional(),
+  serviceLevelAgreementUrl: z.string().optional(),
+  dataProcessingAgreementUrl: z.string().optional(),
+  websiteUrl: z.string().optional(),
+  legalName: z.string().optional(),
+  headquarterAddress: z.string().optional(),
   certifications: z.array(z.string()),
   countries: z.array(z.string()),
-  securityPageUrl: z.string(),
-  trustPageUrl: z.string(),
+  securityPageUrl: z.string().optional(),
+  trustPageUrl: z.string().optional(),
   businessOwnerId: z.string().nullish(),
   securityOwnerId: z.string().nullish(),
 });
@@ -70,7 +70,7 @@ export function useVendorForm(vendorKey: useVendorFormFragment$key) {
 
   const [mutate] = useMutationWithToasts(vendorUpdateQuery, {
     successMessage: __("Vendor updated successfully."),
-    errorMessage: __("Failed to update vendor. Please try again."),
+    errorMessage: __("Failed to update vendor"),
   });
 
   const defaultValues = useMemo(
