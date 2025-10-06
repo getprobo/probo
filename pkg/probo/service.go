@@ -176,7 +176,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	}
 	tenantService.Controls = &ControlService{svc: tenantService}
 	tenantService.Risks = &RiskService{svc: tenantService}
-	tenantService.VendorComplianceReports = &VendorComplianceReportService{svc: tenantService}
+	tenantService.VendorComplianceReports = &VendorComplianceReportService{svc: tenantService, fileValidator: filevalidation.NewValidator(filevalidation.CategoryDocument)}
 	tenantService.VendorBusinessAssociateAgreements = &VendorBusinessAssociateAgreementService{svc: tenantService}
 	tenantService.VendorContacts = &VendorContactService{svc: tenantService}
 	tenantService.VendorDataPrivacyAgreements = &VendorDataPrivacyAgreementService{svc: tenantService}

@@ -1755,8 +1755,7 @@ type VendorComplianceReport implements Node {
   reportDate: Datetime!
   validUntil: Datetime
   reportName: String!
-  fileUrl: String! @goField(forceResolver: true)
-  fileSize: BigInt!
+  file: File @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }

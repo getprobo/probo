@@ -146,6 +146,18 @@ func (s FileService) UploadAndSaveFile(
 	return file, nil
 }
 
+func (s FileService) DeleteFileFromS3(ctx context.Context, fileKey string) error {
+	_, err := s.svc.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(s.svc.bucket),
+		Key:    aws.String(fileKey),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete object from S3: %w", err)
+	}
+
+	return nil
+}
+
 func (s FileService) GenerateFileTempURL(
 	ctx context.Context,
 	fileID gid.GID,

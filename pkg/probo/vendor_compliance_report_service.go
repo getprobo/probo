@@ -17,28 +17,23 @@ package probo
 import (
 	"context"
 	"fmt"
-	"io"
-	"mime"
-	"net/url"
-	"path/filepath"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/coredata"
+	"github.com/getprobo/probo/pkg/filevalidation"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
-	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 )
 
 type (
 	VendorComplianceReportService struct {
-		svc *TenantService
+		svc           *TenantService
+		fileValidator *filevalidation.FileValidator
 	}
 
 	VendorComplianceReportCreateRequest struct {
-		File       io.Reader
+		File       FileUpload
 		ReportDate time.Time
 		ValidUntil *time.Time
 		ReportName string
@@ -71,61 +66,30 @@ func (s VendorComplianceReportService) Upload(
 	vendorID gid.GID,
 	req *VendorComplianceReportCreateRequest,
 ) (*coredata.VendorComplianceReport, error) {
-	objectKey, err := uuid.NewV7()
+
+	f, err := s.svc.Files.UploadAndSaveFile(ctx, s.fileValidator, &req.File)
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate object key: %w", err)
+		return nil, err
 	}
 
-	var vendorComplianceReport *coredata.VendorComplianceReport
+	now := time.Now()
 
-	err = s.svc.pg.WithTx(
+	vendorComplianceReportID := gid.New(s.svc.scope.GetTenantID(), coredata.VendorComplianceReportEntityType)
+
+	vendorComplianceReport := &coredata.VendorComplianceReport{
+		ID:           vendorComplianceReportID,
+		VendorID:     vendorID,
+		ReportDate:   req.ReportDate,
+		ValidUntil:   req.ValidUntil,
+		ReportName:   req.ReportName,
+		ReportFileId: &f.ID,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+
+	err = s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			vendor := &coredata.Vendor{}
-			if err := vendor.LoadByID(ctx, conn, s.svc.scope, vendorID); err != nil {
-				return fmt.Errorf("cannot load vendor: %w", err)
-			}
-
-			mimeType := mime.TypeByExtension(filepath.Ext(req.ReportName))
-
-			_, err := s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-				Bucket:      &s.svc.bucket,
-				Key:         aws.String(objectKey.String()),
-				Body:        req.File,
-				ContentType: &mimeType,
-				Metadata: map[string]string{
-					"type":            "vendor-compliance-report",
-					"vendor-id":       vendorID.String(),
-					"organization-id": vendor.OrganizationID.String(),
-				},
-			})
-			if err != nil {
-				return fmt.Errorf("cannot upload file to S3: %w", err)
-			}
-
-			headOutput, err := s.svc.s3.HeadObject(ctx, &s3.HeadObjectInput{
-				Bucket: aws.String(s.svc.bucket),
-				Key:    aws.String(objectKey.String()),
-			})
-			if err != nil {
-				return fmt.Errorf("cannot get object metadata: %w", err)
-			}
-
-			now := time.Now()
-			vendorComplianceReportID := gid.New(s.svc.scope.GetTenantID(), coredata.VendorComplianceReportEntityType)
-
-			vendorComplianceReport = &coredata.VendorComplianceReport{
-				ID:         vendorComplianceReportID,
-				VendorID:   vendorID,
-				ReportDate: req.ReportDate,
-				ValidUntil: req.ValidUntil,
-				ReportName: req.ReportName,
-				FileKey:    objectKey.String(),
-				FileSize:   *headOutput.ContentLength,
-				CreatedAt:  now,
-				UpdatedAt:  now,
-			}
-
 			return vendorComplianceReport.Insert(ctx, conn, s.svc.scope)
 		},
 	)
@@ -157,38 +121,6 @@ func (s VendorComplianceReportService) Get(
 	return vendorComplianceReport, nil
 }
 
-func (s VendorComplianceReportService) GenerateFileURL(
-	ctx context.Context,
-	vendorComplianceReportID gid.GID,
-	expiresIn time.Duration,
-) (string, error) {
-	vendorComplianceReport, err := s.Get(ctx, vendorComplianceReportID)
-	if err != nil {
-		return "", fmt.Errorf("cannot get vendor compliance report: %w", err)
-	}
-
-	presignClient := s3.NewPresignClient(s.svc.s3)
-
-	// Use RFC 6266/5987 encoding for filename with UTF-8 support
-	encodedFilename := url.QueryEscape(vendorComplianceReport.ReportName)
-	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
-		encodedFilename, encodedFilename)
-
-	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:                     aws.String(s.svc.bucket),
-		Key:                        aws.String(vendorComplianceReport.FileKey),
-		ResponseCacheControl:       aws.String("max-age=3600, public"),
-		ResponseContentDisposition: aws.String(contentDisposition),
-	}, func(opts *s3.PresignOptions) {
-		opts.Expires = expiresIn
-	})
-	if err != nil {
-		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
-	}
-
-	return presignedReq.URL, nil
-}
-
 func (s VendorComplianceReportService) Delete(
 	ctx context.Context,
 	vendorComplianceReportID gid.GID,
@@ -198,7 +130,16 @@ func (s VendorComplianceReportService) Delete(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return vendorComplianceReport.Delete(ctx, conn, s.svc.scope)
+			var fileKey *string
+			var err error
+			if fileKey, err = vendorComplianceReport.Delete(ctx, conn, s.svc.scope); err != nil {
+				return err
+			}
+			if err = s.svc.Files.DeleteFileFromS3(ctx, *fileKey); err != nil {
+				return err
+			}
+
+			return nil
 		},
 	)
 

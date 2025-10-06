@@ -2290,7 +2290,7 @@ func (r *mutationResolver) UploadVendorComplianceReport(ctx context.Context, inp
 		ctx,
 		input.VendorID,
 		&probo.VendorComplianceReportCreateRequest{
-			File:       input.File.File,
+			File:       probo.FileUpload{Filename: input.File.Filename, Size: input.File.Size, Content: input.File.File},
 			ReportDate: input.ReportDate,
 			ValidUntil: input.ValidUntil,
 			ReportName: input.ReportName,
@@ -5007,16 +5007,25 @@ func (r *vendorComplianceReportResolver) Vendor(ctx context.Context, obj *types.
 	return types.NewVendor(vendor), nil
 }
 
-// FileURL is the resolver for the fileUrl field.
-func (r *vendorComplianceReportResolver) FileURL(ctx context.Context, obj *types.VendorComplianceReport) (string, error) {
+// File is the resolver for the file field.
+func (r *vendorComplianceReportResolver) File(ctx context.Context, obj *types.VendorComplianceReport) (*types.File, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	fileURL, err := prb.VendorComplianceReports.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
+	evidence, err := prb.VendorComplianceReports.Get(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("failed to generate file URL: %w", err))
+		return nil, fmt.Errorf("cannot load evidence: %w", err)
 	}
 
-	return fileURL, nil
+	if evidence.ReportFileId == nil {
+		return nil, fmt.Errorf("evidence is not associated with a file")
+	}
+
+	file, err := prb.Files.Get(ctx, *evidence.ReportFileId)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load evidence file: %w", err)
+	}
+
+	return types.NewFile(file), nil
 }
 
 // TotalCount is the resolver for the totalCount field.

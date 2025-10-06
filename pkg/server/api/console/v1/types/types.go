@@ -2089,8 +2089,7 @@ type VendorComplianceReport struct {
 	ReportDate time.Time  `json:"reportDate"`
 	ValidUntil *time.Time `json:"validUntil,omitempty"`
 	ReportName string     `json:"reportName"`
-	FileURL    string     `json:"fileUrl"`
-	FileSize   int64      `json:"fileSize"`
+	File       *File      `json:"file,omitempty"`
 	CreatedAt  time.Time  `json:"createdAt"`
 	UpdatedAt  time.Time  `json:"updatedAt"`
 }

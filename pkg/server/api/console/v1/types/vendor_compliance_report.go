@@ -49,7 +49,6 @@ func NewVendorComplianceReport(c *coredata.VendorComplianceReport) *VendorCompli
 		ReportDate: c.ReportDate,
 		ValidUntil: c.ValidUntil,
 		ReportName: c.ReportName,
-		FileSize:   c.FileSize,
 		CreatedAt:  c.CreatedAt,
 		UpdatedAt:  c.UpdatedAt,
 	}

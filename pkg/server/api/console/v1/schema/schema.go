@@ -1435,8 +1435,7 @@ type ComplexityRoot struct {
 
 	VendorComplianceReport struct {
 		CreatedAt  func(childComplexity int) int
-		FileSize   func(childComplexity int) int
-		FileURL    func(childComplexity int) int
+		File       func(childComplexity int) int
 		ID         func(childComplexity int) int
 		ReportDate func(childComplexity int) int
 		ReportName func(childComplexity int) int
@@ -1893,7 +1892,7 @@ type VendorBusinessAssociateAgreementResolver interface {
 type VendorComplianceReportResolver interface {
 	Vendor(ctx context.Context, obj *types.VendorComplianceReport) (*types.Vendor, error)
 
-	FileURL(ctx context.Context, obj *types.VendorComplianceReport) (string, error)
+	File(ctx context.Context, obj *types.VendorComplianceReport) (*types.File, error)
 }
 type VendorConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.VendorConnection) (int, error)
@@ -7832,19 +7831,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.VendorComplianceReport.CreatedAt(childComplexity), true
 
-	case "VendorComplianceReport.fileSize":
-		if e.complexity.VendorComplianceReport.FileSize == nil {
+	case "VendorComplianceReport.file":
+		if e.complexity.VendorComplianceReport.File == nil {
 			break
 		}
 
-		return e.complexity.VendorComplianceReport.FileSize(childComplexity), true
-
-	case "VendorComplianceReport.fileUrl":
-		if e.complexity.VendorComplianceReport.FileURL == nil {
-			break
-		}
-
-		return e.complexity.VendorComplianceReport.FileURL(childComplexity), true
+		return e.complexity.VendorComplianceReport.File(childComplexity), true
 
 	case "VendorComplianceReport.id":
 		if e.complexity.VendorComplianceReport.ID == nil {
@@ -10301,8 +10293,7 @@ type VendorComplianceReport implements Node {
   reportDate: Datetime!
   validUntil: Datetime
   reportName: String!
-  fileUrl: String! @goField(forceResolver: true)
-  fileSize: BigInt!
+  file: File @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -59222,8 +59213,8 @@ func (ec *executionContext) fieldContext_VendorComplianceReport_reportName(_ con
 	return fc, nil
 }
 
-func (ec *executionContext) _VendorComplianceReport_fileUrl(ctx context.Context, field graphql.CollectedField, obj *types.VendorComplianceReport) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VendorComplianceReport_fileUrl(ctx, field)
+func (ec *executionContext) _VendorComplianceReport_file(ctx context.Context, field graphql.CollectedField, obj *types.VendorComplianceReport) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VendorComplianceReport_file(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -59236,75 +59227,44 @@ func (ec *executionContext) _VendorComplianceReport_fileUrl(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.VendorComplianceReport().FileURL(rctx, obj)
+		return ec.resolvers.VendorComplianceReport().File(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*types.File)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐFile(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_VendorComplianceReport_fileUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_VendorComplianceReport_file(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "VendorComplianceReport",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _VendorComplianceReport_fileSize(ctx context.Context, field graphql.CollectedField, obj *types.VendorComplianceReport) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_VendorComplianceReport_fileSize(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.FileSize, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int64)
-	fc.Result = res
-	return ec.marshalNBigInt2int64(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_VendorComplianceReport_fileSize(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "VendorComplianceReport",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type BigInt does not have child fields")
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_File_id(ctx, field)
+			case "mimeType":
+				return ec.fieldContext_File_mimeType(ctx, field)
+			case "fileName":
+				return ec.fieldContext_File_fileName(ctx, field)
+			case "size":
+				return ec.fieldContext_File_size(ctx, field)
+			case "downloadUrl":
+				return ec.fieldContext_File_downloadUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_File_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_File_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
 		},
 	}
 	return fc, nil
@@ -59595,10 +59555,8 @@ func (ec *executionContext) fieldContext_VendorComplianceReportEdge_node(_ conte
 				return ec.fieldContext_VendorComplianceReport_validUntil(ctx, field)
 			case "reportName":
 				return ec.fieldContext_VendorComplianceReport_reportName(ctx, field)
-			case "fileUrl":
-				return ec.fieldContext_VendorComplianceReport_fileUrl(ctx, field)
-			case "fileSize":
-				return ec.fieldContext_VendorComplianceReport_fileSize(ctx, field)
+			case "file":
+				return ec.fieldContext_VendorComplianceReport_file(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_VendorComplianceReport_createdAt(ctx, field)
 			case "updatedAt":
@@ -85603,19 +85561,16 @@ func (ec *executionContext) _VendorComplianceReport(ctx context.Context, sel ast
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "fileUrl":
+		case "file":
 			field := field
 
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
 				defer func() {
 					if r := recover(); r != nil {
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._VendorComplianceReport_fileUrl(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
+				res = ec._VendorComplianceReport_file(ctx, field, obj)
 				return res
 			}
 
@@ -85639,11 +85594,6 @@ func (ec *executionContext) _VendorComplianceReport(ctx context.Context, sel ast
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "fileSize":
-			out.Values[i] = ec._VendorComplianceReport_fileSize(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "createdAt":
 			out.Values[i] = ec._VendorComplianceReport_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

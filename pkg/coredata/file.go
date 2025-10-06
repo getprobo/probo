@@ -153,3 +153,21 @@ WHERE %s
 
 	return err
 }
+
+func (f File) HardDelete(ctx context.Context, conn pg.Conn, scope Scoper) (*string, error) {
+	q := `
+DELETE FROM files
+WHERE %s
+    AND id = @file_id
+RETURNING file_key
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{"file_id": f.ID}
+	maps.Copy(args, scope.SQLArguments())
+
+	var vcrFileKey *string
+	err := conn.QueryRow(ctx, q, args).Scan(&vcrFileKey)
+
+	return vcrFileKey, err
+}

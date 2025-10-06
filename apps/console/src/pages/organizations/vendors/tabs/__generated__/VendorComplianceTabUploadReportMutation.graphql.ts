@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6093b0bc54fa90962376639ec87fa149>>
+ * @generated SignedSource<<68f2a5a67287a554c3f45ddfc856b6ea>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -172,15 +172,34 @@ return {
                   {
                     "alias": null,
                     "args": null,
-                    "kind": "ScalarField",
-                    "name": "fileUrl",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "fileSize",
+                    "concreteType": "File",
+                    "kind": "LinkedField",
+                    "name": "file",
+                    "plural": false,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "fileName",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "mimeType",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "size",
+                        "storageKey": null
+                      },
+                      (v3/*: any*/)
+                    ],
                     "storageKey": null
                   }
                 ],
@@ -211,12 +230,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "fb9be687deba8567502e207b0969b2b5",
+    "cacheID": "193fdb014a3493e0b0d56a96309afae3",
     "id": null,
     "metadata": {},
     "name": "VendorComplianceTabUploadReportMutation",
     "operationKind": "mutation",
-    "text": "mutation VendorComplianceTabUploadReportMutation(\n  $input: UploadVendorComplianceReportInput!\n) {\n  uploadVendorComplianceReport(input: $input) {\n    vendorComplianceReportEdge {\n      node {\n        id\n        ...VendorComplianceTabFragment_report\n      }\n    }\n  }\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  fileUrl\n  fileSize\n}\n"
+    "text": "mutation VendorComplianceTabUploadReportMutation(\n  $input: UploadVendorComplianceReportInput!\n) {\n  uploadVendorComplianceReport(input: $input) {\n    vendorComplianceReportEdge {\n      node {\n        id\n        ...VendorComplianceTabFragment_report\n      }\n    }\n  }\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n}\n"
   }
 };
 })();
