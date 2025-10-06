@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+- Store id of accepted nda
+
+## Changed
+- Allow missing NDA
+
 ### Fixed
 - Fix trust center v2 design
 
