@@ -233,7 +233,7 @@ function EvidenceRow(props: {
       <Tr to={evidenceUrl}>
         <Td>{evidence.file?.fileName}</Td>
         <Td>{fileType(__, {type: evidence.type, mimeType: evidence.file?.mimeType || ''})}</Td>
-        <Td>{fileSize(__, evidence.file?.size)}</Td>
+        <Td>{fileSize(__, evidence.file?.size || 0)}</Td>
         <Td>{formatDate(evidence.createdAt)}</Td>
         <Td noLink>
           {!props.hideActions && (

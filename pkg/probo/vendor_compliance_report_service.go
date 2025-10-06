@@ -138,12 +138,7 @@ func (s VendorComplianceReportService) Delete(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			var fileKey *string
-			var err error
-			if fileKey, err = vendorComplianceReport.Delete(ctx, conn, s.svc.scope); err != nil {
-				return err
-			}
-			if err = s.svc.Files.DeleteFileFromS3(ctx, *fileKey); err != nil {
+			if err := vendorComplianceReport.Delete(ctx, conn, s.svc.scope); err != nil {
 				return err
 			}
 

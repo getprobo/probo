@@ -445,7 +445,7 @@ RETURNING evidence_file_id;
 		var fileKey *string
 		file := &File{ID: *evidenceFileId}
 		if fileKey, err = file.HardDelete(ctx, conn, scope); err != nil {
-			return nil, fmt.Errorf("failed to soft delete evidence file: %w", err)
+			return nil, fmt.Errorf("failed to hard delete evidence file: %w", err)
 		}
 		return fileKey, nil
 

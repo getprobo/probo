@@ -62,7 +62,6 @@ func NewEvidenceEdge(e *coredata.Evidence, orderBy coredata.EvidenceOrderField) 
 
 func NewEvidence(e *coredata.Evidence) *Evidence {
 	var urlPtr *string = nil
-	var fileObj *File = nil
 	if e.URL != "" {
 		urlCopy := e.URL
 		urlPtr = &urlCopy
@@ -73,7 +72,6 @@ func NewEvidence(e *coredata.Evidence) *Evidence {
 		State:       e.State,
 		Type:        e.Type,
 		URL:         urlPtr,
-		File:        fileObj,
 		Description: e.Description,
 		CreatedAt:   e.CreatedAt,
 		UpdatedAt:   e.UpdatedAt,

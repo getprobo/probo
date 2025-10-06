@@ -744,7 +744,7 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 	}
 
 	if evidence.EvidenceFileId == nil {
-		return nil, fmt.Errorf("evidence is not associated with a file")
+		return nil, nil
 	}
 
 	file, err := prb.Files.Get(ctx, *evidence.EvidenceFileId)
@@ -5017,7 +5017,7 @@ func (r *vendorComplianceReportResolver) File(ctx context.Context, obj *types.Ve
 	}
 
 	if evidence.ReportFileId == nil {
-		return nil, fmt.Errorf("evidence is not associated with a file")
+		return nil, nil
 	}
 
 	file, err := prb.Files.Get(ctx, *evidence.ReportFileId)

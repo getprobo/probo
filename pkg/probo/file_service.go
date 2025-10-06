@@ -18,8 +18,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"mime"
-	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -85,7 +83,7 @@ func (s FileService) UploadAndSaveFile(
 		return nil, fmt.Errorf("cannot generate object key: %w", err)
 	}
 
-	mimeType := mime.TypeByExtension(filepath.Ext(req.Filename))
+	mimeType := req.ContentType
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
 	}

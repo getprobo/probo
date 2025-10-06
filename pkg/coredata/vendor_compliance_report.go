@@ -198,7 +198,7 @@ func (vcr *VendorComplianceReport) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-) (*string, error) {
+) error {
 	q := `
 DELETE
 FROM
@@ -219,18 +219,16 @@ RETURNING report_file_id
 	err := conn.QueryRow(ctx, q, args).Scan(&vcrFileId)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete vendor compliance report: %w", err)
+		return fmt.Errorf("failed to delete vendor compliance report: %w", err)
 	}
 
 	if vcrFileId != nil {
-		var fileKey *string
 		file := &File{ID: *vcrFileId}
-		if fileKey, err = file.HardDelete(ctx, conn, scope); err != nil {
-			return nil, fmt.Errorf("failed to soft delete vendor compliance file: %w", err)
+		if err = file.SoftDelete(ctx, conn, scope); err != nil {
+			return fmt.Errorf("failed to soft delete vendor compliance file: %w", err)
 		}
-		return fileKey, nil
 	}
-	return nil, err
+	return nil
 }
 
 func (vcrs VendorComplianceReports) InsertVendorSnapshots(

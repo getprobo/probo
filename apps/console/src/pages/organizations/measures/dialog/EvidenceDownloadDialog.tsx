@@ -50,7 +50,7 @@ function DownloadLink({ evidenceId, onClose }: Props) {
   const evidence = data.node;
 
   useEffect(() => {
-    downloadFile(evidence.file?.downloadUrl, evidence.file?.downloadUrl ?? "evidence");
+    downloadFile(evidence.file?.downloadUrl, evidence.file?.fileName ?? "evidence");
     onClose();
   }, [evidence]);
 
