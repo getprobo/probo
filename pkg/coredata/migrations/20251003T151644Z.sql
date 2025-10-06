@@ -1,6 +1,6 @@
 ALTER TABLE
     vendor_compliance_reports
-    ADD COLUMN report_file_id text 
+    ADD COLUMN report_file_id text
         REFERENCES files(id) ON DELETE SET NULL;
 
 WITH
@@ -35,7 +35,5 @@ FROM file_vcr_mapping fv
 WHERE vendor_compliance_reports.id = fv.report_id;
 
 ALTER TABLE vendor_compliance_reports
-    DROP COLUMN file_key;
-
-ALTER TABLE vendor_compliance_reports
-    DROP COLUMN file_size;
+    ALTER COLUMN file_key DROP NOT NULL,
+    ALTER COLUMN file_size DROP NOT NULL;

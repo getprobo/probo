@@ -33,14 +33,9 @@ SET evidence_file_id = fm.file_id
 FROM file_evidence_mapping fm
 WHERE evidences.id = fm.evidence_id;
 
-ALTER TABLE evidences
-    DROP COLUMN filename;
 
 ALTER TABLE evidences
-    DROP COLUMN mime_type;
-
-ALTER TABLE evidences
-    DROP COLUMN size;
-
-ALTER TABLE evidences
-    DROP COLUMN object_key;
+    ALTER COLUMN filename DROP NOT NULL,
+    ALTER COLUMN mime_type DROP NOT NULL,
+    ALTER COLUMN size DROP NOT NULL,
+    ALTER COLUMN oject_key DROP NOT NULL;
