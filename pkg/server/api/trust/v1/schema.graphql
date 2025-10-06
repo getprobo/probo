@@ -581,11 +581,11 @@ type Mutation {
 
   exportDocumentPDF(
     input: ExportDocumentPDFInput!
-  ): ExportDocumentPDFPayload! @mustBeAuthenticated(role: USER)
+  ): ExportDocumentPDFPayload! @mustBeAuthenticated(role: NONE)
 
   exportReportPDF(
     input: ExportReportPDFInput!
-  ): ExportReportPDFPayload! @mustBeAuthenticated(role: USER)
+  ): ExportReportPDFPayload! @mustBeAuthenticated(role: NONE)
 
   acceptNonDisclosureAgreement(
     input: AcceptNonDisclosureAgreementInput!

@@ -1594,11 +1594,11 @@ type Mutation {
 
   exportDocumentPDF(
     input: ExportDocumentPDFInput!
-  ): ExportDocumentPDFPayload! @mustBeAuthenticated(role: USER)
+  ): ExportDocumentPDFPayload! @mustBeAuthenticated(role: NONE)
 
   exportReportPDF(
     input: ExportReportPDFInput!
-  ): ExportReportPDFPayload! @mustBeAuthenticated(role: USER)
+  ): ExportReportPDFPayload! @mustBeAuthenticated(role: NONE)
 
   acceptNonDisclosureAgreement(
     input: AcceptNonDisclosureAgreementInput!
@@ -3357,7 +3357,7 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "USER")
+			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
 			if err != nil {
 				var zeroVal *types.ExportDocumentPDFPayload
 				return zeroVal, err
@@ -3443,7 +3443,7 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "USER")
+			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
 			if err != nil {
 				var zeroVal *types.ExportReportPDFPayload
 				return zeroVal, err
