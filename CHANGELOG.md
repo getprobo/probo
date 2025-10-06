@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
- [0.66.0] - 2025-10-06
+# [0.66.1] - 2025-10-06
+
+### Fixed
+- Fix access to public documents for unauthenticated users
+
+# [0.66.0] - 2025-10-06
 
 ### Added
 - Store id of accepted nda
