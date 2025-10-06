@@ -67,7 +67,15 @@ func (s VendorComplianceReportService) Upload(
 	req *VendorComplianceReportCreateRequest,
 ) (*coredata.VendorComplianceReport, error) {
 
-	f, err := s.svc.Files.UploadAndSaveFile(ctx, s.fileValidator, &req.File)
+	f, err := s.svc.Files.UploadAndSaveFile(
+		ctx,
+		s.fileValidator, map[string]string{
+			"type":      "vendor-compliance-report",
+			"vendor-id": vendorID.String(),
+			//"organization-id": vendor.OrganizationID.String(), TODO : verify if this metadata is mandatory ?
+		},
+		&req.File)
+
 	if err != nil {
 		return nil, err
 	}

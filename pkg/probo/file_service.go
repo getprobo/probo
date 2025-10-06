@@ -78,6 +78,7 @@ func (s FileService) Get(
 func (s FileService) UploadAndSaveFile(
 	ctx context.Context,
 	fileValidator *filevalidation.FileValidator,
+	s3Metadata map[string]string,
 	req *FileUpload) (*coredata.File, error) {
 	objectKey, err := uuid.NewV7()
 	if err != nil {
@@ -97,6 +98,7 @@ func (s FileService) UploadAndSaveFile(
 		Bucket:      &s.svc.bucket,
 		Key:         aws.String(objectKey.String()),
 		Body:        req.Content,
+		Metadata:    s3Metadata,
 		ContentType: aws.String(mimeType),
 	})
 	if err != nil {

@@ -93,7 +93,15 @@ func (s EvidenceService) UploadMeasureEvidence(
 			var file *coredata.File
 			var err error
 
-			file, err = s.svc.Files.UploadAndSaveFile(ctx, s.fileValidator, &req.File)
+			file, err = s.svc.Files.UploadAndSaveFile(
+				ctx,
+				s.fileValidator,
+				map[string]string{
+					"type":            "evidence",
+					"evidence-id":     evidenceID.String(),
+					"organization-id": measure.OrganizationID.String(),
+				},
+				&req.File)
 
 			if err != nil {
 				return fmt.Errorf("cannot upload or file: %w", err)
