@@ -418,7 +418,7 @@ func (e Evidence) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-) error {
+) (*string, error) {
 	q := `
 DELETE FROM
     evidences
@@ -437,15 +437,19 @@ RETURNING evidence_file_id;
 	err := conn.QueryRow(ctx, q, args).Scan(&evidenceFileId)
 
 	if err != nil {
-		return fmt.Errorf("failed to delete evidence: %w", err)
+		return nil, fmt.Errorf("failed to delete evidence: %w", err)
 	}
 
 	if evidenceFileId != nil {
+		var err error
+		var fileKey *string
 		file := &File{ID: *evidenceFileId}
-		if err := file.SoftDelete(ctx, conn, scope); err != nil {
-			return fmt.Errorf("failed to soft delete evidence file: %w", err)
+		if fileKey, err = file.HardDelete(ctx, conn, scope); err != nil {
+			return nil, fmt.Errorf("failed to soft delete evidence file: %w", err)
 		}
+		return fileKey, nil
+
 	}
 
-	return nil
+	return nil, err
 }

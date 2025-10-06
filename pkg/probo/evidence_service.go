@@ -246,8 +246,14 @@ func (s *EvidenceService) Delete(
 	return s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := evidence.Delete(ctx, conn, s.svc.scope); err != nil {
+			var fileKey *string
+			var err error
+
+			if fileKey, err = evidence.Delete(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot delete evidence: %w", err)
+			}
+			if err = s.svc.Files.DeleteFileFromS3(ctx, *fileKey); err != nil {
+				return err
 			}
 
 			return nil
