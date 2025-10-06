@@ -39,4 +39,3 @@ ALTER TABLE vendor_compliance_reports
 
 ALTER TABLE vendor_compliance_reports
     DROP COLUMN file_size;
-
