@@ -295,7 +295,7 @@ FROM
     organizations
 WHERE
     %s
-    custom_domain_id = @custom_domain_id
+    AND custom_domain_id = @custom_domain_id
 LIMIT 1
 `
 
