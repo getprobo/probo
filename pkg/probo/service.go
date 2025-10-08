@@ -98,11 +98,8 @@ type (
 		Snapshots                         *SnapshotService
 		ContinualImprovements             *ContinualImprovementService
 		ProcessingActivities              *ProcessingActivityService
-<<<<<<< HEAD
 		Files                             *FileService
-=======
 		CustomDomains                     *CustomDomainService
->>>>>>> 087e86b5 (Add service impl)
 	}
 )
 
@@ -213,7 +210,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		acmeService:   s.acmeService,
 		logger:        s.logger.Named("custom_domains"),
 	}
-	
+
 	return tenantService
 }
 
@@ -358,4 +355,30 @@ func (s *Service) LoadOrganizationByDomain(ctx context.Context, domain string) (
 	)
 
 	return organizationID, err
+}
+
+type TrustCenterInfo struct {
+	ID             gid.GID
+	OrganizationID gid.GID
+}
+
+func (s *Service) LoadTrustCenterBySlug(ctx context.Context, slug string) (*TrustCenterInfo, error) {
+	var info TrustCenterInfo
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var trustCenter coredata.TrustCenter
+			if err := trustCenter.LoadBySlug(ctx, conn, slug); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			info.ID = trustCenter.ID
+			info.OrganizationID = trustCenter.OrganizationID
+
+			return nil
+		},
+	)
+
+	return &info, err
 }

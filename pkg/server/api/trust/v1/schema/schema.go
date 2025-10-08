@@ -137,8 +137,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Node              func(childComplexity int, id gid.GID) int
-		TrustCenterBySlug func(childComplexity int, slug string) int
+		CurrentTrustCenter func(childComplexity int) int
+		Node               func(childComplexity int, id gid.GID) int
+		TrustCenterBySlug  func(childComplexity int, slug string) int
 	}
 
 	Report struct {
@@ -235,6 +236,7 @@ type OrganizationResolver interface {
 type QueryResolver interface {
 	Node(ctx context.Context, id gid.GID) (types.Node, error)
 	TrustCenterBySlug(ctx context.Context, slug string) (*types.TrustCenter, error)
+	CurrentTrustCenter(ctx context.Context) (*types.TrustCenter, error)
 }
 type ReportResolver interface {
 	IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error)
@@ -568,6 +570,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
+
+	case "Query.currentTrustCenter":
+		if e.complexity.Query.CurrentTrustCenter == nil {
+			break
+		}
+
+		return e.complexity.Query.CurrentTrustCenter(childComplexity), true
 
 	case "Query.node":
 		if e.complexity.Query.Node == nil {
@@ -1084,7 +1093,6 @@ type DocumentEdge {
   node: Document!
 }
 
-
 type Framework implements Node {
   id: ID!
   name: String!
@@ -1585,20 +1593,18 @@ type AcceptNonDisclosureAgreementPayload {
 type Query {
   node(id: ID!): Node!
   trustCenterBySlug(slug: String!): TrustCenter @mustBeAuthenticated(role: NONE)
+  currentTrustCenter: TrustCenter @mustBeAuthenticated(role: NONE)
 }
 
 type Mutation {
-  requestAllAccesses(
-    input: RequestAllAccessesInput!
-  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
+  requestAllAccesses(input: RequestAllAccessesInput!): RequestAccessesPayload!
+    @mustBeAuthenticated(role: NONE)
 
-  exportDocumentPDF(
-    input: ExportDocumentPDFInput!
-  ): ExportDocumentPDFPayload! @mustBeAuthenticated(role: NONE)
+  exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
+    @mustBeAuthenticated(role: NONE)
 
-  exportReportPDF(
-    input: ExportReportPDFInput!
-  ): ExportReportPDFPayload! @mustBeAuthenticated(role: NONE)
+  exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
+    @mustBeAuthenticated(role: NONE)
 
   acceptNonDisclosureAgreement(
     input: AcceptNonDisclosureAgreementInput!
@@ -4387,6 +4393,100 @@ func (ec *executionContext) fieldContext_Query_trustCenterBySlug(ctx context.Con
 	if fc.Args, err = ec.field_Query_trustCenterBySlug_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_currentTrustCenter(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_currentTrustCenter(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		directive0 := func(rctx context.Context) (any, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().CurrentTrustCenter(rctx)
+		}
+
+		directive1 := func(ctx context.Context) (any, error) {
+			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+			if err != nil {
+				var zeroVal *types.TrustCenter
+				return zeroVal, err
+			}
+			if ec.directives.MustBeAuthenticated == nil {
+				var zeroVal *types.TrustCenter
+				return zeroVal, errors.New("directive mustBeAuthenticated is not implemented")
+			}
+			return ec.directives.MustBeAuthenticated(ctx, nil, directive0, role)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*types.TrustCenter); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.TrustCenter`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*types.TrustCenter)
+	fc.Result = res
+	return ec.marshalOTrustCenter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_currentTrustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TrustCenter_id(ctx, field)
+			case "active":
+				return ec.fieldContext_TrustCenter_active(ctx, field)
+			case "slug":
+				return ec.fieldContext_TrustCenter_slug(ctx, field)
+			case "ndaFileName":
+				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
+			case "ndaFileUrl":
+				return ec.fieldContext_TrustCenter_ndaFileUrl(ctx, field)
+			case "organization":
+				return ec.fieldContext_TrustCenter_organization(ctx, field)
+			case "isUserAuthenticated":
+				return ec.fieldContext_TrustCenter_isUserAuthenticated(ctx, field)
+			case "hasAcceptedNonDisclosureAgreement":
+				return ec.fieldContext_TrustCenter_hasAcceptedNonDisclosureAgreement(ctx, field)
+			case "documents":
+				return ec.fieldContext_TrustCenter_documents(ctx, field)
+			case "audits":
+				return ec.fieldContext_TrustCenter_audits(ctx, field)
+			case "vendors":
+				return ec.fieldContext_TrustCenter_vendors(ctx, field)
+			case "references":
+				return ec.fieldContext_TrustCenter_references(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TrustCenter", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -9551,6 +9651,25 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_trustCenterBySlug(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "currentTrustCenter":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_currentTrustCenter(ctx, field)
 				return res
 			}
 

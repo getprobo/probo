@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/probo"
 	console_v1 "github.com/getprobo/probo/pkg/server/api/console/v1"
 	"github.com/getprobo/probo/pkg/server/session"
@@ -28,6 +29,21 @@ import (
 	"github.com/getprobo/probo/pkg/trust"
 	"go.gearno.de/kit/httpserver"
 )
+
+var (
+	CustomDomainTenantIDKey       = &ctxKey{name: "custom_domain_tenant_id"}
+	CustomDomainOrganizationIDKey = &ctxKey{name: "custom_domain_organization_id"}
+)
+
+func GetCustomDomainTenantID(ctx context.Context) (gid.TenantID, bool) {
+	tenantID, ok := ctx.Value(CustomDomainTenantIDKey).(gid.TenantID)
+	return tenantID, ok
+}
+
+func GetCustomDomainOrganizationID(ctx context.Context) (gid.GID, bool) {
+	organizationID, ok := ctx.Value(CustomDomainOrganizationIDKey).(gid.GID)
+	return organizationID, ok
+}
 
 type (
 	AuthTokenRequest struct {

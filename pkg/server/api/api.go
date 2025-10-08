@@ -53,20 +53,21 @@ type (
 	}
 
 	Config struct {
-		AllowedOrigins      []string
-		Probo               *probo.Service
-		Usrmgr              *usrmgr.Service
-		Trust               *trust.Service
-		Auth                ConsoleAuthConfig
-		TrustAuth           TrustAuthConfig
-		ConnectorRegistry   *connector.ConnectorRegistry
-		SafeRedirect        *saferedirect.SafeRedirect
-		CustomDomainCname   string
-		Logger              *log.Logger
+		AllowedOrigins    []string
+		Probo             *probo.Service
+		Usrmgr            *usrmgr.Service
+		Trust             *trust.Service
+		Auth              ConsoleAuthConfig
+		TrustAuth         TrustAuthConfig
+		ConnectorRegistry *connector.ConnectorRegistry
+		SafeRedirect      *saferedirect.SafeRedirect
+		CustomDomainCname string
+		Logger            *log.Logger
 	}
 
 	Server struct {
-		cfg Config
+		cfg             Config
+		trustAPIHandler http.Handler
 	}
 )
 
@@ -108,9 +109,37 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, ErrMissingUsrmgrService
 	}
 
+	// Create trust API handler once
+	trustAPIHandler := trust_v1.NewMux(
+		cfg.Logger.Named("trust.v1"),
+		cfg.Usrmgr,
+		cfg.Trust,
+		console_v1.AuthConfig{
+			CookieName:      cfg.Auth.CookieName,
+			CookieDomain:    cfg.Auth.CookieDomain,
+			SessionDuration: cfg.Auth.SessionDuration,
+			CookieSecret:    cfg.Auth.CookieSecret,
+		},
+		trust_v1.TrustAuthConfig{
+			CookieName:        cfg.TrustAuth.CookieName,
+			CookieDomain:      cfg.TrustAuth.CookieDomain,
+			CookieDuration:    cfg.TrustAuth.CookieDuration,
+			TokenDuration:     cfg.TrustAuth.TokenDuration,
+			ReportURLDuration: cfg.TrustAuth.ReportURLDuration,
+			TokenSecret:       cfg.TrustAuth.TokenSecret,
+			Scope:             cfg.TrustAuth.Scope,
+			TokenType:         cfg.TrustAuth.TokenType,
+		},
+	)
+
 	return &Server{
-		cfg: cfg,
+		cfg:             cfg,
+		trustAPIHandler: trustAPIHandler,
 	}, nil
+}
+
+func (s *Server) TrustAPIHandler() http.Handler {
+	return s.trustAPIHandler
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -160,30 +189,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	)
 
 	// Mount the trust API with authentication
-	router.Mount(
-		"/trust/v1",
-		trust_v1.NewMux(
-			s.cfg.Logger.Named("trust.v1"),
-			s.cfg.Usrmgr,
-			s.cfg.Trust,
-			console_v1.AuthConfig{
-				CookieName:      s.cfg.Auth.CookieName,
-				CookieDomain:    s.cfg.Auth.CookieDomain,
-				SessionDuration: s.cfg.Auth.SessionDuration,
-				CookieSecret:    s.cfg.Auth.CookieSecret,
-			},
-			trust_v1.TrustAuthConfig{
-				CookieName:        s.cfg.TrustAuth.CookieName,
-				CookieDomain:      s.cfg.TrustAuth.CookieDomain,
-				CookieDuration:    s.cfg.TrustAuth.CookieDuration,
-				TokenDuration:     s.cfg.TrustAuth.TokenDuration,
-				ReportURLDuration: s.cfg.TrustAuth.ReportURLDuration,
-				TokenSecret:       s.cfg.TrustAuth.TokenSecret,
-				Scope:             s.cfg.TrustAuth.Scope,
-				TokenType:         s.cfg.TrustAuth.TokenType,
-			},
-		),
-	)
+	router.Mount("/trust/v1", s.trustAPIHandler)
 
 	router.ServeHTTP(w, r)
 }

@@ -89,6 +89,31 @@ func (s TrustCenterService) Get(
 	return trustCenter, file, nil
 }
 
+func (s TrustCenterService) GetByOrganizationID(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*coredata.TrustCenter, error) {
+	trustCenter := &coredata.TrustCenter{}
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := trustCenter.LoadByOrganizationID(ctx, conn, s.svc.scope, organizationID)
+			if err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return trustCenter, nil
+}
+
 func (s TrustCenterService) GenerateNDAFileURL(
 	ctx context.Context,
 	trustCenterID gid.GID,

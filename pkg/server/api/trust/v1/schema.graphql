@@ -71,7 +71,6 @@ type DocumentEdge {
   node: Document!
 }
 
-
 type Framework implements Node {
   id: ID!
   name: String!
@@ -572,20 +571,18 @@ type AcceptNonDisclosureAgreementPayload {
 type Query {
   node(id: ID!): Node!
   trustCenterBySlug(slug: String!): TrustCenter @mustBeAuthenticated(role: NONE)
+  currentTrustCenter: TrustCenter @mustBeAuthenticated(role: NONE)
 }
 
 type Mutation {
-  requestAllAccesses(
-    input: RequestAllAccessesInput!
-  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
+  requestAllAccesses(input: RequestAllAccessesInput!): RequestAccessesPayload!
+    @mustBeAuthenticated(role: NONE)
 
-  exportDocumentPDF(
-    input: ExportDocumentPDFInput!
-  ): ExportDocumentPDFPayload! @mustBeAuthenticated(role: NONE)
+  exportDocumentPDF(input: ExportDocumentPDFInput!): ExportDocumentPDFPayload!
+    @mustBeAuthenticated(role: NONE)
 
-  exportReportPDF(
-    input: ExportReportPDFInput!
-  ): ExportReportPDFPayload! @mustBeAuthenticated(role: NONE)
+  exportReportPDF(input: ExportReportPDFInput!): ExportReportPDFPayload!
+    @mustBeAuthenticated(role: NONE)
 
   acceptNonDisclosureAgreement(
     input: AcceptNonDisclosureAgreementInput!

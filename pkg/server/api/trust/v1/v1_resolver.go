@@ -547,6 +547,45 @@ func (r *queryResolver) TrustCenterBySlug(ctx context.Context, slug string) (*ty
 	return response, nil
 }
 
+// CurrentTrustCenter is the resolver for the currentTrustCenter field.
+func (r *queryResolver) CurrentTrustCenter(ctx context.Context) (*types.TrustCenter, error) {
+	// Get organization and tenant from custom domain context
+	organizationID, ok := GetCustomDomainOrganizationID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("organization not found for custom domain")
+	}
+
+	tenantID, ok := GetCustomDomainTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant not found for custom domain")
+	}
+
+	publicTrustService := r.PublicTrustService(ctx, tenantID)
+
+	trustCenter, err := publicTrustService.TrustCenters.GetByOrganizationID(ctx, organizationID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load trust center: %w", err)
+	}
+
+	if !trustCenter.Active {
+		return nil, nil
+	}
+
+	trustCenter, file, err := publicTrustService.TrustCenters.Get(ctx, trustCenter.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get trust center: %w", err))
+	}
+
+	org, err := publicTrustService.Organizations.Get(ctx, organizationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+	response := types.NewTrustCenter(trustCenter, file)
+	response.Organization = types.NewOrganization(org)
+
+	return response, nil
+}
+
 // IsUserAuthorized is the resolver for the isUserAuthorized field.
 func (r *reportResolver) IsUserAuthorized(ctx context.Context, obj *types.Report) (bool, error) {
 	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())

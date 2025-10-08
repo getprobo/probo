@@ -392,7 +392,7 @@ func (impl *Implm) Run(
 	defer stopTrustCenterServer()
 	wg.Go(
 		func() {
-			if err := impl.runTrustCenterServer(trustCenterServerCtx, l, r, tp, pgClient, serverHandler, acmeService); err != nil {
+			if err := impl.runTrustCenterServer(trustCenterServerCtx, l, r, tp, pgClient, serverHandler.TrustCenterHandler(), acmeService); err != nil {
 				cancel(fmt.Errorf("trust center server crashed: %w", err))
 			}
 		},
