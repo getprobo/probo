@@ -21,6 +21,7 @@ import (
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/docgen"
+	"github.com/getprobo/probo/pkg/file"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/page"
@@ -141,6 +142,7 @@ func (s *DocumentService) exportPDFData(
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
 	owner := &coredata.People{}
+	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -161,6 +163,10 @@ func (s *DocumentService) exportPDFData(
 				return fmt.Errorf("cannot load document owner: %w", err)
 			}
 
+			if err := organization.LoadByID(ctx, conn, s.svc.scope, document.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -177,13 +183,28 @@ func (s *DocumentService) exportPDFData(
 		classification = docgen.ClassificationSecret
 	}
 
+	horizontalLogoBase64 := ""
+	if organization.HorizontalLogoFileID != nil {
+		fileRecord := &coredata.File{}
+		fileErr := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+			return fileRecord.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
+		})
+		if fileErr == nil {
+			base64Data, mimeType, logoErr := file.GetFileBase64(ctx, s.svc.s3, s.svc.bucket, fileRecord.FileKey)
+			if logoErr == nil {
+				horizontalLogoBase64 = fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
+			}
+		}
+	}
+
 	docData := docgen.DocumentData{
-		Title:          version.Title,
-		Content:        version.Content,
-		Version:        version.VersionNumber,
-		Classification: classification,
-		Approver:       owner.FullName,
-		PublishedAt:    version.PublishedAt,
+		Title:                       version.Title,
+		Content:                     version.Content,
+		Version:                     version.VersionNumber,
+		Classification:              classification,
+		Approver:                    owner.FullName,
+		PublishedAt:                 version.PublishedAt,
+		CompanyHorizontalLogoBase64: horizontalLogoBase64,
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)

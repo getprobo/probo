@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<75e8a41e9d070472ff42d71e17c47fa6>>
+ * @generated SignedSource<<183eaf6637cbe68760338959359c5b3d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -41,6 +41,7 @@ export type SettingsPageFragment$data = {
   readonly description: string | null | undefined;
   readonly email: string | null | undefined;
   readonly headquarterAddress: string | null | undefined;
+  readonly horizontalLogoUrl: string | null | undefined;
   readonly id: string;
   readonly logoUrl: string | null | undefined;
   readonly name: string;
@@ -118,6 +119,13 @@ return {
       "args": null,
       "kind": "ScalarField",
       "name": "logoUrl",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "horizontalLogoUrl",
       "storageKey": null
     },
     {
@@ -310,6 +318,6 @@ return {
 };
 })();
 
-(node as any).hash = "9786965352e1978c1171509fcce34b56";
+(node as any).hash = "d8d9f7dc7c5f1805364ee57961b17509";
 
 export default node;

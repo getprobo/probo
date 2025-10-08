@@ -71,6 +71,7 @@ type (
 		ID                 gid.GID
 		Name               *string
 		File               *File
+		HorizontalLogoFile *File
 		Description        **string
 		WebsiteURL         **string
 		Email              **string
@@ -160,14 +161,15 @@ func (s OrganizationService) Update(
 ) (*coredata.Organization, error) {
 	organization := &coredata.Organization{}
 
-	err := s.svc.pg.WithConn(
+	err := s.svc.pg.WithTx(
 		ctx,
-		func(conn pg.Conn) error {
-			if err := organization.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
+		func(tx pg.Conn) error {
+			if err := organization.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
-			organization.UpdatedAt = time.Now()
+			now := time.Now()
+			organization.UpdatedAt = now
 
 			if req.Name != nil {
 				organization.Name = *req.Name
@@ -261,7 +263,89 @@ func (s OrganizationService) Update(
 				organization.LogoObjectKey = objectKey.String()
 			}
 
-			if err := organization.Update(ctx, s.svc.scope, conn); err != nil {
+			if req.HorizontalLogoFile != nil {
+				fileID := gid.New(s.svc.scope.GetTenantID(), coredata.FileEntityType)
+				objectKey, err := uuid.NewV7()
+				if err != nil {
+					return fmt.Errorf("cannot generate object key: %w", err)
+				}
+
+				var fileSize int64
+				var fileContent io.ReadSeeker
+				filename := req.HorizontalLogoFile.Filename
+				contentType := req.HorizontalLogoFile.ContentType
+
+				if readSeeker, ok := req.HorizontalLogoFile.Content.(io.ReadSeeker); ok {
+					if req.HorizontalLogoFile.Size <= 0 {
+						size, err := readSeeker.Seek(0, io.SeekEnd)
+						if err != nil {
+							return fmt.Errorf("cannot determine file size: %w", err)
+						}
+						fileSize = size
+
+						_, err = readSeeker.Seek(0, io.SeekStart)
+						if err != nil {
+							return fmt.Errorf("cannot reset file position: %w", err)
+						}
+					} else {
+						fileSize = req.HorizontalLogoFile.Size
+					}
+					fileContent = readSeeker
+				} else {
+					buf, err := io.ReadAll(req.HorizontalLogoFile.Content)
+					if err != nil {
+						return fmt.Errorf("cannot read file: %w", err)
+					}
+					fileSize = int64(len(buf))
+					fileContent = bytes.NewReader(buf)
+				}
+
+				if contentType == "" {
+					contentType = "application/octet-stream"
+					if filename != "" {
+						if detectedType := mime.TypeByExtension(filepath.Ext(filename)); detectedType != "" {
+							contentType = detectedType
+						}
+					}
+				}
+
+				if err := s.fileValidator.Validate(filename, contentType, fileSize); err != nil {
+					return err
+				}
+
+				_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
+					Bucket:      aws.String(s.svc.bucket),
+					Key:         aws.String(objectKey.String()),
+					Body:        fileContent,
+					ContentType: aws.String(contentType),
+					Metadata: map[string]string{
+						"type":            "organization-horizontal-logo",
+						"organization-id": organization.ID.String(),
+					},
+				})
+				if err != nil {
+					return fmt.Errorf("cannot upload horizontal logo file to S3: %w", err)
+				}
+
+				fileRecord := &coredata.File{
+					ID:         fileID,
+					BucketName: s.svc.bucket,
+					MimeType:   contentType,
+					FileName:   filename,
+					FileKey:    objectKey.String(),
+					FileSize:   fileSize,
+					CreatedAt:  now,
+					UpdatedAt:  now,
+				}
+
+				if err := fileRecord.Insert(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot insert file: %w", err)
+				}
+
+				organization.HorizontalLogoFileID = &fileID
+			}
+
+			if err := organization.Update(ctx, s.svc.scope, tx); err != nil {
 				return fmt.Errorf("cannot update organization: %w", err)
 			}
 
@@ -309,6 +393,83 @@ func (s OrganizationService) GenerateLogoURL(
 	}
 
 	return &presignedReq.URL, nil
+}
+
+func (s OrganizationService) GenerateHorizontalLogoURL(
+	ctx context.Context,
+	organizationID gid.GID,
+	expiresIn time.Duration,
+) (*string, error) {
+	organization, err := s.Get(ctx, organizationID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get organization: %w", err)
+	}
+
+	if organization.HorizontalLogoFileID == nil {
+		return nil, nil
+	}
+
+	file := &coredata.File{}
+	err = s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return file.LoadByID(ctx, conn, s.svc.scope, *organization.HorizontalLogoFileID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load file: %w", err)
+	}
+
+	presignClient := s3.NewPresignClient(s.svc.s3)
+
+	encodedFilename := url.QueryEscape(file.FileName)
+	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
+		encodedFilename, encodedFilename)
+
+	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket:                     aws.String(s.svc.bucket),
+		Key:                        aws.String(file.FileKey),
+		ResponseCacheControl:       aws.String("max-age=3600, public"),
+		ResponseContentDisposition: aws.String(contentDisposition),
+	}, func(opts *s3.PresignOptions) {
+		opts.Expires = expiresIn
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot presign GetObject request: %w", err)
+	}
+
+	return &presignedReq.URL, nil
+}
+
+func (s OrganizationService) DeleteHorizontalLogo(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*coredata.Organization, error) {
+	organization := &coredata.Organization{}
+
+	err := s.svc.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			organization.HorizontalLogoFileID = nil
+			organization.UpdatedAt = time.Now()
+
+			if err := organization.Update(ctx, s.svc.scope, tx); err != nil {
+				return fmt.Errorf("cannot update organization: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return organization, nil
 }
 
 func (s OrganizationService) Delete(

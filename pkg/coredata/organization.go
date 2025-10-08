@@ -28,17 +28,18 @@ import (
 
 type (
 	Organization struct {
-		ID                 gid.GID      `db:"id"`
-		TenantID           gid.TenantID `db:"tenant_id"`
-		Name               string       `db:"name"`
-		LogoObjectKey      string       `db:"logo_object_key"`
-		Description        *string      `db:"description"`
-		WebsiteURL         *string      `db:"website_url"`
-		Email              *string      `db:"email"`
-		HeadquarterAddress *string      `db:"headquarter_address"`
-		CustomDomainID     *gid.GID     `db:"custom_domain_id"`
-		CreatedAt          time.Time    `db:"created_at"`
-		UpdatedAt          time.Time    `db:"updated_at"`
+		ID                   gid.GID      `db:"id"`
+		TenantID             gid.TenantID `db:"tenant_id"`
+		Name                 string       `db:"name"`
+		LogoObjectKey        string       `db:"logo_object_key"`
+		HorizontalLogoFileID *gid.GID     `db:"horizontal_logo_file_id"`
+		Description          *string      `db:"description"`
+		WebsiteURL           *string      `db:"website_url"`
+		Email                *string      `db:"email"`
+		HeadquarterAddress   *string      `db:"headquarter_address"`
+		CustomDomainID       *gid.GID     `db:"custom_domain_id"`
+		CreatedAt            time.Time    `db:"created_at"`
+		UpdatedAt            time.Time    `db:"updated_at"`
 	}
 
 	Organizations []*Organization
@@ -69,6 +70,7 @@ SELECT
     id,
     name,
     logo_object_key,
+    horizontal_logo_file_id,
     description,
     website_url,
     email,
@@ -125,6 +127,7 @@ SELECT
     id,
     name,
     logo_object_key,
+    horizontal_logo_file_id,
     description,
     website_url,
     email,
@@ -170,6 +173,7 @@ INSERT INTO organizations (
     id,
     name,
     logo_object_key,
+    horizontal_logo_file_id,
     description,
     website_url,
     email,
@@ -177,21 +181,22 @@ INSERT INTO organizations (
     custom_domain_id,
     created_at,
     updated_at
-) VALUES (@tenant_id, @id, @name, @logo_object_key, @description, @website_url, @email, @headquarter_address, @custom_domain_id, @created_at, @updated_at)
+) VALUES (@tenant_id, @id, @name, @logo_object_key, @horizontal_logo_file_id, @description, @website_url, @email, @headquarter_address, @custom_domain_id, @created_at, @updated_at)
 `
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":           o.TenantID,
-		"id":                  o.ID,
-		"name":                o.Name,
-		"logo_object_key":     o.LogoObjectKey,
-		"description":         o.Description,
-		"website_url":         o.WebsiteURL,
-		"email":               o.Email,
-		"headquarter_address": o.HeadquarterAddress,
-		"custom_domain_id":    o.CustomDomainID,
-		"created_at":          o.CreatedAt,
-		"updated_at":          o.UpdatedAt,
+		"tenant_id":               o.TenantID,
+		"id":                      o.ID,
+		"name":                    o.Name,
+		"logo_object_key":         o.LogoObjectKey,
+		"horizontal_logo_file_id": o.HorizontalLogoFileID,
+		"description":             o.Description,
+		"website_url":             o.WebsiteURL,
+		"email":                   o.Email,
+		"headquarter_address":     o.HeadquarterAddress,
+		"custom_domain_id":        o.CustomDomainID,
+		"created_at":              o.CreatedAt,
+		"updated_at":              o.UpdatedAt,
 	}
 
 	_, err := conn.Exec(ctx, q, args)
@@ -212,6 +217,7 @@ UPDATE organizations
 SET
     name = @name,
     logo_object_key = @logo_object_key,
+    horizontal_logo_file_id = @horizontal_logo_file_id,
     description = @description,
     website_url = @website_url,
     email = @email,
@@ -226,15 +232,16 @@ WHERE
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"id":                  o.ID,
-		"name":                o.Name,
-		"logo_object_key":     o.LogoObjectKey,
-		"description":         o.Description,
-		"website_url":         o.WebsiteURL,
-		"email":               o.Email,
-		"headquarter_address": o.HeadquarterAddress,
-		"custom_domain_id":    o.CustomDomainID,
-		"updated_at":          o.UpdatedAt,
+		"id":                      o.ID,
+		"name":                    o.Name,
+		"logo_object_key":         o.LogoObjectKey,
+		"horizontal_logo_file_id": o.HorizontalLogoFileID,
+		"description":             o.Description,
+		"website_url":             o.WebsiteURL,
+		"email":                   o.Email,
+		"headquarter_address":     o.HeadquarterAddress,
+		"custom_domain_id":        o.CustomDomainID,
+		"updated_at":              o.UpdatedAt,
 	}
 
 	maps.Copy(args, scope.SQLArguments())

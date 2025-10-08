@@ -20,13 +20,20 @@ export function FileButton({
     children,
     icon: IconComponent,
     ref,
+    accept,
     ...props
 }: Props) {
     return (
         <label className={button({ ...props })}>
             {IconComponent && <IconComponent size={16} className="flex-none" />}
             {children}
-            <input type="file" onChange={onChange} hidden ref={ref} />
+            <input
+                type="file"
+                onChange={onChange}
+                hidden
+                ref={ref}
+                {...(accept && { accept })}
+            />
         </label>
     );
 }

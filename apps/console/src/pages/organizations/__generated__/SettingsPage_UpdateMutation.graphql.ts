@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<892a78db951d547b53d595d219b94e75>>
+ * @generated SignedSource<<ce571f7246b6f7500a132f28c8081f84>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,6 +13,7 @@ export type UpdateOrganizationInput = {
   description?: string | null | undefined;
   email?: string | null | undefined;
   headquarterAddress?: string | null | undefined;
+  horizontalLogoFile?: any | null | undefined;
   logo?: any | null | undefined;
   name?: string | null | undefined;
   organizationId: string;
@@ -27,6 +28,7 @@ export type SettingsPage_UpdateMutation$data = {
       readonly description: string | null | undefined;
       readonly email: string | null | undefined;
       readonly headquarterAddress: string | null | undefined;
+      readonly horizontalLogoUrl: string | null | undefined;
       readonly id: string;
       readonly logoUrl: string | null | undefined;
       readonly name: string;
@@ -95,6 +97,13 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
+            "name": "horizontalLogoUrl",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
             "name": "description",
             "storageKey": null
           },
@@ -144,16 +153,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "3526d270f311db33e0563abc99c96978",
+    "cacheID": "097a6e519249d6f2b3c2a95963f85a6c",
     "id": null,
     "metadata": {},
     "name": "SettingsPage_UpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation SettingsPage_UpdateMutation(\n  $input: UpdateOrganizationInput!\n) {\n  updateOrganization(input: $input) {\n    organization {\n      id\n      name\n      logoUrl\n      description\n      websiteUrl\n      email\n      headquarterAddress\n    }\n  }\n}\n"
+    "text": "mutation SettingsPage_UpdateMutation(\n  $input: UpdateOrganizationInput!\n) {\n  updateOrganization(input: $input) {\n    organization {\n      id\n      name\n      logoUrl\n      horizontalLogoUrl\n      description\n      websiteUrl\n      email\n      headquarterAddress\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "54949158defa7f1bb8e1e578db7cd7be";
+(node as any).hash = "c676129018636d84dbca9d8c98962af7";
 
 export default node;
