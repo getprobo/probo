@@ -66,14 +66,6 @@ func (s ReportService) Delete(
 			return fmt.Errorf("cannot get report: %w", err)
 		}
 
-		_, err = s.svc.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
-			Bucket: aws.String(s.svc.bucket),
-			Key:    aws.String(report.ObjectKey),
-		})
-		if err != nil {
-			return fmt.Errorf("cannot delete report from S3: %w", err)
-		}
-
 		err = report.Delete(ctx, conn, s.svc.scope)
 		if err != nil {
 			return fmt.Errorf("cannot delete report: %w", err)
