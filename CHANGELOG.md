@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+- Display more measures and tasks
+
 # [0.66.1] - 2025-10-06
 
 ### Fixed
