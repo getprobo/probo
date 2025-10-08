@@ -19,10 +19,11 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/securecookie"
-	"github.com/getprobo/probo/pkg/usrmgr"
+	"github.com/getprobo/probo/pkg/auth"
 )
 
 type AuthConfig struct {
@@ -48,7 +49,8 @@ func TryAuth(
 	ctx context.Context,
 	w http.ResponseWriter,
 	r *http.Request,
-	usrmgrSvc *usrmgr.Service,
+	authSvc *auth.Service,
+	authzSvc *authz.Service,
 	authCfg AuthConfig,
 	errorHandler ErrorHandler,
 ) *AuthResult {
@@ -71,7 +73,7 @@ func TryAuth(
 		return nil
 	}
 
-	session, err := usrmgrSvc.GetSession(ctx, sessionID)
+	session, err := authSvc.GetSession(ctx, sessionID)
 	if err != nil {
 		if errorHandler.OnSessionError != nil {
 			errorHandler.OnSessionError(w, authCfg)
@@ -79,7 +81,7 @@ func TryAuth(
 		return nil
 	}
 
-	user, err := usrmgrSvc.GetUserBySession(ctx, sessionID)
+	user, err := authSvc.GetUserBySession(ctx, sessionID)
 	if err != nil {
 		if errorHandler.OnUserError != nil {
 			errorHandler.OnUserError(w, authCfg)
@@ -87,12 +89,17 @@ func TryAuth(
 		return nil
 	}
 
-	tenantIDs, err := usrmgrSvc.ListTenantsForUserID(ctx, user.ID)
+	organizations, err := authzSvc.GetAllUserOrganizations(ctx, user.ID)
 	if err != nil {
 		if errorHandler.OnTenantError != nil {
 			errorHandler.OnTenantError(err)
 		}
 		return nil
+	}
+
+	tenantIDs := make([]gid.TenantID, len(organizations))
+	for i, org := range organizations {
+		tenantIDs[i] = org.ID.TenantID()
 	}
 
 	return &AuthResult{

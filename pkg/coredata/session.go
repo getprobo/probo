@@ -47,6 +47,7 @@ func (s Session) CursorKey(orderBy SessionOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
+// Tenant id scope is not applied because we want to access sessions across all tenants for authentication purposes.
 func (s *Session) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,

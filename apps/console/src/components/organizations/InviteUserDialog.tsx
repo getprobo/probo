@@ -17,9 +17,22 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
 
 const inviteMutation = graphql`
-  mutation InviteUserDialogMutation($input: InviteUserInput!) {
+  mutation InviteUserDialogMutation(
+    $input: InviteUserInput!
+    $connections: [ID!]!
+  ) {
     inviteUser(input: $input) {
-      success
+      invitationEdge @appendEdge(connections: $connections) {
+        node {
+          id
+          email
+          fullName
+          role
+          expiresAt
+          acceptedAt
+          createdAt
+        }
+      }
     }
   }
 `;
@@ -30,7 +43,11 @@ const schema = z.object({
   createPeople: z.boolean().default(false),
 });
 
-export function InviteUserDialog({ children }: PropsWithChildren) {
+type Props = PropsWithChildren & {
+  connectionId?: string;
+};
+
+export function InviteUserDialog({ children, connectionId }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const [inviteUser, isInviting] = useMutationWithToasts(inviteMutation, {
@@ -53,6 +70,7 @@ export function InviteUserDialog({ children }: PropsWithChildren) {
           fullName: data.fullName,
           createPeople: data.createPeople,
         },
+        connections: connectionId ? [connectionId] : ["SettingsPageInvitations_invitations"],
       },
       onSuccess: () => {
         reset();

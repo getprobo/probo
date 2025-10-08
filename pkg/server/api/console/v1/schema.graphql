@@ -1199,6 +1199,54 @@ enum SnapshotOrderField
     )
 }
 
+enum MembershipOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MembershipOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.MembershipOrderFieldFullName"
+    )
+  EMAIL_ADDRESS
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
+    )
+  ROLE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.MembershipOrderFieldRole"
+    )
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.MembershipOrderFieldCreatedAt"
+    )
+}
+
+enum InvitationOrderField
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.InvitationOrderField") {
+  FULL_NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldFullName"
+    )
+  EMAIL
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldEmail"
+    )
+  ROLE
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldRole"
+    )
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
+    )
+  EXPIRES_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldExpiresAt"
+    )
+  ACCEPTED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldAcceptedAt"
+    )
+}
+
 # Input Types
 input UserOrder
   @goModel(
@@ -1394,6 +1442,19 @@ input SnapshotOrder
   field: SnapshotOrderField!
 }
 
+input MembershipOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.MembershipOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: MembershipOrderField!
+}
+
+input InvitationOrder {
+  direction: OrderDirection!
+  field: InvitationOrderField!
+}
+
 input DocumentVersionFilter {
   status: DocumentStatus
 }
@@ -1490,13 +1551,21 @@ type Organization implements Node {
   email: String
   headquarterAddress: String
 
-  users(
+  memberships(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: UserOrder
-  ): UserConnection! @goField(forceResolver: true)
+    orderBy: MembershipOrder
+  ): MembershipConnection! @goField(forceResolver: true)
+
+  invitations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: InvitationOrder
+  ): InvitationConnection! @goField(forceResolver: true)
 
   connectors(
     first: Int
@@ -1660,6 +1729,27 @@ type User implements Node {
   updatedAt: Datetime!
 
   people(organizationId: ID!): People @goField(forceResolver: true)
+}
+
+type Membership implements Node {
+  id: ID!
+  userID: ID!
+  organizationID: ID!
+  role: String!
+  fullName: String!
+  emailAddress: String!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+type Invitation implements Node {
+  id: ID!
+  email: String!
+  fullName: String!
+  role: String!
+  expiresAt: Datetime!
+  acceptedAt: Datetime
+  createdAt: Datetime!
 }
 
 type Connector implements Node {
@@ -2298,8 +2388,20 @@ type TrustCenterReferenceEdge {
 }
 
 type UserConnection {
+  totalCount: Int! @goField(forceResolver: true)
   edges: [UserEdge!]!
   pageInfo: PageInfo!
+}
+
+type MembershipConnection {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [MembershipEdge!]!
+  pageInfo: PageInfo!
+}
+
+type MembershipEdge {
+  cursor: CursorKey!
+  node: Membership!
 }
 
 type UserEdge {
@@ -2590,6 +2692,17 @@ type SnapshotEdge {
   node: Snapshot!
 }
 
+type InvitationConnection {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [InvitationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type InvitationEdge {
+  cursor: CursorKey!
+  node: Invitation!
+}
+
 # Root Types
 type Query {
   node(id: ID!): Node!
@@ -2649,7 +2762,8 @@ type Mutation {
   # User mutations
   confirmEmail(input: ConfirmEmailInput!): ConfirmEmailPayload!
   inviteUser(input: InviteUserInput!): InviteUserPayload!
-  removeUser(input: RemoveUserInput!): RemoveUserPayload!
+  deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload!
+  removeMember(input: RemoveMemberInput!): RemoveMemberPayload!
 
   # People mutations
   createPeople(input: CreatePeopleInput!): CreatePeoplePayload!
@@ -3395,9 +3509,13 @@ input InviteUserInput {
   createPeople: Boolean!
 }
 
-input RemoveUserInput {
+input DeleteInvitationInput {
+  invitationId: ID!
+}
+
+input RemoveMemberInput {
   organizationId: ID!
-  userId: ID!
+  memberId: ID!
 }
 
 input CreateControlInput {
@@ -3910,10 +4028,14 @@ type ConfirmEmailPayload {
 }
 
 type InviteUserPayload {
-  success: Boolean!
+  invitationEdge: InvitationEdge!
 }
 
-type RemoveUserPayload {
+type DeleteInvitationPayload {
+  deletedInvitationId: ID!
+}
+
+type RemoveMemberPayload {
   success: Boolean!
 }
 

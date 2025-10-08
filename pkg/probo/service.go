@@ -21,12 +21,13 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/agents"
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/cipher"
 	"github.com/getprobo/probo/pkg/filevalidation"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
-	"github.com/getprobo/probo/pkg/usrmgr"
+	"github.com/getprobo/probo/pkg/auth"
 	"go.gearno.de/kit/pg"
 	"go.gearno.de/x/ref"
 )
@@ -53,7 +54,8 @@ type (
 		trustConfig       TrustConfig
 		agentConfig       agents.Config
 		html2pdfConverter *html2pdf.Converter
-		usrmgr            *usrmgr.Service
+		auth              *auth.Service
+		authz             *authz.Service
 	}
 
 	TenantService struct {
@@ -108,7 +110,8 @@ func NewService(
 	trustConfig TrustConfig,
 	agentConfig agents.Config,
 	html2pdfConverter *html2pdf.Converter,
-	usrmgrService *usrmgr.Service,
+	authService *auth.Service,
+	authzService *authz.Service,
 ) (*Service, error) {
 	if bucket == "" {
 		return nil, fmt.Errorf("bucket is required")
@@ -124,7 +127,8 @@ func NewService(
 		trustConfig:       trustConfig,
 		agentConfig:       agentConfig,
 		html2pdfConverter: html2pdfConverter,
-		usrmgr:            usrmgrService,
+		auth:              authService,
+		authz:             authzService,
 	}
 
 	return svc, nil
@@ -186,7 +190,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Audits = &AuditService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
-	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, usrmgr: s.usrmgr}
+	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
 	tenantService.Nonconformities = &NonconformityService{svc: tenantService}
 	tenantService.Obligations = &ObligationService{svc: tenantService}

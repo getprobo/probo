@@ -10,6 +10,8 @@ export const organizationViewQuery = graphql`
         id
         name
         ...SettingsPageFragment
+        ...SettingsPageMembershipsFragment
+        ...SettingsPageInvitationsFragment
       }
     }
   }

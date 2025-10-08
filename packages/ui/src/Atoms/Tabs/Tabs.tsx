@@ -8,7 +8,7 @@ const cls = tv({
     slots: {
         wrapper:
             "border-b border-border-low flex gap-6 text-sm font-medium text-txt-secondary",
-        item: "py-4 hover:text-txt-primary border-b-2 active:border-border-active -mb-[1px] active:text-txt-primary flex items-center gap-2",
+        item: "py-4 hover:text-txt-primary border-b-2 active:border-border-active -mb-[1px] active:text-txt-primary flex items-center gap-2 cursor-pointer",
         badge: "py-1 px-2 text-txt-secondary text-xs font-semibold rounded-lg bg-highlight",
     },
     variants: {

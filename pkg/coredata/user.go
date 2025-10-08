@@ -87,7 +87,7 @@ FROM
 	users
 WHERE
 	id IN (
-		SELECT user_id FROM users_organizations WHERE organization_id = @organization_id
+		SELECT user_id FROM authz_memberships WHERE organization_id = @organization_id
 	)
 	AND %s
 `
@@ -112,6 +112,36 @@ WHERE
 	return nil
 }
 
+func (u *Users) CountByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	organizationID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(*)
+FROM
+	users
+WHERE
+	id IN (
+		SELECT user_id FROM authz_memberships WHERE organization_id = @organization_id
+	)
+`
+
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count users: %w", err)
+	}
+
+	return count, nil
+}
+
+// Tenant id scope is not applied because we want to access users across all tenants for authentication purposes.
 func (u *User) LoadByEmail(
 	ctx context.Context,
 	conn pg.Conn,
@@ -154,6 +184,7 @@ LIMIT 1;
 	return nil
 }
 
+// Tenant id scope is not applied because we want to access users across all tenants for authentication purposes.
 func (u *User) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,

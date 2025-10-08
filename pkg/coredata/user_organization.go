@@ -46,6 +46,7 @@ VALUES (@user_id, @organization_id, @created_at)
 	return err
 }
 
+// Tenant id scope is not applied because user organizations are managed at the organization level and don't require tenant isolation.
 func (uo UserOrganization) Delete(ctx context.Context, conn pg.Conn) error {
 	q := `
 DELETE FROM users_organizations WHERE user_id = @user_id AND organization_id = @organization_id

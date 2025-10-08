@@ -58,4 +58,6 @@ const (
 	ExportJobEntityType
 	TrustCenterReferenceEntityType
 	TrustCenterDocumentAccessEntityType
+	InvitationEntityType
+	MembershipEntityType
 )

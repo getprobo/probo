@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9ed3f33dde5f6a00c742b8db245ba03b>>
+ * @generated SignedSource<<8efbb638045cb24913b04b4de2033357>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,11 +16,22 @@ export type InviteUserInput = {
   organizationId: string;
 };
 export type InviteUserDialogMutation$variables = {
+  connections: ReadonlyArray<string>;
   input: InviteUserInput;
 };
 export type InviteUserDialogMutation$data = {
   readonly inviteUser: {
-    readonly success: boolean;
+    readonly invitationEdge: {
+      readonly node: {
+        readonly acceptedAt: any | null | undefined;
+        readonly createdAt: any;
+        readonly email: string;
+        readonly expiresAt: any;
+        readonly fullName: string;
+        readonly id: string;
+        readonly role: string;
+      };
+    };
   };
 };
 export type InviteUserDialogMutation = {
@@ -29,67 +40,170 @@ export type InviteUserDialogMutation = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = [
+var v0 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "connections"
+},
+v1 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "input"
+},
+v2 = [
   {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "input"
+    "kind": "Variable",
+    "name": "input",
+    "variableName": "input"
   }
 ],
-v1 = [
-  {
-    "alias": null,
-    "args": [
-      {
-        "kind": "Variable",
-        "name": "input",
-        "variableName": "input"
-      }
-    ],
-    "concreteType": "InviteUserPayload",
-    "kind": "LinkedField",
-    "name": "inviteUser",
-    "plural": false,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "success",
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
-  }
-];
+v3 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "InvitationEdge",
+  "kind": "LinkedField",
+  "name": "invitationEdge",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "Invitation",
+      "kind": "LinkedField",
+      "name": "node",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "id",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "email",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "fullName",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "role",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "expiresAt",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "acceptedAt",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "createdAt",
+          "storageKey": null
+        }
+      ],
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+};
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/)
+    ],
     "kind": "Fragment",
     "metadata": null,
     "name": "InviteUserDialogMutation",
-    "selections": (v1/*: any*/),
+    "selections": [
+      {
+        "alias": null,
+        "args": (v2/*: any*/),
+        "concreteType": "InviteUserPayload",
+        "kind": "LinkedField",
+        "name": "inviteUser",
+        "plural": false,
+        "selections": [
+          (v3/*: any*/)
+        ],
+        "storageKey": null
+      }
+    ],
     "type": "Mutation",
     "abstractKey": null
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v1/*: any*/),
+      (v0/*: any*/)
+    ],
     "kind": "Operation",
     "name": "InviteUserDialogMutation",
-    "selections": (v1/*: any*/)
+    "selections": [
+      {
+        "alias": null,
+        "args": (v2/*: any*/),
+        "concreteType": "InviteUserPayload",
+        "kind": "LinkedField",
+        "name": "inviteUser",
+        "plural": false,
+        "selections": [
+          (v3/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "filters": null,
+            "handle": "appendEdge",
+            "key": "",
+            "kind": "LinkedHandle",
+            "name": "invitationEdge",
+            "handleArgs": [
+              {
+                "kind": "Variable",
+                "name": "connections",
+                "variableName": "connections"
+              }
+            ]
+          }
+        ],
+        "storageKey": null
+      }
+    ]
   },
   "params": {
-    "cacheID": "aa667927b5e2cd0019a8457edc286181",
+    "cacheID": "2f6a83e238f7749e18757ec74e86b64b",
     "id": null,
     "metadata": {},
     "name": "InviteUserDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation InviteUserDialogMutation(\n  $input: InviteUserInput!\n) {\n  inviteUser(input: $input) {\n    success\n  }\n}\n"
+    "text": "mutation InviteUserDialogMutation(\n  $input: InviteUserInput!\n) {\n  inviteUser(input: $input) {\n    invitationEdge {\n      node {\n        id\n        email\n        fullName\n        role\n        expiresAt\n        acceptedAt\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "de4c5b5208a2ff0953e9d15b844df842";
+(node as any).hash = "3981061f31a11e83ad32bed9fabddf64";
 
 export default node;

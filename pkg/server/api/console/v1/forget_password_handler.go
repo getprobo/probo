@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/getprobo/probo/pkg/usrmgr"
+	"github.com/getprobo/probo/pkg/auth"
 	"go.gearno.de/kit/httpserver"
 )
 
@@ -33,7 +33,7 @@ type (
 	}
 )
 
-func ForgetPasswordHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.HandlerFunc {
+func ForgetPasswordHandler(authSvc *auth.Service, authCfg AuthConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req ForgetPasswordRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -41,7 +41,7 @@ func ForgetPasswordHandler(usrmgrSvc *usrmgr.Service, authCfg AuthConfig) http.H
 			return
 		}
 
-		err := usrmgrSvc.ForgetPassword(r.Context(), req.Email)
+		err := authSvc.ForgetPassword(r.Context(), req.Email)
 		if err != nil {
 			// For security reasons, we don't expose whether an email exists or not
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("cannot process request: %w", err))

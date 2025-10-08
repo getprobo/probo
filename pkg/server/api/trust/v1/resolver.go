@@ -26,17 +26,18 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/getprobo/probo/pkg/auth"
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/probo"
 	console_v1 "github.com/getprobo/probo/pkg/server/api/console/v1"
-	"github.com/getprobo/probo/pkg/server/api/trust/v1/auth"
 	"github.com/getprobo/probo/pkg/server/api/trust/v1/schema"
+	"github.com/getprobo/probo/pkg/server/api/trust/v1/trustauth"
 	gqlutils "github.com/getprobo/probo/pkg/server/graphql"
 	"github.com/getprobo/probo/pkg/server/session"
 	"github.com/getprobo/probo/pkg/statelesstoken"
 	"github.com/getprobo/probo/pkg/trust"
-	"github.com/getprobo/probo/pkg/usrmgr"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 )
@@ -79,31 +80,32 @@ func UserFromContext(ctx context.Context) *coredata.User {
 	return user
 }
 
-func TokenAccessFromContext(ctx context.Context) *auth.TokenAccessData {
-	tokenAccess, _ := ctx.Value(tokenAccessContextKey).(*auth.TokenAccessData)
+func TokenAccessFromContext(ctx context.Context) *trustauth.TokenAccessData {
+	tokenAccess, _ := ctx.Value(tokenAccessContextKey).(*trustauth.TokenAccessData)
 	return tokenAccess
 }
 
-// UserFromContext implements auth.ContextAccessor interface
+// UserFromContext implements trustauth.ContextAccessor interface
 func (r *Resolver) UserFromContext(ctx context.Context) *coredata.User {
 	return UserFromContext(ctx)
 }
 
-// TokenAccessFromContext implements auth.ContextAccessor interface
-func (r *Resolver) TokenAccessFromContext(ctx context.Context) *auth.TokenAccessData {
+// TokenAccessFromContext implements trustauth.ContextAccessor interface
+func (r *Resolver) TokenAccessFromContext(ctx context.Context) *trustauth.TokenAccessData {
 	return TokenAccessFromContext(ctx)
 }
 
 func NewMux(
 	logger *log.Logger,
-	usrmgrSvc *usrmgr.Service,
+	authSvc *auth.Service,
+	authzSvc *authz.Service,
 	trustSvc *trust.Service,
 	authCfg console_v1.AuthConfig,
 	trustAuthCfg TrustAuthConfig,
 ) *chi.Mux {
 	r := chi.NewMux()
 
-	r.Handle("/graphql", graphqlHandler(logger, usrmgrSvc, trustSvc, authCfg, trustAuthCfg))
+	r.Handle("/graphql", graphqlHandler(logger, authSvc, authzSvc, trustSvc, authCfg, trustAuthCfg))
 
 	r.Post("/auth/authenticate", authTokenHandler(trustSvc, trustAuthCfg))
 	r.Delete("/auth/logout", trustCenterLogoutHandler(authCfg, trustAuthCfg))
@@ -111,7 +113,7 @@ func NewMux(
 	return r
 }
 
-func graphqlHandler(logger *log.Logger, usrmgrSvc *usrmgr.Service, trustSvc *trust.Service, authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig) http.HandlerFunc {
+func graphqlHandler(logger *log.Logger, authSvc *auth.Service, authzSvc *authz.Service, trustSvc *trust.Service, authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig) http.HandlerFunc {
 	resolver := &Resolver{
 		trustCenterSvc: trustSvc,
 		authCfg:        authCfg,
@@ -122,7 +124,7 @@ func graphqlHandler(logger *log.Logger, usrmgrSvc *usrmgr.Service, trustSvc *tru
 		Resolvers: resolver,
 	}
 
-	c.Directives.MustBeAuthenticated = auth.MustBeAuthenticatedDirective(resolver)
+	c.Directives.MustBeAuthenticated = trustauth.MustBeAuthenticatedDirective(resolver)
 
 	es := schema.NewExecutableSchema(c)
 
@@ -136,7 +138,7 @@ func graphqlHandler(logger *log.Logger, usrmgrSvc *usrmgr.Service, trustSvc *tru
 
 	srv.SetRecoverFunc(gqlutils.RecoverFunc)
 
-	return WithSession(usrmgrSvc, trustSvc, authCfg, trustAuthCfg, srv.ServeHTTP)
+	return WithSession(authSvc, authzSvc, trustSvc, authCfg, trustAuthCfg, srv.ServeHTTP)
 }
 
 func (r *Resolver) RootTrustService(ctx context.Context) *trust.TenantService {
@@ -148,14 +150,14 @@ func (r *Resolver) PublicTrustService(ctx context.Context, tenantID gid.TenantID
 }
 
 func (r *Resolver) PrivateTrustService(ctx context.Context, tenantID gid.TenantID) (*trust.TenantService, error) {
-	if err := auth.ValidateTenantAccess(ctx, r, userTenantContextKey, tenantID); err != nil {
+	if err := trustauth.ValidateTenantAccess(ctx, r, userTenantContextKey, tenantID); err != nil {
 		return nil, fmt.Errorf("cannot access trust center: %w", err)
 	}
 
 	return r.trustCenterSvc.WithTenant(tenantID), nil
 }
 
-func WithSession(usrmgrSvc *usrmgr.Service, trustSvc *trust.Service, authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig, next http.HandlerFunc) http.HandlerFunc {
+func WithSession(authSvc *auth.Service, authzSvc *authz.Service, trustSvc *trust.Service, authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -167,9 +169,9 @@ func WithSession(usrmgrSvc *usrmgr.Service, trustSvc *trust.Service, authCfg con
 			return
 		}
 
-		if authCtx := trySessionAuth(ctx, w, r, usrmgrSvc, authCfg); authCtx != nil {
+		if authCtx := trySessionAuth(ctx, w, r, authSvc, authzSvc, authCfg); authCtx != nil {
 			next(w, r.WithContext(authCtx))
-			updateSessionIfNeeded(authCtx, usrmgrSvc)
+			updateSessionIfNeeded(authCtx, authSvc)
 			return
 		}
 
@@ -177,7 +179,7 @@ func WithSession(usrmgrSvc *usrmgr.Service, trustSvc *trust.Service, authCfg con
 	}
 }
 
-func trySessionAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, usrmgrSvc *usrmgr.Service, authCfg console_v1.AuthConfig) context.Context {
+func trySessionAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, authSvc *auth.Service, authzSvc *authz.Service, authCfg console_v1.AuthConfig) context.Context {
 	sessionAuthCfg := session.AuthConfig{
 		CookieName:   authCfg.CookieName,
 		CookieSecret: authCfg.CookieSecret,
@@ -198,7 +200,7 @@ func trySessionAuth(ctx context.Context, w http.ResponseWriter, r *http.Request,
 		},
 	}
 
-	authResult := session.TryAuth(ctx, w, r, usrmgrSvc, sessionAuthCfg, errorHandler)
+	authResult := session.TryAuth(ctx, w, r, authSvc, authzSvc, sessionAuthCfg, errorHandler)
 	if authResult == nil {
 		return nil
 	}
@@ -234,7 +236,7 @@ func tryTokenAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, t
 		return nil
 	}
 
-	tokenAccess := &auth.TokenAccessData{
+	tokenAccess := &trustauth.TokenAccessData{
 		TrustCenterID: basicPayload.Data.TrustCenterID,
 		Email:         basicPayload.Data.Email,
 		TenantID:      tenantID,
@@ -257,10 +259,10 @@ func clearTokenCookie(w http.ResponseWriter, trustAuthCfg TrustAuthConfig) {
 	})
 }
 
-func updateSessionIfNeeded(ctx context.Context, usrmgrSvc *usrmgr.Service) {
+func updateSessionIfNeeded(ctx context.Context, authSvc *auth.Service) {
 	session := SessionFromContext(ctx)
 	if session != nil {
-		if err := usrmgrSvc.UpdateSession(ctx, session); err != nil {
+		if _, err := authSvc.UpdateSession(ctx, session.ID); err != nil {
 			panic(fmt.Errorf("failed to update session: %w", err))
 		}
 	}

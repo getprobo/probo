@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c071187d5ef9cecb128621c57f97393b>>
+ * @generated SignedSource<<46255b8d07ef16f2f9a1b94c48b49142>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -27,16 +27,6 @@ export type SettingsPageFragment$data = {
   readonly id: string;
   readonly logoUrl: string | null | undefined;
   readonly name: string;
-  readonly users: {
-    readonly edges: ReadonlyArray<{
-      readonly node: {
-        readonly createdAt: any;
-        readonly email: string;
-        readonly fullName: string;
-        readonly id: string;
-      };
-    }>;
-  };
   readonly websiteUrl: string | null | undefined;
   readonly " $fragmentType": "SettingsPageFragment";
 };
@@ -58,27 +48,6 @@ v1 = {
   "args": null,
   "kind": "ScalarField",
   "name": "name",
-  "storageKey": null
-},
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "email",
-  "storageKey": null
-},
-v3 = [
-  {
-    "kind": "Literal",
-    "name": "first",
-    "value": 100
-  }
-],
-v4 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "createdAt",
   "storageKey": null
 };
 return {
@@ -110,7 +79,13 @@ return {
       "name": "websiteUrl",
       "storageKey": null
     },
-    (v2/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "email",
+      "storageKey": null
+    },
     {
       "alias": null,
       "args": null,
@@ -120,50 +95,13 @@ return {
     },
     {
       "alias": null,
-      "args": (v3/*: any*/),
-      "concreteType": "UserConnection",
-      "kind": "LinkedField",
-      "name": "users",
-      "plural": false,
-      "selections": [
+      "args": [
         {
-          "alias": null,
-          "args": null,
-          "concreteType": "UserEdge",
-          "kind": "LinkedField",
-          "name": "edges",
-          "plural": true,
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "concreteType": "User",
-              "kind": "LinkedField",
-              "name": "node",
-              "plural": false,
-              "selections": [
-                (v0/*: any*/),
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
-                  "name": "fullName",
-                  "storageKey": null
-                },
-                (v2/*: any*/),
-                (v4/*: any*/)
-              ],
-              "storageKey": null
-            }
-          ],
-          "storageKey": null
+          "kind": "Literal",
+          "name": "first",
+          "value": 100
         }
       ],
-      "storageKey": "users(first:100)"
-    },
-    {
-      "alias": null,
-      "args": (v3/*: any*/),
       "concreteType": "ConnectorConnection",
       "kind": "LinkedField",
       "name": "connectors",
@@ -194,7 +132,13 @@ return {
                   "name": "type",
                   "storageKey": null
                 },
-                (v4/*: any*/)
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "createdAt",
+                  "storageKey": null
+                }
               ],
               "storageKey": null
             }
@@ -210,6 +154,6 @@ return {
 };
 })();
 
-(node as any).hash = "bdd548b7b3fa4c1cfef32569dc63d45d";
+(node as any).hash = "1a492f2d5816297e5e232f5585085897";
 
 export default node;
