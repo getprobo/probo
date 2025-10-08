@@ -95,10 +95,19 @@ func authTokenHandler(trustSvc *trust.Service, trustAuthCfg TrustAuthConfig) htt
 			return
 		}
 
+		// Determine cookie domain: use custom domain if present, otherwise use configured domain
+		cookieDomain := trustAuthCfg.CookieDomain
+		if _, ok := GetCustomDomainOrganizationID(r.Context()); ok {
+			// On custom domain, use the request host
+			if r.TLS != nil && r.TLS.ServerName != "" {
+				cookieDomain = r.TLS.ServerName
+			}
+		}
+
 		cookie := &http.Cookie{
 			Name:     trustAuthCfg.CookieName,
 			Value:    tokenString,
-			Domain:   trustAuthCfg.CookieDomain,
+			Domain:   cookieDomain,
 			Path:     "/",
 			MaxAge:   int(trustAuthCfg.CookieDuration / time.Second),
 			Secure:   true,
@@ -135,10 +144,19 @@ func validateTrustCenterAccessToken(ctx context.Context, trustSvc *trust.Service
 
 func trustCenterLogoutHandler(authCfg console_v1.AuthConfig, trustAuthCfg TrustAuthConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Determine cookie domain: use custom domain if present, otherwise use configured domain
+		cookieDomain := trustAuthCfg.CookieDomain
+		if _, ok := GetCustomDomainOrganizationID(r.Context()); ok {
+			// On custom domain, use the request host
+			if r.TLS != nil && r.TLS.ServerName != "" {
+				cookieDomain = r.TLS.ServerName
+			}
+		}
+
 		http.SetCookie(w, &http.Cookie{
 			Name:     trustAuthCfg.CookieName,
 			Value:    "",
-			Domain:   trustAuthCfg.CookieDomain,
+			Domain:   cookieDomain,
 			Path:     "/",
 			MaxAge:   -1,
 			Secure:   true,
