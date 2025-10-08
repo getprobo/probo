@@ -24,6 +24,7 @@ import (
 	"github.com/getprobo/probo/pkg/certmanager"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/cipher"
+	"github.com/getprobo/probo/pkg/filemanager"
 	"github.com/getprobo/probo/pkg/filevalidation"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
@@ -57,6 +58,7 @@ type (
 		html2pdfConverter *html2pdf.Converter
 		usrmgr            *usrmgr.Service
 		acmeService       *certmanager.ACMEService
+		fileManager       *filemanager.Service
 		logger            *log.Logger
 	}
 
@@ -70,6 +72,7 @@ type (
 		tokenSecret                       string
 		trustConfig                       TrustConfig
 		agent                             *agents.Agent
+		fileManager                       *filemanager.Service
 		Frameworks                        *FrameworkService
 		Measures                          *MeasureService
 		Tasks                             *TaskService
@@ -116,6 +119,7 @@ func NewService(
 	html2pdfConverter *html2pdf.Converter,
 	usrmgrService *usrmgr.Service,
 	acmeService *certmanager.ACMEService,
+	fileManagerService *filemanager.Service,
 	logger *log.Logger,
 ) (*Service, error) {
 	if bucket == "" {
@@ -134,6 +138,7 @@ func NewService(
 		html2pdfConverter: html2pdfConverter,
 		usrmgr:            usrmgrService,
 		acmeService:       acmeService,
+		fileManager:       fileManagerService,
 		logger:            logger,
 	}
 
@@ -151,6 +156,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		tokenSecret:   s.tokenSecret,
 		trustConfig:   s.trustConfig,
 		agent:         agents.NewAgent(nil, s.agentConfig),
+		fileManager:   s.fileManager,
 	}
 
 	tenantService.Frameworks = &FrameworkService{

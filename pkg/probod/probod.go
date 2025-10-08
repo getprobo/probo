@@ -36,6 +36,7 @@ import (
 	"github.com/getprobo/probo/pkg/crypto/keys"
 	"github.com/getprobo/probo/pkg/crypto/passwdhash"
 	"github.com/getprobo/probo/pkg/crypto/pem"
+	"github.com/getprobo/probo/pkg/filemanager"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/mailer"
 	"github.com/getprobo/probo/pkg/probo"
@@ -269,6 +270,8 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot create usrmgr service: %w", err)
 	}
 
+	fileManagerService := filemanager.NewService(s3Client)
+
 	var accountKey crypto.Signer
 	if impl.cfg.CustomDomains.ACME.AccountKey != "" {
 		accountKey, err = pem.DecodePrivateKey([]byte(impl.cfg.CustomDomains.ACME.AccountKey))
@@ -311,6 +314,7 @@ func (impl *Implm) Run(
 		html2pdfConverter,
 		usrmgrService,
 		acmeService,
+		fileManagerService,
 		l.Named("probo"),
 	)
 	if err != nil {
@@ -325,6 +329,7 @@ func (impl *Implm) Run(
 		impl.cfg.TrustAuth.TokenSecret,
 		usrmgrService,
 		html2pdfConverter,
+		fileManagerService,
 	)
 
 	serverHandler, err := server.NewServer(

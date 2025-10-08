@@ -831,6 +831,14 @@ type DeleteObligationPayload struct {
 	DeletedObligationID gid.GID `json:"deletedObligationId"`
 }
 
+type DeleteOrganizationHorizontalLogoInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+}
+
+type DeleteOrganizationHorizontalLogoPayload struct {
+	Organization *Organization `json:"organization"`
+}
+
 type DeleteOrganizationInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 }
@@ -1288,6 +1296,7 @@ type Organization struct {
 	ID                    gid.GID                         `json:"id"`
 	Name                  string                          `json:"name"`
 	LogoURL               *string                         `json:"logoUrl,omitempty"`
+	HorizontalLogoURL     *string                         `json:"horizontalLogoUrl,omitempty"`
 	Description           *string                         `json:"description,omitempty"`
 	WebsiteURL            *string                         `json:"websiteUrl,omitempty"`
 	Email                 *string                         `json:"email,omitempty"`
@@ -1798,6 +1807,7 @@ type UpdateOrganizationInput struct {
 	OrganizationID     gid.GID         `json:"organizationId"`
 	Name               *string         `json:"name,omitempty"`
 	Logo               *graphql.Upload `json:"logo,omitempty"`
+	HorizontalLogoFile *graphql.Upload `json:"horizontalLogoFile,omitempty"`
 	Description        *string         `json:"description,omitempty"`
 	WebsiteURL         *string         `json:"websiteUrl,omitempty"`
 	Email              *string         `json:"email,omitempty"`

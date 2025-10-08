@@ -1488,6 +1488,7 @@ type Organization implements Node {
   id: ID!
   name: String!
   logoUrl: String @goField(forceResolver: true)
+  horizontalLogoUrl: String @goField(forceResolver: true)
 
   description: String
   websiteUrl: String
@@ -2619,6 +2620,9 @@ type Mutation {
   updateOrganization(
     input: UpdateOrganizationInput!
   ): UpdateOrganizationPayload!
+  deleteOrganizationHorizontalLogo(
+    input: DeleteOrganizationHorizontalLogoInput!
+  ): DeleteOrganizationHorizontalLogoPayload!
   deleteOrganization(
     input: DeleteOrganizationInput!
   ): DeleteOrganizationPayload!
@@ -2941,10 +2945,15 @@ input UpdateOrganizationInput {
   organizationId: ID!
   name: String
   logo: Upload
+  horizontalLogoFile: Upload
   description: String
   websiteUrl: String
   email: String
   headquarterAddress: String
+}
+
+input DeleteOrganizationHorizontalLogoInput {
+  organizationId: ID!
 }
 
 input DeleteOrganizationInput {
@@ -3625,6 +3634,10 @@ type CreateOrganizationPayload {
 }
 
 type UpdateOrganizationPayload {
+  organization: Organization!
+}
+
+type DeleteOrganizationHorizontalLogoPayload {
   organization: Organization!
 }
 

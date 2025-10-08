@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/cipher"
+	"github.com/getprobo/probo/pkg/filemanager"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/probo"
@@ -35,27 +36,29 @@ type (
 		tokenSecret       string
 		usrmgr            *usrmgr.Service
 		html2pdfConverter *html2pdf.Converter
+		fileManager       *filemanager.Service
 	}
 
 	TenantService struct {
-		pg                  *pg.Client
-		s3                  *s3.Client
-		bucket              string
-		scope               coredata.Scoper
-		proboSvc            *probo.Service
-		encryptionKey       cipher.EncryptionKey
-		tokenSecret         string
-		usrmgr              *usrmgr.Service
-		html2pdfConverter   *html2pdf.Converter
-		TrustCenters        *TrustCenterService
-		Documents           *DocumentService
-		Audits              *AuditService
-		Vendors             *VendorService
-		Frameworks          *FrameworkService
-		TrustCenterAccesses *TrustCenterAccessService
+		pg                    *pg.Client
+		s3                    *s3.Client
+		bucket                string
+		scope                 coredata.Scoper
+		proboSvc              *probo.Service
+		encryptionKey         cipher.EncryptionKey
+		tokenSecret           string
+		usrmgr                *usrmgr.Service
+		html2pdfConverter     *html2pdf.Converter
+		fileManager           *filemanager.Service
+		TrustCenters          *TrustCenterService
+		Documents             *DocumentService
+		Audits                *AuditService
+		Vendors               *VendorService
+		Frameworks            *FrameworkService
+		TrustCenterAccesses   *TrustCenterAccessService
 		TrustCenterReferences *TrustCenterReferenceService
-		Reports             *ReportService
-		Organizations       *OrganizationService
+		Reports               *ReportService
+		Organizations         *OrganizationService
 	}
 )
 
@@ -67,6 +70,7 @@ func NewService(
 	tokenSecret string,
 	usrmgr *usrmgr.Service,
 	html2pdfConverter *html2pdf.Converter,
+	fileManagerService *filemanager.Service,
 ) *Service {
 	return &Service{
 		pg:                pgClient,
@@ -76,6 +80,7 @@ func NewService(
 		tokenSecret:       tokenSecret,
 		usrmgr:            usrmgr,
 		html2pdfConverter: html2pdfConverter,
+		fileManager:       fileManagerService,
 	}
 }
 
@@ -90,6 +95,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		tokenSecret:       s.tokenSecret,
 		usrmgr:            s.usrmgr,
 		html2pdfConverter: s.html2pdfConverter,
+		fileManager:       s.fileManager,
 	}
 
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}

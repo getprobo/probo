@@ -11,17 +11,17 @@
             margin: 2.5cm;
             @bottom-right {
                 content: "Page " counter(page) " of " counter(pages);
-                font-family: 'Times New Roman', Times, serif;
+                font-family: Arial, sans-serif;
                 font-size: 9pt;
                 color: #666;
             }
         }
 
         body {
-            font-family: 'Times New Roman', Times, serif;
+            font-family: Arial, sans-serif;
             font-size: 11pt;
-            line-height: 1.4;
-            color: #000;
+            line-height: 1.6;
+            color: #333;
             margin: 0;
             padding: 20px 0;
             background: #f5f5f5;
@@ -49,46 +49,58 @@
             page-break-after: auto;
         }
 
-
-
         .document-header {
-            border-bottom: 1px solid #333;
-            padding-bottom: 15px;
+            padding-bottom: 0;
             margin-bottom: 25px;
             page-break-after: avoid;
         }
 
+        .company-header {
+            margin-bottom: 25px;
+            page-break-after: avoid;
+        }
+
+        .company-logo {
+            max-height: 50px;
+            max-width: 250px;
+            object-fit: contain;
+            display: block;
+        }
+
         .document-title {
-            font-size: 18pt;
-            font-weight: bold;
-            color: #000;
-            margin: 0 0 10px 0;
-            text-align: center;
+            font-size: 22pt;
+            font-weight: normal;
+            color: #1a1a1a;
+            margin: 0 0 25px 0;
+            text-align: left;
+        }
+
+        .company-header + .document-title {
+            margin-top: 30px;
         }
 
         .document-meta {
-            background: #f9f9f9;
-            padding: 12px;
-            border: 1px solid #ddd;
-            margin: 15px 0;
+            margin: 25px 0 0 0;
             font-size: 9pt;
         }
 
         .meta-table {
             width: 100%;
             border-collapse: collapse;
+            border: 1px solid #333;
         }
 
         .meta-table td {
-            padding: 4px 8px;
-            border-bottom: 1px solid #eee;
-            vertical-align: top;
+            padding: 6px 8px;
+            border: 1px solid #333;
+            vertical-align: middle;
         }
 
         .meta-table td:first-child {
-            font-weight: bold;
+            font-weight: 600;
+            width: 25%;
+            background: #f8f8f8;
             color: #333;
-            width: 120px;
         }
 
         .classification {
@@ -141,7 +153,7 @@
         }
 
         .document-content p {
-            margin-bottom: 12px;
+            margin: 0 0 12px 0;
             text-align: justify;
             orphans: 3;
             widows: 3;
@@ -312,18 +324,23 @@
     <div class="document-container">
         <div class="page-section">
             <div class="document-header">
+                {{- if .CompanyHorizontalLogoBase64}}
+                <div class="company-header">
+                    {{imgTag .CompanyHorizontalLogoBase64 "Company Logo" "company-logo"}}
+                </div>
+                {{- end}}
                 <h1 class="document-title">{{.Title}}</h1>
 
                 <div class="document-meta">
                     <table class="meta-table">
                         <tr>
-                            <td>Classification:</td>
+                            <td>Classification</td>
                             <td>
                                 <span class="classification">{{.Classification | classificationString}}</span>
                             </td>
                         </tr>
                         <tr>
-                            <td>Approver:</td>
+                            <td>Approver</td>
                             <td>{{.Approver}}</td>
                         </tr>
                         <tr>
@@ -332,7 +349,7 @@
                         </tr>
                         {{- if .PublishedAt}}
                         <tr>
-                            <td>Published:</td>
+                            <td>Published</td>
                             <td>{{.PublishedAt.Format "January 2, 2006"}}</td>
                         </tr>
                         {{- end}}

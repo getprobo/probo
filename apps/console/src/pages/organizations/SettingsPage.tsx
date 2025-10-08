@@ -4,6 +4,9 @@ import {
   Badge,
   Button,
   Card,
+  Dialog,
+  DialogContent,
+  DialogFooter,
   DropdownItem,
   Field,
   FileButton,
@@ -13,6 +16,7 @@ import {
   Spinner,
   Textarea,
   useConfirm,
+  useDialogRef,
   useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
@@ -58,6 +62,7 @@ const organizationFragment = graphql`
     id
     name
     logoUrl
+    horizontalLogoUrl
     description
     websiteUrl
     email
@@ -107,10 +112,22 @@ const updateOrganizationMutation = graphql`
         id
         name
         logoUrl
+        horizontalLogoUrl
         description
         websiteUrl
         email
         headquarterAddress
+      }
+    }
+  }
+`;
+
+const deleteHorizontalLogoMutation = graphql`
+  mutation SettingsPage_DeleteHorizontalLogoMutation($input: DeleteOrganizationHorizontalLogoInput!) {
+    deleteOrganizationHorizontalLogo(input: $input) {
+      organization {
+        id
+        horizontalLogoUrl
       }
     }
   }
@@ -129,6 +146,13 @@ export default function SettingsPage({ queryRef }: Props) {
     organizationKey
   );
   const [updateOrganization] = useMutation(updateOrganizationMutation);
+  const [deleteHorizontalLogo, isDeletingHorizontalLogo] = useMutationWithToasts(
+    deleteHorizontalLogoMutation,
+    {
+      successMessage: __("Horizontal logo deleted successfully"),
+      errorMessage: __("Failed to delete horizontal logo"),
+    }
+  );
   const [deleteOrganization, isDeleting] = useDeleteOrganizationMutation();
   const users = organization.users.edges.map((edge) => edge.node);
 
@@ -167,10 +191,10 @@ export default function SettingsPage({ queryRef }: Props) {
           headquarterAddress: data.headquarterAddress || null,
         },
       },
-      onError(error) {
+      onError() {
         toast({
-          title: __("Failed to update organization"),
-          description: error.message || __("Please try again."),
+          title: __("Error"),
+          description: __("Failed to update organization."),
           variant: "error",
         });
       },
@@ -201,12 +225,66 @@ export default function SettingsPage({ queryRef }: Props) {
       uploadables: {
         "input.logo": file,
       },
-      onError(error) {
+      onError() {
         toast({
-          title: __("Failed to update organization logo"),
-          description: error.message || __("Please try again."),
+          title: __("Error"),
+          description: __("Failed to update logo"),
           variant: "error",
         });
+      },
+      onCompleted() {
+        toast({
+          title: __("Success"),
+          description: __("Your organization logo has been updated successfully."),
+          variant: "success",
+        });
+      },
+    });
+  };
+
+  const updateHorizontalLogo: ChangeEventHandler<HTMLInputElement> = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+    updateOrganization({
+      variables: {
+        input: {
+          organizationId: organization.id,
+          horizontalLogoFile: null,
+        },
+      },
+      uploadables: {
+        "input.horizontalLogoFile": file,
+      },
+      onError() {
+        toast({
+          title: __("Error"),
+          description: __("Failed to update horizontal logo."),
+          variant: "error",
+        });
+      },
+      onCompleted() {
+        toast({
+          title: __("Success"),
+          description: __("Your organization horizontal logo has been updated successfully."),
+          variant: "success",
+        });
+      },
+    });
+  };
+
+  const deleteDialogRef = useDialogRef();
+
+  const handleDeleteHorizontalLogo = () => {
+    deleteHorizontalLogo({
+      variables: {
+        input: {
+          organizationId: organization.id,
+        },
+      },
+      onSuccess: () => {
+        deleteDialogRef.current?.close();
       },
     });
   };
@@ -252,9 +330,70 @@ export default function SettingsPage({ queryRef }: Props) {
                   onChange={updateOrganizationLogo}
                   variant="secondary"
                   className="ml-auto"
+                  accept="image/png,image/jpeg,image/jpg"
                 >
                   {__("Change logo")}
                 </FileButton>
+              </div>
+            </div>
+            <div>
+              <Label>{__("Horizontal logo")}</Label>
+              <p className="text-sm text-txt-tertiary mb-2">
+                {__("Upload a horizontal version of your logo for use in documents")}
+              </p>
+              <div className="flex items-center gap-4">
+                {organization.horizontalLogoUrl && (
+                  <div className="border border-border-solid rounded-md p-4 bg-surface-secondary">
+                    <img
+                      src={organization.horizontalLogoUrl}
+                      alt={__("Horizontal logo")}
+                      className="h-12 max-w-xs object-contain"
+                    />
+                  </div>
+                )}
+                <FileButton
+                  disabled={formState.isSubmitting}
+                  onChange={updateHorizontalLogo}
+                  variant="secondary"
+                  accept="image/png,image/jpeg,image/jpg"
+                >
+                  {organization.horizontalLogoUrl ? __("Change horizontal logo") : __("Upload horizontal logo")}
+                </FileButton>
+                {organization.horizontalLogoUrl && (
+                  <Dialog
+                    ref={deleteDialogRef}
+                    trigger={
+                      <Button
+                        variant="quaternary"
+                        icon={IconTrashCan}
+                        aria-label={__("Delete horizontal logo")}
+                        className="text-red-600 hover:text-red-700"
+                      />
+                    }
+                    title={__("Delete Horizontal Logo")}
+                    className="max-w-md"
+                  >
+                    <DialogContent padded>
+                      <p className="text-txt-secondary">
+                        {__("Are you sure you want to delete the horizontal logo?")}
+                      </p>
+                      <p className="text-txt-secondary mt-2">
+                        {__("This action cannot be undone.")}
+                      </p>
+                    </DialogContent>
+
+                    <DialogFooter>
+                      <Button
+                        variant="danger"
+                        onClick={handleDeleteHorizontalLogo}
+                        disabled={isDeletingHorizontalLogo}
+                        icon={isDeletingHorizontalLogo ? Spinner : IconTrashCan}
+                      >
+                        {isDeletingHorizontalLogo ? __("Deleting...") : __("Delete")}
+                      </Button>
+                    </DialogFooter>
+                  </Dialog>
+                )}
               </div>
             </div>
             <Field

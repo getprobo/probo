@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<267b2fc05603188ad26c38ce1485887b>>
+ * @generated SignedSource<<5a41cd3709282172e4d5a3ca65d07b96>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -149,6 +149,13 @@ return {
                 "args": null,
                 "kind": "ScalarField",
                 "name": "logoUrl",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "horizontalLogoUrl",
                 "storageKey": null
               },
               {
@@ -338,12 +345,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5118b2778835b232009a9d5ef5647aba",
+    "cacheID": "8b9e1f3b1e93e1823354e77f10764e54",
     "id": null,
     "metadata": {},
     "name": "OrganizationGraph_ViewQuery",
     "operationKind": "query",
-    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    sslExpiresAt\n  }\n  users(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n        email\n        createdAt\n      }\n    }\n  }\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    sslExpiresAt\n  }\n  users(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n        email\n        createdAt\n      }\n    }\n  }\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();

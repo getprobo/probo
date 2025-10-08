@@ -1099,12 +1099,35 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 		}
 	}
 
+	if input.HorizontalLogoFile != nil {
+		req.HorizontalLogoFile = &probo.File{
+			Filename:    input.HorizontalLogoFile.Filename,
+			ContentType: input.HorizontalLogoFile.ContentType,
+			Size:        input.HorizontalLogoFile.Size,
+			Content:     input.HorizontalLogoFile.File,
+		}
+	}
+
 	organization, err := prb.Organizations.Update(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot update organization: %w", err)
+		panic(fmt.Errorf("cannot update organization: %w", err))
 	}
 
 	return &types.UpdateOrganizationPayload{
+		Organization: types.NewOrganization(organization),
+	}, nil
+}
+
+// DeleteOrganizationHorizontalLogo is the resolver for the deleteOrganizationHorizontalLogo field.
+func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context, input types.DeleteOrganizationHorizontalLogoInput) (*types.DeleteOrganizationHorizontalLogoPayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	organization, err := prb.Organizations.DeleteHorizontalLogo(ctx, input.OrganizationID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot delete horizontal logo: %w", err)
+	}
+
+	return &types.DeleteOrganizationHorizontalLogoPayload{
 		Organization: types.NewOrganization(organization),
 	}, nil
 }
@@ -3495,6 +3518,13 @@ func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organizat
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	return prb.Organizations.GenerateLogoURL(ctx, obj.ID, 1*time.Hour)
+}
+
+// HorizontalLogoURL is the resolver for the horizontalLogoUrl field.
+func (r *organizationResolver) HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	return prb.Organizations.GenerateHorizontalLogoURL(ctx, obj.ID, 1*time.Hour)
 }
 
 // Users is the resolver for the users field.

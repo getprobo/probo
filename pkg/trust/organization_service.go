@@ -71,19 +71,30 @@ func (s OrganizationService) GenerateLogoURL(
 		return nil, fmt.Errorf("cannot get organization: %w", err)
 	}
 
-	if organization.LogoObjectKey == "" {
+	if organization.LogoFileID == nil {
 		return nil, nil
+	}
+
+	file := &coredata.File{}
+	err = s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			return file.LoadByID(ctx, conn, s.svc.scope, *organization.LogoFileID)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load file: %w", err)
 	}
 
 	presignClient := s3.NewPresignClient(s.svc.s3)
 
-	encodedFilename := url.QueryEscape(organization.Name)
+	encodedFilename := url.QueryEscape(file.FileName)
 	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
 		encodedFilename, encodedFilename)
 
 	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket:                     aws.String(s.svc.bucket),
-		Key:                        aws.String(organization.LogoObjectKey),
+		Key:                        aws.String(file.FileKey),
 		ResponseCacheControl:       aws.String("max-age=3600, public"),
 		ResponseContentDisposition: aws.String(contentDisposition),
 	}, func(opts *s3.PresignOptions) {
