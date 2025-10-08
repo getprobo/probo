@@ -18,6 +18,7 @@ package server
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/getprobo/probo/pkg/agents"
 	"github.com/getprobo/probo/pkg/connector"
@@ -119,6 +120,7 @@ func (s *Server) setupRoutes() {
 	// Trust center routes by slug
 	s.router.Route("/trust/{slug}", func(r chi.Router) {
 		r.Use(s.loadTrustCenterBySlug)
+		r.Use(s.stripTrustSlugPrefix)
 		r.Mount("/", s.trustCenterRouter())
 	})
 
@@ -213,6 +215,28 @@ func (s *Server) addTrustCenterToContext(ctx context.Context, tenantID, organiza
 	ctx = context.WithValue(ctx, trust_v1.CustomDomainTenantIDKey, tenantID)
 	ctx = context.WithValue(ctx, trust_v1.CustomDomainOrganizationIDKey, organizationID)
 	return ctx
+}
+
+// stripTrustSlugPrefix middleware strips /trust/{slug} from the path
+func (s *Server) stripTrustSlugPrefix(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		slug := chi.URLParam(r, "slug")
+		prefix := "/trust/" + slug
+
+		// Strip the prefix from the path
+		if r.URL.Path == prefix {
+			// Redirect to trailing slash for proper asset resolution
+			http.Redirect(w, r, prefix+"/", http.StatusMovedPermanently)
+			return
+		}
+
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, prefix)
+		if r.URL.Path == "" {
+			r.URL.Path = "/"
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 // trustCenterRouter returns a router for trust center content (API + frontend)
