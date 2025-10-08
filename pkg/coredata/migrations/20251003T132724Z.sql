@@ -1,7 +1,7 @@
 ALTER TABLE evidences
     ADD COLUMN evidence_file_id text;
 
-/* 10 is for FileEntityType */
+/* 25 is for FileEntityType */
 WITH
     evidence_files AS (
         SELECT
@@ -38,4 +38,4 @@ ALTER TABLE evidences
     ALTER COLUMN filename DROP NOT NULL,
     ALTER COLUMN mime_type DROP NOT NULL,
     ALTER COLUMN size DROP NOT NULL,
-    ALTER COLUMN oject_key DROP NOT NULL;
+    ALTER COLUMN object_key DROP NOT NULL;
