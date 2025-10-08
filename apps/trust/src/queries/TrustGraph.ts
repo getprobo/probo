@@ -68,3 +68,73 @@ export const trustVendorsQuery = graphql`
     }
   }
 `;
+
+// Queries for custom domain (subdomain) approach
+export const currentTrustGraphQuery = graphql`
+  query TrustGraphCurrentQuery {
+    currentTrustCenter {
+      id
+      slug
+      isUserAuthenticated
+      hasAcceptedNonDisclosureAgreement
+      ndaFileName
+      ndaFileUrl
+      organization {
+        name
+        description
+        websiteUrl
+        logoUrl
+        email
+        headquarterAddress
+      }
+      ...OverviewPageFragment
+      audits(first: 50) {
+        edges {
+          node {
+            id
+            ...AuditRowFragment
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const currentTrustDocumentsQuery = graphql`
+  query TrustGraphCurrentDocumentsQuery {
+    currentTrustCenter {
+      id
+      organization {
+        name
+      }
+      documents(first: 50) {
+        edges {
+          node {
+            id
+            documentType
+            ...DocumentRowFragment
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const currentTrustVendorsQuery = graphql`
+  query TrustGraphCurrentVendorsQuery {
+    currentTrustCenter {
+      id
+      organization {
+        name
+      }
+      vendors(first: 50) {
+        edges {
+          node {
+            id
+            ...VendorRowFragment
+          }
+        }
+      }
+    }
+  }
+`;

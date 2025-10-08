@@ -86,10 +86,15 @@ const fetchRelay: FetchFunction = async (
 
     requestInit.body = formData;
   } else {
+    // Extract slug from URL if present for slug-based routing
+    const slugMatch = window.location.pathname.match(/^\/trust\/([^/]+)/);
+    const slug = slugMatch ? slugMatch[1] : null;
+
     requestInit.headers = {
       Accept:
         "application/graphql-response+json; charset=utf-8, application/json; charset=utf-8",
       "Content-Type": "application/json",
+      ...(slug ? { "X-Trust-Slug": slug } : {}),
     };
 
     requestInit.body = JSON.stringify({
@@ -99,8 +104,11 @@ const fetchRelay: FetchFunction = async (
     });
   }
 
+  // Use relative API path to ensure it goes through the same routing context
+  // For /trust/slug/overview, this resolves to /trust/slug/api/trust/v1/graphql
+  // For custom domains at /overview, this resolves to /api/trust/v1/graphql
   const response = await fetch(
-    buildEndpoint("/api/trust/v1/graphql"),
+    buildEndpoint("./api/trust/v1/graphql"),
     requestInit,
   );
 

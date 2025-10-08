@@ -16,9 +16,9 @@ import { useCleanup } from "./hooks/useDelayedEffect";
 import { PageError } from "./components/PageError";
 import { MainLayout } from "/layouts/MainLayout";
 import {
-  trustGraphQuery,
-  trustDocumentsQuery,
-  trustVendorsQuery,
+  currentTrustGraphQuery,
+  currentTrustDocumentsQuery,
+  currentTrustVendorsQuery,
 } from "/queries/TrustGraph";
 import { OverviewPage } from "/pages/OverviewPage";
 import { DocumentsPage } from "/pages/DocumentsPage";
@@ -50,48 +50,63 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
 const routes = [
   {
     path: "/",
+    loader: async () => {
+      throw redirect("/overview");
+    },
     Component: Fragment,
     ErrorBoundary: ErrorBoundary,
   },
+  // Custom domain routes (subdomain-based)
   {
-    path: "/trust/:slug/access",
-    Component: AccessPage,
-    ErrorBoundary: ErrorBoundary,
-  },
-  {
-    path: "/trust/:slug",
-    queryLoader: ({ slug }) =>
-      loadQuery(relayEnvironment, trustGraphQuery, { slug: slug }),
+    path: "/overview",
+    queryLoader: () => loadQuery(relayEnvironment, currentTrustGraphQuery, {}),
     Component: MainLayout,
     fallback: MainSkeleton,
     ErrorBoundary: ErrorBoundary,
     children: [
       {
         path: "",
-        loader: ({ params }) => {
-          throw redirect(`/trust/${params.slug}/overview`);
-        },
-      },
-      {
-        path: "overview",
         fallback: TabSkeleton,
         Component: OverviewPage,
       },
+    ],
+  },
+  {
+    path: "/documents",
+    queryLoader: () => loadQuery(relayEnvironment, currentTrustGraphQuery, {}),
+    Component: MainLayout,
+    fallback: MainSkeleton,
+    ErrorBoundary: ErrorBoundary,
+    children: [
       {
-        path: "documents",
+        path: "",
+        queryLoader: () =>
+          loadQuery(relayEnvironment, currentTrustDocumentsQuery, {}),
         fallback: TabSkeleton,
         Component: DocumentsPage,
-        queryLoader: ({ slug }) =>
-          loadQuery(relayEnvironment, trustDocumentsQuery, { slug: slug }),
-      },
-      {
-        path: "subprocessors",
-        fallback: TabSkeleton,
-        Component: SubprocessorsPage,
-        queryLoader: ({ slug }) =>
-          loadQuery(relayEnvironment, trustVendorsQuery, { slug: slug }),
       },
     ],
+  },
+  {
+    path: "/subprocessors",
+    queryLoader: () => loadQuery(relayEnvironment, currentTrustGraphQuery, {}),
+    Component: MainLayout,
+    fallback: MainSkeleton,
+    ErrorBoundary: ErrorBoundary,
+    children: [
+      {
+        path: "",
+        queryLoader: () =>
+          loadQuery(relayEnvironment, currentTrustVendorsQuery, {}),
+        fallback: TabSkeleton,
+        Component: SubprocessorsPage,
+      },
+    ],
+  },
+  {
+    path: "/access",
+    Component: AccessPage,
+    ErrorBoundary: ErrorBoundary,
   },
   // Fallback URL to the NotFound Page
   {
@@ -150,4 +165,15 @@ function routeTransformer({
   } as RouteObject;
 }
 
-export const router = createBrowserRouter(routes.map(routeTransformer));
+// Detect basename from current URL path
+// If URL starts with /trust/{slug}, extract that as the basename
+// Otherwise, use "/" for custom domains
+function getBasename(): string {
+  const path = window.location.pathname;
+  const trustMatch = path.match(/^\/trust\/[^/]+/);
+  return trustMatch ? trustMatch[0] : "/";
+}
+
+export const router = createBrowserRouter(routes.map(routeTransformer), {
+  basename: getBasename(),
+});

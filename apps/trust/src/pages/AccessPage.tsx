@@ -1,6 +1,6 @@
 import { useTranslate } from "@probo/i18n";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { buildEndpoint } from "/providers/RelayProviders";
 import { PageError } from "/components/PageError";
 import { Spinner } from "@probo/ui";
@@ -10,16 +10,12 @@ import { Spinner } from "@probo/ui";
  */
 export function AccessPage() {
   const { __ } = useTranslate();
-  const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
 
-  const isValidRequest = !!(slug && token);
+  const isValidRequest = !!token;
   const [error, setError] = useState<string | null>(() => {
-    if (!slug) {
-      return __("Invalid trust center");
-    }
     if (!token) {
       return __("Invalid access token");
     }
@@ -57,7 +53,7 @@ export function AccessPage() {
       })
       .then((data) => {
         if (data.success) {
-          navigate(`/trust/${slug}`);
+          navigate("/overview");
           return;
         }
         throw new Error(data.message ?? __("Authentication failed"));
@@ -65,7 +61,7 @@ export function AccessPage() {
       .catch((error) => {
         setError(error.message);
       });
-  }, [isValidRequest, slug, token, __, navigate]);
+  }, [isValidRequest, token, __, navigate]);
 
   if (error) {
     return <PageError error={error} />;

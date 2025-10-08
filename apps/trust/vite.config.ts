@@ -9,7 +9,7 @@ export default defineConfig({
   build: {
     assetsDir: "assets",
   },
-  base: "/trust/",
+  base: "./",
   server: {
     port: 5174,
     proxy: {

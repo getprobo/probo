@@ -1,6 +1,6 @@
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import type { TrustGraphQuery } from "/queries/__generated__/TrustGraphQuery.graphql.ts";
-import { trustGraphQuery } from "/queries/TrustGraph.ts";
+import type { TrustGraphCurrentQuery } from "/queries/__generated__/TrustGraphCurrentQuery.graphql.ts";
+import { currentTrustGraphQuery } from "/queries/TrustGraph.ts";
 import { Logo, TabLink, Tabs } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { OrganizationSidebar } from "/components/OrganizationSidebar";
@@ -10,21 +10,17 @@ import { AuthProvider } from "/providers/AuthProvider";
 import { TrustCenterProvider } from "/providers/TrustCenterProvider";
 
 type Props = {
-  queryRef: PreloadedQuery<TrustGraphQuery>;
+  queryRef: PreloadedQuery<TrustGraphCurrentQuery>;
 };
 
 export function MainLayout(props: Props) {
   const { __ } = useTranslate();
-  const trustCenter = usePreloadedQuery(
-    trustGraphQuery,
-    props.queryRef,
-  ).trustCenterBySlug;
+  const data = usePreloadedQuery(currentTrustGraphQuery, props.queryRef);
+  const trustCenter = data.currentTrustCenter;
 
   if (!trustCenter) {
     return null;
   }
-
-  const baseTabUrl = `/trust/${trustCenter.slug}`;
   const showNDADialog =
     trustCenter.isUserAuthenticated &&
     !trustCenter.hasAcceptedNonDisclosureAgreement &&
@@ -44,11 +40,11 @@ export function MainLayout(props: Props) {
           <OrganizationSidebar trustCenter={trustCenter} />
           <main>
             <Tabs className="mb-8">
-              <TabLink to={`${baseTabUrl}/overview`}>{__("Overview")}</TabLink>
-              <TabLink to={`${baseTabUrl}/documents`}>
+              <TabLink to="/overview">{__("Overview")}</TabLink>
+              <TabLink to="/documents">
                 {__("Documents")}
               </TabLink>
-              <TabLink to={`${baseTabUrl}/subprocessors`}>
+              <TabLink to="/subprocessors">
                 {__("Subprocessors")}
               </TabLink>
             </Tabs>

@@ -1,6 +1,6 @@
 import { type PreloadedQuery, usePreloadedQuery } from "react-relay";
-import { trustDocumentsQuery } from "/queries/TrustGraph";
-import type { TrustGraphDocumentsQuery } from "/queries/__generated__/TrustGraphDocumentsQuery.graphql.ts";
+import { currentTrustDocumentsQuery } from "/queries/TrustGraph";
+import type { TrustGraphCurrentDocumentsQuery } from "/queries/__generated__/TrustGraphCurrentDocumentsQuery.graphql.ts";
 import { groupBy, objectEntries } from "@probo/helpers";
 import { documentTypeLabel } from "/helpers/documents";
 import { useTranslate } from "@probo/i18n";
@@ -10,16 +10,19 @@ import { Rows } from "/components/Rows.tsx";
 import { RowHeader } from "/components/RowHeader.tsx";
 
 type Props = {
-  queryRef: PreloadedQuery<TrustGraphDocumentsQuery>;
+  queryRef: PreloadedQuery<TrustGraphCurrentDocumentsQuery>;
 };
 
 export function DocumentsPage({ queryRef }: Props) {
   const { __ } = useTranslate();
-  const data = usePreloadedQuery(trustDocumentsQuery, queryRef);
+  const data = usePreloadedQuery<TrustGraphCurrentDocumentsQuery>(
+    currentTrustDocumentsQuery,
+    queryRef
+  );
   const documents =
-    data.trustCenterBySlug?.documents.edges.map((edge) => edge.node) ?? [];
+    data.currentTrustCenter?.documents.edges.map((edge) => edge.node) ?? [];
   const documentsPerType = groupBy(documents, (document) =>
-    documentTypeLabel(document.documentType, __),
+    documentTypeLabel(document.documentType, __)
   );
   return (
     <div>
