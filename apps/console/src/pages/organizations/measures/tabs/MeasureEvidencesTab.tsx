@@ -212,7 +212,7 @@ function EvidenceRow(props: {
           __(
             'This will permanently delete the evidence "%s". This action cannot be undone.'
           ),
-          evidence.file?.fileName
+          evidence.file?.fileName || __("Link evidence")
         ),
       }
     );

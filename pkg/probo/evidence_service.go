@@ -93,6 +93,10 @@ func (s EvidenceService) UploadMeasureEvidence(
 			var file *coredata.File
 			var err error
 
+			if err := measure.LoadByID(ctx, conn, s.svc.scope, req.MeasureID); err != nil {
+				return fmt.Errorf("cannot load measure %q: %w", req.MeasureID, err)
+			}
+
 			file, err = s.svc.Files.UploadAndSaveFile(
 				ctx,
 				s.fileValidator,
@@ -108,11 +112,6 @@ func (s EvidenceService) UploadMeasureEvidence(
 			}
 
 			evidence.EvidenceFileId = &file.ID
-
-			if err := measure.LoadByID(ctx, conn, s.svc.scope, req.MeasureID); err != nil {
-				return fmt.Errorf("cannot load measure %q: %w", req.MeasureID, err)
-			}
-
 			evidence.MeasureID = req.MeasureID
 
 			if err := evidence.Insert(ctx, conn, s.svc.scope); err != nil {
@@ -243,17 +242,12 @@ func (s *EvidenceService) Delete(
 ) error {
 	evidence := &coredata.Evidence{ID: evidenceID}
 
-	return s.svc.pg.WithTx(
+	return s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			var fileKey *string
-			var err error
-
-			if fileKey, err = evidence.Delete(ctx, conn, s.svc.scope); err != nil {
+			err := evidence.Delete(ctx, conn, s.svc.scope)
+			if err != nil {
 				return fmt.Errorf("cannot delete evidence: %w", err)
-			}
-			if err = s.svc.Files.DeleteFileFromS3(ctx, *fileKey); err != nil {
-				return err
 			}
 
 			return nil

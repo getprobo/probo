@@ -418,14 +418,13 @@ func (e Evidence) Delete(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-) (*string, error) {
+) error {
 	q := `
 DELETE FROM
     evidences
 WHERE
     %s
     AND id = @evidence_id
-RETURNING evidence_file_id;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -437,19 +436,8 @@ RETURNING evidence_file_id;
 	err := conn.QueryRow(ctx, q, args).Scan(&evidenceFileId)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to delete evidence: %w", err)
+		return fmt.Errorf("failed to delete evidence: %w", err)
 	}
 
-	if evidenceFileId != nil {
-		var err error
-		var fileKey *string
-		file := &File{ID: *evidenceFileId}
-		if fileKey, err = file.HardDelete(ctx, conn, scope); err != nil {
-			return nil, fmt.Errorf("failed to hard delete evidence file: %w", err)
-		}
-		return fileKey, nil
-
-	}
-
-	return nil, err
+	return nil
 }
