@@ -6,7 +6,7 @@ WITH
     evidence_files AS (
         SELECT
             e.id as evidence_id,
-            generate_gid(decode_base64_unpadded(e.tenant_id), 10) as file_id,
+            generate_gid(decode_base64_unpadded(e.tenant_id), 25) as file_id,
             e.tenant_id,
             'probod' as bucket_name,
             e.mime_type,

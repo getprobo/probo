@@ -89,7 +89,7 @@ func (s FileService) UploadAndSaveFile(
 	}
 
 	if err := fileValidator.Validate(req.Filename, mimeType, req.Size); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot validate file: %w", err)
 	}
 
 	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{

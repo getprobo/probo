@@ -2290,7 +2290,7 @@ func (r *mutationResolver) UploadVendorComplianceReport(ctx context.Context, inp
 		ctx,
 		input.VendorID,
 		&probo.VendorComplianceReportCreateRequest{
-			File:       probo.FileUpload{Filename: input.File.Filename, Size: input.File.Size, Content: input.File.File},
+			File:       probo.FileUpload{Filename: input.File.Filename, Size: input.File.Size, Content: input.File.File, ContentType: input.File.ContentType},
 			ReportDate: input.ReportDate,
 			ValidUntil: input.ValidUntil,
 			ReportName: input.ReportName,

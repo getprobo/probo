@@ -1,14 +1,16 @@
 ALTER TABLE
     vendor_compliance_reports
     ADD COLUMN report_file_id text
-        REFERENCES files(id) ON DELETE SET NULL;
+    REFERENCES files(id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT;
 
 WITH
-    /* 10 is for FileEntityType */
+    /* 25 is for FileEntityType */
     vcr_files AS (
         SELECT
             vcr.id as report_id,
-            generate_gid(decode_base64_unpadded(vcr.tenant_id), 10) as file_id,
+            generate_gid(decode_base64_unpadded(vcr.tenant_id), 25) as file_id,
             vcr.tenant_id,
             'probod' as bucket_name,
             'application/pdf' as mime_type,
