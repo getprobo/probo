@@ -3,6 +3,7 @@ package probo
 import (
 	"archive/zip"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +15,7 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/docgen"
@@ -1201,7 +1203,7 @@ func (s *DocumentService) ExportPDF(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) (err error) {
-			data, err = exportDocumentPDF(ctx, s.html2pdfConverter, conn, s.svc.scope, documentVersionID, options)
+			data, err = exportDocumentPDF(ctx, s.svc, s.html2pdfConverter, conn, s.svc.scope, documentVersionID, options)
 			if err != nil {
 				return fmt.Errorf("cannot export document PDF: %w", err)
 			}
@@ -1333,6 +1335,7 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID 
 
 func exportDocumentPDF(
 	ctx context.Context,
+	svc *TenantService,
 	html2pdfConverter *html2pdf.Converter,
 	conn pg.Conn,
 	scope coredata.Scoper,
@@ -1342,6 +1345,7 @@ func exportDocumentPDF(
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
 	owner := &coredata.People{}
+	organization := &coredata.Organization{}
 	signatures := coredata.DocumentVersionSignatures{}
 	peopleMap := make(map[gid.GID]*coredata.People)
 
@@ -1355,6 +1359,10 @@ func exportDocumentPDF(
 
 	if err := owner.LoadByID(ctx, conn, scope, document.OwnerID); err != nil {
 		return nil, fmt.Errorf("cannot load document owner: %w", err)
+	}
+
+	if err := organization.LoadByID(ctx, conn, scope, document.OrganizationID); err != nil {
+		return nil, fmt.Errorf("cannot load organization: %w", err)
 	}
 
 	var signatureData []docgen.SignatureData
@@ -1403,14 +1411,24 @@ func exportDocumentPDF(
 		classification = docgen.ClassificationSecret
 	}
 
+	logoBase64 := ""
+	if organization.LogoObjectKey != "" {
+		ptLogoBase64, logoErr := getLogoBase64(ctx, svc, organization.LogoObjectKey)
+		if logoErr == nil {
+			logoBase64 = *ptLogoBase64
+		}
+	}
+
 	docData := docgen.DocumentData{
-		Title:          version.Title,
-		Content:        version.Content,
-		Version:        version.VersionNumber,
-		Classification: classification,
-		Approver:       owner.FullName,
-		PublishedAt:    version.PublishedAt,
-		Signatures:     signatureData,
+		Title:             version.Title,
+		Content:           version.Content,
+		Version:           version.VersionNumber,
+		Classification:    classification,
+		Approver:          owner.FullName,
+		PublishedAt:       version.PublishedAt,
+		Signatures:        signatureData,
+		CompanyName:       organization.Name,
+		CompanyLogoBase64: logoBase64,
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)
@@ -1492,6 +1510,7 @@ func (s *DocumentService) Export(
 
 				exportedPDF, err := exportDocumentPDF(
 					ctx,
+					s.svc,
 					s.html2pdfConverter,
 					conn,
 					s.svc.scope,
@@ -1606,4 +1625,30 @@ func sanitizeFilename(title string) string {
 	}
 
 	return sanitized
+}
+
+func getLogoBase64(ctx context.Context, svc *TenantService, logoObjectKey string) (*string, error) {
+	result, err := svc.s3.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(svc.bucket),
+		Key:    aws.String(logoObjectKey),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get logo from S3: %w", err)
+	}
+	defer result.Body.Close()
+
+	logoData, err := io.ReadAll(result.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read logo data: %w", err)
+	}
+
+	mimeType := "image/png"
+	if result.ContentType != nil {
+		mimeType = *result.ContentType
+	}
+
+	base64Data := base64.StdEncoding.EncodeToString(logoData)
+	dataURL := fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
+
+	return &dataURL, nil
 }

@@ -53,6 +53,9 @@ var (
 			}
 			return template.HTML(buf.String())
 		},
+		"imgTag": func(src, alt, class string) template.HTML {
+			return template.HTML(fmt.Sprintf(`<img src="%s" alt="%s" class="%s">`, src, alt, class))
+		},
 	}
 
 	documentTemplate = template.Must(template.New("document").Funcs(templateFuncs).Parse(htmlTemplateContent))
@@ -62,14 +65,16 @@ type (
 	Classification string
 
 	DocumentData struct {
-		Title          string
-		Content        string
-		Version        int
-		Classification Classification
-		Approver       string
-		Description    string
-		PublishedAt    *time.Time
-		Signatures     []SignatureData
+		Title             string
+		Content           string
+		Version           int
+		Classification    Classification
+		Approver          string
+		Description       string
+		PublishedAt       *time.Time
+		Signatures        []SignatureData
+		CompanyName       string
+		CompanyLogoBase64 string
 	}
 
 	SignatureData struct {
@@ -91,6 +96,7 @@ func RenderHTML(data DocumentData) ([]byte, error) {
 	data.Title = html.EscapeString(data.Title)
 	data.Approver = html.EscapeString(data.Approver)
 	data.Description = html.EscapeString(data.Description)
+	data.CompanyName = html.EscapeString(data.CompanyName)
 
 	for i := range data.Signatures {
 		data.Signatures[i].SignedBy = html.EscapeString(data.Signatures[i].SignedBy)

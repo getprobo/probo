@@ -16,9 +16,12 @@ package trust
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/docgen"
 	"github.com/getprobo/probo/pkg/gid"
@@ -141,6 +144,7 @@ func (s *DocumentService) exportPDFData(
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
 	owner := &coredata.People{}
+	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithConn(
 		ctx,
@@ -161,6 +165,10 @@ func (s *DocumentService) exportPDFData(
 				return fmt.Errorf("cannot load document owner: %w", err)
 			}
 
+			if err := organization.LoadByID(ctx, conn, s.svc.scope, document.OrganizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
 			return nil
 		},
 	)
@@ -177,13 +185,23 @@ func (s *DocumentService) exportPDFData(
 		classification = docgen.ClassificationSecret
 	}
 
+	logoBase64 := ""
+	if organization.LogoObjectKey != "" {
+		ptLogoBase64, logoErr := getLogoBase64(ctx, s.svc, organization.LogoObjectKey)
+		if logoErr == nil {
+			logoBase64 = *ptLogoBase64
+		}
+	}
+
 	docData := docgen.DocumentData{
-		Title:          version.Title,
-		Content:        version.Content,
-		Version:        version.VersionNumber,
-		Classification: classification,
-		Approver:       owner.FullName,
-		PublishedAt:    version.PublishedAt,
+		Title:             version.Title,
+		Content:           version.Content,
+		Version:           version.VersionNumber,
+		Classification:    classification,
+		Approver:          owner.FullName,
+		PublishedAt:       version.PublishedAt,
+		CompanyName:       organization.Name,
+		CompanyLogoBase64: logoBase64,
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)
@@ -213,4 +231,30 @@ func (s *DocumentService) exportPDFData(
 	}
 
 	return pdfData, nil
+}
+
+func getLogoBase64(ctx context.Context, svc *TenantService, logoObjectKey string) (*string, error) {
+	result, err := svc.s3.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(svc.bucket),
+		Key:    aws.String(logoObjectKey),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get logo from S3: %w", err)
+	}
+	defer result.Body.Close()
+
+	logoData, err := io.ReadAll(result.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read logo data: %w", err)
+	}
+
+	mimeType := "image/png"
+	if result.ContentType != nil {
+		mimeType = *result.ContentType
+	}
+
+	base64Data := base64.StdEncoding.EncodeToString(logoData)
+	dataURL := fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
+
+	return &dataURL, nil
 }

@@ -49,13 +49,40 @@
             page-break-after: auto;
         }
 
-
-
         .document-header {
             border-bottom: 1px solid #333;
             padding-bottom: 15px;
             margin-bottom: 25px;
             page-break-after: avoid;
+        }
+
+        .company-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 0;
+            margin-bottom: 20px;
+            page-break-after: avoid;
+        }
+
+        .company-divider {
+            border-top: 1px solid #000;
+            margin: 10px 0 20px 0;
+            page-break-after: avoid;
+        }
+
+        .company-logo {
+            max-height: 60px;
+            max-width: 200px;
+            margin-right: 15px;
+            object-fit: contain;
+        }
+
+        .company-name {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
         }
 
         .document-title {
@@ -312,6 +339,17 @@
     <div class="document-container">
         <div class="page-section">
             <div class="document-header">
+                {{- if or .CompanyLogoBase64 .CompanyName}}
+                <div class="company-header">
+                    {{- if .CompanyLogoBase64}}
+                    {{imgTag .CompanyLogoBase64 (printf "%s Logo" .CompanyName) "company-logo"}}
+                    {{- end}}
+                    {{- if .CompanyName}}
+                    <h2 class="company-name">{{.CompanyName}}</h2>
+                    {{- end}}
+                </div>
+                <div class="company-divider"></div>
+                {{- end}}
                 <h1 class="document-title">{{.Title}}</h1>
 
                 <div class="document-meta">
