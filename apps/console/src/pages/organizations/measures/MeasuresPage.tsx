@@ -55,7 +55,7 @@ type Props = {
 
 const measuresFragment = graphql`
   fragment MeasuresPageFragment on Organization {
-    measures(first: 100) @connection(key: "MeasuresGraphListQuery__measures") {
+    measures(first: 500) @connection(key: "MeasuresGraphListQuery__measures") {
       __id
       edges {
         node {

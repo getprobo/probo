@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f73db66d7c3890608398fc933f073fd5>>
+ * @generated SignedSource<<cff26152bf46e7734e8ae5f5671b47b6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -57,7 +57,7 @@ v4 = [
   {
     "kind": "Literal",
     "name": "first",
-    "value": 20
+    "value": 500
   }
 ],
 v5 = {
@@ -273,7 +273,7 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "tasks(first:20)"
+                "storageKey": "tasks(first:500)"
               },
               {
                 "alias": null,
@@ -296,12 +296,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f80135be50e4f0a5a9a881930b686bcd",
+    "cacheID": "a0b3367a3288c70f0bbcde73ec237bee",
     "id": null,
     "metadata": {},
     "name": "TaskGraphQuery",
     "operationKind": "query",
-    "text": "query TaskGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...TasksPageFragment\n    }\n    id\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n\nfragment TasksPageFragment on Organization {\n  tasks(first: 20) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        ...TaskFormDialogFragment\n        measure {\n          id\n          name\n        }\n        assignedTo {\n          id\n          fullName\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query TaskGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      ...TasksPageFragment\n    }\n    id\n  }\n}\n\nfragment TaskFormDialogFragment on Task {\n  id\n  description\n  name\n  state\n  timeEstimate\n  deadline\n  assignedTo {\n    id\n  }\n  measure {\n    id\n  }\n}\n\nfragment TasksPageFragment on Organization {\n  tasks(first: 500) {\n    edges {\n      node {\n        id\n        name\n        state\n        description\n        ...TaskFormDialogFragment\n        measure {\n          id\n          name\n        }\n        assignedTo {\n          id\n          fullName\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

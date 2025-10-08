@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<792fbba36453d167b7844222f287183e>>
+ * @generated SignedSource<<5dfe8149e11942df0913ea8ba61e7ee5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -57,7 +57,7 @@ v4 = [
   {
     "kind": "Literal",
     "name": "first",
-    "value": 100
+    "value": 500
   }
 ];
 return {
@@ -212,7 +212,7 @@ return {
                     ]
                   }
                 ],
-                "storageKey": "measures(first:100)"
+                "storageKey": "measures(first:500)"
               },
               {
                 "alias": null,
@@ -233,12 +233,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "aeaecdca869ba61b6602c2ebd701061d",
+    "cacheID": "644632c32801939ffc06c8258b3060f3",
     "id": null,
     "metadata": {},
     "name": "MeasureGraphListQuery",
     "operationKind": "query",
-    "text": "query MeasureGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...MeasuresPageFragment\n  }\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasuresPageFragment on Organization {\n  measures(first: 100) {\n    edges {\n      node {\n        id\n        name\n        category\n        state\n        ...MeasureFormDialogMeasureFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query MeasureGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...MeasuresPageFragment\n  }\n}\n\nfragment MeasureFormDialogMeasureFragment on Measure {\n  id\n  description\n  name\n  category\n  state\n}\n\nfragment MeasuresPageFragment on Organization {\n  measures(first: 500) {\n    edges {\n      node {\n        id\n        name\n        category\n        state\n        ...MeasureFormDialogMeasureFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();

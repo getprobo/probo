@@ -17,7 +17,7 @@ const tasksFragment = graphql`
   fragment TasksPageFragment on Organization
   @refetchable(queryName: "TasksPageFragment_query")
   @argumentDefinitions(
-    first: { type: "Int", defaultValue: 20 }
+    first: { type: "Int", defaultValue: 500 }
     order: { type: "TaskOrder", defaultValue: null }
     after: { type: "CursorKey", defaultValue: null }
     before: { type: "CursorKey", defaultValue: null }
