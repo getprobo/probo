@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.68.1] - 2025-10-09
+
+### Fixed
+- Fix filename content type regression
+- Add missing permission to binary in docker image
+
 ## [0.68.0] - 2025-10-09
 
 ### Added
