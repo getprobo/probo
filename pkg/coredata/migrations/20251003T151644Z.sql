@@ -20,6 +20,7 @@ WITH
             vcr.created_at,
             vcr.updated_at
         FROM vendor_compliance_reports vcr
+        WHERE snapshot_id IS NULL
     ),
     inserted_files AS (
         INSERT INTO files (id, tenant_id, bucket_name, mime_type, file_name, file_key, file_size, created_at, updated_at)
@@ -39,3 +40,12 @@ WHERE vendor_compliance_reports.id = fv.report_id;
 ALTER TABLE vendor_compliance_reports
     ALTER COLUMN file_key DROP NOT NULL,
     ALTER COLUMN file_size DROP NOT NULL;
+
+UPDATE vendor_compliance_reports
+SET report_file_id = f.id
+FROM files f
+WHERE vendor_compliance_reports.snapshot_id IS NOT NULL
+    AND vendor_compliance_reports.report_file_id IS NULL
+    AND vendor_compliance_reports.file_key IS NOT NULL
+    AND f.file_key = vendor_compliance_reports.file_key::uuid
+    AND f.tenant_id = vendor_compliance_reports.tenant_id;
