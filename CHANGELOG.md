@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.67.2] - 2025-10-09
+
+### Fixed
+- Fix vendor compliance reports files migration
+
 ## [0.67.1] - 2025-10-09
 
 ### Fixed
