@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.67.0] - 2025-10-09
+
+## Changed
+- Store all file data in one table
+
 ### Fixed
 - Display more measures and tasks
 
