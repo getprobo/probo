@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -158,12 +159,17 @@ func (s FileService) GenerateFileTempURL(
 
 	presignClient := s3.NewPresignClient(s.svc.s3)
 
+	// Use RFC 6266/5987 encoding for filename with UTF-8 support
+	encodedFilename := url.QueryEscape(file.FileName)
+	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
+		encodedFilename, encodedFilename)
+
 	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket:                     aws.String(s.svc.bucket),
 		Key:                        aws.String(file.FileKey),
 		ResponseCacheControl:       aws.String("max-age=3600, public"),
 		ResponseContentType:        aws.String(file.MimeType),
-		ResponseContentDisposition: aws.String(fmt.Sprintf("attachment; filename=\"%s\"", file.FileName)),
+		ResponseContentDisposition: aws.String(fmt.Sprintf("attachment; filename=\"%s\"", contentDisposition)),
 	}, func(opts *s3.PresignOptions) {
 		opts.Expires = expiresIn
 	})
