@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.68.0] - 2025-10-09
+
+### Added
+- Add custom domain to trust centers
+
 ## [0.67.2] - 2025-10-09
 
 ### Fixed
