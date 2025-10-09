@@ -16,6 +16,7 @@ WITH
             e.created_at,
             e.updated_at
         FROM evidences e
+        WHERE  e.object_key IS NOT NULL AND e.object_key != ''
     ),
     inserted_files AS (
         INSERT INTO files (id, tenant_id, bucket_name, mime_type, file_name, file_key, file_size, created_at, updated_at)
