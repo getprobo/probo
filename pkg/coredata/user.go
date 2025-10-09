@@ -115,6 +115,7 @@ WHERE
 func (u *Users) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
 	q := `
@@ -124,11 +125,14 @@ FROM
 	users
 WHERE
 	id IN (
-		SELECT user_id FROM authz_memberships WHERE organization_id = @organization_id
+		SELECT user_id FROM authz_memberships WHERE organization_id = @organization_id AND %s
 	)
 `
 
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
 	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 

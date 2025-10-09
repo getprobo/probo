@@ -16,14 +16,28 @@ package types
 
 import (
 	"github.com/getprobo/probo/pkg/coredata"
+	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 )
 
 type (
+	MembershipConnection struct {
+		TotalCount int               `json:"totalCount"`
+		Edges      []*MembershipEdge `json:"edges"`
+		PageInfo   *PageInfo         `json:"pageInfo"`
+
+		Resolver any
+		ParentID gid.GID
+	}
+
 	MembershipOrderBy OrderBy[coredata.MembershipOrderField]
 )
 
-func NewMembershipConnection(p *page.Page[*coredata.Membership, coredata.MembershipOrderField]) *MembershipConnection {
+func NewMembershipConnection(
+	p *page.Page[*coredata.Membership, coredata.MembershipOrderField],
+	resolver any,
+	parentID gid.GID,
+) *MembershipConnection {
 	var edges = make([]*MembershipEdge, len(p.Data))
 
 	for i := range edges {
@@ -33,6 +47,8 @@ func NewMembershipConnection(p *page.Page[*coredata.Membership, coredata.Members
 	return &MembershipConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
+		Resolver: resolver,
+		ParentID: parentID,
 	}
 }
 

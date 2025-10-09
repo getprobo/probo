@@ -50,13 +50,13 @@ import { sprintf } from "@probo/helpers";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { z } from "zod";
 import type { NodeOf } from "/types";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { InviteUserDialog } from "/components/organizations/InviteUserDialog";
 import { useDeleteOrganizationMutation } from "/hooks/graph/OrganizationGraph";
 import { useNavigate } from "react-router";
 import { DeleteOrganizationDialog } from "/components/organizations/DeleteOrganizationDialog";
 import { CustomDomainManager } from "/components/customDomains/CustomDomainManager";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 const organizationSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
@@ -220,6 +220,7 @@ const deleteHorizontalLogoMutation = graphql`
 export default function SettingsPage({ queryRef }: Props) {
   const { __ } = useTranslate();
   const navigate = useNavigate();
+  const organizationId = useOrganizationId();
   const organizationKey = usePreloadedQuery(
     organizationViewQuery,
     queryRef
@@ -240,6 +241,14 @@ export default function SettingsPage({ queryRef }: Props) {
     organizationKey as SettingsPageInvitationsFragment$key
   );
 
+  const refetchMemberships = () => {
+    membershipsPagination.refetch({}, { fetchPolicy: 'network-only' });
+  };
+
+  const refetchInvitations = () => {
+    invitationsPagination.refetch({}, { fetchPolicy: 'network-only' });
+  };
+
   const [updateOrganization] = useMutation(updateOrganizationMutation);
   const [deleteHorizontalLogo, isDeletingHorizontalLogo] = useMutationWithToasts(
     deleteHorizontalLogoMutation,
@@ -252,24 +261,6 @@ export default function SettingsPage({ queryRef }: Props) {
   const memberships = membershipsPagination.data.memberships?.edges.map((edge) => edge.node) || [];
   const invitations = invitationsPagination.data.invitations?.edges.map((edge) => edge.node) || [];
   const [activeTab, setActiveTab] = useState<"memberships" | "invitations">("memberships");
-
-  const refetchMemberships = ({ order }: { order: { direction: string; field: string } }) => {
-    membershipsPagination.refetch({
-      order: {
-        direction: order.direction as "ASC" | "DESC",
-        field: order.field as "CREATED_AT" | "FULL_NAME" | "EMAIL_ADDRESS" | "ROLE"
-      }
-    });
-  };
-
-  const refetchInvitations = ({ order }: { order: { direction: string; field: string } }) => {
-    invitationsPagination.refetch({
-      order: {
-        direction: order.direction as "ASC" | "DESC",
-        field: order.field as "CREATED_AT" | "EXPIRES_AT" | "FULL_NAME" | "EMAIL" | "ROLE" | "STATUS" | "ACCEPTED_AT"
-      }
-    });
-  };
 
   const { formState, handleSubmit, register, reset } = useFormWithSchema(
     organizationSchema,
@@ -572,7 +563,10 @@ export default function SettingsPage({ queryRef }: Props) {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-medium">{__("Workspace members")}</h2>
-          <InviteUserDialog connectionId={invitationsPagination.data.invitations?.__id}>
+          <InviteUserDialog
+            connectionId={invitationsPagination.data.invitations?.__id}
+            onRefetch={refetchInvitations}
+          >
             <Button variant="secondary">{__("Invite member")}</Button>
           </InviteUserDialog>
         </div>
@@ -603,7 +597,14 @@ export default function SettingsPage({ queryRef }: Props) {
             {activeTab === "memberships" && (
               <SortableTable
                 {...membershipsPagination}
-                refetch={refetchMemberships}
+                refetch={({ order }: { order: { direction: string; field: string } }) => {
+                  membershipsPagination.refetch({
+                    order: {
+                      direction: order.direction as "ASC" | "DESC",
+                      field: order.field as "CREATED_AT" | "FULL_NAME" | "EMAIL_ADDRESS" | "ROLE"
+                    }
+                  });
+                }}
               >
                 <Thead>
                   <Tr>
@@ -623,7 +624,13 @@ export default function SettingsPage({ queryRef }: Props) {
                     </Tr>
                   ) : (
                     memberships.map((membership) => (
-                      <MembershipRow key={membership.id} membership={membership} />
+                      <MembershipRow
+                        key={membership.id}
+                        membership={membership}
+                        connectionId={membershipsPagination.data.memberships?.__id}
+                        organizationId={organizationId}
+                        onRefetch={refetchMemberships}
+                      />
                     ))
                   )}
                 </Tbody>
@@ -633,7 +640,14 @@ export default function SettingsPage({ queryRef }: Props) {
             {activeTab === "invitations" && (
               <SortableTable
                 {...invitationsPagination}
-                refetch={refetchInvitations}
+                refetch={({ order }: { order: { direction: string; field: string } }) => {
+                  invitationsPagination.refetch({
+                    order: {
+                      direction: order.direction as "ASC" | "DESC",
+                      field: order.field as "CREATED_AT" | "EXPIRES_AT" | "FULL_NAME" | "EMAIL" | "ROLE" | "STATUS" | "ACCEPTED_AT"
+                    }
+                  });
+                }}
               >
                 <Thead>
                   <Tr>
@@ -659,6 +673,8 @@ export default function SettingsPage({ queryRef }: Props) {
                         key={invitation.id}
                         invitation={invitation}
                         connectionId={invitationsPagination.data.invitations?.__id}
+                        organizationId={organizationId}
+                        onRefetch={refetchInvitations}
                       />
                     ))
                   )}
@@ -794,9 +810,12 @@ function Connectors(props: {
 }
 
 const removeMemberMutation = graphql`
-  mutation SettingsPage_RemoveMemberMutation($input: RemoveMemberInput!) {
+  mutation SettingsPage_RemoveMemberMutation(
+    $input: RemoveMemberInput!
+    $connections: [ID!]!
+  ) {
     removeMember(input: $input) {
-      success
+      deletedMemberId @deleteEdge(connections: $connections)
     }
   }
 `;
@@ -804,16 +823,16 @@ const removeMemberMutation = graphql`
 function InvitationRow(props: {
   invitation: NodeOf<SettingsPageInvitationsFragment$data["invitations"]>;
   connectionId?: string;
+  organizationId: string;
+  onRefetch: () => void;
 }) {
   const { __ } = useTranslate();
   const confirm = useConfirm();
   const [deleteInvitation, isDeleting] = useMutationWithToasts(
     deleteInvitationMutation,
     {
-      successMessage: sprintf(
-        __("Invitation for %s deleted successfully"),
-        props.invitation.fullName
-      ),
+      successMessage: __("Invitation deleted successfully"),
+      errorMessage: __("Failed to delete invitation"),
     }
   );
 
@@ -829,6 +848,9 @@ function InvitationRow(props: {
               invitationId: props.invitation.id,
             },
             connections: props.connectionId ? [props.connectionId] : [],
+          },
+          onCompleted: () => {
+            props.onRefetch();
           },
         });
       },
@@ -885,15 +907,16 @@ function InvitationRow(props: {
   );
 }
 
-function MembershipRow(props: { membership: NodeOf<SettingsPageMembershipsFragment$data["memberships"]> }) {
+function MembershipRow(props: {
+  membership: NodeOf<SettingsPageMembershipsFragment$data["memberships"]>;
+  connectionId?: string;
+  organizationId: string;
+  onRefetch: () => void;
+}) {
   const { __ } = useTranslate();
-  const organizationId = useOrganizationId();
   const [removeMember, isRemoving] = useMutationWithToasts(removeMemberMutation, {
-    successMessage: sprintf(
-      __("Member %s removed successfully"),
-      props.membership.fullName
-    ),
-    errorMessage: sprintf(__("Failed to remove member %s"), props.membership.fullName),
+    successMessage: __("Member removed successfully"),
+    errorMessage: __("Failed to remove member"),
   });
   const confirm = useConfirm();
   const [isRemoved, setIsRemoved] = useState(false);
@@ -909,11 +932,13 @@ function MembershipRow(props: { membership: NodeOf<SettingsPageMembershipsFragme
           variables: {
             input: {
               memberId: props.membership.id,
-              organizationId: organizationId,
+              organizationId: props.organizationId,
             },
+            connections: props.connectionId ? [props.connectionId] : [],
           },
-          onSuccess: () => {
+          onCompleted: () => {
             setIsRemoved(true);
+            props.onRefetch();
           },
         });
       },

@@ -64,6 +64,7 @@ type ResolverRoot interface {
 	File() FileResolver
 	Framework() FrameworkResolver
 	FrameworkConnection() FrameworkConnectionResolver
+	Invitation() InvitationResolver
 	InvitationConnection() InvitationConnectionResolver
 	Measure() MeasureResolver
 	MeasureConnection() MeasureConnectionResolver
@@ -91,7 +92,6 @@ type ResolverRoot interface {
 	TrustCenterDocumentAccessConnection() TrustCenterDocumentAccessConnectionResolver
 	TrustCenterReference() TrustCenterReferenceResolver
 	TrustCenterReferenceConnection() TrustCenterReferenceConnectionResolver
-	User() UserResolver
 	UserConnection() UserConnectionResolver
 	Vendor() VendorResolver
 	VendorBusinessAssociateAgreement() VendorBusinessAssociateAgreementResolver
@@ -108,6 +108,10 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AcceptInvitationPayload struct {
+		Invitation func(childComplexity int) int
+	}
+
 	AssessVendorPayload struct {
 		Vendor func(childComplexity int) int
 	}
@@ -759,13 +763,14 @@ type ComplexityRoot struct {
 	}
 
 	Invitation struct {
-		AcceptedAt func(childComplexity int) int
-		CreatedAt  func(childComplexity int) int
-		Email      func(childComplexity int) int
-		ExpiresAt  func(childComplexity int) int
-		FullName   func(childComplexity int) int
-		ID         func(childComplexity int) int
-		Role       func(childComplexity int) int
+		AcceptedAt   func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		Email        func(childComplexity int) int
+		ExpiresAt    func(childComplexity int) int
+		FullName     func(childComplexity int) int
+		ID           func(childComplexity int) int
+		Organization func(childComplexity int) int
+		Role         func(childComplexity int) int
 	}
 
 	InvitationConnection struct {
@@ -831,6 +836,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AcceptInvitation                       func(childComplexity int, input types.AcceptInvitationInput) int
 		AssessVendor                           func(childComplexity int, input types.AssessVendorInput) int
 		AssignTask                             func(childComplexity int, input types.AssignTaskInput) int
 		BulkDeleteDocuments                    func(childComplexity int, input types.BulkDeleteDocumentsInput) int
@@ -1026,7 +1032,7 @@ type ComplexityRoot struct {
 		HeadquarterAddress    func(childComplexity int) int
 		HorizontalLogoURL     func(childComplexity int) int
 		ID                    func(childComplexity int) int
-		Invitations           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder) int
+		Invitations           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder, filter *types.InvitationFilter) int
 		LogoURL               func(childComplexity int) int
 		Measures              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
 		Memberships           func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) int
@@ -1131,7 +1137,7 @@ type ComplexityRoot struct {
 	}
 
 	RemoveMemberPayload struct {
-		Success func(childComplexity int) int
+		DeletedMemberID func(childComplexity int) int
 	}
 
 	Report struct {
@@ -1459,7 +1465,6 @@ type ComplexityRoot struct {
 		Email     func(childComplexity int) int
 		FullName  func(childComplexity int) int
 		ID        func(childComplexity int) int
-		People    func(childComplexity int, organizationID gid.GID) int
 		UpdatedAt func(childComplexity int) int
 	}
 
@@ -1627,6 +1632,7 @@ type ComplexityRoot struct {
 
 	Viewer struct {
 		ID            func(childComplexity int) int
+		Invitations   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder, filter *types.InvitationFilter) int
 		Organizations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) int
 		User          func(childComplexity int) int
 	}
@@ -1719,6 +1725,9 @@ type FrameworkResolver interface {
 type FrameworkConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.FrameworkConnection) (int, error)
 }
+type InvitationResolver interface {
+	Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error)
+}
 type InvitationConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.InvitationConnection) (int, error)
 }
@@ -1750,6 +1759,7 @@ type MutationResolver interface {
 	DeleteTrustCenterReference(ctx context.Context, input types.DeleteTrustCenterReferenceInput) (*types.DeleteTrustCenterReferencePayload, error)
 	ConfirmEmail(ctx context.Context, input types.ConfirmEmailInput) (*types.ConfirmEmailPayload, error)
 	InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error)
+	AcceptInvitation(ctx context.Context, input types.AcceptInvitationInput) (*types.AcceptInvitationPayload, error)
 	DeleteInvitation(ctx context.Context, input types.DeleteInvitationInput) (*types.DeleteInvitationPayload, error)
 	RemoveMember(ctx context.Context, input types.RemoveMemberInput) (*types.RemoveMemberPayload, error)
 	CreatePeople(ctx context.Context, input types.CreatePeopleInput) (*types.CreatePeoplePayload, error)
@@ -1878,7 +1888,7 @@ type OrganizationResolver interface {
 	HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error)
 
 	Memberships(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error)
-	Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder) (*types.InvitationConnection, error)
+	Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder, filter *types.InvitationFilter) (*types.InvitationConnection, error)
 	Connectors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) (*types.ConnectorConnection, error)
 	Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error)
 	Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
@@ -1969,9 +1979,6 @@ type TrustCenterReferenceResolver interface {
 type TrustCenterReferenceConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.TrustCenterReferenceConnection) (int, error)
 }
-type UserResolver interface {
-	People(ctx context.Context, obj *types.User, organizationID gid.GID) (*types.People, error)
-}
 type UserConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.UserConnection) (int, error)
 }
@@ -2015,6 +2022,7 @@ type VendorServiceResolver interface {
 }
 type ViewerResolver interface {
 	Organizations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) (*types.OrganizationConnection, error)
+	Invitations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder, filter *types.InvitationFilter) (*types.InvitationConnection, error)
 }
 
 type executableSchema struct {
@@ -2035,6 +2043,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AcceptInvitationPayload.invitation":
+		if e.complexity.AcceptInvitationPayload.Invitation == nil {
+			break
+		}
+
+		return e.complexity.AcceptInvitationPayload.Invitation(childComplexity), true
 
 	case "AssessVendorPayload.vendor":
 		if e.complexity.AssessVendorPayload.Vendor == nil {
@@ -4142,6 +4157,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Invitation.ID(childComplexity), true
 
+	case "Invitation.organization":
+		if e.complexity.Invitation.Organization == nil {
+			break
+		}
+
+		return e.complexity.Invitation.Organization(childComplexity), true
+
 	case "Invitation.role":
 		if e.complexity.Invitation.Role == nil {
 			break
@@ -4413,6 +4435,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.MembershipEdge.Node(childComplexity), true
+
+	case "Mutation.acceptInvitation":
+		if e.complexity.Mutation.AcceptInvitation == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_acceptInvitation_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AcceptInvitation(childComplexity, args["input"].(types.AcceptInvitationInput)), true
 
 	case "Mutation.assessVendor":
 		if e.complexity.Mutation.AssessVendor == nil {
@@ -6277,7 +6311,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Organization.Invitations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.InvitationOrder)), true
+		return e.complexity.Organization.Invitations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.InvitationOrder), args["filter"].(*types.InvitationFilter)), true
 
 	case "Organization.logoUrl":
 		if e.complexity.Organization.LogoURL == nil {
@@ -6810,12 +6844,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Query.Viewer(childComplexity), true
 
-	case "RemoveMemberPayload.success":
-		if e.complexity.RemoveMemberPayload.Success == nil {
+	case "RemoveMemberPayload.deletedMemberId":
+		if e.complexity.RemoveMemberPayload.DeletedMemberID == nil {
 			break
 		}
 
-		return e.complexity.RemoveMemberPayload.Success(childComplexity), true
+		return e.complexity.RemoveMemberPayload.DeletedMemberID(childComplexity), true
 
 	case "Report.audit":
 		if e.complexity.Report.Audit == nil {
@@ -7933,18 +7967,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.User.ID(childComplexity), true
 
-	case "User.people":
-		if e.complexity.User.People == nil {
-			break
-		}
-
-		args, err := ec.field_User_people_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.User.People(childComplexity, args["organizationId"].(gid.GID)), true
-
 	case "User.updatedAt":
 		if e.complexity.User.UpdatedAt == nil {
 			break
@@ -8714,6 +8736,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Viewer.ID(childComplexity), true
 
+	case "Viewer.invitations":
+		if e.complexity.Viewer.Invitations == nil {
+			break
+		}
+
+		args, err := ec.field_Viewer_invitations_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Viewer.Invitations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.InvitationOrder), args["filter"].(*types.InvitationFilter)), true
+
 	case "Viewer.organizations":
 		if e.complexity.Viewer.Organizations == nil {
 			break
@@ -8741,6 +8775,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	opCtx := graphql.GetOperationContext(ctx)
 	ec := executionContext{opCtx, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAcceptInvitationInput,
 		ec.unmarshalInputAssessVendorInput,
 		ec.unmarshalInputAssetFilter,
 		ec.unmarshalInputAssetOrder,
@@ -8843,6 +8878,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGenerateFrameworkStateOfApplicabilityInput,
 		ec.unmarshalInputImportFrameworkInput,
 		ec.unmarshalInputImportMeasureInput,
+		ec.unmarshalInputInvitationFilter,
 		ec.unmarshalInputInvitationOrder,
 		ec.unmarshalInputInviteUserInput,
 		ec.unmarshalInputMeasureFilter,
@@ -10471,6 +10507,10 @@ input InvitationOrder {
   field: InvitationOrderField!
 }
 
+input InvitationFilter {
+  onlyPending: Boolean
+}
+
 input DocumentVersionFilter {
   status: DocumentStatus
 }
@@ -10578,6 +10618,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: InvitationOrder
+    filter: InvitationFilter
   ): InvitationConnection! @goField(forceResolver: true)
 
   connectors(
@@ -10742,8 +10783,6 @@ type User implements Node {
   email: String!
   createdAt: Datetime!
   updatedAt: Datetime!
-
-  people(organizationId: ID!): People @goField(forceResolver: true)
 }
 
 type Membership implements Node {
@@ -10765,6 +10804,7 @@ type Invitation implements Node {
   expiresAt: Datetime!
   acceptedAt: Datetime
   createdAt: Datetime!
+  organization: Organization! @goField(forceResolver: true)
 }
 
 type Connector implements Node {
@@ -11301,6 +11341,15 @@ type Viewer {
     before: CursorKey
     orderBy: OrganizationOrder
   ): OrganizationConnection! @goField(forceResolver: true)
+
+  invitations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: InvitationOrder
+    filter: InvitationFilter
+  ): InvitationConnection! @goField(forceResolver: true)
 }
 
 # Connection Types
@@ -11400,13 +11449,19 @@ type TrustCenterReferenceEdge {
   node: TrustCenterReference!
 }
 
-type UserConnection {
+type UserConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.UserConnection"
+  ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [UserEdge!]!
   pageInfo: PageInfo!
 }
 
-type MembershipConnection {
+type MembershipConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.MembershipConnection"
+  ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [MembershipEdge!]!
   pageInfo: PageInfo!
@@ -11715,7 +11770,10 @@ type File {
   updatedAt: Datetime!
 }
 
-type InvitationConnection {
+type InvitationConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.InvitationConnection"
+  ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [InvitationEdge!]!
   pageInfo: PageInfo!
@@ -11786,6 +11844,7 @@ type Mutation {
   # User mutations
   confirmEmail(input: ConfirmEmailInput!): ConfirmEmailPayload!
   inviteUser(input: InviteUserInput!): InviteUserPayload!
+  acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload!
   deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload!
   removeMember(input: RemoveMemberInput!): RemoveMemberPayload!
 
@@ -12546,6 +12605,10 @@ input InviteUserInput {
   createPeople: Boolean!
 }
 
+input AcceptInvitationInput {
+  invitationId: ID!
+}
+
 input DeleteInvitationInput {
   invitationId: ID!
 }
@@ -13072,12 +13135,16 @@ type InviteUserPayload {
   invitationEdge: InvitationEdge!
 }
 
+type AcceptInvitationPayload {
+  invitation: Invitation!
+}
+
 type DeleteInvitationPayload {
   deletedInvitationId: ID!
 }
 
 type RemoveMemberPayload {
-  success: Boolean!
+  deletedMemberId: ID!
 }
 
 input VendorRiskAssessmentOrder {
@@ -15183,6 +15250,29 @@ func (ec *executionContext) field_Measure_tasks_argsOrderBy(
 	}
 
 	var zeroVal *types.TaskOrderBy
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_acceptInvitation_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_acceptInvitation_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_acceptInvitation_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.AcceptInvitationInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNAcceptInvitationInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAcceptInvitationInput(ctx, tmp)
+	}
+
+	var zeroVal types.AcceptInvitationInput
 	return zeroVal, nil
 }
 
@@ -18801,6 +18891,11 @@ func (ec *executionContext) field_Organization_invitations_args(ctx context.Cont
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	arg5, err := ec.field_Organization_invitations_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
 	return args, nil
 }
 func (ec *executionContext) field_Organization_invitations_argsFirst(
@@ -18865,6 +18960,19 @@ func (ec *executionContext) field_Organization_invitations_argsOrderBy(
 	}
 
 	var zeroVal *types.InvitationOrder
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_invitations_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.InvitationFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalOInvitationFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.InvitationFilter
 	return zeroVal, nil
 }
 
@@ -20935,29 +21043,6 @@ func (ec *executionContext) field_TrustCenter_references_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_User_people_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_User_people_argsOrganizationID(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["organizationId"] = arg0
-	return args, nil
-}
-func (ec *executionContext) field_User_people_argsOrganizationID(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (gid.GID, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
-	if tmp, ok := rawArgs["organizationId"]; ok {
-		return ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, tmp)
-	}
-
-	var zeroVal gid.GID
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Vendor_complianceReports_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -21338,6 +21423,119 @@ func (ec *executionContext) field_Vendor_services_argsOrderBy(
 	return zeroVal, nil
 }
 
+func (ec *executionContext) field_Viewer_invitations_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Viewer_invitations_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Viewer_invitations_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Viewer_invitations_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Viewer_invitations_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_Viewer_invitations_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	arg5, err := ec.field_Viewer_invitations_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
+	return args, nil
+}
+func (ec *executionContext) field_Viewer_invitations_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Viewer_invitations_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Viewer_invitations_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Viewer_invitations_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Viewer_invitations_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.InvitationOrder, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalOInvitationOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationOrder(ctx, tmp)
+	}
+
+	var zeroVal *types.InvitationOrder
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Viewer_invitations_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.InvitationFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalOInvitationFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.InvitationFilter
+	return zeroVal, nil
+}
+
 func (ec *executionContext) field_Viewer_organizations_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -21532,6 +21730,68 @@ func (ec *executionContext) field___Type_fields_argsIncludeDeprecated(
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AcceptInvitationPayload_invitation(ctx context.Context, field graphql.CollectedField, obj *types.AcceptInvitationPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AcceptInvitationPayload_invitation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Invitation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Invitation)
+	fc.Result = res
+	return ec.marshalNInvitation2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitation(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AcceptInvitationPayload_invitation(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AcceptInvitationPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Invitation_id(ctx, field)
+			case "email":
+				return ec.fieldContext_Invitation_email(ctx, field)
+			case "fullName":
+				return ec.fieldContext_Invitation_fullName(ctx, field)
+			case "role":
+				return ec.fieldContext_Invitation_role(ctx, field)
+			case "expiresAt":
+				return ec.fieldContext_Invitation_expiresAt(ctx, field)
+			case "acceptedAt":
+				return ec.fieldContext_Invitation_acceptedAt(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Invitation_createdAt(ctx, field)
+			case "organization":
+				return ec.fieldContext_Invitation_organization(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Invitation", field.Name)
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _AssessVendorPayload_vendor(ctx context.Context, field graphql.CollectedField, obj *types.AssessVendorPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_AssessVendorPayload_vendor(ctx, field)
@@ -36289,6 +36549,114 @@ func (ec *executionContext) fieldContext_Invitation_createdAt(_ context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Invitation_organization(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Invitation_organization(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Invitation().Organization(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Organization)
+	fc.Result = res
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Invitation_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Invitation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "memberships":
+				return ec.fieldContext_Organization_memberships(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Organization_invitations(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformities":
+				return ec.fieldContext_Organization_nonconformities(ctx, field)
+			case "obligations":
+				return ec.fieldContext_Organization_obligations(ctx, field)
+			case "continualImprovements":
+				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "processingActivities":
+				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "customDomain":
+				return ec.fieldContext_Organization_customDomain(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _InvitationConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.InvitationConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_InvitationConnection_totalCount(ctx, field)
 	if err != nil {
@@ -36534,6 +36902,8 @@ func (ec *executionContext) fieldContext_InvitationEdge_node(_ context.Context, 
 				return ec.fieldContext_Invitation_acceptedAt(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Invitation_createdAt(ctx, field)
+			case "organization":
+				return ec.fieldContext_Invitation_organization(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Invitation", field.Name)
 		},
@@ -38902,6 +39272,65 @@ func (ec *executionContext) fieldContext_Mutation_inviteUser(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_acceptInvitation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_acceptInvitation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AcceptInvitation(rctx, fc.Args["input"].(types.AcceptInvitationInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.AcceptInvitationPayload)
+	fc.Result = res
+	return ec.marshalNAcceptInvitationPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAcceptInvitationPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_acceptInvitation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "invitation":
+				return ec.fieldContext_AcceptInvitationPayload_invitation(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AcceptInvitationPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_acceptInvitation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_deleteInvitation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_deleteInvitation(ctx, field)
 	if err != nil {
@@ -39000,8 +39429,8 @@ func (ec *executionContext) fieldContext_Mutation_removeMember(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "success":
-				return ec.fieldContext_RemoveMemberPayload_success(ctx, field)
+			case "deletedMemberId":
+				return ec.fieldContext_RemoveMemberPayload_deletedMemberId(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type RemoveMemberPayload", field.Name)
 		},
@@ -47494,7 +47923,7 @@ func (ec *executionContext) _Organization_invitations(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organization().Invitations(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.InvitationOrder))
+		return ec.resolvers.Organization().Invitations(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.InvitationOrder), fc.Args["filter"].(*types.InvitationFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -51410,6 +51839,8 @@ func (ec *executionContext) fieldContext_Query_viewer(_ context.Context, field g
 				return ec.fieldContext_Viewer_user(ctx, field)
 			case "organizations":
 				return ec.fieldContext_Viewer_organizations(ctx, field)
+			case "invitations":
+				return ec.fieldContext_Viewer_invitations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Viewer", field.Name)
 		},
@@ -51548,8 +51979,8 @@ func (ec *executionContext) fieldContext_Query___schema(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _RemoveMemberPayload_success(ctx context.Context, field graphql.CollectedField, obj *types.RemoveMemberPayload) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_RemoveMemberPayload_success(ctx, field)
+func (ec *executionContext) _RemoveMemberPayload_deletedMemberId(ctx context.Context, field graphql.CollectedField, obj *types.RemoveMemberPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_RemoveMemberPayload_deletedMemberId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -51562,7 +51993,7 @@ func (ec *executionContext) _RemoveMemberPayload_success(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Success, nil
+		return obj.DeletedMemberID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -51574,19 +52005,19 @@ func (ec *executionContext) _RemoveMemberPayload_success(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(gid.GID)
 	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_RemoveMemberPayload_success(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_RemoveMemberPayload_deletedMemberId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "RemoveMemberPayload",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -59994,80 +60425,6 @@ func (ec *executionContext) fieldContext_User_updatedAt(_ context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _User_people(ctx context.Context, field graphql.CollectedField, obj *types.User) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_User_people(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.User().People(rctx, obj, fc.Args["organizationId"].(gid.GID))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*types.People)
-	fc.Result = res
-	return ec.marshalOPeople2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPeople(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_User_people(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_People_id(ctx, field)
-			case "fullName":
-				return ec.fieldContext_People_fullName(ctx, field)
-			case "primaryEmailAddress":
-				return ec.fieldContext_People_primaryEmailAddress(ctx, field)
-			case "additionalEmailAddresses":
-				return ec.fieldContext_People_additionalEmailAddresses(ctx, field)
-			case "kind":
-				return ec.fieldContext_People_kind(ctx, field)
-			case "position":
-				return ec.fieldContext_People_position(ctx, field)
-			case "contractStartDate":
-				return ec.fieldContext_People_contractStartDate(ctx, field)
-			case "contractEndDate":
-				return ec.fieldContext_People_contractEndDate(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_People_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_People_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type People", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_User_people_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return fc, err
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _UserConnection_totalCount(ctx context.Context, field graphql.CollectedField, obj *types.UserConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_UserConnection_totalCount(ctx, field)
 	if err != nil {
@@ -60309,8 +60666,6 @@ func (ec *executionContext) fieldContext_UserEdge_node(_ context.Context, field 
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "people":
-				return ec.fieldContext_User_people(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -65549,8 +65904,6 @@ func (ec *executionContext) fieldContext_Viewer_user(_ context.Context, field gr
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "people":
-				return ec.fieldContext_User_people(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -65613,6 +65966,69 @@ func (ec *executionContext) fieldContext_Viewer_organizations(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Viewer_organizations_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Viewer_invitations(ctx context.Context, field graphql.CollectedField, obj *types.Viewer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Viewer_invitations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Viewer().Invitations(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.InvitationOrder), fc.Args["filter"].(*types.InvitationFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.InvitationConnection)
+	fc.Result = res
+	return ec.marshalNInvitationConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Viewer_invitations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Viewer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_InvitationConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_InvitationConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_InvitationConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type InvitationConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Viewer_invitations_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -67569,6 +67985,33 @@ func (ec *executionContext) fieldContext___Type_isOneOf(_ context.Context, field
 // endregion **************************** field.gotpl *****************************
 
 // region    **************************** input.gotpl *****************************
+
+func (ec *executionContext) unmarshalInputAcceptInvitationInput(ctx context.Context, obj any) (types.AcceptInvitationInput, error) {
+	var it types.AcceptInvitationInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"invitationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "invitationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invitationId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.InvitationID = data
+		}
+	}
+
+	return it, nil
+}
 
 func (ec *executionContext) unmarshalInputAssessVendorInput(ctx context.Context, obj any) (types.AssessVendorInput, error) {
 	var it types.AssessVendorInput
@@ -71598,6 +72041,33 @@ func (ec *executionContext) unmarshalInputImportMeasureInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputInvitationFilter(ctx context.Context, obj any) (types.InvitationFilter, error) {
+	var it types.InvitationFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"onlyPending"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "onlyPending":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onlyPending"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OnlyPending = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputInvitationOrder(ctx context.Context, obj any) (types.InvitationOrder, error) {
 	var it types.InvitationOrder
 	asMap := map[string]any{}
@@ -74924,6 +75394,45 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var acceptInvitationPayloadImplementors = []string{"AcceptInvitationPayload"}
+
+func (ec *executionContext) _AcceptInvitationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.AcceptInvitationPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, acceptInvitationPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AcceptInvitationPayload")
+		case "invitation":
+			out.Values[i] = ec._AcceptInvitationPayload_invitation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
 
 var assessVendorPayloadImplementors = []string{"AssessVendorPayload"}
 
@@ -81730,35 +82239,71 @@ func (ec *executionContext) _Invitation(ctx context.Context, sel ast.SelectionSe
 		case "id":
 			out.Values[i] = ec._Invitation_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "email":
 			out.Values[i] = ec._Invitation_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "fullName":
 			out.Values[i] = ec._Invitation_fullName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "role":
 			out.Values[i] = ec._Invitation_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "expiresAt":
 			out.Values[i] = ec._Invitation_expiresAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
 		case "acceptedAt":
 			out.Values[i] = ec._Invitation_acceptedAt(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Invitation_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				out.Invalids++
+				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "organization":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Invitation_organization(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -82600,6 +83145,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "inviteUser":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_inviteUser(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "acceptInvitation":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_acceptInvitation(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -85554,8 +86106,8 @@ func (ec *executionContext) _RemoveMemberPayload(ctx context.Context, sel ast.Se
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("RemoveMemberPayload")
-		case "success":
-			out.Values[i] = ec._RemoveMemberPayload_success(ctx, field, obj)
+		case "deletedMemberId":
+			out.Values[i] = ec._RemoveMemberPayload_deletedMemberId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -89108,61 +89660,28 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._User_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "fullName":
 			out.Values[i] = ec._User_fullName(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "createdAt":
 			out.Values[i] = ec._User_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "updatedAt":
 			out.Values[i] = ec._User_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
-		case "people":
-			field := field
-
-			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._User_people(ctx, field, obj)
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -90944,6 +91463,42 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "invitations":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Viewer_invitations(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -91301,6 +91856,25 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) unmarshalNAcceptInvitationInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAcceptInvitationInput(ctx context.Context, v any) (types.AcceptInvitationInput, error) {
+	res, err := ec.unmarshalInputAcceptInvitationInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAcceptInvitationPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAcceptInvitationPayload(ctx context.Context, sel ast.SelectionSet, v types.AcceptInvitationPayload) graphql.Marshaler {
+	return ec._AcceptInvitationPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAcceptInvitationPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAcceptInvitationPayload(ctx context.Context, sel ast.SelectionSet, v *types.AcceptInvitationPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AcceptInvitationPayload(ctx, sel, v)
+}
 
 func (ec *executionContext) unmarshalNAssessVendorInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐAssessVendorInput(ctx context.Context, v any) (types.AssessVendorInput, error) {
 	res, err := ec.unmarshalInputAssessVendorInput(ctx, v)
@@ -100658,6 +101232,14 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	_ = ctx
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOInvitationFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationFilter(ctx context.Context, v any) (*types.InvitationFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputInvitationFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOInvitationOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInvitationOrder(ctx context.Context, v any) (*types.InvitationOrder, error) {

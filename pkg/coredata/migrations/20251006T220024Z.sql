@@ -8,6 +8,7 @@ CREATE TYPE authz_role AS ENUM ('OWNER', 'ADMIN', 'MEMBER', 'VIEWER');
 -- Create authz_memberships table with id as primary key
 CREATE TABLE authz_memberships (
     id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
     user_id TEXT NOT NULL,
     organization_id TEXT NOT NULL,
     role authz_role NOT NULL,
@@ -19,6 +20,7 @@ CREATE TABLE authz_memberships (
 -- Create authz_invitations table
 CREATE TABLE authz_invitations (
     id TEXT PRIMARY KEY,
+    tenant_id TEXT NOT NULL,
     organization_id TEXT NOT NULL,
     email TEXT NOT NULL,
     full_name TEXT NOT NULL,
@@ -29,8 +31,9 @@ CREATE TABLE authz_invitations (
 );
 
 -- Copy data from users_organizations to authz_memberships
-INSERT INTO authz_memberships (id, user_id, organization_id, role, created_at, updated_at)
+INSERT INTO authz_memberships (tenant_id, id, user_id, organization_id, role, created_at, updated_at)
 SELECT
+    organizations.tenant_id,
     generate_gid(decode_base64_unpadded(organizations.tenant_id), 38) as id,
     users_organizations.user_id,
     users_organizations.organization_id,

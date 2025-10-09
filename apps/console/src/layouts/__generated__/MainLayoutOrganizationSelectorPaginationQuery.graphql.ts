@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<92c96c7b8a58554e9fb99b86489e13d4>>
+ * @generated SignedSource<<7288534d3b5e852c463af820a9001298>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -208,6 +208,37 @@ return {
             "kind": "LinkedHandle",
             "name": "organizations"
           },
+          {
+            "alias": null,
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "filter",
+                "value": {
+                  "onlyPending": true
+                }
+              },
+              {
+                "kind": "Literal",
+                "name": "first",
+                "value": 1
+              }
+            ],
+            "concreteType": "InvitationConnection",
+            "kind": "LinkedField",
+            "name": "invitations",
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "totalCount",
+                "storageKey": null
+              }
+            ],
+            "storageKey": "invitations(filter:{\"onlyPending\":true},first:1)"
+          },
           (v4/*: any*/)
         ],
         "storageKey": null
@@ -215,16 +246,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "57fa65c9d5f23210b606fbf0b2005fb8",
+    "cacheID": "77f3fbbca18dda24151bff9901c54626",
     "id": null,
     "metadata": {},
     "name": "MainLayoutOrganizationSelectorPaginationQuery",
     "operationKind": "query",
-    "text": "query MainLayoutOrganizationSelectorPaginationQuery(\n  $after: CursorKey\n  $first: Int = 25\n) {\n  viewer {\n    ...MainLayout_OrganizationSelector_viewer_2HEEH6\n    id\n  }\n}\n\nfragment MainLayout_OrganizationSelector_viewer_2HEEH6 on Viewer {\n  organizations(first: $first, after: $after, orderBy: {field: NAME, direction: ASC}) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query MainLayoutOrganizationSelectorPaginationQuery(\n  $after: CursorKey\n  $first: Int = 25\n) {\n  viewer {\n    ...MainLayout_OrganizationSelector_viewer_2HEEH6\n    id\n  }\n}\n\nfragment MainLayout_OrganizationSelector_viewer_2HEEH6 on Viewer {\n  organizations(first: $first, after: $after, orderBy: {field: NAME, direction: ASC}) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n  invitations(first: 1, filter: {onlyPending: true}) {\n    totalCount\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0dc2841aeeb6ba5291cb45d8644ec4af";
+(node as any).hash = "99a5cdcce2542bc7fba01d32bbd4648b";
 
 export default node;

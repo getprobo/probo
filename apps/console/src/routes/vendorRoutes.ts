@@ -30,10 +30,9 @@ export const vendorRoutes = [
   {
     path: "vendors/:vendorId",
     fallback: PageSkeleton,
-    queryLoader: ({ vendorId, organizationId }) =>
+    queryLoader: ({ vendorId }) =>
       loadQuery(relayEnvironment, vendorNodeQuery, {
         vendorId,
-        organizationId,
       }),
     Component: lazy(
       () => import("../pages/organizations/vendors/VendorDetailPage")
@@ -95,10 +94,9 @@ export const vendorRoutes = [
   {
     path: "snapshots/:snapshotId/vendors/:vendorId",
     fallback: PageSkeleton,
-    queryLoader: ({ vendorId, organizationId }) =>
+    queryLoader: ({ vendorId }) =>
       loadQuery(relayEnvironment, vendorNodeQuery, {
         vendorId,
-        organizationId,
       }),
     Component: lazy(
       () => import("../pages/organizations/vendors/VendorDetailPage")

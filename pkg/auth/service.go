@@ -600,3 +600,107 @@ func (s Service) ResetPassword(ctx context.Context, tokenString string, newPassw
 		},
 	)
 }
+
+func (s Service) SignupFromInvitation(
+	ctx context.Context,
+	token string,
+	password string,
+	fullName string,
+) (*coredata.User, *coredata.Session, error) {
+	payload, err := statelesstoken.ValidateToken[coredata.InvitationData](
+		s.tokenSecret,
+		"organization_invitation",
+		token,
+	)
+	if err != nil {
+		return nil, nil, &ErrInvalidTokenType{"invalid invitation token"}
+	}
+	invitationData := payload.Data
+
+	if len(password) < 8 || len(password) > 128 {
+		return nil, nil, &ErrInvalidPassword{minLength: 8, maxLength: 128}
+	}
+
+	if _, err := mail.ParseAddress(invitationData.Email); err != nil {
+		return nil, nil, &ErrInvalidEmail{invitationData.Email}
+	}
+
+	if fullName == "" {
+		fullName = invitationData.FullName
+	}
+
+	if fullName == "" {
+		return nil, nil, &ErrInvalidFullName{fullName}
+	}
+
+	hashedPassword, err := s.hp.HashPassword([]byte(password))
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot hash password: %w", err)
+	}
+
+	var user *coredata.User
+	var session *coredata.Session
+
+	scope := coredata.NewScope(invitationData.InvitationID.TenantID())
+	err = s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			invitation := &coredata.Invitation{}
+			if err := invitation.LoadByID(ctx, tx, scope, invitationData.InvitationID); err != nil {
+				var errInvitationNotFound *coredata.ErrInvitationNotFound
+				if errors.As(err, &errInvitationNotFound) {
+					return fmt.Errorf("invitation was deleted or no longer exists")
+				}
+				return fmt.Errorf("cannot load invitation: %w", err)
+			}
+
+			if invitation.AcceptedAt != nil {
+				return fmt.Errorf("invitation already accepted")
+			}
+
+			if time.Now().After(invitation.ExpiresAt) {
+				return fmt.Errorf("invitation expired")
+			}
+
+			now := time.Now()
+			user = &coredata.User{
+				ID:                   gid.New(gid.NilTenant, coredata.UserEntityType),
+				EmailAddress:         invitationData.Email,
+				HashedPassword:       hashedPassword,
+				EmailAddressVerified: true,
+				FullName:             fullName,
+				CreatedAt:            now,
+				UpdatedAt:            now,
+			}
+
+			if err := user.Insert(ctx, tx); err != nil {
+				var errUserAlreadyExists *coredata.ErrUserAlreadyExists
+				if errors.As(err, &errUserAlreadyExists) {
+					return &ErrUserAlreadyExists{errUserAlreadyExists.Error()}
+				}
+				return fmt.Errorf("cannot insert user: %w", err)
+			}
+
+			session = &coredata.Session{
+				ID:        gid.New(gid.NilTenant, coredata.SessionEntityType),
+				UserID:    user.ID,
+				Data:      coredata.SessionData{},
+				ExpiredAt: now.Add(24 * time.Hour * 7),
+				CreatedAt: now,
+				UpdatedAt: now,
+			}
+
+			if err := session.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot insert session: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return user, session, nil
+}

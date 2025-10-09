@@ -76,28 +76,20 @@ func (m Membership) CursorKey(orderBy MembershipOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-// Tenant id scope is not applied because memberships are managed at the organization level and don't require tenant isolation.
-func (m *Membership) Create(ctx context.Context, conn pg.Conn) error {
+func (m *Membership) Create(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
-		INSERT INTO authz_memberships (id, user_id, organization_id, role, created_at, updated_at)
-		SELECT
-			generate_gid(decode_base64_unpadded(o.tenant_id), @entity_type),
-			@user_id,
-			@organization_id,
-			@role,
-			@created_at,
-			@updated_at
-		FROM organizations o
-		WHERE o.id = @organization_id
+		INSERT INTO authz_memberships (tenant_id, id, user_id, organization_id, role, created_at, updated_at)
+		VALUES (@tenant_id, @id, @user_id, @organization_id, @role, @created_at, @updated_at)
 	`
 
 	args := pgx.StrictNamedArgs{
+		"tenant_id":       scope.GetTenantID(),
+		"id":              m.ID,
 		"user_id":         m.UserID,
 		"organization_id": m.OrganizationID,
 		"role":            m.Role,
 		"created_at":      m.CreatedAt,
 		"updated_at":      m.UpdatedAt,
-		"entity_type":     MembershipEntityType,
 	}
 
 	result, err := conn.Exec(ctx, query, args)
@@ -116,10 +108,10 @@ func (m *Membership) Create(ctx context.Context, conn pg.Conn) error {
 	return nil
 }
 
-// Tenant id scope is not applied because we want to access memberships across all tenants for authentication purposes.
 func (m *Membership) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	membershipID gid.GID,
 ) error {
 	query := `
@@ -134,12 +126,15 @@ func (m *Membership) LoadByID(
 			m.updated_at
 		FROM authz_memberships m
 		JOIN users u ON m.user_id = u.id
-		WHERE m.id = @membership_id
+		WHERE m.id = @membership_id AND %s
 	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"membership_id": membershipID,
 	}
+	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
 	if err != nil {
@@ -158,10 +153,10 @@ func (m *Membership) LoadByID(
 	return nil
 }
 
-// Tenant id scope is not applied because we want to access memberships across all tenants for authentication purposes.
 func (m *Membership) LoadByUserAndOrg(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	userID gid.GID,
 	orgID gid.GID,
 ) error {
@@ -177,13 +172,16 @@ func (m *Membership) LoadByUserAndOrg(
 			m.updated_at
 		FROM authz_memberships m
 		JOIN users u ON m.user_id = u.id
-		WHERE m.user_id = @user_id AND m.organization_id = @organization_id
+		WHERE m.user_id = @user_id AND m.organization_id = @organization_id AND %s
 	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"user_id":         userID,
 		"organization_id": orgID,
 	}
+	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
 	if err != nil {
@@ -202,19 +200,21 @@ func (m *Membership) LoadByUserAndOrg(
 	return nil
 }
 
-// Tenant id scope is not applied because memberships are managed at the organization level and don't require tenant isolation.
-func (m *Membership) Update(ctx context.Context, conn pg.Conn) error {
+func (m *Membership) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 		UPDATE authz_memberships
 		SET role = @role, updated_at = @updated_at
-		WHERE id = @id
+		WHERE id = @id AND %s
 	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":         m.ID,
 		"role":       m.Role,
 		"updated_at": m.UpdatedAt,
 	}
+	maps.Copy(args, scope.SQLArguments())
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
@@ -228,16 +228,18 @@ func (m *Membership) Update(ctx context.Context, conn pg.Conn) error {
 	return nil
 }
 
-// Tenant id scope is not applied because memberships are managed at the organization level and don't require tenant isolation.
-func (m *Membership) Delete(ctx context.Context, conn pg.Conn) error {
+func (m *Membership) Delete(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 		DELETE FROM authz_memberships
-		WHERE id = @id
+		WHERE id = @id AND %s
 	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id": m.ID,
 	}
+	maps.Copy(args, scope.SQLArguments())
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
@@ -251,10 +253,10 @@ func (m *Membership) Delete(ctx context.Context, conn pg.Conn) error {
 	return nil
 }
 
-// Tenant id scope is not applied because we want to access all user's memberships across tenants for authentication purposes.
 func (m *Memberships) LoadByUserID(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	userID gid.GID,
 ) error {
 	query := `
@@ -272,11 +274,17 @@ FROM
 JOIN users u ON m.user_id = u.id
 WHERE
 	m.user_id = @user_id
+	AND %s
 ORDER BY
 	m.created_at DESC
 	`
 
-	args := pgx.StrictNamedArgs{"user_id": userID}
+	query = fmt.Sprintf(query, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"user_id": userID,
+	}
+	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
 	if err != nil {
@@ -292,10 +300,10 @@ ORDER BY
 	return nil
 }
 
-// Tenant id scope is not applied because we want to access memberships across all tenants for authentication purposes.
 func (m *Memberships) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[MembershipOrderField],
 ) error {
@@ -315,11 +323,15 @@ JOIN users u ON m.user_id = u.id
 WHERE
 	m.organization_id = @organization_id
 	AND %s
+	AND %s
 `
 
-	query = fmt.Sprintf(query, cursor.SQLFragment())
+	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
@@ -339,14 +351,19 @@ WHERE
 func (m *Memberships) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	organizationID gid.GID,
 ) (int, error) {
 	query := `
 		SELECT COUNT(*)
 		FROM authz_memberships
-		WHERE organization_id = @organization_id
+		WHERE organization_id = @organization_id AND %s
 	`
-	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	query = fmt.Sprintf(query, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{
+		"organization_id": organizationID,
+	}
+	maps.Copy(args, scope.SQLArguments())
 	row := conn.QueryRow(ctx, query, args)
 	var count int
 	if err := row.Scan(&count); err != nil {

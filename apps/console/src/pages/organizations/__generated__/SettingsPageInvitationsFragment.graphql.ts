@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4f099d1ee6b4635ca8129eca77d3f7e8>>
+ * @generated SignedSource<<09561c2c29459fc840773b414af6083a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type InvitationStatus = "ACCEPTED" | "EXPIRED" | "PENDING";
 import { FragmentRefs } from "relay-runtime";
 export type SettingsPageInvitationsFragment$data = {
   readonly id: string;
@@ -23,6 +24,7 @@ export type SettingsPageInvitationsFragment$data = {
         readonly fullName: string;
         readonly id: string;
         readonly role: string;
+        readonly status: InvitationStatus;
       };
     }>;
     readonly totalCount: number;
@@ -175,6 +177,13 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
+                  "name": "status",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
                   "name": "expiresAt",
                   "storageKey": null
                 },
@@ -273,6 +282,6 @@ return {
 };
 })();
 
-(node as any).hash = "d971d93653991efde284ed2b87068698";
+(node as any).hash = "f9a1ec38579cea21312ba0a20bb7394a";
 
 export default node;

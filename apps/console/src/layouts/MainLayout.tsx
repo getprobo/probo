@@ -32,6 +32,8 @@ import {
   IconPlusLarge,
   IconChevronDown,
   Avatar,
+  IconPeopleAdd,
+  Badge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
@@ -84,6 +86,9 @@ const OrganizationSelectorFragment = graphql`
         hasNextPage
         endCursor
       }
+    }
+    invitations(first: 1, filter: {onlyPending: true}) {
+      totalCount
     }
   }
 `;
@@ -287,6 +292,7 @@ function OrganizationSelector({
   );
 
   const organizations = data.organizations.edges.map((edge) => edge.node);
+  const pendingInvitationsCount = data.invitations.totalCount;
 
   const handleLoadMore = (e?: React.MouseEvent) => {
     e?.preventDefault();
@@ -301,54 +307,79 @@ function OrganizationSelector({
   };
 
   return (
-    <Dropdown
-      toggle={
-        <Button
-          className="-ml-3"
-          variant="tertiary"
-          iconAfter={IconChevronGrabberVertical}
-        >
-          {currentOrganization?.name || ""}
-        </Button>
-      }
-    >
-      <div className="max-h-150 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
-        {organizations.map((organization) => (
-          <DropdownItem
-            asChild
-            key={organization.id}
+    <div className="flex items-center gap-1">
+      <Dropdown
+        toggle={
+          <Button
+            className="-ml-3"
+            variant="tertiary"
+            iconAfter={IconChevronGrabberVertical}
           >
-            <Link to={`/organizations/${organization.id}`}>
-              <Avatar src={organization.logoUrl} name={organization.name} />
-              {organization.name}
+            {currentOrganization?.name || ""}
+          </Button>
+        }
+      >
+        <div className="max-h-150 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
+          {organizations.map((organization) => (
+            <DropdownItem
+              asChild
+              key={organization.id}
+            >
+              <Link to={`/organizations/${organization.id}`}>
+                <Avatar src={organization.logoUrl} name={organization.name} />
+                {organization.name}
+              </Link>
+            </DropdownItem>
+          ))}
+          {hasNext && (
+            <div className="px-3 py-1 flex justify-center">
+              <Button
+                variant="tertiary"
+                onClick={handleLoadMore}
+                onMouseDown={(e: React.MouseEvent) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                className="mx-auto"
+                icon={IconChevronDown}
+                disabled={isLoadingMore}
+              >
+                {isLoadingMore ? __("Loading...") : __("Show More")}
+              </Button>
+            </div>
+          )}
+        </div>
+        <DropdownSeparator />
+        {pendingInvitationsCount > 0 && (
+          <DropdownItem asChild>
+            <Link to="/">
+              <IconPeopleAdd size={16} />
+              <span className="flex-1">{__("Invitations")}</span>
+              <Badge variant="info" size="sm">
+                {pendingInvitationsCount}
+              </Badge>
             </Link>
           </DropdownItem>
-        ))}
-        {hasNext && (
-          <div className="px-3 py-1 flex justify-center">
-            <Button
-              variant="tertiary"
-              onClick={handleLoadMore}
-              onMouseDown={(e: React.MouseEvent) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              className="mx-auto"
-              icon={IconChevronDown}
-              disabled={isLoadingMore}
-            >
-              {isLoadingMore ? __("Loading...") : __("Show More")}
-            </Button>
-          </div>
         )}
-      </div>
-      <DropdownSeparator />
-      <DropdownItem asChild icon={IconPlusLarge}>
-        <Link to="/organizations/new">
-          <IconPlusLarge size={16} />
-          {__("Add organization")}
+        <DropdownItem asChild>
+          <Link to="/organizations/new">
+            <IconPlusLarge size={16} />
+            {__("Add organization")}
+          </Link>
+        </DropdownItem>
+      </Dropdown>
+      {pendingInvitationsCount > 0 && (
+        <Link to="/" className="relative" title={__("Invitations")}>
+          <Button variant="tertiary" icon={IconPeopleAdd} />
+          <Badge
+            variant="info"
+            size="sm"
+            className="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center"
+          >
+            {pendingInvitationsCount}
+          </Badge>
         </Link>
-      </DropdownItem>
-    </Dropdown>
+      )}
+    </div>
   );
 }

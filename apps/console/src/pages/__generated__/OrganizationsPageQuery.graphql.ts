@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<84d0e43eced78862d1c82603e9c332e8>>
+ * @generated SignedSource<<c25588b7506704dd23d9c8be8672f9ef>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,6 +12,24 @@ import { ConcreteRequest } from 'relay-runtime';
 export type OrganizationsPageQuery$variables = Record<PropertyKey, never>;
 export type OrganizationsPageQuery$data = {
   readonly viewer: {
+    readonly invitations: {
+      readonly __id: string;
+      readonly edges: ReadonlyArray<{
+        readonly node: {
+          readonly acceptedAt: any | null | undefined;
+          readonly createdAt: any;
+          readonly email: string;
+          readonly expiresAt: any;
+          readonly fullName: string;
+          readonly id: string;
+          readonly organization: {
+            readonly id: string;
+            readonly name: string;
+          };
+          readonly role: string;
+        };
+      }>;
+    };
     readonly organizations: {
       readonly __id: string;
       readonly edges: ReadonlyArray<{
@@ -45,7 +63,65 @@ v1 = {
   "name": "id",
   "storageKey": null
 },
-v2 = [
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "__typename",
+  "storageKey": null
+},
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "cursor",
+  "storageKey": null
+},
+v5 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "PageInfo",
+  "kind": "LinkedField",
+  "name": "pageInfo",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "endCursor",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "hasNextPage",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+},
+v6 = {
+  "kind": "ClientExtension",
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "__id",
+      "storageKey": null
+    }
+  ]
+},
+v7 = [
   {
     "alias": null,
     "args": null,
@@ -63,13 +139,7 @@ v2 = [
         "plural": false,
         "selections": [
           (v1/*: any*/),
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "name",
-            "storageKey": null
-          },
+          (v2/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -77,71 +147,129 @@ v2 = [
             "name": "logoUrl",
             "storageKey": null
           },
+          (v3/*: any*/)
+        ],
+        "storageKey": null
+      },
+      (v4/*: any*/)
+    ],
+    "storageKey": null
+  },
+  (v5/*: any*/),
+  (v6/*: any*/)
+],
+v8 = {
+  "kind": "Literal",
+  "name": "filter",
+  "value": {
+    "onlyPending": true
+  }
+},
+v9 = {
+  "kind": "Literal",
+  "name": "orderBy",
+  "value": {
+    "direction": "DESC",
+    "field": "CREATED_AT"
+  }
+},
+v10 = [
+  {
+    "alias": null,
+    "args": null,
+    "concreteType": "InvitationEdge",
+    "kind": "LinkedField",
+    "name": "edges",
+    "plural": true,
+    "selections": [
+      {
+        "alias": null,
+        "args": null,
+        "concreteType": "Invitation",
+        "kind": "LinkedField",
+        "name": "node",
+        "plural": false,
+        "selections": [
+          (v1/*: any*/),
           {
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "__typename",
+            "name": "email",
             "storageKey": null
-          }
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "fullName",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "role",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "expiresAt",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "acceptedAt",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "createdAt",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "Organization",
+            "kind": "LinkedField",
+            "name": "organization",
+            "plural": false,
+            "selections": [
+              (v1/*: any*/),
+              (v2/*: any*/)
+            ],
+            "storageKey": null
+          },
+          (v3/*: any*/)
         ],
         "storageKey": null
       },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "cursor",
-        "storageKey": null
-      }
+      (v4/*: any*/)
     ],
     "storageKey": null
   },
-  {
-    "alias": null,
-    "args": null,
-    "concreteType": "PageInfo",
-    "kind": "LinkedField",
-    "name": "pageInfo",
-    "plural": false,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "endCursor",
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "hasNextPage",
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
-  },
-  {
-    "kind": "ClientExtension",
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "__id",
-        "storageKey": null
-      }
-    ]
-  }
+  (v5/*: any*/),
+  (v6/*: any*/)
 ],
-v3 = [
-  {
-    "kind": "Literal",
-    "name": "first",
-    "value": 1000
-  },
+v11 = {
+  "kind": "Literal",
+  "name": "first",
+  "value": 1000
+},
+v12 = [
+  (v11/*: any*/),
   (v0/*: any*/)
+],
+v13 = [
+  (v8/*: any*/),
+  (v11/*: any*/),
+  (v9/*: any*/)
 ];
 return {
   "fragment": {
@@ -167,8 +295,21 @@ return {
             "kind": "LinkedField",
             "name": "__OrganizationsPage_organizations_connection",
             "plural": false,
-            "selections": (v2/*: any*/),
+            "selections": (v7/*: any*/),
             "storageKey": "__OrganizationsPage_organizations_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"NAME\"})"
+          },
+          {
+            "alias": "invitations",
+            "args": [
+              (v8/*: any*/),
+              (v9/*: any*/)
+            ],
+            "concreteType": "InvitationConnection",
+            "kind": "LinkedField",
+            "name": "__OrganizationsPage_invitations_connection",
+            "plural": false,
+            "selections": (v10/*: any*/),
+            "storageKey": "__OrganizationsPage_invitations_connection(filter:{\"onlyPending\":true},orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
           }
         ],
         "storageKey": null
@@ -193,17 +334,17 @@ return {
         "selections": [
           {
             "alias": null,
-            "args": (v3/*: any*/),
+            "args": (v12/*: any*/),
             "concreteType": "OrganizationConnection",
             "kind": "LinkedField",
             "name": "organizations",
             "plural": false,
-            "selections": (v2/*: any*/),
+            "selections": (v7/*: any*/),
             "storageKey": "organizations(first:1000,orderBy:{\"direction\":\"ASC\",\"field\":\"NAME\"})"
           },
           {
             "alias": null,
-            "args": (v3/*: any*/),
+            "args": (v12/*: any*/),
             "filters": [
               "orderBy"
             ],
@@ -212,6 +353,28 @@ return {
             "kind": "LinkedHandle",
             "name": "organizations"
           },
+          {
+            "alias": null,
+            "args": (v13/*: any*/),
+            "concreteType": "InvitationConnection",
+            "kind": "LinkedField",
+            "name": "invitations",
+            "plural": false,
+            "selections": (v10/*: any*/),
+            "storageKey": "invitations(filter:{\"onlyPending\":true},first:1000,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+          },
+          {
+            "alias": null,
+            "args": (v13/*: any*/),
+            "filters": [
+              "orderBy",
+              "filter"
+            ],
+            "handle": "connection",
+            "key": "OrganizationsPage_invitations",
+            "kind": "LinkedHandle",
+            "name": "invitations"
+          },
           (v1/*: any*/)
         ],
         "storageKey": null
@@ -219,7 +382,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "1735764e6816660969c5f96922320ac5",
+    "cacheID": "5675b3eb7810ef04bf531d7bf988c86c",
     "id": null,
     "metadata": {
       "connection": [
@@ -231,16 +394,25 @@ return {
             "viewer",
             "organizations"
           ]
+        },
+        {
+          "count": null,
+          "cursor": null,
+          "direction": "forward",
+          "path": [
+            "viewer",
+            "invitations"
+          ]
         }
       ]
     },
     "name": "OrganizationsPageQuery",
     "operationKind": "query",
-    "text": "query OrganizationsPageQuery {\n  viewer {\n    organizations(first: 1000, orderBy: {field: NAME, direction: ASC}) {\n      edges {\n        node {\n          id\n          name\n          logoUrl\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query OrganizationsPageQuery {\n  viewer {\n    organizations(first: 1000, orderBy: {field: NAME, direction: ASC}) {\n      edges {\n        node {\n          id\n          name\n          logoUrl\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    invitations(first: 1000, orderBy: {field: CREATED_AT, direction: DESC}, filter: {onlyPending: true}) {\n      edges {\n        node {\n          id\n          email\n          fullName\n          role\n          expiresAt\n          acceptedAt\n          createdAt\n          organization {\n            id\n            name\n          }\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6fde39384e4678f88f17c34bbd30e684";
+(node as any).hash = "a548f9c3a434e12c079fb2ff651822d2";
 
 export default node;

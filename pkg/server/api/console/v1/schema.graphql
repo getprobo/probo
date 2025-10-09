@@ -1465,6 +1465,10 @@ input InvitationOrder {
   field: InvitationOrderField!
 }
 
+input InvitationFilter {
+  onlyPending: Boolean
+}
+
 input DocumentVersionFilter {
   status: DocumentStatus
 }
@@ -1572,6 +1576,7 @@ type Organization implements Node {
     last: Int
     before: CursorKey
     orderBy: InvitationOrder
+    filter: InvitationFilter
   ): InvitationConnection! @goField(forceResolver: true)
 
   connectors(
@@ -1736,8 +1741,6 @@ type User implements Node {
   email: String!
   createdAt: Datetime!
   updatedAt: Datetime!
-
-  people(organizationId: ID!): People @goField(forceResolver: true)
 }
 
 type Membership implements Node {
@@ -1759,6 +1762,7 @@ type Invitation implements Node {
   expiresAt: Datetime!
   acceptedAt: Datetime
   createdAt: Datetime!
+  organization: Organization! @goField(forceResolver: true)
 }
 
 type Connector implements Node {
@@ -2295,6 +2299,15 @@ type Viewer {
     before: CursorKey
     orderBy: OrganizationOrder
   ): OrganizationConnection! @goField(forceResolver: true)
+
+  invitations(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: InvitationOrder
+    filter: InvitationFilter
+  ): InvitationConnection! @goField(forceResolver: true)
 }
 
 # Connection Types
@@ -2394,13 +2407,19 @@ type TrustCenterReferenceEdge {
   node: TrustCenterReference!
 }
 
-type UserConnection {
+type UserConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.UserConnection"
+  ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [UserEdge!]!
   pageInfo: PageInfo!
 }
 
-type MembershipConnection {
+type MembershipConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.MembershipConnection"
+  ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [MembershipEdge!]!
   pageInfo: PageInfo!
@@ -2709,7 +2728,10 @@ type File {
   updatedAt: Datetime!
 }
 
-type InvitationConnection {
+type InvitationConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.InvitationConnection"
+  ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [InvitationEdge!]!
   pageInfo: PageInfo!
@@ -2780,6 +2802,7 @@ type Mutation {
   # User mutations
   confirmEmail(input: ConfirmEmailInput!): ConfirmEmailPayload!
   inviteUser(input: InviteUserInput!): InviteUserPayload!
+  acceptInvitation(input: AcceptInvitationInput!): AcceptInvitationPayload!
   deleteInvitation(input: DeleteInvitationInput!): DeleteInvitationPayload!
   removeMember(input: RemoveMemberInput!): RemoveMemberPayload!
 
@@ -3540,6 +3563,10 @@ input InviteUserInput {
   createPeople: Boolean!
 }
 
+input AcceptInvitationInput {
+  invitationId: ID!
+}
+
 input DeleteInvitationInput {
   invitationId: ID!
 }
@@ -4066,12 +4093,16 @@ type InviteUserPayload {
   invitationEdge: InvitationEdge!
 }
 
+type AcceptInvitationPayload {
+  invitation: Invitation!
+}
+
 type DeleteInvitationPayload {
   deletedInvitationId: ID!
 }
 
 type RemoveMemberPayload {
-  success: Boolean!
+  deletedMemberId: ID!
 }
 
 input VendorRiskAssessmentOrder {

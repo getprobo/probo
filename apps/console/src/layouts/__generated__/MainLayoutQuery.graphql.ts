@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0719379cc0124f36eb1810ad24b2ae5a>>
+ * @generated SignedSource<<cb335e1fd93543371a82adf23002f600>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -275,6 +275,37 @@ return {
             "key": "MainLayout_OrganizationSelector_organizations",
             "kind": "LinkedHandle",
             "name": "organizations"
+          },
+          {
+            "alias": null,
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "filter",
+                "value": {
+                  "status": "PENDING"
+                }
+              },
+              {
+                "kind": "Literal",
+                "name": "first",
+                "value": 1
+              }
+            ],
+            "concreteType": "InvitationConnection",
+            "kind": "LinkedField",
+            "name": "invitations",
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "totalCount",
+                "storageKey": null
+              }
+            ],
+            "storageKey": "invitations(filter:{\"status\":\"PENDING\"},first:1)"
           }
         ],
         "storageKey": null
@@ -304,12 +335,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "6287440397ef427d84f8734b0953784c",
+    "cacheID": "117a78fef8e7a8fe200baf1ebf2d2487",
     "id": null,
     "metadata": {},
     "name": "MainLayoutQuery",
     "operationKind": "query",
-    "text": "query MainLayoutQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    id\n    user {\n      fullName\n      email\n      id\n    }\n    ...MainLayout_OrganizationSelector_viewer\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      logoUrl\n    }\n    id\n  }\n}\n\nfragment MainLayout_OrganizationSelector_viewer on Viewer {\n  organizations(first: 25, orderBy: {field: NAME, direction: ASC}) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n}\n"
+    "text": "query MainLayoutQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    id\n    user {\n      fullName\n      email\n      id\n    }\n    ...MainLayout_OrganizationSelector_viewer\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      logoUrl\n    }\n    id\n  }\n}\n\nfragment MainLayout_OrganizationSelector_viewer on Viewer {\n  organizations(first: 25, orderBy: {field: NAME, direction: ASC}) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n  invitations(first: 1, filter: {status: PENDING}) {\n    totalCount\n  }\n}\n"
   }
 };
 })();

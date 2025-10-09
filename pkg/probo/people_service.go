@@ -32,7 +32,6 @@ type (
 
 	UpdatePeopleRequest struct {
 		ID                       gid.GID
-		UserID                   *gid.GID
 		Kind                     *coredata.PeopleKind
 		FullName                 *string
 		PrimaryEmailAddress      *string
@@ -44,7 +43,6 @@ type (
 
 	CreatePeopleRequest struct {
 		OrganizationID           gid.GID
-		UserID                   *gid.GID
 		FullName                 string
 		PrimaryEmailAddress      string
 		AdditionalEmailAddresses []string
@@ -65,26 +63,6 @@ func (s PeopleService) Get(
 		ctx,
 		func(conn pg.Conn) error {
 			return people.LoadByID(ctx, conn, s.svc.scope, peopleID)
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return people, nil
-}
-
-func (s PeopleService) GetByUserID(
-	ctx context.Context,
-	userID gid.GID,
-) (*coredata.People, error) {
-	people := &coredata.People{}
-
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			return people.LoadByUserID(ctx, conn, s.svc.scope, userID)
 		},
 	)
 
@@ -164,10 +142,6 @@ func (s PeopleService) Update(
 				return fmt.Errorf("cannot load people: %w", err)
 			}
 
-			if req.UserID != nil {
-				people.UserID = req.UserID
-			}
-
 			if req.Kind != nil {
 				people.Kind = *req.Kind
 			}
@@ -234,7 +208,6 @@ func (s PeopleService) Create(
 		FullName:                 req.FullName,
 		PrimaryEmailAddress:      req.PrimaryEmailAddress,
 		AdditionalEmailAddresses: req.AdditionalEmailAddresses,
-		UserID:                   req.UserID,
 		Position:                 req.Position,
 		ContractStartDate:        req.ContractStartDate,
 		ContractEndDate:          req.ContractEndDate,

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fdfadfbc4f5fdecf5f70a8c92d3ded88>>
+ * @generated SignedSource<<cd9f55de7564e6b9e142c91a79bd9d9d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,6 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type VendorGraphNodeQuery$variables = {
-  organizationId: string;
   vendorId: string;
 };
 export type VendorGraphNodeQuery$data = {
@@ -25,9 +24,6 @@ export type VendorGraphNodeQuery$data = {
   readonly viewer: {
     readonly user: {
       readonly id: string;
-      readonly people: {
-        readonly id: string;
-      } | null | undefined;
     };
   };
 };
@@ -37,153 +33,132 @@ export type VendorGraphNodeQuery = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "organizationId"
-},
-v1 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "vendorId"
-},
-v2 = [
+var v0 = [
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "vendorId"
+  }
+],
+v1 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "vendorId"
   }
 ],
-v3 = {
+v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 },
-v4 = {
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "snapshotId",
   "storageKey": null
 },
-v5 = {
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 },
-v6 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "websiteUrl",
   "storageKey": null
 },
-v7 = [
-  (v3/*: any*/)
+v6 = [
+  (v2/*: any*/)
 ],
-v8 = {
+v7 = {
   "alias": null,
   "args": null,
   "concreteType": "User",
   "kind": "LinkedField",
   "name": "user",
   "plural": false,
-  "selections": [
-    (v3/*: any*/),
-    {
-      "alias": null,
-      "args": [
-        {
-          "kind": "Variable",
-          "name": "organizationId",
-          "variableName": "organizationId"
-        }
-      ],
-      "concreteType": "People",
-      "kind": "LinkedField",
-      "name": "people",
-      "plural": false,
-      "selections": (v7/*: any*/),
-      "storageKey": null
-    }
-  ],
+  "selections": (v6/*: any*/),
   "storageKey": null
 },
-v9 = {
+v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "__typename",
   "storageKey": null
 },
-v10 = {
+v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "description",
   "storageKey": null
 },
-v11 = [
+v10 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 50
   }
 ],
-v12 = {
+v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "validUntil",
   "storageKey": null
 },
-v13 = {
+v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "fileName",
   "storageKey": null
 },
-v14 = {
+v13 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v15 = {
+v14 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "endCursor",
   "storageKey": null
 },
-v16 = {
+v15 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "hasNextPage",
   "storageKey": null
 },
-v17 = {
+v16 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "hasPreviousPage",
   "storageKey": null
 },
-v18 = {
+v17 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "startCursor",
   "storageKey": null
 },
-v19 = {
+v18 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -191,14 +166,14 @@ v19 = {
   "name": "pageInfo",
   "plural": false,
   "selections": [
+    (v14/*: any*/),
     (v15/*: any*/),
     (v16/*: any*/),
-    (v17/*: any*/),
-    (v18/*: any*/)
+    (v17/*: any*/)
   ],
   "storageKey": null
 },
-v20 = {
+v19 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -210,26 +185,26 @@ v20 = {
     }
   ]
 },
-v21 = [
+v20 = [
   "orderBy"
 ],
-v22 = {
+v21 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v23 = {
+v22 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "updatedAt",
   "storageKey": null
 },
-v24 = [
-  (v3/*: any*/),
-  (v13/*: any*/),
+v23 = [
+  (v2/*: any*/),
+  (v12/*: any*/),
   {
     "alias": null,
     "args": null,
@@ -244,22 +219,19 @@ v24 = [
     "name": "validFrom",
     "storageKey": null
   },
-  (v12/*: any*/),
-  (v22/*: any*/)
+  (v11/*: any*/),
+  (v21/*: any*/)
 ];
 return {
   "fragment": {
-    "argumentDefinitions": [
-      (v0/*: any*/),
-      (v1/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
     "name": "VendorGraphNodeQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v2/*: any*/),
+        "args": (v1/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
@@ -268,10 +240,10 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
+              (v2/*: any*/),
               (v3/*: any*/),
               (v4/*: any*/),
               (v5/*: any*/),
-              (v6/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
@@ -322,7 +294,7 @@ return {
         "name": "viewer",
         "plural": false,
         "selections": [
-          (v8/*: any*/)
+          (v7/*: any*/)
         ],
         "storageKey": null
       }
@@ -332,30 +304,27 @@ return {
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": [
-      (v1/*: any*/),
-      (v0/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "VendorGraphNodeQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v2/*: any*/),
+        "args": (v1/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
         "plural": false,
         "selections": [
-          (v9/*: any*/),
-          (v3/*: any*/),
+          (v8/*: any*/),
+          (v2/*: any*/),
           {
             "kind": "InlineFragment",
             "selections": [
+              (v3/*: any*/),
               (v4/*: any*/),
               (v5/*: any*/),
-              (v6/*: any*/),
-              (v10/*: any*/),
+              (v9/*: any*/),
               {
                 "alias": null,
                 "args": null,
@@ -447,7 +416,7 @@ return {
                 "kind": "LinkedField",
                 "name": "businessOwner",
                 "plural": false,
-                "selections": (v7/*: any*/),
+                "selections": (v6/*: any*/),
                 "storageKey": null
               },
               {
@@ -457,12 +426,12 @@ return {
                 "kind": "LinkedField",
                 "name": "securityOwner",
                 "plural": false,
-                "selections": (v7/*: any*/),
+                "selections": (v6/*: any*/),
                 "storageKey": null
               },
               {
                 "alias": null,
-                "args": (v11/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "VendorComplianceReportConnection",
                 "kind": "LinkedField",
                 "name": "complianceReports",
@@ -484,7 +453,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
+                          (v2/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -492,7 +461,7 @@ return {
                             "name": "reportDate",
                             "storageKey": null
                           },
-                          (v12/*: any*/),
+                          (v11/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -508,7 +477,7 @@ return {
                             "name": "file",
                             "plural": false,
                             "selections": [
-                              (v13/*: any*/),
+                              (v12/*: any*/),
                               {
                                 "alias": null,
                                 "args": null,
@@ -523,27 +492,27 @@ return {
                                 "name": "size",
                                 "storageKey": null
                               },
-                              (v3/*: any*/)
+                              (v2/*: any*/)
                             ],
                             "storageKey": null
                           },
-                          (v9/*: any*/)
+                          (v8/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v14/*: any*/)
+                      (v13/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v19/*: any*/),
-                  (v20/*: any*/)
+                  (v18/*: any*/),
+                  (v19/*: any*/)
                 ],
                 "storageKey": "complianceReports(first:50)"
               },
               {
                 "alias": null,
-                "args": (v11/*: any*/),
-                "filters": (v21/*: any*/),
+                "args": (v10/*: any*/),
+                "filters": (v20/*: any*/),
                 "handle": "connection",
                 "key": "VendorComplianceTabFragment_complianceReports",
                 "kind": "LinkedHandle",
@@ -551,7 +520,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v11/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "VendorContactConnection",
                 "kind": "LinkedField",
                 "name": "contacts",
@@ -573,7 +542,7 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
+                          (v2/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -602,25 +571,25 @@ return {
                             "name": "role",
                             "storageKey": null
                           },
+                          (v21/*: any*/),
                           (v22/*: any*/),
-                          (v23/*: any*/),
-                          (v9/*: any*/)
+                          (v8/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v14/*: any*/)
+                      (v13/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v19/*: any*/),
-                  (v20/*: any*/)
+                  (v18/*: any*/),
+                  (v19/*: any*/)
                 ],
                 "storageKey": "contacts(first:50)"
               },
               {
                 "alias": null,
-                "args": (v11/*: any*/),
-                "filters": (v21/*: any*/),
+                "args": (v10/*: any*/),
+                "filters": (v20/*: any*/),
                 "handle": "connection",
                 "key": "VendorContactsTabFragment_contacts",
                 "kind": "LinkedHandle",
@@ -628,7 +597,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v11/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "VendorServiceConnection",
                 "kind": "LinkedField",
                 "name": "services",
@@ -650,28 +619,28 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
-                          (v5/*: any*/),
-                          (v10/*: any*/),
+                          (v2/*: any*/),
+                          (v4/*: any*/),
+                          (v9/*: any*/),
+                          (v21/*: any*/),
                           (v22/*: any*/),
-                          (v23/*: any*/),
-                          (v9/*: any*/)
+                          (v8/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v14/*: any*/)
+                      (v13/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v19/*: any*/),
-                  (v20/*: any*/)
+                  (v18/*: any*/),
+                  (v19/*: any*/)
                 ],
                 "storageKey": "services(first:50)"
               },
               {
                 "alias": null,
-                "args": (v11/*: any*/),
-                "filters": (v21/*: any*/),
+                "args": (v10/*: any*/),
+                "filters": (v20/*: any*/),
                 "handle": "connection",
                 "key": "VendorServicesTabFragment_services",
                 "kind": "LinkedHandle",
@@ -679,7 +648,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v11/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "VendorRiskAssessmentConnection",
                 "kind": "LinkedField",
                 "name": "riskAssessments",
@@ -701,8 +670,8 @@ return {
                         "name": "node",
                         "plural": false,
                         "selections": [
-                          (v3/*: any*/),
-                          (v22/*: any*/),
+                          (v2/*: any*/),
+                          (v21/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -731,11 +700,11 @@ return {
                             "name": "notes",
                             "storageKey": null
                           },
-                          (v9/*: any*/)
+                          (v8/*: any*/)
                         ],
                         "storageKey": null
                       },
-                      (v14/*: any*/)
+                      (v13/*: any*/)
                     ],
                     "storageKey": null
                   },
@@ -747,21 +716,21 @@ return {
                     "name": "pageInfo",
                     "plural": false,
                     "selections": [
-                      (v16/*: any*/),
                       (v15/*: any*/),
-                      (v17/*: any*/),
-                      (v18/*: any*/)
+                      (v14/*: any*/),
+                      (v16/*: any*/),
+                      (v17/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v20/*: any*/)
+                  (v19/*: any*/)
                 ],
                 "storageKey": "riskAssessments(first:50)"
               },
               {
                 "alias": null,
-                "args": (v11/*: any*/),
-                "filters": (v21/*: any*/),
+                "args": (v10/*: any*/),
+                "filters": (v20/*: any*/),
                 "handle": "connection",
                 "key": "VendorRiskAssessmentTabFragment_riskAssessments",
                 "kind": "LinkedHandle",
@@ -774,7 +743,7 @@ return {
                 "kind": "LinkedField",
                 "name": "businessAssociateAgreement",
                 "plural": false,
-                "selections": (v24/*: any*/),
+                "selections": (v23/*: any*/),
                 "storageKey": null
               },
               {
@@ -784,7 +753,7 @@ return {
                 "kind": "LinkedField",
                 "name": "dataPrivacyAgreement",
                 "plural": false,
-                "selections": (v24/*: any*/),
+                "selections": (v23/*: any*/),
                 "storageKey": null
               }
             ],
@@ -802,24 +771,24 @@ return {
         "name": "viewer",
         "plural": false,
         "selections": [
-          (v8/*: any*/),
-          (v3/*: any*/)
+          (v7/*: any*/),
+          (v2/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "faee4f059ef9baab46d5f2420e36bb60",
+    "cacheID": "b4e4f090951f025be6f359df3d2dc41a",
     "id": null,
     "metadata": {},
     "name": "VendorGraphNodeQuery",
     "operationKind": "query",
-    "text": "query VendorGraphNodeQuery(\n  $vendorId: ID!\n  $organizationId: ID!\n) {\n  node(id: $vendorId) {\n    __typename\n    ... on Vendor {\n      id\n      snapshotId\n      name\n      websiteUrl\n      ...useVendorFormFragment\n      ...VendorComplianceTabFragment\n      ...VendorContactsTabFragment\n      ...VendorServicesTabFragment\n      ...VendorRiskAssessmentTabFragment\n      ...VendorOverviewTabBusinessAssociateAgreementFragment\n      ...VendorOverviewTabDataPrivacyAgreementFragment\n    }\n    id\n  }\n  viewer {\n    user {\n      id\n      people(organizationId: $organizationId) {\n        id\n      }\n    }\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment on Vendor {\n  complianceReports(first: 50) {\n    edges {\n      node {\n        id\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n}\n\nfragment VendorContactsTabFragment on Vendor {\n  contacts(first: 50) {\n    edges {\n      node {\n        id\n        ...VendorContactsTabFragment_contact\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  createdAt\n  updatedAt\n}\n\nfragment VendorOverviewTabBusinessAssociateAgreementFragment on Vendor {\n  businessAssociateAgreement {\n    id\n    fileName\n    fileUrl\n    validFrom\n    validUntil\n    createdAt\n  }\n}\n\nfragment VendorOverviewTabDataPrivacyAgreementFragment on Vendor {\n  dataPrivacyAgreement {\n    id\n    fileName\n    fileUrl\n    validFrom\n    validUntil\n    createdAt\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment on Vendor {\n  id\n  riskAssessments(first: 50) {\n    edges {\n      node {\n        id\n        ...VendorRiskAssessmentTabFragment_assessment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment_assessment on VendorRiskAssessment {\n  id\n  createdAt\n  expiresAt\n  dataSensitivity\n  businessImpact\n  notes\n}\n\nfragment VendorServicesTabFragment on Vendor {\n  services(first: 50) {\n    edges {\n      node {\n        id\n        ...VendorServicesTabFragment_service\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n}\n\nfragment useVendorFormFragment on Vendor {\n  id\n  name\n  description\n  category\n  statusPageUrl\n  termsOfServiceUrl\n  privacyPolicyUrl\n  serviceLevelAgreementUrl\n  dataProcessingAgreementUrl\n  websiteUrl\n  legalName\n  headquarterAddress\n  certifications\n  countries\n  securityPageUrl\n  trustPageUrl\n  businessOwner {\n    id\n  }\n  securityOwner {\n    id\n  }\n}\n"
+    "text": "query VendorGraphNodeQuery(\n  $vendorId: ID!\n) {\n  node(id: $vendorId) {\n    __typename\n    ... on Vendor {\n      id\n      snapshotId\n      name\n      websiteUrl\n      ...useVendorFormFragment\n      ...VendorComplianceTabFragment\n      ...VendorContactsTabFragment\n      ...VendorServicesTabFragment\n      ...VendorRiskAssessmentTabFragment\n      ...VendorOverviewTabBusinessAssociateAgreementFragment\n      ...VendorOverviewTabDataPrivacyAgreementFragment\n    }\n    id\n  }\n  viewer {\n    user {\n      id\n    }\n    id\n  }\n}\n\nfragment VendorComplianceTabFragment on Vendor {\n  complianceReports(first: 50) {\n    edges {\n      node {\n        id\n        ...VendorComplianceTabFragment_report\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorComplianceTabFragment_report on VendorComplianceReport {\n  id\n  reportDate\n  validUntil\n  reportName\n  file {\n    fileName\n    mimeType\n    size\n    id\n  }\n}\n\nfragment VendorContactsTabFragment on Vendor {\n  contacts(first: 50) {\n    edges {\n      node {\n        id\n        ...VendorContactsTabFragment_contact\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorContactsTabFragment_contact on VendorContact {\n  id\n  fullName\n  email\n  phone\n  role\n  createdAt\n  updatedAt\n}\n\nfragment VendorOverviewTabBusinessAssociateAgreementFragment on Vendor {\n  businessAssociateAgreement {\n    id\n    fileName\n    fileUrl\n    validFrom\n    validUntil\n    createdAt\n  }\n}\n\nfragment VendorOverviewTabDataPrivacyAgreementFragment on Vendor {\n  dataPrivacyAgreement {\n    id\n    fileName\n    fileUrl\n    validFrom\n    validUntil\n    createdAt\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment on Vendor {\n  id\n  riskAssessments(first: 50) {\n    edges {\n      node {\n        id\n        ...VendorRiskAssessmentTabFragment_assessment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment VendorRiskAssessmentTabFragment_assessment on VendorRiskAssessment {\n  id\n  createdAt\n  expiresAt\n  dataSensitivity\n  businessImpact\n  notes\n}\n\nfragment VendorServicesTabFragment on Vendor {\n  services(first: 50) {\n    edges {\n      node {\n        id\n        ...VendorServicesTabFragment_service\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment VendorServicesTabFragment_service on VendorService {\n  id\n  name\n  description\n  createdAt\n  updatedAt\n}\n\nfragment useVendorFormFragment on Vendor {\n  id\n  name\n  description\n  category\n  statusPageUrl\n  termsOfServiceUrl\n  privacyPolicyUrl\n  serviceLevelAgreementUrl\n  dataProcessingAgreementUrl\n  websiteUrl\n  legalName\n  headquarterAddress\n  certifications\n  countries\n  securityPageUrl\n  trustPageUrl\n  businessOwner {\n    id\n  }\n  securityOwner {\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "5b907e5cc3446745ff2414ee06839aed";
+(node as any).hash = "0a13dd059626880c4a51f8a47b9c2423";
 
 export default node;

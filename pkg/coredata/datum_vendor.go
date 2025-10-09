@@ -158,7 +158,6 @@ JOIN snapshot_vendors sv ON sv.source_id = dv.vendor_id
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
-		"tenant_id":       scope.GetTenantID(),
 		"snapshot_id":     snapshotID,
 		"organization_id": organizationID,
 	}

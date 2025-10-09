@@ -32,7 +32,6 @@ type (
 		ID                       gid.GID    `db:"id"`
 		OrganizationID           gid.GID    `db:"organization_id"`
 		Kind                     PeopleKind `db:"kind"`
-		UserID                   *gid.GID   `db:"user_id"`
 		FullName                 string     `db:"full_name"`
 		PrimaryEmailAddress      string     `db:"primary_email_address"`
 		AdditionalEmailAddresses []string   `db:"additional_email_addresses"`
@@ -78,7 +77,6 @@ SELECT
     id,
     organization_id,
     kind,
-    user_id,
     full_name,
     primary_email_address,
     additional_email_addresses,
@@ -126,7 +124,6 @@ func (p *People) LoadByEmail(
 		id,
 		organization_id,
 		kind,
-		user_id,
 		full_name,
 		primary_email_address,
 		additional_email_addresses,
@@ -167,58 +164,6 @@ func (p *People) LoadByEmail(
 	return nil
 }
 
-func (p *People) LoadByUserID(
-	ctx context.Context,
-	conn pg.Conn,
-	scope Scoper,
-	userID gid.GID,
-) error {
-	q := `
-SELECT
-    id,
-    organization_id,
-    kind,
-    user_id,
-    full_name,
-    primary_email_address,
-    additional_email_addresses,
-    position,
-    contract_start_date,
-    contract_end_date,
-    created_at,
-    updated_at
-FROM
-    peoples
-WHERE
-    %s
-    AND user_id = @user_id
-LIMIT 1;
-`
-
-	q = fmt.Sprintf(q, scope.SQLFragment())
-
-	args := pgx.StrictNamedArgs{"user_id": userID}
-	maps.Copy(args, scope.SQLArguments())
-
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query people: %w", err)
-	}
-
-	people, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[People])
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return &ErrPeopleNotFound{Identifier: userID.String()}
-		}
-
-		return fmt.Errorf("cannot collect people: %w", err)
-	}
-
-	*p = people
-
-	return nil
-}
-
 func (p People) Insert(
 	ctx context.Context,
 	conn pg.Conn,
@@ -230,7 +175,6 @@ INSERT INTO
         tenant_id,
         id,
         organization_id,
-        user_id,
         kind,
         full_name,
         primary_email_address,
@@ -245,7 +189,6 @@ VALUES (
     @tenant_id,
     @people_id,
     @organization_id,
-    @user_id,
     @kind,
     @full_name,
     @primary_email_address,
@@ -262,7 +205,6 @@ VALUES (
 		"tenant_id":                  scope.GetTenantID(),
 		"people_id":                  p.ID,
 		"organization_id":            p.OrganizationID,
-		"user_id":                    p.UserID,
 		"kind":                       p.Kind,
 		"full_name":                  p.FullName,
 		"primary_email_address":      p.PrimaryEmailAddress,
@@ -343,7 +285,6 @@ SELECT
     id,
     organization_id,
     kind,
-    user_id,
     full_name,
     primary_email_address,
     additional_email_addresses,
@@ -390,7 +331,6 @@ func (p *People) Update(
 ) error {
 	q := `
 UPDATE peoples SET
-	user_id = @user_id,
 	full_name = @full_name,
 	primary_email_address = @primary_email_address,
 	additional_email_addresses = @additional_email_addresses,
@@ -406,7 +346,6 @@ WHERE %s
 
 	args := pgx.StrictNamedArgs{
 		"people_id":                  p.ID,
-		"user_id":                    p.UserID,
 		"full_name":                  p.FullName,
 		"primary_email_address":      p.PrimaryEmailAddress,
 		"additional_email_addresses": p.AdditionalEmailAddresses,
@@ -447,7 +386,6 @@ SELECT
 	id,
 	organization_id,
 	kind,
-	user_id,
 	full_name,
 	primary_email_address,
 	additional_email_addresses,

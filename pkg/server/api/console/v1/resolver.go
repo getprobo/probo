@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -157,7 +158,7 @@ func NewMux(
 	r.Post("/auth/register", SignUpHandler(authSvc, authCfg))
 	r.Post("/auth/login", SignInHandler(authSvc, authCfg))
 	r.Delete("/auth/logout", SignOutHandler(authSvc, authCfg))
-	r.Post("/auth/invitation", InvitationConfirmationHandler(authSvc, authzSvc, authCfg))
+	r.Post("/auth/signup-from-invitation", SignupFromInvitationHandler(authSvc, authCfg))
 	r.Post("/auth/forget-password", ForgetPasswordHandler(authSvc, authCfg))
 	r.Post("/auth/reset-password", ResetPasswordHandler(authSvc, authCfg))
 
@@ -316,18 +317,28 @@ func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *pro
 	return GetTenantService(ctx, r.proboSvc, tenantID)
 }
 
+func (r *Resolver) AuthzService(ctx context.Context, tenantID gid.TenantID) *authz.TenantAuthzService {
+	return GetTenantAuthzService(ctx, r.authzSvc, tenantID)
+}
+
 func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid.TenantID) *probo.TenantService {
+	validateTenantAccess(ctx, tenantID)
+	return proboSvc.WithTenant(tenantID)
+}
+
+func GetTenantAuthzService(ctx context.Context, authzSvc *authz.Service, tenantID gid.TenantID) *authz.TenantAuthzService {
+	validateTenantAccess(ctx, tenantID)
+	return authzSvc.WithTenant(tenantID)
+}
+
+func validateTenantAccess(ctx context.Context, tenantID gid.TenantID) {
 	tenantIDs, _ := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
 
 	if tenantIDs == nil {
 		panic(fmt.Errorf("tenant not found"))
 	}
 
-	for _, id := range *tenantIDs {
-		if id == tenantID {
-			return proboSvc.WithTenant(tenantID)
-		}
+	if !slices.Contains(*tenantIDs, tenantID) {
+		panic(fmt.Errorf("tenant not found"))
 	}
-
-	panic(fmt.Errorf("tenant not found"))
 }

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<994eb713978ecef3329fd9873e4c744c>>
+ * @generated SignedSource<<d210161405099a17aa25d06ca4563634>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,11 +14,12 @@ export type RemoveMemberInput = {
   organizationId: string;
 };
 export type SettingsPage_RemoveMemberMutation$variables = {
+  connections: ReadonlyArray<string>;
   input: RemoveMemberInput;
 };
 export type SettingsPage_RemoveMemberMutation$data = {
   readonly removeMember: {
-    readonly success: boolean;
+    readonly deletedMemberId: string;
   };
 };
 export type SettingsPage_RemoveMemberMutation = {
@@ -27,67 +28,106 @@ export type SettingsPage_RemoveMemberMutation = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = [
+var v0 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "connections"
+},
+v1 = {
+  "defaultValue": null,
+  "kind": "LocalArgument",
+  "name": "input"
+},
+v2 = [
   {
-    "defaultValue": null,
-    "kind": "LocalArgument",
-    "name": "input"
+    "kind": "Variable",
+    "name": "input",
+    "variableName": "input"
   }
 ],
-v1 = [
-  {
-    "alias": null,
-    "args": [
-      {
-        "kind": "Variable",
-        "name": "input",
-        "variableName": "input"
-      }
-    ],
-    "concreteType": "RemoveMemberPayload",
-    "kind": "LinkedField",
-    "name": "removeMember",
-    "plural": false,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "success",
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
-  }
-];
+v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "deletedMemberId",
+  "storageKey": null
+};
 return {
   "fragment": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v0/*: any*/),
+      (v1/*: any*/)
+    ],
     "kind": "Fragment",
     "metadata": null,
     "name": "SettingsPage_RemoveMemberMutation",
-    "selections": (v1/*: any*/),
+    "selections": [
+      {
+        "alias": null,
+        "args": (v2/*: any*/),
+        "concreteType": "RemoveMemberPayload",
+        "kind": "LinkedField",
+        "name": "removeMember",
+        "plural": false,
+        "selections": [
+          (v3/*: any*/)
+        ],
+        "storageKey": null
+      }
+    ],
     "type": "Mutation",
     "abstractKey": null
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": (v0/*: any*/),
+    "argumentDefinitions": [
+      (v1/*: any*/),
+      (v0/*: any*/)
+    ],
     "kind": "Operation",
     "name": "SettingsPage_RemoveMemberMutation",
-    "selections": (v1/*: any*/)
+    "selections": [
+      {
+        "alias": null,
+        "args": (v2/*: any*/),
+        "concreteType": "RemoveMemberPayload",
+        "kind": "LinkedField",
+        "name": "removeMember",
+        "plural": false,
+        "selections": [
+          (v3/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "filters": null,
+            "handle": "deleteEdge",
+            "key": "",
+            "kind": "ScalarHandle",
+            "name": "deletedMemberId",
+            "handleArgs": [
+              {
+                "kind": "Variable",
+                "name": "connections",
+                "variableName": "connections"
+              }
+            ]
+          }
+        ],
+        "storageKey": null
+      }
+    ]
   },
   "params": {
-    "cacheID": "97e29046871ce8aab01abf98a62236fc",
+    "cacheID": "e2dd0f4d7327ce3bc97754c85d3f700d",
     "id": null,
     "metadata": {},
     "name": "SettingsPage_RemoveMemberMutation",
     "operationKind": "mutation",
-    "text": "mutation SettingsPage_RemoveMemberMutation(\n  $input: RemoveMemberInput!\n) {\n  removeMember(input: $input) {\n    success\n  }\n}\n"
+    "text": "mutation SettingsPage_RemoveMemberMutation(\n  $input: RemoveMemberInput!\n) {\n  removeMember(input: $input) {\n    deletedMemberId\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f61071a0fb6f6554e56e79b6b04bc135";
+(node as any).hash = "9909a8b95f8d8621ffdf02da34ec8da2";
 
 export default node;

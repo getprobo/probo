@@ -16,14 +16,28 @@ package types
 
 import (
 	"github.com/getprobo/probo/pkg/coredata"
+	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 )
 
 type (
+	UserConnection struct {
+		TotalCount int         `json:"totalCount"`
+		Edges      []*UserEdge `json:"edges"`
+		PageInfo   *PageInfo   `json:"pageInfo"`
+
+		Resolver any
+		ParentID gid.GID
+	}
+
 	UserOrderBy OrderBy[coredata.UserOrderField]
 )
 
-func NewUserConnection(p *page.Page[*coredata.User, coredata.UserOrderField]) *UserConnection {
+func NewUserConnection(
+	p *page.Page[*coredata.User, coredata.UserOrderField],
+	resolver any,
+	parentID gid.GID,
+) *UserConnection {
 	var edges = make([]*UserEdge, len(p.Data))
 
 	for i := range edges {
@@ -33,6 +47,8 @@ func NewUserConnection(p *page.Page[*coredata.User, coredata.UserOrderField]) *U
 	return &UserConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
+		Resolver: resolver,
+		ParentID: parentID,
 	}
 }
 

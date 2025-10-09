@@ -147,7 +147,7 @@ export const paginatedVendorsFragment = graphql`
 `;
 
 export const vendorNodeQuery = graphql`
-  query VendorGraphNodeQuery($vendorId: ID!, $organizationId: ID!) {
+  query VendorGraphNodeQuery($vendorId: ID!) {
     node(id: $vendorId) {
       ... on Vendor {
         id
@@ -166,9 +166,6 @@ export const vendorNodeQuery = graphql`
     viewer {
       user {
         id
-        people(organizationId: $organizationId) {
-          id
-        }
       }
     }
   }

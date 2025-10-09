@@ -11,6 +11,8 @@ import {
   IconPlusLarge,
 } from "@probo/ui";
 import { usePageTitle } from "@probo/hooks";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
+import { formatDate } from "@probo/helpers";
 
 const OrganizationsPageQuery = graphql`
   query OrganizationsPageQuery {
@@ -24,6 +26,34 @@ const OrganizationsPageQuery = graphql`
             logoUrl
           }
         }
+      }
+      invitations(first: 1000, orderBy: {field: CREATED_AT, direction: DESC}, filter: {onlyPending: true}) @connection(key: "OrganizationsPage_invitations") {
+        __id
+        edges {
+          node {
+            id
+            email
+            fullName
+            role
+            expiresAt
+            acceptedAt
+            createdAt
+            organization {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+const acceptInvitationMutation = graphql`
+  mutation OrganizationsPage_AcceptInvitationMutation($input: AcceptInvitationInput!) {
+    acceptInvitation(input: $input) {
+      invitation {
+        id
       }
     }
   }
@@ -41,15 +71,40 @@ export default function OrganizationsPage() {
     (edge) => edge.node
   );
 
+  const pendingInvitations = data.viewer.invitations.edges.map(
+    (edge) => edge.node
+  );
+
+  const [acceptInvitation, isAccepting] = useMutationWithToasts(
+    acceptInvitationMutation,
+    {
+      successMessage: __("Invitation accepted successfully"),
+      errorMessage: __("Failed to accept invitation"),
+    }
+  );
+
+  const handleAcceptInvitation = (invitationId: string, organizationId: string) => {
+    acceptInvitation({
+      variables: {
+        input: {
+          invitationId,
+        },
+      },
+      onSuccess: () => {
+        navigate(`/organizations/${organizationId}`);
+      },
+    });
+  };
+
   usePageTitle(__("Select an organization"));
 
   useEffect(() => {
-    if (organizations.length === 1) {
+    if (organizations.length === 1 && pendingInvitations.length === 0) {
       navigate(`/organizations/${organizations[0].id}`);
-    } else if (organizations.length === 0) {
+    } else if (organizations.length === 0 && pendingInvitations.length === 0) {
       navigate("/organizations/new");
     }
-  }, [organizations]);
+  }, [organizations, pendingInvitations]);
 
   return (
     <>
@@ -58,12 +113,36 @@ export default function OrganizationsPage() {
           {__("Select an organization")}
         </h1>
         <div className="space-y-4 w-full">
-          {organizations.map((organization) => (
-            <OrganizationCard
-              key={organization.id}
-              organization={organization}
-            />
-          ))}
+          {pendingInvitations.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xl font-semibold">
+                {__("Pending invitations")}
+              </h2>
+              {pendingInvitations.map((invitation) => (
+                <InvitationCard
+                  key={invitation.id}
+                  invitation={invitation}
+                  onAccept={handleAcceptInvitation}
+                  isAccepting={isAccepting}
+                />
+              ))}
+            </div>
+          )}
+          {organizations.length > 0 && (
+            <div className="space-y-3">
+              {pendingInvitations.length > 0 && (
+                <h2 className="text-xl font-semibold">
+                  {__("Your organizations")}
+                </h2>
+              )}
+              {organizations.map((organization) => (
+                <OrganizationCard
+                  key={organization.id}
+                  organization={organization}
+                />
+              ))}
+            </div>
+          )}
           <Card padded>
             <h2 className="text-xl font-semibold mb-1">
               {__("Create an organization")}
@@ -83,6 +162,51 @@ export default function OrganizationsPage() {
         </div>
       </div>
     </>
+  );
+}
+
+type InvitationCardProps = {
+  invitation: {
+    id: string;
+    email: string;
+    fullName: string;
+    role: string;
+    expiresAt: string;
+    createdAt: string;
+    organization: {
+      id: string;
+      name: string;
+    };
+  };
+  onAccept: (invitationId: string, organizationId: string) => void;
+  isAccepting: boolean;
+};
+
+function InvitationCard({ invitation, onAccept, isAccepting }: InvitationCardProps) {
+  const { __ } = useTranslate();
+
+  return (
+    <Card padded className="w-full">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 space-y-1">
+          <h3 className="text-lg font-semibold">
+            {invitation.organization.name}
+          </h3>
+          <p className="text-sm text-txt-secondary">
+            {__("Role")}: <span className="font-medium">{invitation.role}</span>
+          </p>
+          <p className="text-xs text-txt-tertiary">
+            {__("Invited on")} {formatDate(invitation.createdAt)}
+          </p>
+        </div>
+        <Button
+          onClick={() => onAccept(invitation.id, invitation.organization.id)}
+          disabled={isAccepting}
+        >
+          {isAccepting ? __("Accepting...") : __("Accept invitation")}
+        </Button>
+      </div>
+    </Card>
   );
 }
 

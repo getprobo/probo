@@ -74,8 +74,8 @@ const routes = [
         Component: lazy(() => import("./pages/auth/ConfirmEmailPage")),
       },
       {
-        path: "confirm-invitation",
-        Component: lazy(() => import("./pages/auth/ConfirmInvitationPage")),
+        path: "signup-from-invitation",
+        Component: lazy(() => import("./pages/auth/SignupFromInvitationPage")),
       },
       {
         path: "forgot-password",

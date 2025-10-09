@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2eda1054dbabd2bb5e45d8db5c7a01fc>>
+ * @generated SignedSource<<bd521d62fb0f29ace7af511b527ef750>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,6 +11,9 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type MainLayout_OrganizationSelector_viewer$data = {
+  readonly invitations: {
+    readonly totalCount: number;
+  };
   readonly organizations: {
     readonly edges: ReadonlyArray<{
       readonly node: {
@@ -178,6 +181,37 @@ return {
         }
       ],
       "storageKey": "__MainLayout_OrganizationSelector_organizations_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"NAME\"})"
+    },
+    {
+      "alias": null,
+      "args": [
+        {
+          "kind": "Literal",
+          "name": "filter",
+          "value": {
+            "status": "PENDING"
+          }
+        },
+        {
+          "kind": "Literal",
+          "name": "first",
+          "value": 1
+        }
+      ],
+      "concreteType": "InvitationConnection",
+      "kind": "LinkedField",
+      "name": "invitations",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "totalCount",
+          "storageKey": null
+        }
+      ],
+      "storageKey": "invitations(filter:{\"status\":\"PENDING\"},first:1)"
     }
   ],
   "type": "Viewer",
@@ -185,6 +219,6 @@ return {
 };
 })();
 
-(node as any).hash = "0dc2841aeeb6ba5291cb45d8644ec4af";
+(node as any).hash = "d1491a8228d455e2491724c03c7c30c1";
 
 export default node;

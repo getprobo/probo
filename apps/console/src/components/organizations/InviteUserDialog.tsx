@@ -45,14 +45,15 @@ const schema = z.object({
 
 type Props = PropsWithChildren & {
   connectionId?: string;
+  onRefetch: () => void;
 };
 
-export function InviteUserDialog({ children, connectionId }: Props) {
+export function InviteUserDialog({ children, connectionId, onRefetch }: Props) {
   const { __ } = useTranslate();
   const organizationId = useOrganizationId();
   const [inviteUser, isInviting] = useMutationWithToasts(inviteMutation, {
-    successMessage: __("User invited successfully"),
-    errorMessage: __("Failed to invite user"),
+    successMessage: __("Invitation sent successfully"),
+    errorMessage: __("Failed to send invitation"),
   });
   const { register, handleSubmit, formState, reset, control } = useFormWithSchema(
     schema,
@@ -72,9 +73,10 @@ export function InviteUserDialog({ children, connectionId }: Props) {
         },
         connections: connectionId ? [connectionId] : ["SettingsPageInvitations_invitations"],
       },
-      onSuccess: () => {
+      onCompleted: () => {
         reset();
         dialogRef.current?.close();
+        onRefetch();
       },
     });
   });

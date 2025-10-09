@@ -81,17 +81,17 @@ func (i Invitation) CursorKey(orderBy InvitationOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-// Tenant id scope is not applied because invitations are managed at the organization level and don't require tenant isolation.
-func (i *Invitation) Create(ctx context.Context, conn pg.Conn) error {
+func (i *Invitation) Create(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 		INSERT INTO authz_invitations (
-			id, organization_id, email, full_name, role, expires_at, created_at
+			tenant_id, id, organization_id, email, full_name, role, expires_at, created_at
 		) VALUES (
-			@id, @organization_id, @email, @full_name, @role, @expires_at, @created_at
+			@tenant_id, @id, @organization_id, @email, @full_name, @role, @expires_at, @created_at
 		)
 	`
 
 	args := pgx.StrictNamedArgs{
+		"tenant_id":       scope.GetTenantID(),
 		"id":              i.ID,
 		"organization_id": i.OrganizationID,
 		"email":           i.Email,
@@ -109,21 +109,24 @@ func (i *Invitation) Create(ctx context.Context, conn pg.Conn) error {
 	return nil
 }
 
-// Tenant id scope is not applied because we want to access invitations across all tenants for authentication purposes.
 func (i *Invitation) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	id gid.GID,
 ) error {
 	query := `
 		SELECT id, organization_id, email, full_name, role, expires_at, accepted_at, created_at
 		FROM authz_invitations
-		WHERE id = @id
+		WHERE id = @id AND %s
 	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id": id,
 	}
+	maps.Copy(args, scope.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
 	if err != nil {
@@ -142,18 +145,20 @@ func (i *Invitation) LoadByID(
 	return nil
 }
 
-// Tenant id scope is not applied because invitations are managed at the organization level and don't require tenant isolation.
-func (i *Invitation) Update(ctx context.Context, conn pg.Conn) error {
+func (i *Invitation) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 		UPDATE authz_invitations
 		SET accepted_at = @accepted_at
-		WHERE id = @id
+		WHERE id = @id AND %s
 	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id":          i.ID,
 		"accepted_at": i.AcceptedAt,
 	}
+	maps.Copy(args, scope.SQLArguments())
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
@@ -167,16 +172,18 @@ func (i *Invitation) Update(ctx context.Context, conn pg.Conn) error {
 	return nil
 }
 
-// Tenant id scope is not applied because invitations are managed at the organization level and don't require tenant isolation.
-func (i *Invitation) Delete(ctx context.Context, conn pg.Conn) error {
+func (i *Invitation) Delete(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
 		DELETE FROM authz_invitations
-		WHERE id = @id
+		WHERE id = @id AND %s
 	`
+
+	query = fmt.Sprintf(query, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"id": i.ID,
 	}
+	maps.Copy(args, scope.SQLArguments())
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
@@ -190,21 +197,30 @@ func (i *Invitation) Delete(ctx context.Context, conn pg.Conn) error {
 	return nil
 }
 
+// Tenant scope is not applied because this is used to query invitations across all tenants
+// for a user who doesn't have tenant access yet (before accepting an invitation).
 func (i *Invitations) LoadByEmail(
 	ctx context.Context,
 	conn pg.Conn,
 	email string,
+	cursor *page.Cursor[InvitationOrderField],
+	filter *InvitationFilter,
 ) error {
 	query := `
 		SELECT id, organization_id, email, full_name, role, expires_at, accepted_at, created_at
 		FROM authz_invitations
-		WHERE email = @email AND accepted_at IS NULL
-		ORDER BY created_at DESC
+		WHERE email = @email
+		AND %s
+		AND %s
 	`
+
+	query = fmt.Sprintf(query, filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"email": email,
 	}
+	maps.Copy(args, filter.SQLArguments())
+	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
 	if err != nil {
@@ -223,19 +239,23 @@ func (i *Invitations) LoadByEmail(
 func (i *Invitations) LoadByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	orgID gid.GID,
 	cursor *page.Cursor[InvitationOrderField],
 ) error {
 	query := `
 		SELECT id, organization_id, email, full_name, role, expires_at, accepted_at, created_at
 		FROM authz_invitations
-		WHERE organization_id = @organization_id
+		WHERE organization_id = @organization_id AND %s
 		AND %s
 	`
 
-	query = fmt.Sprintf(query, cursor.SQLFragment())
+	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())
 
-	args := pgx.StrictNamedArgs{"organization_id": orgID}
+	args := pgx.StrictNamedArgs{
+		"organization_id": orgID,
+	}
+	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
@@ -255,6 +275,7 @@ func (i *Invitations) LoadByOrganizationID(
 func (i *Invitations) CountByOrganizationID(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	orgID gid.GID,
 ) (int, error) {
 	q := `
@@ -263,10 +284,51 @@ SELECT
 FROM
 	authz_invitations
 WHERE
-	organization_id = @organization_id
+	organization_id = @organization_id AND %s
 `
 
-	args := pgx.StrictNamedArgs{"organization_id": orgID}
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"organization_id": orgID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	err := row.Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count invitations: %w", err)
+	}
+
+	return count, nil
+}
+
+// Tenant scope is not applied because this is used to count invitations across all tenants
+// for a user who doesn't have tenant access yet (before accepting an invitation).
+func (i *Invitations) CountByEmail(
+	ctx context.Context,
+	conn pg.Conn,
+	email string,
+	filter *InvitationFilter,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(*)
+FROM
+	authz_invitations
+WHERE
+	email = @email
+	AND %s
+`
+
+	q = fmt.Sprintf(q, filter.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"email": email,
+	}
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 

@@ -16,10 +16,28 @@ package types
 
 import (
 	"github.com/getprobo/probo/pkg/coredata"
+	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 )
 
-func NewInvitationConnection(p *page.Page[*coredata.Invitation, coredata.InvitationOrderField]) *InvitationConnection {
+type (
+	InvitationConnection struct {
+		TotalCount int               `json:"totalCount"`
+		Edges      []*InvitationEdge `json:"edges"`
+		PageInfo   *PageInfo         `json:"pageInfo"`
+
+		Resolver any
+		ParentID gid.GID
+		Filter   *InvitationFilter
+	}
+)
+
+func NewInvitationConnection(
+	p *page.Page[*coredata.Invitation, coredata.InvitationOrderField],
+	resolver any,
+	parentID gid.GID,
+	filter *InvitationFilter,
+) *InvitationConnection {
 	var edges = make([]*InvitationEdge, len(p.Data))
 
 	for i := range edges {
@@ -29,6 +47,9 @@ func NewInvitationConnection(p *page.Page[*coredata.Invitation, coredata.Invitat
 	return &InvitationConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
+		Resolver: resolver,
+		ParentID: parentID,
+		Filter:   filter,
 	}
 }
 

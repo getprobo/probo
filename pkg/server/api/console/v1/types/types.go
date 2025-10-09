@@ -16,6 +16,14 @@ type Node interface {
 	GetID() gid.GID
 }
 
+type AcceptInvitationInput struct {
+	InvitationID gid.GID `json:"invitationId"`
+}
+
+type AcceptInvitationPayload struct {
+	Invitation *Invitation `json:"invitation"`
+}
+
 type AssessVendorInput struct {
 	ID         gid.GID `json:"id"`
 	WebsiteURL string  `json:"websiteUrl"`
@@ -1200,27 +1208,26 @@ type ImportMeasurePayload struct {
 }
 
 type Invitation struct {
-	ID         gid.GID    `json:"id"`
-	Email      string     `json:"email"`
-	FullName   string     `json:"fullName"`
-	Role       string     `json:"role"`
-	ExpiresAt  time.Time  `json:"expiresAt"`
-	AcceptedAt *time.Time `json:"acceptedAt,omitempty"`
-	CreatedAt  time.Time  `json:"createdAt"`
+	ID           gid.GID       `json:"id"`
+	Email        string        `json:"email"`
+	FullName     string        `json:"fullName"`
+	Role         string        `json:"role"`
+	ExpiresAt    time.Time     `json:"expiresAt"`
+	AcceptedAt   *time.Time    `json:"acceptedAt,omitempty"`
+	CreatedAt    time.Time     `json:"createdAt"`
+	Organization *Organization `json:"organization"`
 }
 
 func (Invitation) IsNode()             {}
 func (this Invitation) GetID() gid.GID { return this.ID }
 
-type InvitationConnection struct {
-	TotalCount int               `json:"totalCount"`
-	Edges      []*InvitationEdge `json:"edges"`
-	PageInfo   *PageInfo         `json:"pageInfo"`
-}
-
 type InvitationEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *Invitation    `json:"node"`
+}
+
+type InvitationFilter struct {
+	OnlyPending *bool `json:"onlyPending,omitempty"`
 }
 
 type InvitationOrder struct {
@@ -1279,12 +1286,6 @@ type Membership struct {
 
 func (Membership) IsNode()             {}
 func (this Membership) GetID() gid.GID { return this.ID }
-
-type MembershipConnection struct {
-	TotalCount int               `json:"totalCount"`
-	Edges      []*MembershipEdge `json:"edges"`
-	PageInfo   *PageInfo         `json:"pageInfo"`
-}
 
 type MembershipEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
@@ -1493,7 +1494,7 @@ type RemoveMemberInput struct {
 }
 
 type RemoveMemberPayload struct {
-	Success bool `json:"success"`
+	DeletedMemberID gid.GID `json:"deletedMemberId"`
 }
 
 type Report struct {
@@ -2120,17 +2121,10 @@ type User struct {
 	Email     string    `json:"email"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
-	People    *People   `json:"people,omitempty"`
 }
 
 func (User) IsNode()             {}
 func (this User) GetID() gid.GID { return this.ID }
-
-type UserConnection struct {
-	TotalCount int         `json:"totalCount"`
-	Edges      []*UserEdge `json:"edges"`
-	PageInfo   *PageInfo   `json:"pageInfo"`
-}
 
 type UserEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
@@ -2316,4 +2310,5 @@ type Viewer struct {
 	ID            gid.GID                 `json:"id"`
 	User          *User                   `json:"user"`
 	Organizations *OrganizationConnection `json:"organizations"`
+	Invitations   *InvitationConnection   `json:"invitations"`
 }
