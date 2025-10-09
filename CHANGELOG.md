@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.67.1] - 2025-10-09
+
+### Fixed
+- Fix evidence files migration
+
 ## [0.67.0] - 2025-10-09
 
 ## Changed
