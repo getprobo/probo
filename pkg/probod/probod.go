@@ -67,12 +67,18 @@ type (
 		Api           apiConfig            `json:"api"`
 		Auth          authConfig           `json:"auth"`
 		TrustAuth     trustAuthConfig      `json:"trust-auth"`
+		TrustCenter   trustCenterConfig    `json:"trust-center"`
 		AWS           awsConfig            `json:"aws"`
 		Mailer        mailerConfig         `json:"mailer"`
 		Connectors    []connectorConfig    `json:"connectors"`
 		OpenAI        openaiConfig         `json:"openai"`
 		ChromeDPAddr  string               `json:"chrome-dp-addr"`
 		CustomDomains customDomainsConfig  `json:"custom-domains"`
+	}
+
+	trustCenterConfig struct {
+		HTTPAddr  string `json:"http-addr"`
+		HTTPSAddr string `json:"https-addr"`
 	}
 )
 
@@ -119,6 +125,10 @@ func New() *Implm {
 				TokenSecret:       "this-is-a-secure-secret-for-trust-token-signing-at-least-32-bytes",
 				Scope:             "trust_center_readonly",
 				TokenType:         "trust_center_access",
+			},
+			TrustCenter: trustCenterConfig{
+				HTTPAddr:  ":80",
+				HTTPSAddr: ":443",
 			},
 			AWS: awsConfig{
 				Region: "us-east-1",
@@ -557,7 +567,7 @@ func (impl *Implm) runTrustCenterServer(
 	)
 
 	httpServer := httpserver.NewServer(
-		":80",
+		impl.cfg.TrustCenter.HTTPAddr,
 		httpACMEHandler.Handle(http.NotFoundHandler()),
 		httpserver.WithLogger(l),
 		httpserver.WithRegisterer(r),
@@ -591,7 +601,7 @@ func (impl *Implm) runTrustCenterServer(
 	handler := acmeHandler.Handle(trustRouter)
 
 	httpsServer := httpserver.NewServer(
-		":443",
+		impl.cfg.TrustCenter.HTTPSAddr,
 		handler,
 		httpserver.WithLogger(l),
 		httpserver.WithRegisterer(r),
