@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+- Fix trust center design on custom domain
+- Fix evidence deletion
+
 ## [0.68.2] - 2025-10-10
 
 ### Added
