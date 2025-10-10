@@ -285,6 +285,7 @@ func (s FrameworkService) Export(
 
 					exportedPDF, err := exportDocumentPDF(
 						ctx,
+						s.svc,
 						s.html2pdfConverter,
 						conn,
 						s.svc.scope,

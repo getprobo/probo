@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7493102ba1f19bb7721e444d0e372629>>
+ * @generated SignedSource<<59e171c75ea380b66639dc482796f14f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -149,6 +149,13 @@ return {
                 "args": null,
                 "kind": "ScalarField",
                 "name": "logoUrl",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "horizontalLogoUrl",
                 "storageKey": null
               },
               {
@@ -345,12 +352,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "793d8f1eb4118deebe64f3025d3e8c31",
+    "cacheID": "479908461e940a4eebcc4e5465bd4b5e",
     "id": null,
     "metadata": {},
     "name": "OrganizationGraph_ViewQuery",
     "operationKind": "query",
-    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    verifiedAt\n    sslExpiresAt\n  }\n  users(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n        email\n        createdAt\n      }\n    }\n  }\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    verifiedAt\n    sslExpiresAt\n  }\n  users(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n        email\n        createdAt\n      }\n    }\n  }\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();

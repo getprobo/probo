@@ -518,6 +518,10 @@ type ComplexityRoot struct {
 		DeletedObligationID func(childComplexity int) int
 	}
 
+	DeleteOrganizationHorizontalLogoPayload struct {
+		Organization func(childComplexity int) int
+	}
+
 	DeleteOrganizationPayload struct {
 		DeletedOrganizationID func(childComplexity int) int
 	}
@@ -837,6 +841,7 @@ type ComplexityRoot struct {
 		DeleteNonconformity                    func(childComplexity int, input types.DeleteNonconformityInput) int
 		DeleteObligation                       func(childComplexity int, input types.DeleteObligationInput) int
 		DeleteOrganization                     func(childComplexity int, input types.DeleteOrganizationInput) int
+		DeleteOrganizationHorizontalLogo       func(childComplexity int, input types.DeleteOrganizationHorizontalLogoInput) int
 		DeletePeople                           func(childComplexity int, input types.DeletePeopleInput) int
 		DeleteProcessingActivity               func(childComplexity int, input types.DeleteProcessingActivityInput) int
 		DeleteRisk                             func(childComplexity int, input types.DeleteRiskInput) int
@@ -970,6 +975,7 @@ type ComplexityRoot struct {
 		Email                 func(childComplexity int) int
 		Frameworks            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) int
 		HeadquarterAddress    func(childComplexity int) int
+		HorizontalLogoURL     func(childComplexity int) int
 		ID                    func(childComplexity int) int
 		LogoURL               func(childComplexity int) int
 		Measures              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MeasureOrderBy, filter *types.MeasureFilter) int
@@ -1676,6 +1682,7 @@ type MeasureConnectionResolver interface {
 type MutationResolver interface {
 	CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error)
 	UpdateOrganization(ctx context.Context, input types.UpdateOrganizationInput) (*types.UpdateOrganizationPayload, error)
+	DeleteOrganizationHorizontalLogo(ctx context.Context, input types.DeleteOrganizationHorizontalLogoInput) (*types.DeleteOrganizationHorizontalLogoPayload, error)
 	DeleteOrganization(ctx context.Context, input types.DeleteOrganizationInput) (*types.DeleteOrganizationPayload, error)
 	UpdateTrustCenter(ctx context.Context, input types.UpdateTrustCenterInput) (*types.UpdateTrustCenterPayload, error)
 	UploadTrustCenterNda(ctx context.Context, input types.UploadTrustCenterNDAInput) (*types.UploadTrustCenterNDAPayload, error)
@@ -1812,6 +1819,7 @@ type ObligationConnectionResolver interface {
 }
 type OrganizationResolver interface {
 	LogoURL(ctx context.Context, obj *types.Organization) (*string, error)
+	HorizontalLogoURL(ctx context.Context, obj *types.Organization) (*string, error)
 
 	Users(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.UserOrderBy) (*types.UserConnection, error)
 	Connectors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) (*types.ConnectorConnection, error)
@@ -3255,6 +3263,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DeleteObligationPayload.DeletedObligationID(childComplexity), true
+
+	case "DeleteOrganizationHorizontalLogoPayload.organization":
+		if e.complexity.DeleteOrganizationHorizontalLogoPayload.Organization == nil {
+			break
+		}
+
+		return e.complexity.DeleteOrganizationHorizontalLogoPayload.Organization(childComplexity), true
 
 	case "DeleteOrganizationPayload.deletedOrganizationId":
 		if e.complexity.DeleteOrganizationPayload.DeletedOrganizationID == nil {
@@ -4867,6 +4882,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Mutation.DeleteOrganization(childComplexity, args["input"].(types.DeleteOrganizationInput)), true
 
+	case "Mutation.deleteOrganizationHorizontalLogo":
+		if e.complexity.Mutation.DeleteOrganizationHorizontalLogo == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteOrganizationHorizontalLogo_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteOrganizationHorizontalLogo(childComplexity, args["input"].(types.DeleteOrganizationHorizontalLogoInput)), true
+
 	case "Mutation.deletePeople":
 		if e.complexity.Mutation.DeletePeople == nil {
 			break
@@ -5985,6 +6012,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.HeadquarterAddress(childComplexity), true
+
+	case "Organization.horizontalLogoUrl":
+		if e.complexity.Organization.HorizontalLogoURL == nil {
+			break
+		}
+
+		return e.complexity.Organization.HorizontalLogoURL(childComplexity), true
 
 	case "Organization.id":
 		if e.complexity.Organization.ID == nil {
@@ -8523,6 +8557,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDeleteMeasureInput,
 		ec.unmarshalInputDeleteNonconformityInput,
 		ec.unmarshalInputDeleteObligationInput,
+		ec.unmarshalInputDeleteOrganizationHorizontalLogoInput,
 		ec.unmarshalInputDeleteOrganizationInput,
 		ec.unmarshalInputDeletePeopleInput,
 		ec.unmarshalInputDeleteProcessingActivityInput,
@@ -10217,6 +10252,7 @@ type Organization implements Node {
   id: ID!
   name: String!
   logoUrl: String @goField(forceResolver: true)
+  horizontalLogoUrl: String @goField(forceResolver: true)
 
   description: String
   websiteUrl: String
@@ -11348,6 +11384,9 @@ type Mutation {
   updateOrganization(
     input: UpdateOrganizationInput!
   ): UpdateOrganizationPayload!
+  deleteOrganizationHorizontalLogo(
+    input: DeleteOrganizationHorizontalLogoInput!
+  ): DeleteOrganizationHorizontalLogoPayload!
   deleteOrganization(
     input: DeleteOrganizationInput!
   ): DeleteOrganizationPayload!
@@ -11670,10 +11709,15 @@ input UpdateOrganizationInput {
   organizationId: ID!
   name: String
   logo: Upload
+  horizontalLogoFile: Upload
   description: String
   websiteUrl: String
   email: String
   headquarterAddress: String
+}
+
+input DeleteOrganizationHorizontalLogoInput {
+  organizationId: ID!
 }
 
 input DeleteOrganizationInput {
@@ -12354,6 +12398,10 @@ type CreateOrganizationPayload {
 }
 
 type UpdateOrganizationPayload {
+  organization: Organization!
+}
+
+type DeleteOrganizationHorizontalLogoPayload {
   organization: Organization!
 }
 
@@ -16086,6 +16134,29 @@ func (ec *executionContext) field_Mutation_deleteObligation_argsInput(
 	}
 
 	var zeroVal types.DeleteObligationInput
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteOrganizationHorizontalLogo_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Mutation_deleteOrganizationHorizontalLogo_argsInput(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg0
+	return args, nil
+}
+func (ec *executionContext) field_Mutation_deleteOrganizationHorizontalLogo_argsInput(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (types.DeleteOrganizationHorizontalLogoInput, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+	if tmp, ok := rawArgs["input"]; ok {
+		return ec.unmarshalNDeleteOrganizationHorizontalLogoInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoInput(ctx, tmp)
+	}
+
+	var zeroVal types.DeleteOrganizationHorizontalLogoInput
 	return zeroVal, nil
 }
 
@@ -21589,6 +21660,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -22198,6 +22271,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -23925,6 +24000,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -28625,6 +28702,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -30024,6 +30103,110 @@ func (ec *executionContext) fieldContext_DeleteObligationPayload_deletedObligati
 	return fc, nil
 }
 
+func (ec *executionContext) _DeleteOrganizationHorizontalLogoPayload_organization(ctx context.Context, field graphql.CollectedField, obj *types.DeleteOrganizationHorizontalLogoPayload) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DeleteOrganizationHorizontalLogoPayload_organization(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Organization, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.Organization)
+	fc.Result = res
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DeleteOrganizationHorizontalLogoPayload",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "logoUrl":
+				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "websiteUrl":
+				return ec.fieldContext_Organization_websiteUrl(ctx, field)
+			case "email":
+				return ec.fieldContext_Organization_email(ctx, field)
+			case "headquarterAddress":
+				return ec.fieldContext_Organization_headquarterAddress(ctx, field)
+			case "users":
+				return ec.fieldContext_Organization_users(ctx, field)
+			case "connectors":
+				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "frameworks":
+				return ec.fieldContext_Organization_frameworks(ctx, field)
+			case "controls":
+				return ec.fieldContext_Organization_controls(ctx, field)
+			case "vendors":
+				return ec.fieldContext_Organization_vendors(ctx, field)
+			case "peoples":
+				return ec.fieldContext_Organization_peoples(ctx, field)
+			case "documents":
+				return ec.fieldContext_Organization_documents(ctx, field)
+			case "measures":
+				return ec.fieldContext_Organization_measures(ctx, field)
+			case "risks":
+				return ec.fieldContext_Organization_risks(ctx, field)
+			case "tasks":
+				return ec.fieldContext_Organization_tasks(ctx, field)
+			case "assets":
+				return ec.fieldContext_Organization_assets(ctx, field)
+			case "data":
+				return ec.fieldContext_Organization_data(ctx, field)
+			case "audits":
+				return ec.fieldContext_Organization_audits(ctx, field)
+			case "nonconformities":
+				return ec.fieldContext_Organization_nonconformities(ctx, field)
+			case "obligations":
+				return ec.fieldContext_Organization_obligations(ctx, field)
+			case "continualImprovements":
+				return ec.fieldContext_Organization_continualImprovements(ctx, field)
+			case "processingActivities":
+				return ec.fieldContext_Organization_processingActivities(ctx, field)
+			case "snapshots":
+				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenter":
+				return ec.fieldContext_Organization_trustCenter(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DeleteOrganizationPayload_deletedOrganizationId(ctx context.Context, field graphql.CollectedField, obj *types.DeleteOrganizationPayload) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DeleteOrganizationPayload_deletedOrganizationId(ctx, field)
 	if err != nil {
@@ -31342,6 +31525,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -34664,6 +34849,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -36340,6 +36527,65 @@ func (ec *executionContext) fieldContext_Mutation_updateOrganization(ctx context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateOrganization_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteOrganizationHorizontalLogo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteOrganizationHorizontalLogo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteOrganizationHorizontalLogo(rctx, fc.Args["input"].(types.DeleteOrganizationHorizontalLogoInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.DeleteOrganizationHorizontalLogoPayload)
+	fc.Result = res
+	return ec.marshalNDeleteOrganizationHorizontalLogoPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteOrganizationHorizontalLogo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "organization":
+				return ec.fieldContext_DeleteOrganizationHorizontalLogoPayload_organization(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type DeleteOrganizationHorizontalLogoPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteOrganizationHorizontalLogo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -43295,6 +43541,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -44356,6 +44604,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -45285,6 +45535,47 @@ func (ec *executionContext) _Organization_logoUrl(ctx context.Context, field gra
 }
 
 func (ec *executionContext) fieldContext_Organization_logoUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organization",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organization_horizontalLogoUrl(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Organization().HorizontalLogoURL(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organization_horizontalLogoUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Organization",
 		Field:      field,
@@ -46996,6 +47287,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -48085,6 +48378,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -50762,6 +51057,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -51662,6 +51959,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -52575,6 +52874,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -53459,6 +53760,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -56500,6 +56803,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -58540,6 +58845,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_name(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_Organization_logoUrl(ctx, field)
+			case "horizontalLogoUrl":
+				return ec.fieldContext_Organization_horizontalLogoUrl(ctx, field)
 			case "description":
 				return ec.fieldContext_Organization_description(ctx, field)
 			case "websiteUrl":
@@ -68538,6 +68845,33 @@ func (ec *executionContext) unmarshalInputDeleteObligationInput(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteOrganizationHorizontalLogoInput(ctx context.Context, obj any) (types.DeleteOrganizationHorizontalLogoInput, error) {
+	var it types.DeleteOrganizationHorizontalLogoInput
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"organizationId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "organizationId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizationId"))
+			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.OrganizationID = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteOrganizationInput(ctx context.Context, obj any) (types.DeleteOrganizationInput, error) {
 	var it types.DeleteOrganizationInput
 	asMap := map[string]any{}
@@ -71087,7 +71421,7 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "name", "logo", "description", "websiteUrl", "email", "headquarterAddress"}
+	fieldsInOrder := [...]string{"organizationId", "name", "logo", "horizontalLogoFile", "description", "websiteUrl", "email", "headquarterAddress"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -71115,6 +71449,13 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 				return it, err
 			}
 			it.Logo = data
+		case "horizontalLogoFile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("horizontalLogoFile"))
+			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HorizontalLogoFile = data
 		case "description":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -77032,6 +77373,45 @@ func (ec *executionContext) _DeleteObligationPayload(ctx context.Context, sel as
 	return out
 }
 
+var deleteOrganizationHorizontalLogoPayloadImplementors = []string{"DeleteOrganizationHorizontalLogoPayload"}
+
+func (ec *executionContext) _DeleteOrganizationHorizontalLogoPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteOrganizationHorizontalLogoPayload) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteOrganizationHorizontalLogoPayloadImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteOrganizationHorizontalLogoPayload")
+		case "organization":
+			out.Values[i] = ec._DeleteOrganizationHorizontalLogoPayload_organization(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var deleteOrganizationPayloadImplementors = []string{"DeleteOrganizationPayload"}
 
 func (ec *executionContext) _DeleteOrganizationPayload(ctx context.Context, sel ast.SelectionSet, obj *types.DeleteOrganizationPayload) graphql.Marshaler {
@@ -79915,6 +80295,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "deleteOrganizationHorizontalLogo":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteOrganizationHorizontalLogo(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "deleteOrganization":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteOrganization(ctx, field)
@@ -81350,6 +81737,39 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 					}
 				}()
 				res = ec._Organization_logoUrl(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "horizontalLogoUrl":
+			field := field
+
+			innerFunc := func(ctx context.Context, _ *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organization_horizontalLogoUrl(ctx, field, obj)
 				return res
 			}
 
@@ -91813,6 +92233,25 @@ func (ec *executionContext) marshalNDeleteObligationPayload2ᚖgithubᚗcomᚋge
 		return graphql.Null
 	}
 	return ec._DeleteObligationPayload(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNDeleteOrganizationHorizontalLogoInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoInput(ctx context.Context, v any) (types.DeleteOrganizationHorizontalLogoInput, error) {
+	res, err := ec.unmarshalInputDeleteOrganizationHorizontalLogoInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDeleteOrganizationHorizontalLogoPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoPayload(ctx context.Context, sel ast.SelectionSet, v types.DeleteOrganizationHorizontalLogoPayload) graphql.Marshaler {
+	return ec._DeleteOrganizationHorizontalLogoPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteOrganizationHorizontalLogoPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationHorizontalLogoPayload(ctx context.Context, sel ast.SelectionSet, v *types.DeleteOrganizationHorizontalLogoPayload) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteOrganizationHorizontalLogoPayload(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNDeleteOrganizationInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDeleteOrganizationInput(ctx context.Context, v any) (types.DeleteOrganizationInput, error) {

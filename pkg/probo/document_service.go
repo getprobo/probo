@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/docgen"
+	"github.com/getprobo/probo/pkg/file"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
 	"github.com/getprobo/probo/pkg/page"
@@ -1201,7 +1202,7 @@ func (s *DocumentService) ExportPDF(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) (err error) {
-			data, err = exportDocumentPDF(ctx, s.html2pdfConverter, conn, s.svc.scope, documentVersionID, options)
+			data, err = exportDocumentPDF(ctx, s.svc, s.html2pdfConverter, conn, s.svc.scope, documentVersionID, options)
 			if err != nil {
 				return fmt.Errorf("cannot export document PDF: %w", err)
 			}
@@ -1333,6 +1334,7 @@ func (s *DocumentService) BuildAndUploadExport(ctx context.Context, exportJobID 
 
 func exportDocumentPDF(
 	ctx context.Context,
+	svc *TenantService,
 	html2pdfConverter *html2pdf.Converter,
 	conn pg.Conn,
 	scope coredata.Scoper,
@@ -1342,6 +1344,7 @@ func exportDocumentPDF(
 	document := &coredata.Document{}
 	version := &coredata.DocumentVersion{}
 	owner := &coredata.People{}
+	organization := &coredata.Organization{}
 	signatures := coredata.DocumentVersionSignatures{}
 	peopleMap := make(map[gid.GID]*coredata.People)
 
@@ -1355,6 +1358,10 @@ func exportDocumentPDF(
 
 	if err := owner.LoadByID(ctx, conn, scope, document.OwnerID); err != nil {
 		return nil, fmt.Errorf("cannot load document owner: %w", err)
+	}
+
+	if err := organization.LoadByID(ctx, conn, scope, document.OrganizationID); err != nil {
+		return nil, fmt.Errorf("cannot load organization: %w", err)
 	}
 
 	var signatureData []docgen.SignatureData
@@ -1403,14 +1410,29 @@ func exportDocumentPDF(
 		classification = docgen.ClassificationSecret
 	}
 
+	horizontalLogoBase64 := ""
+	if organization.HorizontalLogoFileID != nil {
+		fileRecord := &coredata.File{}
+		fileErr := svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+			return fileRecord.LoadByID(ctx, conn, scope, *organization.HorizontalLogoFileID)
+		})
+		if fileErr == nil {
+			base64Data, mimeType, logoErr := file.GetFileBase64(ctx, svc.s3, svc.bucket, fileRecord.FileKey)
+			if logoErr == nil {
+				horizontalLogoBase64 = fmt.Sprintf("data:%s;base64,%s", mimeType, base64Data)
+			}
+		}
+	}
+
 	docData := docgen.DocumentData{
-		Title:          version.Title,
-		Content:        version.Content,
-		Version:        version.VersionNumber,
-		Classification: classification,
-		Approver:       owner.FullName,
-		PublishedAt:    version.PublishedAt,
-		Signatures:     signatureData,
+		Title:                       version.Title,
+		Content:                     version.Content,
+		Version:                     version.VersionNumber,
+		Classification:              classification,
+		Approver:                    owner.FullName,
+		PublishedAt:                 version.PublishedAt,
+		Signatures:                  signatureData,
+		CompanyHorizontalLogoBase64: horizontalLogoBase64,
 	}
 
 	htmlContent, err := docgen.RenderHTML(docData)
@@ -1492,6 +1514,7 @@ func (s *DocumentService) Export(
 
 				exportedPDF, err := exportDocumentPDF(
 					ctx,
+					s.svc,
 					s.html2pdfConverter,
 					conn,
 					s.svc.scope,
