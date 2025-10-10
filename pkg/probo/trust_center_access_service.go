@@ -386,10 +386,27 @@ func (s TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Con
 		return fmt.Errorf("cannot load organization: %w", err)
 	}
 
+	hostname := s.svc.hostname
+	path := "/trust/" + trustCenter.Slug + "/access"
+
+	if organization.CustomDomainID != nil {
+		customDomain, err := s.svc.CustomDomains.GetOrganizationCustomDomain(ctx, organization.ID)
+		if err != nil {
+			return fmt.Errorf("cannot load custom domain: %w", err)
+		}
+
+		if customDomain == nil || customDomain.SSLStatus != coredata.CustomDomainSSLStatusActive {
+			return fmt.Errorf("custom domain is not active")
+		}
+
+		hostname = customDomain.Domain
+		path = "/access"
+	}
+
 	accessURL := url.URL{
 		Scheme: "https",
-		Host:   s.svc.hostname,
-		Path:   "/trust/" + trustCenter.Slug + "/access",
+		Host:   hostname,
+		Path:   path,
 		RawQuery: url.Values{
 			"token": []string{accessToken},
 		}.Encode(),
