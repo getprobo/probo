@@ -5,7 +5,7 @@ import type {
   OverviewPageFragment$key,
 } from "./__generated__/OverviewPageFragment.graphql";
 import { Link, useOutletContext } from "react-router";
-import { groupBy, objectEntries, sprintf } from "@probo/helpers";
+import { groupBy, objectEntries, sprintf, getTrustCenterUrl } from "@probo/helpers";
 import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
 import { useTranslate } from "@probo/i18n";
 import { Card, IconChevronRight } from "@probo/ui";
@@ -33,6 +33,7 @@ const overviewFragment = graphql`
       edges {
         node {
           id
+          countries
           ...VendorRowFragment
         }
       }
@@ -63,12 +64,12 @@ export function OverviewPage() {
       <Documents
         audits={trustCenter.audits.edges}
         documents={fragment.documents.edges}
-        url={`/trust/${trustCenter.slug}/documents`}
+        url={getTrustCenterUrl("documents")}
       />
       <Subprocessors
         organizationName={trustCenter.organization.name}
         vendors={fragment.vendors.edges}
-        url={`/trust/${trustCenter.slug}/subprocessors`}
+        url={getTrustCenterUrl("subprocessors")}
       />
     </div>
   );
@@ -143,6 +144,11 @@ function Subprocessors({
     return null;
   }
 
+  const hasAnyCountries = vendors.some(vendor => {
+    const vendorData = vendor.node as any;
+    return vendorData.countries && vendorData.countries.length > 0;
+  });
+
   return (
     <div>
       <h2 className="font-medium mb-1">{__("Subprocessors")}</h2>
@@ -154,7 +160,7 @@ function Subprocessors({
       </p>
       <Rows className="mb-8 *:py-5">
         {vendors.map((vendor) => (
-          <VendorRow key={vendor.node.id} vendor={vendor.node} />
+          <VendorRow key={vendor.node.id} vendor={vendor.node} hasAnyCountries={hasAnyCountries} />
         ))}
         <Link to={url} className="text-sm font-medium flex gap-2 items-center">
           {__("See all subprocessors")}

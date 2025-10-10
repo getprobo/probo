@@ -15,6 +15,9 @@ export function SubprocessorsPage({ queryRef }: Props) {
   const data = usePreloadedQuery(currentTrustVendorsQuery, queryRef);
   const vendors =
     data.currentTrustCenter?.vendors.edges.map((edge) => edge.node) ?? [];
+
+  const hasAnyCountries = vendors.some(vendor => vendor.countries.length > 0);
+
   return (
     <div>
       <h2 className="font-medium mb-1">{__("Subprocessors")}</h2>
@@ -26,7 +29,7 @@ export function SubprocessorsPage({ queryRef }: Props) {
       </p>
       <Rows>
         {vendors.map((vendor) => (
-          <VendorRow key={vendor.id} vendor={vendor} />
+          <VendorRow key={vendor.id} vendor={vendor} hasAnyCountries={hasAnyCountries} />
         ))}
       </Rows>
     </div>

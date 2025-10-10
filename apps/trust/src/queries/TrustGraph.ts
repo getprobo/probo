@@ -61,6 +61,7 @@ export const trustVendorsQuery = graphql`
         edges {
           node {
             id
+            countries
             ...VendorRowFragment
           }
         }
@@ -131,6 +132,7 @@ export const currentTrustVendorsQuery = graphql`
         edges {
           node {
             id
+            countries
             ...VendorRowFragment
           }
         }

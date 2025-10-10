@@ -15,7 +15,7 @@ import {
 import { useTranslate } from "@probo/i18n";
 import type { AuditRowDownloadMutation } from "./__generated__/AuditRowDownloadMutation.graphql";
 import { useMutationWithToasts } from "/hooks/useMutationWithToast";
-import { downloadFile } from "@probo/helpers";
+import { downloadFile, getLogoUrl } from "@probo/helpers";
 import { type PropsWithChildren, useState } from "react";
 import { useLocation } from "react-router";
 import { RequestAccessDialog } from "/components/RequestAccessDialog.tsx";
@@ -103,15 +103,16 @@ export function AuditRow(props: { audit: AuditRowFragment$key }) {
   );
 }
 
-const logos = {
-  "ISO 27001 (2022)": "/trust/logos/iso27001.svg",
-  "SOC 2": "/trust/logos/soc2.svg",
-  HIPAA: "/trust/logos/hipaa.svg",
-  GDPR: "/trust/logos/gdpr.svg",
-};
-
 export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
   const audit = useFragment(auditRowFragment, props.audit);
+
+  const logos = {
+    "ISO 27001 (2022)": getLogoUrl("iso27001.svg"),
+    "SOC 2": getLogoUrl("soc2.svg"),
+    HIPAA: getLogoUrl("hipaa.svg"),
+    GDPR: getLogoUrl("gdpr.svg"),
+  };
+
   return (
     <>
       <AuditDialog
@@ -130,7 +131,7 @@ export function AuditRowAvatar(props: { audit: AuditRowFragment$key }) {
           ) : (
             <div
               className="bg-[#F0F7E2] aspect-square w-full rounded-full text-xs text-[#000] font-bold flex items-center justify-center pb-6 px-2"
-              style={{ background: "url(/trust/logos/blank.svg) no-repeat" }}
+              style={{ background: `url(${getLogoUrl("blank.svg")}) no-repeat` }}
             >
               <span className="line-clamp-2 overflow-hidden">
                 {" "}

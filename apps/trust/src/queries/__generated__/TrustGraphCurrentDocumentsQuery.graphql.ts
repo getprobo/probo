@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dcb43113e97ddd2db2834d5f81c3cd3d>>
+ * @generated SignedSource<<c1dbff6aa4c7dd1ce114b8d1fb9b76e6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -198,6 +198,20 @@ return {
                         "kind": "ScalarField",
                         "name": "title",
                         "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "isUserAuthorized",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "hasUserRequestedAccess",
+                        "storageKey": null
                       }
                     ],
                     "storageKey": null
@@ -214,12 +228,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f04b485bb7a2ff20ac409e123404a954",
+    "cacheID": "9e99faf40ba87ee06df5ddd64431586e",
     "id": null,
     "metadata": {},
     "name": "TrustGraphCurrentDocumentsQuery",
     "operationKind": "query",
-    "text": "query TrustGraphCurrentDocumentsQuery {\n  currentTrustCenter {\n    id\n    organization {\n      name\n      id\n    }\n    documents(first: 50) {\n      edges {\n        node {\n          id\n          documentType\n          ...DocumentRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n}\n"
+    "text": "query TrustGraphCurrentDocumentsQuery {\n  currentTrustCenter {\n    id\n    organization {\n      name\n      id\n    }\n    documents(first: 50) {\n      edges {\n        node {\n          id\n          documentType\n          ...DocumentRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n"
   }
 };
 })();

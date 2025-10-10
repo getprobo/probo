@@ -53,3 +53,4 @@ export {
 export { promisifyMutation } from "./relay";
 export { fileType, fileSize } from "./file";
 export { formatDatetime, formatDate } from "./date";
+export { getLogoUrl, getTrustCenterUrl } from "./trustCenter";
