@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Fix trust center design on custom domain
+- Send trust center invitation with custom domain when available
 - Fix evidence deletion
 
 ## [0.68.2] - 2025-10-10
