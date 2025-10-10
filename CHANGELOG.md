@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.68.2] - 2025-10-10
+
+### Added
+
+- Socket binding for trust center
+
 ## [0.68.1] - 2025-10-09
 
 ### Fixed
