@@ -432,9 +432,7 @@ WHERE
 	args := pgx.StrictNamedArgs{"evidence_id": e.ID}
 	maps.Copy(args, scope.SQLArguments())
 
-	var evidenceFileId *gid.GID
-	err := conn.QueryRow(ctx, q, args).Scan(&evidenceFileId)
-
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("failed to delete evidence: %w", err)
 	}

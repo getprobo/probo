@@ -20,19 +20,19 @@ import {
 import { graphql } from "relay-runtime";
 import {
   useFragment,
-  useMutation,
   usePaginationFragment,
   useRelayEnvironment,
 } from "react-relay";
 import { SortableTable } from "/components/SortableTable";
 import type { MeasureEvidencesTabFragment_evidence$key } from "./__generated__/MeasureEvidencesTabFragment_evidence.graphql";
-import { fileSize, fileType, promisifyMutation, sprintf, formatDate } from "@probo/helpers";
+import { fileSize, fileType, sprintf, formatDate } from "@probo/helpers";
 import { EvidencePreviewDialog } from "../dialog/EvidencePreviewDialog";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { CreateEvidenceDialog } from "../dialog/CreateEvidenceDialog";
 import { useState } from "react";
 import { EvidenceDownloadDialog } from "../dialog/EvidenceDownloadDialog";
 import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
+import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
 export const evidencesFragment = graphql`
   fragment MeasureEvidencesTabFragment on Measure
@@ -180,7 +180,13 @@ function EvidenceRow(props: {
   const evidence = useFragment(evidenceFragment, props.evidenceKey);
   const { __ } = useTranslate();
 
-  const [mutate, isDeleting] = useMutation(deleteEvidenceMutation);
+  const [mutateWithToasts, isDeleting] = useMutationWithToasts(deleteEvidenceMutation, {
+    successMessage: sprintf(
+      __('Evidence "%s" has been deleted successfully'),
+      evidence.file?.fileName || __("Link evidence")
+    ),
+    errorMessage: __("Failed to delete evidence"),
+  });
   const confirm = useConfirm();
   const [isDownloading, setIsDownloading] = useState(false);
   const relayEnv = useRelayEnvironment();
@@ -188,7 +194,7 @@ function EvidenceRow(props: {
   const handleDelete = () => {
     confirm(
       () => {
-        return promisifyMutation(mutate)({
+        return mutateWithToasts({
           variables: {
             connections: [props.connectionId],
             input: {
