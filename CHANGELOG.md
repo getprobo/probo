@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Fix trust center design on custom domain
 - Send trust center invitation with custom domain when available
 - Fix evidence deletion
+- Fix dead ACME challenge
 
 ## [0.68.2] - 2025-10-10
 
