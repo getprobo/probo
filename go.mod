@@ -16,10 +16,10 @@ require (
 	github.com/crewjam/saml v0.5.1
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/go-chi/cors v1.2.2
-	github.com/google/jsonschema-go v0.2.1-0.20250825175020-748c325cec76
+	github.com/google/jsonschema-go v0.3.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jhillyerd/enmime v1.3.0
-	github.com/modelcontextprotocol/go-sdk v0.4.0
+	github.com/modelcontextprotocol/go-sdk v1.0.0
 	github.com/openai/openai-go v1.8.2
 	github.com/pdfcpu/pdfcpu v0.11.0
 	github.com/prometheus/client_golang v1.22.0
