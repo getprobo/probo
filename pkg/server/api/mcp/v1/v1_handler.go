@@ -1,44 +1,88 @@
 package v1
 
 import (
-	"encoding/json"
 	"net/http"
 
-	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/probo"
+	"github.com/getprobo/probo/pkg/usrmgr"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/jsonschema-go/jsonschema"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"go.gearno.de/kit/log"
 )
 
 type (
 	resolver struct {
-		proboSvc       *probo.TenantService
-		organizationID gid.GID
+		proboSvc  *probo.Service
+		usrmgrSvc *usrmgr.Service
+		logger    *log.Logger
 	}
 )
 
-func NewMux(proboSvc *probo.Service) *chi.Mux {
+func NewMux(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrmgr.Service, cfg Config) *chi.Mux {
+	logger.Info("initializing MCP server",
+		log.String("version", cfg.Version),
+		log.String("request_timeout", cfg.RequestTimeout.String()),
+	)
+
 	server := mcp.NewServer(
 		&mcp.Implementation{
 			Name:    "probo",
 			Title:   "Probo",
-			Version: "1.0.0", // todo retrieve from build info
+			Version: cfg.Version,
 		},
 		&mcp.ServerOptions{},
 	)
 
-	tenantID, err := gid.ParseTenantID("lXdXZSh-AAE")
-	if err != nil {
-		panic(err)
+	resolver := &resolver{
+		proboSvc:  proboSvc,
+		usrmgrSvc: usrmgrSvc,
+		logger:    logger,
 	}
 
-	organizationID, err := gid.ParseGID("lXdXZSh-AAEAAAAAAZfLJi38a0AGbu37")
-	if err != nil {
-		panic(err)
-	}
-
-	resolver := &resolver{proboSvc: proboSvc.WithTenant(tenantID), organizationID: organizationID}
+	mcp.AddTool(
+		server,
+		&mcp.Tool{
+			Title:       "List Organizations",
+			Description: "List all organizations the user has access to",
+			Name:        "listOrganizations",
+			Annotations: &mcp.ToolAnnotations{
+				Title:        "List Organizations",
+				ReadOnlyHint: true,
+			},
+			InputSchema: &jsonschema.Schema{
+				Type:       "object",
+				Properties: map[string]*jsonschema.Schema{},
+			},
+			OutputSchema: &jsonschema.Schema{
+				Type: "object",
+				Properties: map[string]*jsonschema.Schema{
+					"result": {
+						Type: "array",
+						Items: &jsonschema.Schema{
+							Type:     "object",
+							Required: []string{"name", "id", "tenantID"},
+							Properties: map[string]*jsonschema.Schema{
+								"name": {
+									Type:        "string",
+									Description: "The organization name",
+								},
+								"id": {
+									Type:        "string",
+									Description: "The organization ID",
+								},
+								"tenantID": {
+									Type:        "string",
+									Description: "The tenant ID this organization belongs to",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		resolver.ListOrganizations,
+	)
 
 	mcp.AddTool(
 		server,
@@ -51,11 +95,16 @@ func NewMux(proboSvc *probo.Service) *chi.Mux {
 				ReadOnlyHint: true,
 			},
 			InputSchema: &jsonschema.Schema{
-				Type: "object",
+				Type:     "object",
+				Required: []string{"organizationID", "size", "orderField"},
 				Properties: map[string]*jsonschema.Schema{
+					"organizationID": {
+						Type:        "string",
+						Description: "The organization ID to list vendors for",
+					},
 					"orderField": {
-						Type:    "string",
-						Default: json.RawMessage(`"NAME"`),
+						Type:        "string",
+						Description: "Field to order results by",
 						Enum: []any{
 							"NAME",
 							"CREATED_AT",
@@ -63,13 +112,14 @@ func NewMux(proboSvc *probo.Service) *chi.Mux {
 						},
 					},
 					"cursor": {
-						Type: "string",
+						Type:        "string",
+						Description: "Cursor for pagination",
 					},
 					"size": {
-						Type:    "integer",
-						Minimum: jsonschema.Ptr(float64(1)),
-						Maximum: jsonschema.Ptr(float64(1000)),
-						Default: json.RawMessage(`100`),
+						Type:        "integer",
+						Description: "Number of results to return",
+						Minimum:     jsonschema.Ptr(float64(1)),
+						Maximum:     jsonschema.Ptr(float64(1000)),
 					},
 				},
 			},
@@ -103,11 +153,17 @@ func NewMux(proboSvc *probo.Service) *chi.Mux {
 			Name:        "addVendor",
 			Description: "Add a vendor",
 			InputSchema: &jsonschema.Schema{
-				Type: "object",
+				Type:     "object",
+				Required: []string{"organizationID", "name"},
 				Properties: map[string]*jsonschema.Schema{
+					"organizationID": {
+						Type:        "string",
+						Description: "The organization ID to add the vendor to",
+					},
 					"name": {
-						Type:     "string",
-						Required: []string{"name"},
+						Type:        "string",
+						Description: "The vendor name",
+						MinLength:   jsonschema.Ptr(1),
 					},
 					"description": {
 						Type: "string",
@@ -202,8 +258,13 @@ func NewMux(proboSvc *probo.Service) *chi.Mux {
 		&mcp.StreamableHTTPOptions{Stateless: true},
 	)
 
+	// Wrap handler with authentication middleware
+	authHandler := WithMCPAuth(logger, usrmgrSvc, cfg.Auth, handler)
+
 	r := chi.NewMux()
-	r.Handle("/", handler)
+	r.Handle("/", authHandler)
+
+	logger.Info("MCP server initialized successfully")
 
 	return r
 }
