@@ -17,6 +17,7 @@ package certmanager
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
@@ -111,6 +112,44 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 	)
 }
 
+func isChallengeFailedError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := strings.ToLower(err.Error())
+
+	// These errors indicate the challenge/order is no longer valid
+	return strings.Contains(errStr, "authorization must be pending") ||
+		strings.Contains(errStr, "order") && strings.Contains(errStr, "invalid") ||
+		strings.Contains(errStr, "authorization") && strings.Contains(errStr, "invalid") ||
+		strings.Contains(errStr, "challenge") && strings.Contains(errStr, "invalid")
+}
+
+func (p *Provisioner) resetDomainToRetry(
+	ctx context.Context,
+	conn pg.Conn,
+	domain *coredata.CustomDomain,
+) error {
+	fullDomain := &coredata.CustomDomain{}
+	if err := fullDomain.LoadByIDForUpdate(ctx, conn, coredata.NewNoScope(), p.encryptionKey, domain.ID); err != nil {
+		return fmt.Errorf("cannot load domain for update: %w", err)
+	}
+
+	fullDomain.HTTPChallengeToken = nil
+	fullDomain.HTTPChallengeKeyAuth = nil
+	fullDomain.HTTPChallengeURL = nil
+	fullDomain.HTTPOrderURL = nil
+
+	fullDomain.SSLStatus = coredata.CustomDomainSSLStatusPending
+
+	if err := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); err != nil {
+		return fmt.Errorf("cannot update domain: %w", err)
+	}
+
+	return nil
+}
+
 func (p *Provisioner) provisionDomainCertificate(
 	ctx context.Context,
 	conn pg.Conn,
@@ -171,6 +210,32 @@ func (p *Provisioner) provisionDomainCertificate(
 			log.String("domain", domain.Domain),
 			log.Error(err),
 		)
+
+		// Check if the error indicates the challenge/order has failed
+		// and needs to be reset for a fresh attempt
+		if isChallengeFailedError(err) {
+			p.logger.InfoCtx(
+				ctx,
+				"challenge or order is no longer valid, resetting domain to retry with fresh challenge",
+				log.String("domain", domain.Domain),
+			)
+
+			if resetErr := p.resetDomainToRetry(ctx, conn, domain); resetErr != nil {
+				p.logger.ErrorCtx(
+					ctx,
+					"cannot reset domain for retry",
+					log.String("domain", domain.Domain),
+					log.Error(resetErr),
+				)
+				return resetErr
+			}
+
+			p.logger.InfoCtx(
+				ctx,
+				"domain reset to pending, will retry with new challenge on next cycle",
+				log.String("domain", domain.Domain),
+			)
+		}
 
 		return nil
 	}
