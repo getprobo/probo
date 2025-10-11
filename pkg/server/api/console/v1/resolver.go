@@ -233,7 +233,7 @@ func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, usrmgrSvc *usrm
 		},
 	)
 	srv.Use(extension.Introspection{})
-	srv.Use(tracingExtension{})
+	srv.Use(gqlutils.NewTracingExtension(logger))
 	srv.SetRecoverFunc(gqlutils.RecoverFunc)
 
 	srv.AroundOperations(

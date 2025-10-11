@@ -133,6 +133,7 @@ func graphqlHandler(logger *log.Logger, usrmgrSvc *usrmgr.Service, trustSvc *tru
 	srv.AddTransport(transport.Options{})
 
 	srv.Use(extension.Introspection{})
+	srv.Use(gqlutils.NewTracingExtension(logger))
 
 	srv.SetRecoverFunc(gqlutils.RecoverFunc)
 

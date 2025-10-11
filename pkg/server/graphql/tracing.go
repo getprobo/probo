@@ -12,28 +12,37 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package console_v1
+package graphql
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
+	"go.gearno.de/kit/log"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
-type tracingExtension struct{}
+type TracingExtension struct {
+	logger *log.Logger
+}
 
-func (t tracingExtension) ExtensionName() string {
+func NewTracingExtension(logger *log.Logger) TracingExtension {
+	return TracingExtension{logger: logger}
+}
+
+func (t TracingExtension) ExtensionName() string {
 	return "Tracing"
 }
 
-func (t tracingExtension) Validate(schema graphql.ExecutableSchema) error {
+func (t TracingExtension) Validate(schema graphql.ExecutableSchema) error {
 	return nil
 }
 
-func (t tracingExtension) InterceptField(ctx context.Context, next graphql.Resolver) (interface{}, error) {
+func (t TracingExtension) InterceptField(ctx context.Context, next graphql.Resolver) (interface{}, error) {
 	rootSpan := trace.SpanFromContext(ctx)
 
 	if rootSpan.IsRecording() {
@@ -61,18 +70,20 @@ func (t tracingExtension) InterceptField(ctx context.Context, next graphql.Resol
 	return next(ctx)
 }
 
-func (t tracingExtension) InterceptOperation(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
+func (t TracingExtension) InterceptOperation(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
 	rootSpan := trace.SpanFromContext(ctx)
+	requestContext := graphql.GetOperationContext(ctx)
+	startTime := time.Now()
 
 	if rootSpan.IsRecording() {
 		tracer := otel.Tracer("graphql-operation")
-		requestContext := graphql.GetOperationContext(ctx)
 		operationName := "GraphQL Operation"
 		if requestContext.OperationName != "" {
 			operationName = "GraphQL " + requestContext.OperationName
 		}
 
-		ctx, span := tracer.Start(ctx, operationName)
+		var span trace.Span
+		ctx, span = tracer.Start(ctx, operationName)
 		defer span.End()
 
 		span.SetAttributes(
@@ -80,9 +91,37 @@ func (t tracingExtension) InterceptOperation(ctx context.Context, next graphql.O
 			attribute.String("graphql.operation_type", string(requestContext.Operation.Operation)),
 			attribute.String("graphql.query", requestContext.RawQuery),
 		)
-
-		return next(ctx)
 	}
 
-	return next(ctx)
+	handler := next(ctx)
+
+	return func(ctx context.Context) *graphql.Response {
+		resp := handler(ctx)
+		duration := time.Since(startTime)
+
+		operationType := string(requestContext.Operation.Operation)
+		operationName := requestContext.OperationName
+		if operationName == "" {
+			operationName = "unnamed"
+		}
+
+		if resp.Errors != nil {
+			t.logger.ErrorCtx(ctx,
+				fmt.Sprintf("%s %s failed %s", operationType, operationName, duration.String()),
+				log.String("graphql_operation_name", operationName),
+				log.String("graphql_operation_type", operationType),
+				log.Duration("graphql_operation_duration", duration),
+				log.Any("graphql_operation_errors", resp.Errors),
+			)
+		} else {
+			t.logger.InfoCtx(ctx,
+				fmt.Sprintf("%s %s succeed %s", operationType, operationName, duration.String()),
+				log.String("graphql_operation_name", operationName),
+				log.String("graphql_operation_type", operationType),
+				log.Duration("graphql_operation_duration", duration),
+			)
+		}
+
+		return resp
+	}
 }
