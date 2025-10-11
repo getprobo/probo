@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.68.3] - 2025-10-11
+
 ### Fixed
 - Fix trust center design on custom domain
 - Send trust center invitation with custom domain when available
