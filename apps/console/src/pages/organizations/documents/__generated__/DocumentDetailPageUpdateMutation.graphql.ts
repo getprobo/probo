@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<efe95ef5290fa021d00c7f32922ae801>>
+ * @generated SignedSource<<575a6c27726fb3e5457989b0d5a4edc2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateDocumentInput = {
   content?: string | null | undefined;

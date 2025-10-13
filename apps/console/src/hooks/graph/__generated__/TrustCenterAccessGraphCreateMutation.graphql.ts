@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2ff966b9632595cece04e7a5ef3f7dd7>>
+ * @generated SignedSource<<5c208d2afc4eb2968b59215d3e79231b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type CreateTrustCenterAccessInput = {
   active: boolean;
   email: string;

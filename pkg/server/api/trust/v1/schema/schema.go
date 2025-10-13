@@ -1073,6 +1073,8 @@ enum DocumentType
   ISMS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeISMS")
   POLICY
     @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypePolicy")
+  PROCEDURE
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeProcedure")
 }
 
 type Document implements Node {
@@ -12243,14 +12245,16 @@ func (ec *executionContext) marshalNDocumentType2githubᚗcomᚋgetproboᚋprobo
 
 var (
 	unmarshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType = map[string]coredata.DocumentType{
-		"OTHER":  coredata.DocumentTypeOther,
-		"ISMS":   coredata.DocumentTypeISMS,
-		"POLICY": coredata.DocumentTypePolicy,
+		"OTHER":     coredata.DocumentTypeOther,
+		"ISMS":      coredata.DocumentTypeISMS,
+		"POLICY":    coredata.DocumentTypePolicy,
+		"PROCEDURE": coredata.DocumentTypeProcedure,
 	}
 	marshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType = map[coredata.DocumentType]string{
-		coredata.DocumentTypeOther:  "OTHER",
-		coredata.DocumentTypeISMS:   "ISMS",
-		coredata.DocumentTypePolicy: "POLICY",
+		coredata.DocumentTypeOther:     "OTHER",
+		coredata.DocumentTypeISMS:      "ISMS",
+		coredata.DocumentTypePolicy:    "POLICY",
+		coredata.DocumentTypeProcedure: "PROCEDURE",
 	}
 )
 

@@ -1,0 +1,1 @@
+ALTER TYPE document_type ADD VALUE 'PROCEDURE';

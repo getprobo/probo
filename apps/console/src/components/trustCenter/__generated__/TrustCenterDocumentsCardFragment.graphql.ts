@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<869852416d522b3851e516a543454edb>>
+ * @generated SignedSource<<40e45041dd8b72c58f1059d9cad3c15c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ReaderFragment } from 'relay-runtime';
 export type DocumentStatus = "DRAFT" | "PUBLISHED";
-export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 import { FragmentRefs } from "relay-runtime";
 export type TrustCenterDocumentsCardFragment$data = {

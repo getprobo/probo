@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7b0ec493ab146db602cae612158407cb>>
+ * @generated SignedSource<<096eea04ea39ac931b8627aee0ebb26c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 import { FragmentRefs } from "relay-runtime";
 export type LinkedDocumentsDialogFragment$data = {
   readonly documents: {

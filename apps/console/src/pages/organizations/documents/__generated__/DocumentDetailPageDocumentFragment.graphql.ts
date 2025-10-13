@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9bec5530e7a90ab3fb9f21c5c2d92286>>
+ * @generated SignedSource<<993de5bc8086378a2993bf0d0cf13658>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ReaderFragment } from 'relay-runtime';
 export type DocumentStatus = "DRAFT" | "PUBLISHED";
-export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentDetailPageDocumentFragment$data = {

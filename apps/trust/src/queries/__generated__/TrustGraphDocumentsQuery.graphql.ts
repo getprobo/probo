@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f592abfc32b9882d40bdfd0d91908ea2>>
+ * @generated SignedSource<<922757406dbc7a2c20b502ef6dd4c0d8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustGraphDocumentsQuery$variables = {
   slug: string;
 };

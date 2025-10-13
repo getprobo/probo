@@ -51,6 +51,8 @@ enum DocumentType
   ISMS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeISMS")
   POLICY
     @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypePolicy")
+  PROCEDURE
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeProcedure")
 }
 
 type Document implements Node {

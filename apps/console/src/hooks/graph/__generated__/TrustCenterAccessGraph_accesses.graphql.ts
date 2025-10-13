@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3717625e10534aaff2d7967a1824405b>>
+ * @generated SignedSource<<ef0d644a344dbab40145e3f4128cd0ec>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,7 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 import { FragmentRefs } from "relay-runtime";
 export type TrustCenterAccessGraph_accesses$data = {
   readonly accesses: {

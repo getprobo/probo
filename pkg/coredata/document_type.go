@@ -24,9 +24,10 @@ type (
 )
 
 const (
-	DocumentTypeOther  DocumentType = "OTHER"
-	DocumentTypeISMS   DocumentType = "ISMS"
-	DocumentTypePolicy DocumentType = "POLICY"
+	DocumentTypeOther     DocumentType = "OTHER"
+	DocumentTypeISMS      DocumentType = "ISMS"
+	DocumentTypePolicy    DocumentType = "POLICY"
+	DocumentTypeProcedure DocumentType = "PROCEDURE"
 )
 
 func (dt DocumentType) MarshalText() ([]byte, error) {
@@ -43,6 +44,8 @@ func (dt *DocumentType) UnmarshalText(data []byte) error {
 		*dt = DocumentTypeISMS
 	case DocumentTypePolicy.String():
 		*dt = DocumentTypePolicy
+	case DocumentTypeProcedure.String():
+		*dt = DocumentTypeProcedure
 	default:
 		return fmt.Errorf("invalid DocumentType value: %q", val)
 	}

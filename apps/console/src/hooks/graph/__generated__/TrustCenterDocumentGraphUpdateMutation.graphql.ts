@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<64b79a80214710d6c3e4676cd63136e4>>
+ * @generated SignedSource<<18b931f119e8ef68f016dfcdf76366cc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type DocumentType = "ISMS" | "OTHER" | "POLICY";
+export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateDocumentInput = {
   content?: string | null | undefined;
