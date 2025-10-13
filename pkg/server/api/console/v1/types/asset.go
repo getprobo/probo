@@ -47,7 +47,6 @@ func NewAsset(asset *coredata.Asset) *Asset {
 		SnapshotID:      asset.SnapshotID,
 		Name:            asset.Name,
 		Amount:          asset.Amount,
-		Criticity:       asset.Criticity,
 		AssetType:       asset.AssetType,
 		DataTypesStored: asset.DataTypesStored,
 		CreatedAt:       asset.CreatedAt,

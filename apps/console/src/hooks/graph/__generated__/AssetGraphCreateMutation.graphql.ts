@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9f6605e9adebeee2a681da0278642501>>
+ * @generated SignedSource<<0f47a0632a7158414d8c87cf9de16a7a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,11 +10,9 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type AssetType = "PHYSICAL" | "VIRTUAL";
-export type CriticityLevel = "HIGH" | "LOW" | "MEDIUM";
 export type CreateAssetInput = {
   amount: number;
   assetType: AssetType;
-  criticity?: CriticityLevel;
   dataTypesStored: string;
   name: string;
   organizationId: string;
@@ -32,7 +30,6 @@ export type AssetGraphCreateMutation$data = {
         readonly amount: number;
         readonly assetType: AssetType;
         readonly createdAt: any;
-        readonly criticity: CriticityLevel;
         readonly dataTypesStored: string;
         readonly id: string;
         readonly name: string;
@@ -121,13 +118,6 @@ v5 = {
           "args": null,
           "kind": "ScalarField",
           "name": "amount",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "criticity",
           "storageKey": null
         },
         {
@@ -290,16 +280,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "f11f5052ed6dd175bd701812c0cd136b",
+    "cacheID": "bc22942b9b4b5efb63a0167c083823fc",
     "id": null,
     "metadata": {},
     "name": "AssetGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation AssetGraphCreateMutation(\n  $input: CreateAssetInput!\n) {\n  createAsset(input: $input) {\n    assetEdge {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        criticity\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation AssetGraphCreateMutation(\n  $input: CreateAssetInput!\n) {\n  createAsset(input: $input) {\n    assetEdge {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "3cec119022d8dffb8536d93294e2633b";
+(node as any).hash = "1d36f3080ab525417516779740f5977c";
 
 export default node;

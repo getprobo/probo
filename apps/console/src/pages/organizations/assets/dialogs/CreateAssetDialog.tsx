@@ -19,7 +19,6 @@ import { useCreateAsset } from "/hooks/graph/AssetGraph";
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   amount: z.number().min(1, "Amount is required"),
-  criticity: z.enum(["LOW", "MEDIUM", "HIGH"]),
   assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
   ownerId: z.string().min(1, "Owner is required"),
   vendorIds: z.array(z.string()).optional(),
@@ -43,7 +42,6 @@ export function CreateAssetDialog({
       defaultValues: {
         name: "",
         amount: 0,
-        criticity: "LOW",
         assetType: "VIRTUAL",
         ownerId: "",
         vendorIds: [],
@@ -79,16 +77,6 @@ export function CreateAssetDialog({
             {...register("amount", { valueAsNumber: true })}
             type="number"
           />
-          <ControlledField
-            control={control}
-            name="criticity"
-            type="select"
-            label={__("Criticity")}
-          >
-            <Option value="LOW">{__("Low")}</Option>
-            <Option value="MEDIUM">{__("Medium")}</Option>
-            <Option value="HIGH">{__("High")}</Option>
-          </ControlledField>
           <ControlledField
             control={control}
             name="assetType"

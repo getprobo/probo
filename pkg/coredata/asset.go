@@ -28,18 +28,17 @@ import (
 
 type (
 	Asset struct {
-		ID              gid.GID        `db:"id"`
-		SnapshotID      *gid.GID       `db:"snapshot_id"`
-		SourceID        *gid.GID       `db:"source_id"`
-		Name            string         `db:"name"`
-		Amount          int            `db:"amount"`
-		OwnerID         gid.GID        `db:"owner_id"`
-		OrganizationID  gid.GID        `db:"organization_id"`
-		Criticity       CriticityLevel `db:"criticity"`
-		AssetType       AssetType      `db:"asset_type"`
-		DataTypesStored string         `db:"data_types_stored"`
-		CreatedAt       time.Time      `db:"created_at"`
-		UpdatedAt       time.Time      `db:"updated_at"`
+		ID              gid.GID   `db:"id"`
+		SnapshotID      *gid.GID  `db:"snapshot_id"`
+		SourceID        *gid.GID  `db:"source_id"`
+		Name            string    `db:"name"`
+		Amount          int       `db:"amount"`
+		OwnerID         gid.GID   `db:"owner_id"`
+		OrganizationID  gid.GID   `db:"organization_id"`
+		AssetType       AssetType `db:"asset_type"`
+		DataTypesStored string    `db:"data_types_stored"`
+		CreatedAt       time.Time `db:"created_at"`
+		UpdatedAt       time.Time `db:"updated_at"`
 	}
 
 	Assets []*Asset
@@ -51,8 +50,6 @@ func (a *Asset) CursorKey(field AssetOrderField) page.CursorKey {
 		return page.NewCursorKey(a.ID, a.CreatedAt)
 	case AssetOrderFieldAmount:
 		return page.NewCursorKey(a.ID, a.Amount)
-	case AssetOrderFieldCriticity:
-		return page.NewCursorKey(a.ID, a.Criticity)
 	}
 
 	panic(fmt.Sprintf("unsupported order by: %s", field))
@@ -73,7 +70,6 @@ SELECT
 	organization_id,
 	owner_id,
 	amount,
-	criticity,
 	asset_type,
 	data_types_stored,
 	created_at,
@@ -120,7 +116,6 @@ SELECT
 	organization_id,
 	owner_id,
 	amount,
-	criticity,
 	asset_type,
 	data_types_stored,
 	created_at,
@@ -204,7 +199,6 @@ SELECT
 	organization_id,
 	owner_id,
 	amount,
-	criticity,
 	asset_type,
 	data_types_stored,
 	created_at,
@@ -253,7 +247,6 @@ INSERT INTO assets (
 	organization_id,
 	owner_id,
 	amount,
-	criticity,
 	asset_type,
 	data_types_stored,
 	created_at,
@@ -265,7 +258,6 @@ INSERT INTO assets (
 	@organization_id,
 	@owner_id,
 	@amount,
-	@criticity,
 	@asset_type,
 	@data_types_stored,
 	@created_at,
@@ -280,7 +272,6 @@ INSERT INTO assets (
 		"name":              a.Name,
 		"owner_id":          a.OwnerID,
 		"amount":            a.Amount,
-		"criticity":         a.Criticity,
 		"asset_type":        a.AssetType,
 		"data_types_stored": a.DataTypesStored,
 		"created_at":        a.CreatedAt,
@@ -306,7 +297,6 @@ SET
 	name = @name,
 	owner_id = @owner_id,
 	amount = @amount,
-	criticity = @criticity,
 	asset_type = @asset_type,
 	data_types_stored = @data_types_stored,
 	updated_at = @updated_at
@@ -322,7 +312,6 @@ RETURNING
 	organization_id,
 	owner_id,
 	amount,
-	criticity,
 	asset_type,
 	data_types_stored,
 	created_at,
@@ -336,7 +325,6 @@ RETURNING
 		"name":              a.Name,
 		"owner_id":          a.OwnerID,
 		"amount":            a.Amount,
-		"criticity":         a.Criticity,
 		"asset_type":        a.AssetType,
 		"data_types_stored": a.DataTypesStored,
 		"updated_at":        time.Now(),
@@ -419,7 +407,6 @@ INSERT INTO assets (
 	organization_id,
 	owner_id,
 	amount,
-	criticity,
 	asset_type,
 	data_types_stored,
 	created_at,
@@ -434,7 +421,6 @@ SELECT
 	a.organization_id,
 	a.owner_id,
 	a.amount,
-	a.criticity,
 	a.asset_type,
 	a.data_types_stored,
 	a.created_at,

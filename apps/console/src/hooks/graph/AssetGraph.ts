@@ -22,7 +22,6 @@ export const assetNodeQuery = graphql`
         snapshotId
         name
         amount
-        criticity
         assetType
         dataTypesStored
         owner {
@@ -58,7 +57,6 @@ export const createAssetMutation = graphql`
           snapshotId
           name
           amount
-          criticity
           assetType
           dataTypesStored
           owner {
@@ -89,7 +87,6 @@ export const updateAssetMutation = graphql`
         snapshotId
         name
         amount
-        criticity
         assetType
         dataTypesStored
         owner {
@@ -163,7 +160,6 @@ export const useCreateAsset = (connectionId: string) => {
   return (input: {
     name: string;
     amount: number;
-    criticity: string;
     assetType: string;
     ownerId: string;
     organizationId: string;
@@ -188,7 +184,6 @@ export const useCreateAsset = (connectionId: string) => {
         input: {
           name: input.name,
           amount: input.amount,
-          criticity: input.criticity,
           assetType: input.assetType,
           dataTypesStored: input.dataTypesStored || "",
           ownerId: input.ownerId,
@@ -209,7 +204,6 @@ export const useUpdateAsset = () => {
     id: string;
     name?: string;
     amount?: number;
-    criticity?: string;
     assetType?: string;
     dataTypesStored?: string;
     ownerId?: string;

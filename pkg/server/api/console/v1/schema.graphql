@@ -952,17 +952,6 @@ enum AssetType
     @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AssetTypeVirtual")
 }
 
-enum CriticityLevel
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.CriticityLevel") {
-  LOW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CriticityLevelLow")
-  MEDIUM
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.CriticityLevelMedium"
-    )
-  HIGH
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CriticityLevelHigh")
-}
-
 enum AssetOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.AssetOrderField") {
   CREATED_AT
@@ -972,10 +961,6 @@ enum AssetOrderField
   AMOUNT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.AssetOrderFieldAmount"
-    )
-  CRITICITY
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AssetOrderFieldCriticity"
     )
 }
 
@@ -4216,7 +4201,6 @@ type Asset implements Node {
     before: CursorKey
     orderBy: VendorOrder
   ): VendorConnection! @goField(forceResolver: true)
-  criticity: CriticityLevel!
   assetType: AssetType! @goField(forceResolver: true)
   dataTypesStored: String!
   organization: Organization! @goField(forceResolver: true)
@@ -4251,7 +4235,6 @@ input CreateAssetInput {
   name: String!
   amount: Int!
   ownerId: ID!
-  criticity: CriticityLevel! = MEDIUM
   assetType: AssetType!
   dataTypesStored: String!
   vendorIds: [ID!]
@@ -4262,7 +4245,6 @@ input UpdateAssetInput {
   name: String
   amount: Int
   ownerId: ID
-  criticity: CriticityLevel
   assetType: AssetType
   dataTypesStored: String
   vendorIds: [ID!]

@@ -28,7 +28,7 @@ import { useDeleteAsset, assetsQuery } from "../../../hooks/graph/AssetGraph";
 import type { AssetGraphListQuery } from "/hooks/graph/__generated__/AssetGraphListQuery.graphql";
 import { faviconUrl } from "@probo/helpers";
 import type { NodeOf } from "/types";
-import { getAssetTypeVariant, getCriticityVariant } from "@probo/helpers";
+import { getAssetTypeVariant } from "@probo/helpers";
 import type {
   AssetsPageFragment$data,
   AssetsPageFragment$key,
@@ -62,7 +62,6 @@ const paginatedAssetsFragment = graphql`
           snapshotId
           name
           amount
-          criticity
           assetType
           dataTypesStored
           owner {
@@ -130,7 +129,6 @@ export default function AssetsPage(props: Props) {
           <Tr>
             <Th>{__("Name")}</Th>
             <Th>{__("Type")}</Th>
-            <Th>{__("Criticity")}</Th>
             <Th>{__("Amount")}</Th>
             <Th>{__("Owner")}</Th>
             <Th>{__("Vendors")}</Th>
@@ -175,11 +173,6 @@ function AssetRow({
       <Td>
         <Badge variant={getAssetTypeVariant(entry.assetType)}>
           {entry.assetType === "PHYSICAL" ? __("Physical") : __("Virtual")}
-        </Badge>
-      </Td>
-      <Td>
-        <Badge variant={getCriticityVariant(entry.criticity)}>
-          {entry.criticity}
         </Badge>
       </Td>
       <Td>{entry.amount}</Td>

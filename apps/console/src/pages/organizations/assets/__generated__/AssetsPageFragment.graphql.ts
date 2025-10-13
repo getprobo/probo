@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<663b14d82ccaeebe2dda8dc256fddfc5>>
+ * @generated SignedSource<<6f077a71ef62a9c059bee1b50d3a23ef>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,6 @@
 
 import { ReaderFragment } from 'relay-runtime';
 export type AssetType = "PHYSICAL" | "VIRTUAL";
-export type CriticityLevel = "HIGH" | "LOW" | "MEDIUM";
 import { FragmentRefs } from "relay-runtime";
 export type AssetsPageFragment$data = {
   readonly assets: {
@@ -20,7 +19,6 @@ export type AssetsPageFragment$data = {
         readonly amount: number;
         readonly assetType: AssetType;
         readonly createdAt: any;
-        readonly criticity: CriticityLevel;
         readonly dataTypesStored: string;
         readonly id: string;
         readonly name: string;
@@ -192,13 +190,6 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
-                  "name": "criticity",
-                  "storageKey": null
-                },
-                {
-                  "alias": null,
-                  "args": null,
-                  "kind": "ScalarField",
                   "name": "assetType",
                   "storageKey": null
                 },
@@ -364,6 +355,6 @@ return {
 };
 })();
 
-(node as any).hash = "4bc1af55d208f3c773c49b753a76aa5c";
+(node as any).hash = "a230182c928f189b50fdc39950602ffd";
 
 export default node;

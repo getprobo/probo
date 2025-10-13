@@ -26,13 +26,12 @@ import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import z from "zod";
-import { getAssetTypeVariant, getCriticityVariant, validateSnapshotConsistency } from "@probo/helpers";
+import { getAssetTypeVariant, validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
 
 const updateAssetSchema = z.object({
   name: z.string().min(1, "Name is required"),
   amount: z.number().min(1, "Amount is required"),
-  criticity: z.enum(["LOW", "MEDIUM", "HIGH"]),
   assetType: z.enum(["PHYSICAL", "VIRTUAL"]),
   dataTypesStored: z.string().min(1, "Data types stored is required"),
   ownerId: z.string().min(1, "Owner is required"),
@@ -71,7 +70,6 @@ export default function AssetDetailsPage(props: Props) {
     defaultValues: {
       name: assetEntry?.name || "",
       amount: assetEntry?.amount || 0,
-      criticity: assetEntry?.criticity || "LOW",
       assetType: assetEntry?.assetType || "VIRTUAL",
       dataTypesStored: assetEntry?.dataTypesStored || "",
       ownerId: assetEntry?.owner?.id || "",
@@ -118,9 +116,6 @@ export default function AssetDetailsPage(props: Props) {
           <Badge variant={getAssetTypeVariant(assetEntry?.assetType)}>
             {assetEntry?.assetType === "PHYSICAL" ? __("Physical") : __("Virtual")}
           </Badge>
-          <Badge variant={getCriticityVariant(assetEntry?.criticity)}>
-            {assetEntry?.criticity}
-          </Badge>
         </div>
         {!isSnapshotMode && (
           <ActionDropdown variant="secondary">
@@ -149,18 +144,6 @@ export default function AssetDetailsPage(props: Props) {
           type="number"
           disabled={isSnapshotMode}
         />
-
-        <ControlledField
-          control={control}
-          name="criticity"
-          type="select"
-          label={__("Criticity")}
-          disabled={isSnapshotMode}
-        >
-          <Option value="LOW">{__("Low")}</Option>
-          <Option value="MEDIUM">{__("Medium")}</Option>
-          <Option value="HIGH">{__("High")}</Option>
-        </ControlledField>
 
         <ControlledField
           control={control}

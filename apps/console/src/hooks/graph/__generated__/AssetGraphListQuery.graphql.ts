@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8d257a13d23e2dd68542540dd12ca35b>>
+ * @generated SignedSource<<cd1648fe4f86e16da121483001ec1a80>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -181,13 +181,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "criticity",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "assetType",
                             "storageKey": null
                           },
@@ -361,12 +354,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "29eec1243d3cceb5d9931562635e1f24",
+    "cacheID": "273752608722b727e8c8999b93d45cd4",
     "id": null,
     "metadata": {},
     "name": "AssetGraphListQuery",
     "operationKind": "query",
-    "text": "query AssetGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...AssetsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment AssetsPageFragment_3iomuz on Organization {\n  assets(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        criticity\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AssetGraphListQuery(\n  $organizationId: ID!\n  $snapshotId: ID\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      ...AssetsPageFragment_3iomuz\n    }\n    id\n  }\n}\n\nfragment AssetsPageFragment_3iomuz on Organization {\n  assets(first: 10, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();

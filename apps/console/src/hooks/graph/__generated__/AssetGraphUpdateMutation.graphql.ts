@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6bc692e9d9ab5b78611dc2a326227761>>
+ * @generated SignedSource<<0d663dac1f9d0086e52882297fbc8944>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,11 +10,9 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type AssetType = "PHYSICAL" | "VIRTUAL";
-export type CriticityLevel = "HIGH" | "LOW" | "MEDIUM";
 export type UpdateAssetInput = {
   amount?: number | null | undefined;
   assetType?: AssetType | null | undefined;
-  criticity?: CriticityLevel | null | undefined;
   dataTypesStored?: string | null | undefined;
   id: string;
   name?: string | null | undefined;
@@ -29,7 +27,6 @@ export type AssetGraphUpdateMutation$data = {
     readonly asset: {
       readonly amount: number;
       readonly assetType: AssetType;
-      readonly criticity: CriticityLevel;
       readonly dataTypesStored: string;
       readonly id: string;
       readonly name: string;
@@ -115,13 +112,6 @@ v3 = [
             "args": null,
             "kind": "ScalarField",
             "name": "amount",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "criticity",
             "storageKey": null
           },
           {
@@ -237,16 +227,16 @@ return {
     "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "1447ea6f965bbd6fcdba1ebc72e2d23f",
+    "cacheID": "ee67fc797e7a09d39db357b1b8e68d11",
     "id": null,
     "metadata": {},
     "name": "AssetGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation AssetGraphUpdateMutation(\n  $input: UpdateAssetInput!\n) {\n  updateAsset(input: $input) {\n    asset {\n      id\n      snapshotId\n      name\n      amount\n      criticity\n      assetType\n      dataTypesStored\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n          }\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation AssetGraphUpdateMutation(\n  $input: UpdateAssetInput!\n) {\n  updateAsset(input: $input) {\n    asset {\n      id\n      snapshotId\n      name\n      amount\n      assetType\n      dataTypesStored\n      owner {\n        id\n        fullName\n      }\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n          }\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "21b0c94b6245eb849e6118a58fb97490";
+(node as any).hash = "65a76cfab2b2fba398cd19e566e3ee33";
 
 export default node;

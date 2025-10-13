@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f2135bf85e1d0dffde8c1bcaa7940504>>
+ * @generated SignedSource<<794ba3ed2ccc75355a8c69c83d143587>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type AssetOrderField = "AMOUNT" | "CREATED_AT" | "CRITICITY";
+export type AssetOrderField = "AMOUNT" | "CREATED_AT";
 export type OrderDirection = "ASC" | "DESC";
 export type AssetOrder = {
   direction: OrderDirection;
@@ -256,13 +256,6 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
-                            "name": "criticity",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
                             "name": "assetType",
                             "storageKey": null
                           },
@@ -436,16 +429,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2eab5fe4d402f48ac4dcd8220284ea41",
+    "cacheID": "71aa6b89d4eba225262e326fdfe04cf7",
     "id": null,
     "metadata": {},
     "name": "AssetsListQuery",
     "operationKind": "query",
-    "text": "query AssetsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AssetOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AssetsPageFragment_38J9tm\n    id\n  }\n}\n\nfragment AssetsPageFragment_38J9tm on Organization {\n  assets(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        criticity\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query AssetsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 10\n  $last: Int = null\n  $orderBy: AssetOrder = null\n  $snapshotId: ID = null\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...AssetsPageFragment_38J9tm\n    id\n  }\n}\n\nfragment AssetsPageFragment_38J9tm on Organization {\n  assets(first: $first, after: $after, last: $last, before: $before, orderBy: $orderBy, filter: {snapshotId: $snapshotId}) {\n    edges {\n      node {\n        id\n        snapshotId\n        name\n        amount\n        assetType\n        dataTypesStored\n        owner {\n          id\n          fullName\n        }\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4bc1af55d208f3c773c49b753a76aa5c";
+(node as any).hash = "a230182c928f189b50fdc39950602ffd";
 
 export default node;

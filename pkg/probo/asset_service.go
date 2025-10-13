@@ -20,7 +20,6 @@ type CreateAssetRequest struct {
 	Name            string
 	Amount          int
 	OwnerID         gid.GID
-	Criticity       coredata.CriticityLevel
 	AssetType       coredata.AssetType
 	DataTypesStored string
 	VendorIDs       []gid.GID
@@ -31,7 +30,6 @@ type UpdateAssetRequest struct {
 	Name            *string
 	Amount          *int
 	OwnerID         *gid.GID
-	Criticity       *coredata.CriticityLevel
 	AssetType       *coredata.AssetType
 	DataTypesStored *string
 	VendorIDs       []gid.GID
@@ -156,9 +154,6 @@ func (s AssetService) Update(
 		if req.OwnerID != nil {
 			asset.OwnerID = *req.OwnerID
 		}
-		if req.Criticity != nil {
-			asset.Criticity = *req.Criticity
-		}
 		if req.AssetType != nil {
 			asset.AssetType = *req.AssetType
 		}
@@ -200,7 +195,6 @@ func (s AssetService) Create(
 		Name:            req.Name,
 		Amount:          req.Amount,
 		OwnerID:         req.OwnerID,
-		Criticity:       req.Criticity,
 		AssetType:       req.AssetType,
 		DataTypesStored: req.DataTypesStored,
 		CreatedAt:       now,

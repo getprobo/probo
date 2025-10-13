@@ -8,16 +8,3 @@ export const getAssetTypeVariant = (type: string) => {
       return "neutral";
   }
 };
-
-export const getCriticityVariant = (criticity: string) => {
-  switch (criticity) {
-    case "HIGH":
-      return "danger";
-    case "MEDIUM":
-      return "warning";
-    case "LOW":
-      return "neutral";
-    default:
-      return "neutral";
-  }
-};

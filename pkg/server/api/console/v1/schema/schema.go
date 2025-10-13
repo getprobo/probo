@@ -113,7 +113,6 @@ type ComplexityRoot struct {
 		Amount          func(childComplexity int) int
 		AssetType       func(childComplexity int) int
 		CreatedAt       func(childComplexity int) int
-		Criticity       func(childComplexity int) int
 		DataTypesStored func(childComplexity int) int
 		ID              func(childComplexity int) int
 		Name            func(childComplexity int) int
@@ -1579,7 +1578,6 @@ type ComplexityRoot struct {
 type AssetResolver interface {
 	Owner(ctx context.Context, obj *types.Asset) (*types.People, error)
 	Vendors(ctx context.Context, obj *types.Asset, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
-
 	AssetType(ctx context.Context, obj *types.Asset) (coredata.AssetType, error)
 
 	Organization(ctx context.Context, obj *types.Asset) (*types.Organization, error)
@@ -1995,13 +1993,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Asset.CreatedAt(childComplexity), true
-
-	case "Asset.criticity":
-		if e.complexity.Asset.Criticity == nil {
-			break
-		}
-
-		return e.complexity.Asset.Criticity(childComplexity), true
 
 	case "Asset.dataTypesStored":
 		if e.complexity.Asset.DataTypesStored == nil {
@@ -9669,17 +9660,6 @@ enum AssetType
     @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AssetTypeVirtual")
 }
 
-enum CriticityLevel
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.CriticityLevel") {
-  LOW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CriticityLevelLow")
-  MEDIUM
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.CriticityLevelMedium"
-    )
-  HIGH
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CriticityLevelHigh")
-}
-
 enum AssetOrderField
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.AssetOrderField") {
   CREATED_AT
@@ -9689,10 +9669,6 @@ enum AssetOrderField
   AMOUNT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.AssetOrderFieldAmount"
-    )
-  CRITICITY
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AssetOrderFieldCriticity"
     )
 }
 
@@ -12933,7 +12909,6 @@ type Asset implements Node {
     before: CursorKey
     orderBy: VendorOrder
   ): VendorConnection! @goField(forceResolver: true)
-  criticity: CriticityLevel!
   assetType: AssetType! @goField(forceResolver: true)
   dataTypesStored: String!
   organization: Organization! @goField(forceResolver: true)
@@ -12968,7 +12943,6 @@ input CreateAssetInput {
   name: String!
   amount: Int!
   ownerId: ID!
-  criticity: CriticityLevel! = MEDIUM
   assetType: AssetType!
   dataTypesStored: String!
   vendorIds: [ID!]
@@ -12979,7 +12953,6 @@ input UpdateAssetInput {
   name: String
   amount: Int
   ownerId: ID
-  criticity: CriticityLevel
   assetType: AssetType
   dataTypesStored: String
   vendorIds: [ID!]
@@ -21413,50 +21386,6 @@ func (ec *executionContext) fieldContext_Asset_vendors(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Asset_criticity(ctx context.Context, field graphql.CollectedField, obj *types.Asset) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Asset_criticity(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Criticity, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(coredata.CriticityLevel)
-	fc.Result = res
-	return ec.marshalNCriticityLevel2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Asset_criticity(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Asset",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CriticityLevel does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Asset_assetType(ctx context.Context, field graphql.CollectedField, obj *types.Asset) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Asset_assetType(ctx, field)
 	if err != nil {
@@ -21980,8 +21909,6 @@ func (ec *executionContext) fieldContext_AssetEdge_node(_ context.Context, field
 				return ec.fieldContext_Asset_owner(ctx, field)
 			case "vendors":
 				return ec.fieldContext_Asset_vendors(ctx, field)
-			case "criticity":
-				return ec.fieldContext_Asset_criticity(ctx, field)
 			case "assetType":
 				return ec.fieldContext_Asset_assetType(ctx, field)
 			case "dataTypesStored":
@@ -55737,8 +55664,6 @@ func (ec *executionContext) fieldContext_UpdateAssetPayload_asset(_ context.Cont
 				return ec.fieldContext_Asset_owner(ctx, field)
 			case "vendors":
 				return ec.fieldContext_Asset_vendors(ctx, field)
-			case "criticity":
-				return ec.fieldContext_Asset_criticity(ctx, field)
 			case "assetType":
 				return ec.fieldContext_Asset_assetType(ctx, field)
 			case "dataTypesStored":
@@ -66053,11 +65978,7 @@ func (ec *executionContext) unmarshalInputCreateAssetInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	if _, present := asMap["criticity"]; !present {
-		asMap["criticity"] = "MEDIUM"
-	}
-
-	fieldsInOrder := [...]string{"organizationId", "name", "amount", "ownerId", "criticity", "assetType", "dataTypesStored", "vendorIds"}
+	fieldsInOrder := [...]string{"organizationId", "name", "amount", "ownerId", "assetType", "dataTypesStored", "vendorIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -66092,13 +66013,6 @@ func (ec *executionContext) unmarshalInputCreateAssetInput(ctx context.Context, 
 				return it, err
 			}
 			it.OwnerID = data
-		case "criticity":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("criticity"))
-			data, err := ec.unmarshalNCriticityLevel2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Criticity = data
 		case "assetType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assetType"))
 			data, err := ec.unmarshalNAssetType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐAssetType(ctx, v)
@@ -70385,7 +70299,7 @@ func (ec *executionContext) unmarshalInputUpdateAssetInput(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "amount", "ownerId", "criticity", "assetType", "dataTypesStored", "vendorIds"}
+	fieldsInOrder := [...]string{"id", "name", "amount", "ownerId", "assetType", "dataTypesStored", "vendorIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -70420,13 +70334,6 @@ func (ec *executionContext) unmarshalInputUpdateAssetInput(ctx context.Context, 
 				return it, err
 			}
 			it.OwnerID = data
-		case "criticity":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("criticity"))
-			data, err := ec.unmarshalOCriticityLevel2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Criticity = data
 		case "assetType":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assetType"))
 			data, err := ec.unmarshalOAssetType2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐAssetType(ctx, v)
@@ -72933,11 +72840,6 @@ func (ec *executionContext) _Asset(ctx context.Context, sel ast.SelectionSet, ob
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "criticity":
-			out.Values[i] = ec._Asset_criticity(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "assetType":
 			field := field
 
@@ -88716,12 +88618,10 @@ var (
 	unmarshalNAssetOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐAssetOrderField = map[string]coredata.AssetOrderField{
 		"CREATED_AT": coredata.AssetOrderFieldCreatedAt,
 		"AMOUNT":     coredata.AssetOrderFieldAmount,
-		"CRITICITY":  coredata.AssetOrderFieldCriticity,
 	}
 	marshalNAssetOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐAssetOrderField = map[coredata.AssetOrderField]string{
 		coredata.AssetOrderFieldCreatedAt: "CREATED_AT",
 		coredata.AssetOrderFieldAmount:    "AMOUNT",
-		coredata.AssetOrderFieldCriticity: "CRITICITY",
 	}
 )
 
@@ -91180,36 +91080,6 @@ func (ec *executionContext) marshalNCreateVendorServicePayload2ᚖgithubᚗcom�
 	}
 	return ec._CreateVendorServicePayload(ctx, sel, v)
 }
-
-func (ec *executionContext) unmarshalNCriticityLevel2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel(ctx context.Context, v any) (coredata.CriticityLevel, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNCriticityLevel2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNCriticityLevel2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel(ctx context.Context, sel ast.SelectionSet, v coredata.CriticityLevel) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNCriticityLevel2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNCriticityLevel2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel = map[string]coredata.CriticityLevel{
-		"LOW":    coredata.CriticityLevelLow,
-		"MEDIUM": coredata.CriticityLevelMedium,
-		"HIGH":   coredata.CriticityLevelHigh,
-	}
-	marshalNCriticityLevel2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel = map[coredata.CriticityLevel]string{
-		coredata.CriticityLevelLow:    "LOW",
-		coredata.CriticityLevelMedium: "MEDIUM",
-		coredata.CriticityLevelHigh:   "HIGH",
-	}
-)
 
 func (ec *executionContext) unmarshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, v any) (page.CursorKey, error) {
 	res, err := cursor.UnmarshalCursorKeyScalar(v)
@@ -97412,38 +97282,6 @@ var (
 		coredata.CountryCodeZA: "ZA",
 		coredata.CountryCodeZM: "ZM",
 		coredata.CountryCodeZW: "ZW",
-	}
-)
-
-func (ec *executionContext) unmarshalOCriticityLevel2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel(ctx context.Context, v any) (*coredata.CriticityLevel, error) {
-	if v == nil {
-		return nil, nil
-	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalOCriticityLevel2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel[tmp]
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOCriticityLevel2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel(ctx context.Context, sel ast.SelectionSet, v *coredata.CriticityLevel) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	_ = sel
-	_ = ctx
-	res := graphql.MarshalString(marshalOCriticityLevel2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel[*v])
-	return res
-}
-
-var (
-	unmarshalOCriticityLevel2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel = map[string]coredata.CriticityLevel{
-		"LOW":    coredata.CriticityLevelLow,
-		"MEDIUM": coredata.CriticityLevelMedium,
-		"HIGH":   coredata.CriticityLevelHigh,
-	}
-	marshalOCriticityLevel2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCriticityLevel = map[coredata.CriticityLevel]string{
-		coredata.CriticityLevelLow:    "LOW",
-		coredata.CriticityLevelMedium: "MEDIUM",
-		coredata.CriticityLevelHigh:   "HIGH",
 	}
 )
 

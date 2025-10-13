@@ -21,7 +21,7 @@ export {
 } from "./countries";
 export { availableFrameworks } from "./frameworks";
 export { getDocumentTypeLabel, documentTypes } from "./documents";
-export { getAssetTypeVariant, getCriticityVariant } from "./assets";
+export { getAssetTypeVariant } from "./assets";
 export {
     getSnapshotTypeLabel,
     getSnapshotTypeUrlPath,

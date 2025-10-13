@@ -19,7 +19,6 @@ type AssetOrderField string
 const (
 	AssetOrderFieldCreatedAt AssetOrderField = "CREATED_AT"
 	AssetOrderFieldAmount    AssetOrderField = "AMOUNT"
-	AssetOrderFieldCriticity AssetOrderField = "CRITICITY"
 	AssetOrderFieldName      AssetOrderField = "NAME"
 )
 

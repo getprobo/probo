@@ -26,18 +26,17 @@ type AssessVendorPayload struct {
 }
 
 type Asset struct {
-	ID              gid.GID                 `json:"id"`
-	SnapshotID      *gid.GID                `json:"snapshotId,omitempty"`
-	Name            string                  `json:"name"`
-	Amount          int                     `json:"amount"`
-	Owner           *People                 `json:"owner"`
-	Vendors         *VendorConnection       `json:"vendors"`
-	Criticity       coredata.CriticityLevel `json:"criticity"`
-	AssetType       coredata.AssetType      `json:"assetType"`
-	DataTypesStored string                  `json:"dataTypesStored"`
-	Organization    *Organization           `json:"organization"`
-	CreatedAt       time.Time               `json:"createdAt"`
-	UpdatedAt       time.Time               `json:"updatedAt"`
+	ID              gid.GID            `json:"id"`
+	SnapshotID      *gid.GID           `json:"snapshotId,omitempty"`
+	Name            string             `json:"name"`
+	Amount          int                `json:"amount"`
+	Owner           *People            `json:"owner"`
+	Vendors         *VendorConnection  `json:"vendors"`
+	AssetType       coredata.AssetType `json:"assetType"`
+	DataTypesStored string             `json:"dataTypesStored"`
+	Organization    *Organization      `json:"organization"`
+	CreatedAt       time.Time          `json:"createdAt"`
+	UpdatedAt       time.Time          `json:"updatedAt"`
 }
 
 func (Asset) IsNode()             {}
@@ -222,14 +221,13 @@ type ControlFilter struct {
 }
 
 type CreateAssetInput struct {
-	OrganizationID  gid.GID                 `json:"organizationId"`
-	Name            string                  `json:"name"`
-	Amount          int                     `json:"amount"`
-	OwnerID         gid.GID                 `json:"ownerId"`
-	Criticity       coredata.CriticityLevel `json:"criticity"`
-	AssetType       coredata.AssetType      `json:"assetType"`
-	DataTypesStored string                  `json:"dataTypesStored"`
-	VendorIds       []gid.GID               `json:"vendorIds,omitempty"`
+	OrganizationID  gid.GID            `json:"organizationId"`
+	Name            string             `json:"name"`
+	Amount          int                `json:"amount"`
+	OwnerID         gid.GID            `json:"ownerId"`
+	AssetType       coredata.AssetType `json:"assetType"`
+	DataTypesStored string             `json:"dataTypesStored"`
+	VendorIds       []gid.GID          `json:"vendorIds,omitempty"`
 }
 
 type CreateAssetPayload struct {
@@ -1652,14 +1650,13 @@ type UnassignTaskPayload struct {
 }
 
 type UpdateAssetInput struct {
-	ID              gid.GID                  `json:"id"`
-	Name            *string                  `json:"name,omitempty"`
-	Amount          *int                     `json:"amount,omitempty"`
-	OwnerID         *gid.GID                 `json:"ownerId,omitempty"`
-	Criticity       *coredata.CriticityLevel `json:"criticity,omitempty"`
-	AssetType       *coredata.AssetType      `json:"assetType,omitempty"`
-	DataTypesStored *string                  `json:"dataTypesStored,omitempty"`
-	VendorIds       []gid.GID                `json:"vendorIds,omitempty"`
+	ID              gid.GID             `json:"id"`
+	Name            *string             `json:"name,omitempty"`
+	Amount          *int                `json:"amount,omitempty"`
+	OwnerID         *gid.GID            `json:"ownerId,omitempty"`
+	AssetType       *coredata.AssetType `json:"assetType,omitempty"`
+	DataTypesStored *string             `json:"dataTypesStored,omitempty"`
+	VendorIds       []gid.GID           `json:"vendorIds,omitempty"`
 }
 
 type UpdateAssetPayload struct {
