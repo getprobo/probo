@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<2961ff4f50f912f350acab5b0a341042>>
+ * @generated SignedSource<<63939336fc37ddb7ced322612302c90b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -222,6 +222,13 @@ return {
                               },
                               {
                                 "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "version",
+                                "storageKey": null
+                              },
+                              {
+                                "alias": null,
                                 "args": [
                                   {
                                     "kind": "Literal",
@@ -288,12 +295,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "bcc8589071b241670107f00c127f70d0",
+    "cacheID": "a5266ffa85ab7455c700dfe75ae74956",
     "id": null,
     "metadata": {},
     "name": "PublishDocumentsDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

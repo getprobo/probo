@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b4a59b6243c579d023e7ab12cc037f20>>
+ * @generated SignedSource<<4d1e3c4d8c567a0b463ea1a1b7cc02f5>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -238,6 +238,13 @@ return {
                               },
                               {
                                 "alias": null,
+                                "args": null,
+                                "kind": "ScalarField",
+                                "name": "version",
+                                "storageKey": null
+                              },
+                              {
+                                "alias": null,
                                 "args": [
                                   {
                                     "kind": "Literal",
@@ -320,12 +327,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e60a87953e4157e808e0d4ce4436ed3b",
+    "cacheID": "271b1222b172816daeac0beb08737084",
     "id": null,
     "metadata": {},
     "name": "CreateDocumentDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

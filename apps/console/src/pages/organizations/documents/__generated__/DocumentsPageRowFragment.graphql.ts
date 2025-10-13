@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<87090235b9f77e1e018ec30e6ff9bacb>>
+ * @generated SignedSource<<32d1bb469d4ece0eb14b746587eb45a1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -36,6 +36,7 @@ export type DocumentsPageRowFragment$data = {
           }>;
         };
         readonly status: DocumentStatus;
+        readonly version: number;
       };
     }>;
   };
@@ -148,6 +149,13 @@ return {
                 },
                 {
                   "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "version",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
                   "args": [
                     {
                       "kind": "Literal",
@@ -208,6 +216,6 @@ return {
 };
 })();
 
-(node as any).hash = "c8543275dc108732ad2377806efacfc1";
+(node as any).hash = "3cb482445055e1fea0e36ff3e7255cb5";
 
 export default node;

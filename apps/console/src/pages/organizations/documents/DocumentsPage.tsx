@@ -202,6 +202,7 @@ export default function DocumentsPage(props: Props) {
                 </Th>
                 <SortableTh field="TITLE" className="min-w-0">{__("Name")}</SortableTh>
                 <Th className="w-24">{__("Status")}</Th>
+                <Th className="w-20">{__("Version")}</Th>
                 <SortableTh field="DOCUMENT_TYPE" className="w-28">{__("Type")}</SortableTh>
                 <Th className="w-60">{__("Owner")}</Th>
                 <Th className="w-60">{__("Last update")}</Th>
@@ -210,7 +211,7 @@ export default function DocumentsPage(props: Props) {
               </Tr>
             ) : (
               <Tr>
-                <Th colspan={8} compact>
+                <Th colspan={9} compact>
                   <div className="flex justify-between items-center h-8">
                     <div className="flex gap-2 items-center">
                       {sprintf(__("%s documents selected"), selection.length)} -
@@ -313,6 +314,7 @@ const rowFragment = graphql`
         node {
           id
           status
+          version
           signatures(first: 100) {
             edges {
               node {
@@ -392,6 +394,7 @@ function DocumentRow({
           {isDraft ? __("Draft") : __("Published")}
         </Badge>
       </Td>
+      <Td className="w-20">v{lastVersion.version}</Td>
       <Td className="w-28">{getDocumentTypeLabel(__, document.documentType)}</Td>
       <Td className="w-60">
         <div className="flex gap-2 items-center">
