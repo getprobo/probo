@@ -4,9 +4,29 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.69.0] - 2025-10-13
+
+### Added
+
+- Add document version on document list
+- Add procedure document type
+- Allow to filter measures by state
+
+### Changed
+
+- Support ID-based trust center URLs with slug fallback
+- Show custom domain URL on trust center page when configured
+- Update framework icons
+
+### Removed
+
+- Remove verifiedAt field from CustomDomain
+- Remove criticity on assets
+
 ## [0.68.3] - 2025-10-11
 
 ### Fixed
+
 - Fix trust center design on custom domain
 - Send trust center invitation with custom domain when available
 - Fix evidence deletion
@@ -21,82 +41,98 @@ All notable changes to this project will be documented in this file.
 ## [0.68.1] - 2025-10-09
 
 ### Fixed
+
 - Fix filename content type regression
 - Add missing permission to binary in docker image
 
 ## [0.68.0] - 2025-10-09
 
 ### Added
+
 - Add custom domain to trust centers
 
 ## [0.67.2] - 2025-10-09
 
 ### Fixed
+
 - Fix vendor compliance reports files migration
 
 ## [0.67.1] - 2025-10-09
 
 ### Fixed
+
 - Fix evidence files migration
 
 ## [0.67.0] - 2025-10-09
 
 ## Changed
+
 - Store all file data in one table
 
 ### Fixed
+
 - Display more measures and tasks
 
 # [0.66.1] - 2025-10-06
 
 ### Fixed
+
 - Fix access to public documents for unauthenticated users
 
 # [0.66.0] - 2025-10-06
 
 ### Added
+
 - Store id of accepted nda
 - Add public documents on trust centers
 
 ## Changed
+
 - Allow missing NDA
 
 ### Fixed
+
 - Fix trust center v2 design
 
 # [0.65.1] - 2025-10-03
 
 ### Fixed
+
 - Restrict deletion of users who have assets
 
 # [0.65.0] - 2025-10-03
 
 ### Added
+
 - Add access by document on trust center
 - Add ordering measures by name in the API
 
 ### Fixed
+
 - Fix resetting state during measure editing
 - Handle document mapping conflict error
 
 # [0.64.1] - 2025-09-30
 
 ### Fixed
+
 - Remove document description and footer in template
 
 # [0.64.0] - 2025-09-30
 
 ### Added
+
 - Add trust center v2
 - Add optional watermark and signatures in pdf export
 
 ### Changed
-- Remove description from pdf export
 
+- Remove description from pdf export
 
 # [0.63.1] - 2025-09-26
 
 ### Fixed
+
 - Fix request document signature
 
 # [0.63.0] - 2025-09-25
@@ -108,30 +144,36 @@ All notable changes to this project will be documented in this file.
 - Change obligations status enum
 
 ### Added
+
 - Add link between obligations and risks
 
 # [0.62.0] - 2025-09-24
 
 ### Added
+
 - Add reference companies for trust center trusted by section
 
 ### Fixed
+
 - Fix watermark display in trust center
 
 # [0.61.1] - 2025-09-23
 
 ### Added
+
 - Display countries on trust centers
 
 # [0.61.0] - 2025-09-23
 
 ### Added
+
 - Decouple users from people
 - Add more details to organization
 
 # [0.60.0] - 2025-09-18
 
 ### Added
+
 - Add bulk export documents
 - Add bulk delete documents
 - Display risk description
@@ -141,58 +183,69 @@ All notable changes to this project will be documented in this file.
 # [0.59.1] - 2025-09-16
 
 ### Fixed
+
 - Build trust center in the make file
 
 # [0.59.0] - 2025-09-16
 
 ### Added
+
 - Add nda to trust centers
 - Add confidential watermark to trust center documents
 - Add countries to vendors
 
 ### Fixed
+
 - Add category back to vendors
 
 # [0.58.4] - 2025-09-12
 
 ### Fixed
+
 - Fix framework export email
 
 ## [0.58.3] - 2025-09-12
 
 ### Fixed
+
 - Fix release workflow
 
 ## [0.58.2] - 2025-09-12
 
 ### Added
+
 - Send framework export by email
 - Order organization by name
 
 ## [0.58.1] - 2025-09-10
 
 ### Chore
+
 - Rename registries
 
 ## [0.58.0] - 2025-09-08
 
 ### Added
+
 - Soft delete documents
 - Store sidebar state
 
 ## [0.57.1] - 2025-09-04
 
 ### Fixed
+
 - Fix framework export for evidence link
 
 ## [0.57.0] - 2025-09-04
 
 ### Added
+
 - Add framework exports
 
 ## [0.56.0] - 2025-09-03
 
 ### Added
+
 - Add risks snapshots
 
 ### Fixed
@@ -203,6 +256,7 @@ All notable changes to this project will be documented in this file.
 ## [0.55.0] - 2025-09-01
 
 ### Added
+
 - Add vendor snapshots
 
 ### Fixed
@@ -214,6 +268,7 @@ All notable changes to this project will be documented in this file.
 ## [0.54.0] - 2025-09-01
 
 ### Added
+
 - Add compliance registry snapshots
 - Add continual improvement snapshots
 - Add processing activity registry snapshots
@@ -222,6 +277,7 @@ All notable changes to this project will be documented in this file.
 ## [0.53.0] - 2025-08-29
 
 ### Added
+
 - Add processing activity registries
 - Add continual improvement registries
 - Add noncoformity registry snapshots
@@ -233,39 +289,47 @@ All notable changes to this project will be documented in this file.
 ## [0.52.0] - 2025-08-27
 
 ### Added
+
 - Add data snapshot
 
 ## [0.51.1] - 2025-08-23
 
 ### Fixed
+
 - Fix query loops in public trust center
 - Fix button display when disconected in public trust center
 
 ## [0.51.0] - 2025-08-22
 
 ### Added
+
 - Add trust center access requests
 
 ## [0.50.1] - 2025-08-21
 
 ### Fixed
+
 - Fix authentification token error
 
 ## [0.50.0] - 2025-08-21
 
 ### Added
+
 - Add compliance registries
 - Add vendor services
 
 ### Chore
+
 - Replace mailhog
 
 ## [0.49.0] - 2025-08-20
 
 ### Added
+
 - Add nonconformity registries
 
 ### Fixed
+
 - Fix trust center dark mode
 
 ## [0.48.1] - 2025-08-14
@@ -277,6 +341,7 @@ All notable changes to this project will be documented in this file.
 ## [0.48.0] - 2025-08-14
 
 ### Added
+
 - Add baa to vendors
 - Add dpa to vendors
 - Add contacts to vendors
@@ -286,11 +351,13 @@ All notable changes to this project will be documented in this file.
 ## [0.47.0] - 2025-08-13
 
 ### Added
+
 - Add document draft deletion
 - People now have contract start and end dates in the UI and API.
 - Lists can filter out people whose contracts have ended.
 
 ### Fixed
+
 - Fix closing of document deletion pop up
 - Fix creation of empty draft without save
 
@@ -300,7 +367,6 @@ All notable changes to this project will be documented in this file.
 
 - Fix various SQL queries failures due to trust center
 - Fix internal information leaking to API
-
 
 ## [0.46.1] - 2025-08-10
 
@@ -324,12 +390,14 @@ All notable changes to this project will be documented in this file.
 ## [0.45.0] - 2025-08-06
 
 ### Added
+
 - Add trust center
 - Add edition of document fields
 
 ## [0.44.0] - 2025-07-23
 
 ### Fixed
+
 - Fix PDF tables
 - Fix display issue on control and framework
 - Fix control creation
@@ -337,24 +405,29 @@ All notable changes to this project will be documented in this file.
 ## [0.43.1] - 2025-07-22
 
 ### Fixed
+
 - Fix document draft creation
 
 ## [0.43.0] - 2025-07-21
 
 ### Added
+
 - Add control exclusion
 
 ### Fixed
+
 - Fix small issues on SOA
 
 ## [0.42.1] - 2025-07-16
 
 ### Fixed
+
 - Fix missing document download button
 
 ## [0.42.0] - 2025-07-16
 
 ### Fixed
+
 - Fix document version selector
 - Fix duplicate people
 
