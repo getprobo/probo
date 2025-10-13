@@ -407,7 +407,6 @@ type ComplexityRoot struct {
 		SslExpiresAt func(childComplexity int) int
 		SslStatus    func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
-		VerifiedAt   func(childComplexity int) int
 	}
 
 	DNSRecordInstruction struct {
@@ -2947,13 +2946,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.CustomDomain.UpdatedAt(childComplexity), true
-
-	case "CustomDomain.verifiedAt":
-		if e.complexity.CustomDomain.VerifiedAt == nil {
-			break
-		}
-
-		return e.complexity.CustomDomain.VerifiedAt(childComplexity), true
 
 	case "DNSRecordInstruction.name":
 		if e.complexity.DNSRecordInstruction.Name == nil {
@@ -13148,7 +13140,6 @@ type CustomDomain implements Node {
   dnsRecords: [DNSRecordInstruction!]!
   createdAt: Datetime!
   updatedAt: Datetime!
-  verifiedAt: Datetime
 }
 
 type DNSRecordInstruction {
@@ -26165,8 +26156,6 @@ func (ec *executionContext) fieldContext_CreateCustomDomainPayload_customDomain(
 				return ec.fieldContext_CustomDomain_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_CustomDomain_updatedAt(ctx, field)
-			case "verifiedAt":
-				return ec.fieldContext_CustomDomain_verifiedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CustomDomain", field.Name)
 		},
@@ -27933,47 +27922,6 @@ func (ec *executionContext) _CustomDomain_updatedAt(ctx context.Context, field g
 }
 
 func (ec *executionContext) fieldContext_CustomDomain_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CustomDomain",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CustomDomain_verifiedAt(ctx context.Context, field graphql.CollectedField, obj *types.CustomDomain) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CustomDomain_verifiedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.VerifiedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*time.Time)
-	fc.Result = res
-	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CustomDomain_verifiedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CustomDomain",
 		Field:      field,
@@ -46634,8 +46582,6 @@ func (ec *executionContext) fieldContext_Organization_customDomain(_ context.Con
 				return ec.fieldContext_CustomDomain_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_CustomDomain_updatedAt(ctx, field)
-			case "verifiedAt":
-				return ec.fieldContext_CustomDomain_verifiedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CustomDomain", field.Name)
 		},
@@ -75843,8 +75789,6 @@ func (ec *executionContext) _CustomDomain(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "verifiedAt":
-			out.Values[i] = ec._CustomDomain_verifiedAt(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

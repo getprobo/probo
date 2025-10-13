@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b8a660825f6c3e3413e6505179ae3e1e>>
+ * @generated SignedSource<<c1db974cc1fa82299f39a71ece9bf7e3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -33,7 +33,6 @@ export type CreateCustomDomainDialogMutation$data = {
       readonly sslExpiresAt: any | null | undefined;
       readonly sslStatus: SSLStatus;
       readonly updatedAt: any;
-      readonly verifiedAt: any | null | undefined;
     };
   };
 };
@@ -158,13 +157,6 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "verifiedAt",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
             "name": "sslExpiresAt",
             "storageKey": null
           }
@@ -193,16 +185,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "9a6fad6d53811f74048b3ff0b64e0afe",
+    "cacheID": "5e5bf90d17b1dc5129d6a0fc5d68d46c",
     "id": null,
     "metadata": {},
     "name": "CreateCustomDomainDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateCustomDomainDialogMutation(\n  $input: CreateCustomDomainInput!\n) {\n  createCustomDomain(input: $input) {\n    customDomain {\n      id\n      domain\n      sslStatus\n      dnsRecords {\n        type\n        name\n        value\n        ttl\n        purpose\n      }\n      createdAt\n      updatedAt\n      verifiedAt\n      sslExpiresAt\n    }\n  }\n}\n"
+    "text": "mutation CreateCustomDomainDialogMutation(\n  $input: CreateCustomDomainInput!\n) {\n  createCustomDomain(input: $input) {\n    customDomain {\n      id\n      domain\n      sslStatus\n      dnsRecords {\n        type\n        name\n        value\n        ttl\n        purpose\n      }\n      createdAt\n      updatedAt\n      sslExpiresAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "312e66e894a78da19c28c7f03d03fe96";
+(node as any).hash = "fb3bede811b12db54f54af3dd375e335";
 
 export default node;

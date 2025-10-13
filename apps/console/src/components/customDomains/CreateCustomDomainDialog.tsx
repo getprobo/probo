@@ -31,7 +31,6 @@ const createCustomDomainMutation = graphql`
         }
         createdAt
         updatedAt
-        verifiedAt
         sslExpiresAt
       }
     }

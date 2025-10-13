@@ -24,7 +24,6 @@ interface DomainDetailsDialogProps {
           readonly purpose: string;
         }[]
       | null;
-    readonly verifiedAt?: string | null;
     readonly sslExpiresAt?: string | null;
   };
 }
@@ -80,12 +79,6 @@ export function DomainDetailsDialog({
       }
     >
       <DialogContent padded className="space-y-6">
-        {domain.verifiedAt && (
-          <p className="text-sm text-txt-secondary">
-            {__("Verified")} {new Date(domain.verifiedAt).toLocaleDateString()}
-          </p>
-        )}
-
         {domain.sslStatus === "ACTIVE" ? (
           <div className="bg-subtle rounded-lg p-4">
             <div className="flex items-start">

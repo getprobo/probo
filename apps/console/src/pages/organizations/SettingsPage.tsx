@@ -75,7 +75,6 @@ const organizationFragment = graphql`
       }
       createdAt
       updatedAt
-      verifiedAt
       sslExpiresAt
     }
     users(first: 100) {

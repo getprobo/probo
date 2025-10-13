@@ -4440,7 +4440,6 @@ type CustomDomain implements Node {
   dnsRecords: [DNSRecordInstruction!]!
   createdAt: Datetime!
   updatedAt: Datetime!
-  verifiedAt: Datetime
 }
 
 type DNSRecordInstruction {

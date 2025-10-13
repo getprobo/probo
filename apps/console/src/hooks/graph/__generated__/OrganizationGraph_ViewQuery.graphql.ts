@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7493102ba1f19bb7721e444d0e372629>>
+ * @generated SignedSource<<267b2fc05603188ad26c38ce1485887b>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -242,13 +242,6 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "verifiedAt",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
                     "name": "sslExpiresAt",
                     "storageKey": null
                   }
@@ -345,12 +338,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "793d8f1eb4118deebe64f3025d3e8c31",
+    "cacheID": "5118b2778835b232009a9d5ef5647aba",
     "id": null,
     "metadata": {},
     "name": "OrganizationGraph_ViewQuery",
     "operationKind": "query",
-    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    verifiedAt\n    sslExpiresAt\n  }\n  users(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n        email\n        createdAt\n      }\n    }\n  }\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    sslExpiresAt\n  }\n  users(first: 100) {\n    edges {\n      node {\n        id\n        fullName\n        email\n        createdAt\n      }\n    }\n  }\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();

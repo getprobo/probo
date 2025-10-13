@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<75e8a41e9d070472ff42d71e17c47fa6>>
+ * @generated SignedSource<<daff4e27d1bdd110777f99826abd4e17>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -36,7 +36,6 @@ export type SettingsPageFragment$data = {
     readonly sslExpiresAt: any | null | undefined;
     readonly sslStatus: SSLStatus;
     readonly updatedAt: any;
-    readonly verifiedAt: any | null | undefined;
   } | null | undefined;
   readonly description: string | null | undefined;
   readonly email: string | null | undefined;
@@ -211,13 +210,6 @@ return {
           "alias": null,
           "args": null,
           "kind": "ScalarField",
-          "name": "verifiedAt",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
           "name": "sslExpiresAt",
           "storageKey": null
         }
@@ -310,6 +302,6 @@ return {
 };
 })();
 
-(node as any).hash = "9786965352e1978c1171509fcce34b56";
+(node as any).hash = "1f76d60a35b4b5116821419432ec4aed";
 
 export default node;

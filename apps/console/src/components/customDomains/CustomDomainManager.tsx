@@ -33,7 +33,6 @@ interface CustomDomainManagerProps {
           | null;
         readonly createdAt?: string | null;
         readonly updatedAt?: string | null;
-        readonly verifiedAt?: string | null;
         readonly sslExpiresAt?: string | null;
       }
     | null
@@ -124,8 +123,8 @@ export function CustomDomainManager({
             <div>
               <div className="font-medium mb-1">{domain.domain}</div>
               <div className="text-sm text-txt-secondary">
-                {domain.verifiedAt
-                  ? `${__("Verified")} ${new Date(domain.verifiedAt).toLocaleDateString()}`
+                {domain.sslStatus === "ACTIVE"
+                  ? __("Verified")
                   : __("Pending verification")}
               </div>
             </div>

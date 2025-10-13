@@ -642,7 +642,6 @@ type CustomDomain struct {
 	DNSRecords   []*DNSRecordInstruction        `json:"dnsRecords"`
 	CreatedAt    time.Time                      `json:"createdAt"`
 	UpdatedAt    time.Time                      `json:"updatedAt"`
-	VerifiedAt   *time.Time                     `json:"verifiedAt,omitempty"`
 }
 
 func (CustomDomain) IsNode()             {}
