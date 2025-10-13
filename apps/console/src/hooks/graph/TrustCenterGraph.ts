@@ -8,6 +8,10 @@ export const trustCenterQuery = graphql`
       ... on Organization {
         id
         name
+        customDomain {
+          id
+          domain
+        }
         trustCenter {
           id
           active

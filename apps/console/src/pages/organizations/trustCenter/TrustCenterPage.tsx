@@ -158,7 +158,9 @@ export default function TrustCenterPage({ queryRef }: Props) {
   };
 
   const trustCenterUrl = organization.trustCenter?.slug
-    ? `${window.location.origin}/trust/${organization.trustCenter.slug}`
+    ? organization.customDomain?.domain
+      ? `https://${organization.customDomain.domain}`
+      : `${window.location.origin}/trust/${organization.trustCenter.slug}`
     : null;
 
 

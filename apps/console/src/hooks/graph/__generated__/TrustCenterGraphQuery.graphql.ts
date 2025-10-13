@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<da6b3823d7bc60f99482bce2b08b9668>>
+ * @generated SignedSource<<8cd42363722a49fe7e843086be0c6b4f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -23,6 +23,10 @@ export type TrustCenterGraphQuery$data = {
         };
       }>;
     };
+    readonly customDomain?: {
+      readonly domain: string;
+      readonly id: string;
+    } | null | undefined;
     readonly documents?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
@@ -102,30 +106,49 @@ v3 = {
 v4 = {
   "alias": null,
   "args": null,
-  "kind": "ScalarField",
-  "name": "createdAt",
+  "concreteType": "CustomDomain",
+  "kind": "LinkedField",
+  "name": "customDomain",
+  "plural": false,
+  "selections": [
+    (v2/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "domain",
+      "storageKey": null
+    }
+  ],
   "storageKey": null
 },
 v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "updatedAt",
+  "name": "createdAt",
   "storageKey": null
 },
 v6 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "updatedAt",
+  "storageKey": null
+},
+v7 = {
   "kind": "Literal",
   "name": "first",
   "value": 100
 },
-v7 = {
+v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "description",
   "storageKey": null
 },
-v8 = {
+v9 = {
   "alias": null,
   "args": null,
   "concreteType": "TrustCenter",
@@ -162,12 +185,12 @@ v8 = {
       "name": "ndaFileUrl",
       "storageKey": null
     },
-    (v4/*: any*/),
     (v5/*: any*/),
+    (v6/*: any*/),
     {
       "alias": null,
       "args": [
-        (v6/*: any*/),
+        (v7/*: any*/),
         {
           "kind": "Literal",
           "name": "orderBy",
@@ -200,7 +223,7 @@ v8 = {
               "selections": [
                 (v2/*: any*/),
                 (v3/*: any*/),
-                (v7/*: any*/),
+                (v8/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -215,8 +238,8 @@ v8 = {
                   "name": "logoUrl",
                   "storageKey": null
                 },
-                (v4/*: any*/),
-                (v5/*: any*/)
+                (v5/*: any*/),
+                (v6/*: any*/)
               ],
               "storageKey": null
             }
@@ -229,10 +252,10 @@ v8 = {
   ],
   "storageKey": null
 },
-v9 = [
-  (v6/*: any*/)
+v10 = [
+  (v7/*: any*/)
 ],
-v10 = {
+v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -259,10 +282,11 @@ return {
             "selections": [
               (v2/*: any*/),
               (v3/*: any*/),
-              (v8/*: any*/),
+              (v4/*: any*/),
+              (v9/*: any*/),
               {
                 "alias": null,
-                "args": (v9/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
                 "name": "documents",
@@ -301,7 +325,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v9/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "AuditConnection",
                 "kind": "LinkedField",
                 "name": "audits",
@@ -340,7 +364,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v9/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "VendorConnection",
                 "kind": "LinkedField",
                 "name": "vendors",
@@ -414,10 +438,11 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v3/*: any*/),
-              (v8/*: any*/),
+              (v4/*: any*/),
+              (v9/*: any*/),
               {
                 "alias": null,
-                "args": (v9/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "DocumentConnection",
                 "kind": "LinkedField",
                 "name": "documents",
@@ -447,7 +472,7 @@ return {
                             "name": "title",
                             "storageKey": null
                           },
-                          (v4/*: any*/),
+                          (v5/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -455,7 +480,7 @@ return {
                             "name": "documentType",
                             "storageKey": null
                           },
-                          (v10/*: any*/),
+                          (v11/*: any*/),
                           {
                             "alias": null,
                             "args": [
@@ -514,7 +539,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v9/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "AuditConnection",
                 "kind": "LinkedField",
                 "name": "audits",
@@ -572,8 +597,8 @@ return {
                             "name": "state",
                             "storageKey": null
                           },
-                          (v10/*: any*/),
-                          (v4/*: any*/)
+                          (v11/*: any*/),
+                          (v5/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -585,7 +610,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v9/*: any*/),
+                "args": (v10/*: any*/),
                 "concreteType": "VendorConnection",
                 "kind": "LinkedField",
                 "name": "vendors",
@@ -616,7 +641,7 @@ return {
                             "name": "category",
                             "storageKey": null
                           },
-                          (v7/*: any*/),
+                          (v8/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -624,7 +649,7 @@ return {
                             "name": "showOnTrustCenter",
                             "storageKey": null
                           },
-                          (v4/*: any*/)
+                          (v5/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -644,16 +669,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3aed31b283ab7aa8e5ae0549474b449f",
+    "cacheID": "5344c186b2f81c2e3e82e2e7398c477a",
     "id": null,
     "metadata": {},
     "name": "TrustCenterGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      trustCenter {\n        id\n        active\n        slug\n        ndaFileName\n        ndaFileUrl\n        createdAt\n        updatedAt\n        references(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              name\n              description\n              websiteUrl\n              logoUrl\n              createdAt\n              updatedAt\n            }\n          }\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterAuditsCardFragment\n          }\n        }\n      }\n      vendors(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterVendorsCardFragment\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  trustCenterVisibility\n  createdAt\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n}\n"
+    "text": "query TrustCenterGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      customDomain {\n        id\n        domain\n      }\n      trustCenter {\n        id\n        active\n        slug\n        ndaFileName\n        ndaFileUrl\n        createdAt\n        updatedAt\n        references(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              name\n              description\n              websiteUrl\n              logoUrl\n              createdAt\n              updatedAt\n            }\n          }\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterAuditsCardFragment\n          }\n        }\n      }\n      vendors(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterVendorsCardFragment\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  trustCenterVisibility\n  createdAt\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "4d70dd23cdcdac7cd715b3eb9020ed37";
+(node as any).hash = "e23ad5ad1f1e29900a49be2312244147";
 
 export default node;
