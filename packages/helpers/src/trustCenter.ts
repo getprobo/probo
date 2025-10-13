@@ -6,8 +6,8 @@ export function getLogoUrl(logoPath: string): string {
     return `/logos/${logoPath}`;
   }
 
-  const slug = trustMatch[1];
-  return `/trust/${slug}/logos/${logoPath}`;
+  const slugOrId = trustMatch[1];
+  return `/trust/${slugOrId}/logos/${logoPath}`;
 }
 
 export function getTrustCenterUrl(path: string): string {

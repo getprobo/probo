@@ -382,3 +382,25 @@ func (s *Service) LoadTrustCenterBySlug(ctx context.Context, slug string) (*Trus
 
 	return &info, err
 }
+
+func (s *Service) LoadTrustCenterByID(ctx context.Context, id gid.GID) (*TrustCenterInfo, error) {
+	var info TrustCenterInfo
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			scope := coredata.NewScope(id.TenantID())
+			var trustCenter coredata.TrustCenter
+			if err := trustCenter.LoadByID(ctx, conn, scope, id); err != nil {
+				return fmt.Errorf("cannot load trust center: %w", err)
+			}
+
+			info.ID = trustCenter.ID
+			info.OrganizationID = trustCenter.OrganizationID
+
+			return nil
+		},
+	)
+
+	return &info, err
+}

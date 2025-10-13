@@ -22,6 +22,7 @@ import (
 
 	"github.com/getprobo/probo/pkg/agents"
 	"github.com/getprobo/probo/pkg/connector"
+	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/probo"
 	"github.com/getprobo/probo/pkg/saferedirect"
 	"github.com/getprobo/probo/pkg/server/api"
@@ -117,10 +118,10 @@ func (s *Server) setupRoutes() {
 	// API routes
 	s.router.Mount("/api", s.apiServer)
 
-	// Trust center routes by slug
-	s.router.Route("/trust/{slug}", func(r chi.Router) {
-		r.Use(s.loadTrustCenterBySlug)
-		r.Use(s.stripTrustSlugPrefix)
+	// Trust center routes by slug or ID
+	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
+		r.Use(s.loadTrustCenterBySlugOrID)
+		r.Use(s.stripTrustPrefix)
 		r.Mount("/", s.trustCenterRouter())
 	})
 
@@ -141,32 +142,61 @@ func (s *Server) setExtraHeaders(w http.ResponseWriter) {
 	}
 }
 
-// loadTrustCenterBySlug middleware loads trust center info from slug and adds to context
-func (s *Server) loadTrustCenterBySlug(next http.Handler) http.Handler {
+// loadTrustCenterBySlugOrID middleware loads trust center info from slug or ID and adds to context
+func (s *Server) loadTrustCenterBySlugOrID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		slug := chi.URLParam(r, "slug")
+		slugOrId := chi.URLParam(r, "slugOrId")
 
-		s.logger.InfoCtx(ctx, "loading trust center by slug",
-			log.String("slug", slug),
-			log.String("path", r.URL.Path),
-		)
+		// Try to parse as GID first
+		var trustCenter *probo.TrustCenterInfo
+		var err error
 
-		trustCenter, err := s.proboService.LoadTrustCenterBySlug(ctx, slug)
-		if err != nil {
-			s.logger.WarnCtx(ctx, "trust center not found",
-				log.String("slug", slug),
-				log.Error(err),
+		if id, parseErr := gid.ParseGID(slugOrId); parseErr == nil {
+			// It's a valid ID, load by ID
+			s.logger.InfoCtx(ctx, "loading trust center by ID",
+				log.String("id", id.String()),
+				log.String("path", r.URL.Path),
 			)
-			http.Error(w, "Trust center not found", http.StatusNotFound)
-			return
-		}
 
-		s.logger.InfoCtx(ctx, "trust center loaded",
-			log.String("slug", slug),
-			log.String("trust_center_id", trustCenter.ID.String()),
-			log.String("organization_id", trustCenter.OrganizationID.String()),
-		)
+			trustCenter, err = s.proboService.LoadTrustCenterByID(ctx, id)
+			if err != nil {
+				s.logger.WarnCtx(ctx, "trust center not found",
+					log.String("id", id.String()),
+					log.Error(err),
+				)
+				http.Error(w, "Trust center not found", http.StatusNotFound)
+				return
+			}
+
+			s.logger.InfoCtx(ctx, "trust center loaded by ID",
+				log.String("id", id.String()),
+				log.String("trust_center_id", trustCenter.ID.String()),
+				log.String("organization_id", trustCenter.OrganizationID.String()),
+			)
+		} else {
+			// Not a valid ID, treat as slug
+			s.logger.InfoCtx(ctx, "loading trust center by slug",
+				log.String("slug", slugOrId),
+				log.String("path", r.URL.Path),
+			)
+
+			trustCenter, err = s.proboService.LoadTrustCenterBySlug(ctx, slugOrId)
+			if err != nil {
+				s.logger.WarnCtx(ctx, "trust center not found",
+					log.String("slug", slugOrId),
+					log.Error(err),
+				)
+				http.Error(w, "Trust center not found", http.StatusNotFound)
+				return
+			}
+
+			s.logger.InfoCtx(ctx, "trust center loaded by slug",
+				log.String("slug", slugOrId),
+				log.String("trust_center_id", trustCenter.ID.String()),
+				log.String("organization_id", trustCenter.OrganizationID.String()),
+			)
+		}
 
 		ctx = s.addTrustCenterToContext(ctx, trustCenter.ID.TenantID(), trustCenter.OrganizationID)
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -217,11 +247,11 @@ func (s *Server) addTrustCenterToContext(ctx context.Context, tenantID, organiza
 	return ctx
 }
 
-// stripTrustSlugPrefix middleware strips /trust/{slug} from the path
-func (s *Server) stripTrustSlugPrefix(next http.Handler) http.Handler {
+// stripTrustPrefix middleware strips /trust/{slugOrId} from the path
+func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		slug := chi.URLParam(r, "slug")
-		prefix := "/trust/" + slug
+		slugOrId := chi.URLParam(r, "slugOrId")
+		prefix := "/trust/" + slugOrId
 
 		// Strip the prefix from the path
 		if r.URL.Path == prefix {
