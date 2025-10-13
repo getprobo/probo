@@ -21,30 +21,45 @@ import (
 type (
 	MeasureFilter struct {
 		query *string
+		state *MeasureState
 	}
 )
 
-func NewMeasureFilter(query *string) *MeasureFilter {
+func NewMeasureFilter(query *string, state *MeasureState) *MeasureFilter {
 	return &MeasureFilter{
 		query: query,
+		state: state,
 	}
 }
 
 func (f *MeasureFilter) SQLArguments() pgx.NamedArgs {
 	return pgx.NamedArgs{
 		"query": f.query,
+		"state": f.state,
 	}
 }
 
 func (f *MeasureFilter) SQLFragment() string {
-	if f.query == nil || *f.query == "" {
-		return "TRUE"
-	}
-
 	return `
-		search_vector @@ (
-			SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
-			FROM unnest(regexp_split_to_array(trim(@query), '\s+')) AS lexeme
+(
+	CASE
+		WHEN @query::text IS NULL OR @query::text = '' THEN
+			TRUE
+		ELSE
+			search_vector @@ (
+				SELECT to_tsquery('simple', string_agg(lexeme || ':*', ' & '))
+				FROM unnest(regexp_split_to_array(trim(@query), '\s+')) AS lexeme
+			)
+	END
+)
+AND
+(
+	CASE
+		WHEN @state::mitigation_state IS NULL THEN
+			TRUE
+		ELSE
+			state = @state::mitigation_state
+	END
 		)
 	`
 }

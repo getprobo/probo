@@ -10142,6 +10142,7 @@ input DocumentFilter {
 
 input MeasureFilter {
   query: String
+  state: MeasureState
 }
 
 input RiskFilter {
@@ -69569,7 +69570,7 @@ func (ec *executionContext) unmarshalInputMeasureFilter(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"query"}
+	fieldsInOrder := [...]string{"query", "state"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -69583,6 +69584,13 @@ func (ec *executionContext) unmarshalInputMeasureFilter(ctx context.Context, obj
 				return it, err
 			}
 			it.Query = data
+		case "state":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
+			data, err := ec.unmarshalOMeasureState2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐMeasureState(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.State = data
 		}
 	}
 

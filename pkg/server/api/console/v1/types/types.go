@@ -1220,7 +1220,8 @@ type MeasureEdge struct {
 }
 
 type MeasureFilter struct {
-	Query *string `json:"query,omitempty"`
+	Query *string                `json:"query,omitempty"`
+	State *coredata.MeasureState `json:"state,omitempty"`
 }
 
 type Mutation struct {

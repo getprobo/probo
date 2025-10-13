@@ -1425,6 +1425,7 @@ input DocumentFilter {
 
 input MeasureFilter {
   query: String
+  state: MeasureState
 }
 
 input RiskFilter {
