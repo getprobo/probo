@@ -94,6 +94,7 @@ const (
 	CountryCodeER CountryCode = "ER"
 	CountryCodeES CountryCode = "ES"
 	CountryCodeET CountryCode = "ET"
+	CountryCodeEU CountryCode = "EU"
 	CountryCodeFI CountryCode = "FI"
 	CountryCodeFJ CountryCode = "FJ"
 	CountryCodeFK CountryCode = "FK"
@@ -429,6 +430,8 @@ func (ct *CountryCode) Scan(value any) error {
 		*ct = CountryCodeES
 	case CountryCodeET.String():
 		*ct = CountryCodeET
+	case CountryCodeEU.String():
+		*ct = CountryCodeEU
 	case CountryCodeFI.String():
 		*ct = CountryCodeFI
 	case CountryCodeFJ.String():
