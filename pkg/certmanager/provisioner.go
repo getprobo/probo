@@ -17,6 +17,7 @@ package certmanager
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
@@ -113,6 +114,21 @@ func (p *Provisioner) checkPendingDomains(ctx context.Context) error {
 			return nil
 		},
 	)
+}
+
+func isFatalChallengeError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := strings.ToLower(err.Error())
+
+	return (strings.Contains(errStr, "invalid") &&
+		(strings.Contains(errStr, "challenge") ||
+			strings.Contains(errStr, "authorization") ||
+			strings.Contains(errStr, "order"))) ||
+		strings.Contains(errStr, "authorization must be pending") ||
+		strings.Contains(errStr, "expired")
 }
 
 func (p *Provisioner) handleStaleProvisioningAttempts(ctx context.Context, conn pg.Conn) error {
@@ -291,34 +307,49 @@ func (p *Provisioner) provisionDomainCertificate(
 			return nil
 		}
 
+		if isFatalChallengeError(err) {
+			p.logger.InfoCtx(
+				ctx,
+				"fatal challenge error, resetting domain to retry with fresh challenge",
+				log.String("domain", domain.Domain),
+				log.Int("retry_count", fullDomain.SSLRetryCount),
+			)
+
+			fullDomain.HTTPChallengeToken = nil
+			fullDomain.HTTPChallengeKeyAuth = nil
+			fullDomain.HTTPChallengeURL = nil
+			fullDomain.HTTPOrderURL = nil
+			fullDomain.SSLStatus = coredata.CustomDomainSSLStatusPending
+
+			if updateErr := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); updateErr != nil {
+				p.logger.ErrorCtx(
+					ctx,
+					"cannot reset domain for retry",
+					log.String("domain", domain.Domain),
+					log.Error(updateErr),
+				)
+				return updateErr
+			}
+
+			return nil
+		}
+
 		p.logger.InfoCtx(
 			ctx,
-			"resetting domain to retry with fresh challenge",
+			"transient error, keeping existing challenge for retry",
 			log.String("domain", domain.Domain),
 			log.Int("retry_count", fullDomain.SSLRetryCount),
 		)
 
-		fullDomain.HTTPChallengeToken = nil
-		fullDomain.HTTPChallengeKeyAuth = nil
-		fullDomain.HTTPChallengeURL = nil
-		fullDomain.HTTPOrderURL = nil
-		fullDomain.SSLStatus = coredata.CustomDomainSSLStatusPending
-
 		if updateErr := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); updateErr != nil {
 			p.logger.ErrorCtx(
 				ctx,
-				"cannot reset domain for retry",
+				"cannot update domain retry tracking",
 				log.String("domain", domain.Domain),
 				log.Error(updateErr),
 			)
 			return updateErr
 		}
-
-		p.logger.InfoCtx(
-			ctx,
-			"domain reset to pending, will retry with new challenge on next cycle",
-			log.String("domain", domain.Domain),
-		)
 
 		return nil
 	}

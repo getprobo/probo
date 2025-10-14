@@ -208,7 +208,7 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 				return updateErr
 			}
 
-			return nil
+			return fmt.Errorf("domain marked as failed after %d retry attempts: %w", maxRetries, err)
 		}
 
 		// Update retry tracking but keep domain ACTIVE for next renewal cycle
@@ -229,7 +229,8 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 			log.Int("retry_count", lockedDomain.SSLRetryCount),
 		)
 
-		return nil
+		// Return the original error so caller knows renewal failed
+		return fmt.Errorf("renewal failed, will retry: %w", err)
 	}
 
 	r.logger.InfoCtx(
