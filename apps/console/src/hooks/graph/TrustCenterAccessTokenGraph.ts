@@ -5,7 +5,6 @@ export const trustCenterByIdQuery = graphql`
     node(id: $trustCenterId) {
       ... on TrustCenter {
         id
-        slug
         active
         organization {
           id

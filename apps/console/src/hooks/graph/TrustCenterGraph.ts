@@ -15,7 +15,6 @@ export const trustCenterQuery = graphql`
         trustCenter {
           id
           active
-          slug
           ndaFileName
           ndaFileUrl
           createdAt
@@ -69,7 +68,6 @@ export const updateTrustCenterMutation = graphql`
       trustCenter {
         id
         active
-        slug
         updatedAt
       }
     }

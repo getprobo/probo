@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6e43a07222fde7acc3d588bac24a8077>>
+ * @generated SignedSource<<04ca9566a32dd6c4ec830303d27040b3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,6 @@ export type TrustCenterAccessTokenGraphQuery$data = {
       readonly id: string;
       readonly name: string;
     };
-    readonly slug?: string;
   };
 };
 export type TrustCenterAccessTokenGraphQuery = {
@@ -54,17 +53,10 @@ v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "slug",
-  "storageKey": null
-},
-v4 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
   "name": "active",
   "storageKey": null
 },
-v5 = {
+v4 = {
   "alias": null,
   "args": null,
   "concreteType": "Organization",
@@ -103,8 +95,7 @@ return {
             "selections": [
               (v2/*: any*/),
               (v3/*: any*/),
-              (v4/*: any*/),
-              (v5/*: any*/)
+              (v4/*: any*/)
             ],
             "type": "TrustCenter",
             "abstractKey": null
@@ -142,8 +133,7 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v3/*: any*/),
-              (v4/*: any*/),
-              (v5/*: any*/)
+              (v4/*: any*/)
             ],
             "type": "TrustCenter",
             "abstractKey": null
@@ -154,16 +144,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "7d3d891944391d31a722364f8b1f1cbb",
+    "cacheID": "3149be57889b4ab4716cf9a8cce2ab8c",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessTokenGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessTokenGraphQuery(\n  $trustCenterId: ID!\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      slug\n      active\n      organization {\n        id\n        name\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query TrustCenterAccessTokenGraphQuery(\n  $trustCenterId: ID!\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      active\n      organization {\n        id\n        name\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e273d4e8c8b756a5aba5271520df8602";
+(node as any).hash = "0eff39cd61d08eeff978f26d88a52edf";
 
 export default node;

@@ -5,8 +5,6 @@ import {
   Card,
   Checkbox,
   Dropzone,
-  Field,
-  Input,
   PageHeader,
   Spinner,
   useToast,
@@ -38,8 +36,6 @@ export default function TrustCenterPage({ queryRef }: Props) {
   const [uploadNDA, isUploadingNDA] = useUploadTrustCenterNDAMutation();
   const [deleteNDA, isDeletingNDA] = useDeleteTrustCenterNDAMutation();
   const [isActive, setIsActive] = useState(organization.trustCenter?.active || false);
-  const [slug, setSlug] = useState(organization.trustCenter?.slug || "");
-  const [isUpdatingSlug, setIsUpdatingSlug] = useState(false);
 
   usePageTitle(__("Trust Center"));
 
@@ -64,44 +60,6 @@ export default function TrustCenterPage({ queryRef }: Props) {
       },
       onError: () => {
         setIsActive(!active);
-      },
-    });
-  };
-
-  const handleSlugUpdate = async () => {
-    if (!organization.trustCenter?.id) {
-      toast({
-        title: __("Error"),
-        description: __("Trust center not found"),
-        variant: "error",
-      });
-      return;
-    }
-
-    if (!slug.trim()) {
-      toast({
-        title: __("Error"),
-        description: __("Slug cannot be empty"),
-        variant: "error",
-      });
-      return;
-    }
-
-    setIsUpdatingSlug(true);
-
-    updateTrustCenter({
-      variables: {
-        input: {
-          trustCenterId: organization.trustCenter.id,
-          slug: slug.trim(),
-        },
-      },
-      onCompleted: () => {
-        setIsUpdatingSlug(false);
-      },
-      onError: () => {
-        setIsUpdatingSlug(false);
-        setSlug(organization.trustCenter?.slug || "");
       },
     });
   };
@@ -231,42 +189,6 @@ export default function TrustCenterPage({ queryRef }: Props) {
               </p>
             </div>
           )}
-        </Card>
-      </div>
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium">{__("Configuration")}</h2>
-          {isUpdatingSlug && <Spinner />}
-        </div>
-        <Card padded className="space-y-4">
-          <div className="space-y-2">
-            <Field
-              label={__("Slug")}
-              help={__("The unique identifier for your trust center URL")}
-            >
-              <div className="flex items-center space-x-2">
-                <div className="flex items-center">
-                  <Input
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    placeholder={__("your-organization")}
-                    className="min-w-[200px]"
-                  />
-                </div>
-                <Button
-                  variant="secondary"
-                  onClick={handleSlugUpdate}
-                  disabled={
-                    isUpdatingSlug ||
-                    !slug.trim() ||
-                    slug === organization.trustCenter?.slug
-                  }
-                >
-                  {__("Update")}
-                </Button>
-              </div>
-            </Field>
-          </div>
         </Card>
       </div>
 

@@ -147,7 +147,9 @@ enum AuditState
 }
 
 enum TrustCenterVisibility
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibility") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibility"
+  ) {
   NONE
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibilityNone"
@@ -943,7 +945,9 @@ enum DocumentType
   POLICY
     @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypePolicy")
   PROCEDURE
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeProcedure")
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeProcedure"
+    )
 }
 
 enum AssetType
@@ -1131,7 +1135,9 @@ enum TrustCenterAccessOrderField
 }
 
 enum TrustCenterDocumentAccessOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterDocumentAccessOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterDocumentAccessOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.TrustCenterDocumentAccessOrderFieldCreatedAt"
@@ -1424,10 +1430,6 @@ input PeopleFilter {
   excludeContractEnded: Boolean
 }
 
-input OrganizationFilter {
-  trustCenterSlug: String
-}
-
 input DatumFilter {
   snapshotId: ID
 }
@@ -1460,7 +1462,6 @@ input VendorFilter {
 type TrustCenter implements Node {
   id: ID!
   active: Boolean!
-  slug: String!
   ndaFileName: String
   ndaFileUrl: String @goField(forceResolver: true)
   createdAt: Datetime!
@@ -2202,7 +2203,6 @@ type Viewer {
     last: Int
     before: CursorKey
     orderBy: OrganizationOrder
-    filter: OrganizationFilter
   ): OrganizationConnection! @goField(forceResolver: true)
 }
 
@@ -2597,13 +2597,13 @@ type SnapshotEdge {
 }
 
 type File {
-    id: ID!
-    mimeType: String!
-    fileName: String!
-    size: BigInt!
-    downloadUrl: String! @goField(forceResolver: true)
-    createdAt: Datetime!
-    updatedAt: Datetime!
+  id: ID!
+  mimeType: String!
+  fileName: String!
+  size: BigInt!
+  downloadUrl: String! @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
 }
 
 # Root Types
@@ -2963,7 +2963,6 @@ input DeleteOrganizationInput {
 input UpdateTrustCenterInput {
   trustCenterId: ID!
   active: Boolean
-  slug: String
 }
 
 input UploadTrustCenterNDAInput {

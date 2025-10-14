@@ -27,7 +27,6 @@ func NewTrustCenter(tc *coredata.TrustCenter, file *coredata.File) *TrustCenter 
 	return &TrustCenter{
 		ID:          tc.ID,
 		Active:      tc.Active,
-		Slug:        tc.Slug,
 		NdaFileName: ndaFileName,
 		CreatedAt:   tc.CreatedAt,
 		UpdatedAt:   tc.UpdatedAt,

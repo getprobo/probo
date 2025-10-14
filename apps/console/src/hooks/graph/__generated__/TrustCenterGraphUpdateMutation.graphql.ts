@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c257950f58c4b876a6ff7ef6083f005b>>
+ * @generated SignedSource<<138afd21c62a2f7940b64b40c61e2014>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,6 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type UpdateTrustCenterInput = {
   active?: boolean | null | undefined;
-  slug?: string | null | undefined;
   trustCenterId: string;
 };
 export type TrustCenterGraphUpdateMutation$variables = {
@@ -22,7 +21,6 @@ export type TrustCenterGraphUpdateMutation$data = {
     readonly trustCenter: {
       readonly active: boolean;
       readonly id: string;
-      readonly slug: string;
       readonly updatedAt: any;
     };
   };
@@ -81,13 +79,6 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "slug",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
             "name": "updatedAt",
             "storageKey": null
           }
@@ -116,16 +107,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "18e80937923185923d9b427819334337",
+    "cacheID": "4d56330e76f63430b88de2deac6d73ff",
     "id": null,
     "metadata": {},
     "name": "TrustCenterGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterGraphUpdateMutation(\n  $input: UpdateTrustCenterInput!\n) {\n  updateTrustCenter(input: $input) {\n    trustCenter {\n      id\n      active\n      slug\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterGraphUpdateMutation(\n  $input: UpdateTrustCenterInput!\n) {\n  updateTrustCenter(input: $input) {\n    trustCenter {\n      id\n      active\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "988f3baf354e729d6cc9482129040898";
+(node as any).hash = "e5db4ea1986315fc8103885fee2ede5b";
 
 export default node;

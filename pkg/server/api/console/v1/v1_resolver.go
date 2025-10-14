@@ -1153,7 +1153,6 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 	trustCenter, file, err := prb.TrustCenters.Update(ctx, &probo.UpdateTrustCenterRequest{
 		ID:     input.TrustCenterID,
 		Active: input.Active,
-		Slug:   input.Slug,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot update trust center: %w", err)
@@ -5215,7 +5214,7 @@ func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorSer
 }
 
 // Organizations is the resolver for the organizations field.
-func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder, filter *types.OrganizationFilter) (*types.OrganizationConnection, error) {
+func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) (*types.OrganizationConnection, error) {
 	user := UserFromContext(ctx)
 
 	pageOrderBy := page.OrderBy[coredata.OrganizationOrderField]{

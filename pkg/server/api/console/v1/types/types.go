@@ -1338,10 +1338,6 @@ type OrganizationEdge struct {
 	Node   *Organization  `json:"node"`
 }
 
-type OrganizationFilter struct {
-	TrustCenterSlug *string `json:"trustCenterSlug,omitempty"`
-}
-
 type OrganizationOrder struct {
 	Direction page.OrderDirection             `json:"direction"`
 	Field     coredata.OrganizationOrderField `json:"field"`
@@ -1566,7 +1562,6 @@ type TaskEdge struct {
 type TrustCenter struct {
 	ID           gid.GID                         `json:"id"`
 	Active       bool                            `json:"active"`
-	Slug         string                          `json:"slug"`
 	NdaFileName  *string                         `json:"ndaFileName,omitempty"`
 	NdaFileURL   *string                         `json:"ndaFileUrl,omitempty"`
 	CreatedAt    time.Time                       `json:"createdAt"`
@@ -1902,7 +1897,6 @@ type UpdateTrustCenterAccessPayload struct {
 type UpdateTrustCenterInput struct {
 	TrustCenterID gid.GID `json:"trustCenterId"`
 	Active        *bool   `json:"active,omitempty"`
-	Slug          *string `json:"slug,omitempty"`
 }
 
 type UpdateTrustCenterPayload struct {

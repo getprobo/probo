@@ -1202,7 +1202,6 @@ type ComplexityRoot struct {
 		NdaFileURL   func(childComplexity int) int
 		Organization func(childComplexity int) int
 		References   func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) int
-		Slug         func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
 	}
 
@@ -1575,7 +1574,7 @@ type ComplexityRoot struct {
 
 	Viewer struct {
 		ID            func(childComplexity int) int
-		Organizations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder, filter *types.OrganizationFilter) int
+		Organizations func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) int
 		User          func(childComplexity int) int
 	}
 }
@@ -1951,7 +1950,7 @@ type VendorServiceResolver interface {
 	Vendor(ctx context.Context, obj *types.VendorService) (*types.Vendor, error)
 }
 type ViewerResolver interface {
-	Organizations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder, filter *types.OrganizationFilter) (*types.OrganizationConnection, error)
+	Organizations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrganizationOrder) (*types.OrganizationConnection, error)
 }
 
 type executableSchema struct {
@@ -7127,13 +7126,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TrustCenter.References(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.OrderBy[coredata.TrustCenterReferenceOrderField])), true
 
-	case "TrustCenter.slug":
-		if e.complexity.TrustCenter.Slug == nil {
-			break
-		}
-
-		return e.complexity.TrustCenter.Slug(childComplexity), true
-
 	case "TrustCenter.updatedAt":
 		if e.complexity.TrustCenter.UpdatedAt == nil {
 			break
@@ -8455,7 +8447,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.Viewer.Organizations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.OrganizationOrder), args["filter"].(*types.OrganizationFilter)), true
+		return e.complexity.Viewer.Organizations(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.OrganizationOrder)), true
 
 	case "Viewer.user":
 		if e.complexity.Viewer.User == nil {
@@ -8580,7 +8572,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNonconformityOrder,
 		ec.unmarshalInputObligationFilter,
 		ec.unmarshalInputObligationOrder,
-		ec.unmarshalInputOrganizationFilter,
 		ec.unmarshalInputOrganizationOrder,
 		ec.unmarshalInputPeopleFilter,
 		ec.unmarshalInputPeopleOrder,
@@ -8882,7 +8873,9 @@ enum AuditState
 }
 
 enum TrustCenterVisibility
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibility") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibility"
+  ) {
   NONE
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibilityNone"
@@ -9678,7 +9671,9 @@ enum DocumentType
   POLICY
     @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypePolicy")
   PROCEDURE
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeProcedure")
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeProcedure"
+    )
 }
 
 enum AssetType
@@ -9866,7 +9861,9 @@ enum TrustCenterAccessOrderField
 }
 
 enum TrustCenterDocumentAccessOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TrustCenterDocumentAccessOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterDocumentAccessOrderField"
+  ) {
   CREATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.TrustCenterDocumentAccessOrderFieldCreatedAt"
@@ -10159,10 +10156,6 @@ input PeopleFilter {
   excludeContractEnded: Boolean
 }
 
-input OrganizationFilter {
-  trustCenterSlug: String
-}
-
 input DatumFilter {
   snapshotId: ID
 }
@@ -10195,7 +10188,6 @@ input VendorFilter {
 type TrustCenter implements Node {
   id: ID!
   active: Boolean!
-  slug: String!
   ndaFileName: String
   ndaFileUrl: String @goField(forceResolver: true)
   createdAt: Datetime!
@@ -10937,7 +10929,6 @@ type Viewer {
     last: Int
     before: CursorKey
     orderBy: OrganizationOrder
-    filter: OrganizationFilter
   ): OrganizationConnection! @goField(forceResolver: true)
 }
 
@@ -11332,13 +11323,13 @@ type SnapshotEdge {
 }
 
 type File {
-    id: ID!
-    mimeType: String!
-    fileName: String!
-    size: BigInt!
-    downloadUrl: String! @goField(forceResolver: true)
-    createdAt: Datetime!
-    updatedAt: Datetime!
+  id: ID!
+  mimeType: String!
+  fileName: String!
+  size: BigInt!
+  downloadUrl: String! @goField(forceResolver: true)
+  createdAt: Datetime!
+  updatedAt: Datetime!
 }
 
 # Root Types
@@ -11698,7 +11689,6 @@ input DeleteOrganizationInput {
 input UpdateTrustCenterInput {
   trustCenterId: ID!
   active: Boolean
-  slug: String
 }
 
 input UploadTrustCenterNDAInput {
@@ -20855,11 +20845,6 @@ func (ec *executionContext) field_Viewer_organizations_args(ctx context.Context,
 		return nil, err
 	}
 	args["orderBy"] = arg4
-	arg5, err := ec.field_Viewer_organizations_argsFilter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["filter"] = arg5
 	return args, nil
 }
 func (ec *executionContext) field_Viewer_organizations_argsFirst(
@@ -20924,19 +20909,6 @@ func (ec *executionContext) field_Viewer_organizations_argsOrderBy(
 	}
 
 	var zeroVal *types.OrganizationOrder
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Viewer_organizations_argsFilter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*types.OrganizationFilter, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
-	if tmp, ok := rawArgs["filter"]; ok {
-		return ec.unmarshalOOrganizationFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganizationFilter(ctx, tmp)
-	}
-
-	var zeroVal *types.OrganizationFilter
 	return zeroVal, nil
 }
 
@@ -30704,8 +30676,6 @@ func (ec *executionContext) fieldContext_DeleteTrustCenterNDAPayload_trustCenter
 				return ec.fieldContext_TrustCenter_id(ctx, field)
 			case "active":
 				return ec.fieldContext_TrustCenter_active(ctx, field)
-			case "slug":
-				return ec.fieldContext_TrustCenter_slug(ctx, field)
 			case "ndaFileName":
 				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
 			case "ndaFileUrl":
@@ -46804,8 +46774,6 @@ func (ec *executionContext) fieldContext_Organization_trustCenter(_ context.Cont
 				return ec.fieldContext_TrustCenter_id(ctx, field)
 			case "active":
 				return ec.fieldContext_TrustCenter_active(ctx, field)
-			case "slug":
-				return ec.fieldContext_TrustCenter_slug(ctx, field)
 			case "ndaFileName":
 				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
 			case "ndaFileUrl":
@@ -53381,50 +53349,6 @@ func (ec *executionContext) fieldContext_TrustCenter_active(_ context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenter_slug(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TrustCenter_slug(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Slug, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TrustCenter_slug(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenter",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _TrustCenter_ndaFileName(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenter) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
 	if err != nil {
@@ -55215,8 +55139,6 @@ func (ec *executionContext) fieldContext_TrustCenterEdge_node(_ context.Context,
 				return ec.fieldContext_TrustCenter_id(ctx, field)
 			case "active":
 				return ec.fieldContext_TrustCenter_active(ctx, field)
-			case "slug":
-				return ec.fieldContext_TrustCenter_slug(ctx, field)
 			case "ndaFileName":
 				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
 			case "ndaFileUrl":
@@ -57159,8 +57081,6 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterPayload_trustCenter(_ 
 				return ec.fieldContext_TrustCenter_id(ctx, field)
 			case "active":
 				return ec.fieldContext_TrustCenter_active(ctx, field)
-			case "slug":
-				return ec.fieldContext_TrustCenter_slug(ctx, field)
 			case "ndaFileName":
 				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
 			case "ndaFileUrl":
@@ -57763,8 +57683,6 @@ func (ec *executionContext) fieldContext_UploadTrustCenterNDAPayload_trustCenter
 				return ec.fieldContext_TrustCenter_id(ctx, field)
 			case "active":
 				return ec.fieldContext_TrustCenter_active(ctx, field)
-			case "slug":
-				return ec.fieldContext_TrustCenter_slug(ctx, field)
 			case "ndaFileName":
 				return ec.fieldContext_TrustCenter_ndaFileName(ctx, field)
 			case "ndaFileUrl":
@@ -63716,7 +63634,7 @@ func (ec *executionContext) _Viewer_organizations(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Viewer().Organizations(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.OrganizationOrder), fc.Args["filter"].(*types.OrganizationFilter))
+		return ec.resolvers.Viewer().Organizations(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.OrganizationOrder))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -69953,33 +69871,6 @@ func (ec *executionContext) unmarshalInputObligationOrder(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputOrganizationFilter(ctx context.Context, obj any) (types.OrganizationFilter, error) {
-	var it types.OrganizationFilter
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"trustCenterSlug"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "trustCenterSlug":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterSlug"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.TrustCenterSlug = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputOrganizationOrder(ctx context.Context, obj any) (types.OrganizationOrder, error) {
 	var it types.OrganizationOrder
 	asMap := map[string]any{}
@@ -71786,7 +71677,7 @@ func (ec *executionContext) unmarshalInputUpdateTrustCenterInput(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"trustCenterId", "active", "slug"}
+	fieldsInOrder := [...]string{"trustCenterId", "active"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -71807,13 +71698,6 @@ func (ec *executionContext) unmarshalInputUpdateTrustCenterInput(ctx context.Con
 				return it, err
 			}
 			it.Active = data
-		case "slug":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Slug = data
 		}
 	}
 
@@ -84520,11 +84404,6 @@ func (ec *executionContext) _TrustCenter(ctx context.Context, sel ast.SelectionS
 			}
 		case "active":
 			out.Values[i] = ec._TrustCenter_active(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "slug":
-			out.Values[i] = ec._TrustCenter_slug(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -98145,14 +98024,6 @@ var (
 		coredata.ObligationStatusCompliant:          "COMPLIANT",
 	}
 )
-
-func (ec *executionContext) unmarshalOOrganizationFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganizationFilter(ctx context.Context, v any) (*types.OrganizationFilter, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputOrganizationFilter(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
 
 func (ec *executionContext) unmarshalOOrganizationOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐOrganizationOrder(ctx context.Context, v any) (*types.OrganizationOrder, error) {
 	if v == nil {
