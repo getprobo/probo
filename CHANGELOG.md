@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.73.0] - 2025-10-14
+
+### Added
+
+- Add invitation management
+- Bootstrap role management
+
+### Changed
+- Refactor of authentication and authorization
+
+
 ## [0.72.0] - 2025-10-14
 
 ### Added
