@@ -1,5 +1,5 @@
 ALTER TABLE custom_domains ADD COLUMN ssl_retry_count INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE custom_domains ADD COLUMN ssl_last_attempt_at TIMESTAMP;
+ALTER TABLE custom_domains ADD COLUMN ssl_last_attempt_at TIMESTAMP WITH TIME ZONE;
 
 ALTER TABLE custom_domains ALTER COLUMN ssl_retry_count DROP DEFAULT;
 
