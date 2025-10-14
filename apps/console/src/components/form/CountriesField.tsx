@@ -1,5 +1,5 @@
 import { useTranslate } from "@probo/i18n";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge, Input, IconCrossLargeX } from "@probo/ui";
 import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 import { getCountryName, getCountryOptions, countries, type CountryCode } from "@probo/helpers";
@@ -97,6 +97,13 @@ function CountryInput({ availableCountries, onAdd }: CountryInputProps) {
   const [search, setSearch] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const countryOptions = getCountryOptions(__);
+
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   const filteredCountries = countryOptions
     .filter((option: { value: string; label: string }) => availableCountries.includes(option.value as CountryCode))
