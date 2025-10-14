@@ -1,0 +1,19 @@
+Probo
+
+Hi {{.FullName}},
+
+You're receiving this message because your company, {{.OrganizationName}}, has shared a new compliance document that requires your review and signature.
+
+To stay compliant with company policies, please take a moment to review and sign the document by clicking the link below:
+
+{{.SigningUrl}}
+
+If you have any questions, please contact your security team.
+
+This process is managed securely by Probo, acting as the compliance partner on behalf of {{.OrganizationName}}.
+
+Thank you for your prompt attention to this matter.
+
+Best regards,
+
+Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US

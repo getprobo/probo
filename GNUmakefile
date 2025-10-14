@@ -42,7 +42,7 @@ all: build
 lint: vet # npm-lint
 
 .PHONY: vet
-vet:
+vet: @probo/emails
 	$(GO_VET) ./...
 
 .PHONY: npm-lint
@@ -72,7 +72,7 @@ test-bench: TEST_FLAGS+=-bench=.
 test-bench: test ## Run benchmark tests
 
 .PHONY: build
-build: @probo/console @probo/trust bin/probod
+build: @probo/emails @probo/console @probo/trust bin/probod
 
 .PHONY: sbom-docker
 sbom-docker: docker-build
@@ -114,8 +114,13 @@ bin/probod: pkg/server/api/console/v1/schema/schema.go \
 	pkg/server/api/trust/v1/schema/schema.go \
 	pkg/server/api/trust/v1/types/types.go \
 	pkg/server/api/trust/v1/v1_resolver.go \
+	@probo/emails \
 	vet
 	$(GO_BUILD) -o $(PROBOD_BIN) $(PROBOD_SRC)
+
+.PHONY: @probo/emails
+@probo/emails:
+	$(NPM) --workspace $@ run build
 
 .PHONY: @probo/console
 @probo/console: NODE_ENV=production
@@ -159,6 +164,7 @@ clean: ## Clean the project (node_modules and build artifacts)
 	$(RM) -rf bin/*
 	$(RM) -rf node_modules
 	$(RM) -rf apps/{console,trust}/{dist,node_modules}
+	$(RM) -rf packages/emails/{dist,node_modules}
 	$(RM) -rf sbom-docker.json sbom.json
 	$(RM) -rf coverage.out coverage.html
 

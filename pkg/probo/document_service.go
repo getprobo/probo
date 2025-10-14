@@ -15,6 +15,7 @@ import (
 	"unicode"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/getprobo/probo/packages/emails"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/docgen"
 	"github.com/getprobo/probo/pkg/gid"
@@ -79,14 +80,6 @@ const (
 	TokenTypeSigningRequest = "signing_request"
 
 	documentExportEmailExpiresIn = 24 * time.Hour
-	documentExportEmailSubject   = "Your document export is ready"
-	documentExportEmailBody      = `
-Your document export has been completed successfully.
-
-You can download the export using the link below:
-[1] %s
-
-This link will expire in 24 hours.`
 
 	maxFilenameLength = 200
 )
@@ -433,11 +426,12 @@ func (s *DocumentService) SendSigningNotifications(
 				return fmt.Errorf("cannot load people: %w", err)
 			}
 
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
 			for _, people := range peoples {
-				now := time.Now()
-
-				emailID := gid.New(s.svc.scope.GetTenantID(), coredata.EmailEntityType)
-
 				token, err := statelesstoken.NewToken(
 					s.svc.tokenSecret,
 					TokenTypeSigningRequest,
@@ -460,15 +454,22 @@ func (s *DocumentService) SendSigningNotifications(
 					}.Encode(),
 				}
 
-				email := &coredata.Email{
-					ID:             emailID,
-					RecipientEmail: people.PrimaryEmailAddress,
-					RecipientName:  people.FullName,
-					Subject:        "Probo - Documents Signing Request",
-					TextBody:       fmt.Sprintf("Hi,\nYou have documents awaiting your signature. Please follow this link to sign them: %s", signRequestURL.String()),
-					CreatedAt:      now,
-					UpdatedAt:      now,
+				subject, textBody, htmlBody, err := emails.RenderDocumentSigning(
+					people.FullName,
+					organization.Name,
+					signRequestURL.String(),
+				)
+				if err != nil {
+					return fmt.Errorf("cannot render signing request email: %w", err)
 				}
+
+				email := coredata.NewEmail(
+					people.FullName,
+					people.PrimaryEmailAddress,
+					subject,
+					textBody,
+					htmlBody,
+				)
 
 				if err := email.Insert(ctx, tx); err != nil {
 					return fmt.Errorf("cannot insert email: %w", err)
@@ -1568,11 +1569,20 @@ func (s *DocumentService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
+			subject, textBody, htmlBody, err := emails.RenderDocumentExport(
+				recipientName,
+				downloadURL,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot render document export email: %w", err)
+			}
+
 			email := coredata.NewEmail(
 				recipientName,
 				recipientEmail,
-				documentExportEmailSubject,
-				fmt.Sprintf(documentExportEmailBody, downloadURL),
+				subject,
+				textBody,
+				htmlBody,
 			)
 
 			if err := email.Insert(ctx, tx); err != nil {

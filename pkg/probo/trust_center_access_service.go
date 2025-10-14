@@ -21,6 +21,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/getprobo/probo/packages/emails"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
@@ -55,21 +56,6 @@ type (
 		TrustCenterID gid.GID `json:"trust_center_id"`
 		Email         string  `json:"email"`
 	}
-)
-
-const (
-	trustCenterAccessEmailSubject  = "Trust Center Access Invitation - %s"
-	trustCenterAccessEmailTemplate = `
-	You have been granted access to %s's Trust Center!
-
-	Click the link below to access it:
-
-	[1] %s
-
-	This link will expire in 7 days.
-
-	If the link above doesn't work, copy and paste the entire URL into your browser.
-	`
 )
 
 func (s TrustCenterAccessService) ListForTrustCenterID(
@@ -421,11 +407,21 @@ func (s TrustCenterAccessService) sendTrustCenterAccessEmail(
 	companyName string,
 	accessURL string,
 ) error {
+	subject, textBody, htmlBody, err := emails.RenderTrustCenterAccess(
+		name,
+		companyName,
+		accessURL,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot render trust center access email: %w", err)
+	}
+
 	accessEmail := coredata.NewEmail(
 		name,
 		email,
-		fmt.Sprintf(trustCenterAccessEmailSubject, companyName),
-		fmt.Sprintf(trustCenterAccessEmailTemplate, companyName, accessURL),
+		subject,
+		textBody,
+		htmlBody,
 	)
 
 	if err := accessEmail.Insert(ctx, tx); err != nil {

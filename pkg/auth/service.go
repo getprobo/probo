@@ -15,16 +15,14 @@
 package auth
 
 import (
-	"bytes"
 	"context"
-	_ "embed"
 	"errors"
 	"fmt"
-	"html/template"
 	"net/mail"
 	"net/url"
 	"time"
 
+	"github.com/getprobo/probo/packages/emails"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/passwdhash"
 	"github.com/getprobo/probo/pkg/gid"
@@ -98,18 +96,6 @@ type (
 const (
 	TokenTypeEmailConfirmation = "email_confirmation"
 	TokenTypePasswordReset     = "password_reset"
-)
-
-var (
-	//go:embed emails/signup_confirmation.txt.tmpl
-	signupEmailTemplateData string
-	signupEmailTemplate     = template.Must(template.New("signup").Parse(signupEmailTemplateData))
-	signupEmailSubject      = "Confirm your email address"
-
-	//go:embed emails/password_reset.txt.tmpl
-	passwordResetEmailTemplateData string
-	passwordResetEmailTemplate     = template.Must(template.New("password_reset").Parse(passwordResetEmailTemplateData))
-	passwordResetEmailSubject      = "Reset your password"
 )
 
 func (e ErrInvalidCredentials) Error() string {
@@ -204,23 +190,20 @@ func (s Service) ForgetPassword(
 				return fmt.Errorf("cannot load user: %w", err)
 			}
 
-			body := bytes.NewBuffer(nil)
-			err = passwordResetEmailTemplate.Execute(
-				body,
-				map[string]string{
-					"FullName": user.FullName,
-					"ResetURL": resetPasswordUrl.String(),
-				},
+			subject, textBody, htmlBody, err := emails.RenderPasswordReset(
+				user.FullName,
+				resetPasswordUrl.String(),
 			)
 			if err != nil {
-				return fmt.Errorf("cannot execute password reset template: %w", err)
+				return fmt.Errorf("cannot render password reset email: %w", err)
 			}
 
 			passwordResetEmail := coredata.NewEmail(
 				user.FullName,
 				email,
-				passwordResetEmailSubject,
-				body.String(),
+				subject,
+				textBody,
+				htmlBody,
 			)
 			if err := passwordResetEmail.Insert(ctx, conn); err != nil {
 				return fmt.Errorf("cannot insert email: %w", err)
@@ -308,23 +291,20 @@ func (s Service) SignUp(
 				}.Encode(),
 			}
 
-			body := bytes.NewBuffer(nil)
-			err = signupEmailTemplate.Execute(
-				body,
-				map[string]string{
-					"FullName":        user.FullName,
-					"ConfirmationURL": confirmationUrl.String(),
-				},
+			subject, textBody, htmlBody, err := emails.RenderConfirmEmail(
+				user.FullName,
+				confirmationUrl.String(),
 			)
 			if err != nil {
-				return fmt.Errorf("cannot execute signup template: %w", err)
+				return fmt.Errorf("cannot render confirmation email: %w", err)
 			}
 
 			confirmationEmail := coredata.NewEmail(
 				user.FullName,
 				user.EmailAddress,
-				signupEmailSubject,
-				body.String(),
+				subject,
+				textBody,
+				htmlBody,
 			)
 
 			if err := confirmationEmail.Insert(ctx, tx); err != nil {

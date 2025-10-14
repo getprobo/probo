@@ -25,6 +25,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/getprobo/probo/packages/emails"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
@@ -39,14 +40,6 @@ import (
 const (
 	maxStateOfApplicabilityLimit  = 10_000
 	frameworkExportEmailExpiresIn = 24 * time.Hour
-	frameworkExportEmailSubject   = "Your framework export is ready"
-	frameworkExportEmailBody      = `
-Your framework export has been completed successfully.
-
-You can download the export using the link below:
-[1] %s
-
-This link will expire in 24 hours.`
 )
 
 type (
@@ -715,11 +708,20 @@ func (s FrameworkService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
+			subject, textBody, htmlBody, err := emails.RenderFrameworkExport(
+				recipientName,
+				downloadURL,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot render framework export email: %w", err)
+			}
+
 			email := coredata.NewEmail(
 				recipientName,
 				recipientEmail,
-				frameworkExportEmailSubject,
-				fmt.Sprintf(frameworkExportEmailBody, downloadURL),
+				subject,
+				textBody,
+				htmlBody,
 			)
 
 			if err := email.Insert(ctx, tx); err != nil {

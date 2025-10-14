@@ -1,0 +1,11 @@
+Probo
+
+Hi {{.FullName}},
+
+You have been invited to join organization {{.OrganizationName}} on Probo. Click the link below to accept the invitation:
+
+{{.InvitationUrl}}
+
+If you don't want to accept the invitation, you can ignore this email.
+
+Probo Inc, 490 Post St, STE 640, San Francisco, CA, 94102, US

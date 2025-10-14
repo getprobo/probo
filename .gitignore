@@ -3,6 +3,7 @@ node_modules/
 .turbo
 .vscode
 dist/
+.react-email/
 sbom.json
 sbom-docker.json
 *_sbom.json

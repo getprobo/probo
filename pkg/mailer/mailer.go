@@ -149,6 +149,10 @@ func (m *Mailer) batchSendEmails(ctx context.Context) error {
 					To(email.RecipientName, email.RecipientEmail).
 					Text([]byte(email.TextBody))
 
+				if email.HtmlBody != nil {
+					mail = mail.HTML([]byte(*email.HtmlBody))
+				}
+
 				envelope, err := mail.Build()
 				if err != nil {
 					return fmt.Errorf("cannot build email: %w", err)

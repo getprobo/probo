@@ -15,15 +15,13 @@
 package authz
 
 import (
-	"bytes"
 	"context"
-	_ "embed"
 	"errors"
 	"fmt"
 	"net/url"
-	"text/template"
 	"time"
 
+	"github.com/getprobo/probo/packages/emails"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
@@ -62,14 +60,6 @@ const (
 
 const (
 	TokenTypeOrganizationInvitation = "organization_invitation"
-)
-
-var (
-	//go:embed emails/invitation.txt.tmpl
-	invitationEmailBodyData string
-
-	invitationEmailBodyTemplate = template.Must(template.New("invitation").Parse(invitationEmailBodyData))
-	invitationEmailSubject      = "Invitation to join organization"
 )
 
 func NewService(
@@ -681,21 +671,15 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 			CreatedAt:      now,
 		}
 
-		body := bytes.NewBuffer(nil)
 		var err error
+		var invitationURL string
+		var recipientName string
+
 		if userExists {
-			err = invitationEmailBodyTemplate.Execute(
-				body,
-				map[string]string{
-					"FullName":         user.FullName,
-					"OrganizationName": organization.Name,
-					"InvitationURL":    fmt.Sprintf("https://%s/", s.hostname),
-				},
-			)
-			if err != nil {
-				return fmt.Errorf("failed to execute template: %w", err)
-			}
+			recipientName = user.FullName
+			invitationURL = fmt.Sprintf("https://%s/", s.hostname)
 		} else {
+			recipientName = fullName
 			invitationData := coredata.InvitationData{
 				InvitationID:   invitationID,
 				OrganizationID: organizationID,
@@ -714,24 +698,24 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 				return fmt.Errorf("failed to generate invitation token: %w", err)
 			}
 
-			err = invitationEmailBodyTemplate.Execute(
-				body,
-				map[string]string{
-					"FullName":         fullName,
-					"OrganizationName": organization.Name,
-					"InvitationURL":    fmt.Sprintf("https://%s/auth/signup-from-invitation?token=%s&fullName=%s", s.hostname, invitationToken, url.QueryEscape(fullName)),
-				},
-			)
-			if err != nil {
-				return fmt.Errorf("failed to execute template: %w", err)
-			}
+			invitationURL = fmt.Sprintf("https://%s/auth/signup-from-invitation?token=%s&fullName=%s", s.hostname, invitationToken, url.QueryEscape(fullName))
+		}
+
+		subject, textBody, htmlBody, err := emails.RenderInvitation(
+			recipientName,
+			organization.Name,
+			invitationURL,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to render invitation email: %w", err)
 		}
 
 		email := coredata.NewEmail(
 			fullName,
 			emailAddress,
-			invitationEmailSubject,
-			body.String(),
+			subject,
+			textBody,
+			htmlBody,
 		)
 
 		if err := email.Insert(ctx, tx); err != nil {
