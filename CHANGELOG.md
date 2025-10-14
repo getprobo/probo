@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.72.0] - 2025-10-14
+
+### Added
+
+- Add retry tracking for certificate provisioning and renewal.
+- Add automatic cleanup of stale provisioning attempts (4+ hours old)
+- Add max retry limit (3 attempts) before marking domains as failed
+- Add distinction between fatal and transient ACME errors
+
+### Changed
+
+- Silently reject TLS connections without SNI (health checks, scanners)
+
+### Fixed
+
+- Fix stale certificate provisioning attempts blocking the queue
+
 ## [0.71.0] - 2025-10-14
 
 ### Fixed
