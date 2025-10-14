@@ -32,6 +32,7 @@ type (
 		RecipientName  string     `db:"recipient_name"`
 		Subject        string     `db:"subject"`
 		TextBody       string     `db:"text_body"`
+		HtmlBody       *string    `db:"html_body"`
 		CreatedAt      time.Time  `db:"created_at"`
 		UpdatedAt      time.Time  `db:"updated_at"`
 		SentAt         *time.Time `db:"sent_at"`
@@ -46,7 +47,8 @@ func NewEmail(
 	recipientName string,
 	recipientEmail string,
 	subject string,
-	body string,
+	textBody string,
+	htmlBody *string,
 ) *Email {
 	now := time.Now()
 	return &Email{
@@ -54,7 +56,8 @@ func NewEmail(
 		RecipientName:  recipientName,
 		RecipientEmail: recipientEmail,
 		Subject:        subject,
-		TextBody:       body,
+		TextBody:       textBody,
+		HtmlBody:       htmlBody,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -65,8 +68,8 @@ func (e *Email) Insert(
 	conn pg.Conn,
 ) error {
 	q := `
-INSERT INTO emails (id, recipient_email, recipient_name, subject, text_body, created_at, updated_at)
-VALUES (@id, @recipient_email, @recipient_name, @subject, @text_body, @created_at, @updated_at)
+INSERT INTO emails (id, recipient_email, recipient_name, subject, text_body, html_body, created_at, updated_at)
+VALUES (@id, @recipient_email, @recipient_name, @subject, @text_body, @html_body, @created_at, @updated_at)
 	`
 
 	args := pgx.StrictNamedArgs{
@@ -75,6 +78,7 @@ VALUES (@id, @recipient_email, @recipient_name, @subject, @text_body, @created_a
 		"recipient_name":  e.RecipientName,
 		"subject":         e.Subject,
 		"text_body":       e.TextBody,
+		"html_body":       e.HtmlBody,
 		"created_at":      e.CreatedAt,
 		"updated_at":      e.UpdatedAt,
 	}
@@ -88,7 +92,7 @@ func (e *Email) LoadNextUnsentForUpdate(
 	conn pg.Conn,
 ) error {
 	q := `
-SELECT id, recipient_email, recipient_name, subject, text_body, created_at, updated_at, sent_at
+SELECT id, recipient_email, recipient_name, subject, text_body, html_body, created_at, updated_at, sent_at
 FROM emails
 WHERE sent_at IS NULL
 ORDER BY created_at ASC

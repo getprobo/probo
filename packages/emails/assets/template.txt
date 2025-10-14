@@ -1,0 +1,18 @@
+{{.Header}}
+
+Hi {{.FullName}},
+
+{{.Body}}
+{{if .ButtonURL}}
+
+{{.ButtonText}}: {{.ButtonURL}}
+{{end}}
+{{if .Footer}}
+
+{{.Footer}}
+{{end}}
+
+Thanks,
+Probo Team
+
+Powered by Probo - https://www.getprobo.com

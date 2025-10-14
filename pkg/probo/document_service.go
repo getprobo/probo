@@ -2,6 +2,7 @@ package probo
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -19,6 +20,7 @@ import (
 	"github.com/getprobo/probo/pkg/docgen"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
+	"github.com/getprobo/probo/pkg/mailer"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/statelesstoken"
 	"github.com/getprobo/probo/pkg/watermarkpdf"
@@ -79,20 +81,26 @@ const (
 	TokenTypeSigningRequest = "signing_request"
 
 	documentExportEmailExpiresIn = 24 * time.Hour
-	documentExportEmailSubject   = "Your document export is ready"
-	documentExportEmailBody      = `
-Your document export has been completed successfully.
-
-You can download the export using the link below:
-[1] %s
-
-This link will expire in 24 hours.`
 
 	maxFilenameLength = 200
 )
 
 var (
 	invalidFilenameChars = regexp.MustCompile(`[<>:"/\\|?*\x00-\x1f\x7f]`)
+)
+
+const (
+	signingRequestEmailSubject    = "Documents Signing Request"
+	signingRequestEmailHeader     = "Documents Awaiting Signature"
+	signingRequestEmailBody       = "You have documents awaiting your signature. Click the button below to review and sign them:"
+	signingRequestEmailButtonText = "Review and Sign Documents"
+	signingRequestEmailFooter     = "If you have any questions, please contact your organization administrator."
+
+	documentExportEmailSubject    = "Your document export is ready"
+	documentExportEmailHeader     = "Your Document Export is Ready"
+	documentExportEmailBody       = "Your document export has been completed successfully. Click the button below to download it:"
+	documentExportEmailButtonText = "Download Export"
+	documentExportEmailFooter     = "This link will expire in 24 hours."
 )
 
 func (e ErrSignatureNotCancellable) Error() string {
@@ -426,10 +434,6 @@ func (s *DocumentService) SendSigningNotifications(
 			}
 
 			for _, people := range peoples {
-				now := time.Now()
-
-				emailID := gid.New(s.svc.scope.GetTenantID(), coredata.EmailEntityType)
-
 				token, err := statelesstoken.NewToken(
 					s.svc.tokenSecret,
 					TokenTypeSigningRequest,
@@ -452,15 +456,36 @@ func (s *DocumentService) SendSigningNotifications(
 					}.Encode(),
 				}
 
-				email := &coredata.Email{
-					ID:             emailID,
-					RecipientEmail: people.PrimaryEmailAddress,
-					RecipientName:  people.FullName,
-					Subject:        "Probo - Documents Signing Request",
-					TextBody:       fmt.Sprintf("Hi,\nYou have documents awaiting your signature. Please follow this link to sign them: %s", signRequestURL.String()),
-					CreatedAt:      now,
-					UpdatedAt:      now,
+				emailData := mailer.EmailData{
+					Subject:    signingRequestEmailSubject,
+					Header:     signingRequestEmailHeader,
+					FullName:   people.FullName,
+					Body:       signingRequestEmailBody,
+					ButtonText: signingRequestEmailButtonText,
+					ButtonURL:  signRequestURL.String(),
+					Footer:     signingRequestEmailFooter,
 				}
+
+				textBody := bytes.NewBuffer(nil)
+				err = mailer.Text().Execute(textBody, emailData)
+				if err != nil {
+					return fmt.Errorf("cannot execute signing request text template: %w", err)
+				}
+
+				htmlBody := bytes.NewBuffer(nil)
+				err = mailer.HTML().Execute(htmlBody, emailData)
+				if err != nil {
+					return fmt.Errorf("cannot execute signing request html template: %w", err)
+				}
+
+				htmlBodyStr := htmlBody.String()
+				email := coredata.NewEmail(
+					people.FullName,
+					people.PrimaryEmailAddress,
+					signingRequestEmailSubject,
+					textBody.String(),
+					&htmlBodyStr,
+				)
 
 				if err := email.Insert(ctx, tx); err != nil {
 					return fmt.Errorf("cannot insert email: %w", err)
@@ -1560,11 +1585,35 @@ func (s *DocumentService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
+			emailData := mailer.EmailData{
+				Subject:    documentExportEmailSubject,
+				Header:     documentExportEmailHeader,
+				FullName:   recipientName,
+				Body:       documentExportEmailBody,
+				ButtonText: documentExportEmailButtonText,
+				ButtonURL:  downloadURL,
+				Footer:     documentExportEmailFooter,
+			}
+
+			textBody := bytes.NewBuffer(nil)
+			err = mailer.Text().Execute(textBody, emailData)
+			if err != nil {
+				return fmt.Errorf("cannot execute document export text template: %w", err)
+			}
+
+			htmlBody := bytes.NewBuffer(nil)
+			err = mailer.HTML().Execute(htmlBody, emailData)
+			if err != nil {
+				return fmt.Errorf("cannot execute document export html template: %w", err)
+			}
+
+			htmlBodyStr := htmlBody.String()
 			email := coredata.NewEmail(
 				recipientName,
 				recipientEmail,
 				documentExportEmailSubject,
-				fmt.Sprintf(documentExportEmailBody, downloadURL),
+				textBody.String(),
+				&htmlBodyStr,
 			)
 
 			if err := email.Insert(ctx, tx); err != nil {

@@ -16,6 +16,7 @@ package probo
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -28,6 +29,7 @@ import (
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/html2pdf"
+	"github.com/getprobo/probo/pkg/mailer"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/slug"
 	"github.com/getprobo/probo/pkg/soagen"
@@ -39,14 +41,12 @@ import (
 const (
 	maxStateOfApplicabilityLimit  = 10_000
 	frameworkExportEmailExpiresIn = 24 * time.Hour
-	frameworkExportEmailSubject   = "Your framework export is ready"
-	frameworkExportEmailBody      = `
-Your framework export has been completed successfully.
 
-You can download the export using the link below:
-[1] %s
-
-This link will expire in 24 hours.`
+	frameworkExportEmailSubject    = "Your framework export is ready"
+	frameworkExportEmailHeader     = "Your Framework Export is Ready"
+	frameworkExportEmailBody       = "Your framework export has been completed successfully. Click the button below to download it:"
+	frameworkExportEmailButtonText = "Download Export"
+	frameworkExportEmailFooter     = "This link will expire in 24 hours."
 )
 
 type (
@@ -715,11 +715,35 @@ func (s FrameworkService) SendExportEmail(
 				return fmt.Errorf("cannot generate download URL: %w", err)
 			}
 
+			emailData := mailer.EmailData{
+				Subject:    frameworkExportEmailSubject,
+				Header:     frameworkExportEmailHeader,
+				FullName:   recipientName,
+				Body:       frameworkExportEmailBody,
+				ButtonText: frameworkExportEmailButtonText,
+				ButtonURL:  downloadURL,
+				Footer:     frameworkExportEmailFooter,
+			}
+
+			textBody := bytes.NewBuffer(nil)
+			err = mailer.Text().Execute(textBody, emailData)
+			if err != nil {
+				return fmt.Errorf("cannot execute framework export text template: %w", err)
+			}
+
+			htmlBody := bytes.NewBuffer(nil)
+			err = mailer.HTML().Execute(htmlBody, emailData)
+			if err != nil {
+				return fmt.Errorf("cannot execute framework export html template: %w", err)
+			}
+
+			htmlBodyStr := htmlBody.String()
 			email := coredata.NewEmail(
 				recipientName,
 				recipientEmail,
 				frameworkExportEmailSubject,
-				fmt.Sprintf(frameworkExportEmailBody, downloadURL),
+				textBody.String(),
+				&htmlBodyStr,
 			)
 
 			if err := email.Insert(ctx, tx); err != nil {

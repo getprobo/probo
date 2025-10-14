@@ -15,6 +15,7 @@
 package probo
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/mail"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/mailer"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/statelesstoken"
 	"go.gearno.de/kit/pg"
@@ -58,18 +60,11 @@ type (
 )
 
 const (
-	trustCenterAccessEmailSubject  = "Trust Center Access Invitation - %s"
-	trustCenterAccessEmailTemplate = `
-	You have been granted access to %s's Trust Center!
-
-	Click the link below to access it:
-
-	[1] %s
-
-	This link will expire in 7 days.
-
-	If the link above doesn't work, copy and paste the entire URL into your browser.
-	`
+	trustCenterAccessEmailSubjectFormat = "Trust Center Access Invitation - %s"
+	trustCenterAccessEmailHeader        = "Trust Center Access"
+	trustCenterAccessEmailBodyFormat    = "You have been granted access to %s's Trust Center! Click the button below to access it:"
+	trustCenterAccessEmailButtonText    = "Access Trust Center"
+	trustCenterAccessEmailFooter        = "This link will expire in 7 days."
 )
 
 func (s TrustCenterAccessService) ListForTrustCenterID(
@@ -421,11 +416,35 @@ func (s TrustCenterAccessService) sendTrustCenterAccessEmail(
 	companyName string,
 	accessURL string,
 ) error {
+	emailData := mailer.EmailData{
+		Subject:    fmt.Sprintf(trustCenterAccessEmailSubjectFormat, companyName),
+		Header:     trustCenterAccessEmailHeader,
+		FullName:   name,
+		Body:       fmt.Sprintf(trustCenterAccessEmailBodyFormat, companyName),
+		ButtonText: trustCenterAccessEmailButtonText,
+		ButtonURL:  accessURL,
+		Footer:     trustCenterAccessEmailFooter,
+	}
+
+	textBody := bytes.NewBuffer(nil)
+	err := mailer.Text().Execute(textBody, emailData)
+	if err != nil {
+		return fmt.Errorf("cannot execute trust center access text template: %w", err)
+	}
+
+	htmlBody := bytes.NewBuffer(nil)
+	err = mailer.HTML().Execute(htmlBody, emailData)
+	if err != nil {
+		return fmt.Errorf("cannot execute trust center access html template: %w", err)
+	}
+
+	htmlBodyStr := htmlBody.String()
 	accessEmail := coredata.NewEmail(
 		name,
 		email,
-		fmt.Sprintf(trustCenterAccessEmailSubject, companyName),
-		fmt.Sprintf(trustCenterAccessEmailTemplate, companyName, accessURL),
+		fmt.Sprintf("Trust Center Access Invitation - %s", companyName),
+		textBody.String(),
+		&htmlBodyStr,
 	)
 
 	if err := accessEmail.Insert(ctx, tx); err != nil {

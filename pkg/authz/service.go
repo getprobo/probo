@@ -17,15 +17,14 @@ package authz
 import (
 	"bytes"
 	"context"
-	_ "embed"
 	"errors"
 	"fmt"
 	"net/url"
-	"text/template"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/mailer"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/getprobo/probo/pkg/statelesstoken"
 	"go.gearno.de/kit/pg"
@@ -62,14 +61,12 @@ const (
 
 const (
 	TokenTypeOrganizationInvitation = "organization_invitation"
-)
 
-var (
-	//go:embed emails/invitation.txt.tmpl
-	invitationEmailBodyData string
-
-	invitationEmailBodyTemplate = template.Must(template.New("invitation").Parse(invitationEmailBodyData))
-	invitationEmailSubject      = "Invitation to join organization"
+	invitationEmailSubject    = "Invitation to join organization"
+	invitationEmailHeader     = "Organization Invitation"
+	invitationEmailBodyFormat = "You have been invited to join organization %s. Click the button below to accept the invitation:"
+	invitationEmailButtonText = "Accept Invitation"
+	invitationEmailFooter     = "If you don't want to accept the invitation, you can ignore this email."
 )
 
 func NewService(
@@ -681,21 +678,15 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 			CreatedAt:      now,
 		}
 
-		body := bytes.NewBuffer(nil)
 		var err error
+		var invitationURL string
+		var recipientName string
+
 		if userExists {
-			err = invitationEmailBodyTemplate.Execute(
-				body,
-				map[string]string{
-					"FullName":         user.FullName,
-					"OrganizationName": organization.Name,
-					"InvitationURL":    fmt.Sprintf("https://%s/", s.hostname),
-				},
-			)
-			if err != nil {
-				return fmt.Errorf("failed to execute template: %w", err)
-			}
+			recipientName = user.FullName
+			invitationURL = fmt.Sprintf("https://%s/", s.hostname)
 		} else {
+			recipientName = fullName
 			invitationData := coredata.InvitationData{
 				InvitationID:   invitationID,
 				OrganizationID: organizationID,
@@ -714,24 +705,38 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 				return fmt.Errorf("failed to generate invitation token: %w", err)
 			}
 
-			err = invitationEmailBodyTemplate.Execute(
-				body,
-				map[string]string{
-					"FullName":         fullName,
-					"OrganizationName": organization.Name,
-					"InvitationURL":    fmt.Sprintf("https://%s/auth/signup-from-invitation?token=%s&fullName=%s", s.hostname, invitationToken, url.QueryEscape(fullName)),
-				},
-			)
-			if err != nil {
-				return fmt.Errorf("failed to execute template: %w", err)
-			}
+			invitationURL = fmt.Sprintf("https://%s/auth/signup-from-invitation?token=%s&fullName=%s", s.hostname, invitationToken, url.QueryEscape(fullName))
 		}
 
+		emailData := mailer.EmailData{
+			Subject:    invitationEmailSubject,
+			Header:     invitationEmailHeader,
+			FullName:   recipientName,
+			Body:       fmt.Sprintf(invitationEmailBodyFormat, organization.Name),
+			ButtonText: invitationEmailButtonText,
+			ButtonURL:  invitationURL,
+			Footer:     invitationEmailFooter,
+		}
+
+		textBody := bytes.NewBuffer(nil)
+		err = mailer.Text().Execute(textBody, emailData)
+		if err != nil {
+			return fmt.Errorf("failed to execute text template: %w", err)
+		}
+
+		htmlBody := bytes.NewBuffer(nil)
+		err = mailer.HTML().Execute(htmlBody, emailData)
+		if err != nil {
+			return fmt.Errorf("failed to execute html template: %w", err)
+		}
+
+		htmlBodyStr := htmlBody.String()
 		email := coredata.NewEmail(
 			fullName,
 			emailAddress,
 			invitationEmailSubject,
-			body.String(),
+			textBody.String(),
+			&htmlBodyStr,
 		)
 
 		if err := email.Insert(ctx, tx); err != nil {
