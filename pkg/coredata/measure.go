@@ -65,7 +65,9 @@ func (m *Measures) CountByRiskID(
 WITH msrs AS (
 	SELECT
 		m.id,
-		m.tenant_id
+		m.tenant_id,
+		m.search_vector,
+		m.state
 	FROM
 		measures m
 	INNER JOIN
@@ -116,7 +118,8 @@ WITH msrs AS (
 		m.state,
 		m.reference_id,
 		m.created_at,
-		m.updated_at
+		m.updated_at,
+		m.search_vector
 	FROM
 		measures m
 	INNER JOIN
@@ -133,7 +136,8 @@ SELECT
 	state,
 	reference_id,
 	created_at,
-	updated_at
+	updated_at,
+	search_vector
 FROM
 	msrs
 WHERE %s
@@ -173,7 +177,9 @@ func (m *Measures) CountByControlID(
 WITH mtgtns AS (
 		SELECT
 			m.id,
-			m.tenant_id
+			m.tenant_id,
+			m.search_vector,
+			m.state
 		FROM
 			measures m
 		INNER JOIN
