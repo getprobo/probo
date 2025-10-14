@@ -32,7 +32,14 @@ type (
 		cache         sync.Map
 		encryptionKey cipher.EncryptionKey
 	}
+
+	// NoSNIError is returned when a TLS client doesn't provide SNI (Server Name Indication)
+	NoSNIError struct{}
 )
+
+func (e *NoSNIError) Error() string {
+	return "no SNI provided"
+}
 
 func NewSelector(
 	pg *pg.Client,
@@ -49,7 +56,7 @@ func (s *Selector) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate,
 
 	// Empty domain, return error
 	if domain == "" {
-		return nil, fmt.Errorf("no SNI provided")
+		return nil, &NoSNIError{}
 	}
 
 	if cached, ok := s.cache.Load(domain); ok {

@@ -614,8 +614,18 @@ func (impl *Implm) runTrustCenterServer(
 	)
 
 	httpsServer.TLSConfig = &tls.Config{
-		GetCertificate: certSelector.GetCertificate,
-		MinVersion:     tls.VersionTLS12,
+		GetCertificate: func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+			cert, err := certSelector.GetCertificate(hello)
+			// Silently reject connections without SNI (load balancers, health checks, scanners)
+			if err != nil {
+				var noSNIErr *certmanager.NoSNIError
+				if errors.As(err, &noSNIErr) {
+					return nil, nil
+				}
+			}
+			return cert, err
+		},
+		MinVersion: tls.VersionTLS12,
 		CipherSuites: []uint16{
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
