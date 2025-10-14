@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+
+### Changed
+
+- Remove trust center slug config UI
+- Add EU as possible contry code for vendor
+
 ## [0.70.0] - 2025-10-14
 
 ### Added
