@@ -78,9 +78,26 @@ func (m Membership) CursorKey(orderBy MembershipOrderField) page.CursorKey {
 
 func (m *Membership) Create(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
-		INSERT INTO authz_memberships (tenant_id, id, user_id, organization_id, role, created_at, updated_at)
-		VALUES (@tenant_id, @id, @user_id, @organization_id, @role, @created_at, @updated_at)
-	`
+INSERT INTO
+    authz_memberships (
+        tenant_id,
+        id,
+        user_id,
+        organization_id,
+        role,
+        created_at,
+        updated_at
+    )
+VALUES (
+    @tenant_id,
+    @id,
+    @user_id,
+    @organization_id,
+    @role,
+    @created_at,
+    @updated_at
+);
+`
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
@@ -98,11 +115,11 @@ func (m *Membership) Create(ctx context.Context, conn pg.Conn, scope Scoper) err
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return ErrMembershipAlreadyExists{UserID: m.UserID, OrgID: m.OrganizationID}
 		}
-		return fmt.Errorf("failed to create membership: %w", err)
+		return fmt.Errorf("cannot create membership: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
-		return fmt.Errorf("failed to create membership: organization %s not found", m.OrganizationID)
+		return fmt.Errorf("cannot create membership: organization %s not found", m.OrganizationID)
 	}
 
 	return nil
@@ -115,19 +132,23 @@ func (m *Membership) LoadByID(
 	membershipID gid.GID,
 ) error {
 	query := `
-		SELECT
-			m.id,
-			m.user_id,
-			m.organization_id,
-			m.role,
-			u.fullname as full_name,
-			u.email_address,
-			m.created_at,
-			m.updated_at
-		FROM authz_memberships m
-		JOIN users u ON m.user_id = u.id
-		WHERE m.id = @membership_id AND %s
-	`
+SELECT
+    m.id,
+    m.user_id,
+    m.organization_id,
+    m.role,
+    u.fullname as full_name,
+    u.email_address,
+    m.created_at,
+    m.updated_at
+FROM
+    authz_memberships m
+JOIN
+    users u ON m.user_id = u.id
+WHERE
+    m.id = @membership_id
+    AND %s
+`
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
@@ -161,19 +182,24 @@ func (m *Membership) LoadByUserAndOrg(
 	orgID gid.GID,
 ) error {
 	query := `
-		SELECT
-			m.id,
-			m.user_id,
-			m.organization_id,
-			m.role,
-			u.fullname as full_name,
-			u.email_address,
-			m.created_at,
-			m.updated_at
-		FROM authz_memberships m
-		JOIN users u ON m.user_id = u.id
-		WHERE m.user_id = @user_id AND m.organization_id = @organization_id AND %s
-	`
+SELECT
+    m.id,
+    m.user_id,
+    m.organization_id,
+    m.role,
+    u.fullname as full_name,
+    u.email_address,
+    m.created_at,
+    m.updated_at
+FROM
+    authz_memberships m
+JOIN
+    users u ON m.user_id = u.id
+WHERE
+    m.user_id = @user_id
+    AND m.organization_id = @organization_id
+    AND %s
+`
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
@@ -202,10 +228,15 @@ func (m *Membership) LoadByUserAndOrg(
 
 func (m *Membership) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
-		UPDATE authz_memberships
-		SET role = @role, updated_at = @updated_at
-		WHERE id = @id AND %s
-	`
+UPDATE
+    authz_memberships
+SET
+    role = @role,
+    updated_at = @updated_at
+WHERE
+    id = @id
+    AND %s
+`
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
@@ -218,7 +249,7 @@ func (m *Membership) Update(ctx context.Context, conn pg.Conn, scope Scoper) err
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
-		return fmt.Errorf("failed to update membership: %w", err)
+		return fmt.Errorf("cannot update membership: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
@@ -230,9 +261,12 @@ func (m *Membership) Update(ctx context.Context, conn pg.Conn, scope Scoper) err
 
 func (m *Membership) Delete(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
-		DELETE FROM authz_memberships
-		WHERE id = @id AND %s
-	`
+DELETE FROM
+    authz_memberships
+WHERE
+    id = @id
+    AND %s
+`
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
@@ -243,7 +277,7 @@ func (m *Membership) Delete(ctx context.Context, conn pg.Conn, scope Scoper) err
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
-		return fmt.Errorf("failed to delete membership: %w", err)
+		return fmt.Errorf("cannot delete membership: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
@@ -261,23 +295,24 @@ func (m *Memberships) LoadByUserID(
 ) error {
 	query := `
 SELECT
-	m.id,
-	m.user_id,
-	m.organization_id,
-	m.role,
-	u.fullname as full_name,
-	u.email_address,
-	m.created_at,
-	m.updated_at
+    m.id,
+    m.user_id,
+    m.organization_id,
+    m.role,
+    u.fullname as full_name,
+    u.email_address,
+    m.created_at,
+    m.updated_at
 FROM
-	authz_memberships m
-JOIN users u ON m.user_id = u.id
+    authz_memberships m
+JOIN
+    users u ON m.user_id = u.id
 WHERE
-	m.user_id = @user_id
-	AND %s
+    m.user_id = @user_id
+    AND %s
 ORDER BY
-	m.created_at DESC
-	`
+    m.created_at DESC
+`
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
@@ -309,21 +344,22 @@ func (m *Memberships) LoadByOrganizationID(
 ) error {
 	query := `
 SELECT
-	m.id,
-	m.user_id,
-	m.organization_id,
-	m.role,
-	u.fullname as full_name,
-	u.email_address,
-	m.created_at,
-	m.updated_at
+    m.id,
+    m.user_id,
+    m.organization_id,
+    m.role,
+    u.fullname as full_name,
+    u.email_address,
+    m.created_at,
+    m.updated_at
 FROM
-	authz_memberships m
-JOIN users u ON m.user_id = u.id
+    authz_memberships m
+JOIN
+    users u ON m.user_id = u.id
 WHERE
-	m.organization_id = @organization_id
-	AND %s
-	AND %s
+    m.organization_id = @organization_id
+    AND %s
+    AND %s
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())
@@ -355,10 +391,14 @@ func (m *Memberships) CountByOrganizationID(
 	organizationID gid.GID,
 ) (int, error) {
 	query := `
-		SELECT COUNT(*)
-		FROM authz_memberships
-		WHERE organization_id = @organization_id AND %s
-	`
+SELECT
+    COUNT(*)
+FROM
+    authz_memberships
+WHERE
+    organization_id = @organization_id
+    AND %s
+`
 	query = fmt.Sprintf(query, scope.SQLFragment())
 	args := pgx.StrictNamedArgs{
 		"organization_id": organizationID,

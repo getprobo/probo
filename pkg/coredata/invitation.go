@@ -51,12 +51,12 @@ type (
 	}
 
 	ErrInvitationNotFound struct {
-		Token string
+		ID string
 	}
 )
 
 func (e ErrInvitationNotFound) Error() string {
-	return fmt.Sprintf("invitation not found: %s", e.Token)
+	return fmt.Sprintf("invitation not found: %s", e.ID)
 }
 
 func (i Invitation) CursorKey(orderBy InvitationOrderField) page.CursorKey {
@@ -84,12 +84,28 @@ func (i Invitation) CursorKey(orderBy InvitationOrderField) page.CursorKey {
 
 func (i *Invitation) Create(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
-		INSERT INTO authz_invitations (
-			tenant_id, id, organization_id, email, full_name, role, expires_at, created_at
-		) VALUES (
-			@tenant_id, @id, @organization_id, @email, @full_name, @role, @expires_at, @created_at
-		)
-	`
+INSERT INTO
+    authz_invitations (
+        tenant_id,
+        id,
+        organization_id,
+        email,
+        full_name,
+        role,
+        expires_at,
+        created_at
+    )
+VALUES (
+    @tenant_id,
+    @id,
+    @organization_id,
+    @email,
+    @full_name,
+    @role,
+    @expires_at,
+    @created_at
+);
+`
 
 	args := pgx.StrictNamedArgs{
 		"tenant_id":       scope.GetTenantID(),
@@ -104,7 +120,7 @@ func (i *Invitation) Create(ctx context.Context, conn pg.Conn, scope Scoper) err
 
 	_, err := conn.Exec(ctx, query, args)
 	if err != nil {
-		return fmt.Errorf("failed to create invitation: %w", err)
+		return fmt.Errorf("cannot create invitation: %w", err)
 	}
 
 	return nil
@@ -117,23 +133,26 @@ func (i *Invitation) LoadByID(
 	id gid.GID,
 ) error {
 	query := `
-		SELECT
-			id,
-			organization_id,
-			email,
-			full_name,
-			role,
-			CASE
-				WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
-				WHEN expires_at < NOW() THEN 'EXPIRED'
-				ELSE 'PENDING'
-			END as status,
-			expires_at,
-			accepted_at,
-			created_at
-		FROM authz_invitations
-		WHERE id = @id AND %s
-	`
+SELECT
+    id,
+    organization_id,
+    email,
+    full_name,
+    role,
+    CASE
+        WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
+        WHEN expires_at < NOW() THEN 'EXPIRED'
+        ELSE 'PENDING'
+    END as status,
+    expires_at,
+    accepted_at,
+    created_at
+FROM
+    authz_invitations
+WHERE
+    id = @id
+    AND %s
+`
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
@@ -150,7 +169,7 @@ func (i *Invitation) LoadByID(
 	invitation, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Invitation])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrInvitationNotFound{Token: id.String()}
+			return ErrInvitationNotFound{ID: id.String()}
 		}
 		return fmt.Errorf("cannot collect invitation: %w", err)
 	}
@@ -161,10 +180,14 @@ func (i *Invitation) LoadByID(
 
 func (i *Invitation) Update(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
-		UPDATE authz_invitations
-		SET accepted_at = @accepted_at
-		WHERE id = @id AND %s
-	`
+UPDATE
+    authz_invitations
+SET
+    accepted_at = @accepted_at
+WHERE
+    id = @id
+    AND %s
+`
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
@@ -176,11 +199,11 @@ func (i *Invitation) Update(ctx context.Context, conn pg.Conn, scope Scoper) err
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
-		return fmt.Errorf("failed to update invitation: %w", err)
+		return fmt.Errorf("cannot update invitation: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrInvitationNotFound{Token: i.ID.String()}
+		return ErrInvitationNotFound{ID: i.ID.String()}
 	}
 
 	return nil
@@ -188,9 +211,12 @@ func (i *Invitation) Update(ctx context.Context, conn pg.Conn, scope Scoper) err
 
 func (i *Invitation) Delete(ctx context.Context, conn pg.Conn, scope Scoper) error {
 	query := `
-		DELETE FROM authz_invitations
-		WHERE id = @id AND %s
-	`
+DELETE FROM
+    authz_invitations
+WHERE
+    id = @id
+    AND %s
+`
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
 
@@ -201,11 +227,11 @@ func (i *Invitation) Delete(ctx context.Context, conn pg.Conn, scope Scoper) err
 
 	result, err := conn.Exec(ctx, query, args)
 	if err != nil {
-		return fmt.Errorf("failed to delete invitation: %w", err)
+		return fmt.Errorf("cannot delete invitation: %w", err)
 	}
 
 	if result.RowsAffected() == 0 {
-		return ErrInvitationNotFound{Token: i.ID.String()}
+		return ErrInvitationNotFound{ID: i.ID.String()}
 	}
 
 	return nil
@@ -221,25 +247,27 @@ func (i *Invitations) LoadByEmail(
 	filter *InvitationFilter,
 ) error {
 	query := `
-		SELECT
-			id,
-			organization_id,
-			email,
-			full_name,
-			role,
-			CASE
-				WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
-				WHEN expires_at < NOW() THEN 'EXPIRED'
-				ELSE 'PENDING'
-			END as status,
-			expires_at,
-			accepted_at,
-			created_at
-		FROM authz_invitations
-		WHERE email = @email
-		AND %s
-		AND %s
-	`
+SELECT
+    id,
+    organization_id,
+    email,
+    full_name,
+    role,
+    CASE
+        WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
+        WHEN expires_at < NOW() THEN 'EXPIRED'
+        ELSE 'PENDING'
+    END as status,
+    expires_at,
+    accepted_at,
+    created_at
+FROM
+    authz_invitations
+WHERE
+    email = @email
+    AND %s
+    AND %s
+`
 
 	query = fmt.Sprintf(query, filter.SQLFragment(), cursor.SQLFragment())
 
@@ -271,24 +299,27 @@ func (i *Invitations) LoadByOrganizationID(
 	cursor *page.Cursor[InvitationOrderField],
 ) error {
 	query := `
-		SELECT
-			id,
-			organization_id,
-			email,
-			full_name,
-			role,
-			CASE
-				WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
-				WHEN expires_at < NOW() THEN 'EXPIRED'
-				ELSE 'PENDING'
-			END as status,
-			expires_at,
-			accepted_at,
-			created_at
-		FROM authz_invitations
-		WHERE organization_id = @organization_id AND %s
-		AND %s
-	`
+SELECT
+    id,
+    organization_id,
+    email,
+    full_name,
+    role,
+    CASE
+        WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
+        WHEN expires_at < NOW() THEN 'EXPIRED'
+        ELSE 'PENDING'
+    END as status,
+    expires_at,
+    accepted_at,
+    created_at
+FROM
+    authz_invitations
+WHERE
+    organization_id = @organization_id
+    AND %s
+    AND %s
+`
 
 	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())
 
