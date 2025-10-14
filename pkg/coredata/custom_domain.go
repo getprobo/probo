@@ -42,6 +42,8 @@ type (
 		SSLCertificateChain    *string               `db:"ssl_certificate_chain"`
 		SSLStatus              CustomDomainSSLStatus `db:"ssl_status"`
 		SSLExpiresAt           *time.Time            `db:"ssl_expires_at"`
+		SSLRetryCount          int                   `db:"ssl_retry_count"`
+		SSLLastAttemptAt       *time.Time            `db:"ssl_last_attempt_at"`
 		CreatedAt              time.Time             `db:"created_at"`
 		UpdatedAt              time.Time             `db:"updated_at"`
 	}
@@ -149,6 +151,8 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
 	created_at,
 	updated_at
 FROM
@@ -199,6 +203,8 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
 	created_at,
 	updated_at
 FROM
@@ -249,6 +255,8 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
 	created_at,
 	updated_at
 FROM
@@ -304,6 +312,8 @@ INSERT INTO custom_domains (
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
 	created_at,
 	updated_at
 ) VALUES (
@@ -319,6 +329,8 @@ INSERT INTO custom_domains (
 	@ssl_certificate_chain,
 	@ssl_status,
 	@ssl_expires_at,
+	@ssl_retry_count,
+	@ssl_last_attempt_at,
 	@created_at,
 	@updated_at
 )
@@ -337,6 +349,8 @@ INSERT INTO custom_domains (
 		"ssl_certificate_chain":     cd.SSLCertificateChain,
 		"ssl_status":                cd.SSLStatus,
 		"ssl_expires_at":            cd.SSLExpiresAt,
+		"ssl_retry_count":           cd.SSLRetryCount,
+		"ssl_last_attempt_at":       cd.SSLLastAttemptAt,
 		"created_at":                cd.CreatedAt,
 		"updated_at":                cd.UpdatedAt,
 	}
@@ -375,6 +389,8 @@ SET
 	ssl_certificate_chain = @ssl_certificate_chain,
 	ssl_status = @ssl_status,
 	ssl_expires_at = @ssl_expires_at,
+	ssl_retry_count = @ssl_retry_count,
+	ssl_last_attempt_at = @ssl_last_attempt_at,
 	updated_at = @updated_at
 WHERE
 	%s
@@ -394,6 +410,8 @@ WHERE
 		"ssl_certificate_chain":     cd.SSLCertificateChain,
 		"ssl_status":                cd.SSLStatus,
 		"ssl_expires_at":            cd.SSLExpiresAt,
+		"ssl_retry_count":           cd.SSLRetryCount,
+		"ssl_last_attempt_at":       cd.SSLLastAttemptAt,
 		"updated_at":                time.Now(),
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -453,6 +471,8 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
 	created_at,
 	updated_at
 FROM
@@ -501,6 +521,8 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
 	created_at,
 	updated_at
 FROM
@@ -551,6 +573,8 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
 	created_at,
 	updated_at
 FROM
@@ -604,6 +628,8 @@ SELECT
 	ssl_certificate_chain,
 	ssl_status,
 	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
 	created_at,
 	updated_at
 FROM
@@ -627,6 +653,65 @@ WHERE
 	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CustomDomain])
 	if err != nil {
 		return fmt.Errorf("cannot collect custom domains: %w", err)
+	}
+
+	*domains = result
+	return nil
+}
+
+func (domains *CustomDomains) ListStaleProvisioningDomains(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+SELECT
+	id,
+	domain,
+	http_challenge_token,
+	http_challenge_key_auth,
+	http_challenge_url,
+	http_order_url,
+	ssl_certificate,
+	encrypted_ssl_private_key,
+	ssl_certificate_chain,
+	ssl_status,
+	ssl_expires_at,
+	ssl_retry_count,
+	ssl_last_attempt_at,
+	created_at,
+	updated_at
+FROM
+	custom_domains
+WHERE
+	%s
+	AND (
+		(ssl_status IN (@provisioning_status, @renewing_status) AND updated_at < CURRENT_TIMESTAMP - INTERVAL '4 hours')
+		OR
+		(ssl_retry_count > 0 AND ssl_last_attempt_at < CURRENT_TIMESTAMP - INTERVAL '24 hours')
+	)
+	AND ssl_status != @failed_status
+	AND ssl_status != @active_status
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.NamedArgs{
+		"provisioning_status": string(CustomDomainSSLStatusProvisioning),
+		"renewing_status":     string(CustomDomainSSLStatusRenewing),
+		"failed_status":       string(CustomDomainSSLStatusFailed),
+		"active_status":       string(CustomDomainSSLStatusActive),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query stale provisioning domains: %w", err)
+	}
+
+	result, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[CustomDomain])
+	if err != nil {
+		return fmt.Errorf("cannot collect stale provisioning domains: %w", err)
 	}
 
 	*domains = result

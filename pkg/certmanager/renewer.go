@@ -171,7 +171,65 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 			return nil
 		}
 
-		return fmt.Errorf("cannot renew certificate: %w", err)
+		r.logger.WarnCtx(
+			ctx,
+			"cannot renew certificate",
+			log.String("domain", lockedDomain.Domain),
+			log.Int("retry_count", lockedDomain.SSLRetryCount),
+			log.Error(err),
+		)
+
+		lockedDomain.SSLRetryCount++
+		now := time.Now()
+		lockedDomain.SSLLastAttemptAt = &now
+
+		const maxRetries = 3
+		if lockedDomain.SSLRetryCount >= maxRetries {
+			r.logger.ErrorCtx(
+				ctx,
+				"domain has exceeded max renewal retry attempts, marking as failed",
+				log.String("domain", lockedDomain.Domain),
+				log.Int("retry_count", lockedDomain.SSLRetryCount),
+			)
+
+			lockedDomain.SSLStatus = coredata.CustomDomainSSLStatusFailed
+			lockedDomain.HTTPChallengeToken = nil
+			lockedDomain.HTTPChallengeKeyAuth = nil
+			lockedDomain.HTTPChallengeURL = nil
+			lockedDomain.HTTPOrderURL = nil
+
+			if updateErr := lockedDomain.Update(ctx, conn, coredata.NewNoScope(), r.encryptionKey); updateErr != nil {
+				r.logger.ErrorCtx(
+					ctx,
+					"cannot mark domain as failed",
+					log.String("domain", lockedDomain.Domain),
+					log.Error(updateErr),
+				)
+				return updateErr
+			}
+
+			return nil
+		}
+
+		// Update retry tracking but keep domain ACTIVE for next renewal cycle
+		if updateErr := lockedDomain.Update(ctx, conn, coredata.NewNoScope(), r.encryptionKey); updateErr != nil {
+			r.logger.ErrorCtx(
+				ctx,
+				"cannot update domain retry tracking",
+				log.String("domain", lockedDomain.Domain),
+				log.Error(updateErr),
+			)
+			return updateErr
+		}
+
+		r.logger.InfoCtx(
+			ctx,
+			"domain will retry renewal on next cycle",
+			log.String("domain", lockedDomain.Domain),
+			log.Int("retry_count", lockedDomain.SSLRetryCount),
+		)
+
+		return nil
 	}
 
 	r.logger.InfoCtx(
@@ -189,6 +247,9 @@ func (r *Renewer) renewDomain(ctx context.Context, conn pg.Conn, domain *coredat
 	lockedDomain.SSLCertificateChain = &chainStr
 	lockedDomain.SSLExpiresAt = &cert.ExpiresAt
 	lockedDomain.SSLStatus = coredata.CustomDomainSSLStatusActive
+
+	lockedDomain.SSLRetryCount = 0
+	lockedDomain.SSLLastAttemptAt = nil
 
 	lockedDomain.HTTPChallengeToken = nil
 	lockedDomain.HTTPChallengeKeyAuth = nil
