@@ -29,14 +29,15 @@ import (
 
 type (
 	Invitation struct {
-		ID             gid.GID    `db:"id"`
-		OrganizationID gid.GID    `db:"organization_id"`
-		Email          string     `db:"email"`
-		FullName       string     `db:"full_name"`
-		Role           string     `db:"role"`
-		ExpiresAt      time.Time  `db:"expires_at"`
-		AcceptedAt     *time.Time `db:"accepted_at"`
-		CreatedAt      time.Time  `db:"created_at"`
+		ID             gid.GID          `db:"id"`
+		OrganizationID gid.GID          `db:"organization_id"`
+		Email          string           `db:"email"`
+		FullName       string           `db:"full_name"`
+		Role           string           `db:"role"`
+		Status         InvitationStatus `db:"status"`
+		ExpiresAt      time.Time        `db:"expires_at"`
+		AcceptedAt     *time.Time       `db:"accepted_at"`
+		CreatedAt      time.Time        `db:"created_at"`
 	}
 
 	Invitations []*Invitation
@@ -116,7 +117,20 @@ func (i *Invitation) LoadByID(
 	id gid.GID,
 ) error {
 	query := `
-		SELECT id, organization_id, email, full_name, role, expires_at, accepted_at, created_at
+		SELECT
+			id,
+			organization_id,
+			email,
+			full_name,
+			role,
+			CASE
+				WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
+				WHEN expires_at < NOW() THEN 'EXPIRED'
+				ELSE 'PENDING'
+			END as status,
+			expires_at,
+			accepted_at,
+			created_at
 		FROM authz_invitations
 		WHERE id = @id AND %s
 	`
@@ -207,7 +221,20 @@ func (i *Invitations) LoadByEmail(
 	filter *InvitationFilter,
 ) error {
 	query := `
-		SELECT id, organization_id, email, full_name, role, expires_at, accepted_at, created_at
+		SELECT
+			id,
+			organization_id,
+			email,
+			full_name,
+			role,
+			CASE
+				WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
+				WHEN expires_at < NOW() THEN 'EXPIRED'
+				ELSE 'PENDING'
+			END as status,
+			expires_at,
+			accepted_at,
+			created_at
 		FROM authz_invitations
 		WHERE email = @email
 		AND %s
@@ -244,7 +271,20 @@ func (i *Invitations) LoadByOrganizationID(
 	cursor *page.Cursor[InvitationOrderField],
 ) error {
 	query := `
-		SELECT id, organization_id, email, full_name, role, expires_at, accepted_at, created_at
+		SELECT
+			id,
+			organization_id,
+			email,
+			full_name,
+			role,
+			CASE
+				WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
+				WHEN expires_at < NOW() THEN 'EXPIRED'
+				ELSE 'PENDING'
+			END as status,
+			expires_at,
+			accepted_at,
+			created_at
 		FROM authz_invitations
 		WHERE organization_id = @organization_id AND %s
 		AND %s

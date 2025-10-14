@@ -771,6 +771,7 @@ type ComplexityRoot struct {
 		ID           func(childComplexity int) int
 		Organization func(childComplexity int) int
 		Role         func(childComplexity int) int
+		Status       func(childComplexity int) int
 	}
 
 	InvitationConnection struct {
@@ -4170,6 +4171,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Invitation.Role(childComplexity), true
+
+	case "Invitation.status":
+		if e.complexity.Invitation.Status == nil {
+			break
+		}
+
+		return e.complexity.Invitation.Status(childComplexity), true
 
 	case "InvitationConnection.edges":
 		if e.complexity.InvitationConnection.Edges == nil {
@@ -9134,6 +9142,16 @@ enum PeopleKind
     )
 }
 
+enum InvitationStatus
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.InvitationStatus") {
+  PENDING
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusPending")
+  ACCEPTED
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusAccepted")
+  EXPIRED
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusExpired")
+}
+
 enum DocumentStatus
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentStatus") {
   DRAFT
@@ -10508,7 +10526,7 @@ input InvitationOrder {
 }
 
 input InvitationFilter {
-  onlyPending: Boolean
+  status: InvitationStatus
 }
 
 input DocumentVersionFilter {
@@ -10801,6 +10819,7 @@ type Invitation implements Node {
   email: String!
   fullName: String!
   role: String!
+  status: InvitationStatus!
   expiresAt: Datetime!
   acceptedAt: Datetime
   createdAt: Datetime!
@@ -21778,6 +21797,8 @@ func (ec *executionContext) fieldContext_AcceptInvitationPayload_invitation(_ co
 				return ec.fieldContext_Invitation_fullName(ctx, field)
 			case "role":
 				return ec.fieldContext_Invitation_role(ctx, field)
+			case "status":
+				return ec.fieldContext_Invitation_status(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_Invitation_expiresAt(ctx, field)
 			case "acceptedAt":
@@ -36420,6 +36441,50 @@ func (ec *executionContext) fieldContext_Invitation_role(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Invitation_status(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Invitation_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.InvitationStatus)
+	fc.Result = res
+	return ec.marshalNInvitationStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Invitation_status(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Invitation",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type InvitationStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Invitation_expiresAt(ctx context.Context, field graphql.CollectedField, obj *types.Invitation) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Invitation_expiresAt(ctx, field)
 	if err != nil {
@@ -36896,6 +36961,8 @@ func (ec *executionContext) fieldContext_InvitationEdge_node(_ context.Context, 
 				return ec.fieldContext_Invitation_fullName(ctx, field)
 			case "role":
 				return ec.fieldContext_Invitation_role(ctx, field)
+			case "status":
+				return ec.fieldContext_Invitation_status(ctx, field)
 			case "expiresAt":
 				return ec.fieldContext_Invitation_expiresAt(ctx, field)
 			case "acceptedAt":
@@ -72048,20 +72115,20 @@ func (ec *executionContext) unmarshalInputInvitationFilter(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"onlyPending"}
+	fieldsInOrder := [...]string{"status"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "onlyPending":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onlyPending"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+		case "status":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			data, err := ec.unmarshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.OnlyPending = data
+			it.Status = data
 		}
 	}
 
@@ -82253,6 +82320,11 @@ func (ec *executionContext) _Invitation(ctx context.Context, sel ast.SelectionSe
 			}
 		case "role":
 			out.Values[i] = ec._Invitation_role(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "status":
+			out.Values[i] = ec._Invitation_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -96418,6 +96490,36 @@ var (
 	}
 )
 
+func (ec *executionContext) unmarshalNInvitationStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx context.Context, v any) (coredata.InvitationStatus, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNInvitationStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInvitationStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx context.Context, sel ast.SelectionSet, v coredata.InvitationStatus) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNInvitationStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNInvitationStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus = map[string]coredata.InvitationStatus{
+		"PENDING":  coredata.InvitationStatusPending,
+		"ACCEPTED": coredata.InvitationStatusAccepted,
+		"EXPIRED":  coredata.InvitationStatusExpired,
+	}
+	marshalNInvitationStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus = map[coredata.InvitationStatus]string{
+		coredata.InvitationStatusPending:  "PENDING",
+		coredata.InvitationStatusAccepted: "ACCEPTED",
+		coredata.InvitationStatusExpired:  "EXPIRED",
+	}
+)
+
 func (ec *executionContext) unmarshalNInviteUserInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐInviteUserInput(ctx context.Context, v any) (types.InviteUserInput, error) {
 	res, err := ec.unmarshalInputInviteUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -101249,6 +101351,38 @@ func (ec *executionContext) unmarshalOInvitationOrder2ᚖgithubᚗcomᚋgetprobo
 	res, err := ec.unmarshalInputInvitationOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
+
+func (ec *executionContext) unmarshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx context.Context, v any) (*coredata.InvitationStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx context.Context, sel ast.SelectionSet, v *coredata.InvitationStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus[*v])
+	return res
+}
+
+var (
+	unmarshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus = map[string]coredata.InvitationStatus{
+		"PENDING":  coredata.InvitationStatusPending,
+		"ACCEPTED": coredata.InvitationStatusAccepted,
+		"EXPIRED":  coredata.InvitationStatusExpired,
+	}
+	marshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus = map[coredata.InvitationStatus]string{
+		coredata.InvitationStatusPending:  "PENDING",
+		coredata.InvitationStatusAccepted: "ACCEPTED",
+		coredata.InvitationStatusExpired:  "EXPIRED",
+	}
+)
 
 func (ec *executionContext) marshalOMeasure2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐMeasure(ctx context.Context, sel ast.SelectionSet, v *types.Measure) graphql.Marshaler {
 	if v == nil {

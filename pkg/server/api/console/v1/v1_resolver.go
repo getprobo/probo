@@ -919,7 +919,7 @@ func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 		invitationFilter := coredata.NewInvitationFilter(nil)
 		if obj.Filter != nil {
-			invitationFilter = coredata.NewInvitationFilter(obj.Filter.OnlyPending)
+			invitationFilter = coredata.NewInvitationFilter(obj.Filter.Status)
 		}
 
 		count, err := r.authzSvc.CountUserInvitations(ctx, user.EmailAddress, invitationFilter)
@@ -5353,7 +5353,7 @@ func (r *viewerResolver) Invitations(ctx context.Context, obj *types.Viewer, fir
 
 	invitationFilter := coredata.NewInvitationFilter(nil)
 	if filter != nil {
-		invitationFilter = coredata.NewInvitationFilter(filter.OnlyPending)
+		invitationFilter = coredata.NewInvitationFilter(filter.Status)
 	}
 
 	invitations, err := r.authzSvc.GetUserInvitations(ctx, user.EmailAddress, cursor, invitationFilter)

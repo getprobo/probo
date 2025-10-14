@@ -1208,14 +1208,15 @@ type ImportMeasurePayload struct {
 }
 
 type Invitation struct {
-	ID           gid.GID       `json:"id"`
-	Email        string        `json:"email"`
-	FullName     string        `json:"fullName"`
-	Role         string        `json:"role"`
-	ExpiresAt    time.Time     `json:"expiresAt"`
-	AcceptedAt   *time.Time    `json:"acceptedAt,omitempty"`
-	CreatedAt    time.Time     `json:"createdAt"`
-	Organization *Organization `json:"organization"`
+	ID           gid.GID                   `json:"id"`
+	Email        string                    `json:"email"`
+	FullName     string                    `json:"fullName"`
+	Role         string                    `json:"role"`
+	Status       coredata.InvitationStatus `json:"status"`
+	ExpiresAt    time.Time                 `json:"expiresAt"`
+	AcceptedAt   *time.Time                `json:"acceptedAt,omitempty"`
+	CreatedAt    time.Time                 `json:"createdAt"`
+	Organization *Organization             `json:"organization"`
 }
 
 func (Invitation) IsNode()             {}
@@ -1227,7 +1228,7 @@ type InvitationEdge struct {
 }
 
 type InvitationFilter struct {
-	OnlyPending *bool `json:"onlyPending,omitempty"`
+	Status *coredata.InvitationStatus `json:"status,omitempty"`
 }
 
 type InvitationOrder struct {

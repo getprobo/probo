@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c25588b7506704dd23d9c8be8672f9ef>>
+ * @generated SignedSource<<fd6d397e513dc681f055a502fa93a6b4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -162,7 +162,7 @@ v8 = {
   "kind": "Literal",
   "name": "filter",
   "value": {
-    "onlyPending": true
+    "status": "PENDING"
   }
 },
 v9 = {
@@ -309,7 +309,7 @@ return {
             "name": "__OrganizationsPage_invitations_connection",
             "plural": false,
             "selections": (v10/*: any*/),
-            "storageKey": "__OrganizationsPage_invitations_connection(filter:{\"onlyPending\":true},orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+            "storageKey": "__OrganizationsPage_invitations_connection(filter:{\"status\":\"PENDING\"},orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
           }
         ],
         "storageKey": null
@@ -361,7 +361,7 @@ return {
             "name": "invitations",
             "plural": false,
             "selections": (v10/*: any*/),
-            "storageKey": "invitations(filter:{\"onlyPending\":true},first:1000,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+            "storageKey": "invitations(filter:{\"status\":\"PENDING\"},first:1000,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
           },
           {
             "alias": null,
@@ -382,7 +382,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5675b3eb7810ef04bf531d7bf988c86c",
+    "cacheID": "f8cd83b9b7ce0e1b43adc7aec05198bb",
     "id": null,
     "metadata": {
       "connection": [
@@ -408,11 +408,11 @@ return {
     },
     "name": "OrganizationsPageQuery",
     "operationKind": "query",
-    "text": "query OrganizationsPageQuery {\n  viewer {\n    organizations(first: 1000, orderBy: {field: NAME, direction: ASC}) {\n      edges {\n        node {\n          id\n          name\n          logoUrl\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    invitations(first: 1000, orderBy: {field: CREATED_AT, direction: DESC}, filter: {onlyPending: true}) {\n      edges {\n        node {\n          id\n          email\n          fullName\n          role\n          expiresAt\n          acceptedAt\n          createdAt\n          organization {\n            id\n            name\n          }\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query OrganizationsPageQuery {\n  viewer {\n    organizations(first: 1000, orderBy: {field: NAME, direction: ASC}) {\n      edges {\n        node {\n          id\n          name\n          logoUrl\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    invitations(first: 1000, orderBy: {field: CREATED_AT, direction: DESC}, filter: {status: PENDING}) {\n      edges {\n        node {\n          id\n          email\n          fullName\n          role\n          expiresAt\n          acceptedAt\n          createdAt\n          organization {\n            id\n            name\n          }\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a548f9c3a434e12c079fb2ff651822d2";
+(node as any).hash = "d1957c93062d07020dc978b0f62bdf41";
 
 export default node;

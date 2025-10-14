@@ -20,19 +20,19 @@ import (
 
 type (
 	InvitationFilter struct {
-		onlyPending *bool
+		status *InvitationStatus
 	}
 )
 
-func NewInvitationFilter(onlyPending *bool) *InvitationFilter {
+func NewInvitationFilter(status *InvitationStatus) *InvitationFilter {
 	return &InvitationFilter{
-		onlyPending: onlyPending,
+		status: status,
 	}
 }
 
 func (f *InvitationFilter) SQLArguments() pgx.NamedArgs {
 	return pgx.NamedArgs{
-		"only_pending": f.onlyPending,
+		"status": f.status,
 	}
 }
 
@@ -40,10 +40,13 @@ func (f *InvitationFilter) SQLFragment() string {
 	return `
 (
 	CASE
-		WHEN @only_pending::boolean IS NOT NULL AND @only_pending::boolean = true THEN
-			(accepted_at IS NULL AND expires_at > NOW())
+		WHEN @status::text IS NOT NULL THEN
+			(CASE
+				WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
+				WHEN expires_at < NOW() THEN 'EXPIRED'
+				ELSE 'PENDING'
+			END) = @status::text
 		ELSE TRUE
 	END
 )`
 }
-

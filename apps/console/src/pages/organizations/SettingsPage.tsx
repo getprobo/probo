@@ -169,6 +169,7 @@ const paginatedInvitationsFragment = graphql`
           email
           fullName
           role
+          status
           expiresAt
           acceptedAt
           createdAt
@@ -836,9 +837,6 @@ function InvitationRow(props: {
     }
   );
 
-  const isExpired = new Date() > new Date(props.invitation.expiresAt);
-  const isAccepted = !!props.invitation.acceptedAt;
-
   const onDelete = () => {
     confirm(
       () => {
@@ -874,9 +872,9 @@ function InvitationRow(props: {
       </Td>
       <Td>{new Date(props.invitation.createdAt).toLocaleDateString()}</Td>
       <Td>
-        {isAccepted ? (
+        {props.invitation.status === "ACCEPTED" ? (
           <Badge variant="success">{__("Accepted")}</Badge>
-        ) : isExpired ? (
+        ) : props.invitation.status === "EXPIRED" ? (
           <Badge variant="danger">{__("Expired")}</Badge>
         ) : (
           <Badge variant="warning">{__("Pending")}</Badge>

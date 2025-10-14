@@ -92,6 +92,16 @@ enum PeopleKind
     )
 }
 
+enum InvitationStatus
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.InvitationStatus") {
+  PENDING
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusPending")
+  ACCEPTED
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusAccepted")
+  EXPIRED
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusExpired")
+}
+
 enum DocumentStatus
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentStatus") {
   DRAFT
@@ -1466,7 +1476,7 @@ input InvitationOrder {
 }
 
 input InvitationFilter {
-  onlyPending: Boolean
+  status: InvitationStatus
 }
 
 input DocumentVersionFilter {
@@ -1759,6 +1769,7 @@ type Invitation implements Node {
   email: String!
   fullName: String!
   role: String!
+  status: InvitationStatus!
   expiresAt: Datetime!
   acceptedAt: Datetime
   createdAt: Datetime!

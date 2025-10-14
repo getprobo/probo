@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9b6812ed468b85a1d3a8684ed1c3ad6f>>
+ * @generated SignedSource<<33365519d19ebac5b95ae4c54652d49d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -247,6 +247,13 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
+                            "name": "status",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
                             "name": "expiresAt",
                             "storageKey": null
                           },
@@ -353,16 +360,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "d1ad09b7e16875a4fc09c5e8dc7e3b7e",
+    "cacheID": "0aa692d4815ddc0a17f76209ea0a5c4f",
     "id": null,
     "metadata": {},
     "name": "SettingsInvitationsRefetchQuery",
     "operationKind": "query",
-    "text": "query SettingsInvitationsRefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: InvitationOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...SettingsPageInvitationsFragment_16fISc\n    id\n  }\n}\n\nfragment SettingsPageInvitationsFragment_16fISc on Organization {\n  invitations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        email\n        fullName\n        role\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query SettingsInvitationsRefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: InvitationOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...SettingsPageInvitationsFragment_16fISc\n    id\n  }\n}\n\nfragment SettingsPageInvitationsFragment_16fISc on Organization {\n  invitations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        email\n        fullName\n        role\n        status\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d971d93653991efde284ed2b87068698";
+(node as any).hash = "f9a1ec38579cea21312ba0a20bb7394a";
 
 export default node;

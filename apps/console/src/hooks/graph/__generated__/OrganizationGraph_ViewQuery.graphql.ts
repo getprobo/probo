@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<df47e943d9509dbbe4d7cf9498941171>>
+ * @generated SignedSource<<8c0884f06c22c11239816cecf638ebbd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -493,6 +493,13 @@ return {
                             "alias": null,
                             "args": null,
                             "kind": "ScalarField",
+                            "name": "status",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
                             "name": "expiresAt",
                             "storageKey": null
                           },
@@ -536,12 +543,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "eb300e10b8aec548831c1610ea7bc0ec",
+    "cacheID": "1f03968306005615bd5d2f70342db661",
     "id": null,
     "metadata": {},
     "name": "OrganizationGraph_ViewQuery",
     "operationKind": "query",
-    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n      ...SettingsPageMembershipsFragment\n      ...SettingsPageInvitationsFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    sslExpiresAt\n  }\n  createdAt\n  updatedAt\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n\nfragment SettingsPageInvitationsFragment on Organization {\n  invitations(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        email\n        fullName\n        role\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SettingsPageMembershipsFragment on Organization {\n  memberships(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        fullName\n        emailAddress\n        role\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n      ...SettingsPageMembershipsFragment\n      ...SettingsPageInvitationsFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    sslExpiresAt\n  }\n  createdAt\n  updatedAt\n  connectors(first: 100) {\n    edges {\n      node {\n        id\n        name\n        type\n        createdAt\n      }\n    }\n  }\n}\n\nfragment SettingsPageInvitationsFragment on Organization {\n  invitations(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        email\n        fullName\n        role\n        status\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SettingsPageMembershipsFragment on Organization {\n  memberships(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        fullName\n        emailAddress\n        role\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
