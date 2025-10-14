@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Fix file download Content-Disposition header format
+
 ## [0.69.0] - 2025-10-13
 
 ### Added

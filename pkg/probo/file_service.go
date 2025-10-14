@@ -93,13 +93,16 @@ func (s FileService) UploadAndSaveFile(
 		return nil, fmt.Errorf("cannot validate file: %w", err)
 	}
 
-	_, err = s.svc.s3.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      &s.svc.bucket,
-		Key:         aws.String(objectKey.String()),
-		Body:        req.Content,
-		Metadata:    s3Metadata,
-		ContentType: aws.String(mimeType),
-	})
+	_, err = s.svc.s3.PutObject(
+		ctx,
+		&s3.PutObjectInput{
+			Bucket:      &s.svc.bucket,
+			Key:         aws.String(objectKey.String()),
+			Body:        req.Content,
+			Metadata:    s3Metadata,
+			ContentType: aws.String(mimeType),
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot upload file to S3: %w", err)
 	}
@@ -120,7 +123,6 @@ func (s FileService) UploadAndSaveFile(
 	err = s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {
-
 			file = &coredata.File{
 				ID:         fileID,
 				BucketName: s.svc.bucket,
@@ -161,18 +163,20 @@ func (s FileService) GenerateFileTempURL(
 
 	// Use RFC 6266/5987 encoding for filename with UTF-8 support
 	encodedFilename := url.QueryEscape(file.FileName)
-	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"; filename*=UTF-8''%s",
+	contentDisposition := fmt.Sprintf("attachment; filename=%q; filename*=UTF-8''%s",
 		encodedFilename, encodedFilename)
 
-	presignedReq, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket:                     aws.String(s.svc.bucket),
-		Key:                        aws.String(file.FileKey),
-		ResponseCacheControl:       aws.String("max-age=3600, public"),
-		ResponseContentType:        aws.String(file.MimeType),
-		ResponseContentDisposition: aws.String(fmt.Sprintf("attachment; filename=\"%s\"", contentDisposition)),
-	}, func(opts *s3.PresignOptions) {
-		opts.Expires = expiresIn
-	})
+	presignedReq, err := presignClient.PresignGetObject(
+		ctx,
+		&s3.GetObjectInput{
+			Bucket:                     &s.svc.bucket,
+			Key:                        &file.FileKey,
+			ResponseCacheControl:       aws.String("max-age=3600, public"),
+			ResponseContentType:        &file.MimeType,
+			ResponseContentDisposition: &contentDisposition,
+		},
+		func(opts *s3.PresignOptions) { opts.Expires = expiresIn },
+	)
 	if err != nil {
 		return "", fmt.Errorf("cannot presign GetObject request: %w", err)
 	}
