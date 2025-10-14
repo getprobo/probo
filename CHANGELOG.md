@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.70.0] - 2025-10-14
+
 ### Added
 
 - Add horizontal logo to documents
