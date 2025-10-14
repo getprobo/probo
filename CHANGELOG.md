@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Add horizontal logo to documents
+
 ### Fixed
 
 - Fix file download Content-Disposition header format
