@@ -1194,6 +1194,7 @@ enum CountryCode
   ER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeER")
   ES @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeES")
   ET @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeET")
+  EU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEU")
   FI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFI")
   FJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFJ")
   FK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFK")
@@ -11122,6 +11123,7 @@ var (
 		"ER": coredata.CountryCodeER,
 		"ES": coredata.CountryCodeES,
 		"ET": coredata.CountryCodeET,
+		"EU": coredata.CountryCodeEU,
 		"FI": coredata.CountryCodeFI,
 		"FJ": coredata.CountryCodeFJ,
 		"FK": coredata.CountryCodeFK,
@@ -11372,6 +11374,7 @@ var (
 		coredata.CountryCodeER: "ER",
 		coredata.CountryCodeES: "ES",
 		coredata.CountryCodeET: "ET",
+		coredata.CountryCodeEU: "EU",
 		coredata.CountryCodeFI: "FI",
 		coredata.CountryCodeFJ: "FJ",
 		coredata.CountryCodeFK: "FK",
@@ -11684,6 +11687,7 @@ var (
 		"ER": coredata.CountryCodeER,
 		"ES": coredata.CountryCodeES,
 		"ET": coredata.CountryCodeET,
+		"EU": coredata.CountryCodeEU,
 		"FI": coredata.CountryCodeFI,
 		"FJ": coredata.CountryCodeFJ,
 		"FK": coredata.CountryCodeFK,
@@ -11934,6 +11938,7 @@ var (
 		coredata.CountryCodeER: "ER",
 		coredata.CountryCodeES: "ES",
 		coredata.CountryCodeET: "ET",
+		coredata.CountryCodeEU: "EU",
 		coredata.CountryCodeFI: "FI",
 		coredata.CountryCodeFJ: "FJ",
 		coredata.CountryCodeFK: "FK",
