@@ -3622,7 +3622,7 @@ input CreateAuditInput {
 
 input UpdateAuditInput {
   id: ID!
-  name: String
+  name: String @goField(omittable: true)
   validFrom: Datetime
   validUntil: Datetime
   state: AuditState

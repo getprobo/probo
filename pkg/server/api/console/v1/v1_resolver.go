@@ -3023,7 +3023,7 @@ func (r *mutationResolver) UpdateAudit(ctx context.Context, input types.UpdateAu
 
 	req := probo.UpdateAuditRequest{
 		ID:                    input.ID,
-		Name:                  &input.Name,
+		Name:                  UnwrapOmittable(input.Name),
 		ValidFrom:             input.ValidFrom,
 		ValidUntil:            input.ValidUntil,
 		State:                 input.State,

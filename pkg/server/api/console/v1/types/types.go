@@ -1733,7 +1733,7 @@ type UpdateAssetPayload struct {
 
 type UpdateAuditInput struct {
 	ID                    gid.GID                         `json:"id"`
-	Name                  *string                         `json:"name,omitempty"`
+	Name                  graphql.Omittable[*string]      `json:"name,omitempty"`
 	ValidFrom             *time.Time                      `json:"validFrom,omitempty"`
 	ValidUntil            *time.Time                      `json:"validUntil,omitempty"`
 	State                 *coredata.AuditState            `json:"state,omitempty"`

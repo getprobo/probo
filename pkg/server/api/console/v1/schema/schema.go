@@ -12672,7 +12672,7 @@ input CreateAuditInput {
 
 input UpdateAuditInput {
   id: ID!
-  name: String
+  name: String @goField(omittable: true)
   validFrom: Datetime
   validUntil: Datetime
   state: AuditState
@@ -73135,7 +73135,7 @@ func (ec *executionContext) unmarshalInputUpdateAuditInput(ctx context.Context, 
 			if err != nil {
 				return it, err
 			}
-			it.Name = data
+			it.Name = graphql.OmittableOf(data)
 		case "validFrom":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validFrom"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
