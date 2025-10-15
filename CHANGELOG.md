@@ -4,11 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.74.0] - 2025-10-15
+
 ### Fixed
 - Fix audit update in trust center settings
 
 ### Changed
 - New signatures page design
+- New emails design
 
 ## [0.73.1] - 2025-10-15
 
