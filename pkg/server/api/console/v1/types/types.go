@@ -146,32 +146,6 @@ type ConfirmEmailPayload struct {
 	Success bool `json:"success"`
 }
 
-type Connector struct {
-	ID        gid.GID   `json:"id"`
-	Name      string    `json:"name"`
-	Type      string    `json:"type"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-func (Connector) IsNode()             {}
-func (this Connector) GetID() gid.GID { return this.ID }
-
-type ConnectorConnection struct {
-	Edges    []*ConnectorEdge `json:"edges"`
-	PageInfo *PageInfo        `json:"pageInfo"`
-}
-
-type ConnectorEdge struct {
-	Cursor page.CursorKey `json:"cursor"`
-	Node   *Connector     `json:"node"`
-}
-
-type ConnectorOrder struct {
-	Field     coredata.ConnectorOrderField `json:"field"`
-	Direction page.OrderDirection          `json:"direction"`
-}
-
 type ContinualImprovement struct {
 	ID           gid.GID                               `json:"id"`
 	SnapshotID   *gid.GID                              `json:"snapshotId,omitempty"`
@@ -1374,7 +1348,7 @@ type Organization struct {
 	HeadquarterAddress    *string                         `json:"headquarterAddress,omitempty"`
 	Memberships           *MembershipConnection           `json:"memberships"`
 	Invitations           *InvitationConnection           `json:"invitations"`
-	Connectors            *ConnectorConnection            `json:"connectors"`
+	SlackConnections      *SlackConnectionConnection      `json:"slackConnections"`
 	Frameworks            *FrameworkConnection            `json:"frameworks"`
 	Controls              *ControlConnection              `json:"controls"`
 	Vendors               *VendorConnection               `json:"vendors"`
@@ -1588,6 +1562,24 @@ type SendSigningNotificationsPayload struct {
 type Session struct {
 	ID        gid.GID   `json:"id"`
 	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+type SlackConnection struct {
+	ID        gid.GID   `json:"id"`
+	Channel   *string   `json:"channel,omitempty"`
+	ChannelID *string   `json:"channelId,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type SlackConnectionConnection struct {
+	Edges    []*SlackConnectionEdge `json:"edges"`
+	PageInfo *PageInfo              `json:"pageInfo"`
+}
+
+type SlackConnectionEdge struct {
+	Cursor page.CursorKey   `json:"cursor"`
+	Node   *SlackConnection `json:"node"`
 }
 
 type Snapshot struct {

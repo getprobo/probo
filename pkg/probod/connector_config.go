@@ -17,15 +17,16 @@ package probod
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/getprobo/probo/pkg/connector"
 )
 
 type (
 	connectorConfig struct {
-		Name   string                 `json:"name"`
-		Type   connector.ProtocolType `json:"type"`
-		Config connector.Connector    `json:"-"`
+		Provider string                 `json:"provider"`
+		Protocol connector.ProtocolType `json:"protocol"`
+		Config   connector.Connector    `json:"-"`
 	}
 
 	connectorConfigOAuth2 struct {
@@ -40,19 +41,19 @@ type (
 
 func (c *connectorConfig) UnmarshalJSON(data []byte) error {
 	var tmp struct {
-		Name      string                 `json:"name"`
-		Type      connector.ProtocolType `json:"type"`
-		RawConfig json.RawMessage        `json:"config"`
+		Provider  string          `json:"provider"`
+		Protocol  string          `json:"protocol"`
+		RawConfig json.RawMessage `json:"config"`
 	}
 
 	if err := json.Unmarshal(data, &tmp); err != nil {
 		return fmt.Errorf("cannot unmarshal connector config: %w", err)
 	}
 
-	c.Name = tmp.Name
-	c.Type = tmp.Type
+	c.Provider = strings.ToUpper(tmp.Provider)
+	c.Protocol = connector.ProtocolType(strings.ToUpper(tmp.Protocol))
 
-	switch tmp.Type {
+	switch c.Protocol {
 	case connector.ProtocolOAuth2:
 		var config connectorConfigOAuth2
 		if err := json.Unmarshal(tmp.RawConfig, &config); err != nil {
@@ -70,7 +71,7 @@ func (c *connectorConfig) UnmarshalJSON(data []byte) error {
 
 		c.Config = &oauth2Connector
 	default:
-		return fmt.Errorf("unknown connector type: %q", tmp.Type)
+		return fmt.Errorf("unknown connector protocol: %q", c.Protocol)
 	}
 
 	return nil

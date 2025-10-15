@@ -15,9 +15,11 @@
 package connector
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -46,7 +48,7 @@ type (
 
 	OAuth2State struct {
 		OrganizationID string `json:"oid"`
-		ConnectorID    string `json:"cid"`
+		Provider       string `json:"provider"`
 	}
 
 	OAuth2Connection struct {
@@ -66,29 +68,33 @@ var (
 	OAuth2TokenTTL  = 10 * time.Minute
 )
 
-func (c *OAuth2Connector) Initiate(ctx context.Context, connectorID string, organizationID gid.GID, r *http.Request) (string, error) {
-	stateData := OAuth2State{OrganizationID: organizationID.String(), ConnectorID: connectorID}
+func (c *OAuth2Connector) Initiate(ctx context.Context, provider string, organizationID gid.GID, r *http.Request) (string, error) {
+	stateData := OAuth2State{
+		OrganizationID: organizationID.String(),
+		Provider:       provider,
+	}
 	state, err := statelesstoken.NewToken(c.ClientSecret, OAuth2TokenType, OAuth2TokenTTL, stateData)
 	if err != nil {
 		return "", fmt.Errorf("cannot create state token: %w", err)
 	}
 
-	redirectURI, err := url.Parse(c.RedirectURI)
+	redirectURI := c.RedirectURI
+	redirectURIParsed, err := url.Parse(redirectURI)
 	if err != nil {
 		return "", fmt.Errorf("cannot parse redirect URI: %w", err)
 	}
-
-	redirectQuery := url.Values{}
-	redirectQuery.Set("organization_id", organizationID.String())
-	redirectQuery.Set("connector_id", connectorID)
-	redirectQuery.Set("continue", r.URL.Query().Get("continue"))
-
-	redirectURI.RawQuery = redirectQuery.Encode()
+	q := redirectURIParsed.Query()
+	q.Set("provider", provider)
+	if continueURL := r.URL.Query().Get("continue"); continueURL != "" {
+		q.Set("continue", continueURL)
+	}
+	redirectURIParsed.RawQuery = q.Encode()
+	redirectURI = redirectURIParsed.String()
 
 	authCodeQuery := url.Values{}
 	authCodeQuery.Set("state", state)
 	authCodeQuery.Set("client_id", c.ClientID)
-	authCodeQuery.Set("redirect_uri", redirectURI.String())
+	authCodeQuery.Set("redirect_uri", redirectURI)
 	authCodeQuery.Set("response_type", "code")
 	authCodeQuery.Set("scope", strings.Join(c.Scopes, " "))
 
@@ -102,51 +108,59 @@ func (c *OAuth2Connector) Initiate(ctx context.Context, connectorID string, orga
 	return u.String(), nil
 }
 
-func (c *OAuth2Connector) Complete(ctx context.Context, connectorID string, organizationID gid.GID, r *http.Request) (Connection, error) {
+func (c *OAuth2Connector) Complete(ctx context.Context, r *http.Request) (Connection, *gid.GID, error) {
+	provider := r.URL.Query().Get("provider")
+	if provider == "" {
+		return nil, nil, fmt.Errorf("missing provider in query parameters")
+	}
+
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		return nil, fmt.Errorf("no code in request")
+		return nil, nil, fmt.Errorf("no code in request")
 	}
 
-	state := r.URL.Query().Get("state")
-	if state == "" {
-		return nil, fmt.Errorf("no state in request")
+	stateToken := r.URL.Query().Get("state")
+	if stateToken == "" {
+		return nil, nil, fmt.Errorf("no state in request")
 	}
 
-	payload, err := statelesstoken.ValidateToken[OAuth2State](c.ClientSecret, OAuth2TokenType, state)
+	payload, err := statelesstoken.ValidateToken[OAuth2State](c.ClientSecret, OAuth2TokenType, stateToken)
 	if err != nil {
-		return nil, fmt.Errorf("cannot validate state token: %w", err)
+		return nil, nil, fmt.Errorf("cannot validate state token: %w", err)
 	}
 
-	if payload.Data.OrganizationID != organizationID.String() {
-		return nil, fmt.Errorf("invalid organization ID")
+	if payload.Data.Provider != provider {
+		return nil, nil, fmt.Errorf("provider mismatch: state has %q, query has %q", payload.Data.Provider, provider)
 	}
 
-	if payload.Data.ConnectorID != connectorID {
-		return nil, fmt.Errorf("invalid connector ID")
-	}
-
-	redirectURI, err := url.Parse(c.RedirectURI)
+	organizationID, err := gid.ParseGID(payload.Data.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse redirect URI: %w", err)
+		return nil, nil, fmt.Errorf("cannot parse organization ID: %w", err)
 	}
 
-	redirectQuery := url.Values{}
-	redirectQuery.Set("organization_id", organizationID.String())
-	redirectQuery.Set("connector_id", connectorID)
-
-	redirectURI.RawQuery = redirectQuery.Encode()
+	redirectURI := c.RedirectURI
+	redirectURIParsed, err := url.Parse(redirectURI)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot parse redirect URI: %w", err)
+	}
+	q := redirectURIParsed.Query()
+	q.Set("provider", provider)
+	if continueURL := r.URL.Query().Get("continue"); continueURL != "" {
+		q.Set("continue", continueURL)
+	}
+	redirectURIParsed.RawQuery = q.Encode()
+	redirectURI = redirectURIParsed.String()
 
 	tokenRequestData := url.Values{}
 	tokenRequestData.Set("client_id", c.ClientID)
 	tokenRequestData.Set("client_secret", c.ClientSecret)
 	tokenRequestData.Set("code", code)
-	tokenRequestData.Set("redirect_uri", redirectURI.String())
+	tokenRequestData.Set("redirect_uri", redirectURI)
 	tokenRequestData.Set("grant_type", "authorization_code")
 
-	tokenRequest, err := http.NewRequestWithContext(ctx, "POST", c.TokenURL, strings.NewReader(tokenRequestData.Encode()))
+	tokenRequest, err := http.NewRequestWithContext(ctx, http.MethodPost, c.TokenURL, strings.NewReader(tokenRequestData.Encode()))
 	if err != nil {
-		return nil, fmt.Errorf("cannot create token request: %w", err)
+		return nil, nil, fmt.Errorf("cannot create token request: %w", err)
 	}
 
 	tokenRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
@@ -155,35 +169,32 @@ func (c *OAuth2Connector) Complete(ctx context.Context, connectorID string, orga
 
 	tokenResp, err := http.DefaultClient.Do(tokenRequest)
 	if err != nil {
-		return nil, fmt.Errorf("cannot post token URL: %w", err)
+		return nil, nil, fmt.Errorf("cannot post token URL: %w", err)
 	}
 	defer tokenResp.Body.Close()
 
 	if tokenResp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("token response status: %d", tokenResp.StatusCode)
+		return nil, nil, fmt.Errorf("token response status: %d", tokenResp.StatusCode)
 	}
 
-	type tokenResponse struct {
-		AccessToken  string    `json:"access_token"`
-		RefreshToken string    `json:"refresh_token"`
-		ExpiresAt    time.Time `json:"expires_at"`
-		Scope        string    `json:"scope"`
-		TokenType    string    `json:"token_type"`
-	}
-
-	var token tokenResponse
-	err = json.NewDecoder(tokenResp.Body).Decode(&token)
+	body, err := io.ReadAll(tokenResp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("cannot decode token response: %w", err)
+		return nil, nil, fmt.Errorf("cannot read token response body: %w", err)
 	}
 
-	return &OAuth2Connection{
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
-		ExpiresAt:    token.ExpiresAt,
-		Scope:        token.Scope,
-		TokenType:    token.TokenType,
-	}, nil
+	var oauth2Conn OAuth2Connection
+	var buf bytes.Buffer
+	buf.Write(body)
+	err = json.NewDecoder(&buf).Decode(&oauth2Conn)
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot decode token response: %w", err)
+	}
+
+	if provider == SlackProvider {
+		return ParseSlackTokenResponse(body, oauth2Conn, organizationID)
+	}
+
+	return &oauth2Conn, &organizationID, nil
 }
 
 func (c *OAuth2Connection) Type() ProtocolType {
