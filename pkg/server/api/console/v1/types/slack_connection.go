@@ -19,36 +19,42 @@ import (
 	"github.com/getprobo/probo/pkg/page"
 )
 
-type (
-	ConnectorOrderBy OrderBy[coredata.ConnectorOrderField]
-)
-
-func NewConnectorConnection(p *page.Page[*coredata.Connector, coredata.ConnectorOrderField]) *ConnectorConnection {
-	var edges = make([]*ConnectorEdge, len(p.Data))
+func NewSlackConnectionConnection(p *page.Page[*coredata.Connector, coredata.ConnectorOrderField]) *SlackConnectionConnection {
+	var edges = make([]*SlackConnectionEdge, len(p.Data))
 
 	for i := range edges {
-		edges[i] = NewConnectorEdge(p.Data[i], p.Cursor.OrderBy.Field)
+		edges[i] = NewSlackConnectionEdge(p.Data[i], p.Cursor.OrderBy.Field)
 	}
 
-	return &ConnectorConnection{
+	return &SlackConnectionConnection{
 		Edges:    edges,
 		PageInfo: NewPageInfo(p),
 	}
 }
 
-func NewConnectorEdge(c *coredata.Connector, orderBy coredata.ConnectorOrderField) *ConnectorEdge {
-	return &ConnectorEdge{
+func NewSlackConnectionEdge(c *coredata.Connector, orderBy coredata.ConnectorOrderField) *SlackConnectionEdge {
+	return &SlackConnectionEdge{
 		Cursor: c.CursorKey(orderBy),
-		Node:   NewConnector(c),
+		Node:   NewSlackConnection(c),
 	}
 }
 
-func NewConnector(c *coredata.Connector) *Connector {
-	return &Connector{
+func NewSlackConnection(c *coredata.Connector) *SlackConnection {
+	conn := &SlackConnection{
 		ID:        c.ID,
-		Name:      c.Name,
-		Type:      string(c.Type),
 		CreatedAt: c.CreatedAt,
 		UpdatedAt: c.UpdatedAt,
 	}
+
+	// Extract channel information from settings
+	if len(c.Settings) > 0 {
+		if channel, ok := c.Settings["channel"].(string); ok && channel != "" {
+			conn.Channel = &channel
+		}
+		if channelID, ok := c.Settings["channel_id"].(string); ok && channelID != "" {
+			conn.ChannelID = &channelID
+		}
+	}
+
+	return conn
 }

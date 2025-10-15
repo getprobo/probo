@@ -12,30 +12,13 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package coredata
+package probo
 
-type (
-	ConnectorOrderField string
+import (
+	"embed"
 )
 
-const (
-	ConnectorOrderFieldCreatedAt ConnectorOrderField = "CREATED_AT"
-	ConnectorOrderFieldProvider  ConnectorOrderField = "PROVIDER"
+var (
+	//go:embed templates/*.tmpl
+	Templates embed.FS
 )
-
-func (p ConnectorOrderField) Column() string {
-	return string(p)
-}
-
-func (p ConnectorOrderField) String() string {
-	return string(p)
-}
-
-func (p ConnectorOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ConnectorOrderField) UnmarshalText(text []byte) error {
-	*p = ConnectorOrderField(text)
-	return nil
-}

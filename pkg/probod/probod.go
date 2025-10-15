@@ -45,6 +45,7 @@ import (
 	"github.com/getprobo/probo/pkg/saferedirect"
 	"github.com/getprobo/probo/pkg/server"
 	"github.com/getprobo/probo/pkg/server/api"
+	"github.com/getprobo/probo/pkg/slack"
 	"github.com/getprobo/probo/pkg/trust"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/httpclient"
@@ -72,6 +73,7 @@ type (
 		TrustCenter   trustCenterConfig    `json:"trust-center"`
 		AWS           awsConfig            `json:"aws"`
 		Mailer        mailerConfig         `json:"mailer"`
+		Slack         slackConfig          `json:"slack"`
 		Connectors    []connectorConfig    `json:"connectors"`
 		OpenAI        openaiConfig         `json:"openai"`
 		ChromeDPAddr  string               `json:"chrome-dp-addr"`
@@ -143,6 +145,9 @@ func New() *Implm {
 					Addr: "localhost:1025",
 				},
 			},
+			Slack: slackConfig{
+				SenderInterval: 60,
+			},
 			CustomDomains: customDomainsConfig{
 				RenewalInterval:   3600,
 				ProvisionInterval: 30,
@@ -204,6 +209,7 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot get trust auth token secret bytes: %w", err)
 	}
 
+
 	awsConfig := awsconfig.NewConfig(
 		l,
 		httpclient.DefaultPooledClient(
@@ -239,7 +245,7 @@ func (impl *Implm) Run(
 
 	defaultConnectorRegistry := connector.NewConnectorRegistry()
 	for _, connector := range impl.cfg.Connectors {
-		if err := defaultConnectorRegistry.Register(connector.Name, connector.Config); err != nil {
+		if err := defaultConnectorRegistry.Register(connector.Provider, connector.Config); err != nil {
 			return fmt.Errorf("cannot register connector: %w", err)
 		}
 	}
@@ -338,6 +344,7 @@ func (impl *Implm) Run(
 		pgClient,
 		s3Client,
 		impl.cfg.AWS.Bucket,
+		impl.cfg.Hostname,
 		impl.cfg.EncryptionKey,
 		impl.cfg.TrustAuth.TokenSecret,
 		authService,
@@ -408,6 +415,18 @@ func (impl *Implm) Run(
 		},
 	)
 
+	slackSenderCtx, stopSlackSender := context.WithCancel(context.Background())
+	slackSender := slack.NewSender(pgClient, l.Named("slack-sender"), impl.cfg.EncryptionKey, slack.Config{
+		Interval: time.Duration(impl.cfg.Slack.SenderInterval) * time.Second,
+	})
+	wg.Go(
+		func() {
+			if err := slackSender.Run(slackSenderCtx); err != nil {
+				cancel(fmt.Errorf("slack sender crashed: %w", err))
+			}
+		},
+	)
+
 	exportJobExporterCtx, stopExportJobExporter := context.WithCancel(context.Background())
 	wg.Go(
 		func() {
@@ -430,6 +449,7 @@ func (impl *Implm) Run(
 	<-ctx.Done()
 
 	stopMailer()
+	stopSlackSender()
 	stopExportJobExporter()
 	stopApiServer()
 	stopTrustCenterServer()

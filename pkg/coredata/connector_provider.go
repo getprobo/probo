@@ -14,28 +14,41 @@
 
 package coredata
 
-type (
-	ConnectorOrderField string
+import (
+	"database/sql/driver"
+	"fmt"
 )
+
+type ConnectorProvider string
 
 const (
-	ConnectorOrderFieldCreatedAt ConnectorOrderField = "CREATED_AT"
-	ConnectorOrderFieldProvider  ConnectorOrderField = "PROVIDER"
+	ConnectorProviderSlack ConnectorProvider = "SLACK"
 )
 
-func (p ConnectorOrderField) Column() string {
-	return string(p)
+func (cp ConnectorProvider) String() string {
+	return string(cp)
 }
 
-func (p ConnectorOrderField) String() string {
-	return string(p)
-}
+func (cp *ConnectorProvider) Scan(value any) error {
+	var s string
+	switch v := value.(type) {
+	case string:
+		s = v
+	case []byte:
+		s = string(v)
+	default:
+		return fmt.Errorf("unsupported type for ConnectorProvider: %T", value)
+	}
 
-func (p ConnectorOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ConnectorOrderField) UnmarshalText(text []byte) error {
-	*p = ConnectorOrderField(text)
+	switch s {
+	case "SLACK":
+		*cp = ConnectorProviderSlack
+	default:
+		return fmt.Errorf("invalid ConnectorProvider value: %q", s)
+	}
 	return nil
+}
+
+func (cp ConnectorProvider) Value() (driver.Value, error) {
+	return cp.String(), nil
 }

@@ -15,8 +15,10 @@
 package probo
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"text/template"
 	"time"
 
 	"github.com/getprobo/probo/pkg/connector"
@@ -26,15 +28,19 @@ import (
 	"go.gearno.de/kit/pg"
 )
 
+var (
+	welcomeTemplate = template.Must(template.ParseFS(Templates, "templates/welcome.txt.tmpl"))
+)
+
 type (
 	ConnectorService struct {
 		svc *TenantService
 	}
 
-	CreateOrUpdateConnectorRequest struct {
+	CreateConnectorRequest struct {
 		OrganizationID gid.GID
-		Name           string
-		Type           connector.ProtocolType
+		Provider       coredata.ConnectorProvider
+		Protocol       coredata.ConnectorProtocol
 		Connection     connector.Connection
 	}
 )
@@ -43,19 +49,20 @@ func (s *ConnectorService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ConnectorOrderField],
+	filter *coredata.ConnectorProviderFilter,
 ) (*page.Page[*coredata.Connector, coredata.ConnectorOrderField], error) {
 	var connectors coredata.Connectors
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return connectors.LoadWithoutDecryptedConnectionByOrganizationID(
+			return connectors.LoadByOrganizationIDWithoutDecryptedConnection(
 				ctx,
 				conn,
 				s.svc.scope,
 				organizationID,
 				cursor,
-				s.svc.encryptionKey,
+				filter,
 			)
 		},
 	)
@@ -67,34 +74,34 @@ func (s *ConnectorService) ListForOrganizationID(
 	return page.NewPage(connectors, cursor), nil
 }
 
-func (s *ConnectorService) CreateOrUpdate(
+func (s *ConnectorService) Create(
 	ctx context.Context,
-	req CreateOrUpdateConnectorRequest,
+	req CreateConnectorRequest,
 ) (*coredata.Connector, error) {
 	if req.OrganizationID == gid.Nil {
 		return nil, fmt.Errorf("organization ID is required")
 	}
 
-	if req.Name == "" {
-		return nil, fmt.Errorf("connector name is required")
+	if req.Provider == "" {
+		return nil, fmt.Errorf("connector provider is required")
 	}
 
-	if req.Type == "" {
-		return nil, fmt.Errorf("connector type is required")
+	if req.Protocol == "" {
+		return nil, fmt.Errorf("connector protocol is required")
 	}
 
 	if req.Connection == nil {
 		return nil, fmt.Errorf("connection configuration is required")
 	}
 
-	connectorID := gid.New(s.svc.scope.GetTenantID(), coredata.ConnectorEntityType)
+	id := gid.New(s.svc.scope.GetTenantID(), coredata.ConnectorEntityType)
 	now := time.Now()
 
-	connector := &coredata.Connector{
-		ID:             connectorID,
+	newConnector := &coredata.Connector{
+		ID:             id,
 		OrganizationID: req.OrganizationID,
-		Name:           req.Name,
-		Type:           req.Type,
+		Provider:       req.Provider,
+		Protocol:       req.Protocol,
 		Connection:     req.Connection,
 		CreatedAt:      now,
 		UpdatedAt:      now,
@@ -103,8 +110,36 @@ func (s *ConnectorService) CreateOrUpdate(
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := connector.Upsert(ctx, conn, s.svc.scope, s.svc.encryptionKey); err != nil {
-				return fmt.Errorf("cannot upsert connector: %w", err)
+			if err := newConnector.Insert(ctx, conn, s.svc.scope, s.svc.encryptionKey); err != nil {
+				return fmt.Errorf("cannot create connector: %w", err)
+			}
+
+			if req.Provider == coredata.ConnectorProviderSlack {
+				slackConn, ok := req.Connection.(*connector.SlackConnection)
+				if ok && slackConn.Settings.Channel != "" {
+					var organization coredata.Organization
+					if err := organization.LoadByID(ctx, conn, s.svc.scope, req.OrganizationID); err != nil {
+						return fmt.Errorf("cannot load organization: %w", err)
+					}
+
+					data := struct {
+						OrganizationName string
+						ChannelName      string
+					}{
+						OrganizationName: organization.Name,
+						ChannelName:      slackConn.Settings.Channel,
+					}
+
+					var buf bytes.Buffer
+					if err := welcomeTemplate.Execute(&buf, data); err != nil {
+						return fmt.Errorf("failed to execute template: %w", err)
+					}
+
+					slackMessage := coredata.NewSlackMessage(s.svc.scope, req.OrganizationID, buf.String())
+					if err := slackMessage.Insert(ctx, conn, s.svc.scope); err != nil {
+						return fmt.Errorf("cannot insert slack message: %w", err)
+					}
+				}
 			}
 
 			return nil
@@ -115,5 +150,5 @@ func (s *ConnectorService) CreateOrUpdate(
 		return nil, err
 	}
 
-	return connector, nil
+	return newConnector, nil
 }
