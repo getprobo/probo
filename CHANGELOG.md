@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.74.1] - 2025-10-15
+
+### Changed
+- Use hosted png for logo in emails
+
 ## [0.74.0] - 2025-10-15
 
 ### Fixed
