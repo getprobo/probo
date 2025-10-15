@@ -376,7 +376,6 @@ func (s *DocumentService) ListSigningRequests(
 	q := `
 SELECT
   p.title,
-  pv.content,
   pv.id AS document_version_id,
   o.name AS organization_name
 FROM

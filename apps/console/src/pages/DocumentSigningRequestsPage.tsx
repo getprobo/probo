@@ -18,7 +18,6 @@ import { sprintf } from "@probo/helpers";
 type Document = {
   document_version_id: string;
   title: string;
-  content: string;
   signed?: boolean;
 };
 
