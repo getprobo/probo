@@ -122,6 +122,54 @@ func NewMux(
 		},
 	)
 
+	r.Get(
+		"/documents/signing-requests/{document_version_id}/pdf",
+		func(w http.ResponseWriter, r *http.Request) {
+			token := r.URL.Query().Get("token")
+			if token == "" {
+				http.Error(w, "token is required", http.StatusUnauthorized)
+				return
+			}
+
+			data, err := statelesstoken.ValidateToken[probo.SigningRequestData](authCfg.CookieSecret, probo.TokenTypeSigningRequest, token)
+			if err != nil {
+				http.Error(w, "invalid token", http.StatusUnauthorized)
+				return
+			}
+
+			documentVersionID, err := gid.ParseGID(chi.URLParam(r, "document_version_id"))
+			if err != nil {
+				http.Error(w, "invalid document version id", http.StatusBadRequest)
+				return
+			}
+
+			svc := proboSvc.WithTenant(data.Data.OrganizationID.TenantID())
+
+			// Get the people to get their email for watermark
+			people, err := svc.Peoples.Get(r.Context(), data.Data.PeopleID)
+			if err != nil {
+				http.Error(w, "failed to get user", http.StatusInternalServerError)
+				return
+			}
+
+			// Generate PDF with watermark
+			pdfData, err := svc.Documents.ExportPDF(r.Context(), documentVersionID, probo.ExportPDFOptions{
+				WithWatermark:  true,
+				WatermarkEmail: &people.PrimaryEmailAddress,
+				WithSignatures: false,
+			})
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			w.Header().Set("Content-Type", "application/pdf")
+			w.Header().Set("Content-Disposition", "inline; filename=\"document.pdf\"")
+			w.WriteHeader(http.StatusOK)
+			w.Write(pdfData)
+		},
+	)
+
 	r.Post(
 		"/documents/signing-requests/{document_version_id}/sign",
 		func(w http.ResponseWriter, r *http.Request) {

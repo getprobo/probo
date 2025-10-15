@@ -377,15 +377,24 @@ func (s *DocumentService) ListSigningRequests(
 SELECT
   p.title,
   pv.content,
-  pv.id AS document_version_id
+  pv.id AS document_version_id,
+  o.name AS organization_name
 FROM
 	documents p
 	INNER JOIN document_versions pv ON pv.document_id = p.id
 	INNER JOIN document_version_signatures pvs ON pvs.document_version_id = pv.id
+	INNER JOIN organizations o ON o.id = p.organization_id
 WHERE
     p.tenant_id = $1
 	AND pvs.signed_by = $2
 	AND pvs.signed_at IS NULL
+	AND pv.status = 'PUBLISHED'
+	AND pv.version_number = (
+		SELECT MAX(pv2.version_number)
+		FROM document_versions pv2
+		WHERE pv2.document_id = pv.document_id
+		AND pv2.status = 'PUBLISHED'
+	)
 `
 
 	var results []map[string]any
