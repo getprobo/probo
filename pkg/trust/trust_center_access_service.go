@@ -15,22 +15,28 @@
 package trust
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/mail"
+	"text/template"
 	"time"
 
+	"github.com/getprobo/probo/pkg/auth"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/auth"
 	"go.gearno.de/kit/pg"
+)
+
+var (
+	accessRequestTemplate = template.Must(template.ParseFS(Templates, "templates/access-request.txt.tmpl"))
 )
 
 type (
 	TrustCenterAccessService struct {
-		svc    *TenantService
+		svc  *TenantService
 		auth *auth.Service
 	}
 
@@ -45,6 +51,7 @@ type (
 
 const (
 	TokenTypeTrustCenterAccess = "trust_center_access"
+	TrustCenterAccessURLFormat = "https://%s/organizations/%s/trust-center/access"
 )
 
 func (s TrustCenterAccessService) ValidateToken(
@@ -74,9 +81,9 @@ func (s TrustCenterAccessService) Request(
 	now := time.Now()
 
 	var access *coredata.TrustCenterAccess
+	var trustCenter *coredata.TrustCenter
 
 	err := s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
-		var trustCenter *coredata.TrustCenter
 		var organizationID gid.GID
 		trustCenter = &coredata.TrustCenter{}
 		if err := trustCenter.LoadByID(ctx, tx, s.svc.scope, req.TrustCenterID); err != nil {
@@ -166,6 +173,10 @@ func (s TrustCenterAccessService) Request(
 
 		if err := accesses.BulkInsertReportAccesses(ctx, tx, s.svc.scope, access.ID, newReportIDs, now); err != nil {
 			return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
+		}
+
+		if err := s.queueSlackNotification(ctx, tx, organizationID, access.Name, access.Email); err != nil {
+			return fmt.Errorf("cannot queue slack notification: %w", err)
 		}
 
 		return nil
@@ -329,4 +340,43 @@ func filterExistingIDs(allIDs []gid.GID, existingIDs []gid.GID) []gid.GID {
 	}
 
 	return newIDs
+}
+
+func (s TrustCenterAccessService) queueSlackNotification(
+	ctx context.Context,
+	tx pg.Conn,
+	organizationID gid.GID,
+	requesterName string,
+	requesterEmail string,
+) error {
+	var organization coredata.Organization
+	if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
+		return fmt.Errorf("cannot load organization: %w", err)
+	}
+
+	consoleURL := fmt.Sprintf(TrustCenterAccessURLFormat, s.svc.hostname, organizationID)
+
+	data := struct {
+		OrganizationName string
+		RequesterName    string
+		RequesterEmail   string
+		ConsoleUrl       string
+	}{
+		OrganizationName: organization.Name,
+		RequesterName:    requesterName,
+		RequesterEmail:   requesterEmail,
+		ConsoleUrl:       consoleURL,
+	}
+
+	var buf bytes.Buffer
+	if err := accessRequestTemplate.Execute(&buf, data); err != nil {
+		return fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	slackMessage := coredata.NewSlackMessage(s.svc.scope, organizationID, buf.String())
+	if err := slackMessage.Insert(ctx, tx, s.svc.scope); err != nil {
+		return fmt.Errorf("cannot insert slack message: %w", err)
+	}
+
+	return nil
 }

@@ -34,6 +34,7 @@ type (
 		proboSvc          *probo.Service
 		encryptionKey     cipher.EncryptionKey
 		tokenSecret       string
+		hostname          string
 		auth              *auth.Service
 		html2pdfConverter *html2pdf.Converter
 		fileManager       *filemanager.Service
@@ -47,6 +48,7 @@ type (
 		proboSvc              *probo.Service
 		encryptionKey         cipher.EncryptionKey
 		tokenSecret           string
+		hostname              string
 		auth                  *auth.Service
 		html2pdfConverter     *html2pdf.Converter
 		fileManager           *filemanager.Service
@@ -66,6 +68,7 @@ func NewService(
 	pgClient *pg.Client,
 	s3Client *s3.Client,
 	bucket string,
+	hostname string,
 	encryptionKey cipher.EncryptionKey,
 	tokenSecret string,
 	auth *auth.Service,
@@ -78,6 +81,7 @@ func NewService(
 		bucket:            bucket,
 		encryptionKey:     encryptionKey,
 		tokenSecret:       tokenSecret,
+		hostname:          hostname,
 		auth:              auth,
 		html2pdfConverter: html2pdfConverter,
 		fileManager:       fileManagerService,
@@ -93,6 +97,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		proboSvc:          s.proboSvc,
 		encryptionKey:     s.encryptionKey,
 		tokenSecret:       s.tokenSecret,
+		hostname:          s.hostname,
 		auth:              s.auth,
 		html2pdfConverter: s.html2pdfConverter,
 		fileManager:       s.fileManager,

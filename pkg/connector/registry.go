@@ -36,40 +36,40 @@ func NewConnectorRegistry() *ConnectorRegistry {
 	}
 }
 
-func (cr *ConnectorRegistry) Register(connectorID string, connector Connector) error {
+func (cr *ConnectorRegistry) Register(provider string, connector Connector) error {
 	cr.Lock()
 	defer cr.Unlock()
-	if _, ok := cr.connectors[connectorID]; ok {
-		return fmt.Errorf("connector %q already registered", connectorID)
+	if _, ok := cr.connectors[provider]; ok {
+		return fmt.Errorf("connector %q already registered", provider)
 	}
-	cr.connectors[connectorID] = connector
+	cr.connectors[provider] = connector
 	return nil
 }
 
-func (cr *ConnectorRegistry) Get(connectorID string) (Connector, error) {
+func (cr *ConnectorRegistry) Get(provider string) (Connector, error) {
 	cr.RLock()
 	defer cr.RUnlock()
-	connector, ok := cr.connectors[connectorID]
+	connector, ok := cr.connectors[provider]
 	if !ok {
-		return nil, fmt.Errorf("connector %q not found", connectorID)
+		return nil, fmt.Errorf("connector %q not found", provider)
 	}
 	return connector, nil
 }
 
-func (cr *ConnectorRegistry) Initiate(ctx context.Context, connectorID string, organizationID gid.GID, r *http.Request) (string, error) {
-	connector, err := cr.Get(connectorID)
+func (cr *ConnectorRegistry) Initiate(ctx context.Context, provider string, organizationID gid.GID, r *http.Request) (string, error) {
+	connector, err := cr.Get(provider)
 	if err != nil {
 		return "", fmt.Errorf("cannot initiate connector: %w", err)
 	}
 
-	return connector.Initiate(ctx, connectorID, organizationID, r)
+	return connector.Initiate(ctx, provider, organizationID, r)
 }
 
-func (cr *ConnectorRegistry) Complete(ctx context.Context, connectorID string, organizationID gid.GID, r *http.Request) (Connection, error) {
-	connector, err := cr.Get(connectorID)
+func (cr *ConnectorRegistry) Complete(ctx context.Context, provider string, r *http.Request) (Connection, *gid.GID, error) {
+	connector, err := cr.Get(provider)
 	if err != nil {
-		return nil, fmt.Errorf("cannot complete connector: %w", err)
+		return nil, nil, fmt.Errorf("cannot complete connector: %w", err)
 	}
 
-	return connector.Complete(ctx, connectorID, organizationID, r)
+	return connector.Complete(ctx, r)
 }

@@ -57,6 +57,17 @@ export const trustCenterQuery = graphql`
             }
           }
         }
+        slackConnections(first: 100) {
+          edges {
+            node {
+              id
+              channel
+              channelId
+              createdAt
+              updatedAt
+            }
+          }
+        }
       }
     }
   }

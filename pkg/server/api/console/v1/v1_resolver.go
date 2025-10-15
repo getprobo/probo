@@ -3652,29 +3652,27 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 	return types.NewInvitationConnection(page, r, obj.ID, filter), nil
 }
 
-// Connectors is the resolver for the connectors field.
-func (r *organizationResolver) Connectors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) (*types.ConnectorConnection, error) {
+// SlackConnections is the resolver for the slackConnections field.
+func (r *organizationResolver) SlackConnections(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SlackConnectionConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	// Filter for Slack connectors only
+	slackProvider := coredata.ConnectorProviderSlack
+	filter := coredata.NewConnectorProviderFilter(&slackProvider)
 
 	pageOrderBy := page.OrderBy[coredata.ConnectorOrderField]{
 		Field:     coredata.ConnectorOrderFieldCreatedAt,
 		Direction: page.OrderDirectionDesc,
 	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.ConnectorOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Connectors.ListForOrganizationID(ctx, obj.ID, cursor)
+	page, err := prb.Connectors.ListForOrganizationID(ctx, obj.ID, cursor, filter)
 	if err != nil {
-		panic(fmt.Errorf("cannot list organization connectors: %w", err))
+		panic(fmt.Errorf("cannot list organization slack connections: %w", err))
 	}
 
-	return types.NewConnectorConnection(page), nil
+	return types.NewSlackConnectionConnection(page), nil
 }
 
 // Frameworks is the resolver for the frameworks field.

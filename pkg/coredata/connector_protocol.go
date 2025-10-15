@@ -14,28 +14,41 @@
 
 package coredata
 
-type (
-	ConnectorOrderField string
+import (
+	"database/sql/driver"
+	"fmt"
 )
+
+type ConnectorProtocol string
 
 const (
-	ConnectorOrderFieldCreatedAt ConnectorOrderField = "CREATED_AT"
-	ConnectorOrderFieldProvider  ConnectorOrderField = "PROVIDER"
+	ConnectorProtocolOAuth2 ConnectorProtocol = "OAUTH2"
 )
 
-func (p ConnectorOrderField) Column() string {
-	return string(p)
+func (cp ConnectorProtocol) String() string {
+	return string(cp)
 }
 
-func (p ConnectorOrderField) String() string {
-	return string(p)
-}
+func (cp *ConnectorProtocol) Scan(value any) error {
+	var s string
+	switch v := value.(type) {
+	case string:
+		s = v
+	case []byte:
+		s = string(v)
+	default:
+		return fmt.Errorf("unsupported type for ConnectorProtocol: %T", value)
+	}
 
-func (p ConnectorOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ConnectorOrderField) UnmarshalText(text []byte) error {
-	*p = ConnectorOrderField(text)
+	switch s {
+	case "OAUTH2":
+		*cp = ConnectorProtocolOAuth2
+	default:
+		return fmt.Errorf("invalid ConnectorProtocol value: %q", s)
+	}
 	return nil
+}
+
+func (cp ConnectorProtocol) Value() (driver.Value, error) {
+	return cp.String(), nil
 }

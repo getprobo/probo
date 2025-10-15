@@ -33,10 +33,7 @@ import { organizationViewQuery } from "/hooks/graph/OrganizationGraph";
 import { graphql } from "relay-runtime";
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import clsx from "clsx";
-import type {
-  SettingsPageFragment$data,
-  SettingsPageFragment$key,
-} from "./__generated__/SettingsPageFragment.graphql";
+import type { SettingsPageFragment$key } from "./__generated__/SettingsPageFragment.graphql";
 import type {
   SettingsPageMembershipsFragment$data,
   SettingsPageMembershipsFragment$key
@@ -99,16 +96,6 @@ const organizationFragment = graphql`
     }
     createdAt
     updatedAt
-    connectors(first: 100) {
-      edges {
-        node {
-          id
-          name
-          type
-          createdAt
-        }
-      }
-    }
   }
 `;
 
@@ -670,17 +657,6 @@ export default function SettingsPage({ queryRef }: Props) {
         </Card>
       </div>
 
-      {/* Integrations */}
-      <div className="space-y-4">
-        <h2 className="text-base font-medium">{__("Integrations")}</h2>
-        <Card padded>
-          <Connectors
-            organizationId={organization.id}
-            connectors={organization.connectors.edges.map((edge) => edge.node)}
-          />
-        </Card>
-      </div>
-
       <div className="space-y-4">
         <h2 className="text-base font-medium">{__("Custom Domain")}</h2>
         <CustomDomainManager
@@ -716,80 +692,6 @@ export default function SettingsPage({ queryRef }: Props) {
           </DeleteOrganizationDialog>
         </Card>
       </div>
-    </div>
-  );
-}
-
-function Connectors(props: {
-  organizationId: string;
-  connectors: NodeOf<SettingsPageFragment$data["connectors"]>[];
-}) {
-  const { __, dateTimeFormat } = useTranslate();
-  const fakeconnectors = [
-    {
-      id: "github",
-      name: "GitHub",
-      type: "oauth2",
-      createdAt: new Date(),
-    },
-  ] satisfies typeof props.connectors;
-  const connectors = [
-    {
-      id: "github",
-      name: "GitHub",
-      type: "oauth2",
-      description: __("Connect to GitHub repositories and issues"),
-      ...fakeconnectors.find((connector) => connector.id === "github"),
-    },
-    {
-      id: "slack",
-      name: "Slack",
-      type: "oauth2",
-      description: __("Connect to Slack workspace and channels"),
-      ...fakeconnectors.find((connector) => connector.id === "slack"),
-    },
-  ];
-
-  const getUrl = (connectorId: string) => {
-    const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
-    const url = new URL("/api/console/v1/connectors/initiate", baseUrl);
-    url.searchParams.append("organization_id", props.organizationId);
-    url.searchParams.append("connector_id", connectorId);
-    url.searchParams.append("continue", window.location.href);
-    return url.toString();
-  };
-
-  return (
-    <div className="space-y-2">
-      {connectors.map((connector) => (
-        <Card key={connector.id} padded className="flex items-center gap-3">
-          <div>
-            <img src={`/${connector.id}.png`} alt="" />
-          </div>
-          <div className="mr-auto">
-            <h3 className="text-base font-semibold">{connector.name}</h3>
-            <p className="text-sm text-txt-tertiary">
-              {connector.createdAt
-                ? sprintf(
-                    __("Connected on %s"),
-                    dateTimeFormat(connector.createdAt)
-                  )
-                : connector.description}
-            </p>
-          </div>
-          {connector.createdAt ? (
-            <div>
-              <Badge variant="success" size="md">
-                {__("Connected")}
-              </Badge>
-            </div>
-          ) : (
-            <Button variant="secondary" asChild>
-              <a href={getUrl(connector.id)}>{__("Connect")}</a>
-            </Button>
-          )}
-        </Card>
-      ))}
     </div>
   );
 }

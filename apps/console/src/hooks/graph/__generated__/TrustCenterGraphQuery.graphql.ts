@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8e92507c4ea06441e81f19bdcd6d4feb>>
+ * @generated SignedSource<<6d55d37aa2ddfae16f8fc829840113d4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -37,6 +37,17 @@ export type TrustCenterGraphQuery$data = {
     };
     readonly id?: string;
     readonly name?: string;
+    readonly slackConnections?: {
+      readonly edges: ReadonlyArray<{
+        readonly node: {
+          readonly channel: string | null | undefined;
+          readonly channelId: string | null | undefined;
+          readonly createdAt: any;
+          readonly id: string;
+          readonly updatedAt: any;
+        };
+      }>;
+    };
     readonly trustCenter?: {
       readonly active: boolean;
       readonly createdAt: any;
@@ -249,6 +260,56 @@ v10 = [
 ],
 v11 = {
   "alias": null,
+  "args": (v10/*: any*/),
+  "concreteType": "SlackConnectionConnection",
+  "kind": "LinkedField",
+  "name": "slackConnections",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "SlackConnectionEdge",
+      "kind": "LinkedField",
+      "name": "edges",
+      "plural": true,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "SlackConnection",
+          "kind": "LinkedField",
+          "name": "node",
+          "plural": false,
+          "selections": [
+            (v2/*: any*/),
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "channel",
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "channelId",
+              "storageKey": null
+            },
+            (v5/*: any*/),
+            (v6/*: any*/)
+          ],
+          "storageKey": null
+        }
+      ],
+      "storageKey": null
+    }
+  ],
+  "storageKey": "slackConnections(first:100)"
+},
+v12 = {
+  "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "trustCenterVisibility",
@@ -392,7 +453,8 @@ return {
                   }
                 ],
                 "storageKey": "vendors(first:100)"
-              }
+              },
+              (v11/*: any*/)
             ],
             "type": "Organization",
             "abstractKey": null
@@ -472,7 +534,7 @@ return {
                             "name": "documentType",
                             "storageKey": null
                           },
-                          (v11/*: any*/),
+                          (v12/*: any*/),
                           {
                             "alias": null,
                             "args": [
@@ -589,7 +651,7 @@ return {
                             "name": "state",
                             "storageKey": null
                           },
-                          (v11/*: any*/),
+                          (v12/*: any*/),
                           (v5/*: any*/)
                         ],
                         "storageKey": null
@@ -650,7 +712,8 @@ return {
                   }
                 ],
                 "storageKey": "vendors(first:100)"
-              }
+              },
+              (v11/*: any*/)
             ],
             "type": "Organization",
             "abstractKey": null
@@ -661,16 +724,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "89f1657de6e2c073609a2c69d7b2d747",
+    "cacheID": "06cd2015e9fc2e65d35ae3153e587c58",
     "id": null,
     "metadata": {},
     "name": "TrustCenterGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      customDomain {\n        id\n        domain\n      }\n      trustCenter {\n        id\n        active\n        ndaFileName\n        ndaFileUrl\n        createdAt\n        updatedAt\n        references(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              name\n              description\n              websiteUrl\n              logoUrl\n              createdAt\n              updatedAt\n            }\n          }\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterAuditsCardFragment\n          }\n        }\n      }\n      vendors(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterVendorsCardFragment\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  trustCenterVisibility\n  createdAt\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n}\n"
+    "text": "query TrustCenterGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      customDomain {\n        id\n        domain\n      }\n      trustCenter {\n        id\n        active\n        ndaFileName\n        ndaFileUrl\n        createdAt\n        updatedAt\n        references(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              name\n              description\n              websiteUrl\n              logoUrl\n              createdAt\n              updatedAt\n            }\n          }\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterAuditsCardFragment\n          }\n        }\n      }\n      vendors(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterVendorsCardFragment\n          }\n        }\n      }\n      slackConnections(first: 100) {\n        edges {\n          node {\n            id\n            channel\n            channelId\n            createdAt\n            updatedAt\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  trustCenterVisibility\n  createdAt\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "60725f4e10d6e720a09a883430854ada";
+(node as any).hash = "7ef9a5adc70dff604a149ea156e52edc";
 
 export default node;

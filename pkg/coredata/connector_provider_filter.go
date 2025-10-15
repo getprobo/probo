@@ -14,28 +14,41 @@
 
 package coredata
 
+import (
+	"github.com/jackc/pgx/v5"
+)
+
 type (
-	ConnectorOrderField string
+	ConnectorProviderFilter struct {
+		provider *ConnectorProvider
+	}
 )
 
-const (
-	ConnectorOrderFieldCreatedAt ConnectorOrderField = "CREATED_AT"
-	ConnectorOrderFieldProvider  ConnectorOrderField = "PROVIDER"
+func NewConnectorProviderFilter(provider *ConnectorProvider) *ConnectorProviderFilter {
+	return &ConnectorProviderFilter{
+		provider: provider,
+	}
+}
+
+func (f *ConnectorProviderFilter) SQLArguments() pgx.NamedArgs {
+	args := pgx.NamedArgs{}
+
+	if f.provider != nil {
+		args["provider"] = *f.provider
+	}
+
+	return args
+}
+
+func (f *ConnectorProviderFilter) SQLFragment() string {
+	return `
+(
+	CASE
+		WHEN @provider::connector_provider IS NULL THEN
+			TRUE
+		ELSE
+			provider = @provider::connector_provider
+	END
 )
-
-func (p ConnectorOrderField) Column() string {
-	return string(p)
-}
-
-func (p ConnectorOrderField) String() string {
-	return string(p)
-}
-
-func (p ConnectorOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ConnectorOrderField) UnmarshalText(text []byte) error {
-	*p = ConnectorOrderField(text)
-	return nil
+	`
 }

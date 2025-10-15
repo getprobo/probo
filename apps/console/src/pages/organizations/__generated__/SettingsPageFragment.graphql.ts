@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8477f42a02a102a4ce8540b794ac4289>>
+ * @generated SignedSource<<cf0ce3993d747999dfbe2ca60b509023>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,16 +12,6 @@ import { ReaderFragment } from 'relay-runtime';
 export type SSLStatus = "ACTIVE" | "EXPIRED" | "FAILED" | "PENDING" | "PROVISIONING" | "RENEWING";
 import { FragmentRefs } from "relay-runtime";
 export type SettingsPageFragment$data = {
-  readonly connectors: {
-    readonly edges: ReadonlyArray<{
-      readonly node: {
-        readonly createdAt: any;
-        readonly id: string;
-        readonly name: string;
-        readonly type: string;
-      };
-    }>;
-  };
   readonly createdAt: any;
   readonly customDomain: {
     readonly createdAt: any;
@@ -73,17 +63,10 @@ v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "type",
-  "storageKey": null
-},
-v3 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v4 = {
+v3 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -171,7 +154,13 @@ return {
           "name": "dnsRecords",
           "plural": true,
           "selections": [
-            (v2/*: any*/),
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "type",
+              "storageKey": null
+            },
             (v1/*: any*/),
             {
               "alias": null,
@@ -197,8 +186,8 @@ return {
           ],
           "storageKey": null
         },
+        (v2/*: any*/),
         (v3/*: any*/),
-        (v4/*: any*/),
         {
           "alias": null,
           "args": null,
@@ -209,57 +198,14 @@ return {
       ],
       "storageKey": null
     },
-    (v3/*: any*/),
-    (v4/*: any*/),
-    {
-      "alias": null,
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "first",
-          "value": 100
-        }
-      ],
-      "concreteType": "ConnectorConnection",
-      "kind": "LinkedField",
-      "name": "connectors",
-      "plural": false,
-      "selections": [
-        {
-          "alias": null,
-          "args": null,
-          "concreteType": "ConnectorEdge",
-          "kind": "LinkedField",
-          "name": "edges",
-          "plural": true,
-          "selections": [
-            {
-              "alias": null,
-              "args": null,
-              "concreteType": "Connector",
-              "kind": "LinkedField",
-              "name": "node",
-              "plural": false,
-              "selections": [
-                (v0/*: any*/),
-                (v1/*: any*/),
-                (v2/*: any*/),
-                (v3/*: any*/)
-              ],
-              "storageKey": null
-            }
-          ],
-          "storageKey": null
-        }
-      ],
-      "storageKey": "connectors(first:100)"
-    }
+    (v2/*: any*/),
+    (v3/*: any*/)
   ],
   "type": "Organization",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "b3b152b507befd6b6918a12972e05f14";
+(node as any).hash = "1e64bcccf8ef3a8ead79b3446e8a3ccd";
 
 export default node;

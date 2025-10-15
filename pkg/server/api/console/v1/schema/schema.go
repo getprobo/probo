@@ -197,24 +197,6 @@ type ComplexityRoot struct {
 		Success func(childComplexity int) int
 	}
 
-	Connector struct {
-		CreatedAt func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Name      func(childComplexity int) int
-		Type      func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-	}
-
-	ConnectorConnection struct {
-		Edges    func(childComplexity int) int
-		PageInfo func(childComplexity int) int
-	}
-
-	ConnectorEdge struct {
-		Cursor func(childComplexity int) int
-		Node   func(childComplexity int) int
-	}
-
 	ContinualImprovement struct {
 		CreatedAt    func(childComplexity int) int
 		Description  func(childComplexity int) int
@@ -1020,7 +1002,6 @@ type ComplexityRoot struct {
 	Organization struct {
 		Assets                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AssetOrderBy, filter *types.AssetFilter) int
 		Audits                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.AuditOrderBy) int
-		Connectors            func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) int
 		ContinualImprovements func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ContinualImprovementOrderBy, filter *types.ContinualImprovementFilter) int
 		Controls              func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
 		CreatedAt             func(childComplexity int) int
@@ -1043,6 +1024,7 @@ type ComplexityRoot struct {
 		Peoples               func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.PeopleOrderBy, filter *types.PeopleFilter) int
 		ProcessingActivities  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ProcessingActivityOrderBy, filter *types.ProcessingActivityFilter) int
 		Risks                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.RiskOrderBy, filter *types.RiskFilter) int
+		SlackConnections      func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey) int
 		Snapshots             func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.SnapshotOrderBy) int
 		Tasks                 func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.TaskOrderBy) int
 		TrustCenter           func(childComplexity int) int
@@ -1203,6 +1185,24 @@ type ComplexityRoot struct {
 	Session struct {
 		ExpiresAt func(childComplexity int) int
 		ID        func(childComplexity int) int
+	}
+
+	SlackConnection struct {
+		Channel   func(childComplexity int) int
+		ChannelID func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+	}
+
+	SlackConnectionConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	SlackConnectionEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Snapshot struct {
@@ -1890,7 +1890,7 @@ type OrganizationResolver interface {
 
 	Memberships(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.MembershipOrderBy) (*types.MembershipConnection, error)
 	Invitations(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder, filter *types.InvitationFilter) (*types.InvitationConnection, error)
-	Connectors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ConnectorOrder) (*types.ConnectorConnection, error)
+	SlackConnections(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.SlackConnectionConnection, error)
 	Frameworks(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.FrameworkOrderBy) (*types.FrameworkConnection, error)
 	Controls(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) (*types.ControlConnection, error)
 	Vendors(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy, filter *types.VendorFilter) (*types.VendorConnection, error)
@@ -2362,69 +2362,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.ConfirmEmailPayload.Success(childComplexity), true
-
-	case "Connector.createdAt":
-		if e.complexity.Connector.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.Connector.CreatedAt(childComplexity), true
-
-	case "Connector.id":
-		if e.complexity.Connector.ID == nil {
-			break
-		}
-
-		return e.complexity.Connector.ID(childComplexity), true
-
-	case "Connector.name":
-		if e.complexity.Connector.Name == nil {
-			break
-		}
-
-		return e.complexity.Connector.Name(childComplexity), true
-
-	case "Connector.type":
-		if e.complexity.Connector.Type == nil {
-			break
-		}
-
-		return e.complexity.Connector.Type(childComplexity), true
-
-	case "Connector.updatedAt":
-		if e.complexity.Connector.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.Connector.UpdatedAt(childComplexity), true
-
-	case "ConnectorConnection.edges":
-		if e.complexity.ConnectorConnection.Edges == nil {
-			break
-		}
-
-		return e.complexity.ConnectorConnection.Edges(childComplexity), true
-
-	case "ConnectorConnection.pageInfo":
-		if e.complexity.ConnectorConnection.PageInfo == nil {
-			break
-		}
-
-		return e.complexity.ConnectorConnection.PageInfo(childComplexity), true
-
-	case "ConnectorEdge.cursor":
-		if e.complexity.ConnectorEdge.Cursor == nil {
-			break
-		}
-
-		return e.complexity.ConnectorEdge.Cursor(childComplexity), true
-
-	case "ConnectorEdge.node":
-		if e.complexity.ConnectorEdge.Node == nil {
-			break
-		}
-
-		return e.complexity.ConnectorEdge.Node(childComplexity), true
 
 	case "ContinualImprovement.createdAt":
 		if e.complexity.ContinualImprovement.CreatedAt == nil {
@@ -6188,18 +6125,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.Organization.Audits(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.AuditOrderBy)), true
 
-	case "Organization.connectors":
-		if e.complexity.Organization.Connectors == nil {
-			break
-		}
-
-		args, err := ec.field_Organization_connectors_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Organization.Connectors(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.ConnectorOrder)), true
-
 	case "Organization.continualImprovements":
 		if e.complexity.Organization.ContinualImprovements == nil {
 			break
@@ -6418,6 +6343,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Organization.Risks(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.RiskOrderBy), args["filter"].(*types.RiskFilter)), true
+
+	case "Organization.slackConnections":
+		if e.complexity.Organization.SlackConnections == nil {
+			break
+		}
+
+		args, err := ec.field_Organization_slackConnections_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organization.SlackConnections(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey)), true
 
 	case "Organization.snapshots":
 		if e.complexity.Organization.Snapshots == nil {
@@ -7158,6 +7095,69 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Session.ID(childComplexity), true
+
+	case "SlackConnection.channel":
+		if e.complexity.SlackConnection.Channel == nil {
+			break
+		}
+
+		return e.complexity.SlackConnection.Channel(childComplexity), true
+
+	case "SlackConnection.channelId":
+		if e.complexity.SlackConnection.ChannelID == nil {
+			break
+		}
+
+		return e.complexity.SlackConnection.ChannelID(childComplexity), true
+
+	case "SlackConnection.createdAt":
+		if e.complexity.SlackConnection.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.SlackConnection.CreatedAt(childComplexity), true
+
+	case "SlackConnection.id":
+		if e.complexity.SlackConnection.ID == nil {
+			break
+		}
+
+		return e.complexity.SlackConnection.ID(childComplexity), true
+
+	case "SlackConnection.updatedAt":
+		if e.complexity.SlackConnection.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.SlackConnection.UpdatedAt(childComplexity), true
+
+	case "SlackConnectionConnection.edges":
+		if e.complexity.SlackConnectionConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.SlackConnectionConnection.Edges(childComplexity), true
+
+	case "SlackConnectionConnection.pageInfo":
+		if e.complexity.SlackConnectionConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.SlackConnectionConnection.PageInfo(childComplexity), true
+
+	case "SlackConnectionEdge.cursor":
+		if e.complexity.SlackConnectionEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.SlackConnectionEdge.Cursor(childComplexity), true
+
+	case "SlackConnectionEdge.node":
+		if e.complexity.SlackConnectionEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.SlackConnectionEdge.Node(childComplexity), true
 
 	case "Snapshot.controls":
 		if e.complexity.Snapshot.Controls == nil {
@@ -8795,7 +8795,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBulkRequestSignaturesInput,
 		ec.unmarshalInputCancelSignatureRequestInput,
 		ec.unmarshalInputConfirmEmailInput,
-		ec.unmarshalInputConnectorOrder,
 		ec.unmarshalInputContinualImprovementFilter,
 		ec.unmarshalInputContinualImprovementOrder,
 		ec.unmarshalInputControlFilter,
@@ -9597,20 +9596,6 @@ enum OrganizationOrderField
   UPDATED_AT
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.OrganizationOrderFieldUpdatedAt"
-    )
-}
-
-enum ConnectorOrderField
-  @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ConnectorOrderField"
-  ) {
-  CREATED_AT
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ConnectorOrderFieldCreatedAt"
-    )
-  NAME
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ConnectorOrderFieldName"
     )
 }
 
@@ -10492,11 +10477,6 @@ input OrganizationOrder {
   field: OrganizationOrderField!
 }
 
-input ConnectorOrder {
-  field: ConnectorOrderField!
-  direction: OrderDirection!
-}
-
 input DocumentVersionOrder
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.DocumentVersionOrderBy"
@@ -10640,13 +10620,12 @@ type Organization implements Node {
     filter: InvitationFilter
   ): InvitationConnection! @goField(forceResolver: true)
 
-  connectors(
+  slackConnections(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: ConnectorOrder
-  ): ConnectorConnection! @goField(forceResolver: true)
+  ): SlackConnectionConnection! @goField(forceResolver: true)
 
   frameworks(
     first: Int
@@ -10827,12 +10806,22 @@ type Invitation implements Node {
   organization: Organization! @goField(forceResolver: true)
 }
 
-type Connector implements Node {
+type SlackConnection {
   id: ID!
-  name: String!
-  type: String!
+  channel: String
+  channelId: String
   createdAt: Datetime!
   updatedAt: Datetime!
+}
+
+type SlackConnectionConnection {
+  edges: [SlackConnectionEdge!]!
+  pageInfo: PageInfo!
+}
+
+type SlackConnectionEdge {
+  cursor: CursorKey!
+  node: SlackConnection!
 }
 
 type People implements Node {
@@ -11653,15 +11642,6 @@ type VendorServiceEdge {
   node: VendorService!
 }
 
-type ConnectorConnection {
-  edges: [ConnectorEdge!]!
-  pageInfo: PageInfo!
-}
-
-type ConnectorEdge {
-  cursor: CursorKey!
-  node: Connector!
-}
 
 type VendorRiskAssessmentConnection {
   edges: [VendorRiskAssessmentEdge!]!
@@ -18264,101 +18244,6 @@ func (ec *executionContext) field_Organization_audits_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_Organization_connectors_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
-	var err error
-	args := map[string]any{}
-	arg0, err := ec.field_Organization_connectors_argsFirst(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["first"] = arg0
-	arg1, err := ec.field_Organization_connectors_argsAfter(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["after"] = arg1
-	arg2, err := ec.field_Organization_connectors_argsLast(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["last"] = arg2
-	arg3, err := ec.field_Organization_connectors_argsBefore(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["before"] = arg3
-	arg4, err := ec.field_Organization_connectors_argsOrderBy(ctx, rawArgs)
-	if err != nil {
-		return nil, err
-	}
-	args["orderBy"] = arg4
-	return args, nil
-}
-func (ec *executionContext) field_Organization_connectors_argsFirst(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-	if tmp, ok := rawArgs["first"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_connectors_argsAfter(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_connectors_argsLast(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*int, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
-	if tmp, ok := rawArgs["last"]; ok {
-		return ec.unmarshalOInt2ᚖint(ctx, tmp)
-	}
-
-	var zeroVal *int
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_connectors_argsBefore(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*page.CursorKey, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
-	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
-	}
-
-	var zeroVal *page.CursorKey
-	return zeroVal, nil
-}
-
-func (ec *executionContext) field_Organization_connectors_argsOrderBy(
-	ctx context.Context,
-	rawArgs map[string]any,
-) (*types.ConnectorOrder, error) {
-	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
-	if tmp, ok := rawArgs["orderBy"]; ok {
-		return ec.unmarshalOConnectorOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorOrder(ctx, tmp)
-	}
-
-	var zeroVal *types.ConnectorOrder
-	return zeroVal, nil
-}
-
 func (ec *executionContext) field_Organization_continualImprovements_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -19789,6 +19674,83 @@ func (ec *executionContext) field_Organization_risks_argsFilter(
 	}
 
 	var zeroVal *types.RiskFilter
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_slackConnections_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_Organization_slackConnections_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_Organization_slackConnections_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_Organization_slackConnections_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_Organization_slackConnections_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	return args, nil
+}
+func (ec *executionContext) field_Organization_slackConnections_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_slackConnections_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_slackConnections_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_Organization_slackConnections_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
 	return zeroVal, nil
 }
 
@@ -22395,8 +22357,8 @@ func (ec *executionContext) fieldContext_Asset_organization(_ context.Context, f
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -23006,8 +22968,8 @@ func (ec *executionContext) fieldContext_Audit_organization(_ context.Context, f
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -24128,430 +24090,6 @@ func (ec *executionContext) fieldContext_ConfirmEmailPayload_success(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _Connector_id(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Connector_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gid.GID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Connector_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Connector",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Connector_name(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Connector_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Connector_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Connector",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Connector_type(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Connector_type(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Connector_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Connector",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Connector_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Connector_createdAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Connector_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Connector",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Connector_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.Connector) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Connector_updatedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Connector_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Connector",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ConnectorConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.ConnectorConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ConnectorConnection_edges(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Edges, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.([]*types.ConnectorEdge)
-	fc.Result = res
-	return ec.marshalNConnectorEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorEdgeᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ConnectorConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ConnectorConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_ConnectorEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_ConnectorEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type ConnectorEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ConnectorConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.ConnectorConnection) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ConnectorConnection_pageInfo(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PageInfo, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.PageInfo)
-	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ConnectorConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ConnectorConnection",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "hasNextPage":
-				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
-			case "hasPreviousPage":
-				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
-			case "startCursor":
-				return ec.fieldContext_PageInfo_startCursor(ctx, field)
-			case "endCursor":
-				return ec.fieldContext_PageInfo_endCursor(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ConnectorEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.ConnectorEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ConnectorEdge_cursor(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(page.CursorKey)
-	fc.Result = res
-	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ConnectorEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ConnectorEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CursorKey does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ConnectorEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.ConnectorEdge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ConnectorEdge_node(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.Connector)
-	fc.Result = res
-	return ec.marshalNConnector2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ConnectorEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ConnectorEdge",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Connector_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Connector_name(ctx, field)
-			case "type":
-				return ec.fieldContext_Connector_type(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Connector_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Connector_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Connector", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _ContinualImprovement_id(ctx context.Context, field graphql.CollectedField, obj *types.ContinualImprovement) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ContinualImprovement_id(ctx, field)
 	if err != nil {
@@ -24737,8 +24275,8 @@ func (ec *executionContext) fieldContext_ContinualImprovement_organization(_ con
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -28499,8 +28037,8 @@ func (ec *executionContext) fieldContext_CustomDomain_organization(_ context.Con
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -29402,8 +28940,8 @@ func (ec *executionContext) fieldContext_Datum_organization(_ context.Context, f
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -30894,8 +30432,8 @@ func (ec *executionContext) fieldContext_DeleteOrganizationHorizontalLogoPayload
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -32273,8 +31811,8 @@ func (ec *executionContext) fieldContext_Document_organization(_ context.Context
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -35599,8 +35137,8 @@ func (ec *executionContext) fieldContext_Framework_organization(_ context.Contex
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -36697,8 +36235,8 @@ func (ec *executionContext) fieldContext_Invitation_organization(_ context.Conte
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -45736,8 +45274,8 @@ func (ec *executionContext) fieldContext_Nonconformity_organization(_ context.Co
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -46801,8 +46339,8 @@ func (ec *executionContext) fieldContext_Obligation_organization(_ context.Conte
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -48063,8 +47601,8 @@ func (ec *executionContext) fieldContext_Organization_invitations(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _Organization_connectors(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Organization_connectors(ctx, field)
+func (ec *executionContext) _Organization_slackConnections(ctx context.Context, field graphql.CollectedField, obj *types.Organization) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organization_slackConnections(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -48077,7 +47615,7 @@ func (ec *executionContext) _Organization_connectors(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organization().Connectors(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.ConnectorOrder))
+		return ec.resolvers.Organization().SlackConnections(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -48089,12 +47627,12 @@ func (ec *executionContext) _Organization_connectors(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*types.ConnectorConnection)
+	res := resTmp.(*types.SlackConnectionConnection)
 	fc.Result = res
-	return ec.marshalNConnectorConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorConnection(ctx, field.Selections, res)
+	return ec.marshalNSlackConnectionConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSlackConnectionConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Organization_connectors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Organization_slackConnections(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Organization",
 		Field:      field,
@@ -48103,11 +47641,11 @@ func (ec *executionContext) fieldContext_Organization_connectors(ctx context.Con
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "edges":
-				return ec.fieldContext_ConnectorConnection_edges(ctx, field)
+				return ec.fieldContext_SlackConnectionConnection_edges(ctx, field)
 			case "pageInfo":
-				return ec.fieldContext_ConnectorConnection_pageInfo(ctx, field)
+				return ec.fieldContext_SlackConnectionConnection_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ConnectorConnection", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type SlackConnectionConnection", field.Name)
 		},
 	}
 	defer func() {
@@ -48117,7 +47655,7 @@ func (ec *executionContext) fieldContext_Organization_connectors(ctx context.Con
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Organization_connectors_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Organization_slackConnections_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -49547,8 +49085,8 @@ func (ec *executionContext) fieldContext_OrganizationEdge_node(_ context.Context
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -50640,8 +50178,8 @@ func (ec *executionContext) fieldContext_ProcessingActivity_organization(_ conte
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -53323,8 +52861,8 @@ func (ec *executionContext) fieldContext_Risk_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -54124,6 +53662,424 @@ func (ec *executionContext) fieldContext_Session_expiresAt(_ context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _SlackConnection_id(ctx context.Context, field graphql.CollectedField, obj *types.SlackConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SlackConnection_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(gid.GID)
+	fc.Result = res
+	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SlackConnection_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SlackConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SlackConnection_channel(ctx context.Context, field graphql.CollectedField, obj *types.SlackConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SlackConnection_channel(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Channel, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SlackConnection_channel(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SlackConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SlackConnection_channelId(ctx context.Context, field graphql.CollectedField, obj *types.SlackConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SlackConnection_channelId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ChannelID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SlackConnection_channelId(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SlackConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SlackConnection_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.SlackConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SlackConnection_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SlackConnection_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SlackConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SlackConnection_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.SlackConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SlackConnection_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SlackConnection_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SlackConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SlackConnectionConnection_edges(ctx context.Context, field graphql.CollectedField, obj *types.SlackConnectionConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SlackConnectionConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*types.SlackConnectionEdge)
+	fc.Result = res
+	return ec.marshalNSlackConnectionEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSlackConnectionEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SlackConnectionConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SlackConnectionConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_SlackConnectionEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_SlackConnectionEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SlackConnectionEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SlackConnectionConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *types.SlackConnectionConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SlackConnectionConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SlackConnectionConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SlackConnectionConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SlackConnectionEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *types.SlackConnectionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SlackConnectionEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(page.CursorKey)
+	fc.Result = res
+	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SlackConnectionEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SlackConnectionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CursorKey does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SlackConnectionEdge_node(ctx context.Context, field graphql.CollectedField, obj *types.SlackConnectionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SlackConnectionEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.SlackConnection)
+	fc.Result = res
+	return ec.marshalNSlackConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSlackConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SlackConnectionEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SlackConnectionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_SlackConnection_id(ctx, field)
+			case "channel":
+				return ec.fieldContext_SlackConnection_channel(ctx, field)
+			case "channelId":
+				return ec.fieldContext_SlackConnection_channelId(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_SlackConnection_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_SlackConnection_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SlackConnection", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Snapshot_id(ctx context.Context, field graphql.CollectedField, obj *types.Snapshot) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Snapshot_id(ctx, field)
 	if err != nil {
@@ -54227,8 +54183,8 @@ func (ec *executionContext) fieldContext_Snapshot_organization(_ context.Context
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -55144,8 +55100,8 @@ func (ec *executionContext) fieldContext_Task_organization(_ context.Context, fi
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -55988,8 +55944,8 @@ func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Cont
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -59029,8 +58985,8 @@ func (ec *executionContext) fieldContext_UpdateOrganizationPayload_organization(
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -61037,8 +60993,8 @@ func (ec *executionContext) fieldContext_Vendor_organization(_ context.Context, 
 				return ec.fieldContext_Organization_memberships(ctx, field)
 			case "invitations":
 				return ec.fieldContext_Organization_invitations(ctx, field)
-			case "connectors":
-				return ec.fieldContext_Organization_connectors(ctx, field)
+			case "slackConnections":
+				return ec.fieldContext_Organization_slackConnections(ctx, field)
 			case "frameworks":
 				return ec.fieldContext_Organization_frameworks(ctx, field)
 			case "controls":
@@ -68464,40 +68420,6 @@ func (ec *executionContext) unmarshalInputConfirmEmailInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputConnectorOrder(ctx context.Context, obj any) (types.ConnectorOrder, error) {
-	var it types.ConnectorOrder
-	asMap := map[string]any{}
-	for k, v := range obj.(map[string]any) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"field", "direction"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "field":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
-			data, err := ec.unmarshalNConnectorOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐConnectorOrderField(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Field = data
-		case "direction":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("direction"))
-			data, err := ec.unmarshalNOrderDirection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐOrderDirection(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Direction = data
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputContinualImprovementFilter(ctx context.Context, obj any) (types.ContinualImprovementFilter, error) {
 	var it types.ContinualImprovementFilter
 	asMap := map[string]any{}
@@ -75483,13 +75405,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._ContinualImprovement(ctx, sel, obj)
-	case types.Connector:
-		return ec._Connector(ctx, sel, &obj)
-	case *types.Connector:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Connector(ctx, sel, obj)
 	case types.Audit:
 		return ec._Audit(ctx, sel, &obj)
 	case *types.Audit:
@@ -76540,153 +76455,6 @@ func (ec *executionContext) _ConfirmEmailPayload(ctx context.Context, sel ast.Se
 			out.Values[i] = graphql.MarshalString("ConfirmEmailPayload")
 		case "success":
 			out.Values[i] = ec._ConfirmEmailPayload_success(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var connectorImplementors = []string{"Connector", "Node"}
-
-func (ec *executionContext) _Connector(ctx context.Context, sel ast.SelectionSet, obj *types.Connector) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, connectorImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Connector")
-		case "id":
-			out.Values[i] = ec._Connector_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "name":
-			out.Values[i] = ec._Connector_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "type":
-			out.Values[i] = ec._Connector_type(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "createdAt":
-			out.Values[i] = ec._Connector_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "updatedAt":
-			out.Values[i] = ec._Connector_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var connectorConnectionImplementors = []string{"ConnectorConnection"}
-
-func (ec *executionContext) _ConnectorConnection(ctx context.Context, sel ast.SelectionSet, obj *types.ConnectorConnection) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, connectorConnectionImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ConnectorConnection")
-		case "edges":
-			out.Values[i] = ec._ConnectorConnection_edges(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "pageInfo":
-			out.Values[i] = ec._ConnectorConnection_pageInfo(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var connectorEdgeImplementors = []string{"ConnectorEdge"}
-
-func (ec *executionContext) _ConnectorEdge(ctx context.Context, sel ast.SelectionSet, obj *types.ConnectorEdge) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, connectorEdgeImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("ConnectorEdge")
-		case "cursor":
-			out.Values[i] = ec._ConnectorEdge_cursor(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "node":
-			out.Values[i] = ec._ConnectorEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -84773,7 +84541,7 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "connectors":
+		case "slackConnections":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -84782,7 +84550,7 @@ func (ec *executionContext) _Organization(ctx context.Context, sel ast.Selection
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Organization_connectors(ctx, field, obj)
+				res = ec._Organization_slackConnections(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -86970,6 +86738,147 @@ func (ec *executionContext) _Session(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "expiresAt":
 			out.Values[i] = ec._Session_expiresAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var slackConnectionImplementors = []string{"SlackConnection"}
+
+func (ec *executionContext) _SlackConnection(ctx context.Context, sel ast.SelectionSet, obj *types.SlackConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, slackConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SlackConnection")
+		case "id":
+			out.Values[i] = ec._SlackConnection_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "channel":
+			out.Values[i] = ec._SlackConnection_channel(ctx, field, obj)
+		case "channelId":
+			out.Values[i] = ec._SlackConnection_channelId(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._SlackConnection_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._SlackConnection_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var slackConnectionConnectionImplementors = []string{"SlackConnectionConnection"}
+
+func (ec *executionContext) _SlackConnectionConnection(ctx context.Context, sel ast.SelectionSet, obj *types.SlackConnectionConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, slackConnectionConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SlackConnectionConnection")
+		case "edges":
+			out.Values[i] = ec._SlackConnectionConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._SlackConnectionConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var slackConnectionEdgeImplementors = []string{"SlackConnectionEdge"}
+
+func (ec *executionContext) _SlackConnectionEdge(ctx context.Context, sel ast.SelectionSet, obj *types.SlackConnectionEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, slackConnectionEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SlackConnectionEdge")
+		case "cursor":
+			out.Values[i] = ec._SlackConnectionEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "node":
+			out.Values[i] = ec._SlackConnectionEdge_node(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -92497,112 +92406,6 @@ func (ec *executionContext) marshalNConfirmEmailPayload2ᚖgithubᚗcomᚋgetpro
 	return ec._ConfirmEmailPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNConnector2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnector(ctx context.Context, sel ast.SelectionSet, v *types.Connector) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Connector(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNConnectorConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorConnection(ctx context.Context, sel ast.SelectionSet, v types.ConnectorConnection) graphql.Marshaler {
-	return ec._ConnectorConnection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNConnectorConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorConnection(ctx context.Context, sel ast.SelectionSet, v *types.ConnectorConnection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ConnectorConnection(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNConnectorEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.ConnectorEdge) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNConnectorEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNConnectorEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorEdge(ctx context.Context, sel ast.SelectionSet, v *types.ConnectorEdge) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ConnectorEdge(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNConnectorOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐConnectorOrderField(ctx context.Context, v any) (coredata.ConnectorOrderField, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNConnectorOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐConnectorOrderField[tmp]
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNConnectorOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐConnectorOrderField(ctx context.Context, sel ast.SelectionSet, v coredata.ConnectorOrderField) graphql.Marshaler {
-	_ = sel
-	res := graphql.MarshalString(marshalNConnectorOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐConnectorOrderField[v])
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-var (
-	unmarshalNConnectorOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐConnectorOrderField = map[string]coredata.ConnectorOrderField{
-		"CREATED_AT": coredata.ConnectorOrderFieldCreatedAt,
-		"NAME":       coredata.ConnectorOrderFieldName,
-	}
-	marshalNConnectorOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐConnectorOrderField = map[coredata.ConnectorOrderField]string{
-		coredata.ConnectorOrderFieldCreatedAt: "CREATED_AT",
-		coredata.ConnectorOrderFieldName:      "NAME",
-	}
-)
-
 func (ec *executionContext) marshalNContinualImprovement2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐContinualImprovement(ctx context.Context, sel ast.SelectionSet, v *types.ContinualImprovement) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -97920,6 +97723,84 @@ func (ec *executionContext) marshalNSendSigningNotificationsPayload2ᚖgithubᚗ
 	return ec._SendSigningNotificationsPayload(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNSlackConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSlackConnection(ctx context.Context, sel ast.SelectionSet, v *types.SlackConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SlackConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSlackConnectionConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSlackConnectionConnection(ctx context.Context, sel ast.SelectionSet, v types.SlackConnectionConnection) graphql.Marshaler {
+	return ec._SlackConnectionConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSlackConnectionConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSlackConnectionConnection(ctx context.Context, sel ast.SelectionSet, v *types.SlackConnectionConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SlackConnectionConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSlackConnectionEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSlackConnectionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.SlackConnectionEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSlackConnectionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSlackConnectionEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSlackConnectionEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSlackConnectionEdge(ctx context.Context, sel ast.SelectionSet, v *types.SlackConnectionEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SlackConnectionEdge(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNSnapshot2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐSnapshot(ctx context.Context, sel ast.SelectionSet, v *types.Snapshot) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -100364,14 +100245,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	_ = ctx
 	res := graphql.MarshalBoolean(*v)
 	return res
-}
-
-func (ec *executionContext) unmarshalOConnectorOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐConnectorOrder(ctx context.Context, v any) (*types.ConnectorOrder, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputConnectorOrder(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOContinualImprovementFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐContinualImprovementFilter(ctx context.Context, v any) (*types.ContinualImprovementFilter, error) {

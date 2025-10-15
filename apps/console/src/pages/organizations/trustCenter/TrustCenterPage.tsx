@@ -20,6 +20,7 @@ import { useState } from "react";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { Outlet, useLocation, Link } from "react-router";
 import { TrustCenterReferencesSection } from "/components/trustCenter/TrustCenterReferencesSection";
+import { SlackConnections } from "../../../components/organizations/SlackConnection";
 
 type Props = {
   queryRef: PreloadedQuery<TrustCenterGraphQuery>;
@@ -256,6 +257,16 @@ export default function TrustCenterPage({ queryRef }: Props) {
       {organization.trustCenter?.id && (
         <TrustCenterReferencesSection trustCenterId={organization.trustCenter.id} />
       )}
+
+      <div className="space-y-4">
+        <h2 className="text-base font-medium">{__("Integrations")}</h2>
+        <Card padded>
+          <SlackConnections
+            organizationId={organization.id!}
+            slackConnections={organization.slackConnections?.edges.map((edge) => edge.node) ?? []}
+          />
+        </Card>
+      </div>
 
       <div className="space-y-4">
         <Tabs>

@@ -549,20 +549,6 @@ enum OrganizationOrderField
     )
 }
 
-enum ConnectorOrderField
-  @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ConnectorOrderField"
-  ) {
-  CREATED_AT
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ConnectorOrderFieldCreatedAt"
-    )
-  NAME
-    @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ConnectorOrderFieldName"
-    )
-}
-
 enum DataSensitivity
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.DataSensitivity") {
   NONE
@@ -1441,11 +1427,6 @@ input OrganizationOrder {
   field: OrganizationOrderField!
 }
 
-input ConnectorOrder {
-  field: ConnectorOrderField!
-  direction: OrderDirection!
-}
-
 input DocumentVersionOrder
   @goModel(
     model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.DocumentVersionOrderBy"
@@ -1589,13 +1570,12 @@ type Organization implements Node {
     filter: InvitationFilter
   ): InvitationConnection! @goField(forceResolver: true)
 
-  connectors(
+  slackConnections(
     first: Int
     after: CursorKey
     last: Int
     before: CursorKey
-    orderBy: ConnectorOrder
-  ): ConnectorConnection! @goField(forceResolver: true)
+  ): SlackConnectionConnection! @goField(forceResolver: true)
 
   frameworks(
     first: Int
@@ -1776,12 +1756,22 @@ type Invitation implements Node {
   organization: Organization! @goField(forceResolver: true)
 }
 
-type Connector implements Node {
+type SlackConnection {
   id: ID!
-  name: String!
-  type: String!
+  channel: String
+  channelId: String
   createdAt: Datetime!
   updatedAt: Datetime!
+}
+
+type SlackConnectionConnection {
+  edges: [SlackConnectionEdge!]!
+  pageInfo: PageInfo!
+}
+
+type SlackConnectionEdge {
+  cursor: CursorKey!
+  node: SlackConnection!
 }
 
 type People implements Node {
@@ -2602,15 +2592,6 @@ type VendorServiceEdge {
   node: VendorService!
 }
 
-type ConnectorConnection {
-  edges: [ConnectorEdge!]!
-  pageInfo: PageInfo!
-}
-
-type ConnectorEdge {
-  cursor: CursorKey!
-  node: Connector!
-}
 
 type VendorRiskAssessmentConnection {
   edges: [VendorRiskAssessmentEdge!]!
