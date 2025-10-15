@@ -4,10 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+- Fix audit update in trust center settings
+
+### Changed
+- New signatures page design
+
 ## [0.73.1] - 2025-10-15
 
 ### Fixed
-
 - Fix organization logo update
 
 ## [0.73.0] - 2025-10-14
