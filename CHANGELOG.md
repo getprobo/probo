@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.73.1] - 2025-10-15
+
+### Fixed
+
+- Fix organization logo update
+
 ## [0.73.0] - 2025-10-14
 
 ### Added
