@@ -262,6 +262,10 @@ export default function SettingsPage({ queryRef }: Props) {
   const memberships = membershipsPagination.data.memberships?.edges.map((edge) => edge.node) || [];
   const invitations = invitationsPagination.data.invitations?.edges.map((edge) => edge.node) || [];
   const [activeTab, setActiveTab] = useState<"memberships" | "invitations">("memberships");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [horizontalLogoFile, setHorizontalLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [horizontalLogoPreview, setHorizontalLogoPreview] = useState<string | null>(null);
 
   const { formState, handleSubmit, register, reset } = useFormWithSchema(
     organizationSchema,
@@ -284,20 +288,37 @@ export default function SettingsPage({ queryRef }: Props) {
       email: organization.email || "",
       headquarterAddress: organization.headquarterAddress || "",
     });
+    setLogoFile(null);
+    setHorizontalLogoFile(null);
+    setLogoPreview(null);
+    setHorizontalLogoPreview(null);
   }, [organization, reset]);
 
   const onSubmit = handleSubmit((data: OrganizationFormData) => {
+    const uploadables: Record<string, File> = {};
+
+    if (logoFile) {
+      uploadables["input.logo"] = logoFile;
+    }
+
+    if (horizontalLogoFile) {
+      uploadables["input.horizontalLogoFile"] = horizontalLogoFile;
+    }
+
     updateOrganization({
       variables: {
         input: {
           organizationId: organization.id,
           name: data.name,
-          description: data.description || null,
-          websiteUrl: data.websiteUrl || null,
-          email: data.email || null,
-          headquarterAddress: data.headquarterAddress || null,
+          description: data.description || undefined,
+          websiteUrl: data.websiteUrl || undefined,
+          email: data.email || undefined,
+          headquarterAddress: data.headquarterAddress || undefined,
+          logo: logoFile ? null : undefined,
+          horizontalLogoFile: horizontalLogoFile ? null : undefined,
         },
       },
+      uploadables: Object.keys(uploadables).length > 0 ? uploadables : undefined,
       onError() {
         toast({
           title: __("Error"),
@@ -317,68 +338,30 @@ export default function SettingsPage({ queryRef }: Props) {
     });
   });
 
-  const updateOrganizationLogo: ChangeEventHandler<HTMLInputElement> = (e) => {
+  const handleLogoChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const file = e.target.files?.[0];
     if (!file) {
       return;
     }
-    updateOrganization({
-      variables: {
-        input: {
-          organizationId: organization.id,
-          logo: null,
-        },
-      },
-      uploadables: {
-        "input.logo": file,
-      },
-      onError() {
-        toast({
-          title: __("Error"),
-          description: __("Failed to update logo"),
-          variant: "error",
-        });
-      },
-      onCompleted() {
-        toast({
-          title: __("Success"),
-          description: __("Your organization logo has been updated successfully."),
-          variant: "success",
-        });
-      },
-    });
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setLogoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
-  const updateHorizontalLogo: ChangeEventHandler<HTMLInputElement> = (e) => {
+  const handleHorizontalLogoChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const file = e.target.files?.[0];
     if (!file) {
       return;
     }
-    updateOrganization({
-      variables: {
-        input: {
-          organizationId: organization.id,
-          horizontalLogoFile: null,
-        },
-      },
-      uploadables: {
-        "input.horizontalLogoFile": file,
-      },
-      onError() {
-        toast({
-          title: __("Error"),
-          description: __("Failed to update horizontal logo."),
-          variant: "error",
-        });
-      },
-      onCompleted() {
-        toast({
-          title: __("Success"),
-          description: __("Your organization horizontal logo has been updated successfully."),
-          variant: "success",
-        });
-      },
-    });
+    setHorizontalLogoFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setHorizontalLogoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const deleteDialogRef = useDialogRef();
@@ -428,13 +411,13 @@ export default function SettingsPage({ queryRef }: Props) {
               <Label>{__("Organization logo")}</Label>
               <div className="flex w-max items-center gap-4">
                 <Avatar
-                  src={organization.logoUrl}
+                  src={logoPreview || organization.logoUrl}
                   name={organization.name}
                   size="xl"
                 />
                 <FileButton
                   disabled={formState.isSubmitting}
-                  onChange={updateOrganizationLogo}
+                  onChange={handleLogoChange}
                   variant="secondary"
                   className="ml-auto"
                   accept="image/png,image/jpeg,image/jpg"
@@ -449,10 +432,10 @@ export default function SettingsPage({ queryRef }: Props) {
                 {__("Upload a horizontal version of your logo for use in documents")}
               </p>
               <div className="flex items-center gap-4">
-                {organization.horizontalLogoUrl && (
+                {(horizontalLogoPreview || organization.horizontalLogoUrl) && (
                   <div className="border border-border-solid rounded-md p-4 bg-surface-secondary">
                     <img
-                      src={organization.horizontalLogoUrl}
+                      src={horizontalLogoPreview || organization.horizontalLogoUrl || undefined}
                       alt={__("Horizontal logo")}
                       className="h-12 max-w-xs object-contain"
                     />
@@ -460,17 +443,18 @@ export default function SettingsPage({ queryRef }: Props) {
                 )}
                 <FileButton
                   disabled={formState.isSubmitting}
-                  onChange={updateHorizontalLogo}
+                  onChange={handleHorizontalLogoChange}
                   variant="secondary"
                   accept="image/png,image/jpeg,image/jpg"
                 >
-                  {organization.horizontalLogoUrl ? __("Change horizontal logo") : __("Upload horizontal logo")}
+                  {(horizontalLogoPreview || organization.horizontalLogoUrl) ? __("Change horizontal logo") : __("Upload horizontal logo")}
                 </FileButton>
-                {organization.horizontalLogoUrl && (
+                {(organization.horizontalLogoUrl && !horizontalLogoFile) && (
                   <Dialog
                     ref={deleteDialogRef}
                     trigger={
                       <Button
+                        type="button"
                         variant="quaternary"
                         icon={IconTrashCan}
                         aria-label={__("Delete horizontal logo")}
@@ -549,7 +533,7 @@ export default function SettingsPage({ queryRef }: Props) {
               />
             </div>
 
-            {formState.isDirty && (
+            {(formState.isDirty || logoFile || horizontalLogoFile) && (
               <div className="flex justify-end pt-6">
                 <Button type="submit" disabled={formState.isSubmitting}>
                   {formState.isSubmitting
