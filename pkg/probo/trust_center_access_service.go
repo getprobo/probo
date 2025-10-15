@@ -408,6 +408,7 @@ func (s TrustCenterAccessService) sendTrustCenterAccessEmail(
 	accessURL string,
 ) error {
 	subject, textBody, htmlBody, err := emails.RenderTrustCenterAccess(
+		s.svc.hostname,
 		name,
 		companyName,
 		accessURL,

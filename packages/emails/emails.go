@@ -26,6 +26,8 @@ import (
 var Templates embed.FS
 
 const (
+	logoURLFormat = "https://%s/logos/probo.png"
+
 	subjectConfirmEmail      = "Confirm your email address"
 	subjectPasswordReset     = "Reset your password"
 	subjectInvitation        = "Invitation to join %s on Probo"
@@ -52,97 +54,111 @@ var (
 	trustCenterAccessTextTemplate = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/trust-center-access.txt.tmpl"))
 )
 
-func RenderConfirmEmail(fullName, confirmationUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderConfirmEmail(hostname, fullName, confirmationUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName        string
 		ConfirmationUrl string
+		LogoURL         string
 	}{
 		FullName:        fullName,
 		ConfirmationUrl: confirmationUrl,
+		LogoURL:         fmt.Sprintf(logoURLFormat, hostname),
 	}
 
 	textBody, htmlBody, err = renderEmail(confirmEmailTextTemplate, confirmEmailHTMLTemplate, data)
 	return subjectConfirmEmail, textBody, htmlBody, err
 }
 
-func RenderPasswordReset(fullName, resetUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderPasswordReset(hostname, fullName, resetUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName string
 		ResetUrl string
+		LogoURL  string
 	}{
 		FullName: fullName,
 		ResetUrl: resetUrl,
+		LogoURL:  fmt.Sprintf(logoURLFormat, hostname),
 	}
 
 	textBody, htmlBody, err = renderEmail(passwordResetTextTemplate, passwordResetHTMLTemplate, data)
 	return subjectPasswordReset, textBody, htmlBody, err
 }
 
-func RenderInvitation(fullName, organizationName, invitationUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderInvitation(hostname, fullName, organizationName, invitationUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName         string
 		OrganizationName string
 		InvitationUrl    string
+		LogoURL          string
 	}{
 		FullName:         fullName,
 		OrganizationName: organizationName,
 		InvitationUrl:    invitationUrl,
+		LogoURL:          fmt.Sprintf(logoURLFormat, hostname),
 	}
 
 	textBody, htmlBody, err = renderEmail(invitationTextTemplate, invitationHTMLTemplate, data)
 	return fmt.Sprintf(subjectInvitation, organizationName), textBody, htmlBody, err
 }
 
-func RenderDocumentSigning(fullName, organizationName, signingUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderDocumentSigning(hostname, fullName, organizationName, signingUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName         string
 		OrganizationName string
 		SigningUrl       string
+		LogoURL          string
 	}{
 		FullName:         fullName,
 		OrganizationName: organizationName,
 		SigningUrl:       signingUrl,
+		LogoURL:          fmt.Sprintf(logoURLFormat, hostname),
 	}
 
 	textBody, htmlBody, err = renderEmail(documentSigningTextTemplate, documentSigningHTMLTemplate, data)
 	return fmt.Sprintf(subjectDocumentSigning, organizationName), textBody, htmlBody, err
 }
 
-func RenderDocumentExport(fullName, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderDocumentExport(hostname, fullName, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName    string
 		DownloadUrl string
+		LogoURL     string
 	}{
 		FullName:    fullName,
 		DownloadUrl: downloadUrl,
+		LogoURL:     fmt.Sprintf(logoURLFormat, hostname),
 	}
 
 	textBody, htmlBody, err = renderEmail(documentExportTextTemplate, documentExportHTMLTemplate, data)
 	return subjectDocumentExport, textBody, htmlBody, err
 }
 
-func RenderFrameworkExport(fullName, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderFrameworkExport(hostname, fullName, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName    string
 		DownloadUrl string
+		LogoURL     string
 	}{
 		FullName:    fullName,
 		DownloadUrl: downloadUrl,
+		LogoURL:     fmt.Sprintf(logoURLFormat, hostname),
 	}
 
 	textBody, htmlBody, err = renderEmail(frameworkExportTextTemplate, frameworkExportHTMLTemplate, data)
 	return subjectFrameworkExport, textBody, htmlBody, err
 }
 
-func RenderTrustCenterAccess(fullName, organizationName, accessUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderTrustCenterAccess(hostname, fullName, organizationName, accessUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName         string
 		OrganizationName string
 		AccessUrl        string
+		LogoURL          string
 	}{
 		FullName:         fullName,
 		OrganizationName: organizationName,
 		AccessUrl:        accessUrl,
+		LogoURL:          fmt.Sprintf(logoURLFormat, hostname),
 	}
 
 	textBody, htmlBody, err = renderEmail(trustCenterAccessTextTemplate, trustCenterAccessHTMLTemplate, data)

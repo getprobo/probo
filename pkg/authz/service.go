@@ -702,6 +702,7 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 		}
 
 		subject, textBody, htmlBody, err := emails.RenderInvitation(
+			s.hostname,
 			recipientName,
 			organization.Name,
 			invitationURL,

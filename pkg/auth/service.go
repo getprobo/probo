@@ -191,6 +191,7 @@ func (s Service) ForgetPassword(
 			}
 
 			subject, textBody, htmlBody, err := emails.RenderPasswordReset(
+				s.hostname,
 				user.FullName,
 				resetPasswordUrl.String(),
 			)
@@ -292,6 +293,7 @@ func (s Service) SignUp(
 			}
 
 			subject, textBody, htmlBody, err := emails.RenderConfirmEmail(
+				s.hostname,
 				user.FullName,
 				confirmationUrl.String(),
 			)

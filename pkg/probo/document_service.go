@@ -455,6 +455,7 @@ func (s *DocumentService) SendSigningNotifications(
 				}
 
 				subject, textBody, htmlBody, err := emails.RenderDocumentSigning(
+					s.svc.hostname,
 					people.FullName,
 					organization.Name,
 					signRequestURL.String(),
@@ -1570,6 +1571,7 @@ func (s *DocumentService) SendExportEmail(
 			}
 
 			subject, textBody, htmlBody, err := emails.RenderDocumentExport(
+				s.svc.hostname,
 				recipientName,
 				downloadURL,
 			)
