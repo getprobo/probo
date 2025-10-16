@@ -47,7 +47,10 @@ import type { DocumentsPageRowFragment$key } from "./__generated__/DocumentsPage
 import { SortableTable, SortableTh } from "/components/SortableTable";
 import { PublishDocumentsDialog } from "./dialogs/PublishDocumentsDialog.tsx";
 import { SignatureDocumentsDialog } from "./dialogs/SignatureDocumentsDialog.tsx";
-import { BulkExportDialog, type BulkExportDialogRef } from "/components/documents/BulkExportDialog";
+import {
+  BulkExportDialog,
+  type BulkExportDialogRef,
+} from "/components/documents/BulkExportDialog";
 import type { DocumentsPageUserEmailQuery } from "./__generated__/DocumentsPageUserEmailQuery.graphql";
 
 const documentsFragment = graphql`
@@ -103,7 +106,10 @@ export default function DocumentsPage(props: Props) {
     props.queryRef
   ).organization;
 
-  const userEmailData = useLazyLoadQuery<DocumentsPageUserEmailQuery>(UserEmailQuery, {});
+  const userEmailData = useLazyLoadQuery<DocumentsPageUserEmailQuery>(
+    UserEmailQuery,
+    {}
+  );
   const defaultEmail = userEmailData.viewer.user.email;
   const pagination = usePaginationFragment(
     documentsFragment,
@@ -116,7 +122,8 @@ export default function DocumentsPage(props: Props) {
   const connectionId = pagination.data.documents.__id;
   const [sendSigningNotifications] = useSendSigningNotificationsMutation();
   const [bulkDeleteDocuments] = useBulkDeleteDocumentsMutation();
-  const [bulkExportDocuments, isBulkExporting] = useBulkExportDocumentsMutation();
+  const [bulkExportDocuments, isBulkExporting] =
+    useBulkExportDocumentsMutation();
   const { list: selection, toggle, clear, reset } = useList<string>([]);
   const confirm = useConfirm();
   const bulkExportDialogRef = useRef<BulkExportDialogRef>(null);
@@ -145,21 +152,26 @@ export default function DocumentsPage(props: Props) {
       {
         message: sprintf(
           __(
-            'This will permanently delete %s document%s. This action cannot be undone.'
+            "This will permanently delete %s document%s. This action cannot be undone."
           ),
           documentCount,
-          documentCount > 1 ? 's' : ''
+          documentCount > 1 ? "s" : ""
         ),
       }
     );
   };
 
-  const handleBulkExport = (options: { withWatermark: boolean; withSignatures: boolean; watermarkEmail?: string }) => {
+  const handleBulkExport = (options: {
+    withWatermark: boolean;
+    withSignatures: boolean;
+    watermarkEmail?: string;
+  }) => {
     const input = {
       documentIds: selection,
       withWatermark: options.withWatermark,
       withSignatures: options.withSignatures,
-      ...(options.withWatermark && options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
+      ...(options.withWatermark &&
+        options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
     };
 
     bulkExportDocuments({
@@ -196,14 +208,21 @@ export default function DocumentsPage(props: Props) {
               <Tr>
                 <Th className="w-18">
                   <Checkbox
-                    checked={selection.length === documents.length && documents.length > 0}
+                    checked={
+                      selection.length === documents.length &&
+                      documents.length > 0
+                    }
                     onChange={() => reset(documents.map((d) => d.id))}
                   />
                 </Th>
-                <SortableTh field="TITLE" className="min-w-0">{__("Name")}</SortableTh>
+                <SortableTh field="TITLE" className="min-w-0">
+                  {__("Name")}
+                </SortableTh>
                 <Th className="w-24">{__("Status")}</Th>
                 <Th className="w-20">{__("Version")}</Th>
-                <SortableTh field="DOCUMENT_TYPE" className="w-28">{__("Type")}</SortableTh>
+                <SortableTh field="DOCUMENT_TYPE" className="w-28">
+                  {__("Type")}
+                </SortableTh>
                 <Th className="w-60">{__("Owner")}</Th>
                 <Th className="w-60">{__("Last update")}</Th>
                 <Th className="w-20">{__("Signatures")}</Th>
@@ -228,41 +247,48 @@ export default function DocumentsPage(props: Props) {
                         documentIds={selection}
                         onSave={clear}
                       >
-                        <Button icon={IconCheckmark1} className="py-0.5 px-2 text-xs h-6 min-h-6">
+                        <Button
+                          icon={IconCheckmark1}
+                          className="py-0.5 px-2 text-xs h-6 min-h-6"
+                        >
                           {__("Publish")}
                         </Button>
                       </PublishDocumentsDialog>
-                    <SignatureDocumentsDialog
-                      documentIds={selection}
-                      onSave={clear}
-                    >
-                      <Button variant="secondary" icon={IconSignature} className="py-0.5 px-2 text-xs h-6 min-h-6">
-                        {__("Request signature")}
-                      </Button>
-                    </SignatureDocumentsDialog>
-                    <BulkExportDialog
-                      ref={bulkExportDialogRef}
-                      onExport={handleBulkExport}
-                      isLoading={isBulkExporting}
-                      defaultEmail={defaultEmail}
-                      selectedCount={selection.length}
-                    >
+                      <SignatureDocumentsDialog
+                        documentIds={selection}
+                        onSave={clear}
+                      >
+                        <Button
+                          variant="secondary"
+                          icon={IconSignature}
+                          className="py-0.5 px-2 text-xs h-6 min-h-6"
+                        >
+                          {__("Request signature")}
+                        </Button>
+                      </SignatureDocumentsDialog>
+                      <BulkExportDialog
+                        ref={bulkExportDialogRef}
+                        onExport={handleBulkExport}
+                        isLoading={isBulkExporting}
+                        defaultEmail={defaultEmail}
+                        selectedCount={selection.length}
+                      >
+                        <Button
+                          variant="secondary"
+                          icon={IconArrowDown}
+                          className="py-0.5 px-2 text-xs h-6 min-h-6"
+                        >
+                          {__("Export")}
+                        </Button>
+                      </BulkExportDialog>
                       <Button
-                        variant="secondary"
-                        icon={IconArrowDown}
+                        variant="danger"
+                        icon={IconTrashCan}
+                        onClick={handleBulkDelete}
                         className="py-0.5 px-2 text-xs h-6 min-h-6"
                       >
-                        {__("Export")}
+                        {__("Delete")}
                       </Button>
-                    </BulkExportDialog>
-                    <Button
-                      variant="danger"
-                      icon={IconTrashCan}
-                      onClick={handleBulkDelete}
-                      className="py-0.5 px-2 text-xs h-6 min-h-6"
-                    >
-                      {__("Delete")}
-                    </Button>
                     </div>
                   </div>
                 </Th>
@@ -315,7 +341,7 @@ const rowFragment = graphql`
           id
           status
           version
-          signatures(first: 100) {
+          signatures(first: 500) {
             edges {
               node {
                 id
@@ -353,7 +379,9 @@ function DocumentRow({
 
   const isDraft = lastVersion.status === "DRAFT";
   const { __ } = useTranslate();
-  const signatures = lastVersion.signatures?.edges?.map((edge) => edge?.node)?.filter(Boolean) ?? [];
+  const signatures =
+    lastVersion.signatures?.edges?.map((edge) => edge?.node)?.filter(Boolean) ??
+    [];
   const signedCount = signatures.filter(
     (signature) => signature.state === "SIGNED"
   ).length;
@@ -385,9 +413,7 @@ function DocumentRow({
         <Checkbox checked={checked} onChange={onCheck} />
       </Td>
       <Td className="min-w-0">
-        <div className="flex gap-4 items-center">
-          {document.title}
-        </div>
+        <div className="flex gap-4 items-center">{document.title}</div>
       </Td>
       <Td className="w-24">
         <Badge variant={isDraft ? "neutral" : "success"}>
@@ -395,16 +421,16 @@ function DocumentRow({
         </Badge>
       </Td>
       <Td className="w-20">v{lastVersion.version}</Td>
-      <Td className="w-28">{getDocumentTypeLabel(__, document.documentType)}</Td>
+      <Td className="w-28">
+        {getDocumentTypeLabel(__, document.documentType)}
+      </Td>
       <Td className="w-60">
         <div className="flex gap-2 items-center">
           <Avatar name={document.owner?.fullName ?? ""} />
           {document.owner?.fullName}
         </div>
       </Td>
-      <Td className="w-60">
-        {formatDate(document.updatedAt)}
-      </Td>
+      <Td className="w-60">{formatDate(document.updatedAt)}</Td>
       <Td className="w-20">
         {signedCount}/{signatures.length}
       </Td>

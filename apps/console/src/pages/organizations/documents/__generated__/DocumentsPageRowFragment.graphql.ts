@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<32d1bb469d4ece0eb14b746587eb45a1>>
+ * @generated SignedSource<<fdb5315d1a51b72e6f80370036f0f89d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -160,7 +160,7 @@ return {
                     {
                       "kind": "Literal",
                       "name": "first",
-                      "value": 100
+                      "value": 500
                     }
                   ],
                   "concreteType": "DocumentVersionSignatureConnection",
@@ -199,7 +199,7 @@ return {
                       "storageKey": null
                     }
                   ],
-                  "storageKey": "signatures(first:100)"
+                  "storageKey": "signatures(first:500)"
                 }
               ],
               "storageKey": null
@@ -216,6 +216,6 @@ return {
 };
 })();
 
-(node as any).hash = "3cb482445055e1fea0e36ff3e7255cb5";
+(node as any).hash = "66c9a0719081e20b4c796638b2f9976f";
 
 export default node;

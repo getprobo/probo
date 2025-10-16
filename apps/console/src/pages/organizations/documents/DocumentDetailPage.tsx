@@ -47,7 +47,12 @@ import {
 } from "@probo/ui";
 import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
-import { getDocumentTypeLabel, sprintf, documentTypes, formatDate } from "@probo/helpers";
+import {
+  getDocumentTypeLabel,
+  sprintf,
+  documentTypes,
+  formatDate,
+} from "@probo/helpers";
 import {
   Link,
   Outlet,
@@ -56,7 +61,10 @@ import {
   useParams,
 } from "react-router";
 import UpdateVersionDialog from "./dialogs/UpdateVersionDialog";
-import { PdfDownloadDialog, type PdfDownloadDialogRef } from "/components/documents/PdfDownloadDialog";
+import {
+  PdfDownloadDialog,
+  type PdfDownloadDialogRef,
+} from "/components/documents/PdfDownloadDialog";
 import { useRef, useState } from "react";
 import type { NodeOf } from "/types.ts";
 import clsx from "clsx";
@@ -93,7 +101,7 @@ const documentFragment = graphql`
           publishedAt
           version
           updatedAt
-          signatures(first: 100)
+          signatures(first: 500)
             @connection(key: "DocumentDetailPage_signatures") {
             __id
             edges {
@@ -227,7 +235,8 @@ export default function DocumentDetailPage(props: Props) {
     }
   );
   const [deleteDocument, isDeleting] = useDeleteDocumentMutation();
-  const [deleteDraftDocumentVersion, isDeletingDraft] = useDeleteDraftDocumentVersionMutation();
+  const [deleteDraftDocumentVersion, isDeletingDraft] =
+    useDeleteDraftDocumentVersionMutation();
   const [exportDocumentVersionPDF, isExporting] =
     useMutationWithToasts<DocumentDetailPageExportPDFMutation>(
       exportDocumentVersionPDFMutation,
@@ -237,24 +246,31 @@ export default function DocumentDetailPage(props: Props) {
       }
     );
 
-  const userEmailData = useLazyLoadQuery<DocumentDetailPageUserEmailQuery>(UserEmailQuery, {});
-  const defaultEmail = userEmailData.viewer.user.email;
-  const [updateDocument, isUpdatingDocument] = useMutationWithToasts<DocumentDetailPageUpdateMutation>(
-    updateDocumentMutation,
-    {
-      successMessage: __("Document updated successfully."),
-      errorMessage: __("Failed to update document. Please try again."),
-    }
+  const userEmailData = useLazyLoadQuery<DocumentDetailPageUserEmailQuery>(
+    UserEmailQuery,
+    {}
   );
+  const defaultEmail = userEmailData.viewer.user.email;
+  const [updateDocument, isUpdatingDocument] =
+    useMutationWithToasts<DocumentDetailPageUpdateMutation>(
+      updateDocumentMutation,
+      {
+        successMessage: __("Document updated successfully."),
+        errorMessage: __("Failed to update document. Please try again."),
+      }
+    );
   const versionConnectionId = document.versions.__id;
 
-  const { register, control, handleSubmit, reset } = useFormWithSchema(documentUpdateSchema, {
-    defaultValues: {
-      title: document.title,
-      ownerId: document.owner?.id || "",
-      documentType: document.documentType,
-    },
-  });
+  const { register, control, handleSubmit, reset } = useFormWithSchema(
+    documentUpdateSchema,
+    {
+      defaultValues: {
+        title: document.title,
+        ownerId: document.owner?.id || "",
+        documentType: document.documentType,
+      },
+    }
+  );
 
   usePageTitle(document.title);
 
@@ -286,7 +302,9 @@ export default function DocumentDetailPage(props: Props) {
     });
   };
 
-  const handleUpdateDocumentType = (data: { documentType: typeof documentTypes[number] }) => {
+  const handleUpdateDocumentType = (data: {
+    documentType: (typeof documentTypes)[number];
+  }) => {
     updateDocument({
       variables: {
         input: {
@@ -376,12 +394,17 @@ export default function DocumentDetailPage(props: Props) {
     );
   };
 
-  const handleDownloadPdf = (options: { withWatermark: boolean; withSignatures: boolean; watermarkEmail?: string }) => {
+  const handleDownloadPdf = (options: {
+    withWatermark: boolean;
+    withSignatures: boolean;
+    watermarkEmail?: string;
+  }) => {
     const input = {
       documentVersionId: currentVersion.id,
       withWatermark: options.withWatermark,
       withSignatures: options.withSignatures,
-      ...(options.withWatermark && options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
+      ...(options.withWatermark &&
+        options.watermarkEmail && { watermarkEmail: options.watermarkEmail }),
     };
 
     exportDocumentVersionPDF({
@@ -671,11 +694,7 @@ function EditablePropertyContent({
         onClick={onSave}
         disabled={disabled}
       />
-      <Button
-        variant="quaternary"
-        icon={IconCrossLargeX}
-        onClick={onCancel}
-      />
+      <Button variant="quaternary" icon={IconCrossLargeX} onClick={onCancel} />
     </div>
   );
 }
@@ -690,11 +709,7 @@ function ReadOnlyPropertyContent({
   return (
     <div className="flex items-center justify-between gap-3">
       {children}
-      <Button
-        variant="quaternary"
-        icon={IconPencil}
-        onClick={onEdit}
-      />
+      <Button variant="quaternary" icon={IconPencil} onClick={onEdit} />
     </div>
   );
 }
