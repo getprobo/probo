@@ -43,6 +43,7 @@ import (
 	"github.com/getprobo/probo/pkg/statelesstoken"
 	"github.com/go-chi/chi/v5"
 	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/log"
 )
 
@@ -163,8 +164,14 @@ func NewMux(
 				return
 			}
 
+			uuid, err := uuid.NewV7()
+			if err != nil {
+				http.Error(w, "failed to generate uuid", http.StatusInternalServerError)
+				return
+			}
+
 			w.Header().Set("Content-Type", "application/pdf")
-			w.Header().Set("Content-Disposition", "inline; filename=\"document.pdf\"")
+			w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s.pdf\"", uuid.String()))
 			w.WriteHeader(http.StatusOK)
 			w.Write(pdfData)
 		},

@@ -110,6 +110,7 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
       >
         <Document
           file={src}
+          key={src + "document"}
           onLoadSuccess={onDocumentLoadSuccess}
           className="flex flex-col gap-4 py-10"
           ref={documentRef}
