@@ -46,8 +46,8 @@ type (
 		Name         *string
 		Description  *string
 		State        *coredata.TaskState
-		TimeEstimate *time.Duration
-		Deadline     *time.Time
+		TimeEstimate **time.Duration
+		Deadline     **time.Time
 	}
 )
 
@@ -203,11 +203,11 @@ func (s TaskService) Update(
 			}
 
 			if req.TimeEstimate != nil {
-				task.TimeEstimate = req.TimeEstimate
+				task.TimeEstimate = *req.TimeEstimate
 			}
 
 			if req.Deadline != nil {
-				task.Deadline = req.Deadline
+				task.Deadline = *req.Deadline
 			}
 
 			task.UpdatedAt = time.Now()

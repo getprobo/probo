@@ -222,12 +222,12 @@ export const useUpdateNonconformity = () => {
     id: string;
     referenceId?: string;
     description?: string;
-    dateIdentified?: string;
+    dateIdentified?: string | null;
     rootCause?: string;
     correctiveAction?: string;
     ownerId?: string;
     auditId?: string;
-    dueDate?: string;
+    dueDate?: string | null;
     status?: string;
     effectivenessCheck?: string;
   }) => {

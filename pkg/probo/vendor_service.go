@@ -56,22 +56,22 @@ type (
 	UpdateVendorRequest struct {
 		ID                            gid.GID
 		Name                          *string
-		Description                   *string
-		HeadquarterAddress            *string
-		LegalName                     *string
-		WebsiteURL                    *string
-		TermsOfServiceURL             *string
+		Description                   **string
+		HeadquarterAddress            **string
+		LegalName                     **string
+		WebsiteURL                    **string
+		TermsOfServiceURL             **string
 		Category                      *coredata.VendorCategory
-		PrivacyPolicyURL              *string
-		ServiceLevelAgreementURL      *string
-		DataProcessingAgreementURL    *string
-		BusinessAssociateAgreementURL *string
-		SubprocessorsListURL          *string
+		PrivacyPolicyURL              **string
+		ServiceLevelAgreementURL      **string
+		DataProcessingAgreementURL    **string
+		BusinessAssociateAgreementURL **string
+		SubprocessorsListURL          **string
 		Certifications                []string
 		Countries                     coredata.CountryCodes
-		SecurityPageURL               *string
-		TrustPageURL                  *string
-		StatusPageURL                 *string
+		SecurityPageURL               **string
+		TrustPageURL                  **string
+		StatusPageURL                 **string
 		BusinessOwnerID               **gid.GID
 		SecurityOwnerID               **gid.GID
 		ShowOnTrustCenter             *bool
@@ -222,35 +222,35 @@ func (s VendorService) Update(
 			}
 
 			if req.Description != nil {
-				vendor.Description = req.Description
+				vendor.Description = *req.Description
 			}
 
 			if req.StatusPageURL != nil {
-				vendor.StatusPageURL = req.StatusPageURL
+				vendor.StatusPageURL = *req.StatusPageURL
 			}
 
 			if req.TermsOfServiceURL != nil {
-				vendor.TermsOfServiceURL = req.TermsOfServiceURL
+				vendor.TermsOfServiceURL = *req.TermsOfServiceURL
 			}
 
 			if req.PrivacyPolicyURL != nil {
-				vendor.PrivacyPolicyURL = req.PrivacyPolicyURL
+				vendor.PrivacyPolicyURL = *req.PrivacyPolicyURL
 			}
 
 			if req.ServiceLevelAgreementURL != nil {
-				vendor.ServiceLevelAgreementURL = req.ServiceLevelAgreementURL
+				vendor.ServiceLevelAgreementURL = *req.ServiceLevelAgreementURL
 			}
 
 			if req.DataProcessingAgreementURL != nil {
-				vendor.DataProcessingAgreementURL = req.DataProcessingAgreementURL
+				vendor.DataProcessingAgreementURL = *req.DataProcessingAgreementURL
 			}
 
 			if req.BusinessAssociateAgreementURL != nil {
-				vendor.BusinessAssociateAgreementURL = req.BusinessAssociateAgreementURL
+				vendor.BusinessAssociateAgreementURL = *req.BusinessAssociateAgreementURL
 			}
 
 			if req.SubprocessorsListURL != nil {
-				vendor.SubprocessorsListURL = req.SubprocessorsListURL
+				vendor.SubprocessorsListURL = *req.SubprocessorsListURL
 			}
 
 			if req.Category != nil {
@@ -260,7 +260,7 @@ func (s VendorService) Update(
 			}
 
 			if req.SecurityPageURL != nil {
-				vendor.SecurityPageURL = req.SecurityPageURL
+				vendor.SecurityPageURL = *req.SecurityPageURL
 			}
 
 			if req.ShowOnTrustCenter != nil {
@@ -268,23 +268,23 @@ func (s VendorService) Update(
 			}
 
 			if req.TrustPageURL != nil {
-				vendor.TrustPageURL = req.TrustPageURL
+				vendor.TrustPageURL = *req.TrustPageURL
 			}
 
 			if req.HeadquarterAddress != nil {
-				vendor.HeadquarterAddress = req.HeadquarterAddress
+				vendor.HeadquarterAddress = *req.HeadquarterAddress
 			}
 
 			if req.LegalName != nil {
-				vendor.LegalName = req.LegalName
+				vendor.LegalName = *req.LegalName
 			}
 
 			if req.WebsiteURL != nil {
-				vendor.WebsiteURL = req.WebsiteURL
+				vendor.WebsiteURL = *req.WebsiteURL
 			}
 
 			if req.TermsOfServiceURL != nil {
-				vendor.TermsOfServiceURL = req.TermsOfServiceURL
+				vendor.TermsOfServiceURL = *req.TermsOfServiceURL
 			}
 
 			if req.Certifications != nil {
@@ -293,18 +293,6 @@ func (s VendorService) Update(
 
 			if req.Countries != nil {
 				vendor.Countries = req.Countries
-			}
-
-			if req.StatusPageURL != nil {
-				vendor.StatusPageURL = req.StatusPageURL
-			}
-
-			if req.SecurityPageURL != nil {
-				vendor.SecurityPageURL = req.SecurityPageURL
-			}
-
-			if req.TrustPageURL != nil {
-				vendor.TrustPageURL = req.TrustPageURL
 			}
 
 			if req.BusinessOwnerID != nil {

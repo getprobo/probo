@@ -195,8 +195,8 @@ export const useUpdateObligation = () => {
     actionsToBeImplemented?: string;
     regulator?: string;
     ownerId?: string;
-    lastReviewDate?: string;
-    dueDate?: string;
+    lastReviewDate?: string | null;
+    dueDate?: string | null;
     status?: string;
   }) => {
     if (!input.id) {

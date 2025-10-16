@@ -23,12 +23,11 @@ import {
   Tr,
   useConfirm,
   useDialogRef,
-  useToast,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import type { PreloadedQuery } from "react-relay";
 import type { OrganizationGraph_ViewQuery } from "/hooks/graph/__generated__/OrganizationGraph_ViewQuery.graphql";
-import { useFragment, useMutation, usePreloadedQuery, usePaginationFragment } from "react-relay";
+import { useFragment, usePreloadedQuery, usePaginationFragment } from "react-relay";
 import { organizationViewQuery } from "/hooks/graph/OrganizationGraph";
 import { graphql } from "relay-runtime";
 import { SortableTable, SortableTh } from "/components/SortableTable";
@@ -45,7 +44,7 @@ import type {
   SettingsPageInvitationsFragment$data,
   SettingsPageInvitationsFragment$key
 } from "./__generated__/SettingsPageInvitationsFragment.graphql";
-import { useState, type ChangeEventHandler, useEffect } from "react";
+import { useState, type ChangeEventHandler, useEffect, useRef } from "react";
 import { sprintf } from "@probo/helpers";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { z } from "zod";
@@ -226,7 +225,6 @@ export default function SettingsPage({ queryRef }: Props) {
     organizationViewQuery,
     queryRef
   ).node;
-  const { toast } = useToast();
   const organization = useFragment<SettingsPageFragment$key>(
     organizationFragment,
     organizationKey
@@ -250,7 +248,13 @@ export default function SettingsPage({ queryRef }: Props) {
     invitationsPagination.refetch({}, { fetchPolicy: 'network-only' });
   };
 
-  const [updateOrganization] = useMutation(updateOrganizationMutation);
+  const [updateOrganization, isUpdatingOrganization] = useMutationWithToasts(
+    updateOrganizationMutation,
+    {
+      successMessage: __("Organization updated successfully"),
+      errorMessage: __("Failed to update organization"),
+    }
+  );
   const [deleteHorizontalLogo, isDeletingHorizontalLogo] = useMutationWithToasts(
     deleteHorizontalLogoMutation,
     {
@@ -262,8 +266,6 @@ export default function SettingsPage({ queryRef }: Props) {
   const memberships = membershipsPagination.data.memberships?.edges.map((edge) => edge.node) || [];
   const invitations = invitationsPagination.data.invitations?.edges.map((edge) => edge.node) || [];
   const [activeTab, setActiveTab] = useState<"memberships" | "invitations">("memberships");
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [horizontalLogoFile, setHorizontalLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [horizontalLogoPreview, setHorizontalLogoPreview] = useState<string | null>(null);
 
@@ -280,31 +282,45 @@ export default function SettingsPage({ queryRef }: Props) {
     }
   );
 
+  const prevOrgDataRef = useRef({
+    name: organization.name,
+    description: organization.description,
+    websiteUrl: organization.websiteUrl,
+    email: organization.email,
+    headquarterAddress: organization.headquarterAddress,
+  });
+
   useEffect(() => {
-    reset({
-      name: organization.name || "",
-      description: organization.description || "",
-      websiteUrl: organization.websiteUrl || "",
-      email: organization.email || "",
-      headquarterAddress: organization.headquarterAddress || "",
-    });
-    setLogoFile(null);
-    setHorizontalLogoFile(null);
-    setLogoPreview(null);
-    setHorizontalLogoPreview(null);
+    const prev = prevOrgDataRef.current;
+    const hasFormFieldChanges =
+      prev.name !== organization.name ||
+      prev.description !== organization.description ||
+      prev.websiteUrl !== organization.websiteUrl ||
+      prev.email !== organization.email ||
+      prev.headquarterAddress !== organization.headquarterAddress;
+
+    if (hasFormFieldChanges) {
+      reset({
+        name: organization.name || "",
+        description: organization.description || "",
+        websiteUrl: organization.websiteUrl || "",
+        email: organization.email || "",
+        headquarterAddress: organization.headquarterAddress || "",
+      });
+      setLogoPreview(null);
+      setHorizontalLogoPreview(null);
+
+      prevOrgDataRef.current = {
+        name: organization.name,
+        description: organization.description,
+        websiteUrl: organization.websiteUrl,
+        email: organization.email,
+        headquarterAddress: organization.headquarterAddress,
+      };
+    }
   }, [organization, reset]);
 
   const onSubmit = handleSubmit((data: OrganizationFormData) => {
-    const uploadables: Record<string, File> = {};
-
-    if (logoFile) {
-      uploadables["input.logo"] = logoFile;
-    }
-
-    if (horizontalLogoFile) {
-      uploadables["input.horizontalLogoFile"] = horizontalLogoFile;
-    }
-
     updateOrganization({
       variables: {
         input: {
@@ -314,26 +330,7 @@ export default function SettingsPage({ queryRef }: Props) {
           websiteUrl: data.websiteUrl || undefined,
           email: data.email || undefined,
           headquarterAddress: data.headquarterAddress || undefined,
-          logo: logoFile ? null : undefined,
-          horizontalLogoFile: horizontalLogoFile ? null : undefined,
         },
-      },
-      uploadables: Object.keys(uploadables).length > 0 ? uploadables : undefined,
-      onError() {
-        toast({
-          title: __("Error"),
-          description: __("Failed to update organization."),
-          variant: "error",
-        });
-      },
-      onCompleted() {
-        toast({
-          title: __("Organization updated"),
-          description: __(
-            "Your organization details have been updated successfully."
-          ),
-          variant: "success",
-        });
       },
     });
   });
@@ -343,12 +340,27 @@ export default function SettingsPage({ queryRef }: Props) {
     if (!file) {
       return;
     }
-    setLogoFile(file);
+
     const reader = new FileReader();
     reader.onloadend = () => {
       setLogoPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
+
+    updateOrganization({
+      variables: {
+        input: {
+          organizationId: organization.id,
+          logoFile: null,
+        },
+      },
+      uploadables: {
+        "input.logoFile": file,
+      },
+      onSuccess: () => {
+        setLogoPreview(null);
+      },
+    });
   };
 
   const handleHorizontalLogoChange: ChangeEventHandler<HTMLInputElement> = (e) => {
@@ -356,12 +368,27 @@ export default function SettingsPage({ queryRef }: Props) {
     if (!file) {
       return;
     }
-    setHorizontalLogoFile(file);
+
     const reader = new FileReader();
     reader.onloadend = () => {
       setHorizontalLogoPreview(reader.result as string);
     };
     reader.readAsDataURL(file);
+
+    updateOrganization({
+      variables: {
+        input: {
+          organizationId: organization.id,
+          horizontalLogoFile: null,
+        },
+      },
+      uploadables: {
+        "input.horizontalLogoFile": file,
+      },
+      onSuccess: () => {
+        setHorizontalLogoPreview(null);
+      },
+    });
   };
 
   const deleteDialogRef = useDialogRef();
@@ -416,13 +443,13 @@ export default function SettingsPage({ queryRef }: Props) {
                   size="xl"
                 />
                 <FileButton
-                  disabled={formState.isSubmitting}
+                  disabled={formState.isSubmitting || isUpdatingOrganization}
                   onChange={handleLogoChange}
                   variant="secondary"
                   className="ml-auto"
                   accept="image/png,image/jpeg,image/jpg"
                 >
-                  {__("Change logo")}
+                  {isUpdatingOrganization ? __("Uploading...") : __("Change logo")}
                 </FileButton>
               </div>
             </div>
@@ -442,14 +469,18 @@ export default function SettingsPage({ queryRef }: Props) {
                   </div>
                 )}
                 <FileButton
-                  disabled={formState.isSubmitting}
+                  disabled={formState.isSubmitting || isUpdatingOrganization}
                   onChange={handleHorizontalLogoChange}
                   variant="secondary"
                   accept="image/png,image/jpeg,image/jpg"
                 >
-                  {(horizontalLogoPreview || organization.horizontalLogoUrl) ? __("Change horizontal logo") : __("Upload horizontal logo")}
+                  {isUpdatingOrganization
+                    ? __("Uploading...")
+                    : (horizontalLogoPreview || organization.horizontalLogoUrl)
+                    ? __("Change horizontal logo")
+                    : __("Upload horizontal logo")}
                 </FileButton>
-                {(organization.horizontalLogoUrl && !horizontalLogoFile) && (
+                {organization.horizontalLogoUrl && (
                   <Dialog
                     ref={deleteDialogRef}
                     trigger={
@@ -533,10 +564,10 @@ export default function SettingsPage({ queryRef }: Props) {
               />
             </div>
 
-            {(formState.isDirty || logoFile || horizontalLogoFile) && (
+            {formState.isDirty && (
               <div className="flex justify-end pt-6">
-                <Button type="submit" disabled={formState.isSubmitting}>
-                  {formState.isSubmitting
+                <Button type="submit" disabled={formState.isSubmitting || isUpdatingOrganization}>
+                  {(formState.isSubmitting || isUpdatingOrganization)
                     ? __("Updating...")
                     : __("Update Organization")}
                 </Button>

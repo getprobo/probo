@@ -25,6 +25,7 @@ import type { TaskFormDialogFragment$key } from "./__generated__/TaskFormDialogF
 import { MeasureSelectField } from "/components/form/MeasureSelectField";
 import { Controller } from "react-hook-form";
 import { updateStoreCounter } from "/hooks/useMutationWithIncrement";
+import { formatDatetime } from "@probo/helpers";
 
 const taskFragment = graphql`
   fragment TaskFormDialogFragment on Task {
@@ -74,11 +75,7 @@ const schema = z.object({
   timeEstimate: z.string().nullable(),
   assignedToId: z.string(),
   measureId: z.string(),
-  deadline: z
-    .date({
-      coerce: true,
-    })
-    .nullable(),
+  deadline: z.string().optional(),
 });
 
 type Props = {
@@ -113,7 +110,7 @@ export default function TaskFormDialog(props: Props) {
         timeEstimate: task?.timeEstimate ?? "",
         assignedToId: task?.assignedTo?.id ?? "",
         measureId: task?.measure?.id ?? props.measureId ?? "",
-        deadline: task?.deadline?.split("T")[0] ?? null,
+        deadline: task?.deadline?.split("T")[0] ?? "",
       },
     });
 
@@ -126,7 +123,7 @@ export default function TaskFormDialog(props: Props) {
             name: data.name,
             description: data.description,
             timeEstimate: data.timeEstimate || null,
-            deadline: data.deadline,
+            deadline: formatDatetime(data.deadline) ?? null,
           },
         },
       });
@@ -138,7 +135,7 @@ export default function TaskFormDialog(props: Props) {
             name: data.name,
             description: data.description,
             timeEstimate: data.timeEstimate || null,
-            deadline: data.deadline || null,
+            deadline: formatDatetime(data.deadline) ?? null,
             assignedToId: data.assignedToId,
             measureId: data.measureId,
           },

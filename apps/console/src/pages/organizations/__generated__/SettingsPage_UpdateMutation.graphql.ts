@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ce571f7246b6f7500a132f28c8081f84>>
+ * @generated SignedSource<<ac93ed76dd8e53876d200e40f5b62edb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,7 +14,7 @@ export type UpdateOrganizationInput = {
   email?: string | null | undefined;
   headquarterAddress?: string | null | undefined;
   horizontalLogoFile?: any | null | undefined;
-  logo?: any | null | undefined;
+  logoFile?: any | null | undefined;
   name?: string | null | undefined;
   organizationId: string;
   websiteUrl?: string | null | undefined;

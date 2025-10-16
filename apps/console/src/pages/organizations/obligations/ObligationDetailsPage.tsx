@@ -109,8 +109,8 @@ export default function ObligationDetailsPage(props: Props) {
         requirement: formData.requirement || undefined,
         actionsToBeImplemented: formData.actionsToBeImplemented || undefined,
         regulator: formData.regulator || undefined,
-        lastReviewDate: formatDatetime(formData.lastReviewDate),
-        dueDate: formatDatetime(formData.dueDate),
+        lastReviewDate: formatDatetime(formData.lastReviewDate) ?? null,
+        dueDate: formatDatetime(formData.dueDate) ?? null,
         status: formData.status,
         ownerId: formData.ownerId,
       });

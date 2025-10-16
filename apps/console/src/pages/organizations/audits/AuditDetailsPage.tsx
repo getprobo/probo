@@ -83,8 +83,8 @@ export default function AuditDetailsPage(props: Props) {
       await updateAudit({
         id: auditEntry.id,
         name: formData.name,
-        validFrom: formatDatetime(formData.validFrom),
-        validUntil: formatDatetime(formData.validUntil),
+        validFrom: formatDatetime(formData.validFrom) ?? null,
+        validUntil: formatDatetime(formData.validUntil) ?? null,
         state: formData.state,
       });
       reset(formData);

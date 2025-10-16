@@ -189,7 +189,7 @@ export const useUpdateContinualImprovement = () => {
     description?: string;
     source?: string;
     ownerId?: string;
-    targetDate?: string;
+    targetDate?: string | null;
     status?: string;
     priority?: string;
   }) => {

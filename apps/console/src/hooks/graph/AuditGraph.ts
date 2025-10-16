@@ -188,8 +188,8 @@ export const useUpdateAudit = () => {
   return (input: {
     id: string;
     name?: string;
-    validFrom?: string;
-    validUntil?: string;
+    validFrom?: string | null;
+    validUntil?: string | null;
     state?: string;
   }) => {
     if (!input.id) {

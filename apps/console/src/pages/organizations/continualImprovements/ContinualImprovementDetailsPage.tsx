@@ -98,7 +98,7 @@ export default function ContinualImprovementDetailsPage(props: Props) {
         referenceId: formData.referenceId,
         description: formData.description || undefined,
         source: formData.source || undefined,
-        targetDate: formatDatetime(formData.targetDate),
+        targetDate: formatDatetime(formData.targetDate) ?? null,
         status: formData.status,
         priority: formData.priority,
         ownerId: formData.ownerId,

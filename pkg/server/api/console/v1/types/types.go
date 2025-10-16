@@ -1751,10 +1751,10 @@ type UpdateAuditPayload struct {
 type UpdateContinualImprovementInput struct {
 	ID          gid.GID                                `json:"id"`
 	ReferenceID *string                                `json:"referenceId,omitempty"`
-	Description *string                                `json:"description,omitempty"`
-	Source      *string                                `json:"source,omitempty"`
+	Description graphql.Omittable[*string]             `json:"description,omitempty"`
+	Source      graphql.Omittable[*string]             `json:"source,omitempty"`
 	OwnerID     *gid.GID                               `json:"ownerId,omitempty"`
-	TargetDate  *time.Time                             `json:"targetDate,omitempty"`
+	TargetDate  graphql.Omittable[*time.Time]          `json:"targetDate,omitempty"`
 	Status      *coredata.ContinualImprovementStatus   `json:"status,omitempty"`
 	Priority    *coredata.ContinualImprovementPriority `json:"priority,omitempty"`
 }
@@ -1835,15 +1835,15 @@ type UpdateMeasurePayload struct {
 type UpdateNonconformityInput struct {
 	ID                 gid.GID                       `json:"id"`
 	ReferenceID        *string                       `json:"referenceId,omitempty"`
-	Description        *string                       `json:"description,omitempty"`
-	DateIdentified     *time.Time                    `json:"dateIdentified,omitempty"`
+	Description        graphql.Omittable[*string]    `json:"description,omitempty"`
+	DateIdentified     graphql.Omittable[*time.Time] `json:"dateIdentified,omitempty"`
 	RootCause          *string                       `json:"rootCause,omitempty"`
-	CorrectiveAction   *string                       `json:"correctiveAction,omitempty"`
+	CorrectiveAction   graphql.Omittable[*string]    `json:"correctiveAction,omitempty"`
 	OwnerID            *gid.GID                      `json:"ownerId,omitempty"`
 	AuditID            *gid.GID                      `json:"auditId,omitempty"`
-	DueDate            *time.Time                    `json:"dueDate,omitempty"`
+	DueDate            graphql.Omittable[*time.Time] `json:"dueDate,omitempty"`
 	Status             *coredata.NonconformityStatus `json:"status,omitempty"`
-	EffectivenessCheck *string                       `json:"effectivenessCheck,omitempty"`
+	EffectivenessCheck graphql.Omittable[*string]    `json:"effectivenessCheck,omitempty"`
 }
 
 type UpdateNonconformityPayload struct {
@@ -1851,16 +1851,16 @@ type UpdateNonconformityPayload struct {
 }
 
 type UpdateObligationInput struct {
-	ID                     gid.GID                    `json:"id"`
-	Area                   *string                    `json:"area,omitempty"`
-	Source                 *string                    `json:"source,omitempty"`
-	Requirement            *string                    `json:"requirement,omitempty"`
-	ActionsToBeImplemented *string                    `json:"actionsToBeImplemented,omitempty"`
-	Regulator              *string                    `json:"regulator,omitempty"`
-	OwnerID                *gid.GID                   `json:"ownerId,omitempty"`
-	LastReviewDate         *time.Time                 `json:"lastReviewDate,omitempty"`
-	DueDate                *time.Time                 `json:"dueDate,omitempty"`
-	Status                 *coredata.ObligationStatus `json:"status,omitempty"`
+	ID                     gid.GID                       `json:"id"`
+	Area                   graphql.Omittable[*string]    `json:"area,omitempty"`
+	Source                 graphql.Omittable[*string]    `json:"source,omitempty"`
+	Requirement            graphql.Omittable[*string]    `json:"requirement,omitempty"`
+	ActionsToBeImplemented graphql.Omittable[*string]    `json:"actionsToBeImplemented,omitempty"`
+	Regulator              graphql.Omittable[*string]    `json:"regulator,omitempty"`
+	OwnerID                *gid.GID                      `json:"ownerId,omitempty"`
+	LastReviewDate         graphql.Omittable[*time.Time] `json:"lastReviewDate,omitempty"`
+	DueDate                graphql.Omittable[*time.Time] `json:"dueDate,omitempty"`
+	Status                 *coredata.ObligationStatus    `json:"status,omitempty"`
 }
 
 type UpdateObligationPayload struct {
@@ -1868,14 +1868,14 @@ type UpdateObligationPayload struct {
 }
 
 type UpdateOrganizationInput struct {
-	OrganizationID     gid.GID         `json:"organizationId"`
-	Name               *string         `json:"name,omitempty"`
-	Logo               *graphql.Upload `json:"logo,omitempty"`
-	HorizontalLogoFile *graphql.Upload `json:"horizontalLogoFile,omitempty"`
-	Description        *string         `json:"description,omitempty"`
-	WebsiteURL         *string         `json:"websiteUrl,omitempty"`
-	Email              *string         `json:"email,omitempty"`
-	HeadquarterAddress *string         `json:"headquarterAddress,omitempty"`
+	OrganizationID     gid.GID                    `json:"organizationId"`
+	Name               *string                    `json:"name,omitempty"`
+	Description        graphql.Omittable[*string] `json:"description,omitempty"`
+	WebsiteURL         graphql.Omittable[*string] `json:"websiteUrl,omitempty"`
+	Email              graphql.Omittable[*string] `json:"email,omitempty"`
+	HeadquarterAddress graphql.Omittable[*string] `json:"headquarterAddress,omitempty"`
+	LogoFile           *graphql.Upload            `json:"logoFile,omitempty"`
+	HorizontalLogoFile *graphql.Upload            `json:"horizontalLogoFile,omitempty"`
 }
 
 type UpdateOrganizationPayload struct {
@@ -1883,14 +1883,14 @@ type UpdateOrganizationPayload struct {
 }
 
 type UpdatePeopleInput struct {
-	ID                       gid.GID              `json:"id"`
-	FullName                 *string              `json:"fullName,omitempty"`
-	PrimaryEmailAddress      *string              `json:"primaryEmailAddress,omitempty"`
-	AdditionalEmailAddresses []string             `json:"additionalEmailAddresses,omitempty"`
-	Kind                     *coredata.PeopleKind `json:"kind,omitempty"`
-	Position                 *string              `json:"position,omitempty"`
-	ContractStartDate        *time.Time           `json:"contractStartDate,omitempty"`
-	ContractEndDate          *time.Time           `json:"contractEndDate,omitempty"`
+	ID                       gid.GID                       `json:"id"`
+	FullName                 *string                       `json:"fullName,omitempty"`
+	PrimaryEmailAddress      *string                       `json:"primaryEmailAddress,omitempty"`
+	AdditionalEmailAddresses []string                      `json:"additionalEmailAddresses,omitempty"`
+	Kind                     *coredata.PeopleKind          `json:"kind,omitempty"`
+	Position                 graphql.Omittable[*string]    `json:"position,omitempty"`
+	ContractStartDate        graphql.Omittable[*time.Time] `json:"contractStartDate,omitempty"`
+	ContractEndDate          graphql.Omittable[*time.Time] `json:"contractEndDate,omitempty"`
 }
 
 type UpdatePeoplePayload struct {
@@ -1898,22 +1898,22 @@ type UpdatePeoplePayload struct {
 }
 
 type UpdateProcessingActivityInput struct {
-	ID                             gid.GID                                                    `json:"id"`
-	Name                           *string                                                    `json:"name,omitempty"`
-	Purpose                        *string                                                    `json:"purpose,omitempty"`
-	DataSubjectCategory            *string                                                    `json:"dataSubjectCategory,omitempty"`
-	PersonalDataCategory           *string                                                    `json:"personalDataCategory,omitempty"`
-	SpecialOrCriminalData          *coredata.ProcessingActivitySpecialOrCriminalData          `json:"specialOrCriminalData,omitempty"`
-	ConsentEvidenceLink            *string                                                    `json:"consentEvidenceLink,omitempty"`
-	LawfulBasis                    *coredata.ProcessingActivityLawfulBasis                    `json:"lawfulBasis,omitempty"`
-	Recipients                     *string                                                    `json:"recipients,omitempty"`
-	Location                       *string                                                    `json:"location,omitempty"`
-	InternationalTransfers         *bool                                                      `json:"internationalTransfers,omitempty"`
-	TransferSafeguards             *coredata.ProcessingActivityTransferSafeguards             `json:"transferSafeguards,omitempty"`
-	RetentionPeriod                *string                                                    `json:"retentionPeriod,omitempty"`
-	SecurityMeasures               *string                                                    `json:"securityMeasures,omitempty"`
-	DataProtectionImpactAssessment *coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment,omitempty"`
-	TransferImpactAssessment       *coredata.ProcessingActivityTransferImpactAssessment       `json:"transferImpactAssessment,omitempty"`
+	ID                             gid.GID                                                           `json:"id"`
+	Name                           *string                                                           `json:"name,omitempty"`
+	Purpose                        graphql.Omittable[*string]                                        `json:"purpose,omitempty"`
+	DataSubjectCategory            graphql.Omittable[*string]                                        `json:"dataSubjectCategory,omitempty"`
+	PersonalDataCategory           graphql.Omittable[*string]                                        `json:"personalDataCategory,omitempty"`
+	SpecialOrCriminalData          *coredata.ProcessingActivitySpecialOrCriminalData                 `json:"specialOrCriminalData,omitempty"`
+	ConsentEvidenceLink            *string                                                           `json:"consentEvidenceLink,omitempty"`
+	LawfulBasis                    *coredata.ProcessingActivityLawfulBasis                           `json:"lawfulBasis,omitempty"`
+	Recipients                     graphql.Omittable[*string]                                        `json:"recipients,omitempty"`
+	Location                       graphql.Omittable[*string]                                        `json:"location,omitempty"`
+	InternationalTransfers         *bool                                                             `json:"internationalTransfers,omitempty"`
+	TransferSafeguards             graphql.Omittable[*coredata.ProcessingActivityTransferSafeguards] `json:"transferSafeguards,omitempty"`
+	RetentionPeriod                graphql.Omittable[*string]                                        `json:"retentionPeriod,omitempty"`
+	SecurityMeasures               graphql.Omittable[*string]                                        `json:"securityMeasures,omitempty"`
+	DataProtectionImpactAssessment *coredata.ProcessingActivityDataProtectionImpactAssessment        `json:"dataProtectionImpactAssessment,omitempty"`
+	TransferImpactAssessment       *coredata.ProcessingActivityTransferImpactAssessment              `json:"transferImpactAssessment,omitempty"`
 }
 
 type UpdateProcessingActivityPayload struct {
@@ -1921,17 +1921,17 @@ type UpdateProcessingActivityPayload struct {
 }
 
 type UpdateRiskInput struct {
-	ID                 gid.GID                 `json:"id"`
-	Name               *string                 `json:"name,omitempty"`
-	Description        *string                 `json:"description,omitempty"`
-	Category           *string                 `json:"category,omitempty"`
-	OwnerID            *gid.GID                `json:"ownerId,omitempty"`
-	Treatment          *coredata.RiskTreatment `json:"treatment,omitempty"`
-	InherentLikelihood *int                    `json:"inherentLikelihood,omitempty"`
-	InherentImpact     *int                    `json:"inherentImpact,omitempty"`
-	ResidualLikelihood *int                    `json:"residualLikelihood,omitempty"`
-	ResidualImpact     *int                    `json:"residualImpact,omitempty"`
-	Note               *string                 `json:"note,omitempty"`
+	ID                 gid.GID                     `json:"id"`
+	Name               *string                     `json:"name,omitempty"`
+	Description        *string                     `json:"description,omitempty"`
+	Category           *string                     `json:"category,omitempty"`
+	OwnerID            graphql.Omittable[*gid.GID] `json:"ownerId,omitempty"`
+	Treatment          *coredata.RiskTreatment     `json:"treatment,omitempty"`
+	InherentLikelihood *int                        `json:"inherentLikelihood,omitempty"`
+	InherentImpact     *int                        `json:"inherentImpact,omitempty"`
+	ResidualLikelihood *int                        `json:"residualLikelihood,omitempty"`
+	ResidualImpact     *int                        `json:"residualImpact,omitempty"`
+	Note               *string                     `json:"note,omitempty"`
 }
 
 type UpdateRiskPayload struct {
@@ -1939,12 +1939,12 @@ type UpdateRiskPayload struct {
 }
 
 type UpdateTaskInput struct {
-	TaskID       gid.GID             `json:"taskId"`
-	Name         *string             `json:"name,omitempty"`
-	Description  *string             `json:"description,omitempty"`
-	State        *coredata.TaskState `json:"state,omitempty"`
-	TimeEstimate *time.Duration      `json:"timeEstimate,omitempty"`
-	Deadline     *time.Time          `json:"deadline,omitempty"`
+	TaskID       gid.GID                           `json:"taskId"`
+	Name         *string                           `json:"name,omitempty"`
+	Description  *string                           `json:"description,omitempty"`
+	State        *coredata.TaskState               `json:"state,omitempty"`
+	TimeEstimate graphql.Omittable[*time.Duration] `json:"timeEstimate,omitempty"`
+	Deadline     graphql.Omittable[*time.Time]     `json:"deadline,omitempty"`
 }
 
 type UpdateTaskPayload struct {
@@ -1985,9 +1985,9 @@ type UpdateTrustCenterReferencePayload struct {
 }
 
 type UpdateVendorBusinessAssociateAgreementInput struct {
-	VendorID   gid.GID    `json:"vendorId"`
-	ValidFrom  *time.Time `json:"validFrom,omitempty"`
-	ValidUntil *time.Time `json:"validUntil,omitempty"`
+	VendorID   gid.GID                       `json:"vendorId"`
+	ValidFrom  graphql.Omittable[*time.Time] `json:"validFrom,omitempty"`
+	ValidUntil graphql.Omittable[*time.Time] `json:"validUntil,omitempty"`
 }
 
 type UpdateVendorBusinessAssociateAgreementPayload struct {
@@ -1995,11 +1995,11 @@ type UpdateVendorBusinessAssociateAgreementPayload struct {
 }
 
 type UpdateVendorContactInput struct {
-	ID       gid.GID `json:"id"`
-	FullName *string `json:"fullName,omitempty"`
-	Email    *string `json:"email,omitempty"`
-	Phone    *string `json:"phone,omitempty"`
-	Role     *string `json:"role,omitempty"`
+	ID       gid.GID                    `json:"id"`
+	FullName graphql.Omittable[*string] `json:"fullName,omitempty"`
+	Email    graphql.Omittable[*string] `json:"email,omitempty"`
+	Phone    graphql.Omittable[*string] `json:"phone,omitempty"`
+	Role     graphql.Omittable[*string] `json:"role,omitempty"`
 }
 
 type UpdateVendorContactPayload struct {
@@ -2007,9 +2007,9 @@ type UpdateVendorContactPayload struct {
 }
 
 type UpdateVendorDataPrivacyAgreementInput struct {
-	VendorID   gid.GID    `json:"vendorId"`
-	ValidFrom  *time.Time `json:"validFrom,omitempty"`
-	ValidUntil *time.Time `json:"validUntil,omitempty"`
+	VendorID   gid.GID                       `json:"vendorId"`
+	ValidFrom  graphql.Omittable[*time.Time] `json:"validFrom,omitempty"`
+	ValidUntil graphql.Omittable[*time.Time] `json:"validUntil,omitempty"`
 }
 
 type UpdateVendorDataPrivacyAgreementPayload struct {
@@ -2017,27 +2017,27 @@ type UpdateVendorDataPrivacyAgreementPayload struct {
 }
 
 type UpdateVendorInput struct {
-	ID                            gid.GID                  `json:"id"`
-	Name                          *string                  `json:"name,omitempty"`
-	Description                   *string                  `json:"description,omitempty"`
-	StatusPageURL                 *string                  `json:"statusPageUrl,omitempty"`
-	TermsOfServiceURL             *string                  `json:"termsOfServiceUrl,omitempty"`
-	PrivacyPolicyURL              *string                  `json:"privacyPolicyUrl,omitempty"`
-	ServiceLevelAgreementURL      *string                  `json:"serviceLevelAgreementUrl,omitempty"`
-	DataProcessingAgreementURL    *string                  `json:"dataProcessingAgreementUrl,omitempty"`
-	BusinessAssociateAgreementURL *string                  `json:"businessAssociateAgreementUrl,omitempty"`
-	SubprocessorsListURL          *string                  `json:"subprocessorsListUrl,omitempty"`
-	WebsiteURL                    *string                  `json:"websiteUrl,omitempty"`
-	LegalName                     *string                  `json:"legalName,omitempty"`
-	HeadquarterAddress            *string                  `json:"headquarterAddress,omitempty"`
-	Category                      *coredata.VendorCategory `json:"category,omitempty"`
-	Certifications                []string                 `json:"certifications,omitempty"`
-	Countries                     []coredata.CountryCode   `json:"countries,omitempty"`
-	SecurityPageURL               *string                  `json:"securityPageUrl,omitempty"`
-	TrustPageURL                  *string                  `json:"trustPageUrl,omitempty"`
-	BusinessOwnerID               *gid.GID                 `json:"businessOwnerId,omitempty"`
-	SecurityOwnerID               *gid.GID                 `json:"securityOwnerId,omitempty"`
-	ShowOnTrustCenter             *bool                    `json:"showOnTrustCenter,omitempty"`
+	ID                            gid.GID                     `json:"id"`
+	Name                          *string                     `json:"name,omitempty"`
+	Description                   graphql.Omittable[*string]  `json:"description,omitempty"`
+	StatusPageURL                 graphql.Omittable[*string]  `json:"statusPageUrl,omitempty"`
+	TermsOfServiceURL             graphql.Omittable[*string]  `json:"termsOfServiceUrl,omitempty"`
+	PrivacyPolicyURL              graphql.Omittable[*string]  `json:"privacyPolicyUrl,omitempty"`
+	ServiceLevelAgreementURL      graphql.Omittable[*string]  `json:"serviceLevelAgreementUrl,omitempty"`
+	DataProcessingAgreementURL    graphql.Omittable[*string]  `json:"dataProcessingAgreementUrl,omitempty"`
+	BusinessAssociateAgreementURL graphql.Omittable[*string]  `json:"businessAssociateAgreementUrl,omitempty"`
+	SubprocessorsListURL          graphql.Omittable[*string]  `json:"subprocessorsListUrl,omitempty"`
+	WebsiteURL                    graphql.Omittable[*string]  `json:"websiteUrl,omitempty"`
+	LegalName                     graphql.Omittable[*string]  `json:"legalName,omitempty"`
+	HeadquarterAddress            graphql.Omittable[*string]  `json:"headquarterAddress,omitempty"`
+	Category                      *coredata.VendorCategory    `json:"category,omitempty"`
+	Certifications                []string                    `json:"certifications,omitempty"`
+	Countries                     []coredata.CountryCode      `json:"countries,omitempty"`
+	SecurityPageURL               graphql.Omittable[*string]  `json:"securityPageUrl,omitempty"`
+	TrustPageURL                  graphql.Omittable[*string]  `json:"trustPageUrl,omitempty"`
+	BusinessOwnerID               graphql.Omittable[*gid.GID] `json:"businessOwnerId,omitempty"`
+	SecurityOwnerID               graphql.Omittable[*gid.GID] `json:"securityOwnerId,omitempty"`
+	ShowOnTrustCenter             *bool                       `json:"showOnTrustCenter,omitempty"`
 }
 
 type UpdateVendorPayload struct {
@@ -2045,11 +2045,11 @@ type UpdateVendorPayload struct {
 }
 
 type UpdateVendorServiceInput struct {
-	ID          gid.GID `json:"id"`
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	URL         *string `json:"url,omitempty"`
-	Type        *string `json:"type,omitempty"`
+	ID          gid.GID                    `json:"id"`
+	Name        *string                    `json:"name,omitempty"`
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	URL         *string                    `json:"url,omitempty"`
+	Type        *string                    `json:"type,omitempty"`
 }
 
 type UpdateVendorServicePayload struct {
