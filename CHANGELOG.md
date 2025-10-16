@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.74.4] - 2025-10-15
+
+### Fixed
+
+- React pdf race condition
+
 ## [0.74.3] - 2025-10-15
 
 ### Changed
