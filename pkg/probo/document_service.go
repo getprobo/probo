@@ -435,7 +435,7 @@ func (s *DocumentService) SendSigningNotifications(
 				token, err := statelesstoken.NewToken(
 					s.svc.tokenSecret,
 					TokenTypeSigningRequest,
-					time.Hour*24*7,
+					time.Hour*24*30,
 					SigningRequestData{
 						OrganizationID: organizationID,
 						PeopleID:       people.ID,
