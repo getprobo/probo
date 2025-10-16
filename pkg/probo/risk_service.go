@@ -50,7 +50,7 @@ type (
 		Description        *string
 		Category           *string
 		Treatment          *coredata.RiskTreatment
-		OwnerID            *gid.GID
+		OwnerID            **gid.GID
 		InherentLikelihood *int
 		InherentImpact     *int
 		ResidualLikelihood *int
@@ -495,12 +495,15 @@ func (s RiskService) Update(
 			}
 
 			if req.OwnerID != nil {
-				people := coredata.People{}
-				if err := people.LoadByID(ctx, conn, s.svc.scope, *req.OwnerID); err != nil {
-					return fmt.Errorf("cannot load owner: %w", err)
+				if *req.OwnerID != nil {
+					people := coredata.People{}
+					if err := people.LoadByID(ctx, conn, s.svc.scope, **req.OwnerID); err != nil {
+						return fmt.Errorf("cannot load owner: %w", err)
+					}
+					risk.OwnerID = *req.OwnerID
+				} else {
+					risk.OwnerID = nil
 				}
-
-				risk.OwnerID = req.OwnerID
 			}
 
 			if req.Category != nil {

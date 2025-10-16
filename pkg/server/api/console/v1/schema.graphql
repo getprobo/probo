@@ -3093,12 +3093,12 @@ input CreateOrganizationInput {
 input UpdateOrganizationInput {
   organizationId: ID!
   name: String
-  logo: Upload
+  description: String @goField(omittable: true)
+  websiteUrl: String @goField(omittable: true)
+  email: String @goField(omittable: true)
+  headquarterAddress: String @goField(omittable: true)
+  logoFile: Upload
   horizontalLogoFile: Upload
-  description: String
-  websiteUrl: String
-  email: String
-  headquarterAddress: String
 }
 
 input DeleteOrganizationHorizontalLogoInput {
@@ -3189,24 +3189,24 @@ input CreateVendorInput {
 input UpdateVendorInput {
   id: ID!
   name: String
-  description: String
-  statusPageUrl: String
-  termsOfServiceUrl: String
-  privacyPolicyUrl: String
-  serviceLevelAgreementUrl: String
-  dataProcessingAgreementUrl: String
-  businessAssociateAgreementUrl: String
-  subprocessorsListUrl: String
-  websiteUrl: String
-  legalName: String
-  headquarterAddress: String
+  description: String @goField(omittable: true)
+  statusPageUrl: String @goField(omittable: true)
+  termsOfServiceUrl: String @goField(omittable: true)
+  privacyPolicyUrl: String @goField(omittable: true)
+  serviceLevelAgreementUrl: String @goField(omittable: true)
+  dataProcessingAgreementUrl: String @goField(omittable: true)
+  businessAssociateAgreementUrl: String @goField(omittable: true)
+  subprocessorsListUrl: String @goField(omittable: true)
+  websiteUrl: String @goField(omittable: true)
+  legalName: String @goField(omittable: true)
+  headquarterAddress: String @goField(omittable: true)
   category: VendorCategory
   certifications: [String!]
   countries: [CountryCode!]
-  securityPageUrl: String
-  trustPageUrl: String
-  businessOwnerId: ID
-  securityOwnerId: ID
+  securityPageUrl: String @goField(omittable: true)
+  trustPageUrl: String @goField(omittable: true)
+  businessOwnerId: ID @goField(omittable: true)
+  securityOwnerId: ID @goField(omittable: true)
   showOnTrustCenter: Boolean
 }
 
@@ -3224,10 +3224,10 @@ input CreateVendorContactInput {
 
 input UpdateVendorContactInput {
   id: ID!
-  fullName: String
-  email: String
-  phone: String
-  role: String
+  fullName: String @goField(omittable: true)
+  email: String @goField(omittable: true)
+  phone: String @goField(omittable: true)
+  role: String @goField(omittable: true)
 }
 
 input DeleteVendorContactInput {
@@ -3245,7 +3245,7 @@ input CreateVendorServiceInput {
 input UpdateVendorServiceInput {
   id: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
   url: String
   type: String
 }
@@ -3271,9 +3271,9 @@ input UpdatePeopleInput {
   primaryEmailAddress: String
   additionalEmailAddresses: [String!]
   kind: PeopleKind
-  position: String
-  contractStartDate: Datetime
-  contractEndDate: Datetime
+  position: String @goField(omittable: true)
+  contractStartDate: Datetime @goField(omittable: true)
+  contractEndDate: Datetime @goField(omittable: true)
 }
 
 input DeletePeopleInput {
@@ -3340,8 +3340,8 @@ input UpdateTaskInput {
   name: String
   description: String
   state: TaskState
-  timeEstimate: Duration
-  deadline: Datetime
+  timeEstimate: Duration @goField(omittable: true)
+  deadline: Datetime @goField(omittable: true)
 }
 
 input DeleteTaskInput {
@@ -3416,7 +3416,7 @@ input UpdateRiskInput {
   name: String
   description: String
   category: String
-  ownerId: ID
+  ownerId: ID @goField(omittable: true)
   treatment: RiskTreatment
   inherentLikelihood: Int
   inherentImpact: Int
@@ -3508,8 +3508,8 @@ input UploadVendorBusinessAssociateAgreementInput {
 
 input UpdateVendorBusinessAssociateAgreementInput {
   vendorId: ID!
-  validFrom: Datetime
-  validUntil: Datetime
+  validFrom: Datetime @goField(omittable: true)
+  validUntil: Datetime @goField(omittable: true)
 }
 
 input DeleteVendorBusinessAssociateAgreementInput {
@@ -3526,8 +3526,8 @@ input UploadVendorDataPrivacyAgreementInput {
 
 input UpdateVendorDataPrivacyAgreementInput {
   vendorId: ID!
-  validFrom: Datetime
-  validUntil: Datetime
+  validFrom: Datetime @goField(omittable: true)
+  validUntil: Datetime @goField(omittable: true)
 }
 
 input DeleteVendorDataPrivacyAgreementInput {
@@ -3660,15 +3660,15 @@ input CreateNonconformityInput {
 input UpdateNonconformityInput {
   id: ID!
   referenceId: String
-  description: String
-  dateIdentified: Datetime
+  description: String @goField(omittable: true)
+  dateIdentified: Datetime @goField(omittable: true)
   rootCause: String
-  correctiveAction: String
+  correctiveAction: String @goField(omittable: true)
   ownerId: ID
   auditId: ID
-  dueDate: Datetime
+  dueDate: Datetime @goField(omittable: true)
   status: NonconformityStatus
-  effectivenessCheck: String
+  effectivenessCheck: String @goField(omittable: true)
 }
 
 input DeleteNonconformityInput {
@@ -3690,14 +3690,14 @@ input CreateObligationInput {
 
 input UpdateObligationInput {
   id: ID!
-  area: String
-  source: String
-  requirement: String
-  actionsToBeImplemented: String
-  regulator: String
+  area: String @goField(omittable: true)
+  source: String @goField(omittable: true)
+  requirement: String @goField(omittable: true)
+  actionsToBeImplemented: String @goField(omittable: true)
+  regulator: String @goField(omittable: true)
   ownerId: ID
-  lastReviewDate: Datetime
-  dueDate: Datetime
+  lastReviewDate: Datetime @goField(omittable: true)
+  dueDate: Datetime @goField(omittable: true)
   status: ObligationStatus
 }
 
@@ -3719,10 +3719,10 @@ input CreateContinualImprovementInput {
 input UpdateContinualImprovementInput {
   id: ID!
   referenceId: String
-  description: String
-  source: String
+  description: String @goField(omittable: true)
+  source: String @goField(omittable: true)
   ownerId: ID
-  targetDate: Datetime
+  targetDate: Datetime @goField(omittable: true)
   status: ContinualImprovementStatus
   priority: ContinualImprovementPriority
 }
@@ -3753,18 +3753,18 @@ input CreateProcessingActivityInput {
 input UpdateProcessingActivityInput {
   id: ID!
   name: String
-  purpose: String
-  dataSubjectCategory: String
-  personalDataCategory: String
+  purpose: String @goField(omittable: true)
+  dataSubjectCategory: String @goField(omittable: true)
+  personalDataCategory: String @goField(omittable: true)
   specialOrCriminalData: ProcessingActivitySpecialOrCriminalData
   consentEvidenceLink: String
   lawfulBasis: ProcessingActivityLawfulBasis
-  recipients: String
-  location: String
+  recipients: String @goField(omittable: true)
+  location: String @goField(omittable: true)
   internationalTransfers: Boolean
-  transferSafeguards: ProcessingActivityTransferSafeguards
-  retentionPeriod: String
-  securityMeasures: String
+  transferSafeguards: ProcessingActivityTransferSafeguards @goField(omittable: true)
+  retentionPeriod: String @goField(omittable: true)
+  securityMeasures: String @goField(omittable: true)
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment
 }

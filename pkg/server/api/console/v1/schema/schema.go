@@ -12144,12 +12144,12 @@ input CreateOrganizationInput {
 input UpdateOrganizationInput {
   organizationId: ID!
   name: String
-  logo: Upload
+  description: String @goField(omittable: true)
+  websiteUrl: String @goField(omittable: true)
+  email: String @goField(omittable: true)
+  headquarterAddress: String @goField(omittable: true)
+  logoFile: Upload
   horizontalLogoFile: Upload
-  description: String
-  websiteUrl: String
-  email: String
-  headquarterAddress: String
 }
 
 input DeleteOrganizationHorizontalLogoInput {
@@ -12240,24 +12240,24 @@ input CreateVendorInput {
 input UpdateVendorInput {
   id: ID!
   name: String
-  description: String
-  statusPageUrl: String
-  termsOfServiceUrl: String
-  privacyPolicyUrl: String
-  serviceLevelAgreementUrl: String
-  dataProcessingAgreementUrl: String
-  businessAssociateAgreementUrl: String
-  subprocessorsListUrl: String
-  websiteUrl: String
-  legalName: String
-  headquarterAddress: String
+  description: String @goField(omittable: true)
+  statusPageUrl: String @goField(omittable: true)
+  termsOfServiceUrl: String @goField(omittable: true)
+  privacyPolicyUrl: String @goField(omittable: true)
+  serviceLevelAgreementUrl: String @goField(omittable: true)
+  dataProcessingAgreementUrl: String @goField(omittable: true)
+  businessAssociateAgreementUrl: String @goField(omittable: true)
+  subprocessorsListUrl: String @goField(omittable: true)
+  websiteUrl: String @goField(omittable: true)
+  legalName: String @goField(omittable: true)
+  headquarterAddress: String @goField(omittable: true)
   category: VendorCategory
   certifications: [String!]
   countries: [CountryCode!]
-  securityPageUrl: String
-  trustPageUrl: String
-  businessOwnerId: ID
-  securityOwnerId: ID
+  securityPageUrl: String @goField(omittable: true)
+  trustPageUrl: String @goField(omittable: true)
+  businessOwnerId: ID @goField(omittable: true)
+  securityOwnerId: ID @goField(omittable: true)
   showOnTrustCenter: Boolean
 }
 
@@ -12275,10 +12275,10 @@ input CreateVendorContactInput {
 
 input UpdateVendorContactInput {
   id: ID!
-  fullName: String
-  email: String
-  phone: String
-  role: String
+  fullName: String @goField(omittable: true)
+  email: String @goField(omittable: true)
+  phone: String @goField(omittable: true)
+  role: String @goField(omittable: true)
 }
 
 input DeleteVendorContactInput {
@@ -12296,7 +12296,7 @@ input CreateVendorServiceInput {
 input UpdateVendorServiceInput {
   id: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
   url: String
   type: String
 }
@@ -12322,9 +12322,9 @@ input UpdatePeopleInput {
   primaryEmailAddress: String
   additionalEmailAddresses: [String!]
   kind: PeopleKind
-  position: String
-  contractStartDate: Datetime
-  contractEndDate: Datetime
+  position: String @goField(omittable: true)
+  contractStartDate: Datetime @goField(omittable: true)
+  contractEndDate: Datetime @goField(omittable: true)
 }
 
 input DeletePeopleInput {
@@ -12391,8 +12391,8 @@ input UpdateTaskInput {
   name: String
   description: String
   state: TaskState
-  timeEstimate: Duration
-  deadline: Datetime
+  timeEstimate: Duration @goField(omittable: true)
+  deadline: Datetime @goField(omittable: true)
 }
 
 input DeleteTaskInput {
@@ -12467,7 +12467,7 @@ input UpdateRiskInput {
   name: String
   description: String
   category: String
-  ownerId: ID
+  ownerId: ID @goField(omittable: true)
   treatment: RiskTreatment
   inherentLikelihood: Int
   inherentImpact: Int
@@ -12559,8 +12559,8 @@ input UploadVendorBusinessAssociateAgreementInput {
 
 input UpdateVendorBusinessAssociateAgreementInput {
   vendorId: ID!
-  validFrom: Datetime
-  validUntil: Datetime
+  validFrom: Datetime @goField(omittable: true)
+  validUntil: Datetime @goField(omittable: true)
 }
 
 input DeleteVendorBusinessAssociateAgreementInput {
@@ -12577,8 +12577,8 @@ input UploadVendorDataPrivacyAgreementInput {
 
 input UpdateVendorDataPrivacyAgreementInput {
   vendorId: ID!
-  validFrom: Datetime
-  validUntil: Datetime
+  validFrom: Datetime @goField(omittable: true)
+  validUntil: Datetime @goField(omittable: true)
 }
 
 input DeleteVendorDataPrivacyAgreementInput {
@@ -12711,15 +12711,15 @@ input CreateNonconformityInput {
 input UpdateNonconformityInput {
   id: ID!
   referenceId: String
-  description: String
-  dateIdentified: Datetime
+  description: String @goField(omittable: true)
+  dateIdentified: Datetime @goField(omittable: true)
   rootCause: String
-  correctiveAction: String
+  correctiveAction: String @goField(omittable: true)
   ownerId: ID
   auditId: ID
-  dueDate: Datetime
+  dueDate: Datetime @goField(omittable: true)
   status: NonconformityStatus
-  effectivenessCheck: String
+  effectivenessCheck: String @goField(omittable: true)
 }
 
 input DeleteNonconformityInput {
@@ -12741,14 +12741,14 @@ input CreateObligationInput {
 
 input UpdateObligationInput {
   id: ID!
-  area: String
-  source: String
-  requirement: String
-  actionsToBeImplemented: String
-  regulator: String
+  area: String @goField(omittable: true)
+  source: String @goField(omittable: true)
+  requirement: String @goField(omittable: true)
+  actionsToBeImplemented: String @goField(omittable: true)
+  regulator: String @goField(omittable: true)
   ownerId: ID
-  lastReviewDate: Datetime
-  dueDate: Datetime
+  lastReviewDate: Datetime @goField(omittable: true)
+  dueDate: Datetime @goField(omittable: true)
   status: ObligationStatus
 }
 
@@ -12770,10 +12770,10 @@ input CreateContinualImprovementInput {
 input UpdateContinualImprovementInput {
   id: ID!
   referenceId: String
-  description: String
-  source: String
+  description: String @goField(omittable: true)
+  source: String @goField(omittable: true)
   ownerId: ID
-  targetDate: Datetime
+  targetDate: Datetime @goField(omittable: true)
   status: ContinualImprovementStatus
   priority: ContinualImprovementPriority
 }
@@ -12804,18 +12804,18 @@ input CreateProcessingActivityInput {
 input UpdateProcessingActivityInput {
   id: ID!
   name: String
-  purpose: String
-  dataSubjectCategory: String
-  personalDataCategory: String
+  purpose: String @goField(omittable: true)
+  dataSubjectCategory: String @goField(omittable: true)
+  personalDataCategory: String @goField(omittable: true)
   specialOrCriminalData: ProcessingActivitySpecialOrCriminalData
   consentEvidenceLink: String
   lawfulBasis: ProcessingActivityLawfulBasis
-  recipients: String
-  location: String
+  recipients: String @goField(omittable: true)
+  location: String @goField(omittable: true)
   internationalTransfers: Boolean
-  transferSafeguards: ProcessingActivityTransferSafeguards
-  retentionPeriod: String
-  securityMeasures: String
+  transferSafeguards: ProcessingActivityTransferSafeguards @goField(omittable: true)
+  retentionPeriod: String @goField(omittable: true)
+  securityMeasures: String @goField(omittable: true)
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment
 }
@@ -73255,14 +73255,14 @@ func (ec *executionContext) unmarshalInputUpdateContinualImprovementInput(ctx co
 			if err != nil {
 				return it, err
 			}
-			it.Description = data
+			it.Description = graphql.OmittableOf(data)
 		case "source":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Source = data
+			it.Source = graphql.OmittableOf(data)
 		case "ownerId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
@@ -73276,7 +73276,7 @@ func (ec *executionContext) unmarshalInputUpdateContinualImprovementInput(ctx co
 			if err != nil {
 				return it, err
 			}
-			it.TargetDate = data
+			it.TargetDate = graphql.OmittableOf(data)
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalOContinualImprovementStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐContinualImprovementStatus(ctx, v)
@@ -73640,14 +73640,14 @@ func (ec *executionContext) unmarshalInputUpdateNonconformityInput(ctx context.C
 			if err != nil {
 				return it, err
 			}
-			it.Description = data
+			it.Description = graphql.OmittableOf(data)
 		case "dateIdentified":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dateIdentified"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.DateIdentified = data
+			it.DateIdentified = graphql.OmittableOf(data)
 		case "rootCause":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rootCause"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -73661,7 +73661,7 @@ func (ec *executionContext) unmarshalInputUpdateNonconformityInput(ctx context.C
 			if err != nil {
 				return it, err
 			}
-			it.CorrectiveAction = data
+			it.CorrectiveAction = graphql.OmittableOf(data)
 		case "ownerId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
@@ -73682,7 +73682,7 @@ func (ec *executionContext) unmarshalInputUpdateNonconformityInput(ctx context.C
 			if err != nil {
 				return it, err
 			}
-			it.DueDate = data
+			it.DueDate = graphql.OmittableOf(data)
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalONonconformityStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐNonconformityStatus(ctx, v)
@@ -73696,7 +73696,7 @@ func (ec *executionContext) unmarshalInputUpdateNonconformityInput(ctx context.C
 			if err != nil {
 				return it, err
 			}
-			it.EffectivenessCheck = data
+			it.EffectivenessCheck = graphql.OmittableOf(data)
 		}
 	}
 
@@ -73730,35 +73730,35 @@ func (ec *executionContext) unmarshalInputUpdateObligationInput(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
-			it.Area = data
+			it.Area = graphql.OmittableOf(data)
 		case "source":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("source"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Source = data
+			it.Source = graphql.OmittableOf(data)
 		case "requirement":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("requirement"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Requirement = data
+			it.Requirement = graphql.OmittableOf(data)
 		case "actionsToBeImplemented":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("actionsToBeImplemented"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ActionsToBeImplemented = data
+			it.ActionsToBeImplemented = graphql.OmittableOf(data)
 		case "regulator":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("regulator"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Regulator = data
+			it.Regulator = graphql.OmittableOf(data)
 		case "ownerId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerId"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
@@ -73772,14 +73772,14 @@ func (ec *executionContext) unmarshalInputUpdateObligationInput(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
-			it.LastReviewDate = data
+			it.LastReviewDate = graphql.OmittableOf(data)
 		case "dueDate":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dueDate"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.DueDate = data
+			it.DueDate = graphql.OmittableOf(data)
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalOObligationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐObligationStatus(ctx, v)
@@ -73800,7 +73800,7 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "name", "logo", "horizontalLogoFile", "description", "websiteUrl", "email", "headquarterAddress"}
+	fieldsInOrder := [...]string{"organizationId", "name", "description", "websiteUrl", "email", "headquarterAddress", "logoFile", "horizontalLogoFile"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -73821,13 +73821,41 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 				return it, err
 			}
 			it.Name = data
-		case "logo":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logo"))
+		case "description":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = graphql.OmittableOf(data)
+		case "websiteUrl":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("websiteUrl"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.WebsiteURL = graphql.OmittableOf(data)
+		case "email":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = graphql.OmittableOf(data)
+		case "headquarterAddress":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("headquarterAddress"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.HeadquarterAddress = graphql.OmittableOf(data)
+		case "logoFile":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logoFile"))
 			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Logo = data
+			it.LogoFile = data
 		case "horizontalLogoFile":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("horizontalLogoFile"))
 			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
@@ -73835,34 +73863,6 @@ func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Co
 				return it, err
 			}
 			it.HorizontalLogoFile = data
-		case "description":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Description = data
-		case "websiteUrl":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("websiteUrl"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.WebsiteURL = data
-		case "email":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Email = data
-		case "headquarterAddress":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("headquarterAddress"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.HeadquarterAddress = data
 		}
 	}
 
@@ -73924,21 +73924,21 @@ func (ec *executionContext) unmarshalInputUpdatePeopleInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-			it.Position = data
+			it.Position = graphql.OmittableOf(data)
 		case "contractStartDate":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contractStartDate"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ContractStartDate = data
+			it.ContractStartDate = graphql.OmittableOf(data)
 		case "contractEndDate":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contractEndDate"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ContractEndDate = data
+			it.ContractEndDate = graphql.OmittableOf(data)
 		}
 	}
 
@@ -73979,21 +73979,21 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 			if err != nil {
 				return it, err
 			}
-			it.Purpose = data
+			it.Purpose = graphql.OmittableOf(data)
 		case "dataSubjectCategory":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataSubjectCategory"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.DataSubjectCategory = data
+			it.DataSubjectCategory = graphql.OmittableOf(data)
 		case "personalDataCategory":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("personalDataCategory"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.PersonalDataCategory = data
+			it.PersonalDataCategory = graphql.OmittableOf(data)
 		case "specialOrCriminalData":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("specialOrCriminalData"))
 			data, err := ec.unmarshalOProcessingActivitySpecialOrCriminalData2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData(ctx, v)
@@ -74021,14 +74021,14 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 			if err != nil {
 				return it, err
 			}
-			it.Recipients = data
+			it.Recipients = graphql.OmittableOf(data)
 		case "location":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("location"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Location = data
+			it.Location = graphql.OmittableOf(data)
 		case "internationalTransfers":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("internationalTransfers"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -74042,21 +74042,21 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 			if err != nil {
 				return it, err
 			}
-			it.TransferSafeguards = data
+			it.TransferSafeguards = graphql.OmittableOf(data)
 		case "retentionPeriod":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("retentionPeriod"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.RetentionPeriod = data
+			it.RetentionPeriod = graphql.OmittableOf(data)
 		case "securityMeasures":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("securityMeasures"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.SecurityMeasures = data
+			it.SecurityMeasures = graphql.OmittableOf(data)
 		case "dataProtectionImpactAssessment":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataProtectionImpactAssessment"))
 			data, err := ec.unmarshalOProcessingActivityDataProtectionImpactAssessment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐProcessingActivityDataProtectionImpactAssessment(ctx, v)
@@ -74125,7 +74125,7 @@ func (ec *executionContext) unmarshalInputUpdateRiskInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-			it.OwnerID = data
+			it.OwnerID = graphql.OmittableOf(data)
 		case "treatment":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("treatment"))
 			data, err := ec.unmarshalORiskTreatment2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐRiskTreatment(ctx, v)
@@ -74222,14 +74222,14 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-			it.TimeEstimate = data
+			it.TimeEstimate = graphql.OmittableOf(data)
 		case "deadline":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deadline"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Deadline = data
+			it.Deadline = graphql.OmittableOf(data)
 		}
 	}
 
@@ -74407,14 +74407,14 @@ func (ec *executionContext) unmarshalInputUpdateVendorBusinessAssociateAgreement
 			if err != nil {
 				return it, err
 			}
-			it.ValidFrom = data
+			it.ValidFrom = graphql.OmittableOf(data)
 		case "validUntil":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validUntil"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ValidUntil = data
+			it.ValidUntil = graphql.OmittableOf(data)
 		}
 	}
 
@@ -74448,28 +74448,28 @@ func (ec *executionContext) unmarshalInputUpdateVendorContactInput(ctx context.C
 			if err != nil {
 				return it, err
 			}
-			it.FullName = data
+			it.FullName = graphql.OmittableOf(data)
 		case "email":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Email = data
+			it.Email = graphql.OmittableOf(data)
 		case "phone":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("phone"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Phone = data
+			it.Phone = graphql.OmittableOf(data)
 		case "role":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Role = data
+			it.Role = graphql.OmittableOf(data)
 		}
 	}
 
@@ -74503,14 +74503,14 @@ func (ec *executionContext) unmarshalInputUpdateVendorDataPrivacyAgreementInput(
 			if err != nil {
 				return it, err
 			}
-			it.ValidFrom = data
+			it.ValidFrom = graphql.OmittableOf(data)
 		case "validUntil":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("validUntil"))
 			data, err := ec.unmarshalODatetime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ValidUntil = data
+			it.ValidUntil = graphql.OmittableOf(data)
 		}
 	}
 
@@ -74551,77 +74551,77 @@ func (ec *executionContext) unmarshalInputUpdateVendorInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-			it.Description = data
+			it.Description = graphql.OmittableOf(data)
 		case "statusPageUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statusPageUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.StatusPageURL = data
+			it.StatusPageURL = graphql.OmittableOf(data)
 		case "termsOfServiceUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("termsOfServiceUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.TermsOfServiceURL = data
+			it.TermsOfServiceURL = graphql.OmittableOf(data)
 		case "privacyPolicyUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("privacyPolicyUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.PrivacyPolicyURL = data
+			it.PrivacyPolicyURL = graphql.OmittableOf(data)
 		case "serviceLevelAgreementUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("serviceLevelAgreementUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ServiceLevelAgreementURL = data
+			it.ServiceLevelAgreementURL = graphql.OmittableOf(data)
 		case "dataProcessingAgreementUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dataProcessingAgreementUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.DataProcessingAgreementURL = data
+			it.DataProcessingAgreementURL = graphql.OmittableOf(data)
 		case "businessAssociateAgreementUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("businessAssociateAgreementUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.BusinessAssociateAgreementURL = data
+			it.BusinessAssociateAgreementURL = graphql.OmittableOf(data)
 		case "subprocessorsListUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subprocessorsListUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.SubprocessorsListURL = data
+			it.SubprocessorsListURL = graphql.OmittableOf(data)
 		case "websiteUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("websiteUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.WebsiteURL = data
+			it.WebsiteURL = graphql.OmittableOf(data)
 		case "legalName":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("legalName"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.LegalName = data
+			it.LegalName = graphql.OmittableOf(data)
 		case "headquarterAddress":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("headquarterAddress"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.HeadquarterAddress = data
+			it.HeadquarterAddress = graphql.OmittableOf(data)
 		case "category":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
 			data, err := ec.unmarshalOVendorCategory2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐVendorCategory(ctx, v)
@@ -74649,28 +74649,28 @@ func (ec *executionContext) unmarshalInputUpdateVendorInput(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-			it.SecurityPageURL = data
+			it.SecurityPageURL = graphql.OmittableOf(data)
 		case "trustPageUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustPageUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.TrustPageURL = data
+			it.TrustPageURL = graphql.OmittableOf(data)
 		case "businessOwnerId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("businessOwnerId"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.BusinessOwnerID = data
+			it.BusinessOwnerID = graphql.OmittableOf(data)
 		case "securityOwnerId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("securityOwnerId"))
 			data, err := ec.unmarshalOID2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.SecurityOwnerID = data
+			it.SecurityOwnerID = graphql.OmittableOf(data)
 		case "showOnTrustCenter":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("showOnTrustCenter"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -74718,7 +74718,7 @@ func (ec *executionContext) unmarshalInputUpdateVendorServiceInput(ctx context.C
 			if err != nil {
 				return it, err
 			}
-			it.Description = data
+			it.Description = graphql.OmittableOf(data)
 		case "url":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
