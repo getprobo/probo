@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.74.2] - 2025-10-15
+
+### Fixed
+
+- Not all signature are visible
+
 ## [0.74.1] - 2025-10-15
 
 ### Changed
