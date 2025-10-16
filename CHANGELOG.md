@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.74.3] - 2025-10-15
+
+### Changed
+
+- Increase signature link period from 7 days to 30 days
+
 ## [0.74.2] - 2025-10-15
 
 ### Fixed
