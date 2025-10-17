@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.74.5] - 2025-10-16
+
+### Fixed
+
+- Broken document scroll when document list unfollded
+
 ## [0.74.4] - 2025-10-15
 
 ### Fixed
