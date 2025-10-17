@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+Fix ordered list display in documents
+
 ## [0.74.5] - 2025-10-16
 
 ### Fixed
