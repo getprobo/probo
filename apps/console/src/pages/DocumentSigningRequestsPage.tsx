@@ -247,7 +247,7 @@ export default function DocumentSigningRequestsPage() {
           <Logo />
         </header>
         <div className="grid lg:grid-cols-2 min-h-0 h-full">
-          <div className="max-w-[440px] mx-auto py-20">
+          <div className="max-w-[440px] mx-auto py-20 overflow-y-auto scrollbar-hide">
             <h1 className="text-2xl font-semibold mb-6">
               {sprintf(__("%s requests your signature"), signingData.organizationName)}
             </h1>
