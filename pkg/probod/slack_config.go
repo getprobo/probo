@@ -12,30 +12,10 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package coredata
+package probod
 
 type (
-	ConnectorOrderField string
+	slackConfig struct {
+		SenderInterval int `json:"sender-interval"`
+	}
 )
-
-const (
-	ConnectorOrderFieldCreatedAt ConnectorOrderField = "CREATED_AT"
-	ConnectorOrderFieldProvider  ConnectorOrderField = "PROVIDER"
-)
-
-func (p ConnectorOrderField) Column() string {
-	return string(p)
-}
-
-func (p ConnectorOrderField) String() string {
-	return string(p)
-}
-
-func (p ConnectorOrderField) MarshalText() ([]byte, error) {
-	return []byte(p.String()), nil
-}
-
-func (p *ConnectorOrderField) UnmarshalText(text []byte) error {
-	*p = ConnectorOrderField(text)
-	return nil
-}

@@ -44,6 +44,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 )
 
@@ -218,7 +219,12 @@ func NewMux(
 	r.Post("/auth/reset-password", ResetPasswordHandler(authSvc, authCfg))
 
 	r.Get("/connectors/initiate", WithSession(authSvc, authzSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
-		connectorID := r.URL.Query().Get("connector_id")
+		provider := r.URL.Query().Get("provider")
+		if provider != "SLACK" {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
+			return
+		}
+
 		organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
 		if err != nil {
 			panic(fmt.Errorf("failed to parse organization id: %w", err))
@@ -226,34 +232,53 @@ func NewMux(
 
 		_ = GetTenantService(r.Context(), proboSvc, organizationID.TenantID())
 
-		redirectURL, err := connectorRegistry.Initiate(r.Context(), connectorID, organizationID, r)
+		redirectURL, err := connectorRegistry.Initiate(r.Context(), provider, organizationID, r)
 		if err != nil {
 			panic(fmt.Errorf("cannot initiate connector: %w", err))
 		}
 
-		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+		// Allow external redirects for Slack OAuth only for now
+		slackSafeRedirect := &saferedirect.SafeRedirect{AllowedHost: "slack.com"}
+		slackSafeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
 	}))
 
-	r.Get("/connectors/complete", WithSession(authSvc, authzSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
-		connectorID := r.URL.Query().Get("connector_id")
-		organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
-		if err != nil {
-			panic(fmt.Errorf("failed to parse organization id: %w", err))
+	r.Get("/connectors/complete", func(w http.ResponseWriter, r *http.Request) {
+		provider := r.URL.Query().Get("provider")
+		if provider == "" {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing provider parameter"))
+			return
 		}
 
-		connection, err := connectorRegistry.Complete(r.Context(), connectorID, organizationID, r)
+		var connectorProvider coredata.ConnectorProvider
+		switch provider {
+		case "SLACK":
+			connectorProvider = coredata.ConnectorProviderSlack
+		default:
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("unsupported provider"))
+			return
+		}
+
+		stateToken := r.URL.Query().Get("state")
+		if stateToken == "" {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("missing state parameter"))
+			return
+		}
+
+		connection, organizationID, err := connectorRegistry.Complete(r.Context(), provider, r)
 		if err != nil {
 			panic(fmt.Errorf("failed to complete connector: %w", err))
 		}
 
-		svc := GetTenantService(r.Context(), proboSvc, organizationID.TenantID())
+		continueURL := r.URL.Query().Get("continue")
 
-		_, err = svc.Connectors.CreateOrUpdate(
+		svc := proboSvc.WithTenant(organizationID.TenantID())
+
+		_, err = svc.Connectors.Create(
 			r.Context(),
-			probo.CreateOrUpdateConnectorRequest{
-				OrganizationID: organizationID,
-				Name:           connectorID,
-				Type:           connector.ProtocolType(connection.Type()),
+			probo.CreateConnectorRequest{
+				OrganizationID: *organizationID,
+				Provider:       connectorProvider,
+				Protocol:       coredata.ConnectorProtocol(connection.Type()),
 				Connection:     connection,
 			},
 		)
@@ -261,8 +286,13 @@ func NewMux(
 			panic(fmt.Errorf("failed to create or update connector: %w", err))
 		}
 
-		safeRedirect.RedirectFromQuery(w, r, "continue", "/", http.StatusSeeOther)
-	}))
+		if continueURL != "" {
+			safeRedirect.Redirect(w, r, continueURL, "/", http.StatusSeeOther)
+		} else {
+			redirectURL := fmt.Sprintf("/organizations/%s", organizationID.String())
+			safeRedirect.Redirect(w, r, redirectURL, "/", http.StatusSeeOther)
+		}
+	})
 
 	r.Get("/", playground.Handler("GraphQL", "/api/console/v1/query"))
 	r.Post("/query", graphqlHandler(logger, proboSvc, authSvc, authzSvc, authCfg, customDomainCname))

@@ -27,8 +27,8 @@ type (
 	ProtocolType string
 
 	Connector interface {
-		Initiate(ctx context.Context, connectorID string, organizationID gid.GID, r *http.Request) (string, error)
-		Complete(ctx context.Context, connectorID string, organizationID gid.GID, r *http.Request) (Connection, error)
+		Initiate(ctx context.Context, provider string, organizationID gid.GID, r *http.Request) (string, error)
+		Complete(ctx context.Context, r *http.Request) (Connection, *gid.GID, error)
 	}
 
 	Connection interface {
@@ -41,20 +41,28 @@ type (
 )
 
 const (
-	ProtocolOAuth2 ProtocolType = "oauth2"
+	ProtocolOAuth2 ProtocolType = "OAUTH2"
 )
 
-func UnmarshalConnection(prtcl ProtocolType, data []byte) (Connection, error) {
+func UnmarshalConnection(protocol string, provider string, data []byte) (Connection, error) {
+	switch protocol {
+	case string(ProtocolOAuth2):
+		switch provider {
+		case SlackProvider:
+			var slackConn SlackConnection
+			if err := json.Unmarshal(data, &slackConn); err != nil {
+				return nil, fmt.Errorf("cannot unmarshal slack connection: %w", err)
+			}
+			return &slackConn, nil
 
-	switch prtcl {
-	case ProtocolOAuth2:
-		var conn OAuth2Connection
-		if err := json.Unmarshal(data, &conn); err != nil {
-			return nil, fmt.Errorf("cannot unmarshal oauth2 connection: %w", err)
+		default:
+			var conn OAuth2Connection
+			if err := json.Unmarshal(data, &conn); err != nil {
+				return nil, fmt.Errorf("cannot unmarshal oauth2 connection: %w", err)
+			}
+			return &conn, nil
 		}
-
-		return &conn, nil
 	}
 
-	return nil, fmt.Errorf("unknown connection type: %s", prtcl)
+	return nil, fmt.Errorf("unknown connection protocol: %s", protocol)
 }

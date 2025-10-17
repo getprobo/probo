@@ -61,4 +61,5 @@ const (
 	CustomDomainEntityType
 	InvitationEntityType
 	MembershipEntityType
+	SlackMessageEntityType
 )
