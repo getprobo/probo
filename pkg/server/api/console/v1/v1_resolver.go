@@ -1141,18 +1141,18 @@ func (r *mutationResolver) UpdateOrganization(ctx context.Context, input types.U
 	req := probo.UpdateOrganizationRequest{
 		ID:                 input.OrganizationID,
 		Name:               input.Name,
-		Description:        &input.Description,
-		WebsiteURL:         &input.WebsiteURL,
-		Email:              &input.Email,
-		HeadquarterAddress: &input.HeadquarterAddress,
+		Description:        UnwrapOmittable(input.Description),
+		WebsiteURL:         UnwrapOmittable(input.WebsiteURL),
+		Email:              UnwrapOmittable(input.Email),
+		HeadquarterAddress: UnwrapOmittable(input.HeadquarterAddress),
 	}
 
-	if input.Logo != nil {
+	if input.LogoFile != nil {
 		req.File = &probo.File{
-			Filename:    input.Logo.Filename,
-			ContentType: input.Logo.ContentType,
-			Size:        input.Logo.Size,
-			Content:     input.Logo.File,
+			Filename:    input.LogoFile.Filename,
+			ContentType: input.LogoFile.ContentType,
+			Size:        input.LogoFile.Size,
+			Content:     input.LogoFile.File,
 		}
 	}
 
@@ -1487,9 +1487,9 @@ func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdateP
 		PrimaryEmailAddress:      input.PrimaryEmailAddress,
 		AdditionalEmailAddresses: &input.AdditionalEmailAddresses,
 		Kind:                     input.Kind,
-		Position:                 &input.Position,
-		ContractStartDate:        &input.ContractStartDate,
-		ContractEndDate:          &input.ContractEndDate,
+		Position:                 UnwrapOmittable(input.Position),
+		ContractStartDate:        UnwrapOmittable(input.ContractStartDate),
+		ContractEndDate:          UnwrapOmittable(input.ContractEndDate),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot update people: %w", err)
@@ -1573,8 +1573,8 @@ func (r *mutationResolver) UpdateVendor(ctx context.Context, input types.UpdateV
 		WebsiteURL:                    input.WebsiteURL,
 		Category:                      input.Category,
 		Certifications:                input.Certifications,
-		BusinessOwnerID:               &input.BusinessOwnerID,
-		SecurityOwnerID:               &input.SecurityOwnerID,
+		BusinessOwnerID:               UnwrapOmittable(input.BusinessOwnerID),
+		SecurityOwnerID:               UnwrapOmittable(input.SecurityOwnerID),
 		ShowOnTrustCenter:             input.ShowOnTrustCenter,
 		Countries:                     input.Countries,
 	})
@@ -1629,10 +1629,10 @@ func (r *mutationResolver) UpdateVendorContact(ctx context.Context, input types.
 
 	req := probo.UpdateVendorContactRequest{
 		ID:       input.ID,
-		FullName: &input.FullName,
-		Email:    &input.Email,
-		Phone:    &input.Phone,
-		Role:     &input.Role,
+		FullName: UnwrapOmittable(input.FullName),
+		Email:    UnwrapOmittable(input.Email),
+		Phone:    UnwrapOmittable(input.Phone),
+		Role:     UnwrapOmittable(input.Role),
 	}
 
 	vendorContact, err := prb.VendorContacts.Update(ctx, req)
@@ -1686,7 +1686,7 @@ func (r *mutationResolver) UpdateVendorService(ctx context.Context, input types.
 	req := probo.UpdateVendorServiceRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: &input.Description,
+		Description: UnwrapOmittable(input.Description),
 	}
 
 	vendorService, err := prb.VendorServices.Update(ctx, req)
@@ -2444,8 +2444,8 @@ func (r *mutationResolver) UpdateVendorBusinessAssociateAgreement(ctx context.Co
 		ctx,
 		input.VendorID,
 		&probo.VendorBusinessAssociateAgreementUpdateRequest{
-			ValidFrom:  &input.ValidFrom,
-			ValidUntil: &input.ValidUntil,
+			ValidFrom:  UnwrapOmittable(input.ValidFrom),
+			ValidUntil: UnwrapOmittable(input.ValidUntil),
 		},
 	)
 	if err != nil {
@@ -2502,8 +2502,8 @@ func (r *mutationResolver) UpdateVendorDataPrivacyAgreement(ctx context.Context,
 		ctx,
 		input.VendorID,
 		&probo.VendorDataPrivacyAgreementUpdateRequest{
-			ValidFrom:  &input.ValidFrom,
-			ValidUntil: &input.ValidUntil,
+			ValidFrom:  UnwrapOmittable(input.ValidFrom),
+			ValidUntil: UnwrapOmittable(input.ValidUntil),
 		},
 	)
 	if err != nil {
@@ -3127,15 +3127,15 @@ func (r *mutationResolver) UpdateNonconformity(ctx context.Context, input types.
 	req := probo.UpdateNonconformityRequest{
 		ID:                 input.ID,
 		ReferenceID:        input.ReferenceID,
-		Description:        &input.Description,
-		DateIdentified:     &input.DateIdentified,
+		Description:        UnwrapOmittable(input.Description),
+		DateIdentified:     UnwrapOmittable(input.DateIdentified),
 		RootCause:          input.RootCause,
-		CorrectiveAction:   &input.CorrectiveAction,
+		CorrectiveAction:   UnwrapOmittable(input.CorrectiveAction),
 		OwnerID:            input.OwnerID,
 		AuditID:            input.AuditID,
-		DueDate:            &input.DueDate,
+		DueDate:            UnwrapOmittable(input.DueDate),
 		Status:             input.Status,
-		EffectivenessCheck: &input.EffectivenessCheck,
+		EffectivenessCheck: UnwrapOmittable(input.EffectivenessCheck),
 	}
 
 	nonconformity, err := prb.Nonconformities.Update(ctx, &req)
@@ -3195,14 +3195,14 @@ func (r *mutationResolver) UpdateObligation(ctx context.Context, input types.Upd
 
 	req := probo.UpdateObligationRequest{
 		ID:                     input.ID,
-		Area:                   &input.Area,
-		Source:                 &input.Source,
-		Requirement:            &input.Requirement,
-		ActionsToBeImplemented: &input.ActionsToBeImplemented,
-		Regulator:              &input.Regulator,
+		Area:                   UnwrapOmittable(input.Area),
+		Source:                 UnwrapOmittable(input.Source),
+		Requirement:            UnwrapOmittable(input.Requirement),
+		ActionsToBeImplemented: UnwrapOmittable(input.ActionsToBeImplemented),
+		Regulator:              UnwrapOmittable(input.Regulator),
 		OwnerID:                input.OwnerID,
-		LastReviewDate:         &input.LastReviewDate,
-		DueDate:                &input.DueDate,
+		LastReviewDate:         UnwrapOmittable(input.LastReviewDate),
+		DueDate:                UnwrapOmittable(input.DueDate),
 		Status:                 input.Status,
 	}
 
@@ -3262,10 +3262,10 @@ func (r *mutationResolver) UpdateContinualImprovement(ctx context.Context, input
 	req := probo.UpdateContinualImprovementRequest{
 		ID:          input.ID,
 		ReferenceID: input.ReferenceID,
-		Description: &input.Description,
-		Source:      &input.Source,
+		Description: UnwrapOmittable(input.Description),
+		Source:      UnwrapOmittable(input.Source),
 		OwnerID:     input.OwnerID,
-		TargetDate:  &input.TargetDate,
+		TargetDate:  UnwrapOmittable(input.TargetDate),
 		Status:      input.Status,
 		Priority:    input.Priority,
 	}
@@ -3333,17 +3333,17 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 	req := probo.UpdateProcessingActivityRequest{
 		ID:                             input.ID,
 		Name:                           input.Name,
-		Purpose:                        &input.Purpose,
-		DataSubjectCategory:            &input.DataSubjectCategory,
-		PersonalDataCategory:           &input.PersonalDataCategory,
+		Purpose:                        UnwrapOmittable(input.Purpose),
+		DataSubjectCategory:            UnwrapOmittable(input.DataSubjectCategory),
+		PersonalDataCategory:           UnwrapOmittable(input.PersonalDataCategory),
 		SpecialOrCriminalData:          input.SpecialOrCriminalData,
 		LawfulBasis:                    input.LawfulBasis,
-		Recipients:                     &input.Recipients,
-		Location:                       &input.Location,
+		Recipients:                     UnwrapOmittable(input.Recipients),
+		Location:                       UnwrapOmittable(input.Location),
 		InternationalTransfers:         input.InternationalTransfers,
-		TransferSafeguards:             &input.TransferSafeguards,
-		RetentionPeriod:                &input.RetentionPeriod,
-		SecurityMeasures:               &input.SecurityMeasures,
+		TransferSafeguards:             UnwrapOmittable(input.TransferSafeguards),
+		RetentionPeriod:                UnwrapOmittable(input.RetentionPeriod),
+		SecurityMeasures:               UnwrapOmittable(input.SecurityMeasures),
 		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
 		TransferImpactAssessment:       input.TransferImpactAssessment,
 	}
