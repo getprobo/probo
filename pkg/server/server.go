@@ -46,6 +46,7 @@ type Config struct {
 	Trust             *trust_pkg.Service
 	ConsoleAuth       api.ConsoleAuthConfig
 	TrustAuth         api.TrustAuthConfig
+	MCPAuth           api.MCPAuthConfig
 	ConnectorRegistry *connector.ConnectorRegistry
 	Agent             *agents.Agent
 	SafeRedirect      *saferedirect.SafeRedirect
@@ -75,6 +76,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Trust:             cfg.Trust,
 		ConsoleAuth:       cfg.ConsoleAuth,
 		TrustAuth:         cfg.TrustAuth,
+		MCPAuth:           cfg.MCPAuth,
 		ConnectorRegistry: cfg.ConnectorRegistry,
 		SafeRedirect:      cfg.SafeRedirect,
 		CustomDomainCname: cfg.CustomDomainCname,

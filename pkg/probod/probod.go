@@ -374,6 +374,13 @@ func (impl *Implm) Run(
 				Scope:             impl.cfg.TrustAuth.Scope,
 				TokenType:         impl.cfg.TrustAuth.TokenType,
 			},
+			MCPAuth: api.MCPAuthConfig{
+				CookieName:     impl.cfg.Auth.Cookie.Name,
+				CookieSecret:   impl.cfg.Auth.Cookie.Secret,
+				Version:        "1.0.0",
+				RequestTimeout: 30 * time.Second,
+				MaxRequestSize: 10 * 1024 * 1024, // 10MB
+			},
 		},
 	)
 	if err != nil {
