@@ -1,0 +1,121 @@
+{
+  "text": "New Trust Center Access Request",
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "🔒 New Trust Center Access Request"
+      }
+    },
+    {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": "👤 Requested by *{{jsonEscape .RequesterName}}* <{{jsonEscape .RequesterEmail}}>"
+        }
+      ]
+    },
+    {
+      "type": "actions",
+      "elements": [
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "✅ Accept All"
+          },
+          "action_id": "accept_all",
+          "value": "{{buildAcceptAllValue .DocumentIDs .ReportIDs}}",
+          "style": "primary"
+        },
+        {
+          "type": "button",
+          "text": {
+            "type": "plain_text",
+            "text": "👁️ View Requests"
+          },
+          "url": "https://{{.Domain}}/organizations/{{.OrganizationID}}/trust-center/access"
+        }
+      ]
+    }{{if .Documents}},
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*📄 Requested Documents*"
+      }
+    }{{range .Documents}},
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/documents/{{.ID}}|{{jsonEscape .Title}}>"
+      },
+      "accessory": {{if .Granted}}{
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "✓ Granted"
+        },
+        "url": "https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access"
+      }{{else}}{
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Accept"
+        },
+        "action_id": "accept_document",
+        "value": "{{.ID}}",
+        "style": "primary"
+      }{{end}}
+    }{{end}}{{end}}{{if .Reports}},
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*📊 Requested Audit Reports*"
+      }
+    }{{range .Reports}},
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/audits/{{.AuditID}}|{{jsonEscape .Title}}>"
+      },
+      "accessory": {{if .Granted}}{
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "✓ Granted"
+        },
+        "url": "https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access"
+      }{{else}}{
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Accept"
+        },
+        "action_id": "accept_report",
+        "value": "{{.ID}}",
+        "style": "primary"
+      }{{end}}
+    }{{end}}{{end}},
+    {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": "⚠️ _Updates from this message will only work for 14 days_"
+        }
+      ]
+    }
+  ]
+}

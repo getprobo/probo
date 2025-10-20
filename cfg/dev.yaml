@@ -64,6 +64,7 @@ probod:
 
   slack:
     sender-interval: 60
+    signing-secret: "this-is-not-a-secret-for-slack-signing"
 
   openai:
     api-key: "thisisnotasecret"
@@ -90,4 +91,6 @@ probod:
         auth-url: "https://slack.com/oauth/v2/authorize"
         token-url: "https://slack.com/api/oauth.v2.access"
         scopes:
+          - "chat:write"
+          - "channels:join"
           - "incoming-webhook"

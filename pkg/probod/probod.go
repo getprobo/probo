@@ -209,7 +209,6 @@ func (impl *Implm) Run(
 		return fmt.Errorf("cannot get trust auth token secret bytes: %w", err)
 	}
 
-
 	awsConfig := awsconfig.NewConfig(
 		l,
 		httpclient.DefaultPooledClient(
@@ -347,9 +346,16 @@ func (impl *Implm) Run(
 		impl.cfg.Hostname,
 		impl.cfg.EncryptionKey,
 		impl.cfg.TrustAuth.TokenSecret,
+		impl.cfg.Slack.SigningSecret,
 		authService,
 		html2pdfConverter,
 		fileManagerService,
+		l,
+		trust.TrustConfig{
+			TokenSecret:   impl.cfg.TrustAuth.TokenSecret,
+			TokenDuration: time.Duration(impl.cfg.TrustAuth.TokenDuration) * time.Hour,
+			TokenType:     impl.cfg.TrustAuth.TokenType,
+		},
 	)
 
 	serverHandler, err := server.NewServer(

@@ -110,6 +110,8 @@ func NewMux(
 	r.Post("/auth/authenticate", authTokenHandler(trustSvc, trustAuthCfg))
 	r.Delete("/auth/logout", trustCenterLogoutHandler(authCfg, trustAuthCfg))
 
+	r.Post("/slack", slackHandler(trustSvc, trustSvc.GetSlackSigningSecret(), logger))
+
 	return r
 }
 

@@ -1,0 +1,32 @@
+{
+  "text": "Welcome to Probo app!",
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "👋 Welcome to Probo!"
+      }
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "This channel is now connected to your Probo platform.\n\nYou'll receive notifications here for new trust center access requests."
+      }
+    },
+    {
+      "type": "context",
+      "elements": [
+        {
+          "type": "mrkdwn",
+          "text": "🏢 *Organization:* {{jsonEscape .OrganizationName}}"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "💬 *Channel:* {{jsonEscape .ChannelName}}"
+        }
+      ]
+    }
+  ]
+}
