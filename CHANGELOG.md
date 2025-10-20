@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.74.7] - 2025-10-20
+
+### Fixed
+
+- Fix compliance website wording
+
 ## [0.74.6] - 2025-10-20
 
 ### Fixed
