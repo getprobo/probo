@@ -4,9 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.74.6] - 2025-10-20
+
 ### Fixed
 
-Fix ordered list display in documents
+- Fix ordered list display in documents
+- Fix 5xx on risk measures resolver
 
 ## [0.74.5] - 2025-10-16
 
