@@ -61,6 +61,40 @@ func (s OrganizationService) Get(
 	return organization, nil
 }
 
+func (s OrganizationService) GetOrganizationCustomDomain(
+	ctx context.Context,
+	organizationID gid.GID,
+) (*coredata.CustomDomain, error) {
+	var domain *coredata.CustomDomain
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			var org coredata.Organization
+			if err := org.LoadByID(ctx, conn, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
+
+			if org.CustomDomainID == nil {
+				return nil
+			}
+
+			domain = &coredata.CustomDomain{}
+			if err := domain.LoadByID(ctx, conn, s.svc.scope, s.svc.encryptionKey, *org.CustomDomainID); err != nil {
+				return fmt.Errorf("cannot load custom domain: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return domain, nil
+}
+
 func (s OrganizationService) GenerateLogoURL(
 	ctx context.Context,
 	organizationID gid.GID,

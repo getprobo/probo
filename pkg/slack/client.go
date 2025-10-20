@@ -21,63 +21,161 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"go.gearno.de/kit/httpclient"
+	"go.gearno.de/kit/log"
+)
+
+const (
+	slackAPIPostMessage      = "https://slack.com/api/chat.postMessage"
+	slackAPIUpdateMessage    = "https://slack.com/api/chat.update"
+	slackAPIConversationJoin = "https://slack.com/api/conversations.join"
 )
 
 type (
 	Client struct {
-		webhookURL string
 		httpClient *http.Client
 	}
 
-	webhookMessage struct {
-		Text   string  `json:"text,omitempty"`
-		Blocks []block `json:"blocks,omitempty"`
-	}
-
-	block struct {
-		Type string    `json:"type"`
-		Text *textItem `json:"text,omitempty"`
-	}
-
-	textItem struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
+	SlackResponse struct {
+		OK      bool   `json:"ok,omitempty"`
+		TS      string `json:"ts,omitempty"`
+		Channel string `json:"channel,omitempty"`
+		Error   string `json:"error,omitempty"`
 	}
 )
 
-func NewClient(webhookURL string, httpClient *http.Client) *Client {
+func NewClient(logger *log.Logger) *Client {
+	httpClientOpts := []httpclient.Option{
+		httpclient.WithLogger(logger),
+	}
+
 	return &Client{
-		webhookURL: webhookURL,
-		httpClient: httpClient,
+		httpClient: httpclient.DefaultPooledClient(httpClientOpts...),
 	}
 }
 
-func (c *Client) PostMessage(ctx context.Context, text string) error {
-	msg := webhookMessage{
-		Text: text,
-		Blocks: []block{
-			{
-				Type: "section",
-				Text: &textItem{
-					Type: "mrkdwn",
-					Text: text,
-				},
-			},
-		},
+func (c *Client) CreateMessage(ctx context.Context, accessToken string, channelID string, body map[string]any) (*SlackResponse, error) {
+	payload := map[string]any{
+		"channel": channelID,
+		"text":    body["text"],
+		"blocks":  body["blocks"],
 	}
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(msg); err != nil {
+	if err := json.NewEncoder(&buf).Encode(payload); err != nil {
+		return nil, fmt.Errorf("cannot marshal message: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, slackAPIPostMessage, &buf)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("cannot send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(responseBody))
+	}
+
+	var slackResponse SlackResponse
+
+	if err := json.NewDecoder(bytes.NewReader(responseBody)).Decode(&slackResponse); err != nil {
+		return nil, fmt.Errorf("failed to parse Slack response: %w (body: %s)", err, string(responseBody))
+	}
+
+	if !slackResponse.OK {
+		return nil, fmt.Errorf("Slack API error: %s (channel: %s, response: %s)", slackResponse.Error, channelID, string(responseBody))
+	}
+
+	return &slackResponse, nil
+}
+
+func (c *Client) UpdateInteractiveMessage(ctx context.Context, responseURL string, body map[string]any) error {
+	updatePayload := map[string]any{
+		"replace_original": true,
+		"text":             body["text"],
+		"blocks":           body["blocks"],
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(updatePayload); err != nil {
+		return fmt.Errorf("cannot marshal interactive message update: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, responseURL, &buf)
+	if err != nil {
+		return fmt.Errorf("cannot create interactive message update request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("cannot send interactive message update request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(responseBody))
+	}
+
+	// Slack can return either plain text "ok" or JSON {"ok":true}
+	bodyStr := string(responseBody)
+	if bodyStr == "ok" || bodyStr == "" {
+		return nil
+	}
+
+	var slackResponse SlackResponse
+	if err := json.NewDecoder(bytes.NewReader(responseBody)).Decode(&slackResponse); err == nil {
+		if slackResponse.OK {
+			return nil
+		}
+		if slackResponse.Error != "" {
+			return fmt.Errorf("Slack error: %s", slackResponse.Error)
+		}
+	}
+
+	return fmt.Errorf("unexpected Slack response: %s", bodyStr)
+}
+
+func (c *Client) UpdateMessage(ctx context.Context, accessToken string, channelID string, messageTS string, body map[string]any) error {
+	payload := map[string]any{
+		"channel": channelID,
+		"ts":      messageTS,
+		"text":    body["text"],
+		"blocks":  body["blocks"],
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(payload); err != nil {
 		return fmt.Errorf("cannot marshal message: %w", err)
 	}
-	body := buf.Bytes()
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.webhookURL, bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, slackAPIUpdateMessage, &buf)
 	if err != nil {
 		return fmt.Errorf("cannot create request: %w", err)
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+accessToken)
 
 	resp, err := c.httpClient.Do(httpReq)
 	if err != nil {
@@ -85,20 +183,76 @@ func (c *Client) PostMessage(ctx context.Context, text string) error {
 	}
 	defer resp.Body.Close()
 
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("unexpected status code: %d, failed to read response body: %w", resp.StatusCode, err)
+		return fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(responseBody))
+	}
+
+	var slackResponse SlackResponse
+	if err := json.NewDecoder(bytes.NewReader(responseBody)).Decode(&slackResponse); err != nil {
+		return fmt.Errorf("failed to parse Slack response: %w (body: %s)", err, string(responseBody))
+	}
+
+	if !slackResponse.OK {
+		return fmt.Errorf("Slack API error: %s", slackResponse.Error)
+	}
+
+	return nil
+}
+
+func (c *Client) JoinChannel(ctx context.Context, accessToken string, channelID string) error {
+	payload := map[string]any{
+		"channel": channelID,
+	}
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(payload); err != nil {
+		return fmt.Errorf("cannot marshal request: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, slackAPIConversationJoin, &buf)
+	if err != nil {
+		return fmt.Errorf("cannot create request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("cannot send request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(responseBody))
+	}
+
+	var slackResponse SlackResponse
+
+	if err := json.NewDecoder(bytes.NewReader(responseBody)).Decode(&slackResponse); err != nil {
+		return fmt.Errorf("failed to parse Slack response: %w (body: %s)", err, string(responseBody))
+	}
+
+	if !slackResponse.OK {
+		if slackResponse.Error == "already_in_channel" {
+			return nil
 		}
 
-		var errorResponse map[string]any
-		var buf bytes.Buffer
-		buf.Write(body)
-		if err := json.NewDecoder(&buf).Decode(&errorResponse); err != nil {
-			return fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(body))
+		if slackResponse.Error == "channel_not_found" || slackResponse.Error == "is_private" {
+			return fmt.Errorf("cannot join private channel - bot must be invited manually")
 		}
 
-		return fmt.Errorf("unexpected status code: %d, response: %+v", resp.StatusCode, errorResponse)
+		return fmt.Errorf("Slack API error: %s", slackResponse.Error)
 	}
 
 	return nil

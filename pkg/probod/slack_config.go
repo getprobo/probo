@@ -16,6 +16,7 @@ package probod
 
 type (
 	slackConfig struct {
-		SenderInterval int `json:"sender-interval"`
+		SenderInterval int    `json:"sender-interval"`
+		SigningSecret  string `json:"signing-secret"`
 	}
 )

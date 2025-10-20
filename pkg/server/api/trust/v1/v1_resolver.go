@@ -140,7 +140,7 @@ func (r *mutationResolver) RequestAllAccesses(ctx context.Context, input types.R
 		return nil, fmt.Errorf("email is required for unauthenticated users")
 	}
 
-	access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.RequestTrustCenterAccessRequest{
+	access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.TrustCenterAccessRequest{
 		TrustCenterID: input.TrustCenterID,
 		Email:         *email,
 		Name:          input.Name,
@@ -370,7 +370,7 @@ func (r *mutationResolver) RequestDocumentAccess(ctx context.Context, input type
 		return nil, fmt.Errorf("email is required for unauthenticated users")
 	}
 
-	access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.RequestTrustCenterAccessRequest{
+	access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.TrustCenterAccessRequest{
 		TrustCenterID: input.TrustCenterID,
 		Email:         *email,
 		Name:          input.Name,
@@ -423,7 +423,7 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 		return nil, fmt.Errorf("email is required for unauthenticated users")
 	}
 
-	access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.RequestTrustCenterAccessRequest{
+	access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.TrustCenterAccessRequest{
 		TrustCenterID: input.TrustCenterID,
 		Email:         *email,
 		Name:          input.Name,

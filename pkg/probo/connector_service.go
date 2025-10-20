@@ -17,6 +17,7 @@ package probo
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"text/template"
 	"time"
@@ -29,7 +30,16 @@ import (
 )
 
 var (
-	welcomeTemplate = template.Must(template.ParseFS(Templates, "templates/welcome.txt.tmpl"))
+	welcomeTemplate = template.Must(
+		template.New("welcome.json.tmpl").
+			Funcs(template.FuncMap{
+				"jsonEscape": func(s string) string {
+					b, _ := json.Marshal(s)
+					return string(b[1 : len(b)-1])
+				},
+			}).
+			ParseFS(Templates, "templates/welcome.json.tmpl"),
+	)
 )
 
 type (
@@ -135,7 +145,12 @@ func (s *ConnectorService) Create(
 						return fmt.Errorf("failed to execute template: %w", err)
 					}
 
-					slackMessage := coredata.NewSlackMessage(s.svc.scope, req.OrganizationID, buf.String())
+					var body map[string]any
+					if err := json.NewDecoder(&buf).Decode(&body); err != nil {
+						return fmt.Errorf("failed to parse template JSON: %w", err)
+					}
+
+					slackMessage := coredata.NewSlackMessage(s.svc.scope, req.OrganizationID, coredata.SlackMessageTypeWelcome, body, nil)
 					if err := slackMessage.Insert(ctx, conn, s.svc.scope); err != nil {
 						return fmt.Errorf("cannot insert slack message: %w", err)
 					}

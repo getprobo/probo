@@ -15,32 +15,58 @@
 package trust
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/mail"
+	"net/url"
+	"strings"
 	"text/template"
 	"time"
 
+	"github.com/getprobo/probo/packages/emails"
 	"github.com/getprobo/probo/pkg/auth"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/probo"
+	"github.com/getprobo/probo/pkg/statelesstoken"
+	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 )
 
 var (
-	accessRequestTemplate = template.Must(template.ParseFS(Templates, "templates/access-request.txt.tmpl"))
+	accessRequestTemplate = template.Must(
+		template.New("access-request.json.tmpl").
+			Funcs(template.FuncMap{
+				"jsonEscape": func(s string) string {
+					b, _ := json.Marshal(s)
+					return string(b[1 : len(b)-1])
+				},
+				"buildAcceptAllValue": func(docIDs, repIDs []string) string {
+					value := map[string][]string{
+						"document_ids": docIDs,
+						"report_ids":   repIDs,
+					}
+					b, _ := json.Marshal(value)
+					s := string(b)
+					s = strings.ReplaceAll(s, `\`, `\\`)
+					s = strings.ReplaceAll(s, `"`, `\"`)
+					return s
+				},
+			}).
+			ParseFS(Templates, "templates/access-request.json.tmpl"),
+	)
 )
 
 type (
 	TrustCenterAccessService struct {
-		svc  *TenantService
-		auth *auth.Service
+		svc    *TenantService
+		auth   *auth.Service
+		logger *log.Logger
 	}
 
-	RequestTrustCenterAccessRequest struct {
+	TrustCenterAccessRequest struct {
 		TrustCenterID gid.GID
 		Email         string
 		Name          *string
@@ -50,7 +76,6 @@ type (
 )
 
 const (
-	TokenTypeTrustCenterAccess = "trust_center_access"
 	TrustCenterAccessURLFormat = "https://%s/organizations/%s/trust-center/access"
 )
 
@@ -76,7 +101,7 @@ func (s TrustCenterAccessService) ValidateToken(
 
 func (s TrustCenterAccessService) Request(
 	ctx context.Context,
-	req *RequestTrustCenterAccessRequest,
+	req *TrustCenterAccessRequest,
 ) (*coredata.TrustCenterAccess, error) {
 	now := time.Now()
 
@@ -175,15 +200,15 @@ func (s TrustCenterAccessService) Request(
 			return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
 		}
 
-		if err := s.queueSlackNotification(ctx, tx, organizationID, access.Name, access.Email); err != nil {
-			return fmt.Errorf("cannot queue slack notification: %w", err)
-		}
-
 		return nil
 	})
 
 	if err != nil {
 		return nil, err
+	}
+
+	if err := s.svc.SlackMessages.QueueSlackNotification(ctx, access.Email, req.TrustCenterID); err != nil {
+		s.logger.ErrorCtx(ctx, "cannot queue slack notification")
 	}
 
 	return access, nil
@@ -310,6 +335,136 @@ func (s TrustCenterAccessService) LoadReportAccess(
 	return reportAccess, nil
 }
 
+func (s *TrustCenterAccessService) AcceptByIDs(
+	ctx context.Context,
+	trustCenterID gid.GID,
+	email string,
+	documentIDs []gid.GID,
+	reportIDs []gid.GID,
+) error {
+	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
+		access := &coredata.TrustCenterAccess{}
+		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenterID, email); err != nil {
+			return fmt.Errorf("cannot load trust center access: %w", err)
+		}
+
+		wasInactive := !access.Active
+		now := time.Now()
+
+		if len(documentIDs) > 0 {
+			if err := coredata.ActivateByDocumentIDs(ctx, tx, s.svc.scope, access.ID, documentIDs, now); err != nil {
+				return fmt.Errorf("cannot activate document accesses: %w", err)
+			}
+		}
+		if len(reportIDs) > 0 {
+			if err := coredata.ActivateByReportIDs(ctx, tx, s.svc.scope, access.ID, reportIDs, now); err != nil {
+				return fmt.Errorf("cannot activate report accesses: %w", err)
+			}
+		}
+
+		if wasInactive {
+			access.Active = true
+			access.UpdatedAt = now
+			if err := access.Update(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update trust center access: %w", err)
+			}
+
+			if err := s.sendAccessEmail(ctx, tx, access); err != nil {
+				return fmt.Errorf("failed to send access email: %w", err)
+			}
+		}
+
+		return nil
+	})
+}
+
+func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Conn, access *coredata.TrustCenterAccess) error {
+	accessToken, err := statelesstoken.NewToken(
+		s.svc.trustConfig.TokenSecret,
+		s.svc.trustConfig.TokenType,
+		s.svc.trustConfig.TokenDuration,
+		probo.TrustCenterAccessData{
+			TrustCenterID: access.TrustCenterID,
+			Email:         access.Email,
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("cannot generate access token: %w", err)
+	}
+
+	trustCenter := &coredata.TrustCenter{}
+	err = trustCenter.LoadByID(ctx, tx, s.svc.scope, access.TrustCenterID)
+	if err != nil {
+		return fmt.Errorf("cannot load trust center: %w", err)
+	}
+
+	organization := &coredata.Organization{}
+	err = organization.LoadByID(ctx, tx, s.svc.scope, trustCenter.OrganizationID)
+	if err != nil {
+		return fmt.Errorf("cannot load organization: %w", err)
+	}
+
+	hostname := s.svc.hostname
+	path := "/trust/" + trustCenter.Slug + "/access"
+
+	if organization.CustomDomainID != nil {
+		customDomain, err := s.svc.Organizations.GetOrganizationCustomDomain(ctx, organization.ID)
+		if err != nil {
+			return fmt.Errorf("cannot load custom domain: %w", err)
+		}
+
+		if customDomain == nil || customDomain.SSLStatus != coredata.CustomDomainSSLStatusActive {
+			return fmt.Errorf("custom domain is not active")
+		}
+
+		hostname = customDomain.Domain
+		path = "/access"
+	}
+
+	accessURL := url.URL{
+		Scheme: "https",
+		Host:   hostname,
+		Path:   path,
+		RawQuery: url.Values{
+			"token": []string{accessToken},
+		}.Encode(),
+	}
+
+	return s.sendTrustCenterAccessEmail(ctx, tx, access.Name, access.Email, organization.Name, accessURL.String())
+}
+
+func (s *TrustCenterAccessService) sendTrustCenterAccessEmail(
+	ctx context.Context,
+	tx pg.Conn,
+	name string,
+	email string,
+	companyName string,
+	accessURL string,
+) error {
+	subject, textBody, htmlBody, err := emails.RenderTrustCenterAccess(
+		s.svc.hostname,
+		name,
+		companyName,
+		accessURL,
+	)
+	if err != nil {
+		return fmt.Errorf("cannot render trust center access email: %w", err)
+	}
+
+	accessEmail := coredata.NewEmail(
+		name,
+		email,
+		subject,
+		textBody,
+		htmlBody,
+	)
+
+	if err := accessEmail.Insert(ctx, tx); err != nil {
+		return fmt.Errorf("cannot insert access email: %w", err)
+	}
+	return nil
+}
+
 func extractExistingIDs(accesses coredata.TrustCenterDocumentAccesses) ([]gid.GID, []gid.GID) {
 	var documentIDs []gid.GID
 	var reportIDs []gid.GID
@@ -340,43 +495,4 @@ func filterExistingIDs(allIDs []gid.GID, existingIDs []gid.GID) []gid.GID {
 	}
 
 	return newIDs
-}
-
-func (s TrustCenterAccessService) queueSlackNotification(
-	ctx context.Context,
-	tx pg.Conn,
-	organizationID gid.GID,
-	requesterName string,
-	requesterEmail string,
-) error {
-	var organization coredata.Organization
-	if err := organization.LoadByID(ctx, tx, s.svc.scope, organizationID); err != nil {
-		return fmt.Errorf("cannot load organization: %w", err)
-	}
-
-	consoleURL := fmt.Sprintf(TrustCenterAccessURLFormat, s.svc.hostname, organizationID)
-
-	data := struct {
-		OrganizationName string
-		RequesterName    string
-		RequesterEmail   string
-		ConsoleUrl       string
-	}{
-		OrganizationName: organization.Name,
-		RequesterName:    requesterName,
-		RequesterEmail:   requesterEmail,
-		ConsoleUrl:       consoleURL,
-	}
-
-	var buf bytes.Buffer
-	if err := accessRequestTemplate.Execute(&buf, data); err != nil {
-		return fmt.Errorf("failed to execute template: %w", err)
-	}
-
-	slackMessage := coredata.NewSlackMessage(s.svc.scope, organizationID, buf.String())
-	if err := slackMessage.Insert(ctx, tx, s.svc.scope); err != nil {
-		return fmt.Errorf("cannot insert slack message: %w", err)
-	}
-
-	return nil
 }
