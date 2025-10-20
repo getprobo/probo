@@ -76,7 +76,7 @@ export function OrganizationSidebar({
             <div className="space-y-4">
               <h2 className="text-xs text-txt-secondary flex gap-1 items-center">
                 <IconMedal size={16} />
-                {__("Certifications")}
+                {__("Frameworks")}
               </h2>
               <div
                 className="grid grid-cols-4 gap-4"

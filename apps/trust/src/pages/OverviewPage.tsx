@@ -5,7 +5,12 @@ import type {
   OverviewPageFragment$key,
 } from "./__generated__/OverviewPageFragment.graphql";
 import { Link, useOutletContext } from "react-router";
-import { groupBy, objectEntries, sprintf, getTrustCenterUrl } from "@probo/helpers";
+import {
+  groupBy,
+  objectEntries,
+  sprintf,
+  getTrustCenterUrl,
+} from "@probo/helpers";
 import type { TrustGraphQuery$data } from "/queries/__generated__/TrustGraphQuery.graphql";
 import { useTranslate } from "@probo/i18n";
 import { Card, IconChevronRight } from "@probo/ui";
@@ -89,7 +94,7 @@ function Documents({
   const { __ } = useTranslate();
   const documentsPerType = groupBy(
     documents.map((edge) => edge.node),
-    (node) => documentTypeLabel(node.documentType, __),
+    (node) => documentTypeLabel(node.documentType, __)
   );
   const hasAudits = audits.length > 0;
   const hasDocuments = hasAudits || documents.length > 0;
@@ -107,7 +112,7 @@ function Documents({
       <Rows className="mb-8">
         {audits.length > 0 && (
           <>
-            <RowHeader>{__("Certifications")}</RowHeader>
+            <RowHeader>{__("Compliance")}</RowHeader>
             {audits.map((audit) => (
               <AuditRow key={audit.node.id} audit={audit.node} />
             ))}
@@ -144,7 +149,7 @@ function Subprocessors({
     return null;
   }
 
-  const hasAnyCountries = vendors.some(vendor => {
+  const hasAnyCountries = vendors.some((vendor) => {
     const vendorData = vendor.node as any;
     return vendorData.countries && vendorData.countries.length > 0;
   });
@@ -155,12 +160,16 @@ function Subprocessors({
       <p className="text-sm text-txt-secondary mb-4">
         {sprintf(
           __("Third-party subprocessors %s work with:"),
-          organizationName,
+          organizationName
         )}
       </p>
       <Rows className="mb-8 *:py-5">
         {vendors.map((vendor) => (
-          <VendorRow key={vendor.node.id} vendor={vendor.node} hasAnyCountries={hasAnyCountries} />
+          <VendorRow
+            key={vendor.node.id}
+            vendor={vendor.node}
+            hasAnyCountries={hasAnyCountries}
+          />
         ))}
         <Link to={url} className="text-sm font-medium flex gap-2 items-center">
           {__("See all subprocessors")}
