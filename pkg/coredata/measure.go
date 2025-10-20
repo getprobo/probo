@@ -136,8 +136,7 @@ SELECT
 	state,
 	reference_id,
 	created_at,
-	updated_at,
-	search_vector
+	updated_at
 FROM
 	msrs
 WHERE %s
