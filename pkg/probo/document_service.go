@@ -1354,8 +1354,6 @@ func exportDocumentPDF(
 	version := &coredata.DocumentVersion{}
 	owner := &coredata.People{}
 	organization := &coredata.Organization{}
-	signatures := coredata.DocumentVersionSignatures{}
-	peopleMap := make(map[gid.GID]*coredata.People)
 
 	if err := version.LoadByID(ctx, conn, scope, documentVersionID); err != nil {
 		return nil, fmt.Errorf("cannot load document version: %w", err)
@@ -1375,35 +1373,15 @@ func exportDocumentPDF(
 
 	var signatureData []docgen.SignatureData
 	if options.WithSignatures {
-		cursor := page.NewCursor(
-			1_000,
-			nil,
-			page.Head,
-			page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
-				Field:     coredata.DocumentVersionSignatureOrderFieldCreatedAt,
-				Direction: page.OrderDirectionAsc,
-			},
-		)
-
-		if err := signatures.LoadByDocumentVersionID(ctx, conn, scope, documentVersionID, cursor); err != nil {
+		signaturesWithPeople := &coredata.DocumentVersionSignaturesWithPeople{}
+		if err := signaturesWithPeople.LoadByDocumentVersionIDWithPeople(ctx, conn, scope, documentVersionID, 1_000); err != nil {
 			return nil, fmt.Errorf("cannot load document version signatures: %w", err)
 		}
 
-		// TODO: refactor this to use a single query
-		for _, sig := range signatures {
-			if _, ok := peopleMap[sig.SignedBy]; !ok {
-				people := &coredata.People{}
-				if err := people.LoadByID(ctx, conn, scope, sig.SignedBy); err != nil {
-					return nil, fmt.Errorf("cannot load people %q: %w", sig.SignedBy, err)
-				}
-				peopleMap[sig.SignedBy] = people
-			}
-		}
-
-		signatureData = make([]docgen.SignatureData, len(signatures))
-		for i, sig := range signatures {
+		signatureData = make([]docgen.SignatureData, len(*signaturesWithPeople))
+		for i, sig := range *signaturesWithPeople {
 			signatureData[i] = docgen.SignatureData{
-				SignedBy:    peopleMap[sig.SignedBy].FullName,
+				SignedBy:    sig.SignedByFullName,
 				SignedAt:    sig.SignedAt,
 				State:       sig.State,
 				RequestedAt: sig.RequestedAt,

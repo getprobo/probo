@@ -39,6 +39,13 @@ type (
 	}
 
 	DocumentVersionSignatures []*DocumentVersionSignature
+
+	DocumentVersionSignatureWithPeople struct {
+		DocumentVersionSignature
+		SignedByFullName string `db:"signed_by_full_name"`
+	}
+
+	DocumentVersionSignaturesWithPeople []*DocumentVersionSignatureWithPeople
 )
 
 func (pvs DocumentVersionSignature) CursorKey(orderBy DocumentVersionSignatureOrderField) page.CursorKey {
@@ -295,6 +302,75 @@ WHERE
 	if err != nil {
 		return fmt.Errorf("cannot delete document version signature: %w", err)
 	}
+
+	return nil
+}
+
+func (pvss *DocumentVersionSignaturesWithPeople) LoadByDocumentVersionIDWithPeople(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	documentVersionID gid.GID,
+	limit int,
+) error {
+	q := `
+WITH sigs AS (
+	SELECT
+		dvs.id,
+		dvs.tenant_id,
+		dvs.document_version_id,
+		dvs.state,
+		dvs.signed_by,
+		dvs.signed_at,
+		dvs.requested_at,
+		dvs.created_at,
+		dvs.updated_at,
+		p.full_name as signed_by_full_name
+	FROM
+		document_version_signatures dvs
+	INNER JOIN
+		peoples p ON dvs.signed_by = p.id
+	WHERE
+		dvs.document_version_id = @document_version_id
+	ORDER BY
+		p.full_name ASC
+	LIMIT @limit
+)
+SELECT
+	id,
+	document_version_id,
+	state,
+	signed_by,
+	signed_at,
+	requested_at,
+	created_at,
+	updated_at,
+	signed_by_full_name
+FROM
+	sigs
+WHERE
+	%s
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"document_version_id": documentVersionID,
+		"limit":               limit,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query document version signatures with people: %w", err)
+	}
+
+	signatures, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[DocumentVersionSignatureWithPeople])
+	if err != nil {
+		return fmt.Errorf("cannot collect document version signatures with people: %w", err)
+	}
+
+	*pvss = signatures
 
 	return nil
 }
