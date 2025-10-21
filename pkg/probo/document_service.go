@@ -1376,7 +1376,7 @@ func exportDocumentPDF(
 	var signatureData []docgen.SignatureData
 	if options.WithSignatures {
 		cursor := page.NewCursor(
-			100,
+			1_000,
 			nil,
 			page.Head,
 			page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
