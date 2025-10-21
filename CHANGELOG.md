@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.75.0] - 2025-10-21
+
+### Added
+
+- Add signature filtering by state (REQUESTED/SIGNED) on document signatures tab
+- Add HTTP to HTTPS redirect for custom domain 404 pages
+
+### Changed
+
+- Optimize document PDF export signature loading with single query instead of N+1 queries
+
 ## [0.74.7] - 2025-10-20
 
 ### Fixed
