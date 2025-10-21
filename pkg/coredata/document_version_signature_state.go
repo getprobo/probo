@@ -78,6 +78,10 @@ func (pvs DocumentVersionSignatureState) Value() (driver.Value, error) {
 }
 
 func (states DocumentVersionSignatureStates) Value() (driver.Value, error) {
+	if states == nil || len(states) == 0 {
+		return nil, nil
+	}
+
 	var result strings.Builder
 	result.WriteString("{")
 	for i, state := range states {

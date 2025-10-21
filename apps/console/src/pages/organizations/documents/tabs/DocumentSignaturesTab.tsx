@@ -8,7 +8,7 @@ import {
   Spinner,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import type { ItemOf, NodeOf } from "/types";
 import { graphql, useFragment, useRefetchableFragment } from "react-relay";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
@@ -19,6 +19,7 @@ import type { DocumentDetailPageDocumentFragment$data } from "../__generated__/D
 import { useOutletContext } from "react-router";
 import type { DocumentSignaturesTab_signature$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_signature.graphql.ts";
 import type { DocumentSignaturesTab_version$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_version.graphql.ts";
+import type { DocumentSignaturesTabRefetchQuery } from "./__generated__/DocumentSignaturesTabRefetchQuery.graphql";
 
 type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
 
@@ -33,7 +34,10 @@ const versionFragment = graphql`
     id
     status
     signatures(first: $count, after: $cursor, filter: $signatureFilter)
-      @connection(key: "DocumentSignaturesTab_signatures", filters: ["filter"]) {
+      @connection(
+        key: "DocumentSignaturesTab_signatures"
+        filters: ["filter"]
+      ) {
       __id
       edges {
         node {
@@ -54,7 +58,9 @@ const versionFragment = graphql`
 type SignatureState = "REQUESTED" | "SIGNED";
 
 export default function DocumentSignaturesTab() {
-  const { version: versionFromContext } = useOutletContext<{ version: Version }>();
+  const { version: versionFromContext } = useOutletContext<{
+    version: Version;
+  }>();
   const [selectedStates, setSelectedStates] = useState<SignatureState[]>([]);
   const { __ } = useTranslate();
 
@@ -64,9 +70,7 @@ export default function DocumentSignaturesTab() {
 
   const toggleState = (state: SignatureState) => {
     setSelectedStates((prev) =>
-      prev.includes(state)
-        ? prev.filter((s) => s !== state)
-        : [...prev, state]
+      prev.includes(state) ? prev.filter((s) => s !== state) : [...prev, state]
     );
   };
 
@@ -102,29 +106,40 @@ export default function DocumentSignaturesTab() {
         </div>
       </div>
       <Suspense fallback={<Spinner centered />}>
-        <SignatureList version={versionFromContext} selectedStates={selectedStates} />
+        <SignatureList
+          version={versionFromContext}
+          selectedStates={selectedStates}
+        />
       </Suspense>
     </div>
   );
 }
 
-function SignatureList(props: { version: Version; selectedStates: SignatureState[] }) {
-  const [version, refetch] = useRefetchableFragment<any, DocumentSignaturesTab_version$key>(
-    versionFragment,
-    props.version
-  );
+function SignatureList(props: {
+  version: Version;
+  selectedStates: SignatureState[];
+}) {
+  const [version, refetch] = useRefetchableFragment<
+    DocumentSignaturesTabRefetchQuery,
+    DocumentSignaturesTab_version$key
+  >(versionFragment, props.version);
   const signatures = version.signatures?.edges?.map((edge) => edge.node) ?? [];
   const { __ } = useTranslate();
   const signatureMap = new Map(signatures.map((s) => [s.signedBy.id, s]));
   const organizationId = useOrganizationId();
   const people = usePeople(organizationId, { excludeContractEnded: true });
   const signable = version.status === "PUBLISHED";
+  const isFirstRender = useRef(true);
 
-  // Refetch when filter changes
+  // Refetch when filter changes (skip initial render)
   useEffect(() => {
-    const filter = props.selectedStates.length > 0
-      ? { states: props.selectedStates }
-      : null;
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    const filter =
+      props.selectedStates.length > 0 ? { states: props.selectedStates } : null;
 
     refetch({ signatureFilter: filter });
   }, [JSON.stringify(props.selectedStates), refetch]);
@@ -146,9 +161,10 @@ function SignatureList(props: { version: Version; selectedStates: SignatureState
   }
 
   // When a filter is active, only show people who have signatures in the filtered results
-  const filteredPeople = props.selectedStates.length > 0
-    ? people.filter((p) => signatureMap.has(p.id))
-    : people;
+  const filteredPeople =
+    props.selectedStates.length > 0
+      ? people.filter((p) => signatureMap.has(p.id))
+      : people;
 
   if (filteredPeople.length === 0 && props.selectedStates.length > 0) {
     return (
@@ -174,9 +190,6 @@ function SignatureList(props: { version: Version; selectedStates: SignatureState
   );
 }
 
-/**
- * Fragments
- */
 const signatureFragment = graphql`
   fragment DocumentSignaturesTab_signature on DocumentVersionSignature {
     id
@@ -237,14 +250,14 @@ function SignatureItem(props: {
     {
       successMessage: __("Signature request sent successfully"),
       errorMessage: __("Failed to send signature request"),
-    },
+    }
   );
   const [cancelSignature, isCancellingSignature] = useMutationWithToasts(
     cancelSignatureMutation,
     {
       successMessage: __("Request cancelled successfully"),
       errorMessage: __("Failed to cancel signature request"),
-    },
+    }
   );
 
   // No signature request for this user
@@ -304,8 +317,8 @@ function SignatureItem(props: {
             {sprintf(
               label,
               dateTimeFormat(
-                isSigned ? signature.signedAt : signature.requestedAt,
-              ),
+                isSigned ? signature.signedAt : signature.requestedAt
+              )
             )}
           </span>
         </div>
