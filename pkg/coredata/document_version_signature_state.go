@@ -78,7 +78,7 @@ func (pvs DocumentVersionSignatureState) Value() (driver.Value, error) {
 }
 
 func (states DocumentVersionSignatureStates) Value() (driver.Value, error) {
-	if states == nil || len(states) == 0 {
+	if len(states) == 0 {
 		return nil, nil
 	}
 
