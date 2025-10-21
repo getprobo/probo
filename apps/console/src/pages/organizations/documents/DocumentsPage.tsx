@@ -341,7 +341,7 @@ const rowFragment = graphql`
           id
           status
           version
-          signatures(first: 500) {
+          signatures(first: 1000) {
             edges {
               node {
                 id

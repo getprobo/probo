@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d3b46cd525209def686ba33f7d6ff9bd>>
+ * @generated SignedSource<<429de5dec69b88e0abedd39ecac81ee3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -249,7 +249,7 @@ return {
                                   {
                                     "kind": "Literal",
                                     "name": "first",
-                                    "value": 500
+                                    "value": 1000
                                   }
                                 ],
                                 "concreteType": "DocumentVersionSignatureConnection",
@@ -288,7 +288,7 @@ return {
                                     "storageKey": null
                                   }
                                 ],
-                                "storageKey": "signatures(first:500)"
+                                "storageKey": "signatures(first:1000)"
                               }
                             ],
                             "storageKey": null
@@ -327,12 +327,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b43db972b1b28672faa60267ad642e43",
+    "cacheID": "0a5f7934a498b696a268943176bdf910",
     "id": null,
     "metadata": {},
     "name": "CreateDocumentDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 500) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation CreateDocumentDialogMutation(\n  $input: CreateDocumentInput!\n) {\n  createDocument(input: $input) {\n    documentEdge {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

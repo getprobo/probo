@@ -19,7 +19,7 @@ const peopleQuery = graphql`
   query PeopleGraphQuery($organizationId: ID!, $filter: PeopleFilter) {
     organization: node(id: $organizationId) {
       ... on Organization {
-        peoples(first: 100, orderBy: { direction: ASC, field: FULL_NAME }, filter: $filter) {
+        peoples(first: 1000, orderBy: { direction: ASC, field: FULL_NAME }, filter: $filter) {
           edges {
             node {
               id

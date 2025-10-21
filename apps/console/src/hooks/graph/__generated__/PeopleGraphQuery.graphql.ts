@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f8f5d2692a9b278d16d997a3ba952b03>>
+ * @generated SignedSource<<3b196ff5779051fcd1ed9cca6b7be112>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -73,7 +73,7 @@ v4 = {
         {
           "kind": "Literal",
           "name": "first",
-          "value": 100
+          "value": 1000
         },
         {
           "kind": "Literal",
@@ -191,16 +191,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "cfb5be60bd39783154a815d178a8fa51",
+    "cacheID": "3b6dc3ae9df52a04b5d496b68f8c26f4",
     "id": null,
     "metadata": {},
     "name": "PeopleGraphQuery",
     "operationKind": "query",
-    "text": "query PeopleGraphQuery(\n  $organizationId: ID!\n  $filter: PeopleFilter\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      peoples(first: 100, orderBy: {direction: ASC, field: FULL_NAME}, filter: $filter) {\n        edges {\n          node {\n            id\n            fullName\n            primaryEmailAddress\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query PeopleGraphQuery(\n  $organizationId: ID!\n  $filter: PeopleFilter\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      peoples(first: 1000, orderBy: {direction: ASC, field: FULL_NAME}, filter: $filter) {\n        edges {\n          node {\n            id\n            fullName\n            primaryEmailAddress\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "79f4d511be3c7cfa63a774ac017a6f41";
+(node as any).hash = "f1ce35948ab8dcd05c83e13ad83d93cd";
 
 export default node;

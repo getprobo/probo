@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6e738ec6de4916bb47e6698ef348a702>>
+ * @generated SignedSource<<daaba0a12d115e8691984612356d4234>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -32,7 +32,7 @@ export type DocumentSignaturesTabRefetchQuery = {
 
 const node: ConcreteRequest = (function(){
 var v0 = {
-  "defaultValue": 500,
+  "defaultValue": 1000,
   "kind": "LocalArgument",
   "name": "count"
 },
@@ -315,16 +315,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3f2497c26794429a940d920be7459a16",
+    "cacheID": "d7b2a5ca29001eca591507471d4178cc",
     "id": null,
     "metadata": {},
     "name": "DocumentSignaturesTabRefetchQuery",
     "operationKind": "query",
-    "text": "query DocumentSignaturesTabRefetchQuery(\n  $count: Int = 500\n  $cursor: CursorKey\n  $signatureFilter: DocumentVersionSignatureFilter\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentSignaturesTab_version_1vp7QE\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_version_1vp7QE on DocumentVersion {\n  id\n  status\n  signatures(first: $count, after: $cursor, filter: $signatureFilter) {\n    edges {\n      node {\n        id\n        state\n        signedBy {\n          id\n          fullName\n          primaryEmailAddress\n        }\n        ...DocumentSignaturesTab_signature\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
+    "text": "query DocumentSignaturesTabRefetchQuery(\n  $count: Int = 1000\n  $cursor: CursorKey\n  $signatureFilter: DocumentVersionSignatureFilter\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentSignaturesTab_version_1vp7QE\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_version_1vp7QE on DocumentVersion {\n  id\n  status\n  signatures(first: $count, after: $cursor, filter: $signatureFilter) {\n    edges {\n      node {\n        id\n        state\n        signedBy {\n          id\n          fullName\n          primaryEmailAddress\n        }\n        ...DocumentSignaturesTab_signature\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "8692b71c860fba2b26a641a637920930";
+(node as any).hash = "497571b827200e09a848436820668d10";
 
 export default node;

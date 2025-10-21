@@ -27,7 +27,7 @@ const versionFragment = graphql`
   fragment DocumentSignaturesTab_version on DocumentVersion
   @refetchable(queryName: "DocumentSignaturesTabRefetchQuery")
   @argumentDefinitions(
-    count: { type: "Int", defaultValue: 500 }
+    count: { type: "Int", defaultValue: 1000 }
     cursor: { type: "CursorKey" }
     signatureFilter: { type: "DocumentVersionSignatureFilter" }
   ) {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fc23e650e605a834fa70eab4d2a62cd2>>
+ * @generated SignedSource<<739800753f29986463be3d9e4316a44a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -313,7 +313,7 @@ return {
                                           {
                                             "kind": "Literal",
                                             "name": "first",
-                                            "value": 500
+                                            "value": 1000
                                           }
                                         ],
                                         "concreteType": "DocumentVersionSignatureConnection",
@@ -352,7 +352,7 @@ return {
                                             "storageKey": null
                                           }
                                         ],
-                                        "storageKey": "signatures(first:500)"
+                                        "storageKey": "signatures(first:1000)"
                                       }
                                     ],
                                     "storageKey": null
@@ -452,12 +452,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "32e25ba27cb9ad12640c0e338c16a804",
+    "cacheID": "ce2facebbd111ac1b3398933a5a06a05",
     "id": null,
     "metadata": {},
     "name": "DocumentsListQuery",
     "operationKind": "query",
-    "text": "query DocumentsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentsPageListFragment_16fISc\n    id\n  }\n}\n\nfragment DocumentsPageListFragment_16fISc on Organization {\n  documents(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 500) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentsListQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 50\n  $last: Int = null\n  $order: DocumentOrder = {field: TITLE, direction: ASC}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...DocumentsPageListFragment_16fISc\n    id\n  }\n}\n\nfragment DocumentsPageListFragment_16fISc on Organization {\n  documents(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    edges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

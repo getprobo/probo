@@ -102,7 +102,7 @@ const documentFragment = graphql`
           version
           updatedAt
           ...DocumentSignaturesTab_version
-          signatures(first: 500)
+          signatures(first: 1000)
             @connection(key: "DocumentDetailPage_signatures", filters: []) {
             __id
             edges {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e35bdd76924adcc49210173df6dabdc3>>
+ * @generated SignedSource<<18ebf050c9c9ec64b126385ad8b8dd7d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -233,7 +233,7 @@ return {
                                   {
                                     "kind": "Literal",
                                     "name": "first",
-                                    "value": 500
+                                    "value": 1000
                                   }
                                 ],
                                 "concreteType": "DocumentVersionSignatureConnection",
@@ -272,7 +272,7 @@ return {
                                     "storageKey": null
                                   }
                                 ],
-                                "storageKey": "signatures(first:500)"
+                                "storageKey": "signatures(first:1000)"
                               }
                             ],
                             "storageKey": null
@@ -295,12 +295,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "2ea3e8b6baf3eeb5b5b38f3e21b5998f",
+    "cacheID": "5c79c67dcab25c8ead714ff999b0e7cf",
     "id": null,
     "metadata": {},
     "name": "PublishDocumentsDialogMutation",
     "operationKind": "mutation",
-    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 500) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation PublishDocumentsDialogMutation(\n  $input: BulkPublishDocumentVersionsInput!\n) {\n  bulkPublishDocumentVersions(input: $input) {\n    documentEdges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n      }\n    }\n  }\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

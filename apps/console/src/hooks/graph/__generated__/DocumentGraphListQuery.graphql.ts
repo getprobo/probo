@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<83ae1b92ac910fa4ba9083a67eecaea9>>
+ * @generated SignedSource<<80c5f44dbb42b6501cd63d626d52518c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -238,7 +238,7 @@ return {
                                           {
                                             "kind": "Literal",
                                             "name": "first",
-                                            "value": 500
+                                            "value": 1000
                                           }
                                         ],
                                         "concreteType": "DocumentVersionSignatureConnection",
@@ -277,7 +277,7 @@ return {
                                             "storageKey": null
                                           }
                                         ],
-                                        "storageKey": "signatures(first:500)"
+                                        "storageKey": "signatures(first:1000)"
                                       }
                                     ],
                                     "storageKey": null
@@ -377,12 +377,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "44b8abc69cfebb8f29adcc8a9fcddc3b",
+    "cacheID": "e3e170d0a40aa1d0d4d07d9d414704ce",
     "id": null,
     "metadata": {},
     "name": "DocumentGraphListQuery",
     "operationKind": "query",
-    "text": "query DocumentGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...DocumentsPageListFragment\n  }\n}\n\nfragment DocumentsPageListFragment on Organization {\n  documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 500) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "query DocumentGraphListQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    id\n    ...DocumentsPageListFragment\n  }\n}\n\nfragment DocumentsPageListFragment on Organization {\n  documents(first: 50, orderBy: {field: TITLE, direction: ASC}) {\n    edges {\n      node {\n        id\n        ...DocumentsPageRowFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment DocumentsPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
