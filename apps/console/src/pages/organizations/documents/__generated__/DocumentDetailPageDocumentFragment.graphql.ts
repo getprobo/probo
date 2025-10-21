@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1b07d7b3b18267f31c2b7ec7950edcb6>>
+ * @generated SignedSource<<79bf0f8ac3d41ba5c456ddae462e2c6d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -47,6 +47,7 @@ export type DocumentDetailPageDocumentFragment$data = {
         readonly status: DocumentStatus;
         readonly updatedAt: any;
         readonly version: number;
+        readonly " $fragmentSpreads": FragmentRefs<"DocumentSignaturesTab_version">;
       };
     }>;
   };
@@ -264,6 +265,11 @@ return {
                   "storageKey": null
                 },
                 {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "DocumentSignaturesTab_version"
+                },
+                {
                   "alias": "signatures",
                   "args": null,
                   "concreteType": "DocumentVersionSignatureConnection",
@@ -344,6 +350,6 @@ return {
 };
 })();
 
-(node as any).hash = "ffd5764324ccdcfe201e937980e75253";
+(node as any).hash = "ce3a8422f4391952a8ad839ff874c5cf";
 
 export default node;

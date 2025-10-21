@@ -640,7 +640,7 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		Owner       func(childComplexity int) int
 		PublishedAt func(childComplexity int) int
-		Signatures  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) int
+		Signatures  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) int
 		Status      func(childComplexity int) int
 		Title       func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
@@ -1700,7 +1700,7 @@ type DocumentVersionResolver interface {
 	Document(ctx context.Context, obj *types.DocumentVersion) (*types.Document, error)
 
 	Owner(ctx context.Context, obj *types.DocumentVersion) (*types.People, error)
-	Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) (*types.DocumentVersionSignatureConnection, error)
+	Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) (*types.DocumentVersionSignatureConnection, error)
 }
 type DocumentVersionSignatureResolver interface {
 	DocumentVersion(ctx context.Context, obj *types.DocumentVersionSignature) (*types.DocumentVersion, error)
@@ -3675,7 +3675,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.complexity.DocumentVersion.Signatures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentVersionSignatureOrder)), true
+		return e.complexity.DocumentVersion.Signatures(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.DocumentVersionSignatureOrder), args["filter"].(*types.DocumentVersionSignatureFilter)), true
 
 	case "DocumentVersion.status":
 		if e.complexity.DocumentVersion.Status == nil {
@@ -8876,6 +8876,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputDocumentOrder,
 		ec.unmarshalInputDocumentVersionFilter,
 		ec.unmarshalInputDocumentVersionOrder,
+		ec.unmarshalInputDocumentVersionSignatureFilter,
 		ec.unmarshalInputDocumentVersionSignatureOrder,
 		ec.unmarshalInputEvidenceOrder,
 		ec.unmarshalInputExportDocumentVersionPDFInput,
@@ -13232,6 +13233,7 @@ type DocumentVersion implements Node {
     last: Int
     before: CursorKey
     orderBy: DocumentVersionSignatureOrder
+    filter: DocumentVersionSignatureFilter
   ): DocumentVersionSignatureConnection! @goField(forceResolver: true)
 
   publishedAt: Datetime
@@ -13252,6 +13254,10 @@ type DocumentVersionSignatureEdge {
 input DocumentVersionSignatureOrder {
   field: DocumentVersionSignatureOrderField!
   direction: OrderDirection!
+}
+
+input DocumentVersionSignatureFilter {
+  states: [DocumentVersionSignatureState!]
 }
 
 enum DocumentVersionSignatureState
@@ -14450,6 +14456,11 @@ func (ec *executionContext) field_DocumentVersion_signatures_args(ctx context.Co
 		return nil, err
 	}
 	args["orderBy"] = arg4
+	arg5, err := ec.field_DocumentVersion_signatures_argsFilter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["filter"] = arg5
 	return args, nil
 }
 func (ec *executionContext) field_DocumentVersion_signatures_argsFirst(
@@ -14514,6 +14525,19 @@ func (ec *executionContext) field_DocumentVersion_signatures_argsOrderBy(
 	}
 
 	var zeroVal *types.DocumentVersionSignatureOrder
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_DocumentVersion_signatures_argsFilter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.DocumentVersionSignatureFilter, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+	if tmp, ok := rawArgs["filter"]; ok {
+		return ec.unmarshalODocumentVersionSignatureFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureFilter(ctx, tmp)
+	}
+
+	var zeroVal *types.DocumentVersionSignatureFilter
 	return zeroVal, nil
 }
 
@@ -33186,7 +33210,7 @@ func (ec *executionContext) _DocumentVersion_signatures(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.DocumentVersion().Signatures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentVersionSignatureOrder))
+		return ec.resolvers.DocumentVersion().Signatures(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.DocumentVersionSignatureOrder), fc.Args["filter"].(*types.DocumentVersionSignatureFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -71761,6 +71785,33 @@ func (ec *executionContext) unmarshalInputDocumentVersionOrder(ctx context.Conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDocumentVersionSignatureFilter(ctx context.Context, obj any) (types.DocumentVersionSignatureFilter, error) {
+	var it types.DocumentVersionSignatureFilter
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"states"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "states":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("states"))
+			data, err := ec.unmarshalODocumentVersionSignatureState2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureStateᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.States = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDocumentVersionSignatureOrder(ctx context.Context, obj any) (types.DocumentVersionSignatureOrder, error) {
 	var it types.DocumentVersionSignatureOrder
 	asMap := map[string]any{}
@@ -101215,6 +101266,14 @@ func (ec *executionContext) unmarshalODocumentVersionOrder2ᚖgithubᚗcomᚋget
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalODocumentVersionSignatureFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureFilter(ctx context.Context, v any) (*types.DocumentVersionSignatureFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputDocumentVersionSignatureFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalODocumentVersionSignatureOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentVersionSignatureOrder(ctx context.Context, v any) (*types.DocumentVersionSignatureOrder, error) {
 	if v == nil {
 		return nil, nil
@@ -101222,6 +101281,82 @@ func (ec *executionContext) unmarshalODocumentVersionSignatureOrder2ᚖgithubᚗ
 	res, err := ec.unmarshalInputDocumentVersionSignatureOrder(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
+
+func (ec *executionContext) unmarshalODocumentVersionSignatureState2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureStateᚄ(ctx context.Context, v any) ([]coredata.DocumentVersionSignatureState, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]coredata.DocumentVersionSignatureState, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalODocumentVersionSignatureState2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureStateᚄ(ctx context.Context, sel ast.SelectionSet, v []coredata.DocumentVersionSignatureState) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNDocumentVersionSignatureState2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureState(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+var (
+	unmarshalODocumentVersionSignatureState2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureStateᚄ = map[string]coredata.DocumentVersionSignatureState{
+		"REQUESTED": coredata.DocumentVersionSignatureStateRequested,
+		"SIGNED":    coredata.DocumentVersionSignatureStateSigned,
+	}
+	marshalODocumentVersionSignatureState2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentVersionSignatureStateᚄ = map[coredata.DocumentVersionSignatureState]string{
+		coredata.DocumentVersionSignatureStateRequested: "REQUESTED",
+		coredata.DocumentVersionSignatureStateSigned:    "SIGNED",
+	}
+)
 
 func (ec *executionContext) unmarshalODuration2ᚖtimeᚐDuration(ctx context.Context, v any) (*time.Duration, error) {
 	if v == nil {

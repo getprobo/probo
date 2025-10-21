@@ -715,13 +715,14 @@ func (s *DocumentService) ListSignatures(
 	ctx context.Context,
 	documentVersionID gid.GID,
 	cursor *page.Cursor[coredata.DocumentVersionSignatureOrderField],
+	filter *coredata.DocumentVersionSignatureFilter,
 ) (*page.Page[*coredata.DocumentVersionSignature, coredata.DocumentVersionSignatureOrderField], error) {
 	var documentVersionSignatures coredata.DocumentVersionSignatures
 
 	err := s.svc.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return documentVersionSignatures.LoadByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID, cursor)
+			return documentVersionSignatures.LoadByDocumentVersionID(ctx, conn, s.svc.scope, documentVersionID, cursor, filter)
 		},
 	)
 

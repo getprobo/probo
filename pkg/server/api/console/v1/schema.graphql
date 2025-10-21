@@ -4182,6 +4182,7 @@ type DocumentVersion implements Node {
     last: Int
     before: CursorKey
     orderBy: DocumentVersionSignatureOrder
+    filter: DocumentVersionSignatureFilter
   ): DocumentVersionSignatureConnection! @goField(forceResolver: true)
 
   publishedAt: Datetime
@@ -4202,6 +4203,10 @@ type DocumentVersionSignatureEdge {
 input DocumentVersionSignatureOrder {
   field: DocumentVersionSignatureOrderField!
   direction: OrderDirection!
+}
+
+input DocumentVersionSignatureFilter {
+  states: [DocumentVersionSignatureState!]
 }
 
 enum DocumentVersionSignatureState

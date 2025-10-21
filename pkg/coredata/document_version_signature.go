@@ -203,6 +203,7 @@ func (pvss *DocumentVersionSignatures) LoadByDocumentVersionID(
 	scope Scoper,
 	documentVersionID gid.GID,
 	cursor *page.Cursor[DocumentVersionSignatureOrderField],
+	filter *DocumentVersionSignatureFilter,
 ) error {
 	q := `
 SELECT
@@ -220,13 +221,15 @@ WHERE
 	%s
 	AND document_version_id = @document_version_id
 	AND %s
+	AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"document_version_id": documentVersionID}
 	maps.Copy(args, scope.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

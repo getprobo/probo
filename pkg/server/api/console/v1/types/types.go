@@ -1088,6 +1088,10 @@ type DocumentVersionSignatureEdge struct {
 	Node   *DocumentVersionSignature `json:"node"`
 }
 
+type DocumentVersionSignatureFilter struct {
+	States []coredata.DocumentVersionSignatureState `json:"states,omitempty"`
+}
+
 type DocumentVersionSignatureOrder struct {
 	Field     coredata.DocumentVersionSignatureOrderField `json:"field"`
 	Direction page.OrderDirection                         `json:"direction"`

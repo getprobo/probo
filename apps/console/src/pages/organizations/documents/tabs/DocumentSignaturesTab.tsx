@@ -2,14 +2,15 @@ import {
   Avatar,
   Badge,
   Button,
+  Checkbox,
   IconCircleCheck,
   IconClock,
   Spinner,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import type { ItemOf, NodeOf } from "/types";
-import { graphql, useFragment } from "react-relay";
+import { graphql, useFragment, useRefetchableFragment } from "react-relay";
 import { usePeople } from "/hooks/graph/PeopleGraph.ts";
 import { useOrganizationId } from "/hooks/useOrganizationId.ts";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts.ts";
@@ -17,31 +18,118 @@ import { sprintf } from "@probo/helpers";
 import type { DocumentDetailPageDocumentFragment$data } from "../__generated__/DocumentDetailPageDocumentFragment.graphql";
 import { useOutletContext } from "react-router";
 import type { DocumentSignaturesTab_signature$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_signature.graphql.ts";
+import type { DocumentSignaturesTab_version$key } from "/pages/organizations/documents/tabs/__generated__/DocumentSignaturesTab_version.graphql.ts";
 
 type Version = NodeOf<DocumentDetailPageDocumentFragment$data["versions"]>;
 
+const versionFragment = graphql`
+  fragment DocumentSignaturesTab_version on DocumentVersion
+  @refetchable(queryName: "DocumentSignaturesTabRefetchQuery")
+  @argumentDefinitions(
+    count: { type: "Int", defaultValue: 500 }
+    cursor: { type: "CursorKey" }
+    signatureFilter: { type: "DocumentVersionSignatureFilter" }
+  ) {
+    id
+    status
+    signatures(first: $count, after: $cursor, filter: $signatureFilter)
+      @connection(key: "DocumentSignaturesTab_signatures", filters: ["filter"]) {
+      __id
+      edges {
+        node {
+          id
+          state
+          signedBy {
+            id
+            fullName
+            primaryEmailAddress
+          }
+          ...DocumentSignaturesTab_signature
+        }
+      }
+    }
+  }
+`;
+
+type SignatureState = "REQUESTED" | "SIGNED";
+
 export default function DocumentSignaturesTab() {
-  const { version } = useOutletContext<{ version: Version }>();
-  if (!version) {
+  const { version: versionFromContext } = useOutletContext<{ version: Version }>();
+  const [selectedStates, setSelectedStates] = useState<SignatureState[]>([]);
+  const { __ } = useTranslate();
+
+  if (!versionFromContext) {
     return null;
   }
 
+  const toggleState = (state: SignatureState) => {
+    setSelectedStates((prev) =>
+      prev.includes(state)
+        ? prev.filter((s) => s !== state)
+        : [...prev, state]
+    );
+  };
+
   return (
-    <Suspense fallback={<Spinner centered />}>
-      <SignatureList version={version} />
-    </Suspense>
+    <div className="space-y-4">
+      <div className="flex items-center gap-4 pb-2 border-b border-border-solid">
+        <span className="text-sm text-txt-secondary">
+          {__("Filter by state:")}
+        </span>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={selectedStates.includes("REQUESTED")}
+            onChange={() => toggleState("REQUESTED")}
+          />
+          <span
+            className="text-sm text-txt-secondary cursor-pointer select-none"
+            onClick={() => toggleState("REQUESTED")}
+          >
+            {__("Requested")}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            checked={selectedStates.includes("SIGNED")}
+            onChange={() => toggleState("SIGNED")}
+          />
+          <span
+            className="text-sm text-txt-secondary cursor-pointer select-none"
+            onClick={() => toggleState("SIGNED")}
+          >
+            {__("Signed")}
+          </span>
+        </div>
+      </div>
+      <Suspense fallback={<Spinner centered />}>
+        <SignatureList version={versionFromContext} selectedStates={selectedStates} />
+      </Suspense>
+    </div>
   );
 }
 
-function SignatureList(props: { version: Version }) {
-  const signatures = props.version.signatures?.edges?.map((edge) => edge.node) ?? [];
+function SignatureList(props: { version: Version; selectedStates: SignatureState[] }) {
+  const [version, refetch] = useRefetchableFragment<any, DocumentSignaturesTab_version$key>(
+    versionFragment,
+    props.version
+  );
+  const signatures = version.signatures?.edges?.map((edge) => edge.node) ?? [];
   const { __ } = useTranslate();
   const signatureMap = new Map(signatures.map((s) => [s.signedBy.id, s]));
   const organizationId = useOrganizationId();
   const people = usePeople(organizationId, { excludeContractEnded: true });
-  const signable = props.version.status === "PUBLISHED";
+  const signable = version.status === "PUBLISHED";
 
-  if (!props.version.signatures) {
+  // Refetch when filter changes
+  useEffect(() => {
+    const filter = props.selectedStates.length > 0
+      ? { states: props.selectedStates }
+      : null;
+
+    refetch({ signatureFilter: filter });
+  }, [JSON.stringify(props.selectedStates), refetch]);
+
+  if (!version.signatures) {
     return (
       <div className="text-center text-sm text-txt-tertiary py-3">
         {__("Loading signatures...")}
@@ -57,15 +145,28 @@ function SignatureList(props: { version: Version }) {
     );
   }
 
+  // When a filter is active, only show people who have signatures in the filtered results
+  const filteredPeople = props.selectedStates.length > 0
+    ? people.filter((p) => signatureMap.has(p.id))
+    : people;
+
+  if (filteredPeople.length === 0 && props.selectedStates.length > 0) {
+    return (
+      <div className="text-center text-sm text-txt-tertiary py-3">
+        {__("No signatures match the selected filters")}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2 divide-y divide-border-solid">
-      {people.map((p) => (
+      {filteredPeople.map((p) => (
         <SignatureItem
           key={p.id}
-          versionId={props.version.id}
+          versionId={version.id}
           signature={signatureMap.get(p.id)}
           people={p}
-          connectionId={props.version.signatures.__id}
+          connectionId={version.signatures.__id}
           signable={signable}
         />
       ))}

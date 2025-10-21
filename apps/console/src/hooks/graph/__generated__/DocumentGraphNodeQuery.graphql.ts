@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4d39076389b55a86a116d8115ac22fca>>
+ * @generated SignedSource<<3b517368f8d0fc79e1c5c60e56c00b4d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -469,7 +469,18 @@ return {
                           {
                             "alias": null,
                             "args": (v11/*: any*/),
-                            "filters": null,
+                            "filters": [
+                              "filter"
+                            ],
+                            "handle": "connection",
+                            "key": "DocumentSignaturesTab_signatures",
+                            "kind": "LinkedHandle",
+                            "name": "signatures"
+                          },
+                          {
+                            "alias": null,
+                            "args": (v11/*: any*/),
+                            "filters": [],
                             "handle": "connection",
                             "key": "DocumentDetailPage_signatures",
                             "kind": "LinkedHandle",
@@ -507,12 +518,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "6d2e59057d037990aeb917bb36d8234f",
+    "cacheID": "d77cc1c3f05f4be15b7c50b90b8a4704",
     "id": null,
     "metadata": {},
     "name": "DocumentGraphNodeQuery",
     "operationKind": "query",
-    "text": "query DocumentGraphNodeQuery(\n  $documentId: ID!\n) {\n  node(id: $documentId) {\n    __typename\n    ... on Document {\n      ...DocumentDetailPageDocumentFragment\n    }\n    id\n  }\n}\n\nfragment DocumentControlsTabFragment on Document {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment DocumentDetailPageDocumentFragment on Document {\n  id\n  title\n  documentType\n  owner {\n    id\n    fullName\n  }\n  ...DocumentControlsTabFragment\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        signatures(first: 500) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesTab_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
+    "text": "query DocumentGraphNodeQuery(\n  $documentId: ID!\n) {\n  node(id: $documentId) {\n    __typename\n    ... on Document {\n      ...DocumentDetailPageDocumentFragment\n    }\n    id\n  }\n}\n\nfragment DocumentControlsTabFragment on Document {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment DocumentDetailPageDocumentFragment on Document {\n  id\n  title\n  documentType\n  owner {\n    id\n    fullName\n  }\n  ...DocumentControlsTabFragment\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        ...DocumentSignaturesTab_version\n        signatures(first: 500) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesTab_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_version on DocumentVersion {\n  id\n  status\n  signatures(first: 500) {\n    edges {\n      node {\n        id\n        state\n        signedBy {\n          id\n          fullName\n          primaryEmailAddress\n        }\n        ...DocumentSignaturesTab_signature\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
   }
 };
 })();

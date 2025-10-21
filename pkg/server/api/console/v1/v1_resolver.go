@@ -677,7 +677,7 @@ func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.Document
 }
 
 // Signatures is the resolver for the signatures field.
-func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder) (*types.DocumentVersionSignatureConnection, error) {
+func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.DocumentVersion, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) (*types.DocumentVersionSignatureConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.DocumentVersionSignatureOrderField]{
@@ -691,9 +691,15 @@ func (r *documentVersionResolver) Signatures(ctx context.Context, obj *types.Doc
 		}
 	}
 
+	var signatureStates []coredata.DocumentVersionSignatureState
+	if filter != nil && filter.States != nil {
+		signatureStates = filter.States
+	}
+	signatureFilter := coredata.NewDocumentVersionSignatureFilter(signatureStates)
+
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	page, err := prb.Documents.ListSignatures(ctx, obj.ID, cursor)
+	page, err := prb.Documents.ListSignatures(ctx, obj.ID, cursor, signatureFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list document version signatures: %w", err))
 	}

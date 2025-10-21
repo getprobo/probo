@@ -17,10 +17,12 @@ package coredata
 import (
 	"database/sql/driver"
 	"fmt"
+	"strings"
 )
 
 type (
-	DocumentVersionSignatureState string
+	DocumentVersionSignatureState  string
+	DocumentVersionSignatureStates []DocumentVersionSignatureState
 )
 
 const (
@@ -73,4 +75,17 @@ func (pvs *DocumentVersionSignatureState) Scan(value any) error {
 
 func (pvs DocumentVersionSignatureState) Value() (driver.Value, error) {
 	return pvs.String(), nil
+}
+
+func (states DocumentVersionSignatureStates) Value() (driver.Value, error) {
+	var result strings.Builder
+	result.WriteString("{")
+	for i, state := range states {
+		if i > 0 {
+			result.WriteString(",")
+		}
+		result.WriteString(fmt.Sprintf("%q", state.String()))
+	}
+	result.WriteString("}")
+	return result.String(), nil
 }
