@@ -12,11 +12,11 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Package server provides functionality for serving the SPA frontend.
 package server
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -33,10 +33,10 @@ import (
 	"github.com/getprobo/probo/pkg/server/web"
 	trust_pkg "github.com/getprobo/probo/pkg/trust"
 	"github.com/go-chi/chi/v5"
+	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 )
 
-// Config holds the configuration for the server
 type Config struct {
 	AllowedOrigins    []string
 	ExtraHeaderFields map[string]string
@@ -53,7 +53,6 @@ type Config struct {
 	Logger            *log.Logger
 }
 
-// Server represents the main server that handles both API and frontend requests
 type Server struct {
 	apiServer         *api.Server
 	webServer         *web.Server
@@ -64,9 +63,7 @@ type Server struct {
 	logger            *log.Logger
 }
 
-// NewServer creates a new server instance
 func NewServer(cfg Config) (*Server, error) {
-	// Create API server
 	apiCfg := api.Config{
 		AllowedOrigins:    cfg.AllowedOrigins,
 		Probo:             cfg.Probo,
@@ -85,19 +82,16 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
-	// Create web server for console SPA
 	webServer, err := web.NewServer()
 	if err != nil {
 		return nil, err
 	}
 
-	// Create trust server for trust SPA
 	trustServer, err := trust.NewServer()
 	if err != nil {
 		return nil, err
 	}
 
-	// Create main router
 	router := chi.NewRouter()
 
 	server := &Server{
@@ -110,42 +104,56 @@ func NewServer(cfg Config) (*Server, error) {
 		logger:            cfg.Logger,
 	}
 
-	// Set up routes
 	server.setupRoutes()
 
 	return server, nil
 }
 
-// setupRoutes configures the routing for the server
 func (s *Server) setupRoutes() {
-	// API routes
 	s.router.Mount("/api", s.apiServer)
 
-	// Trust center routes by slug or ID
 	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
 		r.Use(s.loadTrustCenterBySlugOrID)
 		r.Use(s.stripTrustPrefix)
 		r.Mount("/", s.trustCenterRouter())
 	})
 
-	// Console SPA (catch-all)
 	s.router.Mount("/", s.webServer)
 }
 
-// ServeHTTP implements the http.Handler interface
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.setExtraHeaders(w)
 	s.router.ServeHTTP(w, r)
 }
 
-// setExtraHeaders adds configured extra headers to the response
 func (s *Server) setExtraHeaders(w http.ResponseWriter) {
 	for key, value := range s.extraHeaderFields {
 		w.Header().Set(key, value)
 	}
 }
 
-// loadTrustCenterBySlugOrID middleware loads trust center info from slug or ID and adds to context
+func (s *Server) handleCustomDomain404(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if r.TLS == nil {
+		domain := r.Host
+
+		_, err := s.proboService.LoadOrganizationByDomain(ctx, domain)
+		if err == nil {
+			httpsURL := "https://" + r.Host + r.URL.RequestURI()
+			s.logger.InfoCtx(ctx, "404 on HTTP custom domain, redirecting to HTTPS",
+				log.String("domain", domain),
+				log.String("from", r.URL.RequestURI()),
+				log.String("to", httpsURL),
+			)
+			http.Redirect(w, r, httpsURL, http.StatusMovedPermanently)
+			return
+		}
+	}
+
+	httpserver.RenderError(w, http.StatusNotFound, errors.New("not found"))
+}
+
 func (s *Server) loadTrustCenterBySlugOrID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -206,7 +214,6 @@ func (s *Server) loadTrustCenterBySlugOrID(next http.Handler) http.Handler {
 	})
 }
 
-// loadTrustCenterByDomain middleware loads trust center info from custom domain and adds to context
 func (s *Server) loadTrustCenterByDomain(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
@@ -243,22 +250,18 @@ func (s *Server) loadTrustCenterByDomain(next http.Handler) http.Handler {
 	})
 }
 
-// addTrustCenterToContext adds trust center identification to context
 func (s *Server) addTrustCenterToContext(ctx context.Context, tenantID, organizationID interface{}) context.Context {
 	ctx = context.WithValue(ctx, trust_v1.CustomDomainTenantIDKey, tenantID)
 	ctx = context.WithValue(ctx, trust_v1.CustomDomainOrganizationIDKey, organizationID)
 	return ctx
 }
 
-// stripTrustPrefix middleware strips /trust/{slugOrId} from the path
 func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slugOrId := chi.URLParam(r, "slugOrId")
 		prefix := "/trust/" + slugOrId
 
-		// Strip the prefix from the path
 		if r.URL.Path == prefix {
-			// Redirect to trailing slash for proper asset resolution
 			http.Redirect(w, r, prefix+"/", http.StatusMovedPermanently)
 			return
 		}
@@ -272,24 +275,18 @@ func (s *Server) stripTrustPrefix(next http.Handler) http.Handler {
 	})
 }
 
-// trustCenterRouter returns a router for trust center content (API + frontend)
 func (s *Server) trustCenterRouter() chi.Router {
 	r := chi.NewRouter()
 
-	// Trust API routes
 	r.Mount("/api/trust/v1", s.apiServer.TrustAPIHandler())
-
-	// Trust center frontend (catch-all)
 	r.Handle("/*", s.trustServer)
 
 	return r
 }
 
-// TrustCenterHandler returns an HTTP handler for serving trust centers on custom domains
 func (s *Server) TrustCenterHandler() http.Handler {
 	r := chi.NewRouter()
 
-	// Set security headers
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Strict-Transport-Security", "max-age=31536000; preload")
@@ -298,10 +295,9 @@ func (s *Server) TrustCenterHandler() http.Handler {
 		})
 	})
 
-	// Load organization by custom domain
 	r.Use(s.loadTrustCenterByDomain)
+	r.NotFound(s.handleCustomDomain404)
 
-	// Mount trust center content
 	r.Mount("/", s.trustCenterRouter())
 
 	return r
