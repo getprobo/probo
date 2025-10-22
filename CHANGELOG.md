@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Invitation status not updated on the UI
+
 ## [0.75.0] - 2025-10-21
 
 ### Added
