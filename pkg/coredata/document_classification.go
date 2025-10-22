@@ -34,9 +34,14 @@ func (dc *DocumentClassification) Scan(value interface{}) error {
 		return nil
 	}
 
-	sv, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("failed to scan DocumentClassification: %v", value)
+	var sv string
+	switch v := value.(type) {
+	case string:
+		sv = v
+	case []byte:
+		sv = string(v)
+	default:
+		return fmt.Errorf("failed to scan DocumentClassification: expected string or []byte, got %T", value)
 	}
 
 	*dc = DocumentClassification(sv)
