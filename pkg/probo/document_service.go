@@ -1408,12 +1408,14 @@ func exportDocumentPDF(
 		}
 	}
 
-	classification := docgen.ClassificationInternal
-	switch document.DocumentType {
-	case coredata.DocumentTypePolicy:
+	classification := docgen.ClassificationSecret
+	switch document.Classification {
+	case coredata.DocumentClassificationPublic:
+		classification = docgen.ClassificationPublic
+	case coredata.DocumentClassificationInternal:
+		classification = docgen.ClassificationInternal
+	case coredata.DocumentClassificationConfidential:
 		classification = docgen.ClassificationConfidential
-	case coredata.DocumentTypeISMS:
-		classification = docgen.ClassificationSecret
 	}
 
 	horizontalLogoBase64 := ""
