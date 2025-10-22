@@ -49,8 +49,10 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import {
   getDocumentTypeLabel,
+  getDocumentClassificationLabel,
   sprintf,
   documentTypes,
+  documentClassifications,
   formatDate,
 } from "@probo/helpers";
 import {
@@ -71,6 +73,7 @@ import clsx from "clsx";
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { ControlledField } from "/components/form/ControlledField";
 import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
+import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";
 import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 
@@ -83,6 +86,7 @@ const documentFragment = graphql`
     id
     title
     documentType
+    classification
     owner {
       id
       fullName
@@ -101,6 +105,11 @@ const documentFragment = graphql`
           publishedAt
           version
           updatedAt
+          classification
+          owner {
+            id
+            fullName
+          }
           ...DocumentSignaturesTab_version
           signatures(first: 1000)
             @connection(key: "DocumentDetailPage_signatures", filters: []) {
@@ -128,6 +137,7 @@ graphql`
     title
     description
     documentType
+    classification
     updatedAt
     owner {
       id
@@ -182,6 +192,7 @@ const updateDocumentMutation = graphql`
         id
         title
         documentType
+        classification
         owner {
           id
           fullName
@@ -195,6 +206,7 @@ const documentUpdateSchema = z.object({
   title: z.string().min(1, "Title is required").max(255),
   ownerId: z.string().min(1, "Owner is required"),
   documentType: z.enum(documentTypes),
+  classification: z.enum(documentClassifications),
 });
 
 const UserEmailQuery = graphql`
@@ -221,6 +233,7 @@ export default function DocumentDetailPage(props: Props) {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingOwner, setIsEditingOwner] = useState(false);
   const [isEditingType, setIsEditingType] = useState(false);
+  const [isEditingClassification, setIsEditingClassification] = useState(false);
   const versions = document.versions.edges.map((edge) => edge.node);
   const currentVersion =
     document.versions.edges.find((v) => v.node.id === versionId)?.node ??
@@ -267,8 +280,9 @@ export default function DocumentDetailPage(props: Props) {
     {
       defaultValues: {
         title: document.title,
-        ownerId: document.owner?.id || "",
+        ownerId: currentVersion.owner?.id || "",
         documentType: document.documentType,
+        classification: currentVersion.classification,
       },
     }
   );
@@ -315,6 +329,28 @@ export default function DocumentDetailPage(props: Props) {
       },
       onSuccess: () => {
         setIsEditingType(false);
+        loadQuery(
+          props.queryRef.environment,
+          documentNodeQuery,
+          props.queryRef.variables,
+          { fetchPolicy: "network-only" }
+        );
+      },
+    });
+  };
+
+  const handleUpdateClassification = (data: {
+    classification: (typeof documentClassifications)[number];
+  }) => {
+    updateDocument({
+      variables: {
+        input: {
+          id: document.id,
+          classification: data.classification,
+        },
+      },
+      onSuccess: () => {
+        setIsEditingClassification(false);
         loadQuery(
           props.queryRef.environment,
           documentNodeQuery,
@@ -610,8 +646,8 @@ export default function DocumentDetailPage(props: Props) {
           ) : (
             <ReadOnlyPropertyContent onEdit={() => setIsEditingOwner(true)}>
               <Badge variant="highlight" size="md" className="gap-2">
-                <Avatar name={document.owner?.fullName ?? ""} />
-                {document.owner?.fullName}
+                <Avatar name={currentVersion.owner?.fullName ?? ""} />
+                {currentVersion.owner?.fullName}
               </Badge>
             </ReadOnlyPropertyContent>
           )}
@@ -638,6 +674,34 @@ export default function DocumentDetailPage(props: Props) {
             <ReadOnlyPropertyContent onEdit={() => setIsEditingType(true)}>
               <div className="text-sm text-txt-secondary">
                 {getDocumentTypeLabel(__, document.documentType)}
+              </div>
+            </ReadOnlyPropertyContent>
+          )}
+        </PropertyRow>
+        <PropertyRow label={__("Classification")}>
+          {isEditingClassification ? (
+            <EditablePropertyContent
+              onSave={handleSubmit(handleUpdateClassification)}
+              onCancel={() => {
+                setIsEditingClassification(false);
+                reset();
+              }}
+              disabled={isUpdatingDocument}
+            >
+              <ControlledField
+                name="classification"
+                control={control}
+                type="select"
+              >
+                <DocumentClassificationOptions />
+              </ControlledField>
+            </EditablePropertyContent>
+          ) : (
+            <ReadOnlyPropertyContent
+              onEdit={() => setIsEditingClassification(true)}
+            >
+              <div className="text-sm text-txt-secondary">
+                {getDocumentClassificationLabel(__, currentVersion.classification)}
               </div>
             </ReadOnlyPropertyContent>
           )}

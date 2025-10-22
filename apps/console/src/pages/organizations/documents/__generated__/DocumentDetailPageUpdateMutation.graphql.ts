@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<575a6c27726fb3e5457989b0d5a4edc2>>
+ * @generated SignedSource<<7c1bfb7a8cc7cc0f426348c57a17f7c9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,9 +9,11 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type DocumentClassification = "CONFIDENTIAL" | "INTERNAL" | "PUBLIC" | "SECRET";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type TrustCenterVisibility = "NONE" | "PRIVATE" | "PUBLIC";
 export type UpdateDocumentInput = {
+  classification?: DocumentClassification | null | undefined;
   content?: string | null | undefined;
   documentType?: DocumentType | null | undefined;
   id: string;
@@ -25,6 +27,7 @@ export type DocumentDetailPageUpdateMutation$variables = {
 export type DocumentDetailPageUpdateMutation$data = {
   readonly updateDocument: {
     readonly document: {
+      readonly classification: DocumentClassification;
       readonly documentType: DocumentType;
       readonly id: string;
       readonly owner: {
@@ -96,6 +99,13 @@ v2 = [
           {
             "alias": null,
             "args": null,
+            "kind": "ScalarField",
+            "name": "classification",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
             "concreteType": "People",
             "kind": "LinkedField",
             "name": "owner",
@@ -137,16 +147,16 @@ return {
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "23268b13b11a1a56164dcc4cb96e24b3",
+    "cacheID": "865056a65394e413822f798f31351341",
     "id": null,
     "metadata": {},
     "name": "DocumentDetailPageUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentDetailPageUpdateMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      id\n      title\n      documentType\n      owner {\n        id\n        fullName\n      }\n    }\n  }\n}\n"
+    "text": "mutation DocumentDetailPageUpdateMutation(\n  $input: UpdateDocumentInput!\n) {\n  updateDocument(input: $input) {\n    document {\n      id\n      title\n      documentType\n      classification\n      owner {\n        id\n        fullName\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "507a2bd40b923d2064fdd864f16f29aa";
+(node as any).hash = "bd6acddfc137a6bdce42628d05dc9ff6";
 
 export default node;

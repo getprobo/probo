@@ -607,6 +607,7 @@ type ComplexityRoot struct {
 	}
 
 	Document struct {
+		Classification          func(childComplexity int) int
 		Controls                func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.ControlOrderBy, filter *types.ControlFilter) int
 		CreatedAt               func(childComplexity int) int
 		CurrentPublishedVersion func(childComplexity int) int
@@ -633,18 +634,19 @@ type ComplexityRoot struct {
 	}
 
 	DocumentVersion struct {
-		Changelog   func(childComplexity int) int
-		Content     func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		Document    func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Owner       func(childComplexity int) int
-		PublishedAt func(childComplexity int) int
-		Signatures  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) int
-		Status      func(childComplexity int) int
-		Title       func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
-		Version     func(childComplexity int) int
+		Changelog      func(childComplexity int) int
+		Classification func(childComplexity int) int
+		Content        func(childComplexity int) int
+		CreatedAt      func(childComplexity int) int
+		Document       func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Owner          func(childComplexity int) int
+		PublishedAt    func(childComplexity int) int
+		Signatures     func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.DocumentVersionSignatureOrder, filter *types.DocumentVersionSignatureFilter) int
+		Status         func(childComplexity int) int
+		Title          func(childComplexity int) int
+		UpdatedAt      func(childComplexity int) int
+		Version        func(childComplexity int) int
 	}
 
 	DocumentVersionConnection struct {
@@ -3487,6 +3489,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.DeleteVendorServicePayload.DeletedVendorServiceID(childComplexity), true
 
+	case "Document.classification":
+		if e.complexity.Document.Classification == nil {
+			break
+		}
+
+		return e.complexity.Document.Classification(childComplexity), true
+
 	case "Document.controls":
 		if e.complexity.Document.Controls == nil {
 			break
@@ -3622,6 +3631,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.DocumentVersion.Changelog(childComplexity), true
+
+	case "DocumentVersion.classification":
+		if e.complexity.DocumentVersion.Classification == nil {
+			break
+		}
+
+		return e.complexity.DocumentVersion.Classification(childComplexity), true
 
 	case "DocumentVersion.content":
 		if e.complexity.DocumentVersion.Content == nil {
@@ -9146,11 +9162,17 @@ enum PeopleKind
 enum InvitationStatus
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.InvitationStatus") {
   PENDING
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusPending")
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusPending"
+    )
   ACCEPTED
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusAccepted")
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusAccepted"
+    )
   EXPIRED
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusExpired")
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusExpired"
+    )
 }
 
 enum DocumentStatus
@@ -10012,6 +10034,28 @@ enum DocumentType
     )
 }
 
+enum DocumentClassification
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.DocumentClassification"
+  ) {
+  PUBLIC
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationPublic"
+    )
+  INTERNAL
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationInternal"
+    )
+  CONFIDENTIAL
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationConfidential"
+    )
+  SECRET
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationSecret"
+    )
+}
+
 enum AssetType
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.AssetType") {
   PHYSICAL
@@ -10271,7 +10315,9 @@ enum SnapshotOrderField
 }
 
 enum MembershipOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MembershipOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.MembershipOrderField"
+  ) {
   FULL_NAME
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.MembershipOrderFieldFullName"
@@ -10291,7 +10337,9 @@ enum MembershipOrderField
 }
 
 enum InvitationOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.InvitationOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.InvitationOrderField"
+  ) {
   FULL_NAME
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldFullName"
@@ -11128,6 +11176,7 @@ type Document implements Node {
   title: String!
   description: String!
   documentType: DocumentType!
+  classification: DocumentClassification!
   currentPublishedVersion: Int
   trustCenterVisibility: TrustCenterVisibility!
   owner: People! @goField(forceResolver: true)
@@ -12591,6 +12640,7 @@ input CreateDocumentInput {
   content: String!
   ownerId: ID!
   documentType: DocumentType!
+  classification: DocumentClassification!
   trustCenterVisibility: TrustCenterVisibility
 }
 
@@ -12600,6 +12650,7 @@ input UpdateDocumentInput {
   content: String
   ownerId: ID
   documentType: DocumentType
+  classification: DocumentClassification
   trustCenterVisibility: TrustCenterVisibility
 }
 
@@ -13225,6 +13276,7 @@ type DocumentVersion implements Node {
   content: String!
   changelog: String!
   title: String!
+  classification: DocumentClassification!
   owner: People! @goField(forceResolver: true)
 
   signatures(
@@ -32063,6 +32115,50 @@ func (ec *executionContext) fieldContext_Document_documentType(_ context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Document_classification(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Document_classification(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Classification, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.DocumentClassification)
+	fc.Result = res
+	return ec.marshalNDocumentClassification2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Document_classification(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Document",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DocumentClassification does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Document_currentPublishedVersion(ctx context.Context, field graphql.CollectedField, obj *types.Document) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 	if err != nil {
@@ -32773,6 +32869,8 @@ func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, fi
 				return ec.fieldContext_Document_description(ctx, field)
 			case "documentType":
 				return ec.fieldContext_Document_documentType(ctx, field)
+			case "classification":
+				return ec.fieldContext_Document_classification(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "trustCenterVisibility":
@@ -32887,6 +32985,8 @@ func (ec *executionContext) fieldContext_DocumentVersion_document(_ context.Cont
 				return ec.fieldContext_Document_description(ctx, field)
 			case "documentType":
 				return ec.fieldContext_Document_documentType(ctx, field)
+			case "classification":
+				return ec.fieldContext_Document_classification(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "trustCenterVisibility":
@@ -33125,6 +33225,50 @@ func (ec *executionContext) fieldContext_DocumentVersion_title(_ context.Context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _DocumentVersion_classification(ctx context.Context, field graphql.CollectedField, obj *types.DocumentVersion) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_DocumentVersion_classification(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Classification, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(coredata.DocumentClassification)
+	fc.Result = res
+	return ec.marshalNDocumentClassification2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_DocumentVersion_classification(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "DocumentVersion",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DocumentClassification does not have child fields")
 		},
 	}
 	return fc, nil
@@ -33587,6 +33731,8 @@ func (ec *executionContext) fieldContext_DocumentVersionEdge_node(_ context.Cont
 				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
 			case "title":
 				return ec.fieldContext_DocumentVersion_title(ctx, field)
+			case "classification":
+				return ec.fieldContext_DocumentVersion_classification(ctx, field)
 			case "owner":
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
@@ -33701,6 +33847,8 @@ func (ec *executionContext) fieldContext_DocumentVersionSignature_documentVersio
 				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
 			case "title":
 				return ec.fieldContext_DocumentVersion_title(ctx, field)
+			case "classification":
+				return ec.fieldContext_DocumentVersion_classification(ctx, field)
 			case "owner":
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
@@ -51743,6 +51891,8 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_documentV
 				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
 			case "title":
 				return ec.fieldContext_DocumentVersion_title(ctx, field)
+			case "classification":
+				return ec.fieldContext_DocumentVersion_classification(ctx, field)
 			case "owner":
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
@@ -51807,6 +51957,8 @@ func (ec *executionContext) fieldContext_PublishDocumentVersionPayload_document(
 				return ec.fieldContext_Document_description(ctx, field)
 			case "documentType":
 				return ec.fieldContext_Document_documentType(ctx, field)
+			case "classification":
+				return ec.fieldContext_Document_classification(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "trustCenterVisibility":
@@ -57128,6 +57280,8 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_document(_ co
 				return ec.fieldContext_Document_description(ctx, field)
 			case "documentType":
 				return ec.fieldContext_Document_documentType(ctx, field)
+			case "classification":
+				return ec.fieldContext_Document_classification(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "trustCenterVisibility":
@@ -58597,6 +58751,8 @@ func (ec *executionContext) fieldContext_UpdateDocumentPayload_document(_ contex
 				return ec.fieldContext_Document_description(ctx, field)
 			case "documentType":
 				return ec.fieldContext_Document_documentType(ctx, field)
+			case "classification":
+				return ec.fieldContext_Document_classification(ctx, field)
 			case "currentPublishedVersion":
 				return ec.fieldContext_Document_currentPublishedVersion(ctx, field)
 			case "trustCenterVisibility":
@@ -58673,6 +58829,8 @@ func (ec *executionContext) fieldContext_UpdateDocumentVersionPayload_documentVe
 				return ec.fieldContext_DocumentVersion_changelog(ctx, field)
 			case "title":
 				return ec.fieldContext_DocumentVersion_title(ctx, field)
+			case "classification":
+				return ec.fieldContext_DocumentVersion_classification(ctx, field)
 			case "owner":
 				return ec.fieldContext_DocumentVersion_owner(ctx, field)
 			case "signatures":
@@ -69128,7 +69286,7 @@ func (ec *executionContext) unmarshalInputCreateDocumentInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "title", "content", "ownerId", "documentType", "trustCenterVisibility"}
+	fieldsInOrder := [...]string{"organizationId", "title", "content", "ownerId", "documentType", "classification", "trustCenterVisibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -69170,6 +69328,13 @@ func (ec *executionContext) unmarshalInputCreateDocumentInput(ctx context.Contex
 				return it, err
 			}
 			it.DocumentType = data
+		case "classification":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("classification"))
+			data, err := ec.unmarshalNDocumentClassification2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Classification = data
 		case "trustCenterVisibility":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterVisibility"))
 			data, err := ec.unmarshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx, v)
@@ -73421,7 +73586,7 @@ func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Contex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "title", "content", "ownerId", "documentType", "trustCenterVisibility"}
+	fieldsInOrder := [...]string{"id", "title", "content", "ownerId", "documentType", "classification", "trustCenterVisibility"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -73463,6 +73628,13 @@ func (ec *executionContext) unmarshalInputUpdateDocumentInput(ctx context.Contex
 				return it, err
 			}
 			it.DocumentType = data
+		case "classification":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("classification"))
+			data, err := ec.unmarshalODocumentClassification2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Classification = data
 		case "trustCenterVisibility":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterVisibility"))
 			data, err := ec.unmarshalOTrustCenterVisibility2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterVisibility(ctx, v)
@@ -80617,6 +80789,11 @@ func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "classification":
+			out.Values[i] = ec._Document_classification(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "currentPublishedVersion":
 			out.Values[i] = ec._Document_currentPublishedVersion(ctx, field, obj)
 		case "trustCenterVisibility":
@@ -80999,6 +81176,11 @@ func (ec *executionContext) _DocumentVersion(ctx context.Context, sel ast.Select
 			}
 		case "title":
 			out.Values[i] = ec._DocumentVersion_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "classification":
+			out.Values[i] = ec._DocumentVersion_classification(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -95590,6 +95772,38 @@ func (ec *executionContext) marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋprobo�
 	return ec._Document(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNDocumentClassification2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification(ctx context.Context, v any) (coredata.DocumentClassification, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNDocumentClassification2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDocumentClassification2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentClassification) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNDocumentClassification2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNDocumentClassification2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification = map[string]coredata.DocumentClassification{
+		"PUBLIC":       coredata.DocumentClassificationPublic,
+		"INTERNAL":     coredata.DocumentClassificationInternal,
+		"CONFIDENTIAL": coredata.DocumentClassificationConfidential,
+		"SECRET":       coredata.DocumentClassificationSecret,
+	}
+	marshalNDocumentClassification2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification = map[coredata.DocumentClassification]string{
+		coredata.DocumentClassificationPublic:       "PUBLIC",
+		coredata.DocumentClassificationInternal:     "INTERNAL",
+		coredata.DocumentClassificationConfidential: "CONFIDENTIAL",
+		coredata.DocumentClassificationSecret:       "SECRET",
+	}
+)
+
 func (ec *executionContext) marshalNDocumentConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentConnection) graphql.Marshaler {
 	return ec._DocumentConnection(ctx, sel, &v)
 }
@@ -101169,6 +101383,40 @@ func (ec *executionContext) marshalODocument2ᚖgithubᚗcomᚋgetproboᚋprobo�
 	}
 	return ec._Document(ctx, sel, v)
 }
+
+func (ec *executionContext) unmarshalODocumentClassification2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification(ctx context.Context, v any) (*coredata.DocumentClassification, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalODocumentClassification2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification[tmp]
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODocumentClassification2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification(ctx context.Context, sel ast.SelectionSet, v *coredata.DocumentClassification) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalString(marshalODocumentClassification2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification[*v])
+	return res
+}
+
+var (
+	unmarshalODocumentClassification2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification = map[string]coredata.DocumentClassification{
+		"PUBLIC":       coredata.DocumentClassificationPublic,
+		"INTERNAL":     coredata.DocumentClassificationInternal,
+		"CONFIDENTIAL": coredata.DocumentClassificationConfidential,
+		"SECRET":       coredata.DocumentClassificationSecret,
+	}
+	marshalODocumentClassification2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentClassification = map[coredata.DocumentClassification]string{
+		coredata.DocumentClassificationPublic:       "PUBLIC",
+		coredata.DocumentClassificationInternal:     "INTERNAL",
+		coredata.DocumentClassificationConfidential: "CONFIDENTIAL",
+		coredata.DocumentClassificationSecret:       "SECRET",
+	}
+)
 
 func (ec *executionContext) unmarshalODocumentFilter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐDocumentFilter(ctx context.Context, v any) (*types.DocumentFilter, error) {
 	if v == nil {

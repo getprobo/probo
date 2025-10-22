@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d4ad1b45197821a3ac5d59350a5646d8>>
+ * @generated SignedSource<<a39062565d1126fbcbee36865fa8c0fb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -56,45 +56,65 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
+  "name": "classification",
+  "storageKey": null
+},
+v5 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
   "name": "fullName",
   "storageKey": null
 },
-v5 = [
+v6 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "People",
+  "kind": "LinkedField",
+  "name": "owner",
+  "plural": false,
+  "selections": [
+    (v3/*: any*/),
+    (v5/*: any*/)
+  ],
+  "storageKey": null
+},
+v7 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 20
   }
 ],
-v6 = {
+v8 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 },
-v7 = {
+v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v8 = {
+v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "endCursor",
   "storageKey": null
 },
-v9 = {
+v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "hasNextPage",
   "storageKey": null
 },
-v10 = {
+v12 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -106,14 +126,14 @@ v10 = {
     }
   ]
 },
-v11 = [
+v13 = [
   {
     "kind": "Literal",
     "name": "first",
     "value": 1000
   }
 ],
-v12 = {
+v14 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -121,8 +141,8 @@ v12 = {
   "name": "pageInfo",
   "plural": false,
   "selections": [
-    (v8/*: any*/),
-    (v9/*: any*/)
+    (v10/*: any*/),
+    (v11/*: any*/)
   ],
   "storageKey": null
 };
@@ -193,22 +213,11 @@ return {
                 "name": "documentType",
                 "storageKey": null
               },
+              (v4/*: any*/),
+              (v6/*: any*/),
               {
                 "alias": null,
-                "args": null,
-                "concreteType": "People",
-                "kind": "LinkedField",
-                "name": "owner",
-                "plural": false,
-                "selections": [
-                  (v3/*: any*/),
-                  (v4/*: any*/)
-                ],
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v7/*: any*/),
                 "concreteType": "ControlConnection",
                 "kind": "LinkedField",
                 "name": "controls",
@@ -231,7 +240,7 @@ return {
                         "plural": false,
                         "selections": [
                           (v3/*: any*/),
-                          (v6/*: any*/),
+                          (v8/*: any*/),
                           {
                             "alias": null,
                             "args": null,
@@ -248,7 +257,7 @@ return {
                             "plural": false,
                             "selections": [
                               (v3/*: any*/),
-                              (v6/*: any*/)
+                              (v8/*: any*/)
                             ],
                             "storageKey": null
                           },
@@ -256,7 +265,7 @@ return {
                         ],
                         "storageKey": null
                       },
-                      (v7/*: any*/)
+                      (v9/*: any*/)
                     ],
                     "storageKey": null
                   },
@@ -268,8 +277,8 @@ return {
                     "name": "pageInfo",
                     "plural": false,
                     "selections": [
-                      (v8/*: any*/),
-                      (v9/*: any*/),
+                      (v10/*: any*/),
+                      (v11/*: any*/),
                       {
                         "alias": null,
                         "args": null,
@@ -287,13 +296,13 @@ return {
                     ],
                     "storageKey": null
                   },
-                  (v10/*: any*/)
+                  (v12/*: any*/)
                 ],
                 "storageKey": "controls(first:20)"
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v7/*: any*/),
                 "filters": [
                   "orderBy",
                   "filter"
@@ -329,7 +338,7 @@ return {
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v7/*: any*/),
                 "concreteType": "DocumentVersionConnection",
                 "kind": "LinkedField",
                 "name": "versions",
@@ -387,9 +396,11 @@ return {
                             "name": "updatedAt",
                             "storageKey": null
                           },
+                          (v4/*: any*/),
+                          (v6/*: any*/),
                           {
                             "alias": null,
-                            "args": (v11/*: any*/),
+                            "args": (v13/*: any*/),
                             "concreteType": "DocumentVersionSignatureConnection",
                             "kind": "LinkedField",
                             "name": "signatures",
@@ -428,7 +439,7 @@ return {
                                         "plural": false,
                                         "selections": [
                                           (v3/*: any*/),
-                                          (v4/*: any*/),
+                                          (v5/*: any*/),
                                           {
                                             "alias": null,
                                             "args": null,
@@ -457,18 +468,18 @@ return {
                                     ],
                                     "storageKey": null
                                   },
-                                  (v7/*: any*/)
+                                  (v9/*: any*/)
                                 ],
                                 "storageKey": null
                               },
-                              (v12/*: any*/),
-                              (v10/*: any*/)
+                              (v14/*: any*/),
+                              (v12/*: any*/)
                             ],
                             "storageKey": "signatures(first:1000)"
                           },
                           {
                             "alias": null,
-                            "args": (v11/*: any*/),
+                            "args": (v13/*: any*/),
                             "filters": [
                               "filter"
                             ],
@@ -479,7 +490,7 @@ return {
                           },
                           {
                             "alias": null,
-                            "args": (v11/*: any*/),
+                            "args": (v13/*: any*/),
                             "filters": [],
                             "handle": "connection",
                             "key": "DocumentDetailPage_signatures",
@@ -490,18 +501,18 @@ return {
                         ],
                         "storageKey": null
                       },
-                      (v7/*: any*/)
+                      (v9/*: any*/)
                     ],
                     "storageKey": null
                   },
-                  (v12/*: any*/),
-                  (v10/*: any*/)
+                  (v14/*: any*/),
+                  (v12/*: any*/)
                 ],
                 "storageKey": "versions(first:20)"
               },
               {
                 "alias": null,
-                "args": (v5/*: any*/),
+                "args": (v7/*: any*/),
                 "filters": null,
                 "handle": "connection",
                 "key": "DocumentDetailPage_versions",
@@ -518,12 +529,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4dd1a6c2a9117deb789984766f9c3b36",
+    "cacheID": "72db9b5c4f2a4cd076ebf4e45f0eb662",
     "id": null,
     "metadata": {},
     "name": "DocumentGraphNodeQuery",
     "operationKind": "query",
-    "text": "query DocumentGraphNodeQuery(\n  $documentId: ID!\n) {\n  node(id: $documentId) {\n    __typename\n    ... on Document {\n      ...DocumentDetailPageDocumentFragment\n    }\n    id\n  }\n}\n\nfragment DocumentControlsTabFragment on Document {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment DocumentDetailPageDocumentFragment on Document {\n  id\n  title\n  documentType\n  owner {\n    id\n    fullName\n  }\n  ...DocumentControlsTabFragment\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        ...DocumentSignaturesTab_version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesTab_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_version on DocumentVersion {\n  id\n  status\n  signatures(first: 1000) {\n    edges {\n      node {\n        id\n        state\n        signedBy {\n          id\n          fullName\n          primaryEmailAddress\n        }\n        ...DocumentSignaturesTab_signature\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
+    "text": "query DocumentGraphNodeQuery(\n  $documentId: ID!\n) {\n  node(id: $documentId) {\n    __typename\n    ... on Document {\n      ...DocumentDetailPageDocumentFragment\n    }\n    id\n  }\n}\n\nfragment DocumentControlsTabFragment on Document {\n  id\n  controls(first: 20) {\n    edges {\n      node {\n        id\n        ...LinkedControlsCardFragment\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n}\n\nfragment DocumentDetailPageDocumentFragment on Document {\n  id\n  title\n  documentType\n  classification\n  owner {\n    id\n    fullName\n  }\n  ...DocumentControlsTabFragment\n  controlsInfo: controls(first: 0) {\n    totalCount\n  }\n  versions(first: 20) {\n    edges {\n      node {\n        id\n        content\n        status\n        publishedAt\n        version\n        updatedAt\n        classification\n        owner {\n          id\n          fullName\n        }\n        ...DocumentSignaturesTab_version\n        signatures(first: 1000) {\n          edges {\n            node {\n              id\n              state\n              signedBy {\n                id\n              }\n              ...DocumentSignaturesTab_signature\n              __typename\n            }\n            cursor\n          }\n          pageInfo {\n            endCursor\n            hasNextPage\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment DocumentSignaturesTab_signature on DocumentVersionSignature {\n  id\n  state\n  signedAt\n  requestedAt\n  signedBy {\n    fullName\n    primaryEmailAddress\n    id\n  }\n}\n\nfragment DocumentSignaturesTab_version on DocumentVersion {\n  id\n  status\n  signatures(first: 1000) {\n    edges {\n      node {\n        id\n        state\n        signedBy {\n          id\n          fullName\n          primaryEmailAddress\n        }\n        ...DocumentSignaturesTab_signature\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment LinkedControlsCardFragment on Control {\n  id\n  name\n  sectionTitle\n  framework {\n    id\n    name\n  }\n}\n"
   }
 };
 })();

@@ -2566,11 +2566,14 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 
 	document, err := prb.Documents.Update(
 		ctx,
-		input.ID,
-		input.OwnerID,
-		input.DocumentType,
-		input.Title,
-		input.TrustCenterVisibility,
+		probo.UpdateDocumentRequest{
+			DocumentID:            input.ID,
+			Title:                 input.Title,
+			OwnerID:               input.OwnerID,
+			Classification:        input.Classification,
+			DocumentType:          input.DocumentType,
+			TrustCenterVisibility: input.TrustCenterVisibility,
+		},
 	)
 
 	if err != nil {

@@ -78,6 +78,7 @@ func NewDocument(document *coredata.Document) *Document {
 		ID:                      document.ID,
 		Title:                   document.Title,
 		DocumentType:            document.DocumentType,
+		Classification:          document.Classification,
 		CurrentPublishedVersion: document.CurrentPublishedVersion,
 		TrustCenterVisibility:   document.TrustCenterVisibility,
 		CreatedAt:               document.CreatedAt,

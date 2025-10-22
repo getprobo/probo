@@ -28,17 +28,18 @@ import (
 
 type (
 	DocumentVersion struct {
-		ID            gid.GID        `db:"id"`
-		DocumentID    gid.GID        `db:"document_id"`
-		Title         string         `db:"title"`
-		OwnerID       gid.GID        `db:"owner_id"`
-		VersionNumber int            `db:"version_number"`
-		Content       string         `db:"content"`
-		Changelog     string         `db:"changelog"`
-		Status        DocumentStatus `db:"status"`
-		PublishedAt   *time.Time     `db:"published_at"`
-		CreatedAt     time.Time      `db:"created_at"`
-		UpdatedAt     time.Time      `db:"updated_at"`
+		ID             gid.GID                `db:"id"`
+		DocumentID     gid.GID                `db:"document_id"`
+		Title          string                 `db:"title"`
+		OwnerID        gid.GID                `db:"owner_id"`
+		VersionNumber  int                    `db:"version_number"`
+		Classification DocumentClassification `db:"classification"`
+		Content        string                 `db:"content"`
+		Changelog      string                 `db:"changelog"`
+		Status         DocumentStatus         `db:"status"`
+		PublishedAt    *time.Time             `db:"published_at"`
+		CreatedAt      time.Time              `db:"created_at"`
+		UpdatedAt      time.Time              `db:"updated_at"`
 	}
 
 	DocumentVersions []*DocumentVersion
@@ -58,6 +59,7 @@ SELECT
 	title,
 	owner_id,
 	version_number,
+	classification,
 	content,
 	changelog,
 	status,
@@ -116,6 +118,7 @@ SELECT
 	title,
 	owner_id,
 	version_number,
+	classification,
 	content,
 	changelog,
 	status,
@@ -165,6 +168,7 @@ INSERT INTO document_versions (
 	title,
 	owner_id,
 	version_number,
+	classification,
 	content,
 	changelog,
 	status,
@@ -178,6 +182,7 @@ VALUES (
 	@title,
 	@owner_id,
 	@version_number,
+	@classification,
 	@content,
 	@changelog,
 	@status,
@@ -192,6 +197,7 @@ VALUES (
 		"title":          p.Title,
 		"owner_id":       p.OwnerID,
 		"version_number": p.VersionNumber,
+		"classification": p.Classification,
 		"content":        p.Content,
 		"changelog":      p.Changelog,
 		"status":         p.Status,
@@ -221,6 +227,7 @@ SELECT
 	title,
 	owner_id,
 	version_number,
+	classification,
 	content,
 	changelog,
 	status,
@@ -272,6 +279,7 @@ SELECT
 	title,
 	owner_id,
 	version_number,
+	classification,
 	content,
 	changelog,
 	status,
@@ -321,6 +329,7 @@ SELECT
 	title,
 	owner_id,
 	version_number,
+	classification,
 	content,
 	changelog,
 	status,
@@ -372,6 +381,7 @@ UPDATE document_versions SET
 	status = @status,
 	content = @content,
 	published_at = @published_at,
+	classification = @classification,
 	updated_at = @updated_at
 WHERE %s
 	AND id = @document_version_id
@@ -387,6 +397,7 @@ WHERE %s
 		"status":              p.Status,
 		"content":             p.Content,
 		"published_at":        p.PublishedAt,
+		"classification":      p.Classification,
 		"updated_at":          p.UpdatedAt,
 	}
 	maps.Copy(args, scope.SQLArguments())

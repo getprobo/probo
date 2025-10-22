@@ -66,6 +66,7 @@ export { MeasureBadge } from "./Molecules/Badge/MeasureBadge";
 export { MeasureImplementation } from "./Molecules/MeasureImplementation/MeasureImplementation";
 export { FrameworkSelector } from "./Molecules/FrameworkSelector/FrameworkSelector";
 export { DocumentTypeBadge } from "./Molecules/Badge/DocumentTypeBadge";
+export { DocumentClassificationBadge } from "./Molecules/Badge/DocumentClassificationBadge";
 export { SentitivityOptions } from "./Molecules/Select/SentitivityOptions";
 export { ImpactOptions } from "./Molecules/Select/ImpactOptions";
 export { DurationPicker } from "./Molecules/DurationPicker/DurationPicker";

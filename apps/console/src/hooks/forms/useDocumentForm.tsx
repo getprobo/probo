@@ -6,12 +6,14 @@ export const documentSchema = z.object({
   content: z.string(),
   ownerId: z.string(),
   documentType: z.enum(["OTHER", "ISMS", "POLICY", "PROCEDURE"]),
+  classification: z.enum(["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]),
 });
 
 export const useDocumentForm = () => {
   return useFormWithSchema(documentSchema, {
     defaultValues: {
       documentType: "POLICY",
+      classification: "INTERNAL",
     },
   });
 };

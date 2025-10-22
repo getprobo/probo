@@ -1,0 +1,49 @@
+package coredata
+
+import (
+	"database/sql/driver"
+	"fmt"
+)
+
+type DocumentClassification string
+
+const (
+	DocumentClassificationPublic       DocumentClassification = "PUBLIC"
+	DocumentClassificationInternal     DocumentClassification = "INTERNAL"
+	DocumentClassificationConfidential DocumentClassification = "CONFIDENTIAL"
+	DocumentClassificationSecret       DocumentClassification = "SECRET"
+)
+
+func (dc DocumentClassification) String() string {
+	switch dc {
+	case DocumentClassificationPublic:
+		return "PUBLIC"
+	case DocumentClassificationInternal:
+		return "INTERNAL"
+	case DocumentClassificationConfidential:
+		return "CONFIDENTIAL"
+	case DocumentClassificationSecret:
+		return "SECRET"
+	}
+	panic(fmt.Errorf("invalid DocumentClassification value: %s", string(dc)))
+}
+
+// Scan implements the sql.Scanner interface for database deserialization.
+func (dc *DocumentClassification) Scan(value interface{}) error {
+	if value == nil {
+		return nil
+	}
+
+	sv, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("failed to scan DocumentClassification: %v", value)
+	}
+
+	*dc = DocumentClassification(sv)
+	return nil
+}
+
+// Value implements the driver.Valuer interface for database serialization.
+func (dc DocumentClassification) Value() (driver.Value, error) {
+	return string(dc), nil
+}

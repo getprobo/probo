@@ -54,14 +54,15 @@ func NewDocumentVersionEdge(documentVersion *coredata.DocumentVersion, orderBy c
 
 func NewDocumentVersion(documentVersion *coredata.DocumentVersion) *DocumentVersion {
 	return &DocumentVersion{
-		ID:          documentVersion.ID,
-		Version:     documentVersion.VersionNumber,
-		Title:       documentVersion.Title,
-		Content:     documentVersion.Content,
-		Status:      documentVersion.Status,
-		PublishedAt: documentVersion.PublishedAt,
-		Changelog:   documentVersion.Changelog,
-		CreatedAt:   documentVersion.CreatedAt,
-		UpdatedAt:   documentVersion.UpdatedAt,
+		ID:             documentVersion.ID,
+		Version:        documentVersion.VersionNumber,
+		Title:          documentVersion.Title,
+		Content:        documentVersion.Content,
+		Status:         documentVersion.Status,
+		Classification: documentVersion.Classification,
+		PublishedAt:    documentVersion.PublishedAt,
+		Changelog:      documentVersion.Changelog,
+		CreatedAt:      documentVersion.CreatedAt,
+		UpdatedAt:      documentVersion.UpdatedAt,
 	}
 }

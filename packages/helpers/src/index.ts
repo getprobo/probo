@@ -20,7 +20,12 @@ export {
     type CountryCode,
 } from "./countries";
 export { availableFrameworks } from "./frameworks";
-export { getDocumentTypeLabel, documentTypes } from "./documents";
+export {
+    getDocumentTypeLabel,
+    documentTypes,
+    getDocumentClassificationLabel,
+    documentClassifications,
+} from "./documents";
 export { getAssetTypeVariant } from "./assets";
 export {
     getSnapshotTypeLabel,

@@ -95,11 +95,17 @@ enum PeopleKind
 enum InvitationStatus
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.InvitationStatus") {
   PENDING
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusPending")
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusPending"
+    )
   ACCEPTED
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusAccepted")
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusAccepted"
+    )
   EXPIRED
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusExpired")
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusExpired"
+    )
 }
 
 enum DocumentStatus
@@ -961,6 +967,28 @@ enum DocumentType
     )
 }
 
+enum DocumentClassification
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.DocumentClassification"
+  ) {
+  PUBLIC
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationPublic"
+    )
+  INTERNAL
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationInternal"
+    )
+  CONFIDENTIAL
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationConfidential"
+    )
+  SECRET
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationSecret"
+    )
+}
+
 enum AssetType
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.AssetType") {
   PHYSICAL
@@ -1220,7 +1248,9 @@ enum SnapshotOrderField
 }
 
 enum MembershipOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MembershipOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.MembershipOrderField"
+  ) {
   FULL_NAME
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.MembershipOrderFieldFullName"
@@ -1240,7 +1270,9 @@ enum MembershipOrderField
 }
 
 enum InvitationOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.InvitationOrderField") {
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.InvitationOrderField"
+  ) {
   FULL_NAME
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldFullName"
@@ -2077,6 +2109,7 @@ type Document implements Node {
   title: String!
   description: String!
   documentType: DocumentType!
+  classification: DocumentClassification!
   currentPublishedVersion: Int
   trustCenterVisibility: TrustCenterVisibility!
   owner: People! @goField(forceResolver: true)
@@ -3540,6 +3573,7 @@ input CreateDocumentInput {
   content: String!
   ownerId: ID!
   documentType: DocumentType!
+  classification: DocumentClassification!
   trustCenterVisibility: TrustCenterVisibility
 }
 
@@ -3549,6 +3583,7 @@ input UpdateDocumentInput {
   content: String
   ownerId: ID
   documentType: DocumentType
+  classification: DocumentClassification
   trustCenterVisibility: TrustCenterVisibility
 }
 
@@ -4174,6 +4209,7 @@ type DocumentVersion implements Node {
   content: String!
   changelog: String!
   title: String!
+  classification: DocumentClassification!
   owner: People! @goField(forceResolver: true)
 
   signatures(

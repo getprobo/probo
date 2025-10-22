@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c802e03e4097ba191cb3738a0e45a4ed>>
+ * @generated SignedSource<<80564e817a10279d3bcbed4ad0ce8e27>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -139,6 +139,13 @@ return {
                 "alias": null,
                 "args": null,
                 "kind": "ScalarField",
+                "name": "classification",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
                 "name": "updatedAt",
                 "storageKey": null
               },
@@ -264,12 +271,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "e7734d4aece1b73c9bd85eddfbda2548",
+    "cacheID": "abf83afc77c45fa28de8d3c711633ec3",
     "id": null,
     "metadata": {},
     "name": "DocumentDetailPagePublishMutation",
     "operationKind": "mutation",
-    "text": "mutation DocumentDetailPagePublishMutation(\n  $input: PublishDocumentVersionInput!\n) {\n  publishDocumentVersion(input: $input) {\n    document {\n      id\n      ...DocumentDetailPageRowFragment\n    }\n  }\n}\n\nfragment DocumentDetailPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation DocumentDetailPagePublishMutation(\n  $input: PublishDocumentVersionInput!\n) {\n  publishDocumentVersion(input: $input) {\n    document {\n      id\n      ...DocumentDetailPageRowFragment\n    }\n  }\n}\n\nfragment DocumentDetailPageRowFragment on Document {\n  id\n  title\n  description\n  documentType\n  classification\n  updatedAt\n  owner {\n    id\n    fullName\n  }\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n        signatures(first: 100) {\n          edges {\n            node {\n              id\n              state\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();

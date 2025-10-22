@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c39dd56e0397cd63ae1d2da95977694c>>
+ * @generated SignedSource<<3ba79250c6ba07fa44aca6eff28b3d9d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,11 +9,13 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type DocumentClassification = "CONFIDENTIAL" | "INTERNAL" | "PUBLIC" | "SECRET";
 export type DocumentStatus = "DRAFT" | "PUBLISHED";
 export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentDetailPageDocumentFragment$data = {
+  readonly classification: DocumentClassification;
   readonly controlsInfo: {
     readonly totalCount: number;
   };
@@ -28,8 +30,13 @@ export type DocumentDetailPageDocumentFragment$data = {
     readonly __id: string;
     readonly edges: ReadonlyArray<{
       readonly node: {
+        readonly classification: DocumentClassification;
         readonly content: string;
         readonly id: string;
+        readonly owner: {
+          readonly fullName: string;
+          readonly id: string;
+        };
         readonly publishedAt: any | null | undefined;
         readonly signatures: {
           readonly __id: string;
@@ -71,17 +78,43 @@ v1 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "__typename",
+  "name": "classification",
   "storageKey": null
 },
 v2 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "People",
+  "kind": "LinkedField",
+  "name": "owner",
+  "plural": false,
+  "selections": [
+    (v0/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "fullName",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+},
+v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "__typename",
+  "storageKey": null
+},
+v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v3 = {
+v5 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -106,7 +139,7 @@ v3 = {
   ],
   "storageKey": null
 },
-v4 = {
+v6 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -156,25 +189,8 @@ return {
       "name": "documentType",
       "storageKey": null
     },
-    {
-      "alias": null,
-      "args": null,
-      "concreteType": "People",
-      "kind": "LinkedField",
-      "name": "owner",
-      "plural": false,
-      "selections": [
-        (v0/*: any*/),
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "fullName",
-          "storageKey": null
-        }
-      ],
-      "storageKey": null
-    },
+    (v1/*: any*/),
+    (v2/*: any*/),
     {
       "args": null,
       "kind": "FragmentSpread",
@@ -264,6 +280,8 @@ return {
                   "name": "updatedAt",
                   "storageKey": null
                 },
+                (v1/*: any*/),
+                (v2/*: any*/),
                 {
                   "args": null,
                   "kind": "FragmentSpread",
@@ -318,29 +336,29 @@ return {
                               "kind": "FragmentSpread",
                               "name": "DocumentSignaturesTab_signature"
                             },
-                            (v1/*: any*/)
+                            (v3/*: any*/)
                           ],
                           "storageKey": null
                         },
-                        (v2/*: any*/)
+                        (v4/*: any*/)
                       ],
                       "storageKey": null
                     },
-                    (v3/*: any*/),
-                    (v4/*: any*/)
+                    (v5/*: any*/),
+                    (v6/*: any*/)
                   ],
                   "storageKey": null
                 },
-                (v1/*: any*/)
+                (v3/*: any*/)
               ],
               "storageKey": null
             },
-            (v2/*: any*/)
+            (v4/*: any*/)
           ],
           "storageKey": null
         },
-        (v3/*: any*/),
-        (v4/*: any*/)
+        (v5/*: any*/),
+        (v6/*: any*/)
       ],
       "storageKey": null
     }
@@ -350,6 +368,6 @@ return {
 };
 })();
 
-(node as any).hash = "f1a7ec789a05b74cade1d3024119a844";
+(node as any).hash = "e1418d5efeade64db32e9939132c03de";
 
 export default node;

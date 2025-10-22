@@ -41,7 +41,12 @@ import {
 } from "/hooks/graph/DocumentGraph";
 import type { DocumentsPageListFragment$key } from "./__generated__/DocumentsPageListFragment.graphql";
 import { useList, usePageTitle } from "@probo/hooks";
-import { sprintf, getDocumentTypeLabel, formatDate } from "@probo/helpers";
+import {
+  sprintf,
+  getDocumentTypeLabel,
+  getDocumentClassificationLabel,
+  formatDate,
+} from "@probo/helpers";
 import { CreateDocumentDialog } from "./dialogs/CreateDocumentDialog";
 import type { DocumentsPageRowFragment$key } from "./__generated__/DocumentsPageRowFragment.graphql";
 import { SortableTable, SortableTh } from "/components/SortableTable";
@@ -223,6 +228,7 @@ export default function DocumentsPage(props: Props) {
                 <SortableTh field="DOCUMENT_TYPE" className="w-28">
                   {__("Type")}
                 </SortableTh>
+                <Th className="w-32">{__("Classification")}</Th>
                 <Th className="w-60">{__("Owner")}</Th>
                 <Th className="w-60">{__("Last update")}</Th>
                 <Th className="w-20">{__("Signatures")}</Th>
@@ -230,7 +236,7 @@ export default function DocumentsPage(props: Props) {
               </Tr>
             ) : (
               <Tr>
-                <Th colspan={9} compact>
+                <Th colspan={10} compact>
                   <div className="flex justify-between items-center h-8">
                     <div className="flex gap-2 items-center">
                       {sprintf(__("%s documents selected"), selection.length)} -
@@ -330,6 +336,7 @@ const rowFragment = graphql`
     title
     description
     documentType
+    classification
     updatedAt
     owner {
       id
@@ -423,6 +430,9 @@ function DocumentRow({
       <Td className="w-20">v{lastVersion.version}</Td>
       <Td className="w-28">
         {getDocumentTypeLabel(__, document.documentType)}
+      </Td>
+      <Td className="w-32">
+        {getDocumentClassificationLabel(__, document.classification)}
       </Td>
       <Td className="w-60">
         <div className="flex gap-2 items-center">

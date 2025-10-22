@@ -351,6 +351,7 @@ type CreateDocumentInput struct {
 	Content               string                          `json:"content"`
 	OwnerID               gid.GID                         `json:"ownerId"`
 	DocumentType          coredata.DocumentType           `json:"documentType"`
+	Classification        coredata.DocumentClassification `json:"classification"`
 	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
 }
 
@@ -1006,18 +1007,19 @@ type DeleteVendorServicePayload struct {
 }
 
 type Document struct {
-	ID                      gid.GID                        `json:"id"`
-	Title                   string                         `json:"title"`
-	Description             string                         `json:"description"`
-	DocumentType            coredata.DocumentType          `json:"documentType"`
-	CurrentPublishedVersion *int                           `json:"currentPublishedVersion,omitempty"`
-	TrustCenterVisibility   coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
-	Owner                   *People                        `json:"owner"`
-	Organization            *Organization                  `json:"organization"`
-	Versions                *DocumentVersionConnection     `json:"versions"`
-	Controls                *ControlConnection             `json:"controls"`
-	CreatedAt               time.Time                      `json:"createdAt"`
-	UpdatedAt               time.Time                      `json:"updatedAt"`
+	ID                      gid.GID                         `json:"id"`
+	Title                   string                          `json:"title"`
+	Description             string                          `json:"description"`
+	DocumentType            coredata.DocumentType           `json:"documentType"`
+	Classification          coredata.DocumentClassification `json:"classification"`
+	CurrentPublishedVersion *int                            `json:"currentPublishedVersion,omitempty"`
+	TrustCenterVisibility   coredata.TrustCenterVisibility  `json:"trustCenterVisibility"`
+	Owner                   *People                         `json:"owner"`
+	Organization            *Organization                   `json:"organization"`
+	Versions                *DocumentVersionConnection      `json:"versions"`
+	Controls                *ControlConnection              `json:"controls"`
+	CreatedAt               time.Time                       `json:"createdAt"`
+	UpdatedAt               time.Time                       `json:"updatedAt"`
 }
 
 func (Document) IsNode()             {}
@@ -1033,18 +1035,19 @@ type DocumentFilter struct {
 }
 
 type DocumentVersion struct {
-	ID          gid.GID                             `json:"id"`
-	Document    *Document                           `json:"document"`
-	Status      coredata.DocumentStatus             `json:"status"`
-	Version     int                                 `json:"version"`
-	Content     string                              `json:"content"`
-	Changelog   string                              `json:"changelog"`
-	Title       string                              `json:"title"`
-	Owner       *People                             `json:"owner"`
-	Signatures  *DocumentVersionSignatureConnection `json:"signatures"`
-	PublishedAt *time.Time                          `json:"publishedAt,omitempty"`
-	CreatedAt   time.Time                           `json:"createdAt"`
-	UpdatedAt   time.Time                           `json:"updatedAt"`
+	ID             gid.GID                             `json:"id"`
+	Document       *Document                           `json:"document"`
+	Status         coredata.DocumentStatus             `json:"status"`
+	Version        int                                 `json:"version"`
+	Content        string                              `json:"content"`
+	Changelog      string                              `json:"changelog"`
+	Title          string                              `json:"title"`
+	Classification coredata.DocumentClassification     `json:"classification"`
+	Owner          *People                             `json:"owner"`
+	Signatures     *DocumentVersionSignatureConnection `json:"signatures"`
+	PublishedAt    *time.Time                          `json:"publishedAt,omitempty"`
+	CreatedAt      time.Time                           `json:"createdAt"`
+	UpdatedAt      time.Time                           `json:"updatedAt"`
 }
 
 func (DocumentVersion) IsNode()             {}
@@ -1789,12 +1792,13 @@ type UpdateDatumPayload struct {
 }
 
 type UpdateDocumentInput struct {
-	ID                    gid.GID                         `json:"id"`
-	Title                 *string                         `json:"title,omitempty"`
-	Content               *string                         `json:"content,omitempty"`
-	OwnerID               *gid.GID                        `json:"ownerId,omitempty"`
-	DocumentType          *coredata.DocumentType          `json:"documentType,omitempty"`
-	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
+	ID                    gid.GID                          `json:"id"`
+	Title                 *string                          `json:"title,omitempty"`
+	Content               *string                          `json:"content,omitempty"`
+	OwnerID               *gid.GID                         `json:"ownerId,omitempty"`
+	DocumentType          *coredata.DocumentType           `json:"documentType,omitempty"`
+	Classification        *coredata.DocumentClassification `json:"classification,omitempty"`
+	TrustCenterVisibility *coredata.TrustCenterVisibility  `json:"trustCenterVisibility,omitempty"`
 }
 
 type UpdateDocumentPayload struct {

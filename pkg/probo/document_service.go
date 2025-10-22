@@ -45,7 +45,17 @@ type (
 		Title                 string
 		Content               string
 		OwnerID               gid.GID
+		Classification        coredata.DocumentClassification
 		DocumentType          coredata.DocumentType
+		TrustCenterVisibility *coredata.TrustCenterVisibility
+	}
+
+	UpdateDocumentRequest struct {
+		DocumentID            gid.GID
+		Title                 *string
+		OwnerID               *gid.GID
+		Classification        *coredata.DocumentClassification
+		DocumentType          *coredata.DocumentType
 		TrustCenterVisibility *coredata.TrustCenterVisibility
 	}
 
@@ -308,6 +318,7 @@ func (s *DocumentService) Create(
 		Title:                 req.Title,
 		DocumentType:          req.DocumentType,
 		TrustCenterVisibility: coredata.TrustCenterVisibilityNone,
+		Classification:        req.Classification,
 		CreatedAt:             now,
 		UpdatedAt:             now,
 	}
@@ -317,15 +328,16 @@ func (s *DocumentService) Create(
 	}
 
 	documentVersion := &coredata.DocumentVersion{
-		ID:            documentVersionID,
-		DocumentID:    documentID,
-		Title:         req.Title,
-		OwnerID:       req.OwnerID,
-		VersionNumber: 1,
-		Content:       req.Content,
-		Status:        coredata.DocumentStatusDraft,
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		ID:             documentVersionID,
+		DocumentID:     documentID,
+		Title:          req.Title,
+		OwnerID:        req.OwnerID,
+		VersionNumber:  1,
+		Content:        req.Content,
+		Status:         coredata.DocumentStatusDraft,
+		Classification: req.Classification,
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	err := s.svc.pg.WithTx(
@@ -563,6 +575,7 @@ func (s *DocumentService) UpdateVersion(
 
 			documentVersion.Title = document.Title
 			documentVersion.OwnerID = document.OwnerID
+			documentVersion.Classification = document.Classification
 			documentVersion.Content = req.Content
 			documentVersion.UpdatedAt = time.Now()
 
@@ -764,6 +777,7 @@ func (s *DocumentService) CreateDraft(
 			draftVersion.Title = document.Title
 			draftVersion.OwnerID = document.OwnerID
 			draftVersion.VersionNumber = latestVersion.VersionNumber + 1
+			draftVersion.Classification = document.Classification
 			draftVersion.Content = latestVersion.Content
 			draftVersion.Status = coredata.DocumentStatusDraft
 			draftVersion.CreatedAt = now
@@ -1108,11 +1122,7 @@ func (s *DocumentService) ListForRiskID(
 
 func (s *DocumentService) Update(
 	ctx context.Context,
-	documentID gid.GID,
-	newOwnerID *gid.GID,
-	documentType *coredata.DocumentType,
-	title *string,
-	trustCenterVisibility *coredata.TrustCenterVisibility,
+	req UpdateDocumentRequest,
 ) (*coredata.Document, error) {
 	document := &coredata.Document{}
 	people := &coredata.People{}
@@ -1121,27 +1131,35 @@ func (s *DocumentService) Update(
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			if err := document.LoadByID(ctx, tx, s.svc.scope, documentID); err != nil {
-				return fmt.Errorf("cannot load document %q: %w", documentID, err)
+			if err := document.LoadByID(ctx, tx, s.svc.scope, req.DocumentID); err != nil {
+				return fmt.Errorf("cannot load document %q: %w", req.DocumentID, err)
 			}
 
-			if newOwnerID != nil {
-				if err := people.LoadByID(ctx, tx, s.svc.scope, *newOwnerID); err != nil {
-					return fmt.Errorf("cannot load new owner %q: %w", *newOwnerID, err)
+			if req.Title != nil {
+				document.Title = *req.Title
+			}
+
+			if req.Classification != nil {
+				document.Classification = *req.Classification
+			}
+
+			if req.DocumentType != nil {
+				document.DocumentType = *req.DocumentType
+			}
+
+			if req.DocumentType != nil {
+				document.DocumentType = *req.DocumentType
+			}
+
+			if req.TrustCenterVisibility != nil {
+				document.TrustCenterVisibility = *req.TrustCenterVisibility
+			}
+
+			if req.OwnerID != nil {
+				if err := people.LoadByID(ctx, tx, s.svc.scope, *req.OwnerID); err != nil {
+					return fmt.Errorf("cannot load owner %q: %w", *req.OwnerID, err)
 				}
-				document.OwnerID = *newOwnerID
-			}
-
-			if documentType != nil {
-				document.DocumentType = *documentType
-			}
-
-			if title != nil {
-				document.Title = *title
-			}
-
-			if trustCenterVisibility != nil {
-				document.TrustCenterVisibility = *trustCenterVisibility
+				document.OwnerID = people.ID
 			}
 
 			document.UpdatedAt = now

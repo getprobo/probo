@@ -21,6 +21,7 @@ import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import type { CreateDocumentDialogMutation } from "./__generated__/CreateDocumentDialogMutation.graphql";
 import { ControlledField } from "/components/form/ControlledField";
 import { DocumentTypeOptions } from "/components/form/DocumentTypeOptions";
+import { DocumentClassificationOptions } from "/components/form/DocumentClassificationOptions";
 
 type Props = {
   trigger?: ReactNode;
@@ -122,6 +123,20 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
                 type="select"
               >
                 <DocumentTypeOptions />
+              </ControlledField>
+            </PropertyRow>
+
+            <PropertyRow
+              id="classification"
+              label={__("Classification")}
+              error={errors.classification?.message}
+            >
+              <ControlledField
+                control={control}
+                name="classification"
+                type="select"
+              >
+                <DocumentClassificationOptions />
               </ControlledField>
             </PropertyRow>
 

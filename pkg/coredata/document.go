@@ -28,15 +28,16 @@ import (
 
 type (
 	Document struct {
-		ID                      gid.GID               `db:"id"`
-		OrganizationID          gid.GID               `db:"organization_id"`
-		OwnerID                 gid.GID               `db:"owner_id"`
-		Title                   string                `db:"title"`
-		DocumentType            DocumentType          `db:"document_type"`
-		CurrentPublishedVersion *int                  `db:"current_published_version"`
-		TrustCenterVisibility   TrustCenterVisibility `db:"trust_center_visibility"`
-		CreatedAt               time.Time             `db:"created_at"`
-		UpdatedAt               time.Time             `db:"updated_at"`
+		ID                      gid.GID                `db:"id"`
+		OrganizationID          gid.GID                `db:"organization_id"`
+		OwnerID                 gid.GID                `db:"owner_id"`
+		Title                   string                 `db:"title"`
+		DocumentType            DocumentType           `db:"document_type"`
+		Classification          DocumentClassification `db:"classification"`
+		CurrentPublishedVersion *int                   `db:"current_published_version"`
+		TrustCenterVisibility   TrustCenterVisibility  `db:"trust_center_visibility"`
+		CreatedAt               time.Time              `db:"created_at"`
+		UpdatedAt               time.Time              `db:"updated_at"`
 	}
 
 	Documents []*Document
@@ -68,6 +69,7 @@ SELECT
     owner_id,
     title,
     document_type,
+    classification,
     current_published_version,
     trust_center_visibility,
     created_at,
@@ -150,6 +152,7 @@ SELECT
     owner_id,
     title,
     document_type,
+    classification,
     current_published_version,
     trust_center_visibility,
     created_at,
@@ -200,6 +203,7 @@ SELECT
     owner_id,
     title,
     document_type,
+    classification,
     current_published_version,
     trust_center_visibility,
     created_at,
@@ -249,6 +253,7 @@ INSERT INTO
 		owner_id,
 		title,
 		document_type,
+		classification,
 		current_published_version,
 		trust_center_visibility,
 		created_at,
@@ -261,6 +266,7 @@ VALUES (
     @owner_id,
     @title,
     @document_type,
+    @classification,
     @current_published_version,
     @trust_center_visibility,
     @created_at,
@@ -275,6 +281,7 @@ VALUES (
 		"owner_id":                  p.OwnerID,
 		"title":                     p.Title,
 		"document_type":             p.DocumentType,
+		"classification":            p.Classification,
 		"current_published_version": p.CurrentPublishedVersion,
 		"trust_center_visibility":   p.TrustCenterVisibility,
 		"created_at":                p.CreatedAt,
@@ -334,6 +341,7 @@ SET
 	current_published_version = @current_published_version,
 	owner_id = @owner_id,
 	document_type = @document_type,
+	classification = @classification,
 	trust_center_visibility = @trust_center_visibility,
 	updated_at = @updated_at
 WHERE
@@ -350,6 +358,7 @@ WHERE
 		"current_published_version": p.CurrentPublishedVersion,
 		"owner_id":                  p.OwnerID,
 		"document_type":             p.DocumentType,
+		"classification":            p.Classification,
 		"trust_center_visibility":   p.TrustCenterVisibility,
 	}
 	maps.Copy(args, scope.SQLArguments())
@@ -427,6 +436,7 @@ WITH plcs AS (
 		p.owner_id,
 		p.title,
 		p.document_type,
+		p.classification,
 		p.current_published_version,
 		p.trust_center_visibility,
 		p.created_at,
@@ -445,6 +455,7 @@ SELECT
 	owner_id,
 	title,
 	document_type,
+	classification,
 	current_published_version,
 	trust_center_visibility,
 	created_at,
@@ -543,6 +554,7 @@ WITH plcs AS (
 		p.owner_id,
 		p.title,
 		p.document_type,
+		p.classification,
 		p.current_published_version,
 		p.trust_center_visibility,
 		p.created_at,
@@ -562,6 +574,7 @@ SELECT
 	owner_id,
 	title,
 	document_type,
+	classification,
 	current_published_version,
 	trust_center_visibility,
 	created_at,
