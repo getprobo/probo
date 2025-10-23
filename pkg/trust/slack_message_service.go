@@ -30,7 +30,6 @@ import (
 
 const (
 	slackMessageDeduplicationWindow = 7 * 24 * time.Hour
-	trustCenterAccessURLFormat      = "https://%s/organizations/%s/trust-center/access"
 )
 
 type (

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
@@ -30,6 +31,7 @@ const (
 	slackAPIPostMessage      = "https://slack.com/api/chat.postMessage"
 	slackAPIUpdateMessage    = "https://slack.com/api/chat.update"
 	slackAPIConversationJoin = "https://slack.com/api/conversations.join"
+	slackWebhookHost         = "hooks.slack.com"
 )
 
 type (
@@ -104,6 +106,10 @@ func (c *Client) CreateMessage(ctx context.Context, accessToken string, channelI
 }
 
 func (c *Client) UpdateInteractiveMessage(ctx context.Context, responseURL string, body map[string]any) error {
+	if err := validateSlackResponseURL(responseURL); err != nil {
+		return fmt.Errorf("invalid Slack response URL: %w", err)
+	}
+
 	updatePayload := map[string]any{
 		"replace_original": true,
 		"text":             body["text"],
@@ -253,6 +259,23 @@ func (c *Client) JoinChannel(ctx context.Context, accessToken string, channelID 
 		}
 
 		return fmt.Errorf("Slack API error: %s", slackResponse.Error)
+	}
+
+	return nil
+}
+
+func validateSlackResponseURL(responseURL string) error {
+	parsedURL, err := url.Parse(responseURL)
+	if err != nil {
+		return fmt.Errorf("invalid URL format: %w", err)
+	}
+
+	if parsedURL.Scheme != "https" {
+		return fmt.Errorf("invalid URL scheme: must be https")
+	}
+
+	if parsedURL.Host != slackWebhookHost {
+		return fmt.Errorf("invalid URL host: must be %s", slackWebhookHost)
 	}
 
 	return nil
