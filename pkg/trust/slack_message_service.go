@@ -240,6 +240,28 @@ func (s *SlackMessageService) QueueSlackNotification(
 			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
+		var connectors coredata.Connectors
+		if err := connectors.LoadAllByOrganizationIDWithoutDecryptedConnection(
+			ctx,
+			tx,
+			s.svc.scope,
+			trustCenter.OrganizationID,
+		); err != nil {
+			return fmt.Errorf("cannot load connectors: %w", err)
+		}
+
+		hasSlackConnector := false
+		for _, connector := range connectors {
+			if connector.Provider == coredata.ConnectorProviderSlack {
+				hasSlackConnector = true
+				break
+			}
+		}
+
+		if !hasSlackConnector {
+			return fmt.Errorf("no slack connector found for organization")
+		}
+
 		documents, reports, err := s.loadDocumentsAndReportsFromAccesses(ctx, tx, trustCenterAccess.ID)
 		if err != nil {
 			return fmt.Errorf("cannot load documents and reports: %w", err)
