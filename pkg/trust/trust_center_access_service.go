@@ -208,7 +208,7 @@ func (s TrustCenterAccessService) Request(
 	}
 
 	if err := s.svc.SlackMessages.QueueSlackNotification(ctx, access.Email, req.TrustCenterID); err != nil {
-		s.logger.ErrorCtx(ctx, "cannot queue slack notification")
+		s.logger.ErrorCtx(ctx, "cannot queue slack notification", log.Error(err))
 	}
 
 	return access, nil
@@ -337,14 +337,19 @@ func (s TrustCenterAccessService) LoadReportAccess(
 
 func (s *TrustCenterAccessService) AcceptByIDs(
 	ctx context.Context,
-	trustCenterID gid.GID,
+	organizationID gid.GID,
 	email string,
 	documentIDs []gid.GID,
 	reportIDs []gid.GID,
 ) error {
 	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
+		trustCenter := &coredata.TrustCenter{}
+		if err := trustCenter.LoadByOrganizationID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			return fmt.Errorf("cannot load trust center: %w", err)
+		}
+
 		access := &coredata.TrustCenterAccess{}
-		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenterID, email); err != nil {
+		if err := access.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenter.ID, email); err != nil {
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 

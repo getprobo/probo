@@ -18,8 +18,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"maps"
 	"time"
 
 	"github.com/getprobo/probo/pkg/coredata"
@@ -33,20 +33,47 @@ const (
 	trustCenterAccessURLFormat      = "https://%s/organizations/%s/trust-center/access"
 )
 
-type SlackMessageService struct {
-	svc         *TenantService
-	slackClient *slack.Client
+type (
+	SlackMessageService struct {
+		svc         *TenantService
+		slackClient *slack.Client
+	}
+
+	SlackMessageDocument struct {
+		ID      string
+		Title   string
+		Granted bool
+	}
+
+	SlackMessageReport struct {
+		ID      string
+		Title   string
+		AuditID string
+		Granted bool
+	}
+
+	SlackMessageMetadata struct {
+		Documents []SlackMessageDocument
+		Reports   []SlackMessageReport
+	}
+)
+
+func (m SlackMessageMetadata) toMap() map[string]any {
+	return map[string]any{
+		"documents": m.Documents,
+		"reports":   m.Reports,
+	}
 }
 
-func (s *SlackMessageService) LoadSlackMessageUnscoped(
+func (s *Service) GetInitialSlackMessageByChannelAndTS(
 	ctx context.Context,
 	channelID string,
 	messageTS string,
 ) (*coredata.SlackMessage, error) {
 	var slackMessage coredata.SlackMessage
 
-	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
-		if err := slackMessage.LoadByChannelAndTSUnscoped(ctx, conn, channelID, messageTS); err != nil {
+	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
+		if err := slackMessage.LoadInitialByChannelAndTS(ctx, conn, coredata.NewNoScope(), channelID, messageTS); err != nil {
 			return fmt.Errorf("cannot load slack message: %w", err)
 		}
 
@@ -60,12 +87,74 @@ func (s *SlackMessageService) LoadSlackMessageUnscoped(
 	return &slackMessage, nil
 }
 
+func (s *SlackMessageService) GetSlackMessageMetadataByID(
+	ctx context.Context,
+	slackMessageID gid.GID,
+) (documentIDs []gid.GID, reportIDs []gid.GID, err error) {
+	var slackMessage coredata.SlackMessage
+
+	err = s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+		if err := slackMessage.LoadById(ctx, conn, s.svc.scope, slackMessageID); err != nil {
+			return fmt.Errorf("cannot load slack message: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	documents, ok := slackMessage.Metadata["documents"].([]any)
+	if !ok {
+		return nil, nil, fmt.Errorf("invalid documents metadata")
+	}
+
+	for _, docAny := range documents {
+		doc, ok := docAny.(map[string]any)
+		if !ok {
+			continue
+		}
+		idStr, ok := doc["ID"].(string)
+		if !ok {
+			continue
+		}
+		docID, err := gid.ParseGID(idStr)
+		if err != nil {
+			continue
+		}
+		documentIDs = append(documentIDs, docID)
+	}
+
+	reports, ok := slackMessage.Metadata["reports"].([]any)
+	if !ok {
+		return nil, nil, fmt.Errorf("invalid reports metadata")
+	}
+
+	for _, repAny := range reports {
+		rep, ok := repAny.(map[string]any)
+		if !ok {
+			continue
+		}
+		idStr, ok := rep["ID"].(string)
+		if !ok {
+			continue
+		}
+		repID, err := gid.ParseGID(idStr)
+		if err != nil {
+			continue
+		}
+		reportIDs = append(reportIDs, repID)
+	}
+
+	return documentIDs, reportIDs, nil
+}
+
 func (s *SlackMessageService) UpdateSlackAccessMessage(
 	ctx context.Context,
 	slackMessageID gid.GID,
-	actionID string,
-	value string,
 	responseURL string,
+	requesterEmail string,
 ) error {
 	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
 		var slackMessage coredata.SlackMessage
@@ -73,20 +162,58 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 			return fmt.Errorf("cannot load slack message: %w", err)
 		}
 
-		baseBody := slackMessage.Body
-		var latestUpdate coredata.SlackMessageUpdate
-		if err := latestUpdate.LoadLatestBySlackMessageID(ctx, tx, slackMessage.ID); err == nil {
-			baseBody = latestUpdate.Body
+		var trustCenter coredata.TrustCenter
+		if err := trustCenter.LoadByOrganizationID(ctx, tx, s.svc.scope, slackMessage.OrganizationID); err != nil {
+			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
-		accessTabURL := fmt.Sprintf(trustCenterAccessURLFormat, s.svc.hostname, slackMessage.OrganizationID)
-		updatedBody := s.changeButton(baseBody, actionID, value, accessTabURL)
+		var trustCenterAccess coredata.TrustCenterAccess
+		if err := trustCenterAccess.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, trustCenter.ID, requesterEmail); err != nil {
+			return fmt.Errorf("cannot load trust center access: %w", err)
+		}
 
-		slackMessageUpdate := coredata.NewSlackMessageUpdate(s.svc.scope, slackMessage.ID, updatedBody)
+		documents, reports, err := s.loadDocumentsAndReportsFromAccesses(ctx, tx, trustCenterAccess.ID)
+		if err != nil {
+			return err
+		}
+
+		newSlackMessageID := gid.New(s.svc.scope.GetTenantID(), coredata.SlackMessageEntityType)
+
+		updatedBody, err := s.buildAccessRequestMessage(
+			newSlackMessageID,
+			trustCenterAccess.Name,
+			requesterEmail,
+			trustCenter.OrganizationID,
+			documents,
+			reports,
+		)
+		if err != nil {
+			return err
+		}
+
+		metadata := SlackMessageMetadata{
+			Documents: documents,
+			Reports:   reports,
+		}
+
 		now := time.Now()
-		slackMessageUpdate.SentAt = &now
-		if err := slackMessageUpdate.Insert(ctx, tx, s.svc.scope); err != nil {
-			return fmt.Errorf("cannot insert slack message update: %w", err)
+		newSlackMessage := &coredata.SlackMessage{
+			ID:                    newSlackMessageID,
+			OrganizationID:        slackMessage.OrganizationID,
+			Type:                  slackMessage.Type,
+			Body:                  updatedBody,
+			MessageTS:             slackMessage.MessageTS,
+			ChannelID:             slackMessage.ChannelID,
+			RequesterEmail:        slackMessage.RequesterEmail,
+			Metadata:              metadata.toMap(),
+			InitialSlackMessageID: slackMessage.InitialSlackMessageID,
+			CreatedAt:             now,
+			UpdatedAt:             now,
+			SentAt:                &now,
+		}
+
+		if err := newSlackMessage.Insert(ctx, tx, s.svc.scope); err != nil {
+			return fmt.Errorf("cannot insert slack message: %w", err)
 		}
 
 		if err := s.slackClient.UpdateInteractiveMessage(ctx, responseURL, updatedBody); err != nil {
@@ -113,120 +240,46 @@ func (s *SlackMessageService) QueueSlackNotification(
 			return fmt.Errorf("cannot load trust center: %w", err)
 		}
 
-		var accesses coredata.TrustCenterDocumentAccesses
-		if err := accesses.LoadAllByTrustCenterAccessID(ctx, tx, s.svc.scope, trustCenterAccess.ID); err != nil {
-			return fmt.Errorf("cannot load trust center document accesses: %w", err)
+		documents, reports, err := s.loadDocumentsAndReportsFromAccesses(ctx, tx, trustCenterAccess.ID)
+		if err != nil {
+			return fmt.Errorf("cannot load documents and reports: %w", err)
 		}
 
-		var documentIDs []string
-		var reportIDs []string
-		var documents []struct {
-			ID      string
-			Title   string
-			Granted bool
-		}
-		var reports []struct {
-			ID      string
-			Title   string
-			AuditID string
-			Granted bool
-		}
+		slackMessageID := gid.New(s.svc.scope.GetTenantID(), coredata.SlackMessageEntityType)
 
-		for _, access := range accesses {
-			if access.DocumentID != nil {
-				doc := &coredata.Document{}
-				if err := doc.LoadByID(ctx, tx, s.svc.scope, *access.DocumentID); err != nil {
-					return fmt.Errorf("cannot load document: %w", err)
-				}
-				documentIDs = append(documentIDs, access.DocumentID.String())
-				documents = append(documents, struct {
-					ID      string
-					Title   string
-					Granted bool
-				}{
-					ID:      access.DocumentID.String(),
-					Title:   doc.Title,
-					Granted: access.Active,
-				})
-			}
-
-			if access.ReportID != nil {
-				rep := &coredata.Report{}
-				if err := rep.LoadByID(ctx, tx, s.svc.scope, *access.ReportID); err != nil {
-					return fmt.Errorf("cannot load report: %w", err)
-				}
-
-				audit := &coredata.Audit{}
-				if err := audit.LoadByReportID(ctx, tx, s.svc.scope, *access.ReportID); err != nil {
-					return fmt.Errorf("cannot load audit: %w", err)
-				}
-
-				framework := &coredata.Framework{}
-				if err := framework.LoadByID(ctx, tx, s.svc.scope, audit.FrameworkID); err != nil {
-					return fmt.Errorf("cannot load framework: %w", err)
-				}
-
-				label := framework.Name
-				if audit.Name != nil && *audit.Name != "" {
-					label = label + " - " + *audit.Name
-				}
-				reportIDs = append(reportIDs, access.ReportID.String())
-				reports = append(reports, struct {
-					ID      string
-					Title   string
-					AuditID string
-					Granted bool
-				}{
-					ID:      access.ReportID.String(),
-					Title:   label,
-					AuditID: audit.ID.String(),
-					Granted: access.Active,
-				})
-			}
+		body, err := s.buildAccessRequestMessage(
+			slackMessageID,
+			trustCenterAccess.Name,
+			requesterEmail,
+			trustCenter.OrganizationID,
+			documents,
+			reports,
+		)
+		if err != nil {
+			return fmt.Errorf("cannot build access request message: %w", err)
 		}
 
-		templateData := struct {
-			RequesterName  string
-			RequesterEmail string
-			OrganizationID string
-			Domain         string
-			DocumentIDs    []string
-			ReportIDs      []string
-			Documents      []struct {
-				ID      string
-				Title   string
-				Granted bool
-			}
-			Reports []struct {
-				ID      string
-				Title   string
-				AuditID string
-				Granted bool
-			}
-		}{
-			RequesterName:  trustCenterAccess.Name,
-			RequesterEmail: requesterEmail,
-			OrganizationID: trustCenter.OrganizationID.String(),
-			Domain:         s.svc.hostname,
-			DocumentIDs:    documentIDs,
-			ReportIDs:      reportIDs,
-			Documents:      documents,
-			Reports:        reports,
+		metadata := SlackMessageMetadata{
+			Documents: documents,
+			Reports:   reports,
 		}
 
-		var buf bytes.Buffer
-		if err := accessRequestTemplate.Execute(&buf, templateData); err != nil {
-			return fmt.Errorf("failed to execute template: %w", err)
+		now := time.Now()
+		slackMessage := &coredata.SlackMessage{
+			ID:             slackMessageID,
+			OrganizationID: trustCenter.OrganizationID,
+			Type:           coredata.SlackMessageTypeTrustCenterAccessRequest,
+			Body:           body,
+			RequesterEmail: &requesterEmail,
+			Metadata:       metadata.toMap(),
+			CreatedAt:      now,
+			UpdatedAt:      now,
 		}
 
-		var body map[string]any
-		if err := json.NewDecoder(&buf).Decode(&body); err != nil {
-			return fmt.Errorf("failed to parse template JSON: %w", err)
-		}
+		sevenDaysAgo := now.Add(-slackMessageDeduplicationWindow)
 
-		sevenDaysAgo := time.Now().Add(-slackMessageDeduplicationWindow)
 		var existingMessage coredata.SlackMessage
-		err := existingMessage.LoadLatestByRequesterEmailAndType(
+		err = existingMessage.LoadLatestByRequesterEmailAndType(
 			ctx,
 			tx,
 			s.svc.scope,
@@ -235,17 +288,23 @@ func (s *SlackMessageService) QueueSlackNotification(
 			coredata.SlackMessageTypeTrustCenterAccessRequest,
 			sevenDaysAgo,
 		)
+		if err == nil {
+			slackMessage.MessageTS = existingMessage.MessageTS
+			slackMessage.ChannelID = existingMessage.ChannelID
+			slackMessage.InitialSlackMessageID = existingMessage.InitialSlackMessageID
 
-		if err == nil && existingMessage.MessageTS != nil && existingMessage.ChannelID != nil {
-			slackMessageUpdate := coredata.NewSlackMessageUpdate(s.svc.scope, existingMessage.ID, body)
-			if err := slackMessageUpdate.Insert(ctx, tx, s.svc.scope); err != nil {
-				return fmt.Errorf("cannot insert slack message update: %w", err)
+			if err := slackMessage.Insert(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot insert slack message: %w", err)
 			}
 
 			return nil
 		}
+		var notFoundErr coredata.ErrSlackMessageNotFound
+		if !errors.Is(err, notFoundErr) {
+			return fmt.Errorf("cannot load existing slack message: %w", err)
+		}
 
-		slackMessage := coredata.NewSlackMessage(s.svc.scope, trustCenter.OrganizationID, coredata.SlackMessageTypeTrustCenterAccessRequest, body, &requesterEmail)
+		slackMessage.InitialSlackMessageID = slackMessageID
 		if err := slackMessage.Insert(ctx, tx, s.svc.scope); err != nil {
 			return fmt.Errorf("cannot insert slack message: %w", err)
 		}
@@ -254,84 +313,114 @@ func (s *SlackMessageService) QueueSlackNotification(
 	})
 }
 
-func (s *SlackMessageService) changeButton(body map[string]any, actionID string, value string, accessTabURL string) map[string]any {
-	blocks, ok := body["blocks"].([]any)
-	if !ok {
-		return body
+func (s *SlackMessageService) loadDocumentsAndReportsFromAccesses(
+	ctx context.Context,
+	conn pg.Conn,
+	trustCenterAccessID gid.GID,
+) (
+	documents []SlackMessageDocument,
+	reports []SlackMessageReport,
+	err error,
+) {
+	var accesses coredata.TrustCenterDocumentAccesses
+	if err := accesses.LoadAllByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID); err != nil {
+		return nil, nil, fmt.Errorf("cannot load trust center document accesses: %w", err)
 	}
 
-	isAcceptAll := actionID == "accept_all"
-
-	updatedBlocks := make([]any, len(blocks))
-	for i, blockAny := range blocks {
-		block, ok := blockAny.(map[string]any)
-		if !ok {
-			updatedBlocks[i] = blockAny
-			continue
-		}
-
-		blockCopy := make(map[string]any)
-		maps.Copy(blockCopy, block)
-
-		if blockType, ok := block["type"].(string); ok && blockType == "section" {
-			if acc, ok := block["accessory"].(map[string]any); ok {
-				if s.shouldChangeButton(acc, actionID, value, isAcceptAll) {
-					blockCopy["accessory"] = s.makeStaticButton(accessTabURL)
-				}
+	for _, access := range accesses {
+		if access.DocumentID != nil {
+			doc := &coredata.Document{}
+			if err := doc.LoadByID(ctx, conn, s.svc.scope, *access.DocumentID); err != nil {
+				return nil, nil, fmt.Errorf("cannot load document: %w", err)
 			}
+			documents = append(documents, SlackMessageDocument{
+				ID:      access.DocumentID.String(),
+				Title:   doc.Title,
+				Granted: access.Active,
+			})
 		}
 
-		if blockType, ok := block["type"].(string); ok && blockType == "actions" {
-			if elements, ok := block["elements"].([]any); ok {
-				updatedElements := make([]any, len(elements))
-				for j, elemAny := range elements {
-					elem, ok := elemAny.(map[string]any)
-					if !ok {
-						updatedElements[j] = elemAny
-						continue
-					}
-
-					if s.shouldChangeButton(elem, actionID, value, isAcceptAll) {
-						updatedElements[j] = s.makeStaticButton(accessTabURL)
-					} else {
-						updatedElements[j] = elem
-					}
-				}
-				blockCopy["elements"] = updatedElements
+		if access.ReportID != nil {
+			rep := &coredata.Report{}
+			if err := rep.LoadByID(ctx, conn, s.svc.scope, *access.ReportID); err != nil {
+				return nil, nil, fmt.Errorf("cannot load report: %w", err)
 			}
-		}
 
-		updatedBlocks[i] = blockCopy
+			audit := &coredata.Audit{}
+			if err := audit.LoadByReportID(ctx, conn, s.svc.scope, *access.ReportID); err != nil {
+				return nil, nil, fmt.Errorf("cannot load audit: %w", err)
+			}
+
+			framework := &coredata.Framework{}
+			if err := framework.LoadByID(ctx, conn, s.svc.scope, audit.FrameworkID); err != nil {
+				return nil, nil, fmt.Errorf("cannot load framework: %w", err)
+			}
+
+			label := framework.Name
+			if audit.Name != nil && *audit.Name != "" {
+				label = label + " - " + *audit.Name
+			}
+			reports = append(reports, SlackMessageReport{
+				ID:      access.ReportID.String(),
+				Title:   label,
+				AuditID: audit.ID.String(),
+				Granted: access.Active,
+			})
+		}
 	}
 
-	updatedBody := make(map[string]any)
-	maps.Copy(updatedBody, body)
-	updatedBody["blocks"] = updatedBlocks
-
-	return updatedBody
+	return documents, reports, nil
 }
 
-func (s *SlackMessageService) shouldChangeButton(button map[string]any, actionID string, value string, isAcceptAll bool) bool {
-	if button["type"] != "button" {
-		return false
+func (s *SlackMessageService) buildAccessRequestMessage(
+	slackMessageID gid.GID,
+	requesterName string,
+	requesterEmail string,
+	organizationID gid.GID,
+	documents []SlackMessageDocument,
+	reports []SlackMessageReport,
+) (map[string]any, error) {
+	var documentIDs []string
+	var reportIDs []string
+
+	for _, doc := range documents {
+		documentIDs = append(documentIDs, doc.ID)
+	}
+	for _, rep := range reports {
+		reportIDs = append(reportIDs, rep.ID)
 	}
 
-	btnActionID, _ := button["action_id"].(string)
-	btnValue, _ := button["value"].(string)
-
-	isExactMatch := btnActionID == actionID && btnValue == value
-	isAcceptAllMatch := isAcceptAll && (btnActionID == "accept_document" || btnActionID == "accept_report")
-
-	return isExactMatch || isAcceptAllMatch
-}
-
-func (s *SlackMessageService) makeStaticButton(accessTabURL string) map[string]any {
-	return map[string]any{
-		"type": "button",
-		"text": map[string]any{
-			"type": "plain_text",
-			"text": "✓ Granted",
-		},
-		"url": accessTabURL,
+	templateData := struct {
+		RequesterName  string
+		RequesterEmail string
+		OrganizationID string
+		Domain         string
+		SlackMessageID string
+		DocumentIDs    []string
+		ReportIDs      []string
+		Documents      []SlackMessageDocument
+		Reports        []SlackMessageReport
+	}{
+		RequesterName:  requesterName,
+		RequesterEmail: requesterEmail,
+		OrganizationID: organizationID.String(),
+		Domain:         s.svc.hostname,
+		SlackMessageID: slackMessageID.String(),
+		DocumentIDs:    documentIDs,
+		ReportIDs:      reportIDs,
+		Documents:      documents,
+		Reports:        reports,
 	}
+
+	var buf bytes.Buffer
+	if err := accessRequestTemplate.Execute(&buf, templateData); err != nil {
+		return nil, fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	var body map[string]any
+	if err := json.NewDecoder(&buf).Decode(&body); err != nil {
+		return nil, fmt.Errorf("failed to parse template JSON: %w", err)
+	}
+
+	return body, nil
 }

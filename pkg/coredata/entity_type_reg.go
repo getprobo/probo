@@ -62,5 +62,4 @@ const (
 	InvitationEntityType
 	MembershipEntityType
 	SlackMessageEntityType
-	SlackMessageUpdateEntityType
 )

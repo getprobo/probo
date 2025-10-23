@@ -123,37 +123,45 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			return
 		}
 
+		initialSlackMessage, err := trustSvc.GetInitialSlackMessageByChannelAndTS(ctx, slackPayload.Container.ChannelID, slackPayload.Container.MessageTS)
+		if err != nil {
+			logger.ErrorCtx(ctx, "cannot load slack message", log.Error(err))
+			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+			return
+		}
+
+		//TODO: Update the message when it is too old to be updated
+		fourteenDaysAgo := time.Now().Add(-14 * 24 * time.Hour)
+		if initialSlackMessage.CreatedAt.Before(fourteenDaysAgo) {
+			httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "this message is too old to be updated (older than 14 days)"})
+			return
+		}
+
+		if initialSlackMessage.RequesterEmail == nil || *initialSlackMessage.RequesterEmail == "" {
+			logger.ErrorCtx(ctx, "missing requester email", log.String("slack_message_id", initialSlackMessage.ID.String()))
+			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+			return
+		}
+		requesterEmail := *initialSlackMessage.RequesterEmail
+
+		tenantSvc := trustSvc.WithTenant(initialSlackMessage.OrganizationID.TenantID())
+
 		var documentIDs []gid.GID
 		var reportIDs []gid.GID
 
 		switch action.ActionID {
 		case "accept_all":
-			var acceptAllData struct {
-				DocumentIDs []string `json:"document_ids"`
-				ReportIDs   []string `json:"report_ids"`
-			}
-			if err := json.NewDecoder(strings.NewReader(action.Value)).Decode(&acceptAllData); err != nil {
-				logger.ErrorCtx(ctx, "failed to parse accept_all value", log.Error(err))
-				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid accept_all value"})
+			currentMessageId, err := gid.ParseGID(action.Value)
+			if err != nil {
+				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid message ID"})
 				return
 			}
 
-			for _, idStr := range acceptAllData.DocumentIDs {
-				docID, err := gid.ParseGID(idStr)
-				if err != nil {
-					httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid document ID"})
-					return
-				}
-				documentIDs = append(documentIDs, docID)
-			}
-
-			for _, idStr := range acceptAllData.ReportIDs {
-				repID, err := gid.ParseGID(idStr)
-				if err != nil {
-					httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid report ID"})
-					return
-				}
-				reportIDs = append(reportIDs, repID)
+			documentIDs, reportIDs, err = tenantSvc.SlackMessages.GetSlackMessageMetadataByID(ctx, currentMessageId)
+			if err != nil {
+				logger.ErrorCtx(ctx, "cannot load slack message metadata by ID", log.Error(err))
+				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
+				return
 			}
 
 		case "accept_document":
@@ -177,41 +185,9 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			return
 		}
 
-		// Load the slack message without tenant scope
-		slackMessage, err := trustSvc.WithTenant(gid.TenantID{}).SlackMessages.LoadSlackMessageUnscoped(
-			ctx,
-			slackPayload.Container.ChannelID,
-			slackPayload.Container.MessageTS,
-		)
-		if err != nil {
-			logger.ErrorCtx(ctx, "cannot load slack message", log.Error(err))
-			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
-			return
-		}
-
-		fourteenDaysAgo := time.Now().Add(-14 * 24 * time.Hour)
-		if slackMessage.CreatedAt.Before(fourteenDaysAgo) {
-			httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "this message is too old to be updated (older than 14 days)"})
-			return
-		}
-
-		if slackMessage.RequesterEmail == nil || *slackMessage.RequesterEmail == "" {
-			httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "missing requester_email"})
-			return
-		}
-		requesterEmail := *slackMessage.RequesterEmail
-
-		tenantSvc := trustSvc.WithTenant(slackMessage.OrganizationID.TenantID())
-		trustCenter, err := tenantSvc.TrustCenters.GetByOrganizationID(ctx, slackMessage.OrganizationID)
-		if err != nil {
-			logger.ErrorCtx(ctx, "cannot load trust center", log.Error(err))
-			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
-			return
-		}
-
 		if err := tenantSvc.TrustCenterAccesses.AcceptByIDs(
 			ctx,
-			trustCenter.ID,
+			initialSlackMessage.OrganizationID,
 			requesterEmail,
 			documentIDs,
 			reportIDs,
@@ -223,10 +199,9 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 
 		if err := tenantSvc.SlackMessages.UpdateSlackAccessMessage(
 			ctx,
-			slackMessage.ID,
-			action.ActionID,
-			action.Value,
+			initialSlackMessage.ID,
 			slackPayload.ResponseURL,
+			requesterEmail,
 		); err != nil {
 			logger.ErrorCtx(ctx, "failed to update Slack message", log.Error(err))
 			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
