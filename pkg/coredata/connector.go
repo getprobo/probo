@@ -63,7 +63,7 @@ func (c *Connectors) LoadByOrganizationID(
 	organizationID gid.GID,
 	cursor *page.Cursor[ConnectorOrderField],
 	encryptionKey cipher.EncryptionKey,
-	filter *ConnectorProviderFilter,
+	filter *ConnectorFilter,
 ) error {
 	if err := c.loadByOrganizationIDWithPagination(ctx, conn, scope, organizationID, cursor, filter); err != nil {
 		return fmt.Errorf("cannot load connectors by organization ID: %w", err)
@@ -120,7 +120,7 @@ func (c *Connectors) LoadByOrganizationIDWithoutDecryptedConnection(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ConnectorOrderField],
-	filter *ConnectorProviderFilter,
+	filter *ConnectorFilter,
 ) error {
 	return c.loadByOrganizationIDWithPagination(ctx, conn, scope, organizationID, cursor, filter)
 }
@@ -246,7 +246,7 @@ func (c *Connectors) loadByOrganizationIDWithPagination(
 	scope Scoper,
 	organizationID gid.GID,
 	cursor *page.Cursor[ConnectorOrderField],
-	filter *ConnectorProviderFilter,
+	filter *ConnectorFilter,
 ) error {
 	q := `
 SELECT

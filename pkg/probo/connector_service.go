@@ -59,7 +59,7 @@ func (s *ConnectorService) ListForOrganizationID(
 	ctx context.Context,
 	organizationID gid.GID,
 	cursor *page.Cursor[coredata.ConnectorOrderField],
-	filter *coredata.ConnectorProviderFilter,
+	filter *coredata.ConnectorFilter,
 ) (*page.Page[*coredata.Connector, coredata.ConnectorOrderField], error) {
 	var connectors coredata.Connectors
 

@@ -19,28 +19,24 @@ import (
 )
 
 type (
-	ConnectorProviderFilter struct {
+	ConnectorFilter struct {
 		provider *ConnectorProvider
 	}
 )
 
-func NewConnectorProviderFilter(provider *ConnectorProvider) *ConnectorProviderFilter {
-	return &ConnectorProviderFilter{
+func NewConnectorProviderFilter(provider *ConnectorProvider) *ConnectorFilter {
+	return &ConnectorFilter{
 		provider: provider,
 	}
 }
 
-func (f *ConnectorProviderFilter) SQLArguments() pgx.NamedArgs {
-	args := pgx.NamedArgs{}
-
-	if f.provider != nil {
-		args["provider"] = *f.provider
+func (f *ConnectorFilter) SQLArguments() pgx.NamedArgs {
+	return pgx.NamedArgs{
+		"provider": f.provider,
 	}
-
-	return args
 }
 
-func (f *ConnectorProviderFilter) SQLFragment() string {
+func (f *ConnectorFilter) SQLFragment() string {
 	return `
 (
 	CASE
