@@ -263,7 +263,7 @@ export default function TrustCenterPage({ queryRef }: Props) {
         <Card padded>
           <SlackConnections
             organizationId={organization.id!}
-            slackConnections={organization.slackConnections?.edges.map((edge) => edge.node) ?? []}
+            slackConnections={organization.slackConnections?.edges?.map((edge) => edge.node) ?? []}
           />
         </Card>
       </div>
