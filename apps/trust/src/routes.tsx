@@ -6,6 +6,7 @@ import {
   useLoaderData,
   useRouteError,
 } from "react-router";
+import { withFaroRouterInstrumentation } from "@grafana/faro-react";
 import { type ComponentType, Fragment, Suspense } from "react";
 import {
   relayEnvironment,
@@ -174,6 +175,8 @@ function getBasename(): string {
   return trustMatch ? trustMatch[0] : "/";
 }
 
-export const router = createBrowserRouter(routes.map(routeTransformer), {
-  basename: getBasename(),
-});
+export const router = withFaroRouterInstrumentation(
+  createBrowserRouter(routes.map(routeTransformer), {
+    basename: getBasename(),
+  })
+);
