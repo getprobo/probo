@@ -343,6 +343,9 @@ func (s *SlackMessageService) loadDocumentsAndReportsFromAccesses(
 	reports []SlackMessageReport,
 	err error,
 ) {
+	documents = []SlackMessageDocument{}
+	reports = []SlackMessageReport{}
+
 	var accesses coredata.TrustCenterDocumentAccesses
 	if err := accesses.LoadAllByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID); err != nil {
 		return nil, nil, fmt.Errorf("cannot load trust center document accesses: %w", err)
