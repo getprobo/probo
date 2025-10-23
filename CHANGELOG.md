@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Markdown links now open in new tab with security attributes
+
 ## [0.77.0] - 2025-10-23
 
 ### Added
