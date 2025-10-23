@@ -54,35 +54,28 @@ function MeasureSelectWithQuery(
     );
   }, [data?.measures.edges, search]);
 
-  const allMeasures = useMemo(() => {
-    return data?.measures.edges?.map((edge) => edge.node) ?? [];
-  }, [data?.measures.edges]);
-
   return (
     <div>
       <Controller
         control={control}
         name={name}
         render={({ field }) => {
-          const selectedMeasure = allMeasures.find((m) => m.id === field.value);
-          const displayValue = selectedMeasure ? selectedMeasure.name : search;
-
           return (
             <Combobox
               id={name}
               placeholder={__("Select a measure")}
-              onSelect={(measureId) => {
-                field.onChange(measureId);
-                const measure = allMeasures.find((m) => m.id === measureId);
-                setSearch(measure?.name ?? "");
-              }}
-              value={displayValue}
+              value={search}
               onSearch={setSearch}
               disabled={disabled}
-              resetValueOnHide
             >
               {measures?.map((m) => (
-                <ComboboxItem key={m.id} value={m.id}>
+                <ComboboxItem
+                  key={m.id}
+                  onClick={() => {
+                    field.onChange(m.id);
+                    setSearch(m.name);
+                  }}
+                >
                   <div className="space-y-1 text-start min-w-0">
                     <div className="max-w-75 ellipsis overflow-hidden whitespace-pre-wrap">
                       {m.name}
