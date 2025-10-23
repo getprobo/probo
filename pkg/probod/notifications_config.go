@@ -14,18 +14,7 @@
 
 package probod
 
-type (
-	mailerConfig struct {
-		MailerInterval int        `json:"mailer-interval"`
-		SenderName     string     `json:"sender-name"`
-		SenderEmail    string     `json:"sender-email"`
-		SMTP           smtpConfig `json:"smtp"`
-	}
-
-	smtpConfig struct {
-		Addr        string `json:"addr"`
-		User        string `json:"user"`
-		Password    string `json:"password"`
-		TLSRequired bool   `json:"tls-required"`
-	}
-)
+type notificationsConfig struct {
+	Mailer mailerConfig `json:"mailer"`
+	Slack  slackConfig  `json:"slack"`
+}

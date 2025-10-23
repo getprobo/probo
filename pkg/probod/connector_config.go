@@ -15,6 +15,7 @@
 package probod
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -27,6 +28,7 @@ type (
 		Provider string                 `json:"provider"`
 		Protocol connector.ProtocolType `json:"protocol"`
 		Config   connector.Connector    `json:"-"`
+		Settings any                    `json:"-"`
 	}
 
 	connectorConfigOAuth2 struct {
@@ -39,24 +41,46 @@ type (
 	}
 )
 
+func (c *config) GetSlackSigningSecret() string {
+	for _, conn := range c.Connectors {
+		if conn.Provider == "SLACK" {
+			if settings, ok := conn.Settings.(map[string]any); ok {
+				if signingSecret, ok := settings["signing-secret"].(string); ok {
+					return signingSecret
+				}
+			}
+		}
+	}
+	return ""
+}
+
 func (c *connectorConfig) UnmarshalJSON(data []byte) error {
 	var tmp struct {
 		Provider  string          `json:"provider"`
 		Protocol  string          `json:"protocol"`
 		RawConfig json.RawMessage `json:"config"`
+		Settings  json.RawMessage `json:"settings"`
 	}
 
-	if err := json.Unmarshal(data, &tmp); err != nil {
+	if err := json.NewDecoder(bytes.NewReader(data)).Decode(&tmp); err != nil {
 		return fmt.Errorf("cannot unmarshal connector config: %w", err)
 	}
 
 	c.Provider = strings.ToUpper(tmp.Provider)
 	c.Protocol = connector.ProtocolType(strings.ToUpper(tmp.Protocol))
 
+	if len(tmp.Settings) > 0 {
+		var settings map[string]any
+		if err := json.NewDecoder(bytes.NewReader(tmp.Settings)).Decode(&settings); err != nil {
+			return fmt.Errorf("cannot unmarshal settings: %w", err)
+		}
+		c.Settings = settings
+	}
+
 	switch c.Protocol {
 	case connector.ProtocolOAuth2:
 		var config connectorConfigOAuth2
-		if err := json.Unmarshal(tmp.RawConfig, &config); err != nil {
+		if err := json.NewDecoder(bytes.NewReader(tmp.RawConfig)).Decode(&config); err != nil {
 			return fmt.Errorf("cannot unmarshal oauth2 connector config: %w", err)
 		}
 

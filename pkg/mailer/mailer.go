@@ -32,9 +32,10 @@ import (
 
 type (
 	Mailer struct {
-		pg  *pg.Client
-		l   *log.Logger
-		cfg Config
+		pg       *pg.Client
+		l        *log.Logger
+		cfg      Config
+		interval time.Duration
 	}
 
 	Config struct {
@@ -45,6 +46,7 @@ type (
 		User        string
 		Password    string
 		TLSRequired bool
+		Interval    time.Duration
 	}
 )
 
@@ -53,7 +55,8 @@ func NewMailer(pg *pg.Client, l *log.Logger, cfg Config) *Mailer {
 	if cfg.Timeout == 0 {
 		cfg.Timeout = 10 * time.Second
 	}
-	return &Mailer{pg: pg, l: l, cfg: cfg}
+
+	return &Mailer{pg: pg, l: l, cfg: cfg, interval: cfg.Interval}
 }
 
 func (m *Mailer) Run(ctx context.Context) error {
@@ -61,7 +64,7 @@ LOOP:
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-time.After(60 * time.Second):
+	case <-time.After(m.interval):
 		ctx := context.Background()
 		if err := m.batchSendEmails(ctx); err != nil {
 			m.l.ErrorCtx(ctx, "cannot send email", log.Error(err))

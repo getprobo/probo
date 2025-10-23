@@ -55,16 +55,16 @@ probod:
     secret-access-key: "thisisnotasecret"
     endpoint: "http://127.0.0.1:9000"
 
-  mailer:
-    sender-name: "Probo"
-    sender-email: "no-reply@notification.getprobo.com"
-    smtp:
-      addr: "localhost:1025"
-      tls-required: false
-
-  slack:
-    sender-interval: 60
-    signing-secret: "this-is-not-a-secret-for-slack-signing"
+  notifications:
+    mailer:
+      sender-name: "Probo"
+      sender-email: "no-reply@notification.getprobo.com"
+      smtp:
+        addr: "localhost:1025"
+        tls-required: false
+      mailer-interval: 60
+    slack:
+      sender-interval: 60
 
   openai:
     api-key: "thisisnotasecret"
@@ -94,3 +94,5 @@ probod:
           - "chat:write"
           - "channels:join"
           - "incoming-webhook"
+      settings:
+        signing-secret: "this-is-not-a-secret-for-slack-signing"

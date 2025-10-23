@@ -72,8 +72,7 @@ type (
 		TrustAuth     trustAuthConfig      `json:"trust-auth"`
 		TrustCenter   trustCenterConfig    `json:"trust-center"`
 		AWS           awsConfig            `json:"aws"`
-		Mailer        mailerConfig         `json:"mailer"`
-		Slack         slackConfig          `json:"slack"`
+		Notifications notificationsConfig  `json:"notifications"`
 		Connectors    []connectorConfig    `json:"connectors"`
 		OpenAI        openaiConfig         `json:"openai"`
 		ChromeDPAddr  string               `json:"chrome-dp-addr"`
@@ -138,15 +137,18 @@ func New() *Implm {
 				Region: "us-east-1",
 				Bucket: "probod",
 			},
-			Mailer: mailerConfig{
-				SenderEmail: "no-reply@notification.getprobo.com",
-				SenderName:  "Probo",
-				SMTP: smtpConfig{
-					Addr: "localhost:1025",
+			Notifications: notificationsConfig{
+				Mailer: mailerConfig{
+					MailerInterval: 60,
+					SenderEmail:    "no-reply@notification.getprobo.com",
+					SenderName:     "Probo",
+					SMTP: smtpConfig{
+						Addr: "localhost:1025",
+					},
 				},
-			},
-			Slack: slackConfig{
-				SenderInterval: 60,
+				Slack: slackConfig{
+					SenderInterval: 60,
+				},
 			},
 			CustomDomains: customDomainsConfig{
 				RenewalInterval:   3600,
@@ -346,7 +348,7 @@ func (impl *Implm) Run(
 		impl.cfg.Hostname,
 		impl.cfg.EncryptionKey,
 		impl.cfg.TrustAuth.TokenSecret,
-		impl.cfg.Slack.SigningSecret,
+		impl.cfg.GetSlackSigningSecret(),
 		authService,
 		html2pdfConverter,
 		fileManagerService,
@@ -405,13 +407,14 @@ func (impl *Implm) Run(
 
 	mailerCtx, stopMailer := context.WithCancel(context.Background())
 	mailer := mailer.NewMailer(pgClient, l, mailer.Config{
-		SenderEmail: impl.cfg.Mailer.SenderEmail,
-		SenderName:  impl.cfg.Mailer.SenderName,
-		Addr:        impl.cfg.Mailer.SMTP.Addr,
-		User:        impl.cfg.Mailer.SMTP.User,
-		Password:    impl.cfg.Mailer.SMTP.Password,
-		TLSRequired: impl.cfg.Mailer.SMTP.TLSRequired,
+		SenderEmail: impl.cfg.Notifications.Mailer.SenderEmail,
+		SenderName:  impl.cfg.Notifications.Mailer.SenderName,
+		Addr:        impl.cfg.Notifications.Mailer.SMTP.Addr,
+		User:        impl.cfg.Notifications.Mailer.SMTP.User,
+		Password:    impl.cfg.Notifications.Mailer.SMTP.Password,
+		TLSRequired: impl.cfg.Notifications.Mailer.SMTP.TLSRequired,
 		Timeout:     time.Second * 10,
+		Interval:    time.Duration(impl.cfg.Notifications.Mailer.MailerInterval) * time.Second,
 	})
 	wg.Go(
 		func() {
@@ -423,7 +426,7 @@ func (impl *Implm) Run(
 
 	slackSenderCtx, stopSlackSender := context.WithCancel(context.Background())
 	slackSender := slack.NewSender(pgClient, l.Named("slack-sender"), impl.cfg.EncryptionKey, slack.Config{
-		Interval: time.Duration(impl.cfg.Slack.SenderInterval) * time.Second,
+		Interval: time.Duration(impl.cfg.Notifications.Slack.SenderInterval) * time.Second,
 	})
 	wg.Go(
 		func() {
