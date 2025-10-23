@@ -27,7 +27,7 @@ const OrganizationsPageQuery = graphql`
           }
         }
       }
-      invitations(first: 1000, orderBy: {field: CREATED_AT, direction: DESC}, filter: {status: PENDING}) @connection(key: "OrganizationsPage_invitations") {
+      invitations(first: 1000, orderBy: {field: CREATED_AT, direction: DESC}, filter: {statuses: [PENDING]}) @connection(key: "OrganizationsPage_invitations") {
         __id
         edges {
           node {

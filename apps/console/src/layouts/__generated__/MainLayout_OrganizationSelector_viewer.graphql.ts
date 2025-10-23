@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bd521d62fb0f29ace7af511b527ef750>>
+ * @generated SignedSource<<b0e167541047d61efc6d30382c062d0d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -189,7 +189,9 @@ return {
           "kind": "Literal",
           "name": "filter",
           "value": {
-            "status": "PENDING"
+            "statuses": [
+              "PENDING"
+            ]
           }
         },
         {
@@ -211,7 +213,7 @@ return {
           "storageKey": null
         }
       ],
-      "storageKey": "invitations(filter:{\"status\":\"PENDING\"},first:1)"
+      "storageKey": "invitations(filter:{\"statuses\":[\"PENDING\"]},first:1)"
     }
   ],
   "type": "Viewer",
@@ -219,6 +221,6 @@ return {
 };
 })();
 
-(node as any).hash = "d1491a8228d455e2491724c03c7c30c1";
+(node as any).hash = "3e00f1a6f8089fc59144807a07fd1bdf";
 
 export default node;

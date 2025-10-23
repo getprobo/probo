@@ -20,19 +20,19 @@ import (
 
 type (
 	InvitationFilter struct {
-		status *InvitationStatus
+		statuses InvitationStatuses
 	}
 )
 
-func NewInvitationFilter(status *InvitationStatus) *InvitationFilter {
+func NewInvitationFilter(statuses []InvitationStatus) *InvitationFilter {
 	return &InvitationFilter{
-		status: status,
+		statuses: InvitationStatuses(statuses),
 	}
 }
 
 func (f *InvitationFilter) SQLArguments() pgx.NamedArgs {
 	return pgx.NamedArgs{
-		"status": f.status,
+		"statuses": f.statuses,
 	}
 }
 
@@ -40,12 +40,12 @@ func (f *InvitationFilter) SQLFragment() string {
 	return `
 (
 	CASE
-		WHEN @status::text IS NOT NULL THEN
+		WHEN @statuses::text[] IS NOT NULL THEN
 			(CASE
 				WHEN accepted_at IS NOT NULL THEN 'ACCEPTED'
 				WHEN expires_at < NOW() THEN 'EXPIRED'
 				ELSE 'PENDING'
-			END) = @status::text
+			END) = ANY(@statuses::text[])
 		ELSE TRUE
 	END
 )`

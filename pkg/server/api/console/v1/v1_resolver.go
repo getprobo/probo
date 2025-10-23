@@ -911,8 +911,13 @@ func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invita
 func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *types.InvitationConnection) (int, error) {
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
+		invitationFilter := coredata.NewInvitationFilter(nil)
+		if obj.Filter != nil {
+			invitationFilter = coredata.NewInvitationFilter(obj.Filter.Statuses)
+		}
+
 		authzSvc := r.AuthzService(ctx, obj.ParentID.TenantID())
-		count, err := authzSvc.CountOrganizationInvitations(ctx, obj.ParentID)
+		count, err := authzSvc.CountOrganizationInvitations(ctx, obj.ParentID, invitationFilter)
 		if err != nil {
 			panic(fmt.Errorf("failed to count organization invitations: %w", err))
 		}
@@ -925,7 +930,7 @@ func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 		invitationFilter := coredata.NewInvitationFilter(nil)
 		if obj.Filter != nil {
-			invitationFilter = coredata.NewInvitationFilter(obj.Filter.Status)
+			invitationFilter = coredata.NewInvitationFilter(obj.Filter.Statuses)
 		}
 
 		count, err := r.authzSvc.CountUserInvitations(ctx, user.EmailAddress, invitationFilter)
@@ -3647,8 +3652,13 @@ func (r *organizationResolver) Invitations(ctx context.Context, obj *types.Organ
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
+	invitationFilter := coredata.NewInvitationFilter(nil)
+	if filter != nil {
+		invitationFilter = coredata.NewInvitationFilter(filter.Statuses)
+	}
+
 	authzSvc := r.AuthzService(ctx, obj.ID.TenantID())
-	page, err := authzSvc.GetInvitationsByOrganizationID(ctx, obj.ID, cursor)
+	page, err := authzSvc.GetInvitationsByOrganizationID(ctx, obj.ID, cursor, invitationFilter)
 	if err != nil {
 		panic(fmt.Errorf("cannot list invitations: %w", err))
 	}
@@ -5363,7 +5373,7 @@ func (r *viewerResolver) Invitations(ctx context.Context, obj *types.Viewer, fir
 
 	invitationFilter := coredata.NewInvitationFilter(nil)
 	if filter != nil {
-		invitationFilter = coredata.NewInvitationFilter(filter.Status)
+		invitationFilter = coredata.NewInvitationFilter(filter.Statuses)
 	}
 
 	invitations, err := r.authzSvc.GetUserInvitations(ctx, user.EmailAddress, cursor, invitationFilter)

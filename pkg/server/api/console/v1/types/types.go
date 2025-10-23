@@ -1235,7 +1235,7 @@ type InvitationEdge struct {
 }
 
 type InvitationFilter struct {
-	Status *coredata.InvitationStatus `json:"status,omitempty"`
+	Statuses []coredata.InvitationStatus `json:"statuses,omitempty"`
 }
 
 type InvitationOrder struct {

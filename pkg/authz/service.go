@@ -378,13 +378,14 @@ func (s *TenantAuthzService) GetInvitationsByOrganizationID(
 	ctx context.Context,
 	orgID gid.GID,
 	cursor *page.Cursor[coredata.InvitationOrderField],
+	filter *coredata.InvitationFilter,
 ) (*page.Page[*coredata.Invitation, coredata.InvitationOrderField], error) {
 	var invitations coredata.Invitations
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := invitations.LoadByOrganizationID(ctx, conn, s.scope, orgID, cursor); err != nil {
+			if err := invitations.LoadByOrganizationID(ctx, conn, s.scope, orgID, cursor, filter); err != nil {
 				return fmt.Errorf("failed to load organization invitations: %w", err)
 			}
 
@@ -401,6 +402,7 @@ func (s *TenantAuthzService) GetInvitationsByOrganizationID(
 func (s *TenantAuthzService) CountOrganizationInvitations(
 	ctx context.Context,
 	orgID gid.GID,
+	filter *coredata.InvitationFilter,
 ) (int, error) {
 	var count int
 	err := s.pg.WithConn(
@@ -408,7 +410,7 @@ func (s *TenantAuthzService) CountOrganizationInvitations(
 		func(conn pg.Conn) error {
 			var invitations coredata.Invitations
 			var err error
-			count, err = invitations.CountByOrganizationID(ctx, conn, s.scope, orgID)
+			count, err = invitations.CountByOrganizationID(ctx, conn, s.scope, orgID, filter)
 			return err
 		},
 	)

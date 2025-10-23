@@ -159,6 +159,7 @@ const paginatedInvitationsFragment = graphql`
       last: $last
       before: $before
       orderBy: $order
+      filter: {statuses: [PENDING, EXPIRED]}
     ) @connection(key: "SettingsPageInvitations_invitations") {
       __id
       totalCount

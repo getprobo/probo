@@ -17,9 +17,13 @@ package coredata
 import (
 	"database/sql/driver"
 	"fmt"
+	"strings"
 )
 
-type InvitationStatus string
+type (
+	InvitationStatus  string
+	InvitationStatuses []InvitationStatus
+)
 
 const (
 	InvitationStatusPending  InvitationStatus = "PENDING"
@@ -57,4 +61,21 @@ func (tcv *InvitationStatus) Scan(value any) error {
 
 func (tcv InvitationStatus) Value() (driver.Value, error) {
 	return tcv.String(), nil
+}
+
+func (statuses InvitationStatuses) Value() (driver.Value, error) {
+	if len(statuses) == 0 {
+		return nil, nil
+	}
+
+	var result strings.Builder
+	result.WriteString("{")
+	for i, status := range statuses {
+		if i > 0 {
+			result.WriteString(",")
+		}
+		result.WriteString(fmt.Sprintf("%q", status.String()))
+	}
+	result.WriteString("}")
+	return result.String(), nil
 }

@@ -1508,7 +1508,7 @@ input InvitationOrder {
 }
 
 input InvitationFilter {
-  status: InvitationStatus
+  statuses: [InvitationStatus!]
 }
 
 input DocumentVersionFilter {
@@ -3797,7 +3797,8 @@ input UpdateProcessingActivityInput {
   recipients: String @goField(omittable: true)
   location: String @goField(omittable: true)
   internationalTransfers: Boolean
-  transferSafeguards: ProcessingActivityTransferSafeguards @goField(omittable: true)
+  transferSafeguards: ProcessingActivityTransferSafeguards
+    @goField(omittable: true)
   retentionPeriod: String @goField(omittable: true)
   securityMeasures: String @goField(omittable: true)
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment

@@ -297,6 +297,7 @@ func (i *Invitations) LoadByOrganizationID(
 	scope Scoper,
 	orgID gid.GID,
 	cursor *page.Cursor[InvitationOrderField],
+	filter *InvitationFilter,
 ) error {
 	query := `
 SELECT
@@ -319,14 +320,16 @@ WHERE
     organization_id = @organization_id
     AND %s
     AND %s
+    AND %s
 `
 
-	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())
+	query = fmt.Sprintf(query, scope.SQLFragment(), filter.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": orgID,
 	}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 	maps.Copy(args, cursor.SQLArguments())
 
 	rows, err := conn.Query(ctx, query, args)
@@ -348,6 +351,7 @@ func (i *Invitations) CountByOrganizationID(
 	conn pg.Conn,
 	scope Scoper,
 	orgID gid.GID,
+	filter *InvitationFilter,
 ) (int, error) {
 	q := `
 SELECT
@@ -355,15 +359,16 @@ SELECT
 FROM
 	authz_invitations
 WHERE
-	organization_id = @organization_id AND %s
+	organization_id = @organization_id AND %s AND %s
 `
 
-	q = fmt.Sprintf(q, scope.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), filter.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"organization_id": orgID,
 	}
 	maps.Copy(args, scope.SQLArguments())
+	maps.Copy(args, filter.SQLArguments())
 
 	row := conn.QueryRow(ctx, q, args)
 

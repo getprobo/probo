@@ -87,7 +87,7 @@ const OrganizationSelectorFragment = graphql`
         endCursor
       }
     }
-    invitations(first: 1, filter: {status: PENDING}) {
+    invitations(first: 1, filter: {statuses: [PENDING]}) {
       totalCount
     }
   }

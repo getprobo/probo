@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<33365519d19ebac5b95ae4c54652d49d>>
+ * @generated SignedSource<<39e11ee9cf99dc541aa5a8df259e8438>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -112,6 +112,16 @@ v12 = {
 v13 = [
   (v7/*: any*/),
   (v8/*: any*/),
+  {
+    "kind": "Literal",
+    "name": "filter",
+    "value": {
+      "statuses": [
+        "PENDING",
+        "EXPIRED"
+      ]
+    }
+  },
   (v9/*: any*/),
   (v10/*: any*/),
   {
@@ -343,7 +353,8 @@ return {
                 "alias": null,
                 "args": (v13/*: any*/),
                 "filters": [
-                  "orderBy"
+                  "orderBy",
+                  "filter"
                 ],
                 "handle": "connection",
                 "key": "SettingsPageInvitations_invitations",
@@ -360,16 +371,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0aa692d4815ddc0a17f76209ea0a5c4f",
+    "cacheID": "24b42a44e783a7f8499a568de2c8f9f4",
     "id": null,
     "metadata": {},
     "name": "SettingsInvitationsRefetchQuery",
     "operationKind": "query",
-    "text": "query SettingsInvitationsRefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: InvitationOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...SettingsPageInvitationsFragment_16fISc\n    id\n  }\n}\n\nfragment SettingsPageInvitationsFragment_16fISc on Organization {\n  invitations(first: $first, after: $after, last: $last, before: $before, orderBy: $order) {\n    totalCount\n    edges {\n      node {\n        id\n        email\n        fullName\n        role\n        status\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query SettingsInvitationsRefetchQuery(\n  $after: CursorKey = null\n  $before: CursorKey = null\n  $first: Int = 20\n  $last: Int = null\n  $order: InvitationOrder = {direction: ASC, field: CREATED_AT}\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...SettingsPageInvitationsFragment_16fISc\n    id\n  }\n}\n\nfragment SettingsPageInvitationsFragment_16fISc on Organization {\n  invitations(first: $first, after: $after, last: $last, before: $before, orderBy: $order, filter: {statuses: [PENDING, EXPIRED]}) {\n    totalCount\n    edges {\n      node {\n        id\n        email\n        fullName\n        role\n        status\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "f9a1ec38579cea21312ba0a20bb7394a";
+(node as any).hash = "b56157db731d3968bb825dd36375ddb7";
 
 export default node;

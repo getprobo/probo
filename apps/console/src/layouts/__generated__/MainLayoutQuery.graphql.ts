@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<cb335e1fd93543371a82adf23002f600>>
+ * @generated SignedSource<<1a7aa899a9b6251477122c87ae1c6431>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -283,7 +283,9 @@ return {
                 "kind": "Literal",
                 "name": "filter",
                 "value": {
-                  "status": "PENDING"
+                  "statuses": [
+                    "PENDING"
+                  ]
                 }
               },
               {
@@ -305,7 +307,7 @@ return {
                 "storageKey": null
               }
             ],
-            "storageKey": "invitations(filter:{\"status\":\"PENDING\"},first:1)"
+            "storageKey": "invitations(filter:{\"statuses\":[\"PENDING\"]},first:1)"
           }
         ],
         "storageKey": null
@@ -335,12 +337,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "117a78fef8e7a8fe200baf1ebf2d2487",
+    "cacheID": "6de25e54419d82cb6465c903a0afdd78",
     "id": null,
     "metadata": {},
     "name": "MainLayoutQuery",
     "operationKind": "query",
-    "text": "query MainLayoutQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    id\n    user {\n      fullName\n      email\n      id\n    }\n    ...MainLayout_OrganizationSelector_viewer\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      logoUrl\n    }\n    id\n  }\n}\n\nfragment MainLayout_OrganizationSelector_viewer on Viewer {\n  organizations(first: 25, orderBy: {field: NAME, direction: ASC}) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n  invitations(first: 1, filter: {status: PENDING}) {\n    totalCount\n  }\n}\n"
+    "text": "query MainLayoutQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    id\n    user {\n      fullName\n      email\n      id\n    }\n    ...MainLayout_OrganizationSelector_viewer\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      logoUrl\n    }\n    id\n  }\n}\n\nfragment MainLayout_OrganizationSelector_viewer on Viewer {\n  organizations(first: 25, orderBy: {field: NAME, direction: ASC}) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n  invitations(first: 1, filter: {statuses: [PENDING]}) {\n    totalCount\n  }\n}\n"
   }
 };
 })();

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<09561c2c29459fc840773b414af6083a>>
+ * @generated SignedSource<<7ca4537a89a599fe5d2b7ecad753aa64>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -117,6 +117,16 @@ return {
     {
       "alias": "invitations",
       "args": [
+        {
+          "kind": "Literal",
+          "name": "filter",
+          "value": {
+            "statuses": [
+              "PENDING",
+              "EXPIRED"
+            ]
+          }
+        },
         {
           "kind": "Variable",
           "name": "orderBy",
@@ -282,6 +292,6 @@ return {
 };
 })();
 
-(node as any).hash = "f9a1ec38579cea21312ba0a20bb7394a";
+(node as any).hash = "b56157db731d3968bb825dd36375ddb7";
 
 export default node;

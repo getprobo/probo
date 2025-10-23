@@ -10575,7 +10575,7 @@ input InvitationOrder {
 }
 
 input InvitationFilter {
-  status: InvitationStatus
+  statuses: [InvitationStatus!]
 }
 
 input DocumentVersionFilter {
@@ -12864,7 +12864,8 @@ input UpdateProcessingActivityInput {
   recipients: String @goField(omittable: true)
   location: String @goField(omittable: true)
   internationalTransfers: Boolean
-  transferSafeguards: ProcessingActivityTransferSafeguards @goField(omittable: true)
+  transferSafeguards: ProcessingActivityTransferSafeguards
+    @goField(omittable: true)
   retentionPeriod: String @goField(omittable: true)
   securityMeasures: String @goField(omittable: true)
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment
@@ -72331,20 +72332,20 @@ func (ec *executionContext) unmarshalInputInvitationFilter(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"status"}
+	fieldsInOrder := [...]string{"statuses"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "status":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			data, err := ec.unmarshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx, v)
+		case "statuses":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("statuses"))
+			data, err := ec.unmarshalOInvitationStatus2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatusᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Status = data
+			it.Statuses = data
 		}
 	}
 
@@ -101735,32 +101736,78 @@ func (ec *executionContext) unmarshalOInvitationOrder2ᚖgithubᚗcomᚋgetprobo
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx context.Context, v any) (*coredata.InvitationStatus, error) {
+func (ec *executionContext) unmarshalOInvitationStatus2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatusᚄ(ctx context.Context, v any) ([]coredata.InvitationStatus, error) {
 	if v == nil {
 		return nil, nil
 	}
-	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus[tmp]
-	return &res, graphql.ErrorOnPath(ctx, err)
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]coredata.InvitationStatus, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNInvitationStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
 }
 
-func (ec *executionContext) marshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx context.Context, sel ast.SelectionSet, v *coredata.InvitationStatus) graphql.Marshaler {
+func (ec *executionContext) marshalOInvitationStatus2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatusᚄ(ctx context.Context, sel ast.SelectionSet, v []coredata.InvitationStatus) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	_ = sel
-	_ = ctx
-	res := graphql.MarshalString(marshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus[*v])
-	return res
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNInvitationStatus2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 var (
-	unmarshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus = map[string]coredata.InvitationStatus{
+	unmarshalOInvitationStatus2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatusᚄ = map[string]coredata.InvitationStatus{
 		"PENDING":  coredata.InvitationStatusPending,
 		"ACCEPTED": coredata.InvitationStatusAccepted,
 		"EXPIRED":  coredata.InvitationStatusExpired,
 	}
-	marshalOInvitationStatus2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatus = map[coredata.InvitationStatus]string{
+	marshalOInvitationStatus2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐInvitationStatusᚄ = map[coredata.InvitationStatus]string{
 		coredata.InvitationStatusPending:  "PENDING",
 		coredata.InvitationStatusAccepted: "ACCEPTED",
 		coredata.InvitationStatusExpired:  "EXPIRED",

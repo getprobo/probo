@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<dedda437f17ae35a28c1cdc28ed21a62>>
+ * @generated SignedSource<<3a99643b92330af6920aac4c2286376f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -215,7 +215,9 @@ return {
                 "kind": "Literal",
                 "name": "filter",
                 "value": {
-                  "status": "PENDING"
+                  "statuses": [
+                    "PENDING"
+                  ]
                 }
               },
               {
@@ -237,7 +239,7 @@ return {
                 "storageKey": null
               }
             ],
-            "storageKey": "invitations(filter:{\"status\":\"PENDING\"},first:1)"
+            "storageKey": "invitations(filter:{\"statuses\":[\"PENDING\"]},first:1)"
           },
           (v4/*: any*/)
         ],
@@ -246,16 +248,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "dbf01211a1e8b22f1d74fa9c2171231d",
+    "cacheID": "d51b49a50afe664ee9903c1bb265ab79",
     "id": null,
     "metadata": {},
     "name": "MainLayoutOrganizationSelectorPaginationQuery",
     "operationKind": "query",
-    "text": "query MainLayoutOrganizationSelectorPaginationQuery(\n  $after: CursorKey\n  $first: Int = 25\n) {\n  viewer {\n    ...MainLayout_OrganizationSelector_viewer_2HEEH6\n    id\n  }\n}\n\nfragment MainLayout_OrganizationSelector_viewer_2HEEH6 on Viewer {\n  organizations(first: $first, after: $after, orderBy: {field: NAME, direction: ASC}) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n  invitations(first: 1, filter: {status: PENDING}) {\n    totalCount\n  }\n}\n"
+    "text": "query MainLayoutOrganizationSelectorPaginationQuery(\n  $after: CursorKey\n  $first: Int = 25\n) {\n  viewer {\n    ...MainLayout_OrganizationSelector_viewer_2HEEH6\n    id\n  }\n}\n\nfragment MainLayout_OrganizationSelector_viewer_2HEEH6 on Viewer {\n  organizations(first: $first, after: $after, orderBy: {field: NAME, direction: ASC}) {\n    edges {\n      node {\n        id\n        name\n        logoUrl\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      hasNextPage\n      endCursor\n    }\n  }\n  invitations(first: 1, filter: {statuses: [PENDING]}) {\n    totalCount\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d1491a8228d455e2491724c03c7c30c1";
+(node as any).hash = "3e00f1a6f8089fc59144807a07fd1bdf";
 
 export default node;
