@@ -100,7 +100,7 @@ func (c *Client) CreateMessage(ctx context.Context, accessToken string, channelI
 
 	var slackResponse SlackResponse
 
-	if err := json.NewDecoder(bytes.NewReader(responseBody)).Decode(&slackResponse); err != nil {
+	if err := json.Unmarshal(responseBody, &slackResponse); err != nil {
 		return nil, fmt.Errorf("failed to parse Slack response: %w (body: %s)", err, string(responseBody))
 	}
 
@@ -156,7 +156,7 @@ func (c *Client) UpdateInteractiveMessage(ctx context.Context, responseURL strin
 	}
 
 	var slackResponse SlackResponse
-	if err := json.NewDecoder(bytes.NewReader(responseBody)).Decode(&slackResponse); err == nil {
+	if err := json.Unmarshal(responseBody, &slackResponse); err == nil {
 		if slackResponse.OK {
 			return nil
 		}
@@ -251,7 +251,7 @@ func (c *Client) JoinChannel(ctx context.Context, accessToken string, channelID 
 
 	var slackResponse SlackJoinResponse
 
-	if err := json.NewDecoder(bytes.NewReader(responseBody)).Decode(&slackResponse); err != nil {
+	if err := json.Unmarshal(responseBody, &slackResponse); err != nil {
 		return fmt.Errorf("failed to parse Slack response: %w (body: %s)", err, string(responseBody))
 	}
 
