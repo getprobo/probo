@@ -56,6 +56,11 @@ func NewMailer(pg *pg.Client, l *log.Logger, cfg Config) *Mailer {
 		cfg.Timeout = 10 * time.Second
 	}
 
+	// Set a default interval if not provided
+	if cfg.Interval == 0 {
+		cfg.Interval = 60 * time.Second
+	}
+
 	return &Mailer{pg: pg, l: l, cfg: cfg, interval: cfg.Interval}
 }
 
