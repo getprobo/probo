@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.77.0] - 2025-10-23
+
 ### Added
 
 - Add invitation filtering by multiple states (PENDING/ACCEPTED/EXPIRED)
