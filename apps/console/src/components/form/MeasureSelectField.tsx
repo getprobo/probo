@@ -1,4 +1,4 @@
-import { Field, Option, Select } from "@probo/ui";
+import { Field, Combobox, ComboboxItem } from "@probo/ui";
 import { Suspense, useMemo, useState, type ComponentProps } from "react";
 import { useTranslate } from "@probo/i18n";
 import { type Control, Controller } from "react-hook-form";
@@ -22,7 +22,7 @@ export function MeasureSelectField({
   return (
     <Field {...props}>
       <Suspense
-        fallback={<Select variant="editor" disabled placeholder="Loading..." />}
+        fallback={<Combobox onSearch={() => {}} placeholder="Loading..." disabled><div /></Combobox>}
       >
         <MeasureSelectWithQuery
           organizationId={organizationId}
@@ -60,29 +60,26 @@ function MeasureSelectWithQuery(
         control={control}
         name={name}
         render={({ field }) => (
-          <Select
+          <Combobox
             id={name}
-            variant="editor"
             placeholder={__("Select a measure")}
-            onValueChange={field.onChange}
-            {...field}
-            className="w-full"
-            value={field.value ?? ""}
+            onSelect={field.onChange}
+            value={search}
             onSearch={setSearch}
-            searchValue={search}
             disabled={disabled}
+            resetValueOnHide
           >
             {measures?.map((m) => (
-              <Option key={m.id} value={m.id}>
+              <ComboboxItem key={m.id} value={m.id}>
                 <div className="space-y-1 text-start min-w-0">
                   <div className="max-w-75 ellipsis overflow-hidden whitespace-pre-wrap">
                     {m.name}
                   </div>
                   <div className="text-sm text-txt-secondary">{m.category}</div>
                 </div>
-              </Option>
+              </ComboboxItem>
             ))}
-          </Select>
+          </Combobox>
         )}
       />
     </div>
