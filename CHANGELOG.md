@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.78.0] - 2025-10-23
+
+### Added
+
+- Add slack integration for trust center access management
+
 ### Changed
 
 - Markdown links now open in new tab with security attributes
