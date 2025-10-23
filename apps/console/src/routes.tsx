@@ -6,6 +6,7 @@ import {
   useRouteError,
   type RouteObject,
 } from "react-router";
+import { withFaroRouterInstrumentation } from "@grafana/faro-react";
 import { MainLayout } from "./layouts/MainLayout";
 import { AuthLayout, CenteredLayout, CenteredLayoutSkeleton } from "@probo/ui";
 import { Fragment, Suspense } from "react";
@@ -251,4 +252,6 @@ function routeTransformer({
   } as RouteObject;
 }
 
-export const router = createBrowserRouter(routes.map(routeTransformer));
+export const router = withFaroRouterInstrumentation(
+  createBrowserRouter(routes.map(routeTransformer))
+);
