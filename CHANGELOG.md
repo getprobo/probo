@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Fix document classification not being passed when creating documents
+- Fix document classification changes not syncing to draft versions
+
 ## [0.76.0] - 2025-10-22
 
 ### Added

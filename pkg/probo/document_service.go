@@ -1168,6 +1168,20 @@ func (s *DocumentService) Update(
 				return fmt.Errorf("cannot update document: %w", err)
 			}
 
+			// Update the draft version if it exists to keep it in sync with the document
+			draftVersion := &coredata.DocumentVersion{}
+			err := draftVersion.LoadLatestVersion(ctx, tx, s.svc.scope, req.DocumentID)
+			if err == nil && draftVersion.Status == coredata.DocumentStatusDraft {
+				draftVersion.Title = document.Title
+				draftVersion.OwnerID = document.OwnerID
+				draftVersion.Classification = document.Classification
+				draftVersion.UpdatedAt = now
+
+				if err := draftVersion.Update(ctx, tx, s.svc.scope); err != nil {
+					return fmt.Errorf("cannot update draft version: %w", err)
+				}
+			}
+
 			return nil
 		},
 	)

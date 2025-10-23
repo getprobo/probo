@@ -2547,6 +2547,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 			Title:                 input.Title,
 			OwnerID:               input.OwnerID,
 			Content:               input.Content,
+			Classification:        input.Classification,
 			TrustCenterVisibility: input.TrustCenterVisibility,
 		},
 	)
