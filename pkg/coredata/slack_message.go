@@ -83,31 +83,31 @@ func (s *SlackMessage) Insert(
 	scope Scoper,
 ) error {
 	q := `
-		INSERT INTO slack_messages (
-			id,
-			tenant_id,
-			organization_id,
-			type,
-			body,
-			requester_email,
-			metadata,
-			initial_slack_message_id,
-			created_at,
-			updated_at
-		)
-		VALUES (
-			@id,
-			@tenant_id,
-			@organization_id,
-			@type,
-			@body,
-			@requester_email,
-			@metadata,
-			@initial_slack_message_id,
-			@created_at,
-			@updated_at
-		)
-	`
+INSERT INTO slack_messages (
+	id,
+	tenant_id,
+	organization_id,
+	type,
+	body,
+	requester_email,
+	metadata,
+	initial_slack_message_id,
+	created_at,
+	updated_at
+)
+VALUES (
+	@id,
+	@tenant_id,
+	@organization_id,
+	@type,
+	@body,
+	@requester_email,
+	@metadata,
+	@initial_slack_message_id,
+	@created_at,
+	@updated_at
+)
+`
 
 	args := pgx.StrictNamedArgs{
 		"id":                       s.ID,
