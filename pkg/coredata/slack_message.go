@@ -274,7 +274,7 @@ LIMIT 1
 	message, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SlackMessage])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("slack message not found")
+			return ErrSlackMessageNotFound{}
 		}
 		return fmt.Errorf("cannot collect slack message: %w", err)
 	}
@@ -377,7 +377,7 @@ LIMIT 1
 	message, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[SlackMessage])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return fmt.Errorf("slack message not found")
+			return ErrSlackMessageNotFound{}
 		}
 		return fmt.Errorf("cannot collect slack message: %w", err)
 	}
