@@ -45,6 +45,12 @@ type (
 		Channel string `json:"channel,omitempty"`
 		Error   string `json:"error,omitempty"`
 	}
+
+	SlackJoinResponse struct {
+		OK      bool            `json:"ok,omitempty"`
+		Channel json.RawMessage `json:"channel,omitempty"`
+		Error   string          `json:"error,omitempty"`
+	}
 )
 
 func NewClient(logger *log.Logger) *Client {
@@ -243,7 +249,7 @@ func (c *Client) JoinChannel(ctx context.Context, accessToken string, channelID 
 		return fmt.Errorf("unexpected status code: %d, response body: %s", resp.StatusCode, string(responseBody))
 	}
 
-	var slackResponse SlackResponse
+	var slackResponse SlackJoinResponse
 
 	if err := json.NewDecoder(bytes.NewReader(responseBody)).Decode(&slackResponse); err != nil {
 		return fmt.Errorf("failed to parse Slack response: %w (body: %s)", err, string(responseBody))
