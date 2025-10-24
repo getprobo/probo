@@ -1288,11 +1288,12 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
 	access, err := prb.TrustCenterAccesses.Update(ctx, &probo.UpdateTrustCenterAccessRequest{
-		ID:          input.ID,
-		Name:        input.Name,
-		Active:      input.Active,
-		DocumentIDs: input.DocumentIds,
-		ReportIDs:   input.ReportIds,
+		ID:                 input.ID,
+		Name:               input.Name,
+		Active:             input.Active,
+		DocumentIDs:        input.DocumentIds,
+		ReportIDs:          input.ReportIds,
+		TrustCenterFileIDs: input.TrustCenterFileIds,
 	})
 	if err != nil {
 		panic(fmt.Errorf("cannot update trust center access: %w", err))
@@ -1387,6 +1388,82 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 
 	return &types.DeleteTrustCenterReferencePayload{
 		DeletedTrustCenterReferenceID: input.ID,
+	}, nil
+}
+
+// CreateTrustCenterFile is the resolver for the createTrustCenterFile field.
+func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input types.CreateTrustCenterFileInput) (*types.CreateTrustCenterFilePayload, error) {
+	prb := r.ProboService(ctx, input.OrganizationID.TenantID())
+
+	file, err := prb.TrustCenterFiles.Create(ctx, &probo.CreateTrustCenterFileRequest{
+		OrganizationID: input.OrganizationID,
+		Name:           input.Name,
+		Category:       input.Category,
+		File: probo.File{
+			Content:     input.File.File,
+			Filename:    input.File.Filename,
+			Size:        input.File.Size,
+			ContentType: input.File.ContentType,
+		},
+		TrustCenterVisibility: input.TrustCenterVisibility,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot create trust center file: %w", err)
+	}
+
+	return &types.CreateTrustCenterFilePayload{
+		TrustCenterFileEdge: types.NewTrustCenterFileEdge(file, coredata.TrustCenterFileOrderFieldCreatedAt),
+	}, nil
+}
+
+// UpdateTrustCenterFile is the resolver for the updateTrustCenterFile field.
+func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input types.UpdateTrustCenterFileInput) (*types.UpdateTrustCenterFilePayload, error) {
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	file, err := prb.TrustCenterFiles.Update(ctx, &probo.UpdateTrustCenterFileRequest{
+		ID:                    input.ID,
+		Name:                  input.Name,
+		Category:              input.Category,
+		TrustCenterVisibility: input.TrustCenterVisibility,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot update trust center file: %w", err)
+	}
+
+	return &types.UpdateTrustCenterFilePayload{
+		TrustCenterFile: types.NewTrustCenterFile(file),
+	}, nil
+}
+
+// GetTrustCenterFile is the resolver for the getTrustCenterFile field.
+func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.GetTrustCenterFileInput) (*types.GetTrustCenterFilePayload, error) {
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	file, err := prb.TrustCenterFiles.Get(ctx, &probo.GetTrustCenterFileRequest{
+		ID: input.ID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot get trust center file: %w", err)
+	}
+
+	return &types.GetTrustCenterFilePayload{
+		TrustCenterFile: types.NewTrustCenterFile(file),
+	}, nil
+}
+
+// DeleteTrustCenterFile is the resolver for the deleteTrustCenterFile field.
+func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input types.DeleteTrustCenterFileInput) (*types.DeleteTrustCenterFilePayload, error) {
+	prb := r.ProboService(ctx, input.ID.TenantID())
+
+	err := prb.TrustCenterFiles.Delete(ctx, &probo.DeleteTrustCenterFileRequest{
+		ID: input.ID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot delete trust center file: %w", err)
+	}
+
+	return &types.DeleteTrustCenterFilePayload{
+		DeletedTrustCenterFileID: input.ID,
 	}, nil
 }
 
@@ -4153,6 +4230,31 @@ func (r *organizationResolver) Snapshots(ctx context.Context, obj *types.Organiz
 	return types.NewSnapshotConnection(page, r, obj.ID), nil
 }
 
+// TrustCenterFiles is the resolver for the trustCenterFiles field.
+func (r *organizationResolver) TrustCenterFiles(ctx context.Context, obj *types.Organization, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterFileOrderField]) (*types.TrustCenterFileConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
+		Field:     coredata.TrustCenterFileOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.TrustCenterFileOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	pageResult, err := prb.TrustCenterFiles.ListForOrganizationID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list organization trust center files: %w", err))
+	}
+
+	return types.NewTrustCenterFileConnection(pageResult, obj.ID), nil
+}
+
 // TrustCenter is the resolver for the trustCenter field.
 func (r *organizationResolver) TrustCenter(ctx context.Context, obj *types.Organization) (*types.TrustCenter, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -4930,6 +5032,29 @@ func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *typ
 	return types.NewReport(report), nil
 }
 
+// TrustCenterFile is the resolver for the trustCenterFile field.
+func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterFile, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	documentAccess, err := prb.TrustCenterAccesses.GetDocumentAccess(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("cannot load trust center document access: %w", err)
+	}
+
+	if documentAccess.TrustCenterFileID == nil {
+		return nil, nil
+	}
+
+	trustCenterFile, err := prb.TrustCenterFiles.Get(ctx, &probo.GetTrustCenterFileRequest{
+		ID: *documentAccess.TrustCenterFileID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("cannot load trust center file: %w", err)
+	}
+
+	return types.NewTrustCenterFile(trustCenterFile), nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterDocumentAccessConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
@@ -4939,6 +5064,48 @@ func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Con
 		return 0, fmt.Errorf("cannot count trust center document accesses: %w", err)
 	}
 
+	return count, nil
+}
+
+// FileURL is the resolver for the fileUrl field.
+func (r *trustCenterFileResolver) FileURL(ctx context.Context, obj *types.TrustCenterFile) (string, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	fileURL, err := prb.TrustCenterFiles.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
+	if err != nil {
+		panic(fmt.Errorf("failed to generate file URL: %w", err))
+	}
+
+	return fileURL, nil
+}
+
+// Organization is the resolver for the organization field.
+func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.TrustCenterFile) (*types.Organization, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	file, err := prb.TrustCenterFiles.Get(ctx, &probo.GetTrustCenterFileRequest{
+		ID: obj.ID,
+	})
+	if err != nil {
+		panic(fmt.Errorf("cannot get trust center file: %w", err))
+	}
+
+	organization, err := prb.Organizations.Get(ctx, file.OrganizationID)
+	if err != nil {
+		panic(fmt.Errorf("cannot get organization: %w", err))
+	}
+
+	return types.NewOrganization(organization), nil
+}
+
+// TotalCount is the resolver for the totalCount field.
+func (r *trustCenterFileConnectionResolver) TotalCount(ctx context.Context, obj *types.TrustCenterFileConnection) (int, error) {
+	prb := r.ProboService(ctx, obj.ParentID.TenantID())
+
+	count, err := prb.TrustCenterFiles.CountForOrganizationID(ctx, obj.ParentID)
+	if err != nil {
+		panic(fmt.Errorf("cannot count trust center files: %w", err))
+	}
 	return count, nil
 }
 
@@ -5563,6 +5730,16 @@ func (r *Resolver) TrustCenterDocumentAccessConnection() schema.TrustCenterDocum
 	return &trustCenterDocumentAccessConnectionResolver{r}
 }
 
+// TrustCenterFile returns schema.TrustCenterFileResolver implementation.
+func (r *Resolver) TrustCenterFile() schema.TrustCenterFileResolver {
+	return &trustCenterFileResolver{r}
+}
+
+// TrustCenterFileConnection returns schema.TrustCenterFileConnectionResolver implementation.
+func (r *Resolver) TrustCenterFileConnection() schema.TrustCenterFileConnectionResolver {
+	return &trustCenterFileConnectionResolver{r}
+}
+
 // TrustCenterReference returns schema.TrustCenterReferenceResolver implementation.
 func (r *Resolver) TrustCenterReference() schema.TrustCenterReferenceResolver {
 	return &trustCenterReferenceResolver{r}
@@ -5658,6 +5835,8 @@ type trustCenterResolver struct{ *Resolver }
 type trustCenterAccessResolver struct{ *Resolver }
 type trustCenterDocumentAccessResolver struct{ *Resolver }
 type trustCenterDocumentAccessConnectionResolver struct{ *Resolver }
+type trustCenterFileResolver struct{ *Resolver }
+type trustCenterFileConnectionResolver struct{ *Resolver }
 type trustCenterReferenceResolver struct{ *Resolver }
 type trustCenterReferenceConnectionResolver struct{ *Resolver }
 type userConnectionResolver struct{ *Resolver }

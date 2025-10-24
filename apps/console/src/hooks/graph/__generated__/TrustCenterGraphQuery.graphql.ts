@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6d55d37aa2ddfae16f8fc829840113d4>>
+ * @generated SignedSource<<285497dfb150c3f02c055a091769f301>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -69,6 +69,15 @@ export type TrustCenterGraphQuery$data = {
       };
       readonly updatedAt: any;
     } | null | undefined;
+    readonly trustCenterFiles?: {
+      readonly __id: string;
+      readonly edges: ReadonlyArray<{
+        readonly node: {
+          readonly id: string;
+          readonly " $fragmentSpreads": FragmentRefs<"TrustCenterFilesCardFragment">;
+        };
+      }>;
+    };
     readonly vendors?: {
       readonly edges: ReadonlyArray<{
         readonly node: {
@@ -260,6 +269,57 @@ v10 = [
 ],
 v11 = {
   "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "__typename",
+  "storageKey": null
+},
+v12 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "cursor",
+  "storageKey": null
+},
+v13 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "PageInfo",
+  "kind": "LinkedField",
+  "name": "pageInfo",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "endCursor",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "hasNextPage",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+},
+v14 = {
+  "kind": "ClientExtension",
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "__id",
+      "storageKey": null
+    }
+  ]
+},
+v15 = {
+  "alias": null,
   "args": (v10/*: any*/),
   "concreteType": "SlackConnectionConnection",
   "kind": "LinkedField",
@@ -308,11 +368,18 @@ v11 = {
   ],
   "storageKey": "slackConnections(first:100)"
 },
-v12 = {
+v16 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "trustCenterVisibility",
+  "storageKey": null
+},
+v17 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "category",
   "storageKey": null
 };
 return {
@@ -454,7 +521,50 @@ return {
                 ],
                 "storageKey": "vendors(first:100)"
               },
-              (v11/*: any*/)
+              {
+                "alias": "trustCenterFiles",
+                "args": null,
+                "concreteType": "TrustCenterFileConnection",
+                "kind": "LinkedField",
+                "name": "__TrustCenterPage_trustCenterFiles_connection",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "TrustCenterFileEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "TrustCenterFile",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          {
+                            "args": null,
+                            "kind": "FragmentSpread",
+                            "name": "TrustCenterFilesCardFragment"
+                          },
+                          (v11/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v12/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v13/*: any*/),
+                  (v14/*: any*/)
+                ],
+                "storageKey": null
+              },
+              (v15/*: any*/)
             ],
             "type": "Organization",
             "abstractKey": null
@@ -480,13 +590,7 @@ return {
         "name": "node",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "__typename",
-            "storageKey": null
-          },
+          (v11/*: any*/),
           (v2/*: any*/),
           {
             "kind": "InlineFragment",
@@ -534,7 +638,7 @@ return {
                             "name": "documentType",
                             "storageKey": null
                           },
-                          (v12/*: any*/),
+                          (v16/*: any*/),
                           {
                             "alias": null,
                             "args": [
@@ -651,7 +755,7 @@ return {
                             "name": "state",
                             "storageKey": null
                           },
-                          (v12/*: any*/),
+                          (v16/*: any*/),
                           (v5/*: any*/)
                         ],
                         "storageKey": null
@@ -688,13 +792,7 @@ return {
                         "selections": [
                           (v2/*: any*/),
                           (v3/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "category",
-                            "storageKey": null
-                          },
+                          (v17/*: any*/),
                           (v8/*: any*/),
                           {
                             "alias": null,
@@ -713,7 +811,66 @@ return {
                 ],
                 "storageKey": "vendors(first:100)"
               },
-              (v11/*: any*/)
+              {
+                "alias": null,
+                "args": (v10/*: any*/),
+                "concreteType": "TrustCenterFileConnection",
+                "kind": "LinkedField",
+                "name": "trustCenterFiles",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "TrustCenterFileEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "TrustCenterFile",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          (v3/*: any*/),
+                          (v17/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "fileUrl",
+                            "storageKey": null
+                          },
+                          (v16/*: any*/),
+                          (v5/*: any*/),
+                          (v6/*: any*/),
+                          (v11/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v12/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v13/*: any*/),
+                  (v14/*: any*/)
+                ],
+                "storageKey": "trustCenterFiles(first:100)"
+              },
+              {
+                "alias": null,
+                "args": (v10/*: any*/),
+                "filters": null,
+                "handle": "connection",
+                "key": "TrustCenterPage_trustCenterFiles",
+                "kind": "LinkedHandle",
+                "name": "trustCenterFiles"
+              },
+              (v15/*: any*/)
             ],
             "type": "Organization",
             "abstractKey": null
@@ -724,16 +881,28 @@ return {
     ]
   },
   "params": {
-    "cacheID": "06cd2015e9fc2e65d35ae3153e587c58",
+    "cacheID": "45a68d6b8fc3128a695529daa40eba3a",
     "id": null,
-    "metadata": {},
+    "metadata": {
+      "connection": [
+        {
+          "count": null,
+          "cursor": null,
+          "direction": "forward",
+          "path": [
+            "organization",
+            "trustCenterFiles"
+          ]
+        }
+      ]
+    },
     "name": "TrustCenterGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      customDomain {\n        id\n        domain\n      }\n      trustCenter {\n        id\n        active\n        ndaFileName\n        ndaFileUrl\n        createdAt\n        updatedAt\n        references(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              name\n              description\n              websiteUrl\n              logoUrl\n              createdAt\n              updatedAt\n            }\n          }\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterAuditsCardFragment\n          }\n        }\n      }\n      vendors(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterVendorsCardFragment\n          }\n        }\n      }\n      slackConnections(first: 100) {\n        edges {\n          node {\n            id\n            channel\n            channelId\n            createdAt\n            updatedAt\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  trustCenterVisibility\n  createdAt\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n}\n"
+    "text": "query TrustCenterGraphQuery(\n  $organizationId: ID!\n) {\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      customDomain {\n        id\n        domain\n      }\n      trustCenter {\n        id\n        active\n        ndaFileName\n        ndaFileUrl\n        createdAt\n        updatedAt\n        references(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              name\n              description\n              websiteUrl\n              logoUrl\n              createdAt\n              updatedAt\n            }\n          }\n        }\n      }\n      documents(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterDocumentsCardFragment\n          }\n        }\n      }\n      audits(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterAuditsCardFragment\n          }\n        }\n      }\n      vendors(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterVendorsCardFragment\n          }\n        }\n      }\n      trustCenterFiles(first: 100) {\n        edges {\n          node {\n            id\n            ...TrustCenterFilesCardFragment\n            __typename\n          }\n          cursor\n        }\n        pageInfo {\n          endCursor\n          hasNextPage\n        }\n      }\n      slackConnections(first: 100) {\n        edges {\n          node {\n            id\n            channel\n            channelId\n            createdAt\n            updatedAt\n          }\n        }\n      }\n    }\n    id\n  }\n}\n\nfragment TrustCenterAuditsCardFragment on Audit {\n  id\n  name\n  framework {\n    name\n    id\n  }\n  validFrom\n  validUntil\n  state\n  trustCenterVisibility\n  createdAt\n}\n\nfragment TrustCenterDocumentsCardFragment on Document {\n  id\n  title\n  createdAt\n  documentType\n  trustCenterVisibility\n  versions(first: 1) {\n    edges {\n      node {\n        id\n        status\n      }\n    }\n  }\n}\n\nfragment TrustCenterFilesCardFragment on TrustCenterFile {\n  id\n  name\n  category\n  fileUrl\n  trustCenterVisibility\n  createdAt\n  updatedAt\n}\n\nfragment TrustCenterVendorsCardFragment on Vendor {\n  id\n  name\n  category\n  description\n  showOnTrustCenter\n  createdAt\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7ef9a5adc70dff604a149ea156e52edc";
+(node as any).hash = "1ee50612da47b187cb55b2e228ba5945";
 
 export default node;

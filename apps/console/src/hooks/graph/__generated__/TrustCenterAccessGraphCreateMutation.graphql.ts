@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5c208d2afc4eb2968b59215d3e79231b>>
+ * @generated SignedSource<<d527603a814e765a1a2be0900d1c59e1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -47,6 +47,11 @@ export type TrustCenterAccessGraphCreateMutation$data = {
                 } | null | undefined;
                 readonly filename: string;
                 readonly id: string;
+              } | null | undefined;
+              readonly trustCenterFile: {
+                readonly category: string;
+                readonly id: string;
+                readonly name: string;
               } | null | undefined;
               readonly updatedAt: any;
             };
@@ -186,6 +191,26 @@ v13 = {
   "kind": "ScalarField",
   "name": "filename",
   "storageKey": null
+},
+v14 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "TrustCenterFile",
+  "kind": "LinkedField",
+  "name": "trustCenterFile",
+  "plural": false,
+  "selections": [
+    (v4/*: any*/),
+    (v6/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "category",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
 };
 return {
   "fragment": {
@@ -293,7 +318,8 @@ return {
                                   }
                                 ],
                                 "storageKey": null
-                              }
+                              },
+                              (v14/*: any*/)
                             ],
                             "storageKey": null
                           }
@@ -422,7 +448,8 @@ return {
                                   }
                                 ],
                                 "storageKey": null
-                              }
+                              },
+                              (v14/*: any*/)
                             ],
                             "storageKey": null
                           }
@@ -460,16 +487,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a27b7cdf2a4cadf8cc22a95f39c3c6b0",
+    "cacheID": "4422a02632b77f81f3b5048b5acbac98",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAccessGraphCreateMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        documentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              active\n              createdAt\n              updatedAt\n              document {\n                id\n                title\n                documentType\n              }\n              report {\n                id\n                filename\n                audit {\n                  id\n                  framework {\n                    name\n                    id\n                  }\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterAccessGraphCreateMutation(\n  $input: CreateTrustCenterAccessInput!\n) {\n  createTrustCenterAccess(input: $input) {\n    trustCenterAccessEdge {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        documentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              active\n              createdAt\n              updatedAt\n              document {\n                id\n                title\n                documentType\n              }\n              report {\n                id\n                filename\n                audit {\n                  id\n                  framework {\n                    name\n                    id\n                  }\n                }\n              }\n              trustCenterFile {\n                id\n                name\n                category\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "091432e335b8fe3a97ac06d3765f172b";
+(node as any).hash = "c09c8a22a45226949a08f2262ddd0b1c";
 
 export default node;

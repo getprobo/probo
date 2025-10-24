@@ -476,6 +476,24 @@ type TrustCenterReferenceEdge {
   node: TrustCenterReference!
 }
 
+type TrustCenterFile implements Node {
+  id: ID!
+  name: String!
+  category: String!
+  isUserAuthorized: Boolean! @goField(forceResolver: true)
+  hasUserRequestedAccess: Boolean! @goField(forceResolver: true)
+}
+
+type TrustCenterFileConnection {
+  edges: [TrustCenterFileEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TrustCenterFileEdge {
+  cursor: CursorKey!
+  node: TrustCenterFile!
+}
+
 type TrustCenter implements Node {
   id: ID!
   active: Boolean!
@@ -513,6 +531,13 @@ type TrustCenter implements Node {
     last: Int
     before: CursorKey
   ): TrustCenterReferenceConnection! @goField(forceResolver: true)
+
+  trustCenterFiles(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+  ): TrustCenterFileConnection! @goField(forceResolver: true)
 }
 
 type TrustCenterAccess implements Node {
@@ -559,11 +584,26 @@ input RequestReportAccessInput {
   name: String
 }
 
+input RequestTrustCenterFileAccessInput {
+  trustCenterId: ID!
+  trustCenterFileId: ID!
+  email: String
+  name: String
+}
+
+input ExportTrustCenterFileInput {
+  trustCenterFileId: ID!
+}
+
 type ExportDocumentPDFPayload {
   data: String!
 }
 
 type ExportReportPDFPayload {
+  data: String!
+}
+
+type ExportTrustCenterFilePayload {
   data: String!
 }
 
@@ -598,4 +638,12 @@ type Mutation {
   requestReportAccess(
     input: RequestReportAccessInput!
   ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
+
+  requestTrustCenterFileAccess(
+    input: RequestTrustCenterFileAccessInput!
+  ): RequestAccessesPayload! @mustBeAuthenticated(role: NONE)
+
+  exportTrustCenterFile(
+    input: ExportTrustCenterFileInput!
+  ): ExportTrustCenterFilePayload! @mustBeAuthenticated(role: NONE)
 }

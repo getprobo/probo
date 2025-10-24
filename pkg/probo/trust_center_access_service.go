@@ -41,11 +41,12 @@ type (
 	}
 
 	UpdateTrustCenterAccessRequest struct {
-		ID          gid.GID
-		Name        *string
-		Active      *bool
-		DocumentIDs []gid.GID
-		ReportIDs   []gid.GID
+		ID                 gid.GID
+		Name               *string
+		Active             *bool
+		DocumentIDs        []gid.GID
+		ReportIDs          []gid.GID
+		TrustCenterFileIDs []gid.GID
 	}
 
 	DeleteTrustCenterAccessRequest struct {
@@ -197,6 +198,7 @@ func (s TrustCenterAccessService) Create(
 
 		documentIDs := []gid.GID{}
 		reportIDs := []gid.GID{}
+		trustCenterFileIDs := []gid.GID{}
 
 		var allDocuments coredata.Documents
 		filter := coredata.NewDocumentTrustCenterFilter()
@@ -222,6 +224,16 @@ func (s TrustCenterAccessService) Create(
 			}
 		}
 
+		var allTrustCenterFiles coredata.TrustCenterFiles
+
+		if err := allTrustCenterFiles.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID); err != nil {
+			return fmt.Errorf("cannot list trust center files: %w", err)
+		}
+
+		for _, file := range allTrustCenterFiles {
+			trustCenterFileIDs = append(trustCenterFileIDs, file.ID)
+		}
+
 		access = &coredata.TrustCenterAccess{
 			ID:                                gid.New(s.svc.scope.GetTenantID(), coredata.TrustCenterAccessEntityType),
 			TenantID:                          s.svc.scope.GetTenantID(),
@@ -245,6 +257,10 @@ func (s TrustCenterAccessService) Create(
 
 		if err := documentAccesses.BulkInsertReportAccesses(ctx, tx, s.svc.scope, access.ID, reportIDs, now); err != nil {
 			return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
+		}
+
+		if err := documentAccesses.BulkInsertTrustCenterFileAccesses(ctx, tx, s.svc.scope, access.ID, trustCenterFileIDs, now); err != nil {
+			return fmt.Errorf("cannot bulk insert trust center file accesses: %w", err)
 		}
 
 		return nil
@@ -289,7 +305,7 @@ func (s TrustCenterAccessService) Update(
 			return fmt.Errorf("cannot update trust center access: %w", err)
 		}
 
-		if req.DocumentIDs != nil || req.ReportIDs != nil {
+		if req.DocumentIDs != nil || req.ReportIDs != nil || req.TrustCenterFileIDs != nil {
 			if err := coredata.DeactivateByTrustCenterAccessID(ctx, tx, s.svc.scope, access.ID, now); err != nil {
 				return fmt.Errorf("cannot deactivate existing document accesses: %w", err)
 			}
@@ -303,6 +319,12 @@ func (s TrustCenterAccessService) Update(
 			if req.ReportIDs != nil {
 				if err := coredata.ActivateByReportIDs(ctx, tx, s.svc.scope, access.ID, req.ReportIDs, now); err != nil {
 					return fmt.Errorf("cannot activate report accesses: %w", err)
+				}
+			}
+
+			if req.TrustCenterFileIDs != nil {
+				if err := coredata.ActivateByTrustCenterFileIDs(ctx, tx, s.svc.scope, access.ID, req.TrustCenterFileIDs, now); err != nil {
+					return fmt.Errorf("cannot activate trust center file accesses: %w", err)
 				}
 			}
 		}

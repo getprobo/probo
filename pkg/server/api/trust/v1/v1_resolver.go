@@ -445,6 +445,138 @@ func (r *mutationResolver) RequestReportAccess(ctx context.Context, input types.
 	}, nil
 }
 
+// RequestTrustCenterFileAccess is the resolver for the requestTrustCenterFileAccess field.
+func (r *mutationResolver) RequestTrustCenterFileAccess(ctx context.Context, input types.RequestTrustCenterFileAccessInput) (*types.RequestAccessesPayload, error) {
+	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterID.TenantID())
+
+	trustCenterFile, err := publicTrustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load trust center file: %w", err))
+	}
+
+	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		return nil, fmt.Errorf("trust center file is publicly available and does not require access request")
+	}
+
+	userData := r.UserFromContext(ctx)
+	if userData != nil {
+		return nil, fmt.Errorf("session users cannot request trust center access")
+	}
+
+	email := input.Email
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		if email != nil || input.Name != nil {
+			return nil, fmt.Errorf("email and name are not allowed for authenticated users")
+		}
+		emailValue := tokenData.GetEmail()
+		email = &emailValue
+	}
+	if email == nil {
+		return nil, fmt.Errorf("email is required for unauthenticated users")
+	}
+
+	access, err := publicTrustService.TrustCenterAccesses.Request(ctx, &trust.TrustCenterAccessRequest{
+		TrustCenterID:      input.TrustCenterID,
+		Email:              *email,
+		Name:               input.Name,
+		DocumentIDs:        []gid.GID{},
+		ReportIDs:          []gid.GID{},
+		TrustCenterFileIDs: []gid.GID{input.TrustCenterFileID},
+	})
+	if err != nil {
+		panic(fmt.Errorf("cannot request trust center file access: %w", err))
+	}
+
+	return &types.RequestAccessesPayload{
+		TrustCenterAccess: &types.TrustCenterAccess{
+			ID:        access.ID,
+			Email:     access.Email,
+			Name:      access.Name,
+			CreatedAt: access.CreatedAt,
+			UpdatedAt: access.UpdatedAt,
+		},
+	}, nil
+}
+
+// ExportTrustCenterFile is the resolver for the exportTrustCenterFile field.
+func (r *mutationResolver) ExportTrustCenterFile(ctx context.Context, input types.ExportTrustCenterFileInput) (*types.ExportTrustCenterFilePayload, error) {
+	publicTrustService := r.PublicTrustService(ctx, input.TrustCenterFileID.TenantID())
+
+	trustCenterFile, err := publicTrustService.TrustCenterFiles.Get(ctx, input.TrustCenterFileID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load trust center file: %w", err))
+	}
+
+	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		fileData, err := publicTrustService.TrustCenterFiles.ExportFileWithoutWatermark(ctx, input.TrustCenterFileID)
+		if err != nil {
+			panic(fmt.Errorf("cannot export trust center file: %w", err))
+		}
+
+		return &types.ExportTrustCenterFilePayload{
+			Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
+		}, nil
+	}
+
+	privateTrustService, err := r.PrivateTrustService(ctx, input.TrustCenterFileID.TenantID())
+	if err != nil {
+		return nil, fmt.Errorf("cannot export trust center file: %w", err)
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		ndaExists := true
+		hasAcceptedNDA := false
+
+		trustCenter, _, err := privateTrustService.TrustCenters.Get(ctx, tokenData.TrustCenterID)
+		if err != nil {
+			panic(fmt.Errorf("cannot get trust center: %w", err))
+		}
+		if trustCenter.NonDisclosureAgreementFileID == nil {
+			ndaExists = false
+		}
+
+		if ndaExists {
+			hasAcceptedNDA, err = privateTrustService.TrustCenterAccesses.HasAcceptedNonDisclosureAgreement(ctx, tokenData.TrustCenterID, tokenData.GetEmail())
+			if err != nil {
+				panic(fmt.Errorf("cannot check if user has accepted NDA: %w", err))
+			}
+		}
+
+		fileAccess, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), input.TrustCenterFileID)
+		if err != nil {
+			panic(fmt.Errorf("cannot check trust center file access: %w", err))
+		}
+
+		if !fileAccess.Active {
+			return nil, fmt.Errorf("access denied: no permission to access this file")
+		}
+
+		if ndaExists && !hasAcceptedNDA {
+			return nil, fmt.Errorf("user has not accepted NDA")
+		}
+	}
+
+	userData := UserFromContext(ctx)
+	userEmail := ""
+	if userData != nil {
+		userEmail = userData.EmailAddress
+	}
+	if tokenData != nil {
+		userEmail = tokenData.GetEmail()
+	}
+
+	fileData, err := privateTrustService.TrustCenterFiles.ExportFile(ctx, input.TrustCenterFileID, userEmail)
+	if err != nil {
+		panic(fmt.Errorf("cannot export trust center file: %w", err))
+	}
+
+	return &types.ExportTrustCenterFilePayload{
+		Data: fmt.Sprintf("data:application/pdf;base64,%s", base64.StdEncoding.EncodeToString(fileData)),
+	}, nil
+}
+
 // LogoURL is the resolver for the logoUrl field.
 func (r *organizationResolver) LogoURL(ctx context.Context, obj *types.Organization) (*string, error) {
 	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
@@ -772,6 +904,84 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	return types.NewTrustCenterReferenceConnection(referencePage), nil
 }
 
+// TrustCenterFiles is the resolver for the trustCenterFiles field.
+func (r *trustCenterResolver) TrustCenterFiles(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey) (*types.TrustCenterFileConnection, error) {
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.TrustCenterFileOrderField]{
+		Field:     coredata.TrustCenterFileOrderFieldName,
+		Direction: page.OrderDirectionAsc,
+	}
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	trustCenterFilePage, err := publicTrustService.TrustCenterFiles.ListForOrganizationId(ctx, obj.Organization.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list public trust center files: %w", err))
+	}
+
+	return types.NewTrustCenterFileConnection(trustCenterFilePage), nil
+}
+
+// IsUserAuthorized is the resolver for the isUserAuthorized field.
+func (r *trustCenterFileResolver) IsUserAuthorized(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
+	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
+
+	trustCenterFile, err := publicTrustService.TrustCenterFiles.Get(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot load trust center file: %w", err))
+	}
+
+	if trustCenterFile.TrustCenterVisibility == coredata.TrustCenterVisibilityPublic {
+		return true, nil
+	}
+
+	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return false, nil
+	}
+
+	userData := r.UserFromContext(ctx)
+	if userData != nil {
+		return true, nil
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		fileAccess, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		if err != nil {
+			return false, nil
+		}
+
+		return fileAccess.Active, nil
+	}
+
+	panic(fmt.Errorf("no user or token data found"))
+}
+
+// HasUserRequestedAccess is the resolver for the hasUserRequestedAccess field.
+func (r *trustCenterFileResolver) HasUserRequestedAccess(ctx context.Context, obj *types.TrustCenterFile) (bool, error) {
+	privateTrustService, err := r.PrivateTrustService(ctx, obj.ID.TenantID())
+	if err != nil {
+		return false, nil
+	}
+
+	userData := r.UserFromContext(ctx)
+	if userData != nil {
+		return false, nil
+	}
+
+	tokenData := TokenAccessFromContext(ctx)
+	if tokenData != nil {
+		_, err := privateTrustService.TrustCenterAccesses.LoadTrustCenterFileAccess(ctx, tokenData.TrustCenterID, tokenData.GetEmail(), obj.ID)
+		if err != nil {
+			return false, nil
+		}
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // LogoURL is the resolver for the logoUrl field.
 func (r *trustCenterReferenceResolver) LogoURL(ctx context.Context, obj *types.TrustCenterReference) (string, error) {
 	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
@@ -805,6 +1015,11 @@ func (r *Resolver) Report() schema.ReportResolver { return &reportResolver{r} }
 // TrustCenter returns schema.TrustCenterResolver implementation.
 func (r *Resolver) TrustCenter() schema.TrustCenterResolver { return &trustCenterResolver{r} }
 
+// TrustCenterFile returns schema.TrustCenterFileResolver implementation.
+func (r *Resolver) TrustCenterFile() schema.TrustCenterFileResolver {
+	return &trustCenterFileResolver{r}
+}
+
 // TrustCenterReference returns schema.TrustCenterReferenceResolver implementation.
 func (r *Resolver) TrustCenterReference() schema.TrustCenterReferenceResolver {
 	return &trustCenterReferenceResolver{r}
@@ -817,4 +1032,5 @@ type organizationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
 type trustCenterResolver struct{ *Resolver }
+type trustCenterFileResolver struct{ *Resolver }
 type trustCenterReferenceResolver struct{ *Resolver }
