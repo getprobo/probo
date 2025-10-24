@@ -46,6 +46,7 @@ Probo is designed to be accessible, transparent, and community-driven.
 - Go 1.21+
 - Node.js 22+
 - Docker
+- mkcert
 
 ### Quick Start
 
@@ -82,6 +83,17 @@ Probo is designed to be accessible, transparent, and community-driven.
 The application will be available at:
 
 - Application: http://localhost:8080
+
+### Testing Custom Domains
+
+To test the custom domains feature locally, add the CNAME target to your hosts file:
+
+```bash
+# Add this line to /etc/hosts (macOS/Linux) or C:\Windows\System32\drivers\etc\hosts (Windows)
+127.0.0.1 custom.getprobo.com
+```
+
+This allows you to test custom trust center domains on your local machine. The CNAME target can be configured in `cfg/dev.yaml` under `custom-domains.cname-target`.
 
 For detailed setup instructions, see our [Contributing Guide](CONTRIBUTING.md).
 

@@ -79,7 +79,7 @@ probod:
       directory: "https://localhost:14000/dir"
       email: "admin@getprobo.com"
       key-type: "EC256"
-      insecure-tls: true
+      root-ca: ""
 
   connectors:
     - provider: "slack"
@@ -87,7 +87,7 @@ probod:
       config:
         client-id: "slack-client-id"
         client-secret: "thisisnotasecret"
-        redirect-uri: "http://localhost:8080/api/console/v1/connectors/complete"
+        redirect-uri: "https://localhost:8080/api/console/v1/connectors/complete"
         auth-url: "https://slack.com/oauth/v2/authorize"
         token-url: "https://slack.com/api/oauth.v2.access"
         scopes:

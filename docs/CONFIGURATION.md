@@ -36,8 +36,8 @@ probod:
 
   pg:
     addr: "localhost:5432"
-    username: "probod"
-    password: "probod"
+    username: "postgres"
+    password: "postgres"
     database: "probod"
     pool-size: 100
     ca-cert-bundle: |
@@ -67,6 +67,10 @@ probod:
     scope: "trust_center_readonly"
     token-type: "trust_center_access"
 
+  trust-center:
+    http-addr: ":80"
+    https-addr: ":443"
+
   aws:
     region: "us-east-1"
     bucket: "probod"
@@ -74,29 +78,51 @@ probod:
     secret-access-key: "secret-key"
     endpoint: "http://127.0.0.1:9000"
 
-  mailer:
-    sender-name: "Probo"
-    sender-email: "no-reply@notification.getprobo.com"
-    smtp:
-      addr: "localhost:1025"
-      user: "smtp-username"
-      password: "smtp-password"
-      tls-required: true
+  notifications:
+    mailer:
+      sender-name: "Probo"
+      sender-email: "no-reply@notification.getprobo.com"
+      mailer-interval: 60
+      smtp:
+        addr: "localhost:1025"
+        user: "smtp-username"
+        password: "smtp-password"
+        tls-required: false
+    slack:
+      sender-interval: 60
 
   openai:
     api-key: "openai-api-key"
     temperature: 0.1
     model-name: "gpt-4o"
 
+  custom-domains:
+    renewal-interval: 3600
+    provision-interval: 30
+    cname-target: "custom.getprobo.com"
+    acme:
+      directory: "https://localhost:14000/dir"
+      email: "admin@getprobo.com"
+      key-type: "EC256"
+      root-ca: ""
+      account-key: ""
+      root-ca: ""
+
   connectors:
-    - name: "github"
-      type: "oauth2"
+    - provider: "slack"
+      protocol: "oauth2"
       config:
-        client-id: "github-client-id"
-        client-secret: "github-client-secret"
+        client-id: "slack-client-id"
+        client-secret: "slack-client-secret"
         redirect-uri: "https://localhost:8080/api/console/v1/connectors/complete"
-        auth-url: "https://github.com/login/oauth/authorize"
-        token-url: "https://github.com/login/oauth/access_token"
+        auth-url: "https://slack.com/oauth/v2/authorize"
+        token-url: "https://slack.com/api/oauth.v2.access"
+        scopes:
+          - "chat:write"
+          - "channels:join"
+          - "incoming-webhook"
+      settings:
+        signing-secret: "slack-signing-secret"
 ```
 
 ## Telemetry and Observability
@@ -271,13 +297,13 @@ PostgreSQL database server address and port.
 
 #### `pg.username` (string)
 
-**Default**: `"probod"`
+**Default**: `"postgres"`
 
 Database username for authentication.
 
 #### `pg.password` (string)
 
-**Default**: `"probod"`
+**Default**: `"postgres"`
 
 Database password for authentication.
 
@@ -399,6 +425,20 @@ OAuth2 scope for trust center access.
 
 Type identifier for trust center access tokens.
 
+### Trust Center Configuration
+
+#### `trust-center.http-addr` (string)
+
+**Default**: `":80"`
+
+Network address and port where the trust center HTTP server will listen for ACME HTTP-01 challenges and HTTP to HTTPS redirects.
+
+#### `trust-center.https-addr` (string)
+
+**Default**: `":443"`
+
+Network address and port where the trust center HTTPS server will listen for secure connections. This server handles custom domain routing with automatic TLS certificate management.
+
 ### AWS Configuration
 
 #### `aws.region` (string)
@@ -431,43 +471,57 @@ AWS secret access key for authentication.
 
 Custom S3-compatible endpoint URL. Useful for local development with MinIO or other S3-compatible services.
 
-### Email Configuration
+### Notifications Configuration
 
-#### `mailer.sender-name` (string)
+The `notifications` section configures how Probod sends notifications through various channels.
+
+#### `notifications.mailer.sender-name` (string)
 
 **Default**: `"Probo"`
 
 Display name for outgoing emails.
 
-#### `mailer.sender-email` (string)
+#### `notifications.mailer.sender-email` (string)
 
 **Default**: `"no-reply@notification.getprobo.com"`
 
 Email address used as the sender for outgoing emails.
 
-#### `mailer.smtp.addr` (string)
+#### `notifications.mailer.mailer-interval` (integer)
+
+**Default**: `60`
+
+Interval in seconds between checking for pending email notifications to send.
+
+#### `notifications.mailer.smtp.addr` (string)
 
 **Default**: `"localhost:1025"`
 
 SMTP server address and port.
 
-#### `mailer.smtp.user` (string)
+#### `notifications.mailer.smtp.user` (string)
 
 **Optional**
 
 Username for SMTP authentication.
 
-#### `mailer.smtp.password` (string)
+#### `notifications.mailer.smtp.password` (string)
 
 **Optional**
 
 Password for SMTP authentication.
 
-#### `mailer.smtp.tls-required` (boolean)
+#### `notifications.mailer.smtp.tls-required` (boolean)
 
 **Default**: `false`
 
 Whether TLS encryption is required for SMTP connections.
+
+#### `notifications.slack.sender-interval` (integer)
+
+**Default**: `60`
+
+Interval in seconds between checking for pending Slack notifications to send.
 
 ### OpenAI Integration
 
@@ -489,34 +543,89 @@ Temperature parameter for AI model responses (0.0 to 1.0). Lower values produce 
 
 OpenAI model identifier to use for AI-powered features.
 
+### Custom Domains Configuration
+
+The `custom-domains` section configures automatic TLS certificate management for custom trust center domains using ACME (Let's Encrypt).
+
+#### `custom-domains.renewal-interval` (integer)
+
+**Default**: `3600`
+
+Interval in seconds between checking for certificates that need renewal.
+
+#### `custom-domains.provision-interval` (integer)
+
+**Default**: `30`
+
+Interval in seconds between checking for domains that need certificate provisioning.
+
+#### `custom-domains.cname-target` (string)
+
+**Default**: `"custom.getprobo.com"`
+
+The CNAME target that custom domains should point to. This is used for domain validation and documentation.
+
+#### `custom-domains.acme.directory` (string)
+
+**Default**: `"https://localhost:14000/dir"`
+
+ACME directory URL. For local development, use Pebble at `"https://localhost:14000/dir"`.
+
+#### `custom-domains.acme.email` (string)
+
+**Default**: `"admin@getprobo.com"`
+
+Contact email address for ACME account registration and certificate expiration notifications.
+
+#### `custom-domains.acme.key-type` (string)
+
+**Default**: `"EC256"`
+
+Type of cryptographic key to use for certificates. Supported values: `"EC256"`, `"EC384"`, `"RSA2048"`, `"RSA4096"`.
+
+#### `custom-domains.acme.root-ca` (string)
+
+**Optional**
+
+PEM-encoded root CA certificate for ACME server validation. Required when using private ACME servers or testing with Pebble.
+
+#### `custom-domains.acme.account-key` (string)
+
+**Optional**
+
+PEM-encoded ACME account private key. If not provided, a new account key will be generated automatically.
+
 ### External Connectors
 
-The `connectors` section defines external service integrations for data import and synchronization.
+The `connectors` section defines external service integrations.
 
 #### OAuth2 Connector Configuration
 
 ```yaml
 connectors:
-  - name: "service-name"
-    type: "oauth2"
+  - provider: "slack"
+    protocol: "oauth2"
     config:
       client-id: "oauth2-client-id"
       client-secret: "oauth2-client-secret"
       redirect-uri: "https://your-domain/api/console/v1/connectors/complete"
-      auth-url: "https://service.com/oauth/authorize"
-      token-url: "https://service.com/oauth/token"
+      auth-url: "https://slack.com/oauth/v2/authorize"
+      token-url: "https://slack.com/api/oauth.v2.access"
       scopes:
-        - "scope1"
-        - "scope2"
+        - "chat:write"
+        - "channels:join"
+        - "incoming-webhook"
+    settings:
+      signing-secret: "slack-signing-secret"
 ```
 
-##### `connectors[].name` (string)
+##### `connectors[].provider` (string)
 
 **Required**
 
-Unique identifier for the connector instance.
+Service provider name. Supported values: `"slack"`.
 
-##### `connectors[].type` (string)
+##### `connectors[].protocol` (string)
 
 **Required**
 
@@ -557,6 +666,14 @@ OAuth2 token exchange endpoint URL.
 **Optional**
 
 List of OAuth2 scopes to request during authorization.
+
+##### `connectors[].settings` (object)
+
+**Optional**
+
+Additional provider-specific settings. For Slack connectors, this includes:
+
+- `signing-secret` (string): Slack signing secret for webhook verification.
 
 ## Troubleshooting
 

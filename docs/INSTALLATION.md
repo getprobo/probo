@@ -48,24 +48,30 @@ services:
       - minio
 
   postgres:
-    image: postgres:15
+    image: postgres:17.4
+    shm_size: 1g
+    command: >
+      postgres -c "shared_buffers=4GB"
+               -c "max_connections=200"
+               -c "log_statement=all"
     environment:
-      POSTGRES_DB: probod
-      POSTGRES_USER: probod
-      POSTGRES_PASSWORD: probod
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
 
   minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+    image: quay.io/minio/minio
+    entrypoint: sh
+    command: |
+      -c 'mkdir -p /var/lib/minio/probod && minio server --json --console-address :9001 /var/lib/minio'
     environment:
       MINIO_ROOT_USER: probod
       MINIO_ROOT_PASSWORD: thisisnotasecret
     volumes:
-      - minio_data:/data
+      - minio_data:/var/lib/minio
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -191,8 +197,8 @@ Create a PostgreSQL database for Probo:
 
 ```sql
 CREATE DATABASE probod;
-CREATE USER probod WITH PASSWORD 'your_secure_password';
-GRANT ALL PRIVILEGES ON DATABASE probod TO probod;
+CREATE USER postgres WITH PASSWORD 'your_secure_password';
+GRANT ALL PRIVILEGES ON DATABASE probod TO postgres;
 ```
 
 ### 2. Configuration
@@ -206,7 +212,7 @@ probod:
 
   pg:
     addr: "localhost:5432"
-    username: "probod"
+    username: "postgres"
     password: "your_secure_password"
     database: "probod"
 
