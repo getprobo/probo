@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<395567ba680d0a9e1bad1cdef52bc2e1>>
+ * @generated SignedSource<<8ecf71138aa0165738506f5e589d3181>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,6 +16,7 @@ export type UpdateTrustCenterAccessInput = {
   id: string;
   name?: string | null | undefined;
   reportIds?: ReadonlyArray<string> | null | undefined;
+  trustCenterFileIds?: ReadonlyArray<string> | null | undefined;
 };
 export type TrustCenterAccessGraphUpdateMutation$variables = {
   input: UpdateTrustCenterAccessInput;
@@ -45,6 +46,11 @@ export type TrustCenterAccessGraphUpdateMutation$data = {
               } | null | undefined;
               readonly filename: string;
               readonly id: string;
+            } | null | undefined;
+            readonly trustCenterFile: {
+              readonly category: string;
+              readonly id: string;
+              readonly name: string;
             } | null | undefined;
             readonly updatedAt: any;
           };
@@ -174,6 +180,26 @@ v11 = {
   "kind": "ScalarField",
   "name": "filename",
   "storageKey": null
+},
+v12 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "TrustCenterFile",
+  "kind": "LinkedField",
+  "name": "trustCenterFile",
+  "plural": false,
+  "selections": [
+    (v2/*: any*/),
+    (v4/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "category",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
 };
 return {
   "fragment": {
@@ -270,7 +296,8 @@ return {
                               }
                             ],
                             "storageKey": null
-                          }
+                          },
+                          (v12/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -385,7 +412,8 @@ return {
                               }
                             ],
                             "storageKey": null
-                          }
+                          },
+                          (v12/*: any*/)
                         ],
                         "storageKey": null
                       }
@@ -404,16 +432,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "de3ddd0058b8881667e47e2bf32c8b73",
+    "cacheID": "b66da9236d9f81563608b3aa5f730908",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterAccessGraphUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      active\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n      documentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            active\n            createdAt\n            updatedAt\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterAccessGraphUpdateMutation(\n  $input: UpdateTrustCenterAccessInput!\n) {\n  updateTrustCenterAccess(input: $input) {\n    trustCenterAccess {\n      id\n      email\n      name\n      active\n      hasAcceptedNonDisclosureAgreement\n      createdAt\n      updatedAt\n      documentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        edges {\n          node {\n            id\n            active\n            createdAt\n            updatedAt\n            document {\n              id\n              title\n              documentType\n            }\n            report {\n              id\n              filename\n              audit {\n                id\n                framework {\n                  name\n                  id\n                }\n              }\n            }\n            trustCenterFile {\n              id\n              name\n              category\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "723058aacc2e04bd2df4cf04c6df0a3c";
+(node as any).hash = "43e73cc9d80e898f1ba2a92eaf4646f5";
 
 export default node;

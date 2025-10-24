@@ -51,9 +51,17 @@ type (
 		Granted bool
 	}
 
+	SlackMessageFile struct {
+		ID       string
+		Name     string
+		Category string
+		Granted  bool
+	}
+
 	SlackMessageMetadata struct {
 		Documents []SlackMessageDocument
 		Reports   []SlackMessageReport
+		Files     []SlackMessageFile
 	}
 )
 
@@ -61,6 +69,7 @@ func (m SlackMessageMetadata) toMap() map[string]any {
 	return map[string]any{
 		"documents": m.Documents,
 		"reports":   m.Reports,
+		"files":     m.Files,
 	}
 }
 
@@ -86,10 +95,10 @@ func (s *Service) GetInitialSlackMessageByChannelAndTS(
 	return &slackMessage, nil
 }
 
-func (s *SlackMessageService) GetSlackMessageMetadataByID(
+func (s *SlackMessageService) GetSlackMessageDocumentIDs(
 	ctx context.Context,
 	slackMessageID gid.GID,
-) (documentIDs []gid.GID, reportIDs []gid.GID, err error) {
+) (documentIDs []gid.GID, reportIDs []gid.GID, fileIDs []gid.GID, err error) {
 	var slackMessage coredata.SlackMessage
 
 	err = s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
@@ -101,52 +110,14 @@ func (s *SlackMessageService) GetSlackMessageMetadataByID(
 	})
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	documents, ok := slackMessage.Metadata["documents"].([]any)
-	if !ok {
-		return nil, nil, fmt.Errorf("invalid documents metadata")
-	}
+	documentIDs = extractIDsFromMetadata(slackMessage.Metadata, "documents")
+	reportIDs = extractIDsFromMetadata(slackMessage.Metadata, "reports")
+	fileIDs = extractIDsFromMetadata(slackMessage.Metadata, "files")
 
-	for _, docAny := range documents {
-		doc, ok := docAny.(map[string]any)
-		if !ok {
-			continue
-		}
-		idStr, ok := doc["ID"].(string)
-		if !ok {
-			continue
-		}
-		docID, err := gid.ParseGID(idStr)
-		if err != nil {
-			continue
-		}
-		documentIDs = append(documentIDs, docID)
-	}
-
-	reports, ok := slackMessage.Metadata["reports"].([]any)
-	if !ok {
-		return nil, nil, fmt.Errorf("invalid reports metadata")
-	}
-
-	for _, repAny := range reports {
-		rep, ok := repAny.(map[string]any)
-		if !ok {
-			continue
-		}
-		idStr, ok := rep["ID"].(string)
-		if !ok {
-			continue
-		}
-		repID, err := gid.ParseGID(idStr)
-		if err != nil {
-			continue
-		}
-		reportIDs = append(reportIDs, repID)
-	}
-
-	return documentIDs, reportIDs, nil
+	return documentIDs, reportIDs, fileIDs, nil
 }
 
 func (s *SlackMessageService) UpdateSlackAccessMessage(
@@ -171,7 +142,7 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
-		documents, reports, err := s.loadDocumentsAndReportsFromAccesses(ctx, tx, trustCenterAccess.ID)
+		documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, trustCenterAccess.ID)
 		if err != nil {
 			return err
 		}
@@ -185,6 +156,7 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 			trustCenter.OrganizationID,
 			documents,
 			reports,
+			files,
 		)
 		if err != nil {
 			return err
@@ -193,6 +165,7 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 		metadata := SlackMessageMetadata{
 			Documents: documents,
 			Reports:   reports,
+			Files:     files,
 		}
 
 		now := time.Now()
@@ -261,9 +234,9 @@ func (s *SlackMessageService) QueueSlackNotification(
 			return fmt.Errorf("no slack connector found for organization")
 		}
 
-		documents, reports, err := s.loadDocumentsAndReportsFromAccesses(ctx, tx, trustCenterAccess.ID)
+		documents, reports, files, err := s.loadDocumentsReportsAndFilesFromAccesses(ctx, tx, trustCenterAccess.ID)
 		if err != nil {
-			return fmt.Errorf("cannot load documents and reports: %w", err)
+			return fmt.Errorf("cannot load documents, reports and files: %w", err)
 		}
 
 		slackMessageID := gid.New(s.svc.scope.GetTenantID(), coredata.SlackMessageEntityType)
@@ -275,6 +248,7 @@ func (s *SlackMessageService) QueueSlackNotification(
 			trustCenter.OrganizationID,
 			documents,
 			reports,
+			files,
 		)
 		if err != nil {
 			return fmt.Errorf("cannot build access request message: %w", err)
@@ -283,6 +257,7 @@ func (s *SlackMessageService) QueueSlackNotification(
 		metadata := SlackMessageMetadata{
 			Documents: documents,
 			Reports:   reports,
+			Files:     files,
 		}
 
 		now := time.Now()
@@ -334,28 +309,30 @@ func (s *SlackMessageService) QueueSlackNotification(
 	})
 }
 
-func (s *SlackMessageService) loadDocumentsAndReportsFromAccesses(
+func (s *SlackMessageService) loadDocumentsReportsAndFilesFromAccesses(
 	ctx context.Context,
 	conn pg.Conn,
 	trustCenterAccessID gid.GID,
 ) (
 	documents []SlackMessageDocument,
 	reports []SlackMessageReport,
+	files []SlackMessageFile,
 	err error,
 ) {
 	documents = []SlackMessageDocument{}
 	reports = []SlackMessageReport{}
+	files = []SlackMessageFile{}
 
 	var accesses coredata.TrustCenterDocumentAccesses
 	if err := accesses.LoadAllByTrustCenterAccessID(ctx, conn, s.svc.scope, trustCenterAccessID); err != nil {
-		return nil, nil, fmt.Errorf("cannot load trust center document accesses: %w", err)
+		return nil, nil, nil, fmt.Errorf("cannot load trust center document accesses: %w", err)
 	}
 
 	for _, access := range accesses {
 		if access.DocumentID != nil {
 			doc := &coredata.Document{}
 			if err := doc.LoadByID(ctx, conn, s.svc.scope, *access.DocumentID); err != nil {
-				return nil, nil, fmt.Errorf("cannot load document: %w", err)
+				return nil, nil, nil, fmt.Errorf("cannot load document: %w", err)
 			}
 			documents = append(documents, SlackMessageDocument{
 				ID:      access.DocumentID.String(),
@@ -367,17 +344,17 @@ func (s *SlackMessageService) loadDocumentsAndReportsFromAccesses(
 		if access.ReportID != nil {
 			rep := &coredata.Report{}
 			if err := rep.LoadByID(ctx, conn, s.svc.scope, *access.ReportID); err != nil {
-				return nil, nil, fmt.Errorf("cannot load report: %w", err)
+				return nil, nil, nil, fmt.Errorf("cannot load report: %w", err)
 			}
 
 			audit := &coredata.Audit{}
 			if err := audit.LoadByReportID(ctx, conn, s.svc.scope, *access.ReportID); err != nil {
-				return nil, nil, fmt.Errorf("cannot load audit: %w", err)
+				return nil, nil, nil, fmt.Errorf("cannot load audit: %w", err)
 			}
 
 			framework := &coredata.Framework{}
 			if err := framework.LoadByID(ctx, conn, s.svc.scope, audit.FrameworkID); err != nil {
-				return nil, nil, fmt.Errorf("cannot load framework: %w", err)
+				return nil, nil, nil, fmt.Errorf("cannot load framework: %w", err)
 			}
 
 			label := framework.Name
@@ -391,9 +368,22 @@ func (s *SlackMessageService) loadDocumentsAndReportsFromAccesses(
 				Granted: access.Active,
 			})
 		}
+
+		if access.TrustCenterFileID != nil {
+			file := &coredata.TrustCenterFile{}
+			if err := file.LoadByID(ctx, conn, s.svc.scope, *access.TrustCenterFileID); err != nil {
+				return nil, nil, nil, fmt.Errorf("cannot load trust center file: %w", err)
+			}
+			files = append(files, SlackMessageFile{
+				ID:       access.TrustCenterFileID.String(),
+				Name:     file.Name,
+				Category: file.Category,
+				Granted:  access.Active,
+			})
+		}
 	}
 
-	return documents, reports, nil
+	return documents, reports, files, nil
 }
 
 func (s *SlackMessageService) buildAccessRequestMessage(
@@ -403,15 +393,20 @@ func (s *SlackMessageService) buildAccessRequestMessage(
 	organizationID gid.GID,
 	documents []SlackMessageDocument,
 	reports []SlackMessageReport,
+	files []SlackMessageFile,
 ) (map[string]any, error) {
 	var documentIDs []string
 	var reportIDs []string
+	var fileIDs []string
 
 	for _, doc := range documents {
 		documentIDs = append(documentIDs, doc.ID)
 	}
 	for _, rep := range reports {
 		reportIDs = append(reportIDs, rep.ID)
+	}
+	for _, file := range files {
+		fileIDs = append(fileIDs, file.ID)
 	}
 
 	templateData := struct {
@@ -422,8 +417,10 @@ func (s *SlackMessageService) buildAccessRequestMessage(
 		SlackMessageID string
 		DocumentIDs    []string
 		ReportIDs      []string
+		FileIDs        []string
 		Documents      []SlackMessageDocument
 		Reports        []SlackMessageReport
+		Files          []SlackMessageFile
 	}{
 		RequesterName:  requesterName,
 		RequesterEmail: requesterEmail,
@@ -432,8 +429,10 @@ func (s *SlackMessageService) buildAccessRequestMessage(
 		SlackMessageID: slackMessageID.String(),
 		DocumentIDs:    documentIDs,
 		ReportIDs:      reportIDs,
+		FileIDs:        fileIDs,
 		Documents:      documents,
 		Reports:        reports,
+		Files:          files,
 	}
 
 	var buf bytes.Buffer
@@ -447,4 +446,31 @@ func (s *SlackMessageService) buildAccessRequestMessage(
 	}
 
 	return body, nil
+}
+
+func extractIDsFromMetadata(metadata map[string]any, fieldName string) []gid.GID {
+	ids := []gid.GID{}
+
+	items, ok := metadata[fieldName].([]any)
+	if !ok || items == nil {
+		return ids
+	}
+
+	for _, itemAny := range items {
+		item, ok := itemAny.(map[string]any)
+		if !ok {
+			continue
+		}
+		idStr, ok := item["ID"].(string)
+		if !ok {
+			continue
+		}
+		id, err := gid.ParseGID(idStr)
+		if err != nil {
+			continue
+		}
+		ids = append(ids, id)
+	}
+
+	return ids
 }

@@ -32,6 +32,7 @@ type (
 		TrustCenterAccessID gid.GID   `db:"trust_center_access_id"`
 		DocumentID          *gid.GID  `db:"document_id"`
 		ReportID            *gid.GID  `db:"report_id"`
+		TrustCenterFileID   *gid.GID  `db:"trust_center_file_id"`
 		Active              bool      `db:"active"`
 		CreatedAt           time.Time `db:"created_at"`
 		UpdatedAt           time.Time `db:"updated_at"`
@@ -61,6 +62,7 @@ SELECT
 	trust_center_access_id,
 	document_id,
 	report_id,
+	trust_center_file_id,
 	active,
 	created_at,
 	updated_at
@@ -105,6 +107,7 @@ SELECT
 	trust_center_access_id,
 	document_id,
 	report_id,
+	trust_center_file_id,
 	active,
 	created_at,
 	updated_at
@@ -153,6 +156,7 @@ SELECT
 	trust_center_access_id,
 	document_id,
 	report_id,
+	trust_center_file_id,
 	active,
 	created_at,
 	updated_at
@@ -200,6 +204,7 @@ INSERT INTO trust_center_document_accesses (
 	trust_center_access_id,
 	document_id,
 	report_id,
+	trust_center_file_id,
 	active,
 	created_at,
 	updated_at
@@ -209,6 +214,7 @@ INSERT INTO trust_center_document_accesses (
 	@trust_center_access_id,
 	@document_id,
 	@report_id,
+	@trust_center_file_id,
 	@active,
 	@created_at,
 	@updated_at
@@ -221,6 +227,7 @@ INSERT INTO trust_center_document_accesses (
 		"trust_center_access_id": tcda.TrustCenterAccessID,
 		"document_id":            tcda.DocumentID,
 		"report_id":              tcda.ReportID,
+		"trust_center_file_id":   tcda.TrustCenterFileID,
 		"active":                 tcda.Active,
 		"created_at":             tcda.CreatedAt,
 		"updated_at":             tcda.UpdatedAt,
@@ -338,6 +345,7 @@ SELECT
 	trust_center_access_id,
 	document_id,
 	report_id,
+	trust_center_file_id,
 	active,
 	created_at,
 	updated_at
@@ -384,6 +392,7 @@ SELECT
 	trust_center_access_id,
 	document_id,
 	report_id,
+	trust_center_file_id,
 	active,
 	created_at,
 	updated_at
@@ -543,12 +552,13 @@ WITH document_access_data AS (
 		@trust_center_access_id AS trust_center_access_id,
 		unnest(@document_ids::text[]) AS document_id,
 		null::text AS report_id,
+		null::text AS trust_center_file_id,
 		false AS active,
 		@created_at::timestamptz AS created_at,
 		@updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id, tenant_id, trust_center_access_id, document_id, report_id, active, created_at, updated_at
+	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, created_at, updated_at
 )
 SELECT * FROM document_access_data
 `
@@ -589,12 +599,13 @@ WITH report_access_data AS (
 		@trust_center_access_id AS trust_center_access_id,
 		null::text AS document_id,
 		unnest(@report_ids::text[]) AS report_id,
+		null::text AS trust_center_file_id,
 		false AS active,
 		@created_at::timestamptz AS created_at,
 		@updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id, tenant_id, trust_center_access_id, document_id, report_id, active, created_at, updated_at
+	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, created_at, updated_at
 )
 SELECT * FROM report_access_data
 `
@@ -610,6 +621,132 @@ SELECT * FROM report_access_data
 
 	if _, err := conn.Exec(ctx, q, args); err != nil {
 		return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
+	}
+
+	return nil
+}
+
+func (tcda *TrustCenterDocumentAccess) LoadByTrustCenterAccessIDAndTrustCenterFileID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterAccessID gid.GID,
+	trustCenterFileID gid.GID,
+) error {
+	q := `
+SELECT
+	id,
+	trust_center_access_id,
+	document_id,
+	report_id,
+	trust_center_file_id,
+	active,
+	created_at,
+	updated_at
+FROM
+	trust_center_document_accesses
+WHERE
+	%s
+	AND trust_center_access_id = @trust_center_access_id
+	AND trust_center_file_id = @trust_center_file_id
+LIMIT 1;
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_file_id":   trustCenterFileID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query trust center document access: %w", err)
+	}
+
+	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterDocumentAccess])
+	if err != nil {
+		return fmt.Errorf("cannot collect trust center document access: %w", err)
+	}
+
+	*tcda = access
+
+	return nil
+}
+
+func ActivateByTrustCenterFileIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterAccessID gid.GID,
+	trustCenterFileIDs []gid.GID,
+	updatedAt time.Time,
+) error {
+	q := `
+UPDATE trust_center_document_accesses
+SET active = true, updated_at = @updated_at
+WHERE
+	%s
+	AND trust_center_access_id = @trust_center_access_id
+	AND trust_center_file_id = ANY(@trust_center_file_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_access_id": trustCenterAccessID,
+		"trust_center_file_ids":  trustCenterFileIDs,
+		"updated_at":             updatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot activate trust center document accesses by trust center file IDs: %w", err)
+	}
+
+	return nil
+}
+
+func (tcdas TrustCenterDocumentAccesses) BulkInsertTrustCenterFileAccesses(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterAccessID gid.GID,
+	trustCenterFileIDs []gid.GID,
+	createdAt time.Time,
+) error {
+	q := `
+WITH trust_center_file_access_data AS (
+	SELECT
+		generate_gid(decode_base64_unpadded(@tenant_id), @trust_center_document_access_entity_type) AS id,
+		@tenant_id AS tenant_id,
+		@trust_center_access_id AS trust_center_access_id,
+		null::text AS document_id,
+		null::text AS report_id,
+		unnest(@trust_center_file_ids::text[]) AS trust_center_file_id,
+		false AS active,
+		@created_at::timestamptz AS created_at,
+		@updated_at::timestamptz AS updated_at
+)
+INSERT INTO trust_center_document_accesses (
+	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, created_at, updated_at
+)
+SELECT * FROM trust_center_file_access_data
+`
+
+	args := pgx.StrictNamedArgs{
+		"tenant_id": scope.GetTenantID(),
+		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
+		"trust_center_access_id":                   trustCenterAccessID,
+		"trust_center_file_ids":                    trustCenterFileIDs,
+		"created_at":                               createdAt,
+		"updated_at":                               createdAt,
+	}
+
+	if _, err := conn.Exec(ctx, q, args); err != nil {
+		return fmt.Errorf("cannot bulk insert trust center file accesses: %w", err)
 	}
 
 	return nil

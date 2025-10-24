@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ef0d644a344dbab40145e3f4128cd0ec>>
+ * @generated SignedSource<<d572a906e6afd89e4a3f1dcffa5c0528>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -39,6 +39,11 @@ export type TrustCenterAccessGraph_accesses$data = {
                 } | null | undefined;
                 readonly filename: string;
                 readonly id: string;
+              } | null | undefined;
+              readonly trustCenterFile: {
+                readonly category: string;
+                readonly id: string;
+                readonly name: string;
               } | null | undefined;
               readonly updatedAt: any;
             };
@@ -348,6 +353,26 @@ return {
                                 }
                               ],
                               "storageKey": null
+                            },
+                            {
+                              "alias": null,
+                              "args": null,
+                              "concreteType": "TrustCenterFile",
+                              "kind": "LinkedField",
+                              "name": "trustCenterFile",
+                              "plural": false,
+                              "selections": [
+                                (v2/*: any*/),
+                                (v3/*: any*/),
+                                {
+                                  "alias": null,
+                                  "args": null,
+                                  "kind": "ScalarField",
+                                  "name": "category",
+                                  "storageKey": null
+                                }
+                              ],
+                              "storageKey": null
                             }
                           ],
                           "storageKey": null
@@ -393,6 +418,6 @@ return {
 };
 })();
 
-(node as any).hash = "9e29aa4a382ca2d4bb9d1b014d8d81fd";
+(node as any).hash = "9c7f3e866e2593c169b1f98d0e637667";
 
 export default node;

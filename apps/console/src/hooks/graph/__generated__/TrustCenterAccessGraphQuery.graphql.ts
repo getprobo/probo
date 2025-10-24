@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4fcca19ac1edb0d607a9682090e0cc3e>>
+ * @generated SignedSource<<e0c9c25c78bb6c8cf63eb9437947a013>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -365,6 +365,26 @@ return {
                                           }
                                         ],
                                         "storageKey": null
+                                      },
+                                      {
+                                        "alias": null,
+                                        "args": null,
+                                        "concreteType": "TrustCenterFile",
+                                        "kind": "LinkedField",
+                                        "name": "trustCenterFile",
+                                        "plural": false,
+                                        "selections": [
+                                          (v4/*: any*/),
+                                          (v8/*: any*/),
+                                          {
+                                            "alias": null,
+                                            "args": null,
+                                            "kind": "ScalarField",
+                                            "name": "category",
+                                            "storageKey": null
+                                          }
+                                        ],
+                                        "storageKey": null
                                       }
                                     ],
                                     "storageKey": null
@@ -418,12 +438,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4ca52668a68c0789aa73c0d680ec0abe",
+    "cacheID": "37deb80fc3ff8892d2e68f7588da4e55",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphQuery(\n  $trustCenterId: ID!\n  $count: Int!\n  $cursor: CursorKey\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      ...TrustCenterAccessGraph_accesses\n    }\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        documentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              active\n              createdAt\n              updatedAt\n              document {\n                id\n                title\n                documentType\n              }\n              report {\n                id\n                filename\n                audit {\n                  id\n                  framework {\n                    name\n                    id\n                  }\n                }\n              }\n            }\n          }\n        }\n        __typename\n      }\n    }\n  }\n  id\n}\n"
+    "text": "query TrustCenterAccessGraphQuery(\n  $trustCenterId: ID!\n  $count: Int!\n  $cursor: CursorKey\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      ...TrustCenterAccessGraph_accesses\n    }\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        documentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              active\n              createdAt\n              updatedAt\n              document {\n                id\n                title\n                documentType\n              }\n              report {\n                id\n                filename\n                audit {\n                  id\n                  framework {\n                    name\n                    id\n                  }\n                }\n              }\n              trustCenterFile {\n                id\n                name\n                category\n              }\n            }\n          }\n        }\n        __typename\n      }\n    }\n  }\n  id\n}\n"
   }
 };
 })();

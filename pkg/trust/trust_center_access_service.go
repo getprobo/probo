@@ -67,11 +67,12 @@ type (
 	}
 
 	TrustCenterAccessRequest struct {
-		TrustCenterID gid.GID
-		Email         string
-		Name          *string
-		DocumentIDs   []gid.GID
-		ReportIDs     []gid.GID
+		TrustCenterID      gid.GID
+		Email              string
+		Name               *string
+		DocumentIDs        []gid.GID
+		ReportIDs          []gid.GID
+		TrustCenterFileIDs []gid.GID
 	}
 )
 
@@ -145,6 +146,20 @@ func (s TrustCenterAccessService) Request(
 				}
 			}
 		}
+
+		trustCenterFileIDs := req.TrustCenterFileIDs
+		if req.TrustCenterFileIDs == nil {
+			var allTrustCenterFiles coredata.TrustCenterFiles
+
+			if err := allTrustCenterFiles.LoadAllByOrganizationID(ctx, tx, s.svc.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot list trust center files: %w", err)
+			}
+
+			for _, file := range allTrustCenterFiles {
+				trustCenterFileIDs = append(trustCenterFileIDs, file.ID)
+			}
+		}
+
 		existingAccess := &coredata.TrustCenterAccess{}
 		err := existingAccess.LoadByTrustCenterIDAndEmail(ctx, tx, s.svc.scope, req.TrustCenterID, req.Email)
 
@@ -186,9 +201,10 @@ func (s TrustCenterAccessService) Request(
 			return fmt.Errorf("cannot load existing access records: %w", err)
 		}
 
-		existingDocumentIDs, existingReportIDs := extractExistingIDs(existingAccesses)
+		existingDocumentIDs, existingReportIDs, existingTrustCenterFileIDs := extractExistingIDs(existingAccesses)
 		newDocumentIDs := filterExistingIDs(documentIDs, existingDocumentIDs)
 		newReportIDs := filterExistingIDs(reportIDs, existingReportIDs)
+		newTrustCenterFileIDs := filterExistingIDs(trustCenterFileIDs, existingTrustCenterFileIDs)
 
 		var accesses coredata.TrustCenterDocumentAccesses
 
@@ -198,6 +214,10 @@ func (s TrustCenterAccessService) Request(
 
 		if err := accesses.BulkInsertReportAccesses(ctx, tx, s.svc.scope, access.ID, newReportIDs, now); err != nil {
 			return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
+		}
+
+		if err := accesses.BulkInsertTrustCenterFileAccesses(ctx, tx, s.svc.scope, access.ID, newTrustCenterFileIDs, now); err != nil {
+			return fmt.Errorf("cannot bulk insert trust center file accesses: %w", err)
 		}
 
 		return nil
@@ -335,12 +355,48 @@ func (s TrustCenterAccessService) LoadReportAccess(
 	return reportAccess, nil
 }
 
+func (s TrustCenterAccessService) LoadTrustCenterFileAccess(
+	ctx context.Context,
+	trustCenterID gid.GID,
+	email string,
+	trustCenterFileID gid.GID,
+) (*coredata.TrustCenterDocumentAccess, error) {
+	var fileAccess *coredata.TrustCenterDocumentAccess
+
+	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+		access := &coredata.TrustCenterAccess{}
+		err := access.LoadByTrustCenterIDAndEmail(ctx, conn, s.svc.scope, trustCenterID, email)
+		if err != nil {
+			return fmt.Errorf("cannot load trust center access: %w", err)
+		}
+
+		if !access.Active {
+			return fmt.Errorf("trust center access is not active")
+		}
+
+		fileAccess = &coredata.TrustCenterDocumentAccess{}
+		err = fileAccess.LoadByTrustCenterAccessIDAndTrustCenterFileID(ctx, conn, s.svc.scope, access.ID, trustCenterFileID)
+		if err != nil {
+			return fmt.Errorf("cannot load trust center file access: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return fileAccess, nil
+}
+
 func (s *TrustCenterAccessService) AcceptByIDs(
 	ctx context.Context,
 	organizationID gid.GID,
 	email string,
 	documentIDs []gid.GID,
 	reportIDs []gid.GID,
+	fileIDs []gid.GID,
 ) error {
 	return s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
 		trustCenter := &coredata.TrustCenter{}
@@ -364,6 +420,11 @@ func (s *TrustCenterAccessService) AcceptByIDs(
 		if len(reportIDs) > 0 {
 			if err := coredata.ActivateByReportIDs(ctx, tx, s.svc.scope, access.ID, reportIDs, now); err != nil {
 				return fmt.Errorf("cannot activate report accesses: %w", err)
+			}
+		}
+		if len(fileIDs) > 0 {
+			if err := coredata.ActivateByTrustCenterFileIDs(ctx, tx, s.svc.scope, access.ID, fileIDs, now); err != nil {
+				return fmt.Errorf("cannot activate trust center file accesses: %w", err)
 			}
 		}
 
@@ -470,9 +531,10 @@ func (s *TrustCenterAccessService) sendTrustCenterAccessEmail(
 	return nil
 }
 
-func extractExistingIDs(accesses coredata.TrustCenterDocumentAccesses) ([]gid.GID, []gid.GID) {
+func extractExistingIDs(accesses coredata.TrustCenterDocumentAccesses) ([]gid.GID, []gid.GID, []gid.GID) {
 	var documentIDs []gid.GID
 	var reportIDs []gid.GID
+	var trustCenterFileIDs []gid.GID
 
 	for _, access := range accesses {
 		if access.DocumentID != nil {
@@ -481,9 +543,12 @@ func extractExistingIDs(accesses coredata.TrustCenterDocumentAccesses) ([]gid.GI
 		if access.ReportID != nil {
 			reportIDs = append(reportIDs, *access.ReportID)
 		}
+		if access.TrustCenterFileID != nil {
+			trustCenterFileIDs = append(trustCenterFileIDs, *access.TrustCenterFileID)
+		}
 	}
 
-	return documentIDs, reportIDs
+	return documentIDs, reportIDs, trustCenterFileIDs
 }
 
 func filterExistingIDs(allIDs []gid.GID, existingIDs []gid.GID) []gid.GID {

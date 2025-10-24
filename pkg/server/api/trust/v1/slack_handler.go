@@ -148,6 +148,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 
 		var documentIDs []gid.GID
 		var reportIDs []gid.GID
+		var fileIDs []gid.GID
 
 		switch action.ActionID {
 		case "accept_all":
@@ -157,9 +158,9 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 				return
 			}
 
-			documentIDs, reportIDs, err = tenantSvc.SlackMessages.GetSlackMessageMetadataByID(ctx, currentMessageId)
+			documentIDs, reportIDs, fileIDs, err = tenantSvc.SlackMessages.GetSlackMessageDocumentIDs(ctx, currentMessageId)
 			if err != nil {
-				logger.ErrorCtx(ctx, "cannot load slack message metadata by ID", log.Error(err))
+				logger.ErrorCtx(ctx, "cannot load slack message document ids", log.Error(err))
 				httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
 				return
 			}
@@ -180,6 +181,14 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			}
 			reportIDs = []gid.GID{repID}
 
+		case "accept_file":
+			fileID, err := gid.ParseGID(action.Value)
+			if err != nil {
+				httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: "invalid file ID"})
+				return
+			}
+			fileIDs = []gid.GID{fileID}
+
 		default:
 			httpserver.RenderJSON(w, http.StatusBadRequest, SlackInteractiveResponse{Success: false, Message: fmt.Sprintf("unknown action: %s", action.ActionID)})
 			return
@@ -191,6 +200,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			requesterEmail,
 			documentIDs,
 			reportIDs,
+			fileIDs,
 		); err != nil {
 			logger.ErrorCtx(ctx, "failed to grant access", log.Error(err))
 			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})

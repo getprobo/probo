@@ -541,6 +541,18 @@ type CreateTrustCenterAccessPayload struct {
 	TrustCenterAccessEdge *TrustCenterAccessEdge `json:"trustCenterAccessEdge"`
 }
 
+type CreateTrustCenterFileInput struct {
+	OrganizationID        gid.GID                        `json:"organizationId"`
+	Name                  string                         `json:"name"`
+	Category              string                         `json:"category"`
+	File                  graphql.Upload                 `json:"file"`
+	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
+}
+
+type CreateTrustCenterFilePayload struct {
+	TrustCenterFileEdge *TrustCenterFileEdge `json:"trustCenterFileEdge"`
+}
+
 type CreateTrustCenterReferenceInput struct {
 	TrustCenterID gid.GID        `json:"trustCenterId"`
 	Name          string         `json:"name"`
@@ -916,6 +928,14 @@ type DeleteTrustCenterAccessPayload struct {
 	DeletedTrustCenterAccessID gid.GID `json:"deletedTrustCenterAccessId"`
 }
 
+type DeleteTrustCenterFileInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type DeleteTrustCenterFilePayload struct {
+	DeletedTrustCenterFileID gid.GID `json:"deletedTrustCenterFileId"`
+}
+
 type DeleteTrustCenterNDAInput struct {
 	TrustCenterID gid.GID `json:"trustCenterId"`
 }
@@ -1170,6 +1190,14 @@ type GenerateFrameworkStateOfApplicabilityPayload struct {
 	Data string `json:"data"`
 }
 
+type GetTrustCenterFileInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type GetTrustCenterFilePayload struct {
+	TrustCenterFile *TrustCenterFile `json:"trustCenterFile"`
+}
+
 type ImportFrameworkInput struct {
 	OrganizationID gid.GID        `json:"organizationId"`
 	File           graphql.Upload `json:"file"`
@@ -1365,6 +1393,7 @@ type Organization struct {
 	ContinualImprovements *ContinualImprovementConnection `json:"continualImprovements"`
 	ProcessingActivities  *ProcessingActivityConnection   `json:"processingActivities"`
 	Snapshots             *SnapshotConnection             `json:"snapshots"`
+	TrustCenterFiles      *TrustCenterFileConnection      `json:"trustCenterFiles"`
 	TrustCenter           *TrustCenter                    `json:"trustCenter,omitempty"`
 	CustomDomain          *CustomDomain                   `json:"customDomain,omitempty"`
 	CreatedAt             time.Time                       `json:"createdAt"`
@@ -1675,6 +1704,7 @@ type TrustCenterDocumentAccess struct {
 	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
 	Document          *Document          `json:"document,omitempty"`
 	Report            *Report            `json:"report,omitempty"`
+	TrustCenterFile   *TrustCenterFile   `json:"trustCenterFile,omitempty"`
 }
 
 func (TrustCenterDocumentAccess) IsNode()             {}
@@ -1688,6 +1718,25 @@ type TrustCenterDocumentAccessEdge struct {
 type TrustCenterEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *TrustCenter   `json:"node"`
+}
+
+type TrustCenterFile struct {
+	ID                    gid.GID                        `json:"id"`
+	Name                  string                         `json:"name"`
+	Category              string                         `json:"category"`
+	FileURL               string                         `json:"fileUrl"`
+	TrustCenterVisibility coredata.TrustCenterVisibility `json:"trustCenterVisibility"`
+	CreatedAt             time.Time                      `json:"createdAt"`
+	UpdatedAt             time.Time                      `json:"updatedAt"`
+	Organization          *Organization                  `json:"organization"`
+}
+
+func (TrustCenterFile) IsNode()             {}
+func (this TrustCenterFile) GetID() gid.GID { return this.ID }
+
+type TrustCenterFileEdge struct {
+	Cursor page.CursorKey   `json:"cursor"`
+	Node   *TrustCenterFile `json:"node"`
 }
 
 type TrustCenterReference struct {
@@ -1948,15 +1997,27 @@ type UpdateTaskPayload struct {
 }
 
 type UpdateTrustCenterAccessInput struct {
-	ID          gid.GID   `json:"id"`
-	Name        *string   `json:"name,omitempty"`
-	Active      *bool     `json:"active,omitempty"`
-	DocumentIds []gid.GID `json:"documentIds,omitempty"`
-	ReportIds   []gid.GID `json:"reportIds,omitempty"`
+	ID                 gid.GID   `json:"id"`
+	Name               *string   `json:"name,omitempty"`
+	Active             *bool     `json:"active,omitempty"`
+	DocumentIds        []gid.GID `json:"documentIds,omitempty"`
+	ReportIds          []gid.GID `json:"reportIds,omitempty"`
+	TrustCenterFileIds []gid.GID `json:"trustCenterFileIds,omitempty"`
 }
 
 type UpdateTrustCenterAccessPayload struct {
 	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
+}
+
+type UpdateTrustCenterFileInput struct {
+	ID                    gid.GID                         `json:"id"`
+	Name                  *string                         `json:"name,omitempty"`
+	Category              *string                         `json:"category,omitempty"`
+	TrustCenterVisibility *coredata.TrustCenterVisibility `json:"trustCenterVisibility,omitempty"`
+}
+
+type UpdateTrustCenterFilePayload struct {
+	TrustCenterFile *TrustCenterFile `json:"trustCenterFile"`
 }
 
 type UpdateTrustCenterInput struct {

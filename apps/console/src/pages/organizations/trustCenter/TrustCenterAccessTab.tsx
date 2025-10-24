@@ -1,4 +1,5 @@
 import {
+  Badge,
   Button,
   Card,
   Checkbox,
@@ -31,6 +32,7 @@ import {
   updateTrustCenterAccessMutation,
   deleteTrustCenterAccessMutation
 } from "/hooks/graph/TrustCenterAccessGraph";
+import type { TrustCenterAccessGraph_accesses$data } from "/hooks/graph/__generated__/TrustCenterAccessGraph_accesses.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
@@ -76,6 +78,10 @@ export default function TrustCenterAccessTab() {
   const [selectedDocumentAccesses, setSelectedDocumentAccesses] = useState<Set<string>>(new Set());
   const [pendingEditEmail, setPendingEditEmail] = useState<string | null>(null);
 
+  const formattedDocumentAccesses = editingAccess?.documentAccesses
+    ?.map((docAccess) => getDocumentAccessInfo(docAccess, __))
+    ?.filter((info) => info !== null) ?? [];
+
   const inviteForm = useFormWithSchema(inviteSchema, {
     defaultValues: { name: "", email: "" },
   });
@@ -102,7 +108,47 @@ export default function TrustCenterAccessTab() {
         };
       };
     } | null;
+    trustCenterFile?: {
+      id: string;
+      name: string;
+      category: string;
+    } | null;
   };
+
+  function getDocumentAccessInfo(
+    docAccess: DocumentAccessType,
+    __: (key: string) => string
+  ) {
+    if (!!docAccess.document) {
+      return {
+        variant: "info" as const,
+        name: docAccess.document?.title,
+        type: __("Document"),
+        category: docAccess.document?.documentType,
+        id: docAccess.document?.id,
+      };
+    }
+    if (!!docAccess.report) {
+      return {
+        variant: "success" as const,
+        name: docAccess.report?.filename,
+        type: __("Report"),
+        category: docAccess.report?.audit?.framework?.name,
+        id: docAccess.report?.id,
+      };
+    }
+    if (!!docAccess.trustCenterFile) {
+      return {
+        variant: "highlight" as const,
+        name: docAccess.trustCenterFile?.name,
+        type: __("File"),
+        category: docAccess.trustCenterFile?.category,
+        id: docAccess.trustCenterFile?.id,
+      };
+    }
+
+    return null;
+  }
 
   type AccessType = {
     id: string;
@@ -116,18 +162,22 @@ export default function TrustCenterAccessTab() {
 
   const { data: trustCenterData, loadMore, hasNext, isLoadingNext } = useTrustCenterAccesses(organization.trustCenter?.id || "");
 
-  const accesses: AccessType[] = trustCenterData?.node?.accesses?.edges?.map((edge: any) => ({
+  type AccessEdge = NonNullable<NonNullable<TrustCenterAccessGraph_accesses$data['accesses']>['edges']>[number];
+  type DocumentAccessEdge = NonNullable<NonNullable<NonNullable<AccessEdge>['node']['documentAccesses']>['edges']>[number];
+
+  const accesses: AccessType[] = trustCenterData?.node?.accesses?.edges?.map((edge: AccessEdge) => ({
     id: edge.node.id,
     email: edge.node.email,
     name: edge.node.name,
     active: edge.node.active,
     hasAcceptedNonDisclosureAgreement: edge.node.hasAcceptedNonDisclosureAgreement,
     createdAt: edge.node.createdAt,
-    documentAccesses: edge.node.documentAccesses?.edges?.map((docEdge: any) => ({
+    documentAccesses: edge.node.documentAccesses?.edges?.map((docEdge: DocumentAccessEdge) => ({
       id: docEdge.node.id,
       active: docEdge.node.active,
       document: docEdge.node.document,
-      report: docEdge.node.report
+      report: docEdge.node.report,
+      trustCenterFile: docEdge.node.trustCenterFile
     })) ?? []
   })) ?? [];
 
@@ -173,7 +223,7 @@ export default function TrustCenterAccessTab() {
   const getActiveDocumentIds = useCallback((access: AccessType) => {
     return access.documentAccesses
       .filter(docAccess => docAccess.active)
-      .map(docAccess => docAccess.document?.id || docAccess.report?.id)
+      .map(docAccess => docAccess.document?.id || docAccess.report?.id || docAccess.trustCenterFile?.id)
       .filter((id): id is string => id !== undefined);
   }, []);
 
@@ -212,19 +262,21 @@ export default function TrustCenterAccessTab() {
   const handleUpdateName = editForm.handleSubmit(async (data) => {
     if (!editingAccess) return;
 
-    const { documentIds, reportIds } = editingAccess.documentAccesses.reduce(
+    const { documentIds, reportIds, trustCenterFileIds } = editingAccess.documentAccesses.reduce(
       (acc, docAccess) => {
-        const id = docAccess.document?.id || docAccess.report?.id;
+        const id = docAccess.document?.id || docAccess.report?.id || docAccess.trustCenterFile?.id;
         if (id && selectedDocumentAccesses.has(id)) {
           if (docAccess.document?.id) {
             acc.documentIds.push(docAccess.document.id);
           } else if (docAccess.report?.id) {
             acc.reportIds.push(docAccess.report.id);
+          } else if (docAccess.trustCenterFile?.id) {
+            acc.trustCenterFileIds.push(docAccess.trustCenterFile.id);
           }
         }
         return acc;
       },
-      { documentIds: [] as string[], reportIds: [] as string[] }
+      { documentIds: [] as string[], reportIds: [] as string[], trustCenterFileIds: [] as string[] }
     );
 
     await updateInvitation({
@@ -235,6 +287,7 @@ export default function TrustCenterAccessTab() {
           active: data.active,
           documentIds,
           reportIds,
+          trustCenterFileIds,
         },
       },
       onSuccess: () => {
@@ -431,7 +484,7 @@ export default function TrustCenterAccessTab() {
               </div>
             </div>
 
-            {editingAccess && editingAccess.documentAccesses.length > 0 && (
+            {formattedDocumentAccesses.length > 0 && (
               <div>
                 <h4 className="font-medium text-txt-primary mb-4">
                   {__("Document Access Permissions")}
@@ -451,39 +504,20 @@ export default function TrustCenterAccessTab() {
                       </Tr>
                     </Thead>
                     <Tbody>
-                      {editingAccess.documentAccesses.map((docAccess) => {
-                        const getDocumentInfo = () => {
-                          const isDocument = !!docAccess.document;
-                          return {
-                            isDocument,
-                            name: docAccess.document?.title || docAccess.report?.filename || __("Unknown Item"),
-                            type: isDocument ? __("Document") : __("Report"),
-                            category: isDocument
-                              ? docAccess.document?.documentType
-                              : docAccess.report?.audit?.framework?.name || __("Compliance Report"),
-                            id: docAccess.document?.id || docAccess.report?.id || ''
-                          };
-                        };
-
-                        const { isDocument, name, type, category, id } = getDocumentInfo();
+                      {formattedDocumentAccesses.map((info) => {
+                        const { variant, name, type, category, id } = info;
 
                         return (
-                          <Tr key={docAccess.id}>
+                          <Tr key={id}>
                             <Td>
                               <div className="font-medium text-txt-primary">
                                 {name}
                               </div>
                             </Td>
                             <Td>
-                              <div className="flex items-center space-x-2">
-                                <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                  isDocument
-                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-                                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                }`}>
-                                  {type}
-                                </div>
-                              </div>
+                              <Badge variant={variant}>
+                                {type}
+                              </Badge>
                             </Td>
                             <Td>
                               <div className="text-txt-secondary">

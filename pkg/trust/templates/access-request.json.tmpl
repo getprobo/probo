@@ -107,6 +107,40 @@
         "value": "{{.ID}}",
         "style": "primary"
       }{{end}}
+    }{{end}}{{end}}{{if .Files}},
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*📎 Requested Files*"
+      }
+    }{{range .Files}},
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "<https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/files|{{jsonEscape .Name}}>{{if .Category}} ({{jsonEscape .Category}}){{end}}"
+      },
+      "accessory": {{if .Granted}}{
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "✓ Granted"
+        },
+        "url": "https://{{$.Domain}}/organizations/{{$.OrganizationID}}/trust-center/access"
+      }{{else}}{
+        "type": "button",
+        "text": {
+          "type": "plain_text",
+          "text": "Accept"
+        },
+        "action_id": "accept_file",
+        "value": "{{.ID}}",
+        "style": "primary"
+      }{{end}}
     }{{end}}{{end}},
     {
       "type": "context",

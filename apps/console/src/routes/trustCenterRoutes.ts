@@ -45,6 +45,13 @@ export const trustCenterRoutes = [
         ),
       },
       {
+        path: "files",
+        fallback: LinkCardSkeleton,
+        Component: lazy(
+          () => import("/pages/organizations/trustCenter/TrustCenterFilesTab")
+        ),
+      },
+      {
         path: "access",
         fallback: LinkCardSkeleton,
         Component: lazy(

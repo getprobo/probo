@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7b1972657d83c7bb17b997e287f575d8>>
+ * @generated SignedSource<<cde79d7c929ba1be8e0d033c90e7eeb7>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -32,6 +32,15 @@ export type OverviewPageFragment$data = {
       };
     }>;
   };
+  readonly trustCenterFiles: {
+    readonly edges: ReadonlyArray<{
+      readonly node: {
+        readonly category: string;
+        readonly id: string;
+        readonly " $fragmentSpreads": FragmentRefs<"TrustCenterFileRowFragment">;
+      };
+    }>;
+  };
   readonly vendors: {
     readonly edges: ReadonlyArray<{
       readonly node: {
@@ -55,7 +64,14 @@ var v0 = {
   "kind": "ScalarField",
   "name": "id",
   "storageKey": null
-};
+},
+v1 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 5
+  }
+];
 return {
   "argumentDefinitions": [],
   "kind": "Fragment",
@@ -177,13 +193,7 @@ return {
     },
     {
       "alias": null,
-      "args": [
-        {
-          "kind": "Literal",
-          "name": "first",
-          "value": 5
-        }
-      ],
+      "args": (v1/*: any*/),
       "concreteType": "DocumentConnection",
       "kind": "LinkedField",
       "name": "documents",
@@ -226,6 +236,52 @@ return {
         }
       ],
       "storageKey": "documents(first:5)"
+    },
+    {
+      "alias": null,
+      "args": (v1/*: any*/),
+      "concreteType": "TrustCenterFileConnection",
+      "kind": "LinkedField",
+      "name": "trustCenterFiles",
+      "plural": false,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "TrustCenterFileEdge",
+          "kind": "LinkedField",
+          "name": "edges",
+          "plural": true,
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "concreteType": "TrustCenterFile",
+              "kind": "LinkedField",
+              "name": "node",
+              "plural": false,
+              "selections": [
+                (v0/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "category",
+                  "storageKey": null
+                },
+                {
+                  "args": null,
+                  "kind": "FragmentSpread",
+                  "name": "TrustCenterFileRowFragment"
+                }
+              ],
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        }
+      ],
+      "storageKey": "trustCenterFiles(first:5)"
     }
   ],
   "type": "TrustCenter",
@@ -233,6 +289,6 @@ return {
 };
 })();
 
-(node as any).hash = "0bda7993ef3be4cfe86083658fc77813";
+(node as any).hash = "0f4e9ac02d068ba971bb1f5be5fdaccf";
 
 export default node;

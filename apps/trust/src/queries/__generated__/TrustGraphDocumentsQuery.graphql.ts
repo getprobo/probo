@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<922757406dbc7a2c20b502ef6dd4c0d8>>
+ * @generated SignedSource<<0faaebe3baf4c750825599985210137d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -28,6 +28,15 @@ export type TrustGraphDocumentsQuery$data = {
     readonly id: string;
     readonly organization: {
       readonly name: string;
+    };
+    readonly trustCenterFiles: {
+      readonly edges: ReadonlyArray<{
+        readonly node: {
+          readonly category: string;
+          readonly id: string;
+          readonly " $fragmentSpreads": FragmentRefs<"TrustCenterFileRowFragment">;
+        };
+      }>;
     };
   } | null | undefined;
 };
@@ -77,6 +86,27 @@ v5 = {
   "args": null,
   "kind": "ScalarField",
   "name": "documentType",
+  "storageKey": null
+},
+v6 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "category",
+  "storageKey": null
+},
+v7 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "isUserAuthorized",
+  "storageKey": null
+},
+v8 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "hasUserRequestedAccess",
   "storageKey": null
 };
 return {
@@ -146,6 +176,46 @@ return {
               }
             ],
             "storageKey": "documents(first:50)"
+          },
+          {
+            "alias": null,
+            "args": (v4/*: any*/),
+            "concreteType": "TrustCenterFileConnection",
+            "kind": "LinkedField",
+            "name": "trustCenterFiles",
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "TrustCenterFileEdge",
+                "kind": "LinkedField",
+                "name": "edges",
+                "plural": true,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "TrustCenterFile",
+                    "kind": "LinkedField",
+                    "name": "node",
+                    "plural": false,
+                    "selections": [
+                      (v2/*: any*/),
+                      (v6/*: any*/),
+                      {
+                        "args": null,
+                        "kind": "FragmentSpread",
+                        "name": "TrustCenterFileRowFragment"
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": "trustCenterFiles(first:50)"
           }
         ],
         "storageKey": null
@@ -215,20 +285,8 @@ return {
                         "name": "title",
                         "storageKey": null
                       },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "isUserAuthorized",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "hasUserRequestedAccess",
-                        "storageKey": null
-                      }
+                      (v7/*: any*/),
+                      (v8/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -237,6 +295,44 @@ return {
               }
             ],
             "storageKey": "documents(first:50)"
+          },
+          {
+            "alias": null,
+            "args": (v4/*: any*/),
+            "concreteType": "TrustCenterFileConnection",
+            "kind": "LinkedField",
+            "name": "trustCenterFiles",
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "TrustCenterFileEdge",
+                "kind": "LinkedField",
+                "name": "edges",
+                "plural": true,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "TrustCenterFile",
+                    "kind": "LinkedField",
+                    "name": "node",
+                    "plural": false,
+                    "selections": [
+                      (v2/*: any*/),
+                      (v6/*: any*/),
+                      (v3/*: any*/),
+                      (v7/*: any*/),
+                      (v8/*: any*/)
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": "trustCenterFiles(first:50)"
           }
         ],
         "storageKey": null
@@ -244,16 +340,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8a333723782b24714393e89240704cf2",
+    "cacheID": "151fc8b1cf3becb2a69d87ce978fb71b",
     "id": null,
     "metadata": {},
     "name": "TrustGraphDocumentsQuery",
     "operationKind": "query",
-    "text": "query TrustGraphDocumentsQuery(\n  $slug: String!\n) {\n  trustCenterBySlug(slug: $slug) {\n    id\n    organization {\n      name\n      id\n    }\n    documents(first: 50) {\n      edges {\n        node {\n          id\n          documentType\n          ...DocumentRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n"
+    "text": "query TrustGraphDocumentsQuery(\n  $slug: String!\n) {\n  trustCenterBySlug(slug: $slug) {\n    id\n    organization {\n      name\n      id\n    }\n    documents(first: 50) {\n      edges {\n        node {\n          id\n          documentType\n          ...DocumentRowFragment\n        }\n      }\n    }\n    trustCenterFiles(first: 50) {\n      edges {\n        node {\n          id\n          category\n          ...TrustCenterFileRowFragment\n        }\n      }\n    }\n  }\n}\n\nfragment DocumentRowFragment on Document {\n  id\n  title\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n\nfragment TrustCenterFileRowFragment on TrustCenterFile {\n  id\n  name\n  isUserAuthorized\n  hasUserRequestedAccess\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9c56f70fca2afb316f4fd38d646ec545";
+(node as any).hash = "79e21d586ec18a0977c37df27aa9bdea";
 
 export default node;

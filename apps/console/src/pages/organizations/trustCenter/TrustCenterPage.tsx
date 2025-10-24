@@ -287,6 +287,9 @@ export default function TrustCenterPage({ queryRef }: Props) {
           <TabLink to={`/organizations/${organizationId}/trust-center/documents`}>
             {__("Documents")}
           </TabLink>
+          <TabLink to={`/organizations/${organizationId}/trust-center/files`}>
+            {__("Files")}
+          </TabLink>
           <TabLink to={`/organizations/${organizationId}/trust-center/access`}>
             {__("Access")}
           </TabLink>
