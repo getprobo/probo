@@ -92,14 +92,6 @@ const (
 )
 
 func RenderHTML(data DocumentData) ([]byte, error) {
-	data.Title = html.EscapeString(data.Title)
-	data.Approver = html.EscapeString(data.Approver)
-	data.Description = html.EscapeString(data.Description)
-
-	for i := range data.Signatures {
-		data.Signatures[i].SignedBy = html.EscapeString(data.Signatures[i].SignedBy)
-	}
-
 	var buf bytes.Buffer
 	if err := documentTemplate.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("failed to execute template: %w", err)

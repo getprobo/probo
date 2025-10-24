@@ -77,9 +77,9 @@ func TestRenderHTML(t *testing.T) {
 				},
 			},
 			wantContains: []string{
-				"Test &amp;amp; &amp;lt;Script&amp;gt; Title",
-				"John &amp;lt;script&amp;gt;alert(&amp;#39;xss&amp;#39;)&amp;lt;/script&amp;gt; Doe",
-				"Alice &amp;amp; &amp;lt;Bob&amp;gt;",
+				"Test &amp; &lt;Script&gt; Title",
+				"John &lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt; Doe",
+				"Alice &amp; &lt;Bob&gt;",
 			},
 			wantNotContains: []string{
 				"<script>alert('xss')</script>",
@@ -266,12 +266,12 @@ func TestHTMLEscaping(t *testing.T) {
 
 	resultStr := string(result)
 
-	// Verify dangerous content is escaped
+	// Verify dangerous content is escaped 
 	assert.NotContains(t, resultStr, "<script>alert('xss')</script>")
 	assert.NotContains(t, resultStr, "<malicious>tag")
-	assert.Contains(t, resultStr, "&amp;lt;script&amp;gt;")
-	assert.Contains(t, resultStr, "&amp;amp;")
-	assert.Contains(t, resultStr, "&amp;#39;")
+	assert.Contains(t, resultStr, "&lt;script&gt;")
+	assert.Contains(t, resultStr, "&amp;")
+	assert.Contains(t, resultStr, "&#39;")
 }
 
 func TestMarkdownRendering(t *testing.T) {

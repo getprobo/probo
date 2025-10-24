@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Fix HTML entities displaying incorrectly in PDF exports (e.g., "&" showing as "&amp;")
+
 ## [0.78.0] - 2025-10-23
 
 ### Added
