@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bf8e5a74bfd588ad123f628009b6440e>>
+ * @generated SignedSource<<8c2482b7d32c42396e4645bd309e7cc2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -350,6 +350,26 @@ return {
                                           }
                                         ],
                                         "storageKey": null
+                                      },
+                                      {
+                                        "alias": null,
+                                        "args": null,
+                                        "concreteType": "TrustCenterFile",
+                                        "kind": "LinkedField",
+                                        "name": "trustCenterFile",
+                                        "plural": false,
+                                        "selections": [
+                                          (v3/*: any*/),
+                                          (v6/*: any*/),
+                                          {
+                                            "alias": null,
+                                            "args": null,
+                                            "kind": "ScalarField",
+                                            "name": "category",
+                                            "storageKey": null
+                                          }
+                                        ],
+                                        "storageKey": null
                                       }
                                     ],
                                     "storageKey": null
@@ -403,16 +423,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "96e9906815501bb22bca79bb63a4a149",
+    "cacheID": "12322ab403d03a821d2228ff68c3d191",
     "id": null,
     "metadata": {},
     "name": "TrustCenterAccessGraphPaginationQuery",
     "operationKind": "query",
-    "text": "query TrustCenterAccessGraphPaginationQuery(\n  $count: Int\n  $cursor: CursorKey\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...TrustCenterAccessGraph_accesses\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        documentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              active\n              createdAt\n              updatedAt\n              document {\n                id\n                title\n                documentType\n              }\n              report {\n                id\n                filename\n                audit {\n                  id\n                  framework {\n                    name\n                    id\n                  }\n                }\n              }\n            }\n          }\n        }\n        __typename\n      }\n    }\n  }\n  id\n}\n"
+    "text": "query TrustCenterAccessGraphPaginationQuery(\n  $count: Int\n  $cursor: CursorKey\n  $id: ID!\n) {\n  node(id: $id) {\n    __typename\n    ...TrustCenterAccessGraph_accesses\n    id\n  }\n}\n\nfragment TrustCenterAccessGraph_accesses on TrustCenter {\n  accesses(first: $count, after: $cursor, orderBy: {field: CREATED_AT, direction: DESC}) {\n    pageInfo {\n      hasNextPage\n      hasPreviousPage\n      startCursor\n      endCursor\n    }\n    edges {\n      cursor\n      node {\n        id\n        email\n        name\n        active\n        hasAcceptedNonDisclosureAgreement\n        createdAt\n        documentAccesses(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n          edges {\n            node {\n              id\n              active\n              createdAt\n              updatedAt\n              document {\n                id\n                title\n                documentType\n              }\n              report {\n                id\n                filename\n                audit {\n                  id\n                  framework {\n                    name\n                    id\n                  }\n                }\n              }\n              trustCenterFile {\n                id\n                name\n                category\n              }\n            }\n          }\n        }\n        __typename\n      }\n    }\n  }\n  id\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9e29aa4a382ca2d4bb9d1b014d8d81fd";
+(node as any).hash = "9c7f3e866e2593c169b1f98d0e637667";
 
 export default node;

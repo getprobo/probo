@@ -83,6 +83,14 @@ type ExportReportPDFPayload struct {
 	Data string `json:"data"`
 }
 
+type ExportTrustCenterFileInput struct {
+	TrustCenterFileID gid.GID `json:"trustCenterFileId"`
+}
+
+type ExportTrustCenterFilePayload struct {
+	Data string `json:"data"`
+}
+
 type Framework struct {
 	ID   gid.GID `json:"id"`
 	Name string  `json:"name"`
@@ -151,6 +159,13 @@ type RequestReportAccessInput struct {
 	Name          *string `json:"name,omitempty"`
 }
 
+type RequestTrustCenterFileAccessInput struct {
+	TrustCenterID     gid.GID `json:"trustCenterId"`
+	TrustCenterFileID gid.GID `json:"trustCenterFileId"`
+	Email             *string `json:"email,omitempty"`
+	Name              *string `json:"name,omitempty"`
+}
+
 type TrustCenter struct {
 	ID                                gid.GID                         `json:"id"`
 	Active                            bool                            `json:"active"`
@@ -164,6 +179,7 @@ type TrustCenter struct {
 	Audits                            *AuditConnection                `json:"audits"`
 	Vendors                           *VendorConnection               `json:"vendors"`
 	References                        *TrustCenterReferenceConnection `json:"references"`
+	TrustCenterFiles                  *TrustCenterFileConnection      `json:"trustCenterFiles"`
 }
 
 func (TrustCenter) IsNode()             {}
@@ -179,6 +195,27 @@ type TrustCenterAccess struct {
 
 func (TrustCenterAccess) IsNode()             {}
 func (this TrustCenterAccess) GetID() gid.GID { return this.ID }
+
+type TrustCenterFile struct {
+	ID                     gid.GID `json:"id"`
+	Name                   string  `json:"name"`
+	Category               string  `json:"category"`
+	IsUserAuthorized       bool    `json:"isUserAuthorized"`
+	HasUserRequestedAccess bool    `json:"hasUserRequestedAccess"`
+}
+
+func (TrustCenterFile) IsNode()             {}
+func (this TrustCenterFile) GetID() gid.GID { return this.ID }
+
+type TrustCenterFileConnection struct {
+	Edges    []*TrustCenterFileEdge `json:"edges"`
+	PageInfo *PageInfo              `json:"pageInfo"`
+}
+
+type TrustCenterFileEdge struct {
+	Cursor page.CursorKey   `json:"cursor"`
+	Node   *TrustCenterFile `json:"node"`
+}
 
 type TrustCenterReference struct {
 	ID          gid.GID `json:"id"`

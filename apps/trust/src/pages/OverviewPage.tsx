@@ -18,6 +18,7 @@ import { AuditRow } from "/components/AuditRow";
 import { documentTypeLabel } from "/helpers/documents";
 import { Fragment } from "react";
 import { DocumentRow } from "/components/DocumentRow";
+import { TrustCenterFileRow } from "/components/TrustCenterFileRow";
 import { VendorRow } from "/components/VendorRow";
 import { RowHeader } from "/components/RowHeader.tsx";
 import { Rows } from "/components/Rows.tsx";
@@ -52,6 +53,15 @@ const overviewFragment = graphql`
         }
       }
     }
+    trustCenterFiles(first: 5) {
+      edges {
+        node {
+          id
+          category
+          ...TrustCenterFileRowFragment
+        }
+      }
+    }
   }
 `;
 
@@ -69,6 +79,7 @@ export function OverviewPage() {
       <Documents
         audits={trustCenter.audits.edges}
         documents={fragment.documents.edges}
+        files={fragment.trustCenterFiles.edges}
         url={getTrustCenterUrl("documents")}
       />
       <Subprocessors
@@ -82,10 +93,12 @@ export function OverviewPage() {
 
 function Documents({
   documents,
+  files,
   audits,
   url,
 }: {
   documents: OverviewPageFragment$data["documents"]["edges"];
+  files: OverviewPageFragment$data["trustCenterFiles"]["edges"];
   audits: NonNullable<
     TrustGraphQuery$data["trustCenterBySlug"]
   >["audits"]["edges"];
@@ -96,8 +109,12 @@ function Documents({
     documents.map((edge) => edge.node),
     (node) => documentTypeLabel(node.documentType, __)
   );
+  const filesPerCategory = groupBy(
+    files.map((edge) => edge.node),
+    (node) => node.category
+  );
   const hasAudits = audits.length > 0;
-  const hasDocuments = hasAudits || documents.length > 0;
+  const hasDocuments = hasAudits || documents.length > 0 || files.length > 0;
 
   if (!hasDocuments) {
     return null;
@@ -123,6 +140,14 @@ function Documents({
             <RowHeader>{label}</RowHeader>
             {documents.map((document) => (
               <DocumentRow key={document.id} document={document} />
+            ))}
+          </Fragment>
+        ))}
+        {objectEntries(filesPerCategory).map(([category, files]) => (
+          <Fragment key={category}>
+            <RowHeader>{category}</RowHeader>
+            {files.map((file) => (
+              <TrustCenterFileRow key={file.id} file={file} />
             ))}
           </Fragment>
         ))}

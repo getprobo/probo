@@ -21,6 +21,7 @@ import { useIsAuthenticated } from "/hooks/useIsAuthenticated.ts";
 type Props = PropsWithChildren<{
   documentId?: string;
   reportId?: string;
+  trustCenterFileId?: string;
   onSuccess?: () => void;
 }>;
 
@@ -33,6 +34,7 @@ export function RequestAccessDialog({
   children,
   documentId,
   reportId,
+  trustCenterFileId,
   onSuccess,
 }: Props) {
   const trustCenter = useTrustCenter();
@@ -46,7 +48,7 @@ export function RequestAccessDialog({
   });
   const isAuthenticated = useIsAuthenticated();
   const dialogRef = useDialogRef();
-  const [commitMutation, isMutating] = useMutation({ documentId, reportId });
+  const [commitMutation, isMutating] = useMutation({ documentId, reportId, trustCenterFileId });
 
   const submitCallback = (data: z.infer<typeof schema> | null) => {
     commitMutation(data)
@@ -155,13 +157,26 @@ const requestReportAccessMutation = graphql`
   }
 `;
 
+const requestTrustCenterFileAccessMutation = graphql`
+  mutation RequestAccessDialogTrustCenterFileMutation(
+    $input: RequestTrustCenterFileAccessInput!
+  ) {
+    requestTrustCenterFileAccess(input: $input) {
+      trustCenterAccess {
+        id
+      }
+    }
+  }
+`;
+
 /**
  * Use the correct mutation using the shape
  */
 function useMutation({
   documentId,
   reportId,
-}: Pick<Props, "documentId" | "reportId">): [
+  trustCenterFileId,
+}: Pick<Props, "documentId" | "reportId" | "trustCenterFileId">): [
   (data: z.infer<typeof schema> | null) => Promise<unknown>,
   boolean,
 ] {
@@ -173,8 +188,25 @@ function useMutation({
     useMutationWithToasts(requestDocumentAccessMutation);
   const [commitRequestReportAccess, isRequestingReportAccess] =
     useMutationWithToasts(requestReportAccessMutation);
+  const [commitRequestTrustCenterFileAccess, isRequestingTrustCenterFileAccess] =
+    useMutationWithToasts(requestTrustCenterFileAccessMutation);
 
-  if (reportId) {
+  if (trustCenterFileId) {
+    return [
+      (data) => {
+        return commitRequestTrustCenterFileAccess({
+          variables: {
+            input: {
+              trustCenterId: trustCenter.id,
+              trustCenterFileId: trustCenterFileId,
+              ...data,
+            },
+          },
+        });
+      },
+      isRequestingTrustCenterFileAccess,
+    ];
+  } else if (reportId) {
     return [
       (data) => {
         return commitRequestReportAccess({

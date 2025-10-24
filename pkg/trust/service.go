@@ -74,6 +74,7 @@ type (
 		Frameworks            *FrameworkService
 		TrustCenterAccesses   *TrustCenterAccessService
 		TrustCenterReferences *TrustCenterReferenceService
+		TrustCenterFiles      *TrustCenterFileService
 		Reports               *ReportService
 		Organizations         *OrganizationService
 		SlackMessages         *SlackMessageService
@@ -136,6 +137,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.Frameworks = &FrameworkService{svc: tenantService}
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService, auth: s.auth, logger: s.logger}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
+	tenantService.TrustCenterFiles = &TrustCenterFileService{svc: tenantService}
 	tenantService.Reports = &ReportService{svc: tenantService}
 	tenantService.Organizations = &OrganizationService{svc: tenantService}
 	tenantService.SlackMessages = &SlackMessageService{svc: tenantService, slackClient: slackClient}

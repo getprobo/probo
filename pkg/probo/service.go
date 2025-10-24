@@ -98,6 +98,7 @@ type (
 		TrustCenters                      *TrustCenterService
 		TrustCenterAccesses               *TrustCenterAccessService
 		TrustCenterReferences             *TrustCenterReferenceService
+		TrustCenterFiles                  *TrustCenterFileService
 		Nonconformities                   *NonconformityService
 		Obligations                       *ObligationService
 		Snapshots                         *SnapshotService
@@ -208,6 +209,18 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 	tenantService.TrustCenters = &TrustCenterService{svc: tenantService}
 	tenantService.TrustCenterAccesses = &TrustCenterAccessService{svc: tenantService}
 	tenantService.TrustCenterReferences = &TrustCenterReferenceService{svc: tenantService}
+	tenantService.TrustCenterFiles = &TrustCenterFileService{
+		svc: tenantService,
+		fileValidator: &filevalidation.FileValidator{
+			MaxFileSize: 10 * 1024 * 1024, // 10MB
+			AllowedMimeTypes: map[string]bool{
+				"application/pdf": true,
+			},
+			AllowedExtensions: map[string][]string{
+				".pdf": {"application/pdf"},
+			},
+		},
+	}
 	tenantService.Nonconformities = &NonconformityService{svc: tenantService}
 	tenantService.Obligations = &ObligationService{svc: tenantService}
 	tenantService.Snapshots = &SnapshotService{svc: tenantService}

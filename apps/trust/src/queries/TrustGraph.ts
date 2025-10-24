@@ -46,6 +46,15 @@ export const trustDocumentsQuery = graphql`
           }
         }
       }
+      trustCenterFiles(first: 50) {
+        edges {
+          node {
+            id
+            category
+            ...TrustCenterFileRowFragment
+          }
+        }
+      }
     }
   }
 `;
@@ -114,6 +123,15 @@ export const currentTrustDocumentsQuery = graphql`
             id
             documentType
             ...DocumentRowFragment
+          }
+        }
+      }
+      trustCenterFiles(first: 50) {
+        edges {
+          node {
+            id
+            category
+            ...TrustCenterFileRowFragment
           }
         }
       }

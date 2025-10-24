@@ -1187,6 +1187,24 @@ enum TrustCenterReferenceOrderField
     )
 }
 
+enum TrustCenterFileOrderField
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterFileOrderField"
+  ) {
+  NAME
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterFileOrderFieldName"
+    )
+  CREATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterFileOrderFieldCreatedAt"
+    )
+  UPDATED_AT
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterFileOrderFieldUpdatedAt"
+    )
+}
+
 enum SnapshotsType
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.SnapshotsType") {
   RISKS
@@ -1420,6 +1438,14 @@ input TrustCenterReferenceOrder
   ) {
   direction: OrderDirection!
   field: TrustCenterReferenceOrderField!
+}
+
+input TrustCenterFileOrder
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterFileOrderBy"
+  ) {
+  direction: OrderDirection!
+  field: TrustCenterFileOrderField!
 }
 
 input EvidenceOrder
@@ -1748,6 +1774,14 @@ type Organization implements Node {
     before: CursorKey
     orderBy: SnapshotOrder
   ): SnapshotConnection! @goField(forceResolver: true)
+
+  trustCenterFiles(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: TrustCenterFileOrder
+  ): TrustCenterFileConnection! @goField(forceResolver: true)
 
   trustCenter: TrustCenter @goField(forceResolver: true)
 
@@ -2391,6 +2425,7 @@ type TrustCenterDocumentAccess implements Node {
   trustCenterAccess: TrustCenterAccess! @goField(forceResolver: true)
   document: Document @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
+  trustCenterFile: TrustCenterFile @goField(forceResolver: true)
 }
 
 type TrustCenterDocumentAccessConnection
@@ -2439,6 +2474,31 @@ type TrustCenterReferenceConnection
 type TrustCenterReferenceEdge {
   cursor: CursorKey!
   node: TrustCenterReference!
+}
+
+type TrustCenterFile implements Node {
+  id: ID!
+  name: String!
+  category: String!
+  fileUrl: String! @goField(forceResolver: true)
+  trustCenterVisibility: TrustCenterVisibility!
+  createdAt: Datetime!
+  updatedAt: Datetime!
+  organization: Organization! @goField(forceResolver: true)
+}
+
+type TrustCenterFileConnection
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterFileConnection"
+  ) {
+  totalCount: Int! @goField(forceResolver: true)
+  edges: [TrustCenterFileEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TrustCenterFileEdge {
+  cursor: CursorKey!
+  node: TrustCenterFile!
 }
 
 type UserConnection
@@ -2824,6 +2884,23 @@ type Mutation {
     input: DeleteTrustCenterReferenceInput!
   ): DeleteTrustCenterReferencePayload!
 
+  # Trust Center File mutations
+  createTrustCenterFile(
+    input: CreateTrustCenterFileInput!
+  ): CreateTrustCenterFilePayload!
+
+  updateTrustCenterFile(
+    input: UpdateTrustCenterFileInput!
+  ): UpdateTrustCenterFilePayload!
+
+  getTrustCenterFile(
+    input: GetTrustCenterFileInput!
+  ): GetTrustCenterFilePayload!
+
+  deleteTrustCenterFile(
+    input: DeleteTrustCenterFileInput!
+  ): DeleteTrustCenterFilePayload!
+
   # User mutations
   confirmEmail(input: ConfirmEmailInput!): ConfirmEmailPayload!
   inviteUser(input: InviteUserInput!): InviteUserPayload!
@@ -3151,6 +3228,7 @@ input UpdateTrustCenterAccessInput {
   active: Boolean
   documentIds: [ID!]
   reportIds: [ID!]
+  trustCenterFileIds: [ID!]
 }
 
 input DeleteTrustCenterAccessInput {
@@ -3174,6 +3252,29 @@ input UpdateTrustCenterReferenceInput {
 }
 
 input DeleteTrustCenterReferenceInput {
+  id: ID!
+}
+
+input CreateTrustCenterFileInput {
+  organizationId: ID!
+  name: String!
+  category: String!
+  file: Upload!
+  trustCenterVisibility: TrustCenterVisibility!
+}
+
+input UpdateTrustCenterFileInput {
+  id: ID!
+  name: String
+  category: String
+  trustCenterVisibility: TrustCenterVisibility
+}
+
+input GetTrustCenterFileInput {
+  id: ID!
+}
+
+input DeleteTrustCenterFileInput {
   id: ID!
 }
 
@@ -3852,6 +3953,22 @@ type UpdateTrustCenterReferencePayload {
 
 type DeleteTrustCenterReferencePayload {
   deletedTrustCenterReferenceId: ID!
+}
+
+type CreateTrustCenterFilePayload {
+  trustCenterFileEdge: TrustCenterFileEdge!
+}
+
+type UpdateTrustCenterFilePayload {
+  trustCenterFile: TrustCenterFile!
+}
+
+type GetTrustCenterFilePayload {
+  trustCenterFile: TrustCenterFile!
+}
+
+type DeleteTrustCenterFilePayload {
+  deletedTrustCenterFileId: ID!
 }
 
 type CreateControlPayload {

@@ -47,6 +47,11 @@ export const trustCenterAccessesPaginationFragment = graphql`
                     }
                   }
                 }
+                trustCenterFile {
+                  id
+                  name
+                  category
+                }
               }
             }
           }
@@ -94,16 +99,21 @@ export const createTrustCenterAccessMutation = graphql`
                   title
                   documentType
                 }
-            report {
-              id
-              filename
-              audit {
-                id
-                framework {
-                  name
+                report {
+                  id
+                  filename
+                  audit {
+                    id
+                    framework {
+                      name
+                    }
+                  }
                 }
-              }
-            }
+                trustCenterFile {
+                  id
+                  name
+                  category
+                }
               }
             }
           }
@@ -138,16 +148,21 @@ export const updateTrustCenterAccessMutation = graphql`
                 title
                 documentType
               }
-            report {
-              id
-              filename
-              audit {
+              report {
                 id
-                framework {
-                  name
+                filename
+                audit {
+                  id
+                  framework {
+                    name
+                  }
                 }
               }
-            }
+              trustCenterFile {
+                id
+                name
+                category
+              }
             }
           }
         }

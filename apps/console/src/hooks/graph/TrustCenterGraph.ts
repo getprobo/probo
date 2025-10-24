@@ -57,6 +57,15 @@ export const trustCenterQuery = graphql`
             }
           }
         }
+        trustCenterFiles(first: 100) @connection(key: "TrustCenterPage_trustCenterFiles") {
+          __id
+          edges {
+            node {
+              id
+              ...TrustCenterFilesCardFragment
+            }
+          }
+        }
         slackConnections(first: 100) {
           edges {
             node {
