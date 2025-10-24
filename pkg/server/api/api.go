@@ -26,6 +26,7 @@ import (
 	"github.com/getprobo/probo/pkg/probo"
 	"github.com/getprobo/probo/pkg/saferedirect"
 	console_v1 "github.com/getprobo/probo/pkg/server/api/console/v1"
+	mcp_v1 "github.com/getprobo/probo/pkg/server/api/mcp/v1"
 	trust_v1 "github.com/getprobo/probo/pkg/server/api/trust/v1"
 	"github.com/getprobo/probo/pkg/trust"
 	"github.com/go-chi/chi/v5"
@@ -61,10 +62,20 @@ type (
 		Trust             *trust.Service
 		ConsoleAuth       ConsoleAuthConfig
 		TrustAuth         TrustAuthConfig
+		MCPAuth           MCPAuthConfig
 		ConnectorRegistry *connector.ConnectorRegistry
 		SafeRedirect      *saferedirect.SafeRedirect
 		CustomDomainCname string
 		Logger            *log.Logger
+	}
+
+	// MCPAuthConfig holds authentication configuration for MCP
+	MCPAuthConfig struct {
+		CookieName      string
+		CookieSecret    string
+		Version         string
+		RequestTimeout  time.Duration
+		MaxRequestSize  int64
 	}
 
 	Server struct {
@@ -199,6 +210,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Mount the trust API with authentication
 	router.Mount("/trust/v1", s.trustAPIHandler)
+
+	// Mount the MCP API
+	mcpCfg := mcp_v1.Config{
+		Version:        s.cfg.MCPAuth.Version,
+		RequestTimeout: s.cfg.MCPAuth.RequestTimeout,
+		MaxRequestSize: s.cfg.MCPAuth.MaxRequestSize,
+		Auth: mcp_v1.AuthConfig{
+			CookieName:   s.cfg.MCPAuth.CookieName,
+			CookieSecret: s.cfg.MCPAuth.CookieSecret,
+		},
+	}
+	router.Mount(
+		"/mcp/v1",
+		mcp_v1.NewMux(s.cfg.Logger.Named("mcp.v1"), s.cfg.Probo, s.cfg.Usrmgr, mcpCfg),
+	)
 
 	router.ServeHTTP(w, r)
 }
