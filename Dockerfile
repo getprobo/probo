@@ -11,9 +11,14 @@ RUN useradd -m probo && \
     rm -rf /var/lib/apt/lists/*
 
 COPY probod /usr/local/bin/probod
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
 RUN chmod +x /usr/local/bin/probod && \
-    setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/probod
+    chmod +x /usr/local/bin/entrypoint.sh && \
+    setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/probod && \
+    mkdir -p /etc/probod && \
+    chown probo:probo /etc/probod
 
 USER probo
 
-ENTRYPOINT ["probod"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
