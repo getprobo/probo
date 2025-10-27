@@ -15,6 +15,7 @@ Probod requires the following components for operation:
 
 - **[Installation Guide](./INSTALLATION.md)** - Docker and binary deployment procedures
 - **[Configuration Reference](./CONFIGURATION.md)** - Complete configuration options and examples
+- **[Docker Services](./DOCKER_SERVICES.md)** - Development environment services documentation
 
 ## Quick Deployment
 

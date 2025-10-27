@@ -96,6 +96,8 @@ Signed-off-by: John Doe <john.doe@example.org>
 
 The application should now be running at `http://localhost:3000`
 
+For detailed information about all Docker services in the development stack, see [Docker Services Documentation](docs/DOCKER_SERVICES.md).
+
 ## Need Help?
 
 Create an issue if you:
