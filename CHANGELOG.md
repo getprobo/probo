@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Add trust center files
+
 ### Fixed
 
 - Fix HTML entities displaying incorrectly in PDF exports (e.g., "&" showing as "&amp;")
