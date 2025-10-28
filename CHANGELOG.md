@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Change trust center console UX/UI
+
 ## [0.79.0] - 2025-10-28
 
 ### Added
