@@ -891,8 +891,8 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	publicTrustService := r.PublicTrustService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
-		Field:     coredata.TrustCenterReferenceOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
+		Field:     coredata.TrustCenterReferenceOrderFieldRank,
+		Direction: page.OrderDirectionAsc,
 	}
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 

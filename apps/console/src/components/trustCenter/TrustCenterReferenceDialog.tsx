@@ -22,6 +22,7 @@ const referenceSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string(),
   websiteUrl: z.string().url("Please enter a valid URL"),
+  rank: z.number().int().positive().optional(),
 });
 
 type ReferenceFormData = z.infer<typeof referenceSchema>;
@@ -33,6 +34,7 @@ export type TrustCenterReferenceDialogRef = {
     name: string;
     description: string;
     websiteUrl: string;
+    rank: number;
   }) => void;
 };
 
@@ -41,6 +43,7 @@ type Reference = {
   name: string;
   description: string;
   websiteUrl: string;
+  rank: number;
 };
 
 export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogRef, { children?: ReactNode }>(
@@ -89,6 +92,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
           name: reference.name,
           description: reference.description,
           websiteUrl: reference.websiteUrl,
+          rank: reference.rank,
         });
         dialogRef.current?.open();
       },
@@ -133,6 +137,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
           name: string;
           description: string;
           websiteUrl: string;
+          rank?: number;
           logoFile?: null;
         } = {
           id: editReference.id,
@@ -140,6 +145,10 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
           description: data.description,
           websiteUrl: data.websiteUrl,
         };
+
+        if (data.rank !== undefined) {
+          input.rank = data.rank;
+        }
 
         const uploadables: Record<string, File> = {};
 
@@ -209,6 +218,18 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
                 error={errors.websiteUrl?.message}
                 placeholder={__("https://example.com")}
               />
+
+              {mode === 'edit' && (
+                <Field
+                  {...register("rank", { valueAsNumber: true })}
+                  label={__("Rank")}
+                  type="number"
+                  min={1}
+                  error={errors.rank?.message}
+                  placeholder={__("Display order (1, 2, 3...)")}
+                  help={__("Lower numbers appear first")}
+                />
+              )}
 
               <Field label={__("Logo")}>
                 <Dropzone

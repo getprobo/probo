@@ -1734,6 +1734,7 @@ type TrustCenterReference struct {
 	Description string    `json:"description"`
 	WebsiteURL  string    `json:"websiteUrl"`
 	LogoURL     string    `json:"logoUrl"`
+	Rank        int       `json:"rank"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
@@ -2024,6 +2025,7 @@ type UpdateTrustCenterReferenceInput struct {
 	Description *string         `json:"description,omitempty"`
 	WebsiteURL  *string         `json:"websiteUrl,omitempty"`
 	LogoFile    *graphql.Upload `json:"logoFile,omitempty"`
+	Rank        *int            `json:"rank,omitempty"`
 }
 
 type UpdateTrustCenterReferencePayload struct {

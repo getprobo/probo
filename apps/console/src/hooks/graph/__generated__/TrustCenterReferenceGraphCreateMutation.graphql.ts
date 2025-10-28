@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<216f3e7b4510c3d1127c3910bebc8b95>>
+ * @generated SignedSource<<9d17f089c36e0567d217fe339b6382fd>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -30,6 +30,7 @@ export type TrustCenterReferenceGraphCreateMutation$data = {
         readonly id: string;
         readonly logoUrl: string;
         readonly name: string;
+        readonly rank: number;
         readonly updatedAt: any;
         readonly websiteUrl: string;
       };
@@ -121,6 +122,13 @@ v3 = {
           "alias": null,
           "args": null,
           "kind": "ScalarField",
+          "name": "rank",
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
           "name": "createdAt",
           "storageKey": null
         },
@@ -185,7 +193,7 @@ return {
             "alias": null,
             "args": null,
             "filters": null,
-            "handle": "prependEdge",
+            "handle": "appendEdge",
             "key": "",
             "kind": "LinkedHandle",
             "name": "trustCenterReferenceEdge",
@@ -203,16 +211,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "17a206ba4702d641ffd7631cb8e3e03b",
+    "cacheID": "623c9df0fba82887a878addd1ddaf706",
     "id": null,
     "metadata": {},
     "name": "TrustCenterReferenceGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterReferenceGraphCreateMutation(\n  $input: CreateTrustCenterReferenceInput!\n) {\n  createTrustCenterReference(input: $input) {\n    trustCenterReferenceEdge {\n      cursor\n      node {\n        id\n        name\n        description\n        websiteUrl\n        logoUrl\n        createdAt\n        updatedAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterReferenceGraphCreateMutation(\n  $input: CreateTrustCenterReferenceInput!\n) {\n  createTrustCenterReference(input: $input) {\n    trustCenterReferenceEdge {\n      cursor\n      node {\n        id\n        name\n        description\n        websiteUrl\n        logoUrl\n        rank\n        createdAt\n        updatedAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "e0a76c3f5582bf1ed5def08db36d9e25";
+(node as any).hash = "ee754e6c9bc3aa992e1a40e828b0d07e";
 
 export default node;

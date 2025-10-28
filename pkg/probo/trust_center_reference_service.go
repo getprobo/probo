@@ -52,6 +52,7 @@ type (
 		Description *string
 		WebsiteURL  *string
 		LogoFile    *File
+		Rank        *int
 	}
 
 	DeleteTrustCenterReferenceRequest struct {
@@ -228,6 +229,13 @@ func (s TrustCenterReferenceService) Update(
 			reference.LogoFileID = *newFileID
 		}
 		reference.UpdatedAt = now
+
+		if req.Rank != nil {
+			reference.Rank = *req.Rank
+			if err := reference.UpdateRank(ctx, tx, s.svc.scope); err != nil {
+				return fmt.Errorf("cannot update rank: %w", err)
+			}
+		}
 
 		if err := reference.Update(ctx, tx, s.svc.scope); err != nil {
 			return fmt.Errorf("cannot update trust center reference: %w", err)

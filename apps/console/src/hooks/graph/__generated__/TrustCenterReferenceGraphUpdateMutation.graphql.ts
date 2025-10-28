@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3b02f7734c467adddc8f8abe1c18c4e5>>
+ * @generated SignedSource<<9f21158abea504110ef50d4e0114a56a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,6 +14,7 @@ export type UpdateTrustCenterReferenceInput = {
   id: string;
   logoFile?: any | null | undefined;
   name?: string | null | undefined;
+  rank?: number | null | undefined;
   websiteUrl?: string | null | undefined;
 };
 export type TrustCenterReferenceGraphUpdateMutation$variables = {
@@ -27,6 +28,7 @@ export type TrustCenterReferenceGraphUpdateMutation$data = {
       readonly id: string;
       readonly logoUrl: string;
       readonly name: string;
+      readonly rank: number;
       readonly updatedAt: any;
       readonly websiteUrl: string;
     };
@@ -107,6 +109,13 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
+            "name": "rank",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
             "name": "createdAt",
             "storageKey": null
           },
@@ -142,16 +151,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "e5fa3bdb21897523c1491d6cfbf816cf",
+    "cacheID": "f55510d6d1e0a686d4733f5bd82a605a",
     "id": null,
     "metadata": {},
     "name": "TrustCenterReferenceGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation TrustCenterReferenceGraphUpdateMutation(\n  $input: UpdateTrustCenterReferenceInput!\n) {\n  updateTrustCenterReference(input: $input) {\n    trustCenterReference {\n      id\n      name\n      description\n      websiteUrl\n      logoUrl\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation TrustCenterReferenceGraphUpdateMutation(\n  $input: UpdateTrustCenterReferenceInput!\n) {\n  updateTrustCenterReference(input: $input) {\n    trustCenterReference {\n      id\n      name\n      description\n      websiteUrl\n      logoUrl\n      rank\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "2340a9c559d302025df08a5748c18b80";
+(node as any).hash = "bed2a3190570cd85d85dd38f20f375da";
 
 export default node;

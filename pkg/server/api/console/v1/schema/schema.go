@@ -1366,6 +1366,7 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		LogoURL     func(childComplexity int) int
 		Name        func(childComplexity int) int
+		Rank        func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 		WebsiteURL  func(childComplexity int) int
 	}
@@ -7937,6 +7938,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TrustCenterReference.Name(childComplexity), true
 
+	case "TrustCenterReference.rank":
+		if e.complexity.TrustCenterReference.Rank == nil {
+			break
+		}
+
+		return e.complexity.TrustCenterReference.Rank(childComplexity), true
+
 	case "TrustCenterReference.updatedAt":
 		if e.complexity.TrustCenterReference.UpdatedAt == nil {
 			break
@@ -10491,6 +10499,10 @@ enum TrustCenterReferenceOrderField
   @goModel(
     model: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderField"
   ) {
+  RANK
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldRank"
+    )
   NAME
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldName"
@@ -11779,6 +11791,7 @@ type TrustCenterReference implements Node {
   description: String!
   websiteUrl: String!
   logoUrl: String! @goField(forceResolver: true)
+  rank: Int!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -12570,6 +12583,7 @@ input UpdateTrustCenterReferenceInput {
   description: String
   websiteUrl: String
   logoFile: Upload
+  rank: Int
 }
 
 input DeleteTrustCenterReferenceInput {
@@ -59663,6 +59677,50 @@ func (ec *executionContext) fieldContext_TrustCenterReference_logoUrl(_ context.
 	return fc, nil
 }
 
+func (ec *executionContext) _TrustCenterReference_rank(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterReference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenterReference_rank(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Rank, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterReference_rank(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterReference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _TrustCenterReference_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterReference) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TrustCenterReference_createdAt(ctx, field)
 	if err != nil {
@@ -59992,6 +60050,8 @@ func (ec *executionContext) fieldContext_TrustCenterReferenceEdge_node(_ context
 				return ec.fieldContext_TrustCenterReference_websiteUrl(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_TrustCenterReference_logoUrl(ctx, field)
+			case "rank":
+				return ec.fieldContext_TrustCenterReference_rank(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TrustCenterReference_createdAt(ctx, field)
 			case "updatedAt":
@@ -61510,6 +61570,8 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterReferencePayload_trust
 				return ec.fieldContext_TrustCenterReference_websiteUrl(ctx, field)
 			case "logoUrl":
 				return ec.fieldContext_TrustCenterReference_logoUrl(ctx, field)
+			case "rank":
+				return ec.fieldContext_TrustCenterReference_rank(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TrustCenterReference_createdAt(ctx, field)
 			case "updatedAt":
@@ -76457,7 +76519,7 @@ func (ec *executionContext) unmarshalInputUpdateTrustCenterReferenceInput(ctx co
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "description", "websiteUrl", "logoFile"}
+	fieldsInOrder := [...]string{"id", "name", "description", "websiteUrl", "logoFile", "rank"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -76499,6 +76561,13 @@ func (ec *executionContext) unmarshalInputUpdateTrustCenterReferenceInput(ctx co
 				return it, err
 			}
 			it.LogoFile = data
+		case "rank":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rank"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Rank = data
 		}
 	}
 
@@ -91027,6 +91096,11 @@ func (ec *executionContext) _TrustCenterReference(ctx context.Context, sel ast.S
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "rank":
+			out.Values[i] = ec._TrustCenterReference_rank(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "createdAt":
 			out.Values[i] = ec._TrustCenterReference_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -101438,11 +101512,13 @@ func (ec *executionContext) marshalNTrustCenterReferenceOrderField2githubᚗcom�
 
 var (
 	unmarshalNTrustCenterReferenceOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterReferenceOrderField = map[string]coredata.TrustCenterReferenceOrderField{
+		"RANK":       coredata.TrustCenterReferenceOrderFieldRank,
 		"NAME":       coredata.TrustCenterReferenceOrderFieldName,
 		"CREATED_AT": coredata.TrustCenterReferenceOrderFieldCreatedAt,
 		"UPDATED_AT": coredata.TrustCenterReferenceOrderFieldUpdatedAt,
 	}
 	marshalNTrustCenterReferenceOrderField2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐTrustCenterReferenceOrderField = map[coredata.TrustCenterReferenceOrderField]string{
+		coredata.TrustCenterReferenceOrderFieldRank:      "RANK",
 		coredata.TrustCenterReferenceOrderFieldName:      "NAME",
 		coredata.TrustCenterReferenceOrderFieldCreatedAt: "CREATED_AT",
 		coredata.TrustCenterReferenceOrderFieldUpdatedAt: "UPDATED_AT",

@@ -1173,6 +1173,10 @@ enum TrustCenterReferenceOrderField
   @goModel(
     model: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderField"
   ) {
+  RANK
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldRank"
+    )
   NAME
     @goEnum(
       value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldName"
@@ -2461,6 +2465,7 @@ type TrustCenterReference implements Node {
   description: String!
   websiteUrl: String!
   logoUrl: String! @goField(forceResolver: true)
+  rank: Int!
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -3252,6 +3257,7 @@ input UpdateTrustCenterReferenceInput {
   description: String
   websiteUrl: String
   logoFile: Upload
+  rank: Int
 }
 
 input DeleteTrustCenterReferenceInput {

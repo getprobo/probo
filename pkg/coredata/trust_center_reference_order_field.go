@@ -19,6 +19,7 @@ type (
 )
 
 const (
+	TrustCenterReferenceOrderFieldRank      TrustCenterReferenceOrderField = "RANK"
 	TrustCenterReferenceOrderFieldName      TrustCenterReferenceOrderField = "NAME"
 	TrustCenterReferenceOrderFieldCreatedAt TrustCenterReferenceOrderField = "CREATED_AT"
 	TrustCenterReferenceOrderFieldUpdatedAt TrustCenterReferenceOrderField = "UPDATED_AT"
@@ -26,6 +27,8 @@ const (
 
 func (p TrustCenterReferenceOrderField) Column() string {
 	switch p {
+	case TrustCenterReferenceOrderFieldRank:
+		return "rank"
 	case TrustCenterReferenceOrderFieldName:
 		return "name"
 	case TrustCenterReferenceOrderFieldCreatedAt:

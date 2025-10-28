@@ -34,15 +34,26 @@ type (
 		Description   string    `db:"description"`
 		WebsiteURL    string    `db:"website_url"`
 		LogoFileID    gid.GID   `db:"logo_file_id"`
+		Rank          int       `db:"rank"`
 		CreatedAt     time.Time `db:"created_at"`
 		UpdatedAt     time.Time `db:"updated_at"`
 	}
 
 	TrustCenterReferences []*TrustCenterReference
+
+	ErrTrustCenterReferenceNotFound struct {
+		ID string
+	}
 )
+
+func (e ErrTrustCenterReferenceNotFound) Error() string {
+	return fmt.Sprintf("trust center reference not found: %s", e.ID)
+}
 
 func (t TrustCenterReference) CursorKey(orderBy TrustCenterReferenceOrderField) page.CursorKey {
 	switch orderBy {
+	case TrustCenterReferenceOrderFieldRank:
+		return page.NewCursorKey(t.ID, t.Rank)
 	case TrustCenterReferenceOrderFieldName:
 		return page.NewCursorKey(t.ID, t.Name)
 	case TrustCenterReferenceOrderFieldCreatedAt:
@@ -67,6 +78,7 @@ SELECT
     description,
     website_url,
     logo_file_id,
+    rank,
     created_at,
     updated_at
 FROM
@@ -96,7 +108,7 @@ LIMIT 1;
 	return nil
 }
 
-func (t TrustCenterReference) Insert(
+func (t *TrustCenterReference) Insert(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -111,6 +123,7 @@ INSERT INTO
         description,
         website_url,
         logo_file_id,
+        rank,
         created_at,
         updated_at
     )
@@ -122,9 +135,11 @@ VALUES (
     @description,
     @website_url,
     @logo_file_id,
+    (SELECT COALESCE(MAX(rank), 0) + 1 FROM trust_center_references WHERE trust_center_id = @trust_center_id),
     @created_at,
     @updated_at
-);
+)
+RETURNING rank;
 `
 
 	args := pgx.StrictNamedArgs{
@@ -139,7 +154,7 @@ VALUES (
 		"updated_at":      t.UpdatedAt,
 	}
 
-	_, err := conn.Exec(ctx, q, args)
+	err := conn.QueryRow(ctx, q, args).Scan(&t.Rank)
 	if err != nil {
 		return fmt.Errorf("cannot insert trust center reference: %w", err)
 	}
@@ -162,16 +177,7 @@ SET
     updated_at = @updated_at
 WHERE
     %s
-    AND id = @id
-RETURNING
-    id,
-    trust_center_id,
-    name,
-    description,
-    website_url,
-    logo_file_id,
-    created_at,
-    updated_at
+    AND id = @id;
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment())
@@ -186,17 +192,64 @@ RETURNING
 	}
 	maps.Copy(args, scope.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
+	result, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		return fmt.Errorf("cannot update trust center reference: %w", err)
 	}
 
-	reference, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterReference])
-	if err != nil {
-		return fmt.Errorf("cannot collect updated trust center reference: %w", err)
+	if result.RowsAffected() == 0 {
+		return ErrTrustCenterReferenceNotFound{ID: t.ID.String()}
 	}
 
-	*t = reference
+	return nil
+}
+
+func (t *TrustCenterReference) UpdateRank(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+) error {
+	q := `
+WITH old AS (
+  SELECT
+	rank AS old_rank
+  FROM trust_center_references
+  WHERE %s AND id = @id AND trust_center_id = @trust_center_id
+)
+
+UPDATE trust_center_references
+SET
+    rank = CASE
+        WHEN id = @id THEN @new_rank
+        ELSE rank + CASE
+            WHEN @new_rank < old.old_rank THEN 1
+            WHEN @new_rank > old.old_rank THEN -1
+        END
+    END,
+    updated_at = @updated_at
+FROM old
+WHERE %s
+  AND (
+    id = @id
+    OR (rank BETWEEN LEAST(old.old_rank, @new_rank) AND GREATEST(old.old_rank, @new_rank))
+  );
+`
+
+	scopeFragment := scope.SQLFragment()
+	q = fmt.Sprintf(q, scopeFragment, scopeFragment)
+
+	args := pgx.StrictNamedArgs{
+		"id":              t.ID,
+		"new_rank":        t.Rank,
+		"trust_center_id": t.TrustCenterID,
+		"updated_at":      t.UpdatedAt,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update trust center reference rank: %w", err)
+	}
 
 	return nil
 }
@@ -242,6 +295,7 @@ SELECT
     description,
     website_url,
     logo_file_id,
+    rank,
     created_at,
     updated_at
 FROM

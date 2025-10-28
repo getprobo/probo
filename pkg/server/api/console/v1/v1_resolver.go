@@ -1341,7 +1341,7 @@ func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input
 	}
 
 	return &types.CreateTrustCenterReferencePayload{
-		TrustCenterReferenceEdge: types.NewTrustCenterReferenceEdge(reference, coredata.TrustCenterReferenceOrderFieldCreatedAt),
+		TrustCenterReferenceEdge: types.NewTrustCenterReferenceEdge(reference, coredata.TrustCenterReferenceOrderFieldRank),
 	}, nil
 }
 
@@ -1354,6 +1354,7 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 		Name:        input.Name,
 		Description: input.Description,
 		WebsiteURL:  input.WebsiteURL,
+		Rank:        input.Rank,
 	}
 
 	if input.LogoFile != nil {
@@ -4944,7 +4945,7 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.TrustCenterReferenceOrderField]{
-		Field:     coredata.TrustCenterReferenceOrderFieldName,
+		Field:     coredata.TrustCenterReferenceOrderFieldRank,
 		Direction: page.OrderDirectionAsc,
 	}
 	if orderBy != nil {

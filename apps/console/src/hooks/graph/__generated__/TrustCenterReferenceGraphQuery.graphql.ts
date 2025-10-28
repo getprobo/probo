@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f53f001d217e4c6f5b353f2243f700f2>>
+ * @generated SignedSource<<85556d15b776b3e61e312057a994d482>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,6 +25,7 @@ export type TrustCenterReferenceGraphQuery$data = {
           readonly id: string;
           readonly logoUrl: string;
           readonly name: string;
+          readonly rank: number;
           readonly updatedAt: any;
           readonly websiteUrl: string;
         };
@@ -69,8 +70,8 @@ v3 = {
   "kind": "Literal",
   "name": "orderBy",
   "value": {
-    "direction": "DESC",
-    "field": "CREATED_AT"
+    "direction": "ASC",
+    "field": "RANK"
   }
 },
 v4 = {
@@ -176,6 +177,13 @@ v5 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
+            "name": "rank",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
             "name": "createdAt",
             "storageKey": null
           },
@@ -243,7 +251,7 @@ return {
                 "name": "__TrustCenterReferencesSection_references_connection",
                 "plural": false,
                 "selections": (v5/*: any*/),
-                "storageKey": "__TrustCenterReferencesSection_references_connection(orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+                "storageKey": "__TrustCenterReferencesSection_references_connection(orderBy:{\"direction\":\"ASC\",\"field\":\"RANK\"})"
               }
             ],
             "type": "TrustCenter",
@@ -283,7 +291,7 @@ return {
                 "name": "references",
                 "plural": false,
                 "selections": (v5/*: any*/),
-                "storageKey": "references(first:100,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+                "storageKey": "references(first:100,orderBy:{\"direction\":\"ASC\",\"field\":\"RANK\"})"
               },
               {
                 "alias": null,
@@ -306,7 +314,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "8e9fd111488feb14deeedf47bfa4a0f0",
+    "cacheID": "8fdd97abcaa0d9eb889eb454c85f2e4c",
     "id": null,
     "metadata": {
       "connection": [
@@ -323,11 +331,11 @@ return {
     },
     "name": "TrustCenterReferenceGraphQuery",
     "operationKind": "query",
-    "text": "query TrustCenterReferenceGraphQuery(\n  $trustCenterId: ID!\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      references(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {\n        pageInfo {\n          hasNextPage\n          hasPreviousPage\n          startCursor\n          endCursor\n        }\n        edges {\n          cursor\n          node {\n            id\n            name\n            description\n            websiteUrl\n            logoUrl\n            createdAt\n            updatedAt\n            __typename\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
+    "text": "query TrustCenterReferenceGraphQuery(\n  $trustCenterId: ID!\n) {\n  node(id: $trustCenterId) {\n    __typename\n    ... on TrustCenter {\n      id\n      references(first: 100, orderBy: {field: RANK, direction: ASC}) {\n        pageInfo {\n          hasNextPage\n          hasPreviousPage\n          startCursor\n          endCursor\n        }\n        edges {\n          cursor\n          node {\n            id\n            name\n            description\n            websiteUrl\n            logoUrl\n            rank\n            createdAt\n            updatedAt\n            __typename\n          }\n        }\n      }\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "8b62ed10055cff04e117a31dd598eee4";
+(node as any).hash = "cb4b9b8a68249ae8066a3ff2bfc6acd8";
 
 export default node;

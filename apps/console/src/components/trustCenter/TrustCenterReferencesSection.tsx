@@ -14,9 +14,10 @@ import {
   IconPencil,
   IconArrowLink,
 } from "@probo/ui";
-import { type ReactNode, useRef } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import {
   useTrustCenterReferences,
+  useUpdateTrustCenterReferenceRankMutation,
 } from "/hooks/graph/TrustCenterReferenceGraph";
 import { TrustCenterReferenceDialog, type TrustCenterReferenceDialogRef } from "./TrustCenterReferenceDialog";
 import { DeleteTrustCenterReferenceDialog } from "./DeleteTrustCenterReferenceDialog";
@@ -32,6 +33,7 @@ type Reference = {
   description: string;
   websiteUrl: string;
   logoUrl: string;
+  rank: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -39,7 +41,11 @@ type Reference = {
 export function TrustCenterReferencesSection({ trustCenterId }: Props) {
   const { __ } = useTranslate();
   const dialogRef = useRef<TrustCenterReferenceDialogRef>(null);
-  const data = useTrustCenterReferences(trustCenterId);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [refetchKey, setRefetchKey] = useState(0);
+  const data = useTrustCenterReferences(trustCenterId, refetchKey);
+  const [updateRank] = useUpdateTrustCenterReferenceRankMutation();
 
   const trustCenterNode = data?.node;
   const references = trustCenterNode?.references?.edges?.map((edge) => edge.node) || [];
@@ -55,9 +61,45 @@ export function TrustCenterReferencesSection({ trustCenterId }: Props) {
     dialogRef.current?.openEdit(reference);
   };
 
-
   const handleVisitWebsite = (websiteUrl: string) => {
     safeOpenUrl(websiteUrl);
+  };
+
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex !== index) {
+      setDragOverIndex(index);
+    }
+  };
+
+  const handleDrop = (targetIndex: number) => {
+    if (draggedIndex === null || draggedIndex === targetIndex) {
+      setDraggedIndex(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    const draggedRef = references[draggedIndex];
+    const targetRank = references[targetIndex].rank;
+
+    updateRank({
+      variables: {
+        input: {
+          id: draggedRef.id,
+          rank: targetRank,
+        },
+      },
+      onCompleted: () => {
+        setRefetchKey((prev) => prev + 1);
+      },
+    });
+
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   return (
@@ -93,17 +135,27 @@ export function TrustCenterReferencesSection({ trustCenterId }: Props) {
               </Td>
             </Tr>
           )}
-          {references.map((reference: Reference) => (
+          {references.map((reference: Reference, index: number) => (
             <ReferenceRow
               key={reference.id}
               reference={reference}
+              index={index}
+              isDragging={draggedIndex === index}
+              isDropTarget={dragOverIndex === index && draggedIndex !== index}
               onEdit={() => handleEdit(reference)}
               connectionId={referencesConnectionId}
               onVisitWebsite={() => handleVisitWebsite(reference.websiteUrl)}
+              onDragStart={() => handleDragStart(index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDrop={() => handleDrop(index)}
             />
           ))}
         </Tbody>
       </Table>
+
+      <p className="text-xs text-txt-tertiary">
+        {__("Drag and drop references to change their displayed order")}
+      </p>
 
       <TrustCenterReferenceDialog ref={dialogRef} />
     </div>
@@ -112,14 +164,48 @@ export function TrustCenterReferencesSection({ trustCenterId }: Props) {
 
 type ReferenceRowProps = {
   reference: Reference;
+  index: number;
+  isDragging: boolean;
+  isDropTarget: boolean;
   onEdit: () => void;
   connectionId: string;
   onVisitWebsite: () => void;
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: () => void;
 };
 
-function ReferenceRow({ reference, onEdit, connectionId, onVisitWebsite }: ReferenceRowProps) {
+function ReferenceRow({
+  reference,
+  isDragging,
+  isDropTarget,
+  onEdit,
+  connectionId,
+  onVisitWebsite,
+  onDragStart,
+  onDragOver,
+  onDrop,
+}: ReferenceRowProps) {
+  const [isMouseDown, setIsMouseDown] = useState(false);
+
+  const className = [
+    isDragging && "opacity-50 cursor-grabbing",
+    !isDragging && !isMouseDown && "cursor-grab",
+    !isDragging && isMouseDown && "cursor-grabbing",
+    isDropTarget && "!bg-primary-50 border-y-2 border-primary-500",
+  ].filter(Boolean).join(" ");
+
   return (
-    <Tr>
+    <Tr
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      onMouseDown={() => setIsMouseDown(true)}
+      onMouseUp={() => setIsMouseDown(false)}
+      onMouseLeave={() => setIsMouseDown(false)}
+      className={className}
+    >
       <Td>
         <div className="flex items-center gap-3">
           <Avatar
