@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.80.1] - 2025-10-28
+
+### Fixed
+
+- Fix report list in trust center update access modal
+
 ## [0.80.0] - 2025-10-28
 
 ### Changed
