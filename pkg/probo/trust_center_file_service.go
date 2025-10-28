@@ -54,10 +54,6 @@ type (
 		TrustCenterVisibility *coredata.TrustCenterVisibility
 	}
 
-	GetTrustCenterFileRequest struct {
-		ID gid.GID
-	}
-
 	DeleteTrustCenterFileRequest struct {
 		ID gid.GID
 	}
@@ -114,21 +110,18 @@ func (s TrustCenterFileService) CountForOrganizationID(
 
 func (s TrustCenterFileService) Get(
 	ctx context.Context,
-	req *GetTrustCenterFileRequest,
+	id gid.GID,
 ) (*coredata.TrustCenterFile, error) {
 	var file *coredata.TrustCenterFile
 
-	err := s.svc.pg.WithConn(
-		ctx,
-		func(conn pg.Conn) error {
-			file = &coredata.TrustCenterFile{}
-			if err := file.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
-				return fmt.Errorf("cannot load trust center file: %w", err)
-			}
+	err := s.svc.pg.WithConn(ctx, func(conn pg.Conn) error {
+		file = &coredata.TrustCenterFile{}
+		if err := file.LoadByID(ctx, conn, s.svc.scope, id); err != nil {
+			return fmt.Errorf("cannot load trust center file: %w", err)
+		}
 
-			return nil
-		},
-	)
+		return nil
+	})
 
 	if err != nil {
 		return nil, err

@@ -1439,9 +1439,7 @@ func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input type
 func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.GetTrustCenterFileInput) (*types.GetTrustCenterFilePayload, error) {
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	file, err := prb.TrustCenterFiles.Get(ctx, &probo.GetTrustCenterFileRequest{
-		ID: input.ID,
-	})
+	file, err := prb.TrustCenterFiles.Get(ctx, input.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get trust center file: %w", err)
 	}
@@ -4501,6 +4499,13 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		}
 
 		return types.NewTrustCenter(trustCenter, file), nil
+	case coredata.TrustCenterAccessEntityType:
+		trustCenterAccess, err := prb.TrustCenterAccesses.Get(ctx, id)
+		if err != nil {
+			panic(fmt.Errorf("cannot get trust center access: %w", err))
+		}
+
+		return types.NewTrustCenterAccess(trustCenterAccess), nil
 	default:
 	}
 
@@ -4959,8 +4964,32 @@ func (r *trustCenterResolver) References(ctx context.Context, obj *types.TrustCe
 	return types.NewTrustCenterReferenceConnection(result, obj.ID), nil
 }
 
-// DocumentAccesses is the resolver for the documentAccesses field.
-func (r *trustCenterAccessResolver) DocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error) {
+// PendingRequestCount is the resolver for the pendingRequestCount field.
+func (r *trustCenterAccessResolver) PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	count, err := prb.TrustCenterAccesses.CountPendingRequestDocumentAccesses(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot count pending request document accesses: %w", err))
+	}
+
+	return count, nil
+}
+
+// ActiveCount is the resolver for the activeCount field.
+func (r *trustCenterAccessResolver) ActiveCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	count, err := prb.TrustCenterAccesses.CountActiveDocumentAccesses(ctx, obj.ID)
+	if err != nil {
+		panic(fmt.Errorf("cannot count active document accesses: %w", err))
+	}
+
+	return count, nil
+}
+
+// AvailableDocumentAccesses is the resolver for the availableDocumentAccesses field.
+func (r *trustCenterAccessResolver) AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
 	pageOrderBy := page.OrderBy[coredata.TrustCenterDocumentAccessOrderField]{
@@ -4976,7 +5005,7 @@ func (r *trustCenterAccessResolver) DocumentAccesses(ctx context.Context, obj *t
 
 	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
 
-	result, err := prb.TrustCenterAccesses.ListDocumentAccesses(ctx, obj.ID, cursor)
+	result, err := prb.TrustCenterAccesses.ListAvailableDocumentAccesses(ctx, obj.ID, cursor)
 	if err != nil {
 		panic(fmt.Errorf("cannot list trust center document accesses: %w", err))
 	}
@@ -4984,26 +5013,15 @@ func (r *trustCenterAccessResolver) DocumentAccesses(ctx context.Context, obj *t
 	return types.NewTrustCenterDocumentAccessConnection(result, obj, obj.ID), nil
 }
 
-// TrustCenterAccess is the resolver for the trustCenterAccess field.
-func (r *trustCenterDocumentAccessResolver) TrustCenterAccess(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterAccess, error) {
-	// The TrustCenterAccess is already loaded from the connection resolver
-	return obj.TrustCenterAccess, nil
-}
-
 // Document is the resolver for the document field.
 func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	documentAccess, err := prb.TrustCenterAccesses.GetDocumentAccess(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load trust center document access: %w", err)
-	}
-
-	if documentAccess.DocumentID == nil {
+	if obj.DocumentID == nil {
 		return nil, nil
 	}
 
-	document, err := prb.Documents.Get(ctx, *documentAccess.DocumentID)
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	document, err := prb.Documents.Get(ctx, *obj.DocumentID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load document: %w", err)
 	}
@@ -5013,18 +5031,13 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 
 // Report is the resolver for the report field.
 func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Report, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	documentAccess, err := prb.TrustCenterAccesses.GetDocumentAccess(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load trust center document access: %w", err)
-	}
-
-	if documentAccess.ReportID == nil {
+	if obj.ReportID == nil {
 		return nil, nil
 	}
 
-	report, err := prb.Reports.Get(ctx, *documentAccess.ReportID)
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	report, err := prb.Reports.Get(ctx, *obj.ReportID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load report: %w", err)
 	}
@@ -5034,20 +5047,13 @@ func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *typ
 
 // TrustCenterFile is the resolver for the trustCenterFile field.
 func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterFile, error) {
-	prb := r.ProboService(ctx, obj.ID.TenantID())
-
-	documentAccess, err := prb.TrustCenterAccesses.GetDocumentAccess(ctx, obj.ID)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load trust center document access: %w", err)
-	}
-
-	if documentAccess.TrustCenterFileID == nil {
+	if obj.TrustCenterFileID == nil {
 		return nil, nil
 	}
 
-	trustCenterFile, err := prb.TrustCenterFiles.Get(ctx, &probo.GetTrustCenterFileRequest{
-		ID: *documentAccess.TrustCenterFileID,
-	})
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	trustCenterFile, err := prb.TrustCenterFiles.Get(ctx, *obj.TrustCenterFileID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load trust center file: %w", err)
 	}
@@ -5083,9 +5089,7 @@ func (r *trustCenterFileResolver) FileURL(ctx context.Context, obj *types.TrustC
 func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.TrustCenterFile) (*types.Organization, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 
-	file, err := prb.TrustCenterFiles.Get(ctx, &probo.GetTrustCenterFileRequest{
-		ID: obj.ID,
-	})
+	file, err := prb.TrustCenterFiles.Get(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot get trust center file: %w", err))
 	}

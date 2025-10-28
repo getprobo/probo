@@ -1,4 +1,5 @@
-import { Card, Spinner } from "@probo/ui";
+import { Spinner } from "@probo/ui";
+import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
 import { TrustCenterVendorsCard } from "/components/trustCenter/TrustCenterVendorsCard";
 import { useTrustCenterVendorUpdate } from "/hooks/graph/TrustCenterVendorGraph";
@@ -15,6 +16,7 @@ type ContextType = {
 };
 
 export default function TrustCenterVendorsTab() {
+  const { __ } = useTranslate();
   const { organization } = useOutletContext<ContextType>();
   const [updateVendorVisibility, isUpdatingVendors] = useTrustCenterVendorUpdate();
 
@@ -23,17 +25,20 @@ export default function TrustCenterVendorsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-medium">{__("Vendors")}</h3>
+          <p className="text-sm text-txt-tertiary">
+            {__("Manage vendor assessments and third-party risk information")}
+          </p>
+        </div>
         {isUpdatingVendors && <Spinner />}
       </div>
-      <Card padded>
-        <TrustCenterVendorsCard
-          vendors={vendors}
-          params={{}}
-          disabled={isUpdatingVendors}
-          onToggleVisibility={updateVendorVisibility}
-          variant="table"
-        />
-      </Card>
+      <TrustCenterVendorsCard
+        vendors={vendors}
+        params={{}}
+        disabled={isUpdatingVendors}
+        onToggleVisibility={updateVendorVisibility}
+      />
     </div>
   );
 }

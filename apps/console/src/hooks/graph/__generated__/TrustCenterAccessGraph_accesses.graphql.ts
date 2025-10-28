@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d572a906e6afd89e4a3f1dcffa5c0528>>
+ * @generated SignedSource<<a3da155281753945ab0645a04f0b74fb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,7 +9,6 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
-export type DocumentType = "ISMS" | "OTHER" | "POLICY" | "PROCEDURE";
 import { FragmentRefs } from "relay-runtime";
 export type TrustCenterAccessGraph_accesses$data = {
   readonly accesses: {
@@ -18,41 +17,14 @@ export type TrustCenterAccessGraph_accesses$data = {
       readonly cursor: any;
       readonly node: {
         readonly active: boolean;
+        readonly activeCount: number;
         readonly createdAt: any;
-        readonly documentAccesses: {
-          readonly edges: ReadonlyArray<{
-            readonly node: {
-              readonly active: boolean;
-              readonly createdAt: any;
-              readonly document: {
-                readonly documentType: DocumentType;
-                readonly id: string;
-                readonly title: string;
-              } | null | undefined;
-              readonly id: string;
-              readonly report: {
-                readonly audit: {
-                  readonly framework: {
-                    readonly name: string;
-                  };
-                  readonly id: string;
-                } | null | undefined;
-                readonly filename: string;
-                readonly id: string;
-              } | null | undefined;
-              readonly trustCenterFile: {
-                readonly category: string;
-                readonly id: string;
-                readonly name: string;
-              } | null | undefined;
-              readonly updatedAt: any;
-            };
-          }>;
-        };
         readonly email: string;
         readonly hasAcceptedNonDisclosureAgreement: boolean;
         readonly id: string;
+        readonly lastTokenExpiresAt: any | null | undefined;
         readonly name: string;
+        readonly pendingRequestCount: number;
       };
     }>;
     readonly pageInfo: {
@@ -77,39 +49,10 @@ var v0 = [
   "accesses"
 ],
 v1 = {
-  "kind": "Literal",
-  "name": "orderBy",
-  "value": {
-    "direction": "DESC",
-    "field": "CREATED_AT"
-  }
-},
-v2 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "id",
-  "storageKey": null
-},
-v3 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "name",
-  "storageKey": null
-},
-v4 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "active",
-  "storageKey": null
-},
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "createdAt",
   "storageKey": null
 };
 return {
@@ -157,7 +100,14 @@ return {
     {
       "alias": "accesses",
       "args": [
-        (v1/*: any*/)
+        {
+          "kind": "Literal",
+          "name": "orderBy",
+          "value": {
+            "direction": "DESC",
+            "field": "CREATED_AT"
+          }
+        }
       ],
       "concreteType": "TrustCenterAccessConnection",
       "kind": "LinkedField",
@@ -226,7 +176,7 @@ return {
               "name": "node",
               "plural": false,
               "selections": [
-                (v2/*: any*/),
+                (v1/*: any*/),
                 {
                   "alias": null,
                   "args": null,
@@ -234,8 +184,20 @@ return {
                   "name": "email",
                   "storageKey": null
                 },
-                (v3/*: any*/),
-                (v4/*: any*/),
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "name",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "active",
+                  "storageKey": null
+                },
                 {
                   "alias": null,
                   "args": null,
@@ -243,145 +205,33 @@ return {
                   "name": "hasAcceptedNonDisclosureAgreement",
                   "storageKey": null
                 },
-                (v5/*: any*/),
                 {
                   "alias": null,
-                  "args": [
-                    {
-                      "kind": "Literal",
-                      "name": "first",
-                      "value": 100
-                    },
-                    (v1/*: any*/)
-                  ],
-                  "concreteType": "TrustCenterDocumentAccessConnection",
-                  "kind": "LinkedField",
-                  "name": "documentAccesses",
-                  "plural": false,
-                  "selections": [
-                    {
-                      "alias": null,
-                      "args": null,
-                      "concreteType": "TrustCenterDocumentAccessEdge",
-                      "kind": "LinkedField",
-                      "name": "edges",
-                      "plural": true,
-                      "selections": [
-                        {
-                          "alias": null,
-                          "args": null,
-                          "concreteType": "TrustCenterDocumentAccess",
-                          "kind": "LinkedField",
-                          "name": "node",
-                          "plural": false,
-                          "selections": [
-                            (v2/*: any*/),
-                            (v4/*: any*/),
-                            (v5/*: any*/),
-                            {
-                              "alias": null,
-                              "args": null,
-                              "kind": "ScalarField",
-                              "name": "updatedAt",
-                              "storageKey": null
-                            },
-                            {
-                              "alias": null,
-                              "args": null,
-                              "concreteType": "Document",
-                              "kind": "LinkedField",
-                              "name": "document",
-                              "plural": false,
-                              "selections": [
-                                (v2/*: any*/),
-                                {
-                                  "alias": null,
-                                  "args": null,
-                                  "kind": "ScalarField",
-                                  "name": "title",
-                                  "storageKey": null
-                                },
-                                {
-                                  "alias": null,
-                                  "args": null,
-                                  "kind": "ScalarField",
-                                  "name": "documentType",
-                                  "storageKey": null
-                                }
-                              ],
-                              "storageKey": null
-                            },
-                            {
-                              "alias": null,
-                              "args": null,
-                              "concreteType": "Report",
-                              "kind": "LinkedField",
-                              "name": "report",
-                              "plural": false,
-                              "selections": [
-                                (v2/*: any*/),
-                                {
-                                  "alias": null,
-                                  "args": null,
-                                  "kind": "ScalarField",
-                                  "name": "filename",
-                                  "storageKey": null
-                                },
-                                {
-                                  "alias": null,
-                                  "args": null,
-                                  "concreteType": "Audit",
-                                  "kind": "LinkedField",
-                                  "name": "audit",
-                                  "plural": false,
-                                  "selections": [
-                                    (v2/*: any*/),
-                                    {
-                                      "alias": null,
-                                      "args": null,
-                                      "concreteType": "Framework",
-                                      "kind": "LinkedField",
-                                      "name": "framework",
-                                      "plural": false,
-                                      "selections": [
-                                        (v3/*: any*/)
-                                      ],
-                                      "storageKey": null
-                                    }
-                                  ],
-                                  "storageKey": null
-                                }
-                              ],
-                              "storageKey": null
-                            },
-                            {
-                              "alias": null,
-                              "args": null,
-                              "concreteType": "TrustCenterFile",
-                              "kind": "LinkedField",
-                              "name": "trustCenterFile",
-                              "plural": false,
-                              "selections": [
-                                (v2/*: any*/),
-                                (v3/*: any*/),
-                                {
-                                  "alias": null,
-                                  "args": null,
-                                  "kind": "ScalarField",
-                                  "name": "category",
-                                  "storageKey": null
-                                }
-                              ],
-                              "storageKey": null
-                            }
-                          ],
-                          "storageKey": null
-                        }
-                      ],
-                      "storageKey": null
-                    }
-                  ],
-                  "storageKey": "documentAccesses(first:100,orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "createdAt",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "lastTokenExpiresAt",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "pendingRequestCount",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "activeCount",
+                  "storageKey": null
                 },
                 {
                   "alias": null,
@@ -411,13 +261,13 @@ return {
       ],
       "storageKey": "__TrustCenterAccessGraph_accesses_connection(orderBy:{\"direction\":\"DESC\",\"field\":\"CREATED_AT\"})"
     },
-    (v2/*: any*/)
+    (v1/*: any*/)
   ],
   "type": "TrustCenter",
   "abstractKey": null
 };
 })();
 
-(node as any).hash = "9c7f3e866e2593c169b1f98d0e637667";
+(node as any).hash = "10bb084980182a1e2334be77c29cf1ec";
 
 export default node;

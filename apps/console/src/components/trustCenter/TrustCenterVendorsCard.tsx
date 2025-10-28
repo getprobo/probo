@@ -1,6 +1,5 @@
 import { graphql } from "relay-runtime";
 import {
-  Card,
   Button,
   Tr,
   Td,
@@ -18,7 +17,6 @@ import { useFragment } from "react-relay";
 import { useMemo, useState } from "react";
 import { sprintf } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import clsx from "clsx";
 import type { TrustCenterVendorsCardFragment$key } from "./__generated__/TrustCenterVendorsCardFragment.graphql";
 
 const trustCenterVendorFragment = graphql`
@@ -46,17 +44,15 @@ type Props<Params> = {
   params: Params;
   disabled?: boolean;
   onToggleVisibility: Mutation<Params>;
-  variant?: "card" | "table";
 };
 
 export function TrustCenterVendorsCard<Params>(props: Props<Params>) {
   const { __ } = useTranslate();
-  const [limit, setLimit] = useState<number | null>(4);
+  const [limit, setLimit] = useState<number | null>(100);
   const vendors = useMemo(() => {
     return limit ? props.vendors.slice(0, limit) : props.vendors;
   }, [props.vendors, limit]);
   const showMoreButton = limit !== null && props.vendors.length > limit;
-  const variant = props.variant ?? "table";
 
   const onToggleVisibility = (vendorId: string, showOnTrustCenter: boolean) => {
     props.onToggleVisibility({
@@ -70,11 +66,9 @@ export function TrustCenterVendorsCard<Params>(props: Props<Params>) {
     });
   };
 
-  const Wrapper = variant === "card" ? Card : "div";
-
   return (
-    <Wrapper padded className="space-y-[10px]">
-      <Table className={clsx(variant === "card" && "bg-invert")}>
+    <div className="space-y-[10px]">
+      <Table>
         <Thead>
           <Tr>
             <Th>{__("Name")}</Th>
@@ -111,7 +105,7 @@ export function TrustCenterVendorsCard<Params>(props: Props<Params>) {
           {sprintf(__("Show %s more"), props.vendors.length - limit)}
         </Button>
       )}
-    </Wrapper>
+    </div>
   );
 }
 

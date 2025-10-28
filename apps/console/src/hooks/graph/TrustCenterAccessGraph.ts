@@ -25,36 +25,9 @@ export const trustCenterAccessesPaginationFragment = graphql`
           active
           hasAcceptedNonDisclosureAgreement
           createdAt
-          documentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
-            edges {
-              node {
-                id
-                active
-                createdAt
-                updatedAt
-                document {
-                  id
-                  title
-                  documentType
-                }
-                report {
-                  id
-                  filename
-                  audit {
-                    id
-                    framework {
-                      name
-                    }
-                  }
-                }
-                trustCenterFile {
-                  id
-                  name
-                  category
-                }
-              }
-            }
-          }
+          lastTokenExpiresAt
+          pendingRequestCount
+          activeCount
         }
       }
     }
@@ -87,36 +60,9 @@ export const createTrustCenterAccessMutation = graphql`
           active
           hasAcceptedNonDisclosureAgreement
           createdAt
-          documentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
-            edges {
-              node {
-                id
-                active
-                createdAt
-                updatedAt
-                document {
-                  id
-                  title
-                  documentType
-                }
-                report {
-                  id
-                  filename
-                  audit {
-                    id
-                    framework {
-                      name
-                    }
-                  }
-                }
-                trustCenterFile {
-                  id
-                  name
-                  category
-                }
-              }
-            }
-          }
+          lastTokenExpiresAt
+          pendingRequestCount
+          activeCount
         }
       }
     }
@@ -136,13 +82,35 @@ export const updateTrustCenterAccessMutation = graphql`
         hasAcceptedNonDisclosureAgreement
         createdAt
         updatedAt
-        documentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
+        lastTokenExpiresAt
+        pendingRequestCount
+        activeCount
+      }
+    }
+  }
+`;
+
+export const deleteTrustCenterAccessMutation = graphql`
+  mutation TrustCenterAccessGraphDeleteMutation(
+    $input: DeleteTrustCenterAccessInput!
+    $connections: [ID!]!
+  ) {
+    deleteTrustCenterAccess(input: $input) {
+      deletedTrustCenterAccessId @deleteEdge(connections: $connections)
+    }
+  }
+`;
+
+export const loadTrustCenterAccessDocumentAccessesQuery = graphql`
+  query TrustCenterAccessGraphLoadDocumentAccessesQuery($accessId: ID!) {
+    node(id: $accessId) {
+      ... on TrustCenterAccess {
+        id
+        availableDocumentAccesses(first: 100, orderBy: { field: CREATED_AT, direction: DESC }) {
           edges {
             node {
-              id
               active
-              createdAt
-              updatedAt
+              requested
               document {
                 id
                 title
@@ -171,17 +139,6 @@ export const updateTrustCenterAccessMutation = graphql`
   }
 `;
 
-export const deleteTrustCenterAccessMutation = graphql`
-  mutation TrustCenterAccessGraphDeleteMutation(
-    $input: DeleteTrustCenterAccessInput!
-    $connections: [ID!]!
-  ) {
-    deleteTrustCenterAccess(input: $input) {
-      deletedTrustCenterAccessId @deleteEdge(connections: $connections)
-    }
-  }
-`;
-
 interface PaginatedData {
   data: { node: any } | null;
   hasNext: boolean;
@@ -197,7 +154,7 @@ export function useTrustCenterAccesses(trustCenterId: string): PaginatedData {
       count: 10,
       cursor: null
     },
-    { fetchPolicy: 'network-only' }
+    { fetchPolicy: 'store-and-network' }
   );
 
   if (!trustCenterId) {

@@ -1287,12 +1287,15 @@ type ComplexityRoot struct {
 
 	TrustCenterAccess struct {
 		Active                            func(childComplexity int) int
+		ActiveCount                       func(childComplexity int) int
+		AvailableDocumentAccesses         func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) int
 		CreatedAt                         func(childComplexity int) int
-		DocumentAccesses                  func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) int
 		Email                             func(childComplexity int) int
 		HasAcceptedNonDisclosureAgreement func(childComplexity int) int
 		ID                                func(childComplexity int) int
+		LastTokenExpiresAt                func(childComplexity int) int
 		Name                              func(childComplexity int) int
+		PendingRequestCount               func(childComplexity int) int
 		UpdatedAt                         func(childComplexity int) int
 	}
 
@@ -1312,14 +1315,11 @@ type ComplexityRoot struct {
 	}
 
 	TrustCenterDocumentAccess struct {
-		Active            func(childComplexity int) int
-		CreatedAt         func(childComplexity int) int
-		Document          func(childComplexity int) int
-		ID                func(childComplexity int) int
-		Report            func(childComplexity int) int
-		TrustCenterAccess func(childComplexity int) int
-		TrustCenterFile   func(childComplexity int) int
-		UpdatedAt         func(childComplexity int) int
+		Active          func(childComplexity int) int
+		Document        func(childComplexity int) int
+		Report          func(childComplexity int) int
+		Requested       func(childComplexity int) int
+		TrustCenterFile func(childComplexity int) int
 	}
 
 	TrustCenterDocumentAccessConnection struct {
@@ -2017,10 +2017,11 @@ type TrustCenterResolver interface {
 	References(ctx context.Context, obj *types.TrustCenter, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterReferenceOrderField]) (*types.TrustCenterReferenceConnection, error)
 }
 type TrustCenterAccessResolver interface {
-	DocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error)
+	PendingRequestCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error)
+	ActiveCount(ctx context.Context, obj *types.TrustCenterAccess) (int, error)
+	AvailableDocumentAccesses(ctx context.Context, obj *types.TrustCenterAccess, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]) (*types.TrustCenterDocumentAccessConnection, error)
 }
 type TrustCenterDocumentAccessResolver interface {
-	TrustCenterAccess(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterAccess, error)
 	Document(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Document, error)
 	Report(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.Report, error)
 	TrustCenterFile(ctx context.Context, obj *types.TrustCenterDocumentAccess) (*types.TrustCenterFile, error)
@@ -7609,24 +7610,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TrustCenterAccess.Active(childComplexity), true
 
+	case "TrustCenterAccess.activeCount":
+		if e.complexity.TrustCenterAccess.ActiveCount == nil {
+			break
+		}
+
+		return e.complexity.TrustCenterAccess.ActiveCount(childComplexity), true
+
+	case "TrustCenterAccess.availableDocumentAccesses":
+		if e.complexity.TrustCenterAccess.AvailableDocumentAccesses == nil {
+			break
+		}
+
+		args, err := ec.field_TrustCenterAccess_availableDocumentAccesses_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.TrustCenterAccess.AvailableDocumentAccesses(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.OrderBy[coredata.TrustCenterDocumentAccessOrderField])), true
+
 	case "TrustCenterAccess.createdAt":
 		if e.complexity.TrustCenterAccess.CreatedAt == nil {
 			break
 		}
 
 		return e.complexity.TrustCenterAccess.CreatedAt(childComplexity), true
-
-	case "TrustCenterAccess.documentAccesses":
-		if e.complexity.TrustCenterAccess.DocumentAccesses == nil {
-			break
-		}
-
-		args, err := ec.field_TrustCenterAccess_documentAccesses_args(ctx, rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.TrustCenterAccess.DocumentAccesses(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.OrderBy[coredata.TrustCenterDocumentAccessOrderField])), true
 
 	case "TrustCenterAccess.email":
 		if e.complexity.TrustCenterAccess.Email == nil {
@@ -7649,12 +7657,26 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TrustCenterAccess.ID(childComplexity), true
 
+	case "TrustCenterAccess.lastTokenExpiresAt":
+		if e.complexity.TrustCenterAccess.LastTokenExpiresAt == nil {
+			break
+		}
+
+		return e.complexity.TrustCenterAccess.LastTokenExpiresAt(childComplexity), true
+
 	case "TrustCenterAccess.name":
 		if e.complexity.TrustCenterAccess.Name == nil {
 			break
 		}
 
 		return e.complexity.TrustCenterAccess.Name(childComplexity), true
+
+	case "TrustCenterAccess.pendingRequestCount":
+		if e.complexity.TrustCenterAccess.PendingRequestCount == nil {
+			break
+		}
+
+		return e.complexity.TrustCenterAccess.PendingRequestCount(childComplexity), true
 
 	case "TrustCenterAccess.updatedAt":
 		if e.complexity.TrustCenterAccess.UpdatedAt == nil {
@@ -7712,26 +7734,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TrustCenterDocumentAccess.Active(childComplexity), true
 
-	case "TrustCenterDocumentAccess.createdAt":
-		if e.complexity.TrustCenterDocumentAccess.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.TrustCenterDocumentAccess.CreatedAt(childComplexity), true
-
 	case "TrustCenterDocumentAccess.document":
 		if e.complexity.TrustCenterDocumentAccess.Document == nil {
 			break
 		}
 
 		return e.complexity.TrustCenterDocumentAccess.Document(childComplexity), true
-
-	case "TrustCenterDocumentAccess.id":
-		if e.complexity.TrustCenterDocumentAccess.ID == nil {
-			break
-		}
-
-		return e.complexity.TrustCenterDocumentAccess.ID(childComplexity), true
 
 	case "TrustCenterDocumentAccess.report":
 		if e.complexity.TrustCenterDocumentAccess.Report == nil {
@@ -7740,12 +7748,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.TrustCenterDocumentAccess.Report(childComplexity), true
 
-	case "TrustCenterDocumentAccess.trustCenterAccess":
-		if e.complexity.TrustCenterDocumentAccess.TrustCenterAccess == nil {
+	case "TrustCenterDocumentAccess.requested":
+		if e.complexity.TrustCenterDocumentAccess.Requested == nil {
 			break
 		}
 
-		return e.complexity.TrustCenterDocumentAccess.TrustCenterAccess(childComplexity), true
+		return e.complexity.TrustCenterDocumentAccess.Requested(childComplexity), true
 
 	case "TrustCenterDocumentAccess.trustCenterFile":
 		if e.complexity.TrustCenterDocumentAccess.TrustCenterFile == nil {
@@ -7753,13 +7761,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.TrustCenterDocumentAccess.TrustCenterFile(childComplexity), true
-
-	case "TrustCenterDocumentAccess.updatedAt":
-		if e.complexity.TrustCenterDocumentAccess.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.TrustCenterDocumentAccess.UpdatedAt(childComplexity), true
 
 	case "TrustCenterDocumentAccessConnection.edges":
 		if e.complexity.TrustCenterDocumentAccessConnection.Edges == nil {
@@ -11724,8 +11725,11 @@ type TrustCenterAccess implements Node {
   hasAcceptedNonDisclosureAgreement: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
+  lastTokenExpiresAt: Datetime
+  pendingRequestCount: Int! @goField(forceResolver: true)
+  activeCount: Int! @goField(forceResolver: true)
 
-  documentAccesses(
+  availableDocumentAccesses(
     first: Int
     after: CursorKey
     last: Int
@@ -11734,12 +11738,12 @@ type TrustCenterAccess implements Node {
   ): TrustCenterDocumentAccessConnection! @goField(forceResolver: true)
 }
 
-type TrustCenterDocumentAccess implements Node {
-  id: ID!
+type TrustCenterDocumentAccess
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccess"
+  ) {
   active: Boolean!
-  createdAt: Datetime!
-  updatedAt: Datetime!
-  trustCenterAccess: TrustCenterAccess! @goField(forceResolver: true)
+  requested: Boolean!
   document: Document @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
   trustCenterFile: TrustCenterFile @goField(forceResolver: true)
@@ -21371,37 +21375,37 @@ func (ec *executionContext) field_Task_evidences_argsOrderBy(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_TrustCenterAccess_documentAccesses_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+func (ec *executionContext) field_TrustCenterAccess_availableDocumentAccesses_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := ec.field_TrustCenterAccess_documentAccesses_argsFirst(ctx, rawArgs)
+	arg0, err := ec.field_TrustCenterAccess_availableDocumentAccesses_argsFirst(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["first"] = arg0
-	arg1, err := ec.field_TrustCenterAccess_documentAccesses_argsAfter(ctx, rawArgs)
+	arg1, err := ec.field_TrustCenterAccess_availableDocumentAccesses_argsAfter(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["after"] = arg1
-	arg2, err := ec.field_TrustCenterAccess_documentAccesses_argsLast(ctx, rawArgs)
+	arg2, err := ec.field_TrustCenterAccess_availableDocumentAccesses_argsLast(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["last"] = arg2
-	arg3, err := ec.field_TrustCenterAccess_documentAccesses_argsBefore(ctx, rawArgs)
+	arg3, err := ec.field_TrustCenterAccess_availableDocumentAccesses_argsBefore(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["before"] = arg3
-	arg4, err := ec.field_TrustCenterAccess_documentAccesses_argsOrderBy(ctx, rawArgs)
+	arg4, err := ec.field_TrustCenterAccess_availableDocumentAccesses_argsOrderBy(ctx, rawArgs)
 	if err != nil {
 		return nil, err
 	}
 	args["orderBy"] = arg4
 	return args, nil
 }
-func (ec *executionContext) field_TrustCenterAccess_documentAccesses_argsFirst(
+func (ec *executionContext) field_TrustCenterAccess_availableDocumentAccesses_argsFirst(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -21414,7 +21418,7 @@ func (ec *executionContext) field_TrustCenterAccess_documentAccesses_argsFirst(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_TrustCenterAccess_documentAccesses_argsAfter(
+func (ec *executionContext) field_TrustCenterAccess_availableDocumentAccesses_argsAfter(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -21427,7 +21431,7 @@ func (ec *executionContext) field_TrustCenterAccess_documentAccesses_argsAfter(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_TrustCenterAccess_documentAccesses_argsLast(
+func (ec *executionContext) field_TrustCenterAccess_availableDocumentAccesses_argsLast(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*int, error) {
@@ -21440,7 +21444,7 @@ func (ec *executionContext) field_TrustCenterAccess_documentAccesses_argsLast(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_TrustCenterAccess_documentAccesses_argsBefore(
+func (ec *executionContext) field_TrustCenterAccess_availableDocumentAccesses_argsBefore(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*page.CursorKey, error) {
@@ -21453,7 +21457,7 @@ func (ec *executionContext) field_TrustCenterAccess_documentAccesses_argsBefore(
 	return zeroVal, nil
 }
 
-func (ec *executionContext) field_TrustCenterAccess_documentAccesses_argsOrderBy(
+func (ec *executionContext) field_TrustCenterAccess_availableDocumentAccesses_argsOrderBy(
 	ctx context.Context,
 	rawArgs map[string]any,
 ) (*types.OrderBy[coredata.TrustCenterDocumentAccessOrderField], error) {
@@ -57622,8 +57626,8 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_updatedAt(_ context.C
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenterAccess_documentAccesses(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TrustCenterAccess_documentAccesses(ctx, field)
+func (ec *executionContext) _TrustCenterAccess_lastTokenExpiresAt(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenterAccess_lastTokenExpiresAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -57636,7 +57640,136 @@ func (ec *executionContext) _TrustCenterAccess_documentAccesses(ctx context.Cont
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.TrustCenterAccess().DocumentAccesses(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]))
+		return obj.LastTokenExpiresAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalODatetime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterAccess_lastTokenExpiresAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterAccess",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Datetime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenterAccess_pendingRequestCount(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenterAccess_pendingRequestCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TrustCenterAccess().PendingRequestCount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterAccess_pendingRequestCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterAccess",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenterAccess_activeCount(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenterAccess_activeCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TrustCenterAccess().ActiveCount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TrustCenterAccess_activeCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TrustCenterAccess",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TrustCenterAccess_availableDocumentAccesses(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterAccess) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenterAccess_availableDocumentAccesses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TrustCenterAccess().AvailableDocumentAccesses(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.OrderBy[coredata.TrustCenterDocumentAccessOrderField]))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -57653,7 +57786,7 @@ func (ec *executionContext) _TrustCenterAccess_documentAccesses(ctx context.Cont
 	return ec.marshalNTrustCenterDocumentAccessConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterDocumentAccessConnection(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TrustCenterAccess_documentAccesses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_TrustCenterAccess_availableDocumentAccesses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TrustCenterAccess",
 		Field:      field,
@@ -57678,7 +57811,7 @@ func (ec *executionContext) fieldContext_TrustCenterAccess_documentAccesses(ctx 
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_TrustCenterAccess_documentAccesses_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_TrustCenterAccess_availableDocumentAccesses_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -57886,8 +58019,14 @@ func (ec *executionContext) fieldContext_TrustCenterAccessEdge_node(_ context.Co
 				return ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TrustCenterAccess_updatedAt(ctx, field)
-			case "documentAccesses":
-				return ec.fieldContext_TrustCenterAccess_documentAccesses(ctx, field)
+			case "lastTokenExpiresAt":
+				return ec.fieldContext_TrustCenterAccess_lastTokenExpiresAt(ctx, field)
+			case "pendingRequestCount":
+				return ec.fieldContext_TrustCenterAccess_pendingRequestCount(ctx, field)
+			case "activeCount":
+				return ec.fieldContext_TrustCenterAccess_activeCount(ctx, field)
+			case "availableDocumentAccesses":
+				return ec.fieldContext_TrustCenterAccess_availableDocumentAccesses(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterAccess", field.Name)
 		},
@@ -57999,50 +58138,6 @@ func (ec *executionContext) fieldContext_TrustCenterConnection_pageInfo(_ contex
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenterDocumentAccess_id(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterDocumentAccess) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TrustCenterDocumentAccess_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(gid.GID)
-	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenterDocumentAccess",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _TrustCenterDocumentAccess_active(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterDocumentAccess) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TrustCenterDocumentAccess_active(ctx, field)
 	if err != nil {
@@ -58087,8 +58182,8 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_active(_ cont
 	return fc, nil
 }
 
-func (ec *executionContext) _TrustCenterDocumentAccess_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterDocumentAccess) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TrustCenterDocumentAccess_createdAt(ctx, field)
+func (ec *executionContext) _TrustCenterDocumentAccess_requested(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterDocumentAccess) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TrustCenterDocumentAccess_requested(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -58101,7 +58196,7 @@ func (ec *executionContext) _TrustCenterDocumentAccess_createdAt(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
+		return obj.Requested, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -58113,125 +58208,19 @@ func (ec *executionContext) _TrustCenterDocumentAccess_createdAt(ctx context.Con
 		}
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_createdAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_requested(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "TrustCenterDocumentAccess",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TrustCenterDocumentAccess_updatedAt(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterDocumentAccess) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TrustCenterDocumentAccess_updatedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNDatetime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_updatedAt(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenterDocumentAccess",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Datetime does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _TrustCenterDocumentAccess_trustCenterAccess(ctx context.Context, field graphql.CollectedField, obj *types.TrustCenterDocumentAccess) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TrustCenterDocumentAccess_trustCenterAccess(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.TrustCenterDocumentAccess().TrustCenterAccess(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*types.TrustCenterAccess)
-	fc.Result = res
-	return ec.marshalNTrustCenterAccess2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterAccess(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TrustCenterDocumentAccess_trustCenterAccess(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TrustCenterDocumentAccess",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_TrustCenterAccess_id(ctx, field)
-			case "email":
-				return ec.fieldContext_TrustCenterAccess_email(ctx, field)
-			case "name":
-				return ec.fieldContext_TrustCenterAccess_name(ctx, field)
-			case "active":
-				return ec.fieldContext_TrustCenterAccess_active(ctx, field)
-			case "hasAcceptedNonDisclosureAgreement":
-				return ec.fieldContext_TrustCenterAccess_hasAcceptedNonDisclosureAgreement(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_TrustCenterAccess_updatedAt(ctx, field)
-			case "documentAccesses":
-				return ec.fieldContext_TrustCenterAccess_documentAccesses(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TrustCenterAccess", field.Name)
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -58657,16 +58646,10 @@ func (ec *executionContext) fieldContext_TrustCenterDocumentAccessEdge_node(_ co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_TrustCenterDocumentAccess_id(ctx, field)
 			case "active":
 				return ec.fieldContext_TrustCenterDocumentAccess_active(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_TrustCenterDocumentAccess_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_TrustCenterDocumentAccess_updatedAt(ctx, field)
-			case "trustCenterAccess":
-				return ec.fieldContext_TrustCenterDocumentAccess_trustCenterAccess(ctx, field)
+			case "requested":
+				return ec.fieldContext_TrustCenterDocumentAccess_requested(ctx, field)
 			case "document":
 				return ec.fieldContext_TrustCenterDocumentAccess_document(ctx, field)
 			case "report":
@@ -61337,8 +61320,14 @@ func (ec *executionContext) fieldContext_UpdateTrustCenterAccessPayload_trustCen
 				return ec.fieldContext_TrustCenterAccess_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_TrustCenterAccess_updatedAt(ctx, field)
-			case "documentAccesses":
-				return ec.fieldContext_TrustCenterAccess_documentAccesses(ctx, field)
+			case "lastTokenExpiresAt":
+				return ec.fieldContext_TrustCenterAccess_lastTokenExpiresAt(ctx, field)
+			case "pendingRequestCount":
+				return ec.fieldContext_TrustCenterAccess_pendingRequestCount(ctx, field)
+			case "activeCount":
+				return ec.fieldContext_TrustCenterAccess_activeCount(ctx, field)
+			case "availableDocumentAccesses":
+				return ec.fieldContext_TrustCenterAccess_availableDocumentAccesses(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type TrustCenterAccess", field.Name)
 		},
@@ -77458,13 +77447,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 			return graphql.Null
 		}
 		return ec._TrustCenterFile(ctx, sel, obj)
-	case types.TrustCenterDocumentAccess:
-		return ec._TrustCenterDocumentAccess(ctx, sel, &obj)
-	case *types.TrustCenterDocumentAccess:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._TrustCenterDocumentAccess(ctx, sel, obj)
 	case types.TrustCenterAccess:
 		return ec._TrustCenterAccess(ctx, sel, &obj)
 	case *types.TrustCenterAccess:
@@ -90142,7 +90124,9 @@ func (ec *executionContext) _TrustCenterAccess(ctx context.Context, sel ast.Sele
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "documentAccesses":
+		case "lastTokenExpiresAt":
+			out.Values[i] = ec._TrustCenterAccess_lastTokenExpiresAt(ctx, field, obj)
+		case "pendingRequestCount":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -90151,7 +90135,79 @@ func (ec *executionContext) _TrustCenterAccess(ctx context.Context, sel ast.Sele
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._TrustCenterAccess_documentAccesses(ctx, field, obj)
+				res = ec._TrustCenterAccess_pendingRequestCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "activeCount":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenterAccess_activeCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "availableDocumentAccesses":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TrustCenterAccess_availableDocumentAccesses(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -90333,7 +90389,7 @@ func (ec *executionContext) _TrustCenterConnection(ctx context.Context, sel ast.
 	return out
 }
 
-var trustCenterDocumentAccessImplementors = []string{"TrustCenterDocumentAccess", "Node"}
+var trustCenterDocumentAccessImplementors = []string{"TrustCenterDocumentAccess"}
 
 func (ec *executionContext) _TrustCenterDocumentAccess(ctx context.Context, sel ast.SelectionSet, obj *types.TrustCenterDocumentAccess) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, trustCenterDocumentAccessImplementors)
@@ -90344,62 +90400,16 @@ func (ec *executionContext) _TrustCenterDocumentAccess(ctx context.Context, sel 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("TrustCenterDocumentAccess")
-		case "id":
-			out.Values[i] = ec._TrustCenterDocumentAccess_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "active":
 			out.Values[i] = ec._TrustCenterDocumentAccess_active(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "createdAt":
-			out.Values[i] = ec._TrustCenterDocumentAccess_createdAt(ctx, field, obj)
+		case "requested":
+			out.Values[i] = ec._TrustCenterDocumentAccess_requested(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "updatedAt":
-			out.Values[i] = ec._TrustCenterDocumentAccess_updatedAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "trustCenterAccess":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._TrustCenterDocumentAccess_trustCenterAccess(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "document":
 			field := field
 
@@ -100959,10 +100969,6 @@ func (ec *executionContext) marshalNTrustCenter2ᚖgithubᚗcomᚋgetproboᚋpro
 		return graphql.Null
 	}
 	return ec._TrustCenter(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNTrustCenterAccess2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterAccess(ctx context.Context, sel ast.SelectionSet, v types.TrustCenterAccess) graphql.Marshaler {
-	return ec._TrustCenterAccess(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNTrustCenterAccess2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐTrustCenterAccess(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterAccess) graphql.Marshaler {

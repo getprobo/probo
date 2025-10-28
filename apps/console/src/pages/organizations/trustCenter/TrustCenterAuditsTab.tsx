@@ -1,4 +1,5 @@
-import { Card, Spinner } from "@probo/ui";
+import { Spinner } from "@probo/ui";
+import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
 import { TrustCenterAuditsCard } from "/components/trustCenter/TrustCenterAuditsCard";
 import { useTrustCenterAuditUpdate } from "/hooks/graph/TrustCenterAuditGraph";
@@ -15,6 +16,7 @@ type ContextType = {
 };
 
 export default function TrustCenterAuditsTab() {
+  const { __ } = useTranslate();
   const { organization } = useOutletContext<ContextType>();
   const [updateAuditVisibility, isUpdatingAudits] = useTrustCenterAuditUpdate();
 
@@ -23,17 +25,20 @@ export default function TrustCenterAuditsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-base font-medium">{__("Audits")}</h3>
+          <p className="text-sm text-txt-tertiary">
+            {__("Manage audit reports and compliance certifications")}
+          </p>
+        </div>
         {isUpdatingAudits && <Spinner />}
       </div>
-      <Card padded>
-        <TrustCenterAuditsCard
-          audits={audits}
-          params={{}}
-          disabled={isUpdatingAudits}
-          onChangeVisibility={updateAuditVisibility}
-          variant="table"
-        />
-      </Card>
+      <TrustCenterAuditsCard
+        audits={audits}
+        params={{}}
+        disabled={isUpdatingAudits}
+        onChangeVisibility={updateAuditVisibility}
+      />
     </div>
   );
 }

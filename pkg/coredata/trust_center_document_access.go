@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -34,12 +35,21 @@ type (
 		ReportID            *gid.GID  `db:"report_id"`
 		TrustCenterFileID   *gid.GID  `db:"trust_center_file_id"`
 		Active              bool      `db:"active"`
+		Requested           bool      `db:"requested"`
 		CreatedAt           time.Time `db:"created_at"`
 		UpdatedAt           time.Time `db:"updated_at"`
 	}
 
 	TrustCenterDocumentAccesses []*TrustCenterDocumentAccess
+
+	ErrTrustCenterDocumentAccessNotFound struct {
+		Identifier string
+	}
 )
+
+func (e ErrTrustCenterDocumentAccessNotFound) Error() string {
+	return fmt.Sprintf("trust center document access not found: %s", e.Identifier)
+}
 
 func (tcda *TrustCenterDocumentAccess) CursorKey(orderBy TrustCenterDocumentAccessOrderField) page.CursorKey {
 	switch orderBy {
@@ -64,6 +74,7 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	requested,
 	created_at,
 	updated_at
 FROM
@@ -86,6 +97,9 @@ LIMIT 1;
 
 	access, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[TrustCenterDocumentAccess])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrTrustCenterDocumentAccessNotFound{Identifier: accessID.String()}
+		}
 		return fmt.Errorf("cannot collect trust center document access: %w", err)
 	}
 
@@ -109,6 +123,7 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	requested,
 	created_at,
 	updated_at
 FROM
@@ -158,6 +173,7 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	requested,
 	created_at,
 	updated_at
 FROM
@@ -206,6 +222,7 @@ INSERT INTO trust_center_document_accesses (
 	report_id,
 	trust_center_file_id,
 	active,
+	requested,
 	created_at,
 	updated_at
 ) VALUES (
@@ -216,6 +233,7 @@ INSERT INTO trust_center_document_accesses (
 	@report_id,
 	@trust_center_file_id,
 	@active,
+	@requested,
 	@created_at,
 	@updated_at
 )
@@ -229,6 +247,7 @@ INSERT INTO trust_center_document_accesses (
 		"report_id":              tcda.ReportID,
 		"trust_center_file_id":   tcda.TrustCenterFileID,
 		"active":                 tcda.Active,
+		"requested":              tcda.Requested,
 		"created_at":             tcda.CreatedAt,
 		"updated_at":             tcda.UpdatedAt,
 	}
@@ -332,7 +351,76 @@ WHERE
 	return count, nil
 }
 
-func (tcdas *TrustCenterDocumentAccesses) LoadByTrustCenterAccessID(
+func (tcdas *TrustCenterDocumentAccesses) CountPendingRequestByTrustCenterAccessID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterAccessID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	trust_center_document_accesses
+WHERE
+	%s
+	AND trust_center_access_id = @trust_center_access_id
+	AND requested = true
+	AND active = false
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_access_id": trustCenterAccessID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (tcdas *TrustCenterDocumentAccesses) CountActiveByTrustCenterAccessID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	trustCenterAccessID gid.GID,
+) (int, error) {
+	q := `
+SELECT
+	COUNT(id)
+FROM
+	trust_center_document_accesses
+WHERE
+	%s
+	AND trust_center_access_id = @trust_center_access_id
+	AND active = true
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{
+		"trust_center_access_id": trustCenterAccessID,
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	row := conn.QueryRow(ctx, q, args)
+
+	var count int
+	if err := row.Scan(&count); err != nil {
+		return 0, fmt.Errorf("cannot scan count: %w", err)
+	}
+
+	return count, nil
+}
+
+func (tcdas *TrustCenterDocumentAccesses) LoadAvailableByTrustCenterAccessID(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
@@ -340,6 +428,79 @@ func (tcdas *TrustCenterDocumentAccesses) LoadByTrustCenterAccessID(
 	cursor *page.Cursor[TrustCenterDocumentAccessOrderField],
 ) error {
 	q := `
+WITH organization AS (
+	SELECT tc.organization_id
+	FROM trust_center_accesses tca
+	INNER JOIN trust_centers tc ON tca.trust_center_id = tc.id
+	WHERE tca.tenant_id = @tenant_id
+		AND tca.id = @trust_center_access_id
+),
+tenant_organization AS (
+	SELECT o.id AS organization_id
+	FROM organizations o
+	WHERE %s
+),
+all_items AS (
+	SELECT
+		d.id AS item_id,
+		d.id AS document_id,
+		NULL::text AS report_id,
+		NULL::text AS trust_center_file_id,
+		d.created_at AS item_created_at,
+		d.updated_at AS item_updated_at
+	FROM documents d, tenant_organization o
+	WHERE d.organization_id = o.organization_id
+		AND d.deleted_at IS NULL
+		AND d.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+
+	UNION ALL
+
+	SELECT
+		r.id AS item_id,
+		NULL::text AS document_id,
+		r.id AS report_id,
+		NULL::text AS trust_center_file_id,
+		r.created_at AS item_created_at,
+		r.updated_at AS item_updated_at
+	FROM audits r, tenant_organization o
+	WHERE r.organization_id = o.organization_id
+		AND r.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+
+	UNION ALL
+
+	SELECT
+		tcf.id AS item_id,
+		NULL::text AS document_id,
+		NULL::text AS report_id,
+		tcf.id AS trust_center_file_id,
+		tcf.created_at AS item_created_at,
+		tcf.updated_at AS item_updated_at
+	FROM trust_center_files tcf, tenant_organization o
+	WHERE tcf.organization_id = o.organization_id
+		AND tcf.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+),
+final_items AS (
+	SELECT
+		COALESCE(tcda.id, ai.item_id) AS id,
+		tcda.tenant_id,
+		@trust_center_access_id AS trust_center_access_id,
+		ai.document_id,
+		ai.report_id,
+		ai.trust_center_file_id,
+		COALESCE(tcda.active, false) AS active,
+		COALESCE(tcda.requested, false) AS requested,
+		COALESCE(tcda.created_at, ai.item_created_at) AS created_at,
+		COALESCE(tcda.updated_at, ai.item_updated_at) AS updated_at
+	FROM all_items ai
+	LEFT JOIN trust_center_document_accesses tcda ON (
+		tcda.trust_center_access_id = @trust_center_access_id
+		AND (
+			(tcda.document_id = ai.document_id AND ai.document_id IS NOT NULL)
+			OR (tcda.report_id = ai.report_id AND ai.report_id IS NOT NULL)
+			OR (tcda.trust_center_file_id = ai.trust_center_file_id AND ai.trust_center_file_id IS NOT NULL)
+		)
+	)
+)
 SELECT
 	id,
 	trust_center_access_id,
@@ -347,14 +508,11 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	requested,
 	created_at,
 	updated_at
-FROM
-	trust_center_document_accesses
-WHERE
-	%s
-	AND trust_center_access_id = @trust_center_access_id
-	AND %s
+FROM final_items
+WHERE %s
 `
 
 	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
@@ -394,6 +552,7 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	requested,
 	created_at,
 	updated_at
 FROM
@@ -464,10 +623,6 @@ func ActivateByDocumentIDs(
 	documentIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
-	if len(documentIDs) == 0 {
-		return nil
-	}
-
 	q := `
 UPDATE trust_center_document_accesses
 SET active = true, updated_at = @updated_at
@@ -502,10 +657,6 @@ func ActivateByReportIDs(
 	reportIDs []gid.GID,
 	updatedAt time.Time,
 ) error {
-	if len(reportIDs) == 0 {
-		return nil
-	}
-
 	q := `
 UPDATE trust_center_document_accesses
 SET active = true, updated_at = @updated_at
@@ -538,6 +689,7 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertDocumentAccesses(
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	documentIDs []gid.GID,
+	requested bool,
 	createdAt time.Time,
 ) error {
 	if len(documentIDs) == 0 {
@@ -554,13 +706,15 @@ WITH document_access_data AS (
 		null::text AS report_id,
 		null::text AS trust_center_file_id,
 		false AS active,
+		@requested::boolean AS requested,
 		@created_at::timestamptz AS created_at,
 		@updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, created_at, updated_at
+	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
 )
 SELECT * FROM document_access_data
+ON CONFLICT DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
@@ -568,6 +722,7 @@ SELECT * FROM document_access_data
 		"trust_center_access_id": trustCenterAccessID,
 		"document_ids":           documentIDs,
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
+		"requested":  requested,
 		"created_at": createdAt,
 		"updated_at": createdAt,
 	}
@@ -585,6 +740,7 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertReportAccesses(
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	reportIDs []gid.GID,
+	requested bool,
 	createdAt time.Time,
 ) error {
 	if len(reportIDs) == 0 {
@@ -601,13 +757,15 @@ WITH report_access_data AS (
 		unnest(@report_ids::text[]) AS report_id,
 		null::text AS trust_center_file_id,
 		false AS active,
+		@requested::boolean AS requested,
 		@created_at::timestamptz AS created_at,
 		@updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, created_at, updated_at
+	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
 )
 SELECT * FROM report_access_data
+ON CONFLICT DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
@@ -641,6 +799,7 @@ SELECT
 	report_id,
 	trust_center_file_id,
 	active,
+	requested,
 	created_at,
 	updated_at
 FROM
@@ -715,6 +874,7 @@ func (tcdas TrustCenterDocumentAccesses) BulkInsertTrustCenterFileAccesses(
 	scope Scoper,
 	trustCenterAccessID gid.GID,
 	trustCenterFileIDs []gid.GID,
+	requested bool,
 	createdAt time.Time,
 ) error {
 	q := `
@@ -727,13 +887,15 @@ WITH trust_center_file_access_data AS (
 		null::text AS report_id,
 		unnest(@trust_center_file_ids::text[]) AS trust_center_file_id,
 		false AS active,
+		@requested::boolean AS requested,
 		@created_at::timestamptz AS created_at,
 		@updated_at::timestamptz AS updated_at
 )
 INSERT INTO trust_center_document_accesses (
-	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, created_at, updated_at
+	id, tenant_id, trust_center_access_id, document_id, report_id, trust_center_file_id, active, requested, created_at, updated_at
 )
 SELECT * FROM trust_center_file_access_data
+ON CONFLICT DO NOTHING
 `
 
 	args := pgx.StrictNamedArgs{
@@ -741,6 +903,7 @@ SELECT * FROM trust_center_file_access_data
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
 		"trust_center_access_id":                   trustCenterAccessID,
 		"trust_center_file_ids":                    trustCenterFileIDs,
+		"requested":                                requested,
 		"created_at":                               createdAt,
 		"updated_at":                               createdAt,
 	}

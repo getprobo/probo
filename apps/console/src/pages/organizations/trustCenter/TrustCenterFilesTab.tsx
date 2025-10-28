@@ -1,6 +1,5 @@
 import {
   Button,
-  Card,
   Dialog,
   DialogContent,
   DialogFooter,
@@ -10,6 +9,7 @@ import {
   Dropzone,
   Option,
   Badge,
+  IconPlusLarge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { useOutletContext } from "react-router";
@@ -200,7 +200,7 @@ export default function TrustCenterFilesTab() {
             {__("Upload and manage files for your trust center")}
           </p>
         </div>
-        <Button onClick={() => createDialogRef.current?.open()}>
+        <Button icon={IconPlusLarge} onClick={() => createDialogRef.current?.open()}>
           {__("Add File")}
         </Button>
       </div>
@@ -209,17 +209,14 @@ export default function TrustCenterFilesTab() {
           <Spinner />
         </div>
       )}
-      <Card padded>
-        <TrustCenterFilesCard
-          files={files}
-          params={{}}
-          disabled={isUpdating || isDeleting}
-          onChangeVisibility={handleChangeVisibility}
-          onEdit={handleEdit}
-          onDelete={handleDeleteClick}
-          variant="table"
-        />
-      </Card>
+      <TrustCenterFilesCard
+        files={files}
+        params={{}}
+        disabled={isUpdating || isDeleting}
+        onChangeVisibility={handleChangeVisibility}
+        onEdit={handleEdit}
+        onDelete={handleDeleteClick}
+      />
 
       <Dialog ref={createDialogRef} title={__("Add File")}>
         <form onSubmit={handleCreate}>

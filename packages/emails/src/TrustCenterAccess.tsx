@@ -16,7 +16,7 @@ export const TrustCenterAccess = () => {
       </Section>
 
       <Text style={footerText}>
-        This link will expire in 7 days.
+        This link will expire in {'{{.DurationInDays}}'} days.
       </Text>
     </EmailLayout>
   );

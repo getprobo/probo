@@ -1,6 +1,5 @@
 import { graphql } from "relay-runtime";
 import {
-  Card,
   Button,
   Tr,
   Td,
@@ -21,7 +20,6 @@ import { useFragment } from "react-relay";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import clsx from "clsx";
 
 const trustCenterDocumentFragment = graphql`
   fragment TrustCenterDocumentsCardFragment on Document {
@@ -55,17 +53,15 @@ type Props<Params> = {
   params: Params;
   disabled?: boolean;
   onChangeVisibility: Mutation<Params>;
-  variant?: "card" | "table";
 };
 
 export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
   const { __ } = useTranslate();
-  const [limit, setLimit] = useState<number | null>(4);
+  const [limit, setLimit] = useState<number | null>(100);
   const documents = useMemo(() => {
     return limit ? props.documents.slice(0, limit) : props.documents;
   }, [props.documents, limit]);
   const showMoreButton = limit !== null && props.documents.length > limit;
-  const variant = props.variant ?? "table";
 
   const onChangeVisibility = (documentId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => {
     props.onChangeVisibility({
@@ -79,11 +75,9 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
     });
   };
 
-  const Wrapper = variant === "card" ? Card : "div";
-
   return (
-    <Wrapper padded className="space-y-[10px]">
-      <Table className={clsx(variant === "card" && "bg-invert")}>
+    <div className="space-y-[10px]">
+      <Table>
         <Thead>
           <Tr>
             <Th>{__("Name")}</Th>
@@ -121,7 +115,7 @@ export function TrustCenterDocumentsCard<Params>(props: Props<Params>) {
           {sprintf(__("Show %s more"), props.documents.length - limit)}
         </Button>
       )}
-    </Wrapper>
+    </div>
   );
 }
 

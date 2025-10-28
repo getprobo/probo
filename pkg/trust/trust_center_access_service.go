@@ -208,15 +208,15 @@ func (s TrustCenterAccessService) Request(
 
 		var accesses coredata.TrustCenterDocumentAccesses
 
-		if err := accesses.BulkInsertDocumentAccesses(ctx, tx, s.svc.scope, access.ID, newDocumentIDs, now); err != nil {
+		if err := accesses.BulkInsertDocumentAccesses(ctx, tx, s.svc.scope, access.ID, newDocumentIDs, true, now); err != nil {
 			return fmt.Errorf("cannot bulk insert trust center document accesses: %w", err)
 		}
 
-		if err := accesses.BulkInsertReportAccesses(ctx, tx, s.svc.scope, access.ID, newReportIDs, now); err != nil {
+		if err := accesses.BulkInsertReportAccesses(ctx, tx, s.svc.scope, access.ID, newReportIDs, true, now); err != nil {
 			return fmt.Errorf("cannot bulk insert trust center report accesses: %w", err)
 		}
 
-		if err := accesses.BulkInsertTrustCenterFileAccesses(ctx, tx, s.svc.scope, access.ID, newTrustCenterFileIDs, now); err != nil {
+		if err := accesses.BulkInsertTrustCenterFileAccesses(ctx, tx, s.svc.scope, access.ID, newTrustCenterFileIDs, true, now); err != nil {
 			return fmt.Errorf("cannot bulk insert trust center file accesses: %w", err)
 		}
 
@@ -409,7 +409,7 @@ func (s *TrustCenterAccessService) AcceptByIDs(
 			return fmt.Errorf("cannot load trust center access: %w", err)
 		}
 
-		wasInactive := !access.Active
+		shouldSendEmail := !access.Active
 		now := time.Now()
 
 		if len(documentIDs) > 0 {
@@ -428,7 +428,7 @@ func (s *TrustCenterAccessService) AcceptByIDs(
 			}
 		}
 
-		if wasInactive {
+		if shouldSendEmail {
 			access.Active = true
 			access.UpdatedAt = now
 			if err := access.Update(ctx, tx, s.svc.scope); err != nil {
@@ -496,6 +496,15 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 		}.Encode(),
 	}
 
+	now := time.Now()
+	expiresAt := now.Add(s.svc.trustConfig.TokenDuration)
+	access.LastTokenExpiresAt = &expiresAt
+	access.UpdatedAt = now
+
+	if err := access.Update(ctx, tx, s.svc.scope); err != nil {
+		return fmt.Errorf("cannot update trust center access with expiration: %w", err)
+	}
+
 	return s.sendTrustCenterAccessEmail(ctx, tx, access.Name, access.Email, organization.Name, accessURL.String())
 }
 
@@ -512,6 +521,7 @@ func (s *TrustCenterAccessService) sendTrustCenterAccessEmail(
 		name,
 		companyName,
 		accessURL,
+		s.svc.trustConfig.TokenDuration,
 	)
 	if err != nil {
 		return fmt.Errorf("cannot render trust center access email: %w", err)

@@ -12,7 +12,6 @@ import {
   IconInboxEmpty,
   IconPageTextLine,
   IconSettingsGear2,
-  IconCheckmark1,
   IconStore,
   IconTodo,
   IconListStack,
@@ -20,6 +19,7 @@ import {
   IconShield,
   IconRotateCw,
   IconCircleProgress,
+  IconMedal,
   Layout,
   SidebarItem,
   UserDropdown as UserDropdownRoot,
@@ -169,7 +169,7 @@ export function MainLayout() {
           />
           <SidebarItem
             label={__("Audits")}
-            icon={IconCheckmark1}
+            icon={IconMedal}
             to={`${prefix}/audits`}
           />
           <SidebarItem

@@ -1,6 +1,5 @@
 import { graphql } from "relay-runtime";
 import {
-  Card,
   Button,
   Tr,
   Td,
@@ -22,7 +21,6 @@ import { useFragment } from "react-relay";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { sprintf, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { formatDate } from "@probo/helpers";
-import clsx from "clsx";
 
 const trustCenterFileFragment = graphql`
   fragment TrustCenterFilesCardFragment on TrustCenterFile {
@@ -52,17 +50,15 @@ type Props<Params> = {
   onChangeVisibility: Mutation<Params>;
   onEdit: (file: { id: string; name: string; category: string }) => void;
   onDelete: (id: string) => void;
-  variant?: "card" | "table";
 };
 
 export function TrustCenterFilesCard<Params>(props: Props<Params>) {
   const { __ } = useTranslate();
-  const [limit, setLimit] = useState<number | null>(4);
+  const [limit, setLimit] = useState<number | null>(100);
   const files = useMemo(() => {
     return limit ? props.files.slice(0, limit) : props.files;
   }, [props.files, limit]);
   const showMoreButton = limit !== null && props.files.length > limit;
-  const variant = props.variant ?? "table";
 
   const onChangeVisibility = (fileId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => {
     props.onChangeVisibility({
@@ -76,11 +72,9 @@ export function TrustCenterFilesCard<Params>(props: Props<Params>) {
     });
   };
 
-  const Wrapper = variant === "card" ? Card : "div";
-
   return (
-    <Wrapper padded className="space-y-[10px]">
-      <Table className={clsx(variant === "card" && "bg-invert")}>
+    <div className="space-y-[10px]">
+      <Table>
         <Thead>
           <Tr>
             <Th>{__("Name")}</Th>
@@ -120,7 +114,7 @@ export function TrustCenterFilesCard<Params>(props: Props<Params>) {
           {sprintf(__("Show %s more"), props.files.length - limit)}
         </Button>
       )}
-    </Wrapper>
+    </div>
   );
 }
 
@@ -215,7 +209,7 @@ function FileRow(props: {
             title={__("Edit")}
           />
           <Button
-            variant="secondary"
+            variant="danger"
             icon={IconTrashCan}
             onClick={() => props.onDelete(file.id)}
             disabled={props.disabled}

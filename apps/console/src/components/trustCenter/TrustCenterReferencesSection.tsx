@@ -3,10 +3,16 @@ import { safeOpenUrl } from "@probo/helpers";
 import {
   Avatar,
   Button,
-  Card,
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
   IconPlusLarge,
   IconTrashCan,
   IconPencil,
+  IconArrowLink,
 } from "@probo/ui";
 import { type ReactNode, useRef } from "react";
 import {
@@ -64,7 +70,6 @@ export function TrustCenterReferencesSection({ trustCenterId }: Props) {
           </p>
         </div>
         <Button
-          variant="secondary"
           icon={IconPlusLarge}
           onClick={handleCreate}
         >
@@ -72,33 +77,33 @@ export function TrustCenterReferencesSection({ trustCenterId }: Props) {
         </Button>
       </div>
 
-      <Card padded>
-        {references.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="mx-auto w-12 h-12 bg-tertiary rounded-lg flex items-center justify-center mb-4">
-              <IconPlusLarge size={24} className="text-txt-tertiary" />
-            </div>
-            <h3 className="text-lg font-medium text-txt-primary mb-2">
-              {__("No references yet")}
-            </h3>
-            <p className="text-txt-tertiary mb-4">
-              {__("Add customer testimonials and partner references to build trust")}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {references.map((reference: Reference) => (
-              <ReferenceRow
-                key={reference.id}
-                reference={reference}
-                onEdit={() => handleEdit(reference)}
-                connectionId={referencesConnectionId}
-                onVisitWebsite={() => handleVisitWebsite(reference.websiteUrl)}
-              />
-            ))}
-          </div>
-        )}
-      </Card>
+      <Table>
+        <Thead>
+          <Tr>
+            <Th>{__("Name")}</Th>
+            <Th>{__("Description")}</Th>
+            <Th></Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {references.length === 0 && (
+            <Tr>
+              <Td colSpan={3} className="text-center text-txt-secondary">
+                {__("No references available")}
+              </Td>
+            </Tr>
+          )}
+          {references.map((reference: Reference) => (
+            <ReferenceRow
+              key={reference.id}
+              reference={reference}
+              onEdit={() => handleEdit(reference)}
+              connectionId={referencesConnectionId}
+              onVisitWebsite={() => handleVisitWebsite(reference.websiteUrl)}
+            />
+          ))}
+        </Tbody>
+      </Table>
 
       <TrustCenterReferenceDialog ref={dialogRef} />
     </div>
@@ -113,52 +118,47 @@ type ReferenceRowProps = {
 };
 
 function ReferenceRow({ reference, onEdit, connectionId, onVisitWebsite }: ReferenceRowProps) {
-
   return (
-    <div className="flex items-center justify-between p-4 bg-level-1 rounded-lg">
-      <div className="flex items-center space-x-4 flex-1">
-        <Avatar
-          src={reference.logoUrl}
-          name={reference.name}
-          size="l"
-        />
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-2 mb-1">
-            <button
-              type="button"
-              onClick={onVisitWebsite}
-              className="font-medium text-txt-primary truncate hover:text-primary hover:underline text-left cursor-pointer"
-            >
-              {reference.name}
-            </button>
-          </div>
-
-          <p className="text-sm text-txt-secondary line-clamp-2 mb-2">
-            {reference.description}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center space-x-2 ml-4">
-        <Button
-          variant="tertiary"
-          icon={IconPencil}
-          onClick={onEdit}
-          aria-label="Edit reference"
-        />
-        <DeleteTrustCenterReferenceDialog
-          referenceId={reference.id}
-          referenceName={reference.name}
-          connectionId={connectionId}
-        >
-          <Button
-            variant="danger"
-            icon={IconTrashCan}
-            aria-label="Delete reference"
+    <Tr>
+      <Td>
+        <div className="flex items-center gap-3">
+          <Avatar
+            src={reference.logoUrl}
+            name={reference.name}
+            size="m"
           />
-        </DeleteTrustCenterReferenceDialog>
-      </div>
-    </div>
+          <span className="font-medium">{reference.name}</span>
+        </div>
+      </Td>
+      <Td>
+        <span className="text-txt-secondary line-clamp-2">
+          {reference.description}
+        </span>
+      </Td>
+      <Td noLink width={200} className="text-end">
+        <div className="flex gap-2 justify-end">
+          <Button
+            variant="secondary"
+            icon={IconArrowLink}
+            onClick={onVisitWebsite}
+          />
+          <Button
+            variant="secondary"
+            icon={IconPencil}
+            onClick={onEdit}
+          />
+          <DeleteTrustCenterReferenceDialog
+            referenceId={reference.id}
+            referenceName={reference.name}
+            connectionId={connectionId}
+          >
+            <Button
+              variant="danger"
+              icon={IconTrashCan}
+            />
+          </DeleteTrustCenterReferenceDialog>
+        </div>
+      </Td>
+    </Tr>
   );
 }

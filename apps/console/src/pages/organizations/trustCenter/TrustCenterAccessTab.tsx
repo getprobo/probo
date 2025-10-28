@@ -1,7 +1,6 @@
 import {
   Badge,
   Button,
-  Card,
   Checkbox,
   Dialog,
   DialogContent,
@@ -20,19 +19,21 @@ import {
   IconCheckmark1,
   IconCrossLargeX,
   IconChevronDown,
+  IconPlusLarge,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { formatDate } from "@probo/helpers";
 import { useOutletContext } from "react-router";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { useQueryLoader, usePreloadedQuery } from 'react-relay';
 import z from "zod";
 import {
   useTrustCenterAccesses,
   createTrustCenterAccessMutation,
   updateTrustCenterAccessMutation,
-  deleteTrustCenterAccessMutation
+  deleteTrustCenterAccessMutation,
+  loadTrustCenterAccessDocumentAccessesQuery
 } from "/hooks/graph/TrustCenterAccessGraph";
-import type { TrustCenterAccessGraph_accesses$data } from "/hooks/graph/__generated__/TrustCenterAccessGraph_accesses.graphql";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 
@@ -42,8 +43,88 @@ type ContextType = {
     trustCenter?: {
       id: string;
     };
+    documents?: {
+      edges: Array<{
+        node: {
+          id: string;
+          title: string;
+          documentType: string;
+          trustCenterVisibility: string;
+        };
+      }>;
+    };
+    audits?: {
+      edges: Array<{
+        node: {
+          id: string;
+          filename: string;
+          trustCenterVisibility: string;
+          framework: {
+            name: string;
+          };
+        };
+      }>;
+    };
+    trustCenterFiles?: {
+      edges: Array<{
+        node: {
+          id: string;
+          name: string;
+          category: string;
+          trustCenterVisibility: string;
+        };
+      }>;
+    };
   };
 };
+
+type DocumentAccessInfo = {
+  id: string;
+  active: boolean;
+  requested: boolean;
+  document?: {
+    id: string;
+    title: string;
+    documentType: string;
+  } | null;
+  report?: {
+    id: string;
+    filename: string;
+    audit: {
+      id: string;
+      framework: {
+        name: string;
+      };
+    };
+  } | null;
+  trustCenterFile?: {
+    id: string;
+    name: string;
+    category: string;
+  } | null;
+};
+
+function DocumentAccessesLoader({
+  queryReference,
+  onDataLoaded
+}: {
+  queryReference: any;
+  onDataLoaded: (documentAccesses: DocumentAccessInfo[]) => void;
+}) {
+  const data = usePreloadedQuery(loadTrustCenterAccessDocumentAccessesQuery, queryReference);
+
+  useEffect(() => {
+    if (data && typeof data === 'object' && 'node' in data) {
+      const node = (data as any).node;
+      if (node?.availableDocumentAccesses?.edges) {
+        const documentAccesses = node.availableDocumentAccesses.edges.map((edge: any) => edge.node);
+        onDataLoaded(documentAccesses);
+      }
+    }
+  }, [data, onDataLoaded]);
+
+  return null;
+}
 
 export default function TrustCenterAccessTab() {
   const { __ } = useTranslate();
@@ -75,10 +156,35 @@ export default function TrustCenterAccessTab() {
   const dialogRef = useDialogRef();
   const editDialogRef = useDialogRef();
   const [editingAccess, setEditingAccess] = useState<AccessType | null>(null);
+  const [editingDocumentAccesses, setEditingDocumentAccesses] = useState<DocumentAccessType[]>([]);
   const [selectedDocumentAccesses, setSelectedDocumentAccesses] = useState<Set<string>>(new Set());
   const [pendingEditEmail, setPendingEditEmail] = useState<string | null>(null);
+  const [documentAccessesQueryReference, loadDocumentAccessesQuery] = useQueryLoader(loadTrustCenterAccessDocumentAccessesQuery);
+  const loadedAccessIdRef = useRef<string | null>(null);
+  const [isLoadingDocumentAccesses, setIsLoadingDocumentAccesses] = useState(false);
 
-  const formattedDocumentAccesses = editingAccess?.documentAccesses
+  useEffect(() => {
+    if (editingAccess?.id && loadedAccessIdRef.current !== editingAccess.id) {
+      loadedAccessIdRef.current = editingAccess.id;
+      setIsLoadingDocumentAccesses(true);
+      loadDocumentAccessesQuery({ accessId: editingAccess.id }, { fetchPolicy: 'network-only' });
+    }
+  }, [editingAccess?.id, loadDocumentAccessesQuery]);
+
+  const handleDocumentAccessesLoaded = useCallback((documentAccesses: DocumentAccessInfo[]) => {
+    setEditingDocumentAccesses(documentAccesses);
+
+    const activeIds = new Set<string>(
+      documentAccesses
+        .filter((docAccess) => docAccess.active)
+        .map((docAccess) => docAccess.document?.id || docAccess.report?.id || docAccess.trustCenterFile?.id)
+        .filter((id: unknown): id is string => typeof id === 'string')
+    );
+    setSelectedDocumentAccesses(activeIds);
+    setIsLoadingDocumentAccesses(false);
+  }, []);
+
+  const formattedDocumentAccesses = editingDocumentAccesses
     ?.map((docAccess) => getDocumentAccessInfo(docAccess, __))
     ?.filter((info) => info !== null) ?? [];
 
@@ -93,6 +199,7 @@ export default function TrustCenterAccessTab() {
   type DocumentAccessType = {
     id: string;
     active: boolean;
+    requested: boolean;
     document?: {
       id: string;
       title: string;
@@ -126,6 +233,8 @@ export default function TrustCenterAccessTab() {
         type: __("Document"),
         category: docAccess.document?.documentType,
         id: docAccess.document?.id,
+        requested: docAccess.requested,
+        active: docAccess.active,
       };
     }
     if (!!docAccess.report) {
@@ -135,6 +244,8 @@ export default function TrustCenterAccessTab() {
         type: __("Report"),
         category: docAccess.report?.audit?.framework?.name,
         id: docAccess.report?.id,
+        requested: docAccess.requested,
+        active: docAccess.active,
       };
     }
     if (!!docAccess.trustCenterFile) {
@@ -144,6 +255,8 @@ export default function TrustCenterAccessTab() {
         type: __("File"),
         category: docAccess.trustCenterFile?.category,
         id: docAccess.trustCenterFile?.id,
+        requested: docAccess.requested,
+        active: docAccess.active,
       };
     }
 
@@ -157,28 +270,24 @@ export default function TrustCenterAccessTab() {
     active: boolean;
     hasAcceptedNonDisclosureAgreement: boolean;
     createdAt: string;
-    documentAccesses: DocumentAccessType[];
+    lastTokenExpiresAt: string | null;
+    pendingRequestCount: number;
+    activeCount: number;
+    documentAccesses?: DocumentAccessType[];
   };
 
   const { data: trustCenterData, loadMore, hasNext, isLoadingNext } = useTrustCenterAccesses(organization.trustCenter?.id || "");
 
-  type AccessEdge = NonNullable<NonNullable<TrustCenterAccessGraph_accesses$data['accesses']>['edges']>[number];
-  type DocumentAccessEdge = NonNullable<NonNullable<NonNullable<AccessEdge>['node']['documentAccesses']>['edges']>[number];
-
-  const accesses: AccessType[] = trustCenterData?.node?.accesses?.edges?.map((edge: AccessEdge) => ({
+  const accesses: AccessType[] = trustCenterData?.node?.accesses?.edges?.map((edge: any) => ({
     id: edge.node.id,
     email: edge.node.email,
     name: edge.node.name,
     active: edge.node.active,
     hasAcceptedNonDisclosureAgreement: edge.node.hasAcceptedNonDisclosureAgreement,
     createdAt: edge.node.createdAt,
-    documentAccesses: edge.node.documentAccesses?.edges?.map((docEdge: DocumentAccessEdge) => ({
-      id: docEdge.node.id,
-      active: docEdge.node.active,
-      document: docEdge.node.document,
-      report: docEdge.node.report,
-      trustCenterFile: docEdge.node.trustCenterFile
-    })) ?? []
+    lastTokenExpiresAt: edge.node.lastTokenExpiresAt,
+    pendingRequestCount: edge.node.pendingRequestCount || 0,
+    activeCount: edge.node.activeCount || 0,
   })) ?? [];
 
 
@@ -201,8 +310,6 @@ export default function TrustCenterAccessTab() {
         connections: connectionId ? [connectionId] : [],
       },
       onSuccess: () => {
-        dialogRef.current?.close();
-        inviteForm.reset();
         setPendingEditEmail(email);
       },
     });
@@ -220,32 +327,37 @@ export default function TrustCenterAccessTab() {
   }, [deleteInvitation, trustCenterData]);
 
 
-  const getActiveDocumentIds = useCallback((access: AccessType) => {
-    return access.documentAccesses
-      .filter(docAccess => docAccess.active)
-      .map(docAccess => docAccess.document?.id || docAccess.report?.id || docAccess.trustCenterFile?.id)
-      .filter((id): id is string => id !== undefined);
-  }, []);
 
   const handleEditAccess = useCallback((access: AccessType) => {
+    loadedAccessIdRef.current = null;
     setEditingAccess(access);
+    setEditingDocumentAccesses([]);
+    setSelectedDocumentAccesses(new Set());
+    setIsLoadingDocumentAccesses(false);
     editForm.reset({ name: access.name, active: access.active });
-    setSelectedDocumentAccesses(new Set(getActiveDocumentIds(access)));
     editDialogRef.current?.open();
-  }, [editDialogRef, editForm, getActiveDocumentIds]);
+  }, [editDialogRef, editForm]);
 
   useEffect(() => {
     if (pendingEditEmail && accesses.length > 0) {
       const newAccess = accesses.find(access => access.email === pendingEditEmail);
       if (newAccess) {
         setPendingEditEmail(null);
+        loadedAccessIdRef.current = null;
         setEditingAccess(newAccess);
         editForm.reset({ name: newAccess.name, active: true });
-        setSelectedDocumentAccesses(new Set(getActiveDocumentIds(newAccess)));
+        setEditingDocumentAccesses([]);
+        setSelectedDocumentAccesses(new Set());
         editDialogRef.current?.open();
+        setTimeout(() => {
+          dialogRef.current?.close();
+        }, 50);
+        setTimeout(() => {
+          inviteForm.reset();
+        }, 300);
       }
     }
-  }, [accesses, pendingEditEmail, editForm, editDialogRef, getActiveDocumentIds]);
+  }, [accesses, pendingEditEmail, editForm, dialogRef, editDialogRef, inviteForm]);
 
   const handleToggleDocumentAccess = useCallback((documentId: string, active: boolean) => {
     setSelectedDocumentAccesses(prev => {
@@ -262,7 +374,7 @@ export default function TrustCenterAccessTab() {
   const handleUpdateName = editForm.handleSubmit(async (data) => {
     if (!editingAccess) return;
 
-    const { documentIds, reportIds, trustCenterFileIds } = editingAccess.documentAccesses.reduce(
+    const { documentIds, reportIds, trustCenterFileIds } = editingDocumentAccesses.reduce(
       (acc, docAccess) => {
         const id = docAccess.document?.id || docAccess.report?.id || docAccess.trustCenterFile?.id;
         if (id && selectedDocumentAccesses.has(id)) {
@@ -294,6 +406,7 @@ export default function TrustCenterAccessTab() {
         editDialogRef.current?.close();
         setEditingAccess(null);
         editForm.reset();
+        setEditingDocumentAccesses([]);
         setSelectedDocumentAccesses(new Set());
       },
     });
@@ -309,7 +422,7 @@ export default function TrustCenterAccessTab() {
           </p>
         </div>
         {organization.trustCenter?.id && (
-          <Button onClick={() => {
+          <Button icon={IconPlusLarge} onClick={() => {
             inviteForm.reset();
             dialogRef.current?.open();
           }}>
@@ -318,126 +431,151 @@ export default function TrustCenterAccessTab() {
         )}
       </div>
 
-      <Card padded>
-        {!organization.trustCenter?.id ? (
-          <div className="text-center text-txt-tertiary py-8">
-            <Spinner />
-          </div>
-        ) : accesses.length === 0 ? (
-          <div className="text-center text-txt-tertiary py-8">
-            {__("No external access granted yet")}
-          </div>
-        ) : (
-          <>
-            <Table>
-              <Thead>
-                <Tr>
-                  <Th>{__("Name")}</Th>
-                  <Th>{__("Email")}</Th>
-                  <Th>{__("Date")}</Th>
-                  <Th>{__("Active")}</Th>
-                  <Th>{__("Documents")}</Th>
-                  <Th>{__("NDA")}</Th>
-                  <Th></Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {accesses.map((access) => {
-                  const activeDocuments = access.documentAccesses.filter(doc => doc.active).length;
-                  const totalDocuments = access.documentAccesses.length;
+      {!organization.trustCenter?.id ? (
+        <Table>
+          <Tbody>
+            <Tr>
+              <Td className="text-center text-txt-tertiary py-8">
+                <Spinner />
+              </Td>
+            </Tr>
+          </Tbody>
+        </Table>
+      ) : accesses.length === 0 ? (
+        <Table>
+          <Tbody>
+            <Tr>
+              <Td className="text-center text-txt-tertiary py-8">
+                {__("No external access granted yet")}
+              </Td>
+            </Tr>
+          </Tbody>
+        </Table>
+      ) : (
+        <>
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>{__("Name")}</Th>
+                <Th>{__("Email")}</Th>
+                <Th>{__("Date")}</Th>
+                <Th>{__("Expires")}</Th>
+                <Th className="text-center">{__("Active")}</Th>
+                <Th className="text-center">{__("Access")}</Th>
+                <Th className="text-center">{__("Requests")}</Th>
+                <Th className="text-center">{__("NDA")}</Th>
+                <Th></Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {accesses.map((access) => {
+                const isExpired = access.lastTokenExpiresAt ? new Date(access.lastTokenExpiresAt) < new Date() : false;
 
-                  return (
-                    <Tr
-                      key={access.id}
-                      onClick={() => handleEditAccess(access)}
-                      className="cursor-pointer hover:bg-bg-secondary transition-colors"
-                    >
-                      <Td className="font-medium">{access.name}</Td>
-                      <Td>{access.email}</Td>
-                      <Td>
-                        {formatDate(access.createdAt)}
-                      </Td>
-                      <Td>
+                return (
+                  <Tr
+                    key={access.id}
+                    onClick={() => handleEditAccess(access)}
+                    className="cursor-pointer hover:bg-bg-secondary transition-colors"
+                  >
+                    <Td className="font-medium">{access.name}</Td>
+                    <Td>{access.email}</Td>
+                    <Td>
+                      {formatDate(access.createdAt)}
+                    </Td>
+                    <Td className={isExpired ? "text-txt-danger" : ""}>
+                      {access.lastTokenExpiresAt ? formatDate(access.lastTokenExpiresAt) : "-"}
+                    </Td>
+                    <Td>
+                      <div className="flex justify-center">
                         {access.active ? (
                           <IconCheckmark1 size={16} className="text-txt-success" />
                         ) : (
                           <IconCrossLargeX size={16} className="text-txt-danger" />
                         )}
-                      </Td>
-                      <Td>
-                        {totalDocuments > 0 ? `${activeDocuments}/${totalDocuments}` : '0/0'}
-                      </Td>
-                      <Td>
+                      </div>
+                    </Td>
+                    <Td className="text-center">
+                      {access.activeCount}
+                    </Td>
+                    <Td className="text-center">
+                      {access.pendingRequestCount > 0 ? access.pendingRequestCount : ""}
+                    </Td>
+                    <Td>
+                      <div className="flex justify-center">
                         {access.hasAcceptedNonDisclosureAgreement && (
                           <IconCheckmark1 size={16} className="text-txt-success" />
                         )}
-                      </Td>
-                    <Td noLink width={160} className="text-end">
-                      <div
-                        className="flex gap-2 justify-end"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button
-                          variant="secondary"
-                          onClick={() => handleEditAccess(access)}
-                          disabled={isUpdating}
-                          icon={IconPencil}
-                        />
-                        <Button
-                          variant="secondary"
-                          onClick={() => handleDelete(access.id)}
-                          disabled={isDeleting}
-                          icon={IconTrashCan}
-                        />
                       </div>
                     </Td>
-                  </Tr>
-                  );
-                })}
-              </Tbody>
-            </Table>
-            {hasNext && (
-              <Button
-                variant="tertiary"
-                onClick={loadMore}
-                disabled={isLoadingNext}
-                className="mt-3 mx-auto"
-                icon={IconChevronDown}
-              >
-                {isLoadingNext && <Spinner />}
-                {__("Show More")}
-              </Button>
-            )}
-          </>
-        )}
-      </Card>
+                  <Td noLink width={160} className="text-end">
+                    <div
+                      className="flex gap-2 justify-end"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button
+                        variant="secondary"
+                        onClick={() => handleEditAccess(access)}
+                        disabled={isUpdating}
+                        icon={IconPencil}
+                      />
+                      <Button
+                        variant="danger"
+                        onClick={() => handleDelete(access.id)}
+                        disabled={isDeleting}
+                        icon={IconTrashCan}
+                      />
+                    </div>
+                  </Td>
+                </Tr>
+                );
+              })}
+            </Tbody>
+          </Table>
+          {hasNext && (
+            <Button
+              variant="tertiary"
+              onClick={loadMore}
+              disabled={isLoadingNext}
+              className="mt-3 mx-auto"
+              icon={IconChevronDown}
+            >
+              {isLoadingNext && <Spinner />}
+              {__("Show More")}
+            </Button>
+          )}
+        </>
+      )}
 
       <Dialog
         ref={dialogRef}
         title={__("Invite External Access")}
       >
         <form onSubmit={handleInvite}>
-          <DialogContent padded className="space-y-4">
-            <p className="text-txt-secondary text-sm">
-              {__("Send a 7-day access token to an external person to view your trust center")}
-            </p>
+          <DialogContent padded className="space-y-6">
+            <div>
+              <p className="text-txt-secondary text-sm mb-4">
+                {__("Send a 30-day access token to an external person to view your trust center")}
+              </p>
 
-            <Field
-              label={__("Full Name")}
-              required
-              error={inviteForm.formState.errors.name?.message}
-              {...inviteForm.register("name")}
-              placeholder={__("John Doe")}
-            />
+              <Field
+                label={__("Full Name")}
+                required
+                error={inviteForm.formState.errors.name?.message}
+                {...inviteForm.register("name")}
+                placeholder={__("John Doe")}
+              />
 
-            <Field
-              label={__("Email Address")}
-              required
-              error={inviteForm.formState.errors.email?.message}
-              type="email"
-              {...inviteForm.register("email")}
-              placeholder={__("john@example.com")}
-            />
+              <div className="mt-4">
+                <Field
+                  label={__("Email Address")}
+                  required
+                  error={inviteForm.formState.errors.email?.message}
+                  type="email"
+                  {...inviteForm.register("email")}
+                  placeholder={__("john@example.com")}
+                />
+              </div>
+            </div>
           </DialogContent>
 
           <DialogFooter>
@@ -453,6 +591,12 @@ export default function TrustCenterAccessTab() {
         ref={editDialogRef}
         title={__("Edit Access")}
       >
+        {documentAccessesQueryReference && (
+          <DocumentAccessesLoader
+            queryReference={documentAccessesQueryReference}
+            onDataLoaded={handleDocumentAccessesLoaded}
+          />
+        )}
         <form onSubmit={handleUpdateName}>
           <DialogContent padded className="space-y-6">
             <div>
@@ -484,11 +628,37 @@ export default function TrustCenterAccessTab() {
               </div>
             </div>
 
-            {formattedDocumentAccesses.length > 0 && (
-              <div>
-                <h4 className="font-medium text-txt-primary mb-4">
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h4 className="font-medium text-txt-primary">
                   {__("Document Access Permissions")}
                 </h4>
+                {!isLoadingDocumentAccesses && formattedDocumentAccesses.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="tertiary"
+                    onClick={() => {
+                      if (selectedDocumentAccesses.size === formattedDocumentAccesses.length) {
+                        setSelectedDocumentAccesses(new Set());
+                      } else {
+                        const allIds = new Set(formattedDocumentAccesses.map(doc => doc.id).filter((id): id is string => !!id));
+                        setSelectedDocumentAccesses(allIds);
+                      }
+                    }}
+                    className="text-xs h-7 min-h-7"
+                  >
+                    {selectedDocumentAccesses.size === formattedDocumentAccesses.length
+                      ? __("Clear All")
+                      : __("Select All")}
+                  </Button>
+                )}
+              </div>
+
+              {isLoadingDocumentAccesses ? (
+                <div className="flex justify-center items-center py-12">
+                  <Spinner />
+                </div>
+              ) : formattedDocumentAccesses.length > 0 ? (
                 <div className="bg-bg-secondary rounded-lg overflow-hidden">
                   <Table>
                     <Thead>
@@ -496,6 +666,7 @@ export default function TrustCenterAccessTab() {
                         <Th>{__("Name")}</Th>
                         <Th>{__("Type")}</Th>
                         <Th>{__("Category")}</Th>
+                        <Th></Th>
                         <Th>
                           <div className="flex justify-end">
                             {__("Access")}
@@ -505,7 +676,7 @@ export default function TrustCenterAccessTab() {
                     </Thead>
                     <Tbody>
                       {formattedDocumentAccesses.map((info) => {
-                        const { variant, name, type, category, id } = info;
+                        const { variant, name, type, category, id, requested } = info;
 
                         return (
                           <Tr key={id}>
@@ -525,6 +696,13 @@ export default function TrustCenterAccessTab() {
                               </div>
                             </Td>
                             <Td>
+                              {requested && (
+                                <Badge variant="warning">
+                                  {__("Requested")}
+                                </Badge>
+                              )}
+                            </Td>
+                            <Td>
                               <div className="flex justify-end">
                                 <Checkbox
                                   checked={selectedDocumentAccesses.has(id)}
@@ -540,13 +718,17 @@ export default function TrustCenterAccessTab() {
                     </Tbody>
                   </Table>
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="text-center text-txt-tertiary py-8">
+                  {__("No documents available")}
+                </div>
+              )}
+            </div>
           </DialogContent>
 
           <DialogFooter>
-            <Button type="submit" disabled={isUpdating}>
-              {isUpdating && <Spinner />}
+            <Button type="submit" disabled={isUpdating || isLoadingDocumentAccesses}>
+              {(isUpdating || isLoadingDocumentAccesses) && <Spinner />}
               {__("Update Access")}
             </Button>
           </DialogFooter>

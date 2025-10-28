@@ -19,7 +19,9 @@ import (
 	"embed"
 	"fmt"
 	htmltemplate "html/template"
+	"math"
 	texttemplate "text/template"
+	"time"
 )
 
 //go:embed dist
@@ -148,17 +150,21 @@ func RenderFrameworkExport(hostname, fullName, downloadUrl string) (subject stri
 	return subjectFrameworkExport, textBody, htmlBody, err
 }
 
-func RenderTrustCenterAccess(hostname, fullName, organizationName, accessUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderTrustCenterAccess(hostname, fullName, organizationName, accessUrl string, tokenDuration time.Duration) (subject string, textBody string, htmlBody *string, err error) {
+	durationInDays := int(math.Round(tokenDuration.Hours() / 24))
+
 	data := struct {
 		FullName         string
 		OrganizationName string
 		AccessUrl        string
 		LogoURL          string
+		DurationInDays   int
 	}{
 		FullName:         fullName,
 		OrganizationName: organizationName,
 		AccessUrl:        accessUrl,
 		LogoURL:          fmt.Sprintf(logoURLFormat, hostname),
+		DurationInDays:   durationInDays,
 	}
 
 	textBody, htmlBody, err = renderEmail(trustCenterAccessTextTemplate, trustCenterAccessHTMLTemplate, data)

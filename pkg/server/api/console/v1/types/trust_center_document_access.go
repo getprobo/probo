@@ -15,6 +15,8 @@
 package types
 
 import (
+	"time"
+
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
@@ -31,14 +33,35 @@ type (
 		Resolver any
 		ParentID gid.GID
 	}
+
+	TrustCenterDocumentAccess struct {
+		ID                gid.GID            `json:"id"`
+		Active            bool               `json:"active"`
+		Requested         bool               `json:"requested"`
+		CreatedAt         time.Time          `json:"createdAt"`
+		UpdatedAt         time.Time          `json:"updatedAt"`
+		TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
+		Document          *Document          `json:"document,omitempty"`
+		Report            *Report            `json:"report,omitempty"`
+		TrustCenterFile   *TrustCenterFile   `json:"trustCenterFile,omitempty"`
+
+		// Internal fields used by resolvers
+		DocumentID        *gid.GID `json:"-"`
+		ReportID          *gid.GID `json:"-"`
+		TrustCenterFileID *gid.GID `json:"-"`
+	}
 )
 
 func NewTrustCenterDocumentAccess(tcda *coredata.TrustCenterDocumentAccess) *TrustCenterDocumentAccess {
 	return &TrustCenterDocumentAccess{
-		ID:        tcda.ID,
-		Active:    tcda.Active,
-		CreatedAt: tcda.CreatedAt,
-		UpdatedAt: tcda.UpdatedAt,
+		ID:                tcda.ID,
+		Active:            tcda.Active,
+		Requested:         tcda.Requested,
+		CreatedAt:         tcda.CreatedAt,
+		UpdatedAt:         tcda.UpdatedAt,
+		DocumentID:        tcda.DocumentID,
+		ReportID:          tcda.ReportID,
+		TrustCenterFileID: tcda.TrustCenterFileID,
 	}
 }
 

@@ -61,7 +61,7 @@ probod:
     cookie-name: "TCT"
     cookie-domain: "localhost"
     cookie-duration: 24
-    token-duration: 168
+    token-duration: 720
     report-url-duration: 15
     token-secret: "trust-token-signing-secret"
     scope: "trust_center_readonly"
@@ -397,7 +397,7 @@ Trust center cookie lifetime in hours.
 
 #### `trust-auth.token-duration` (integer)
 
-**Default**: `168`
+**Default**: `720`
 
 Trust center access token lifetime in hours.
 

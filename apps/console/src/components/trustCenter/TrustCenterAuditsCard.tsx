@@ -1,6 +1,5 @@
 import { graphql } from "relay-runtime";
 import {
-  Card,
   Button,
   Tr,
   Td,
@@ -18,7 +17,6 @@ import { useFragment } from "react-relay";
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { sprintf, getAuditStateVariant, getAuditStateLabel, formatDate, getTrustCenterVisibilityOptions } from "@probo/helpers";
 import { useOrganizationId } from "/hooks/useOrganizationId";
-import clsx from "clsx";
 import type { TrustCenterAuditsCardFragment$key } from "./__generated__/TrustCenterAuditsCardFragment.graphql";
 
 const trustCenterAuditFragment = graphql`
@@ -50,17 +48,15 @@ type Props<Params> = {
   params: Params;
   disabled?: boolean;
   onChangeVisibility: Mutation<Params>;
-  variant?: "card" | "table";
 };
 
 export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
   const { __ } = useTranslate();
-  const [limit, setLimit] = useState<number | null>(4);
+  const [limit, setLimit] = useState<number | null>(100);
   const audits = useMemo(() => {
     return limit ? props.audits.slice(0, limit) : props.audits;
   }, [props.audits, limit]);
   const showMoreButton = limit !== null && props.audits.length > limit;
-  const variant = props.variant ?? "table";
 
   const onChangeVisibility = (auditId: string, trustCenterVisibility: "NONE" | "PRIVATE" | "PUBLIC") => {
     props.onChangeVisibility({
@@ -74,11 +70,9 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
     });
   };
 
-  const Wrapper = variant === "card" ? Card : "div";
-
   return (
-    <Wrapper {...(variant === "card" ? { padded: true } : {})} className="space-y-[10px]">
-      <Table className={clsx(variant === "card" && "bg-invert")}>
+    <div className="space-y-[10px]">
+      <Table>
         <Thead>
           <Tr>
             <Th>{__("Framework")}</Th>
@@ -116,7 +110,7 @@ export function TrustCenterAuditsCard<Params>(props: Props<Params>) {
           {sprintf(__("Show %s more"), props.audits.length - limit)}
         </Button>
       )}
-    </Wrapper>
+    </div>
   );
 }
 

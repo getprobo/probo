@@ -20,7 +20,14 @@ export const trustCenterRoutes = [
         index: true,
         fallback: LinkCardSkeleton,
         Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterAuditsTab")
+          () => import("/pages/organizations/trustCenter/TrustCenterOverviewTab")
+        ),
+      },
+      {
+        path: "trust-by",
+        fallback: LinkCardSkeleton,
+        Component: lazy(
+          () => import("/pages/organizations/trustCenter/TrustCenterReferencesTab")
         ),
       },
       {
@@ -28,13 +35,6 @@ export const trustCenterRoutes = [
         fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/trustCenter/TrustCenterAuditsTab")
-        ),
-      },
-      {
-        path: "vendors",
-        fallback: LinkCardSkeleton,
-        Component: lazy(
-          () => import("/pages/organizations/trustCenter/TrustCenterVendorsTab")
         ),
       },
       {
@@ -49,6 +49,13 @@ export const trustCenterRoutes = [
         fallback: LinkCardSkeleton,
         Component: lazy(
           () => import("/pages/organizations/trustCenter/TrustCenterFilesTab")
+        ),
+      },
+      {
+        path: "vendors",
+        fallback: LinkCardSkeleton,
+        Component: lazy(
+          () => import("/pages/organizations/trustCenter/TrustCenterVendorsTab")
         ),
       },
       {

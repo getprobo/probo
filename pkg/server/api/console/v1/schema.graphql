@@ -2407,8 +2407,11 @@ type TrustCenterAccess implements Node {
   hasAcceptedNonDisclosureAgreement: Boolean!
   createdAt: Datetime!
   updatedAt: Datetime!
+  lastTokenExpiresAt: Datetime
+  pendingRequestCount: Int! @goField(forceResolver: true)
+  activeCount: Int! @goField(forceResolver: true)
 
-  documentAccesses(
+  availableDocumentAccesses(
     first: Int
     after: CursorKey
     last: Int
@@ -2417,12 +2420,12 @@ type TrustCenterAccess implements Node {
   ): TrustCenterDocumentAccessConnection! @goField(forceResolver: true)
 }
 
-type TrustCenterDocumentAccess implements Node {
-  id: ID!
+type TrustCenterDocumentAccess
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccess"
+  ) {
   active: Boolean!
-  createdAt: Datetime!
-  updatedAt: Datetime!
-  trustCenterAccess: TrustCenterAccess! @goField(forceResolver: true)
+  requested: Boolean!
   document: Document @goField(forceResolver: true)
   report: Report @goField(forceResolver: true)
   trustCenterFile: TrustCenterFile @goField(forceResolver: true)

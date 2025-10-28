@@ -123,7 +123,7 @@ func New() *Implm {
 				CookieName:        "TCT",
 				CookieDomain:      "localhost",
 				CookieDuration:    24,
-				TokenDuration:     168,
+				TokenDuration:     720,
 				ReportURLDuration: 15,
 				TokenSecret:       "this-is-a-secure-secret-for-trust-token-signing-at-least-32-bytes",
 				Scope:             "trust_center_readonly",

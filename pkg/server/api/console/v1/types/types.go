@@ -1675,7 +1675,10 @@ type TrustCenterAccess struct {
 	HasAcceptedNonDisclosureAgreement bool                                 `json:"hasAcceptedNonDisclosureAgreement"`
 	CreatedAt                         time.Time                            `json:"createdAt"`
 	UpdatedAt                         time.Time                            `json:"updatedAt"`
-	DocumentAccesses                  *TrustCenterDocumentAccessConnection `json:"documentAccesses"`
+	LastTokenExpiresAt                *time.Time                           `json:"lastTokenExpiresAt,omitempty"`
+	PendingRequestCount               int                                  `json:"pendingRequestCount"`
+	ActiveCount                       int                                  `json:"activeCount"`
+	AvailableDocumentAccesses         *TrustCenterDocumentAccessConnection `json:"availableDocumentAccesses"`
 }
 
 func (TrustCenterAccess) IsNode()             {}
@@ -1695,20 +1698,6 @@ type TrustCenterConnection struct {
 	Edges    []*TrustCenterEdge `json:"edges"`
 	PageInfo *PageInfo          `json:"pageInfo"`
 }
-
-type TrustCenterDocumentAccess struct {
-	ID                gid.GID            `json:"id"`
-	Active            bool               `json:"active"`
-	CreatedAt         time.Time          `json:"createdAt"`
-	UpdatedAt         time.Time          `json:"updatedAt"`
-	TrustCenterAccess *TrustCenterAccess `json:"trustCenterAccess"`
-	Document          *Document          `json:"document,omitempty"`
-	Report            *Report            `json:"report,omitempty"`
-	TrustCenterFile   *TrustCenterFile   `json:"trustCenterFile,omitempty"`
-}
-
-func (TrustCenterDocumentAccess) IsNode()             {}
-func (this TrustCenterDocumentAccess) GetID() gid.GID { return this.ID }
 
 type TrustCenterDocumentAccessEdge struct {
 	Cursor page.CursorKey             `json:"cursor"`
