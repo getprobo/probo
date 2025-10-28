@@ -774,6 +774,7 @@ ON CONFLICT DO NOTHING
 		"trust_center_document_access_entity_type": TrustCenterDocumentAccessEntityType,
 		"trust_center_access_id":                   trustCenterAccessID,
 		"report_ids":                               reportIDs,
+		"requested":                                requested,
 		"created_at":                               createdAt,
 		"updated_at":                               createdAt,
 	}
