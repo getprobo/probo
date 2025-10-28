@@ -456,15 +456,16 @@ all_items AS (
 	UNION ALL
 
 	SELECT
-		r.id AS item_id,
+		r.report_id AS item_id,
 		NULL::text AS document_id,
-		r.id AS report_id,
+		r.report_id AS report_id,
 		NULL::text AS trust_center_file_id,
 		r.created_at AS item_created_at,
 		r.updated_at AS item_updated_at
 	FROM audits r, tenant_organization o
 	WHERE r.organization_id = o.organization_id
 		AND r.trust_center_visibility = 'PRIVATE'::trust_center_visibility
+		AND r.report_id IS NOT NULL
 
 	UNION ALL
 
