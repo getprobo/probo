@@ -19,6 +19,8 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net/url"
+
+	pemutil "github.com/getprobo/probo/pkg/crypto/pem"
 )
 
 type ValidationError struct {
@@ -114,7 +116,7 @@ func validateCertificate(certPEM string) error {
 		return fmt.Errorf("cannot parse certificate PEM")
 	}
 
-	if block.Type != "CERTIFICATE" {
+	if block.Type != pemutil.BlockTypeCertificate {
 		return fmt.Errorf("PEM block type must be CERTIFICATE (found: %s)", block.Type)
 	}
 
