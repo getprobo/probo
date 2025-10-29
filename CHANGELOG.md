@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.81.0] - 2025-10-29
+
+### Added
+
+- Add custom order ranking to trust center references
+
 ## [0.80.2] - 2025-10-28
 
 ### Fixed
