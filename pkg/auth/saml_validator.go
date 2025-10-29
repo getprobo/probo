@@ -16,12 +16,14 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/crewjam/saml"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -33,18 +35,8 @@ func PreventReplayAttack(
 	organizationID gid.GID,
 	expiresAt time.Time,
 ) error {
-	var assertion coredata.SAMLAssertion
-	exists, err := assertion.CheckExists(ctx, conn, assertionID)
-	if err != nil {
-		return fmt.Errorf("cannot check assertion ID: %w", err)
-	}
-
-	if exists {
-		return coredata.ErrAssertionAlreadyUsed{AssertionID: assertionID}
-	}
-
 	now := time.Now()
-	assertion = coredata.SAMLAssertion{
+	assertion := coredata.SAMLAssertion{
 		ID:             assertionID,
 		OrganizationID: organizationID,
 		UsedAt:         now,
@@ -52,6 +44,10 @@ func PreventReplayAttack(
 	}
 
 	if err := assertion.Insert(ctx, conn, scope); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "auth_saml_assertions_pkey" {
+			return coredata.ErrAssertionAlreadyUsed{AssertionID: assertionID}
+		}
 		return fmt.Errorf("cannot store assertion ID: %w", err)
 	}
 

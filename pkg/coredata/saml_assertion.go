@@ -39,34 +39,6 @@ func (e ErrAssertionAlreadyUsed) Error() string {
 	return fmt.Sprintf("assertion ID %q has already been used (replay attack)", e.AssertionID)
 }
 
-func (s *SAMLAssertion) CheckExists(
-	ctx context.Context,
-	conn pg.Conn,
-	assertionID string,
-) (bool, error) {
-	query := `
-SELECT id
-FROM auth_saml_assertions
-WHERE id = @id
-LIMIT 1
-`
-
-	rows, err := conn.Query(ctx, query, pgx.NamedArgs{"id": assertionID})
-	if err != nil {
-		return false, fmt.Errorf("cannot query saml_assertions: %w", err)
-	}
-
-	_, err = pgx.CollectOneRow(rows, pgx.RowTo[string])
-	if err == nil {
-		return true, nil
-	}
-	if err == pgx.ErrNoRows {
-		return false, nil
-	}
-
-	return false, fmt.Errorf("cannot collect saml_assertion: %w", err)
-}
-
 func (s *SAMLAssertion) Insert(
 	ctx context.Context,
 	conn pg.Conn,
