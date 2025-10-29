@@ -26,12 +26,14 @@ func ExtractAttributeValue(assertion *saml.Assertion, attributeName string) (str
 		return "", fmt.Errorf("no attribute statement in assertion")
 	}
 
-	for _, attr := range assertion.AttributeStatements[0].Attributes {
-		if attr.Name == attributeName {
-			if len(attr.Values) == 0 {
-				return "", fmt.Errorf("attribute %q has no values", attributeName)
+	for _, statement := range assertion.AttributeStatements {
+		for _, attr := range statement.Attributes {
+			if attr.Name == attributeName {
+				if len(attr.Values) == 0 {
+					return "", fmt.Errorf("attribute %q has no values", attributeName)
+				}
+				return attr.Values[0].Value, nil
 			}
-			return attr.Values[0].Value, nil
 		}
 	}
 
