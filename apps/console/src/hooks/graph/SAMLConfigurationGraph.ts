@@ -30,7 +30,6 @@ const createSAMLConfigurationMutation = graphql`
         attributeFirstname
         attributeLastname
         attributeRole
-        defaultRole
         autoSignupEnabled
         createdAt
         updatedAt
@@ -61,7 +60,6 @@ const updateSAMLConfigurationMutation = graphql`
         attributeFirstname
         attributeLastname
         attributeRole
-        defaultRole
         autoSignupEnabled
         createdAt
         updatedAt

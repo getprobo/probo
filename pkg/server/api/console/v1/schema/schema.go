@@ -1238,7 +1238,6 @@ type ComplexityRoot struct {
 		AttributeRole           func(childComplexity int) int
 		AutoSignupEnabled       func(childComplexity int) int
 		CreatedAt               func(childComplexity int) int
-		DefaultRole             func(childComplexity int) int
 		DomainVerificationToken func(childComplexity int) int
 		DomainVerified          func(childComplexity int) int
 		DomainVerifiedAt        func(childComplexity int) int
@@ -7501,13 +7500,6 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.SAMLConfiguration.CreatedAt(childComplexity), true
-
-	case "SAMLConfiguration.defaultRole":
-		if e.complexity.SAMLConfiguration.DefaultRole == nil {
-			break
-		}
-
-		return e.complexity.SAMLConfiguration.DefaultRole(childComplexity), true
 
 	case "SAMLConfiguration.domainVerificationToken":
 		if e.complexity.SAMLConfiguration.DomainVerificationToken == nil {
@@ -14628,9 +14620,6 @@ type SAMLConfiguration implements Node {
   attributeLastname: String!
   attributeRole: String!
 
-  # Default role for users when role attribute is missing or invalid
-  defaultRole: String!
-
   # Auto-signup
   autoSignupEnabled: Boolean!
 
@@ -14675,7 +14664,6 @@ input CreateSAMLConfigurationInput {
   attributeLastname: String
   attributeRole: String
 
-  defaultRole: String
   autoSignupEnabled: Boolean
 }
 
@@ -14694,7 +14682,6 @@ input UpdateSAMLConfigurationInput {
   attributeFirstname: String
   attributeLastname: String
   attributeRole: String
-  defaultRole: String
   autoSignupEnabled: Boolean
 }
 
@@ -29048,8 +29035,6 @@ func (ec *executionContext) fieldContext_CreateSAMLConfigurationPayload_samlConf
 				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
 			case "attributeRole":
 				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "defaultRole":
-				return ec.fieldContext_SAMLConfiguration_defaultRole(ctx, field)
 			case "autoSignupEnabled":
 				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
 			case "testLoginUrl":
@@ -33183,8 +33168,6 @@ func (ec *executionContext) fieldContext_DisableSAMLPayload_samlConfiguration(_ 
 				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
 			case "attributeRole":
 				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "defaultRole":
-				return ec.fieldContext_SAMLConfiguration_defaultRole(ctx, field)
 			case "autoSignupEnabled":
 				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
 			case "testLoginUrl":
@@ -35701,8 +35684,6 @@ func (ec *executionContext) fieldContext_EnableSAMLPayload_samlConfiguration(_ c
 				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
 			case "attributeRole":
 				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "defaultRole":
-				return ec.fieldContext_SAMLConfiguration_defaultRole(ctx, field)
 			case "autoSignupEnabled":
 				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
 			case "testLoginUrl":
@@ -37939,8 +37920,6 @@ func (ec *executionContext) fieldContext_InitiateDomainVerificationPayload_samlC
 				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
 			case "attributeRole":
 				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "defaultRole":
-				return ec.fieldContext_SAMLConfiguration_defaultRole(ctx, field)
 			case "autoSignupEnabled":
 				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
 			case "testLoginUrl":
@@ -51814,8 +51793,6 @@ func (ec *executionContext) fieldContext_Organization_samlConfigurations(_ conte
 				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
 			case "attributeRole":
 				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "defaultRole":
-				return ec.fieldContext_SAMLConfiguration_defaultRole(ctx, field)
 			case "autoSignupEnabled":
 				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
 			case "testLoginUrl":
@@ -57468,50 +57445,6 @@ func (ec *executionContext) _SAMLConfiguration_attributeRole(ctx context.Context
 }
 
 func (ec *executionContext) fieldContext_SAMLConfiguration_attributeRole(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SAMLConfiguration",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SAMLConfiguration_defaultRole(ctx context.Context, field graphql.CollectedField, obj *types.SAMLConfiguration) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SAMLConfiguration_defaultRole(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DefaultRole, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SAMLConfiguration_defaultRole(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SAMLConfiguration",
 		Field:      field,
@@ -64303,8 +64236,6 @@ func (ec *executionContext) fieldContext_UpdateSAMLConfigurationPayload_samlConf
 				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
 			case "attributeRole":
 				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "defaultRole":
-				return ec.fieldContext_SAMLConfiguration_defaultRole(ctx, field)
 			case "autoSignupEnabled":
 				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
 			case "testLoginUrl":
@@ -71053,8 +70984,6 @@ func (ec *executionContext) fieldContext_VerifyDomainPayload_samlConfiguration(_
 				return ec.fieldContext_SAMLConfiguration_attributeLastname(ctx, field)
 			case "attributeRole":
 				return ec.fieldContext_SAMLConfiguration_attributeRole(ctx, field)
-			case "defaultRole":
-				return ec.fieldContext_SAMLConfiguration_defaultRole(ctx, field)
 			case "autoSignupEnabled":
 				return ec.fieldContext_SAMLConfiguration_autoSignupEnabled(ctx, field)
 			case "testLoginUrl":
@@ -75174,7 +75103,7 @@ func (ec *executionContext) unmarshalInputCreateSAMLConfigurationInput(ctx conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "emailDomain", "enforcementPolicy", "spCertificate", "spPrivateKey", "idpMetadataXml", "idpEntityId", "idpSsoUrl", "idpCertificate", "idpMetadataUrl", "attributeEmail", "attributeFirstname", "attributeLastname", "attributeRole", "defaultRole", "autoSignupEnabled"}
+	fieldsInOrder := [...]string{"organizationId", "emailDomain", "enforcementPolicy", "spCertificate", "spPrivateKey", "idpMetadataXml", "idpEntityId", "idpSsoUrl", "idpCertificate", "idpMetadataUrl", "attributeEmail", "attributeFirstname", "attributeLastname", "attributeRole", "autoSignupEnabled"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -75279,13 +75208,6 @@ func (ec *executionContext) unmarshalInputCreateSAMLConfigurationInput(ctx conte
 				return it, err
 			}
 			it.AttributeRole = data
-		case "defaultRole":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultRole"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DefaultRole = data
 		case "autoSignupEnabled":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoSignupEnabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -79763,7 +79685,7 @@ func (ec *executionContext) unmarshalInputUpdateSAMLConfigurationInput(ctx conte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "enabled", "enforcementPolicy", "spCertificate", "spPrivateKey", "idpEntityId", "idpSsoUrl", "idpCertificate", "idpMetadataUrl", "attributeEmail", "attributeFirstname", "attributeLastname", "attributeRole", "defaultRole", "autoSignupEnabled"}
+	fieldsInOrder := [...]string{"id", "enabled", "enforcementPolicy", "spCertificate", "spPrivateKey", "idpEntityId", "idpSsoUrl", "idpCertificate", "idpMetadataUrl", "attributeEmail", "attributeFirstname", "attributeLastname", "attributeRole", "autoSignupEnabled"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -79861,13 +79783,6 @@ func (ec *executionContext) unmarshalInputUpdateSAMLConfigurationInput(ctx conte
 				return it, err
 			}
 			it.AttributeRole = data
-		case "defaultRole":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultRole"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.DefaultRole = data
 		case "autoSignupEnabled":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoSignupEnabled"))
 			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
@@ -93230,11 +93145,6 @@ func (ec *executionContext) _SAMLConfiguration(ctx context.Context, sel ast.Sele
 			}
 		case "attributeRole":
 			out.Values[i] = ec._SAMLConfiguration_attributeRole(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "defaultRole":
-			out.Values[i] = ec._SAMLConfiguration_defaultRole(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9232c5fa755e56b6a1ecdcdd51ad83db>>
+ * @generated SignedSource<<96f7708613cbb65e52114d120499ed46>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,6 @@ export type CreateSAMLConfigurationInput = {
   attributeLastname?: string | null | undefined;
   attributeRole?: string | null | undefined;
   autoSignupEnabled?: boolean | null | undefined;
-  defaultRole?: string | null | undefined;
   emailDomain: string;
   enforcementPolicy: SAMLEnforcementPolicy;
   idpCertificate?: string | null | undefined;
@@ -40,7 +39,6 @@ export type SAMLConfigurationGraphCreateMutation$data = {
       readonly attributeRole: string;
       readonly autoSignupEnabled: boolean;
       readonly createdAt: any;
-      readonly defaultRole: string;
       readonly emailDomain: string;
       readonly enabled: boolean;
       readonly enforcementPolicy: SAMLEnforcementPolicy;
@@ -209,13 +207,6 @@ v1 = [
             "alias": null,
             "args": null,
             "kind": "ScalarField",
-            "name": "defaultRole",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
             "name": "autoSignupEnabled",
             "storageKey": null
           },
@@ -258,16 +249,16 @@ return {
     "selections": (v1/*: any*/)
   },
   "params": {
-    "cacheID": "71d5f80565cc8bc4cef0382c315b8cb1",
+    "cacheID": "1ee756f7dd01d0faf7f23b8291f70c20",
     "id": null,
     "metadata": {},
     "name": "SAMLConfigurationGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation SAMLConfigurationGraphCreateMutation(\n  $input: CreateSAMLConfigurationInput!\n) {\n  createSAMLConfiguration(input: $input) {\n    samlConfiguration {\n      id\n      enabled\n      emailDomain\n      enforcementPolicy\n      spEntityId\n      spAcsUrl\n      spMetadataUrl\n      testLoginUrl\n      idpEntityId\n      idpSsoUrl\n      idpCertificate\n      idpMetadataUrl\n      attributeEmail\n      attributeFirstname\n      attributeLastname\n      attributeRole\n      defaultRole\n      autoSignupEnabled\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation SAMLConfigurationGraphCreateMutation(\n  $input: CreateSAMLConfigurationInput!\n) {\n  createSAMLConfiguration(input: $input) {\n    samlConfiguration {\n      id\n      enabled\n      emailDomain\n      enforcementPolicy\n      spEntityId\n      spAcsUrl\n      spMetadataUrl\n      testLoginUrl\n      idpEntityId\n      idpSsoUrl\n      idpCertificate\n      idpMetadataUrl\n      attributeEmail\n      attributeFirstname\n      attributeLastname\n      attributeRole\n      autoSignupEnabled\n      createdAt\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "04237f5ad3588264149310798d6137f2";
+(node as any).hash = "43058268e0b04e8b8a83ce91b8908bf7";
 
 export default node;

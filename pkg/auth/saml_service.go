@@ -547,10 +547,7 @@ func (s *SAMLService) HandleSAMLAssertion(
 		return nil, fmt.Errorf("email domain mismatch: assertion contains email with domain %s but SAML config is for domain %s", actualEmailDomain, config.EmailDomain)
 	}
 
-	systemRole, err := MapSAMLRoleToSystemRole(samlRole, config.DefaultRole)
-	if err != nil {
-		return nil, ErrCannotMapRole{Err: err}
-	}
+	systemRole := MapSAMLRoleToSystemRole(samlRole)
 
 	samlSubject := ""
 	if assertion.Subject != nil && assertion.Subject.NameID != nil {

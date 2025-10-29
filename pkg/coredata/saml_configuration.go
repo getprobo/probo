@@ -39,7 +39,6 @@ type SAMLConfiguration struct {
 	AttributeFirstname      string                `db:"attribute_firstname"`
 	AttributeLastname       string                `db:"attribute_lastname"`
 	AttributeRole           string                `db:"attribute_role"`
-	DefaultRole             string                `db:"default_role"`
 	AutoSignupEnabled       bool                  `db:"auto_signup_enabled"`
 	DomainVerified          bool                  `db:"domain_verified"`
 	DomainVerificationToken *string               `db:"domain_verification_token"`
@@ -70,7 +69,6 @@ SELECT
     attribute_firstname,
     attribute_lastname,
     attribute_role,
-    default_role,
     auto_signup_enabled,
     domain_verified,
     domain_verification_token,
@@ -130,7 +128,6 @@ SELECT
     attribute_firstname,
     attribute_lastname,
     attribute_role,
-    default_role,
     auto_signup_enabled,
     domain_verified,
     domain_verification_token,
@@ -186,7 +183,6 @@ INSERT INTO auth_saml_configurations (
     attribute_firstname,
     attribute_lastname,
     attribute_role,
-    default_role,
     auto_signup_enabled,
     domain_verified,
     domain_verification_token,
@@ -208,7 +204,6 @@ INSERT INTO auth_saml_configurations (
     @attribute_firstname,
     @attribute_lastname,
     @attribute_role,
-    @default_role,
     @auto_signup_enabled,
     @domain_verified,
     @domain_verification_token,
@@ -233,7 +228,6 @@ INSERT INTO auth_saml_configurations (
 		"attribute_firstname":       s.AttributeFirstname,
 		"attribute_lastname":        s.AttributeLastname,
 		"attribute_role":            s.AttributeRole,
-		"default_role":              s.DefaultRole,
 		"auto_signup_enabled":       s.AutoSignupEnabled,
 		"domain_verified":           s.DomainVerified,
 		"domain_verification_token": s.DomainVerificationToken,
@@ -268,7 +262,6 @@ SET
     attribute_firstname = @attribute_firstname,
     attribute_lastname = @attribute_lastname,
     attribute_role = @attribute_role,
-    default_role = @default_role,
     auto_signup_enabled = @auto_signup_enabled,
     domain_verified = @domain_verified,
     domain_verification_token = @domain_verification_token,
@@ -293,7 +286,6 @@ WHERE
 		"attribute_firstname":       s.AttributeFirstname,
 		"attribute_lastname":        s.AttributeLastname,
 		"attribute_role":            s.AttributeRole,
-		"default_role":              s.DefaultRole,
 		"auto_signup_enabled":       s.AutoSignupEnabled,
 		"domain_verified":           s.DomainVerified,
 		"domain_verification_token": s.DomainVerificationToken,
@@ -357,7 +349,6 @@ SELECT
     attribute_firstname,
     attribute_lastname,
     attribute_role,
-    default_role,
     auto_signup_enabled,
     domain_verified,
     domain_verification_token,
@@ -417,7 +408,6 @@ SELECT
     attribute_firstname,
     attribute_lastname,
     attribute_role,
-    default_role,
     auto_signup_enabled,
     domain_verified,
     domain_verification_token,

@@ -3665,11 +3665,6 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 		attributeRole = *input.AttributeRole
 	}
 
-	defaultRole := "MEMBER"
-	if input.DefaultRole != nil {
-		defaultRole = *input.DefaultRole
-	}
-
 	autoSignupEnabled := false
 	if input.AutoSignupEnabled != nil {
 		autoSignupEnabled = *input.AutoSignupEnabled
@@ -3687,7 +3682,6 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 		AttributeFirstname: attributeFirstname,
 		AttributeLastname:  attributeLastname,
 		AttributeRole:      attributeRole,
-		DefaultRole:        defaultRole,
 		AutoSignupEnabled:  autoSignupEnabled,
 	})
 	if err != nil {
@@ -3725,7 +3719,6 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 		AttributeFirstname: input.AttributeFirstname,
 		AttributeLastname:  input.AttributeLastname,
 		AttributeRole:      input.AttributeRole,
-		DefaultRole:        input.DefaultRole,
 		AutoSignupEnabled:  input.AutoSignupEnabled,
 	})
 	if err != nil {

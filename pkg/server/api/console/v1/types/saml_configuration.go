@@ -37,7 +37,6 @@ func NewSAMLConfigurationWithURLs(c *coredata.SAMLConfiguration, spEntityID, spA
 		AttributeFirstname:      c.AttributeFirstname,
 		AttributeLastname:       c.AttributeLastname,
 		AttributeRole:           c.AttributeRole,
-		DefaultRole:             c.DefaultRole,
 		AutoSignupEnabled:       c.AutoSignupEnabled,
 		CreatedAt:               c.CreatedAt,
 		UpdatedAt:               c.UpdatedAt,

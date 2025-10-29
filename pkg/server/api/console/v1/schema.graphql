@@ -4880,9 +4880,6 @@ type SAMLConfiguration implements Node {
   attributeLastname: String!
   attributeRole: String!
 
-  # Default role for users when role attribute is missing or invalid
-  defaultRole: String!
-
   # Auto-signup
   autoSignupEnabled: Boolean!
 
@@ -4927,7 +4924,6 @@ input CreateSAMLConfigurationInput {
   attributeLastname: String
   attributeRole: String
 
-  defaultRole: String
   autoSignupEnabled: Boolean
 }
 
@@ -4946,7 +4942,6 @@ input UpdateSAMLConfigurationInput {
   attributeFirstname: String
   attributeLastname: String
   attributeRole: String
-  defaultRole: String
   autoSignupEnabled: Boolean
 }
 

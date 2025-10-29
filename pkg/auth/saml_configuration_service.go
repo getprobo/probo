@@ -38,7 +38,6 @@ type (
 		AttributeFirstname string
 		AttributeLastname  string
 		AttributeRole      string
-		DefaultRole        string
 		AutoSignupEnabled  bool
 	}
 
@@ -54,7 +53,6 @@ type (
 		AttributeFirstname *string
 		AttributeLastname  *string
 		AttributeRole      *string
-		DefaultRole        *string
 		AutoSignupEnabled  *bool
 	}
 )
@@ -64,18 +62,8 @@ func (s TenantAuthService) CreateSAMLConfiguration(
 	req CreateSAMLConfigurationRequest,
 ) (*coredata.SAMLConfiguration, error) {
 	// Validate only the IdP configuration (user-provided data)
-	validationErrors := ValidateIdPConfiguration(
-		req.IdPEntityID,
-		req.IdPSsoURL,
-		req.IdPCertificate,
-	)
-
-	if len(validationErrors) > 0 {
-		var errMsgs []string
-		for _, err := range validationErrors {
-			errMsgs = append(errMsgs, err.Error())
-		}
-		return nil, fmt.Errorf("SAML configuration validation failed: %s", strings.Join(errMsgs, "; "))
+	if err := ValidateIdPConfiguration(req.IdPEntityID, req.IdPSsoURL, req.IdPCertificate); err != nil {
+		return nil, fmt.Errorf("SAML configuration validation failed: %w", err)
 	}
 
 	var config *coredata.SAMLConfiguration
@@ -105,7 +93,6 @@ func (s TenantAuthService) CreateSAMLConfiguration(
 				AttributeFirstname: req.AttributeFirstname,
 				AttributeLastname:  req.AttributeLastname,
 				AttributeRole:      req.AttributeRole,
-				DefaultRole:        req.DefaultRole,
 				AutoSignupEnabled:  req.AutoSignupEnabled,
 				CreatedAt:          now,
 				UpdatedAt:          now,
@@ -168,9 +155,6 @@ func (s TenantAuthService) UpdateSAMLConfiguration(
 			}
 			if req.AttributeRole != nil {
 				cfg.AttributeRole = *req.AttributeRole
-			}
-			if req.DefaultRole != nil {
-				cfg.DefaultRole = *req.DefaultRole
 			}
 			if req.AutoSignupEnabled != nil {
 				cfg.AutoSignupEnabled = *req.AutoSignupEnabled

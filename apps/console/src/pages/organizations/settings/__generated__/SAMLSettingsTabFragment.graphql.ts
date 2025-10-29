@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0b3ea1127a3a6388e6d0802abea0307c>>
+ * @generated SignedSource<<ad8f1e5fd866cefc124b7b7c78bce367>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,6 @@ export type SAMLSettingsTabFragment$data = {
     readonly attributeLastname: string;
     readonly attributeRole: string;
     readonly autoSignupEnabled: boolean;
-    readonly defaultRole: string;
     readonly domainVerificationToken: string | null | undefined;
     readonly domainVerified: boolean;
     readonly domainVerifiedAt: any | null | undefined;
@@ -205,13 +204,6 @@ return {
           "alias": null,
           "args": null,
           "kind": "ScalarField",
-          "name": "defaultRole",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
           "name": "autoSignupEnabled",
           "storageKey": null
         }
@@ -224,6 +216,6 @@ return {
 };
 })();
 
-(node as any).hash = "691298e053f77bcb6ef13a5869a86579";
+(node as any).hash = "eec380838cfd22d70a504028bb5046b4";
 
 export default node;

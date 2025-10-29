@@ -62,7 +62,6 @@ const samlSettingsTabFragment = graphql`
       attributeFirstname
       attributeLastname
       attributeRole
-      defaultRole
       autoSignupEnabled
     }
   }
@@ -85,7 +84,6 @@ const samlConfigSchema = z.object({
   attributeFirstname: z.string().optional(),
   attributeLastname: z.string().optional(),
   attributeRole: z.string().optional(),
-  defaultRole: z.string().optional(),
   autoSignupEnabled: z.boolean().default(false),
 });
 
@@ -157,7 +155,6 @@ export default function SAMLSettingsTab() {
           attributeFirstname: editingConfig.attributeFirstname || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
           attributeLastname: editingConfig.attributeLastname || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
           attributeRole: editingConfig.attributeRole || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role",
-          defaultRole: editingConfig.defaultRole || "MEMBER",
           autoSignupEnabled: editingConfig.autoSignupEnabled || false,
         }
       : {
@@ -171,7 +168,6 @@ export default function SAMLSettingsTab() {
           attributeFirstname: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
           attributeLastname: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
           attributeRole: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role",
-          defaultRole: "MEMBER",
           autoSignupEnabled: false,
         },
   });
@@ -189,7 +185,6 @@ export default function SAMLSettingsTab() {
         attributeFirstname: editingConfig.attributeFirstname || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
         attributeLastname: editingConfig.attributeLastname || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
         attributeRole: editingConfig.attributeRole || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role",
-        defaultRole: editingConfig.defaultRole || "MEMBER",
         autoSignupEnabled: editingConfig.autoSignupEnabled || false,
       });
       initiateForm.reset({
@@ -207,7 +202,6 @@ export default function SAMLSettingsTab() {
         attributeFirstname: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
         attributeLastname: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
         attributeRole: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role",
-        defaultRole: "MEMBER",
         autoSignupEnabled: false,
       });
       initiateForm.reset({
@@ -263,7 +257,6 @@ export default function SAMLSettingsTab() {
             attributeFirstname: data.attributeFirstname || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
             attributeLastname: data.attributeLastname || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
             attributeRole: data.attributeRole || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role",
-            defaultRole: data.defaultRole || "MEMBER",
             autoSignupEnabled: data.autoSignupEnabled || false,
           },
         },
@@ -286,7 +279,6 @@ export default function SAMLSettingsTab() {
             attributeFirstname: data.attributeFirstname || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
             attributeLastname: data.attributeLastname || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
             attributeRole: data.attributeRole || "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role",
-            defaultRole: data.defaultRole || "MEMBER",
             autoSignupEnabled: data.autoSignupEnabled || false,
           },
         },
@@ -698,23 +690,6 @@ export default function SAMLSettingsTab() {
                   placeholder="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"
                   error={form.formState.errors.attributeRole?.message}
                 />
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-base font-medium mb-4">
-                {__("Default Role")}
-              </h3>
-              <div className="space-y-4">
-                <Field
-                  {...form.register("defaultRole")}
-                  label={__("Default Role")}
-                  placeholder="MEMBER"
-                  error={form.formState.errors.defaultRole?.message}
-                />
-                <p className="text-xs text-gray-500">
-                  {__("The IdP must provide roles directly (OWNER, ADMIN, MEMBER, VIEWER). This default role will be used when the role attribute is missing or invalid.")}
-                </p>
               </div>
             </div>
 

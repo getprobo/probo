@@ -520,7 +520,6 @@ type CreateSAMLConfigurationInput struct {
 	AttributeFirstname *string                        `json:"attributeFirstname,omitempty"`
 	AttributeLastname  *string                        `json:"attributeLastname,omitempty"`
 	AttributeRole      *string                        `json:"attributeRole,omitempty"`
-	DefaultRole        *string                        `json:"defaultRole,omitempty"`
 	AutoSignupEnabled  *bool                          `json:"autoSignupEnabled,omitempty"`
 }
 
@@ -1659,7 +1658,6 @@ type SAMLConfiguration struct {
 	AttributeFirstname      string                         `json:"attributeFirstname"`
 	AttributeLastname       string                         `json:"attributeLastname"`
 	AttributeRole           string                         `json:"attributeRole"`
-	DefaultRole             string                         `json:"defaultRole"`
 	AutoSignupEnabled       bool                           `json:"autoSignupEnabled"`
 	TestLoginURL            string                         `json:"testLoginUrl"`
 	CreatedAt               time.Time                      `json:"createdAt"`
@@ -2076,7 +2074,6 @@ type UpdateSAMLConfigurationInput struct {
 	AttributeFirstname *string                         `json:"attributeFirstname,omitempty"`
 	AttributeLastname  *string                         `json:"attributeLastname,omitempty"`
 	AttributeRole      *string                         `json:"attributeRole,omitempty"`
-	DefaultRole        *string                         `json:"defaultRole,omitempty"`
 	AutoSignupEnabled  *bool                           `json:"autoSignupEnabled,omitempty"`
 }
 

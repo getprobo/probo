@@ -74,16 +74,13 @@ func ExtractEmailDomain(email string) (string, error) {
 	return domain, nil
 }
 
-func MapSAMLRoleToSystemRole(samlRole string, defaultRole string) (string, error) {
+func MapSAMLRoleToSystemRole(samlRole string) string {
 	if samlRole != "" && isValidRole(samlRole) {
-		return samlRole, nil
+		return samlRole
 	}
 
-	if !isValidRole(defaultRole) {
-		return "", fmt.Errorf("invalid default role %q", defaultRole)
-	}
-
-	return defaultRole, nil
+	// Default to MEMBER role if SAML role is missing or invalid
+	return "MEMBER"
 }
 
 func isValidRole(role string) bool {

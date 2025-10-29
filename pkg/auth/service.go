@@ -1155,7 +1155,6 @@ func (s Service) InitiateDomainVerification(
 			AttributeFirstname: "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname",
 			AttributeLastname:  "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname",
 			AttributeRole:      "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role",
-			DefaultRole:        "MEMBER",
 			AutoSignupEnabled:  false,
 			CreatedAt:          now,
 			UpdatedAt:          now,
