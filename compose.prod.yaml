@@ -11,7 +11,7 @@ services:
       # Application settings
       PROBOD_HOSTNAME: "localhost:8080"
       API_ADDR: "localhost:8080"
-      API_CORS_ALLOWED_ORIGINS: "http://localhost:8080,http://localhost:5173"
+      API_CORS_ALLOWED_ORIGINS: "http://localhost:8080"
 
       # PostgreSQL database
       PG_ADDR: "postgres:5432"
@@ -29,10 +29,10 @@ services:
 
       # Observability - Metrics & Tracing
       METRICS_ADDR: "probo:8081"
-      TRACING_ADDR: "tempo:4317"
+      TRACING_ADDR: ""
 
       # Email notifications
-      SMTP_ADDR: "mailpit:1025"
+      SMTP_ADDR: "your.smtp.server:587"
       SMTP_TLS_REQUIRED: "false"
       MAILER_SENDER_NAME: "Probo"
       MAILER_SENDER_EMAIL: "no-reply@notification.getprobo.com"
@@ -81,64 +81,6 @@ services:
       MINIO_ROOT_USER: "probod"
       MINIO_ROOT_PASSWORD: "thisisnotasecret"
 
-  grafana:
-    image: "grafana/grafana:latest"
-    ports:
-      - "3001:3000"
-    volumes:
-      - "./compose/grafana/provisioning:/etc/grafana/provisioning:ro"
-      - "grafana-data:/var/lib/grafana:rw"
-    environment:
-      GF_AUTH_ANONYMOUS_ENABLED: "true"
-      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
-      GF_AUTH_DISABLE_LOGIN_FORM: "true"
-      GF_USERS_DEFAULT_THEME: "light"
-
-  prometheus:
-    image: "prom/prometheus:latest"
-    volumes:
-      - "./compose/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml"
-      - "prometheus-data:/prometheus"
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--web.console.libraries=/etc/prometheus/console_libraries"
-      - "--web.console.templates=/etc/prometheus/consoles"
-      - "--web.enable-lifecycle"
-      - "--web.enable-remote-write-receiver"
-      - "--web.listen-address=:9191"
-    ports:
-      - "9191:9191"
-
-  loki:
-    image: "grafana/loki:latest"
-    ports:
-      - "3100:3100"
-    command:
-      - "-config.file=/etc/loki/local-config.yaml"
-
-  tempo:
-    image: "grafana/tempo:latest"
-    command:
-      - "-config.file=/etc/tempo.yaml"
-    ports:
-      - "4317:4317"
-    volumes:
-      - "./compose/tempo/tempo.yaml:/etc/tempo.yaml:ro"
-      - "tempo-data:/var/tempo:rw"
-
-  mailpit:
-    image: "axllent/mailpit:latest"
-    ports:
-      - "1025:1025" # SMTP server
-      - "8025:8025" # Web UI
-    environment:
-      - "MP_DISABLE_VERSION_CHECK=true"
-      - "MP_VERBOSE=false"
-      - "MP_SMTP_AUTH_ACCEPT_ANY=true"
-      - "MP_ENABLE_PROMETHEUS=true"
-      - "MP_SMTP_AUTH_ALLOW_INSECURE=true"
-
   chrome:
     image: "chromedp/headless-shell:140.0.7259.2"
     ports:
@@ -155,31 +97,8 @@ services:
       - "--disable-background-timer-throttling"
       - "--disable-extensions"
 
-  pebble:
-    image: "letsencrypt/pebble:latest"
-    ports:
-      - "14000:14000" # ACME server
-      - "15000:15000" # Management interface
-    environment:
-      PEBBLE_VA_NOSLEEP: "1" # Don't sleep during validation for faster testing
-      PEBBLE_WFE_NONCEREJECT: "0" # Don't reject reused nonces
-      PEBBLE_VA_ALWAYS_VALID: "1" # Skip actual HTTP/DNS validation for local dev
-    command: pebble -config /test/config/pebble-config.json -dnsserver 127.0.0.1:8053
-    volumes:
-      - "./compose/pebble:/test/config:ro"
-
-  pebble-challtestsrv:
-    image: "letsencrypt/pebble-challtestsrv:latest"
-    ports:
-      - "8055:8055" # HTTP-01 challenge test server
-      - "8053:8053" # DNS server
-      - "8056:8056" # Management API
-    command: pebble-challtestsrv -dns01 ":8053" -http01 ":8055" -management ":8056"
 
 volumes:
   probo-data:
   postgres-data:
   minio-data:
-  grafana-data:
-  prometheus-data:
-  tempo-data:

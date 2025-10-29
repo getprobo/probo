@@ -28,57 +28,188 @@ docker run -d \
 
 ### Docker Compose Setup
 
-For a complete setup with dependencies, you can use Docker Compose:
+For a complete setup with dependencies, you can use our `compose.prod.yml` Docker Compose file:
 
+You can either provide environment variables directly in the docker-compose file or use a config file mounted as a volume.
+
+#### With Environment Variables
 ```yaml
-version: "3.8"
-
 services:
-  probod:
-    image: ghcr.io/getprobo/probo:latest
+  probo:
+    image: "ghcr.io/getprobo/probo:latest"
+    environment:
+      # Required secrets (use secure values in production)
+      PROBOD_ENCRYPTION_KEY: "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+      AUTH_COOKIE_SECRET: "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"
+      AUTH_PASSWORD_PEPPER: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
+      TRUST_AUTH_TOKEN_SECRET: "this-is-a-secure-secret-for-trust-token-signing-at-least-32-bytes"
+
+      # Application settings
+      PROBOD_HOSTNAME: "localhost:8080"
+      API_ADDR: "localhost:8080"
+      API_CORS_ALLOWED_ORIGINS: "http://localhost:8080"
+
+      # PostgreSQL database
+      PG_ADDR: "postgres:5432"
+      PG_USERNAME: "postgres"
+      PG_PASSWORD: "postgres"
+      PG_DATABASE: "probod"
+      PG_POOL_SIZE: "100"
+
+      # AWS/MinIO S3 storage
+      AWS_REGION: "us-east-1"
+      AWS_BUCKET: "probod"
+      AWS_ACCESS_KEY_ID: "probod"
+      AWS_SECRET_ACCESS_KEY: "thisisnotasecret"
+      AWS_ENDPOINT: "http://minio:9000"
+
+      # Observability - Metrics & Tracing
+      METRICS_ADDR: "probo:8081"
+      TRACING_ADDR: ""
+
+      # Email notifications
+      SMTP_ADDR: "your.smtp.server:587"
+      SMTP_TLS_REQUIRED: "false"
+      MAILER_SENDER_NAME: "Probo"
+      MAILER_SENDER_EMAIL: "no-reply@notification.getprobo.com"
+
+      # Chrome for PDF generation
+      CHROME_DP_ADDR: "chrome:9222"
     ports:
       - "8080:8080"
+      - "8081:8081"
+      - "8443:8443"
     volumes:
-      - ./config.yaml:/etc/probod/config.yaml
-      - ./data:/data
-    environment:
-      - PROBOD_CONFIG=/etc/probod/config.yaml
+      - "probo-data:/data"
     depends_on:
       - postgres
       - minio
+      - chrome
+
 
   postgres:
-    image: postgres:17.4
-    shm_size: 1g
+    image: "postgres:17.4"
+    shm_size: "1g"
     command: >
       postgres -c "shared_buffers=4GB"
                -c "max_connections=200"
                -c "log_statement=all"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    volumes:
+      - "./compose/postgres:/docker-entrypoint-initdb.d:ro"
+      - "postgres-data:/var/lib/postgresql/data:rw"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
 
   minio:
-    image: quay.io/minio/minio
-    entrypoint: sh
+    image: "quay.io/minio/minio"
+    entrypoint: "sh"
     command: |
       -c 'mkdir -p /var/lib/minio/probod && minio server --json --console-address :9001 /var/lib/minio'
-    environment:
-      MINIO_ROOT_USER: probod
-      MINIO_ROOT_PASSWORD: thisisnotasecret
-    volumes:
-      - minio_data:/var/lib/minio
     ports:
       - "9000:9000"
       - "9001:9001"
+    volumes:
+      - "minio-data:/var/lib/minio:rw"
+    environment:
+      MINIO_ROOT_USER: "probod"
+      MINIO_ROOT_PASSWORD: "thisisnotasecret"
+
+  chrome:
+    image: "chromedp/headless-shell:140.0.7259.2"
+    ports:
+      - "9222:9222"
+    command:
+      - "--headless"
+      - "--disable-gpu"
+      - "--disable-dev-shm-usage"
+      - "--hide-scrollbars"
+      - "--mute-audio"
+      - "--no-default-browser-check"
+      - "--no-first-run"
+      - "--disable-background-networking"
+      - "--disable-background-timer-throttling"
+      - "--disable-extensions"
+
 
 volumes:
-  postgres_data:
-  minio_data:
+  probo-data:
+  postgres-data:
+  minio-data:
+```
+#### With mounted Config File
+```yaml
+services:
+  probo:
+    image: "ghcr.io/getprobo/probo:latest"
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "8443:8443"
+    environment:
+      - PROBOD_CONFIG=/etc/probod/config.yaml
+    volumes:
+      - "probo-data:/data"
+      - "./cfg/dev.yaml:/etc/probod/config.yaml:ro"
+    depends_on:
+      - postgres
+      - minio
+      - chrome
+
+
+  postgres:
+    image: "postgres:17.4"
+    shm_size: "1g"
+    command: >
+      postgres -c "shared_buffers=4GB"
+               -c "max_connections=200"
+               -c "log_statement=all"
+    ports:
+      - "5432:5432"
+    volumes:
+      - "./compose/postgres:/docker-entrypoint-initdb.d:ro"
+      - "postgres-data:/var/lib/postgresql/data:rw"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+
+  minio:
+    image: "quay.io/minio/minio"
+    entrypoint: "sh"
+    command: |
+      -c 'mkdir -p /var/lib/minio/probod && minio server --json --console-address :9001 /var/lib/minio'
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - "minio-data:/var/lib/minio:rw"
+    environment:
+      MINIO_ROOT_USER: "probod"
+      MINIO_ROOT_PASSWORD: "thisisnotasecret"
+
+  chrome:
+    image: "chromedp/headless-shell:140.0.7259.2"
+    ports:
+      - "9222:9222"
+    command:
+      - "--headless"
+      - "--disable-gpu"
+      - "--disable-dev-shm-usage"
+      - "--hide-scrollbars"
+      - "--mute-audio"
+      - "--no-default-browser-check"
+      - "--no-first-run"
+      - "--disable-background-networking"
+      - "--disable-background-timer-throttling"
+      - "--disable-extensions"
+
+
+volumes:
+  probo-data:
+  postgres-data:
+  minio-data:
 ```
 
 ### Docker Architecture Support
