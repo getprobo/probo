@@ -290,7 +290,10 @@ func (s Service) SignUp(
 	session := &coredata.Session{
 		ID:        gid.New(gid.NilTenant, coredata.SessionEntityType),
 		UserID:    user.ID,
-		Data:      coredata.SessionData{},
+		Data: coredata.SessionData{
+			PasswordAuthenticated: true,
+			SAMLAuthenticatedOrgs: make(map[string]coredata.SAMLAuthInfo),
+		},
 		ExpiredAt: now.Add(24 * time.Hour * 7), // 7 days,
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -917,7 +920,10 @@ func (s Service) SignupFromInvitation(
 			session = &coredata.Session{
 				ID:        gid.New(gid.NilTenant, coredata.SessionEntityType),
 				UserID:    user.ID,
-				Data:      coredata.SessionData{},
+				Data: coredata.SessionData{
+					PasswordAuthenticated: true,
+					SAMLAuthenticatedOrgs: make(map[string]coredata.SAMLAuthInfo),
+				},
 				ExpiredAt: now.Add(24 * time.Hour * 7),
 				CreatedAt: now,
 				UpdatedAt: now,
