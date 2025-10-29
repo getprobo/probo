@@ -58,7 +58,10 @@ CREATE TABLE auth_saml_assertions (
     tenant_id TEXT NOT NULL,
     organization_id TEXT NOT NULL,
     used_at TIMESTAMP NOT NULL,
-    expires_at TIMESTAMP NOT NULL
+    expires_at TIMESTAMP NOT NULL,
+
+    CONSTRAINT fk_auth_saml_assertions_organization FOREIGN KEY (organization_id)
+        REFERENCES organizations(id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_auth_saml_assertions_expires_at
