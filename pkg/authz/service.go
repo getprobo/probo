@@ -29,6 +29,14 @@ import (
 	"go.gearno.de/kit/pg"
 )
 
+type TenantAccessError struct {
+	Message string
+}
+
+func (e *TenantAccessError) Error() string {
+	return "not authorized"
+}
+
 type (
 	Service struct {
 		pg                      *pg.Client

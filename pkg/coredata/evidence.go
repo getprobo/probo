@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -42,7 +44,23 @@ type (
 	}
 
 	Evidences []*Evidence
+
+	ErrEvidenceNotFound struct {
+		Identifier string
+	}
+
+	ErrEvidenceAlreadyExists struct {
+		message string
+	}
 )
+
+func (e ErrEvidenceNotFound) Error() string {
+	return fmt.Sprintf("evidence not found: %q", e.Identifier)
+}
+
+func (e ErrEvidenceAlreadyExists) Error() string {
+	return e.message
+}
 
 func (e Evidence) CursorKey(orderBy EvidenceOrderField) page.CursorKey {
 	switch orderBy {
@@ -165,7 +183,20 @@ VALUES (
 		"description":      e.Description,
 	}
 	_, err := conn.Exec(ctx, q, args)
-	return err
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "evidences_reference_id_key" {
+				return &ErrEvidenceAlreadyExists{
+					message: fmt.Sprintf("evidence with task_id %s and reference_id %q already exists", e.TaskID, e.ReferenceID),
+				}
+			}
+		}
+		return fmt.Errorf("cannot insert evidence: %w", err)
+	}
+
+	return nil
 }
 
 func (e *Evidence) LoadByID(

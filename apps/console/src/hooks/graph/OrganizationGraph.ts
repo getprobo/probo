@@ -33,7 +33,7 @@ export function useDeleteOrganizationMutation() {
     deleteOrganizationMutation,
     {
       successMessage: __("Organization deleted successfully."),
-      errorMessage: __("Failed to delete organization. Please try again."),
+      errorMessage: __("Failed to delete organization"),
     }
   );
 }

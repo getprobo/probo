@@ -81,7 +81,7 @@ export default function ConfirmEmailPage() {
         onError: (err) => {
           toast({
             title: __("Error"),
-            description: err.message || __("Failed to confirm email. Please try again."),
+            description: err.message || __("Failed to confirm email"),
             variant: "error",
           });
           setIsLoading(false);
@@ -90,7 +90,7 @@ export default function ConfirmEmailPage() {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: error instanceof Error ? error.message : __("Failed to confirm email. Please try again."),
+        description: error instanceof Error ? error.message : __("Failed to confirm email"),
         variant: "error",
       });
       setIsLoading(false);

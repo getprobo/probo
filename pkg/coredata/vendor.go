@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -62,7 +63,23 @@ type (
 	VendorSnapshotter interface {
 		InsertVendorSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
 	}
+
+	ErrVendorNotFound struct {
+		Identifier string
+	}
+
+	ErrVendorAlreadyExists struct {
+		message string
+	}
 )
+
+func (e ErrVendorNotFound) Error() string {
+	return fmt.Sprintf("vendor not found: %q", e.Identifier)
+}
+
+func (e ErrVendorAlreadyExists) Error() string {
+	return e.message
+}
 
 func (v Vendor) CursorKey(orderBy VendorOrderField) page.CursorKey {
 	switch orderBy {
@@ -133,6 +150,10 @@ LIMIT 1;
 
 	vendor, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Vendor])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrVendorNotFound{Identifier: vendorID.String()}
+		}
+
 		return fmt.Errorf("cannot collect vendor: %w", err)
 	}
 

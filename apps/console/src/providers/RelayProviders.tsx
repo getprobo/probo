@@ -44,6 +44,13 @@ export class AuthenticationRequiredError extends Error {
   }
 }
 
+export class UnauthorizedError extends Error {
+  constructor() {
+    super("UNAUTHORIZED");
+    this.name = "UnauthorizedError";
+  }
+}
+
 export function buildEndpoint(path: string): string {
   const host = import.meta.env.VITE_API_URL;
 
@@ -70,6 +77,9 @@ const hasUnauthenticatedError = (error: GraphQLError) =>
 
 const hasAuthenticationRequiredError = (error: GraphQLError) =>
   error.extensions?.code == "AUTHENTICATION_REQUIRED";
+
+const hasUnauthorizedError = (error: GraphQLError) =>
+  error.extensions?.code == "UNAUTHORIZED";
 
 const fetchRelay: FetchFunction = async (
   request,
@@ -141,12 +151,10 @@ const fetchRelay: FetchFunction = async (
       throw new UnAuthenticatedError();
     }
 
-    // Check for authentication required errors
     const authRequiredError = errors.find(hasAuthenticationRequiredError);
     if (authRequiredError?.extensions) {
       const { redirectUrl, requiresSaml, organizationId, samlConfigId } = authRequiredError.extensions;
 
-      // Throw the error with all the redirect information
       throw new AuthenticationRequiredError({
         redirectUrl: redirectUrl as string,
         requiresSaml: requiresSaml as boolean,
@@ -155,13 +163,9 @@ const fetchRelay: FetchFunction = async (
       });
     }
 
-    throw new Error(
-      `Error fetching GraphQL query '${
-        request.name
-      }' with variables '${JSON.stringify(variables)}': ${JSON.stringify(
-        json.errors
-      )}`
-    );
+    if (errors.find(hasUnauthorizedError)) {
+      throw new UnauthorizedError();
+    }
   }
 
   return json;

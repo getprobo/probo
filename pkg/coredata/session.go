@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -35,31 +36,33 @@ type (
 		UpdatedAt time.Time   `db:"updated_at"`
 	}
 
-	// SessionData stores authentication context for a user session
-	// Stored as JSONB in database
 	SessionData struct {
-		// PasswordAuthenticated indicates if user authenticated with email/password
-		// Required for accessing organizations without SAML
-		PasswordAuthenticated bool `json:"password_authenticated"`
-
-		// SAMLAuthenticatedOrgs tracks which organizations user has SAML-authenticated for
-		// Key: organization ID as string, Value: SAML authentication info
-		// Required for accessing organizations with SAML enforcement
+		PasswordAuthenticated bool                   `json:"password_authenticated"`
 		SAMLAuthenticatedOrgs map[string]SAMLAuthInfo `json:"saml_authenticated_orgs,omitempty"`
 	}
 
-	// SAMLAuthInfo stores SAML authentication details for an organization
 	SAMLAuthInfo struct {
-		// AuthenticatedAt is when the user SAML-
 		AuthenticatedAt time.Time `json:"authenticated_at"`
+		SAMLConfigID    gid.GID   `json:"saml_config_id"`
+		SAMLSubject     string    `json:"saml_subject"`
+	}
 
-		// SAMLConfigID is the SAML configuration used for authentication
-		SAMLConfigID gid.GID `json:"saml_config_id"`
+	ErrSessionNotFound struct {
+		Identifier string
+	}
 
-		// SAMLSubject is the NameID from the SAML assertion (email address)
-		SAMLSubject string `json:"saml_subject"`
+	ErrSessionAlreadyExists struct {
+		message string
 	}
 )
+
+func (e ErrSessionNotFound) Error() string {
+	return fmt.Sprintf("session not found: %q", e.Identifier)
+}
+
+func (e ErrSessionAlreadyExists) Error() string {
+	return e.message
+}
 
 func (s Session) CursorKey(orderBy SessionOrderField) page.CursorKey {
 	switch orderBy {
@@ -99,6 +102,10 @@ LIMIT 1;
 
 	session, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Session])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrSessionNotFound{Identifier: sessionID.String()}
+		}
+
 		return fmt.Errorf("cannot collect session: %w", err)
 	}
 	*s = session

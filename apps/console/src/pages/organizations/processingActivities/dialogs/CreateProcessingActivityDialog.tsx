@@ -19,6 +19,7 @@ import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useCreateProcessingActivity } from "../../../../hooks/graph/ProcessingActivityGraph";
 import { Controller } from "react-hook-form";
 import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import {
   SpecialOrCriminalDataOptions,
   LawfulBasisOptions,
@@ -119,7 +120,7 @@ export function CreateProcessingActivityDialog({
     } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to create processing activity"),
+        description: formatError(__("Failed to create processing activity"), error as GraphQLError),
         variant: "error",
       });
     }

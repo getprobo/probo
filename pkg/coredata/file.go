@@ -16,12 +16,14 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
 
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -39,7 +41,23 @@ type (
 	}
 
 	Files []*File
+
+	ErrFileNotFound struct {
+		Identifier string
+	}
+
+	ErrFileAlreadyExists struct {
+		message string
+	}
 )
+
+func (e ErrFileNotFound) Error() string {
+	return fmt.Sprintf("file not found: %q", e.Identifier)
+}
+
+func (e ErrFileAlreadyExists) Error() string {
+	return e.message
+}
 
 func (f *File) LoadByID(
 	ctx context.Context,
@@ -79,6 +97,10 @@ LIMIT 1;
 
 	file, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[File])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrFileNotFound{Identifier: fileID.String()}
+		}
+
 		return fmt.Errorf("cannot collect file: %w", err)
 	}
 
@@ -133,7 +155,20 @@ VALUES (
 		"deleted_at":  f.DeletedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
-	return err
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "files_file_key_key" {
+				return &ErrFileAlreadyExists{
+					message: fmt.Sprintf("file with file_key %q already exists", f.FileKey),
+				}
+			}
+		}
+		return fmt.Errorf("cannot insert file: %w", err)
+	}
+
+	return nil
 }
 
 func (f File) SoftDelete(ctx context.Context, conn pg.Conn, scope Scoper) error {

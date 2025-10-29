@@ -25,6 +25,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -49,10 +50,18 @@ type (
 	ErrTrustCenterAccessNotFound struct {
 		Identifier string
 	}
+
+	ErrTrustCenterAccessAlreadyExists struct {
+		message string
+	}
 )
 
 func (e ErrTrustCenterAccessNotFound) Error() string {
 	return fmt.Sprintf("trust center access not found: %s", e.Identifier)
+}
+
+func (e ErrTrustCenterAccessAlreadyExists) Error() string {
+	return e.message
 }
 
 func (tca *TrustCenterAccess) CursorKey(orderBy TrustCenterAccessOrderField) page.CursorKey {
@@ -216,6 +225,14 @@ INSERT INTO trust_center_accesses (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "trust_center_accesses_trust_center_id_email_key" {
+				return &ErrTrustCenterAccessAlreadyExists{
+					message: "trust center access already exists",
+				}
+			}
+		}
 		return fmt.Errorf("cannot insert trust center access: %w", err)
 	}
 

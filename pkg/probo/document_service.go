@@ -276,7 +276,9 @@ func (s *DocumentService) publishVersionInTx(
 		if publishedVersion.Content == documentVersion.Content &&
 			publishedVersion.Title == documentVersion.Title &&
 			publishedVersion.OwnerID == documentVersion.OwnerID {
-			return nil, nil, fmt.Errorf("cannot publish version: no changes detected")
+			return nil, nil, &coredata.ErrDocumentVersionNoChanges{
+				Message: "no changes detected",
+			}
 		}
 	}
 

@@ -26,7 +26,7 @@ export function useDeleteRiskMutation() {
 
   return useMutationWithToasts<RiskGraphDeleteMutation>(deleteRiskMutation, {
     successMessage: __("Risk deleted successfully."),
-    errorMessage: __("Failed to delete risk. Please try again."),
+    errorMessage: __("Failed to delete risk"),
   });
 }
 

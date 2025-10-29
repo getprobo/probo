@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -43,7 +44,23 @@ type (
 	}
 
 	Organizations []*Organization
+
+	ErrOrganizationNotFound struct {
+		Identifier string
+	}
+
+	ErrOrganizationAlreadyExists struct {
+		message string
+	}
 )
+
+func (e ErrOrganizationNotFound) Error() string {
+	return fmt.Sprintf("organization not found: %q", e.Identifier)
+}
+
+func (e ErrOrganizationAlreadyExists) Error() string {
+	return e.message
+}
 
 func (o Organization) CursorKey(orderBy OrganizationOrderField) page.CursorKey {
 	switch orderBy {
@@ -98,6 +115,10 @@ LIMIT 1;
 
 	organization, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Organization])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrOrganizationNotFound{Identifier: organizationID.String()}
+		}
+
 		return fmt.Errorf("cannot collect organization: %w", err)
 	}
 
@@ -372,6 +393,10 @@ LIMIT 1
 
 	organization, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Organization])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrOrganizationNotFound{Identifier: customDomainID.String()}
+		}
+
 		return fmt.Errorf("cannot collect organization: %w", err)
 	}
 

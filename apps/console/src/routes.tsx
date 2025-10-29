@@ -12,6 +12,7 @@ import { Fragment, Suspense } from "react";
 import {
   relayEnvironment,
   UnAuthenticatedError,
+  UnauthorizedError,
 } from "./providers/RelayProviders";
 import { PageSkeleton } from "./components/skeletons/PageSkeleton.tsx";
 import { loadQuery, type PreloadedQuery } from "react-relay";
@@ -51,6 +52,10 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
 
   if (error instanceof UnAuthenticatedError) {
     return <Navigate to="/auth/login" />;
+  }
+
+  if (error instanceof UnauthorizedError) {
+    return <PageError error="UNAUTHORIZED" />;
   }
 
   return <PageError error={error?.toString()} />;

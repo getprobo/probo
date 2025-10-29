@@ -32,7 +32,7 @@ export function useDeleteMeasureMutation() {
     deleteMeasureMutation,
     {
       successMessage: __("Measure deleted successfully."),
-      errorMessage: __("Failed to delete measure. Please try again."),
+      errorMessage: __("Failed to delete measure"),
     }
   );
 }
@@ -83,6 +83,6 @@ export const useUpdateMeasure = () => {
 
   return useMutationWithToasts(measureUpdateMutation, {
     successMessage: __("Measure updated successfully."),
-    errorMessage: __("Failed to update measure. Please try again."),
+    errorMessage: __("Failed to update measure"),
   });
 };

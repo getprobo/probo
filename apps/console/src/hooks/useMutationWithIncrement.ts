@@ -10,6 +10,9 @@ import {
   type GraphQLTaggedNode,
   type MutationParameters,
 } from "relay-runtime";
+import { useToast } from "@probo/ui";
+import { useTranslate } from "@probo/i18n";
+import { formatError, type GraphQLError } from "@probo/helpers";
 
 const defaultOptions = {
   field: "totalCount",
@@ -26,17 +29,27 @@ export function useMutationWithIncrement<T extends MutationParameters>(
     node: string;
     field?: string;
     value?: 1 | -1;
+    errorMessage?: string;
   },
 ) {
   const [mutate, isLoading] = useMutation<T>(query);
   const relayEnv = useRelayEnvironment();
+  const { toast } = useToast();
+  const { __ } = useTranslate();
   const options = { ...defaultOptions, ...baseOptions };
   const mutateAndIncrement = useCallback(
     (queryOptions: UseMutationConfig<T>) => {
       return mutate({
         ...queryOptions,
         onCompleted: (response, error) => {
-          if (!error) {
+          if (error) {
+            const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
+            toast({
+              title: __("Error"),
+              description: formatError(errorTitle, error as GraphQLError[]),
+              variant: "error",
+            });
+          } else {
             updateStoreCounter(
               relayEnv,
               options.id,
@@ -47,9 +60,18 @@ export function useMutationWithIncrement<T extends MutationParameters>(
           }
           queryOptions.onCompleted?.(response, error);
         },
+        onError: (error) => {
+          const errorTitle = options.errorMessage ?? __("Failed to commit this operation");
+          toast({
+            title: __("Error"),
+            description: formatError(errorTitle, error as GraphQLError),
+            variant: "error",
+          });
+          queryOptions.onError?.(error);
+        },
       });
     },
-    [mutate, options.id, options.node, options.field, options.value, relayEnv],
+    [mutate, options.id, options.node, options.field, options.value, options.errorMessage, relayEnv, toast, __],
   );
 
   return [mutateAndIncrement, isLoading] as const;

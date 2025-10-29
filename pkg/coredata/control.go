@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -48,7 +50,23 @@ type (
 		Status                 *ControlStatus
 		ExclusionJustification *string
 	}
+
+	ErrControlNotFound struct {
+		Identifier string
+	}
+
+	ErrControlAlreadyExists struct {
+		message string
+	}
 )
+
+func (e ErrControlNotFound) Error() string {
+	return fmt.Sprintf("control not found: %q", e.Identifier)
+}
+
+func (e ErrControlAlreadyExists) Error() string {
+	return e.message
+}
 
 func (c Control) CursorKey(orderBy ControlOrderField) page.CursorKey {
 	switch orderBy {
@@ -628,6 +646,10 @@ LIMIT 1;
 
 	control, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Control])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrControlNotFound{Identifier: fmt.Sprintf("%s:%s", frameworkID, sectionTitle)}
+		}
+
 		return fmt.Errorf("cannot collect control: %w", err)
 	}
 
@@ -671,6 +693,10 @@ LIMIT 1;
 
 	control, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Control])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrControlNotFound{Identifier: controlID.String()}
+		}
+
 		return fmt.Errorf("cannot collect control: %w", err)
 	}
 
@@ -725,7 +751,20 @@ VALUES (
 		"updated_at":              c.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
-	return err
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
+				return &ErrControlAlreadyExists{
+					message: fmt.Sprintf("control with framework_id %s and section_title %q already exists", c.FrameworkID, c.SectionTitle),
+				}
+			}
+		}
+		return fmt.Errorf("cannot insert control: %w", err)
+	}
+
+	return nil
 }
 
 func (c Control) Delete(
@@ -810,6 +849,18 @@ RETURNING
 
 	control, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Control])
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
+				sectionTitle := ""
+				if params.SectionTitle != nil {
+					sectionTitle = *params.SectionTitle
+				}
+				return &ErrControlAlreadyExists{
+					message: fmt.Sprintf("control with section_title %q already exists", sectionTitle),
+				}
+			}
+		}
 		return fmt.Errorf("cannot collect control: %w", err)
 	}
 

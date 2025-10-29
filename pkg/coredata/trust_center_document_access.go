@@ -24,6 +24,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -45,10 +46,18 @@ type (
 	ErrTrustCenterDocumentAccessNotFound struct {
 		Identifier string
 	}
+
+	ErrTrustCenterDocumentAccessAlreadyExists struct {
+		message string
+	}
 )
 
 func (e ErrTrustCenterDocumentAccessNotFound) Error() string {
 	return fmt.Sprintf("trust center document access not found: %s", e.Identifier)
+}
+
+func (e ErrTrustCenterDocumentAccessAlreadyExists) Error() string {
+	return e.message
 }
 
 func (tcda *TrustCenterDocumentAccess) CursorKey(orderBy TrustCenterDocumentAccessOrderField) page.CursorKey {
@@ -254,6 +263,25 @@ INSERT INTO trust_center_document_accesses (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" {
+				switch pgErr.ConstraintName {
+				case "trust_center_document_accesse_trust_center_access_id_docume_key":
+					return &ErrTrustCenterDocumentAccessAlreadyExists{
+						message: fmt.Sprintf("trust center document access with trust_center_access_id %s and document_id %s already exists", tcda.TrustCenterAccessID, tcda.DocumentID),
+					}
+				case "trust_center_document_accesse_trust_center_access_id_report_key":
+					return &ErrTrustCenterDocumentAccessAlreadyExists{
+						message: fmt.Sprintf("trust center document access with trust_center_access_id %s and report_id %s already exists", tcda.TrustCenterAccessID, tcda.ReportID),
+					}
+				case "trust_center_document_accesses_trust_center_file_id_key":
+					return &ErrTrustCenterDocumentAccessAlreadyExists{
+						message: fmt.Sprintf("trust center document access with trust_center_access_id %s and trust_center_file_id %s already exists", tcda.TrustCenterAccessID, tcda.TrustCenterFileID),
+					}
+				}
+			}
+		}
 		return fmt.Errorf("cannot insert trust center document access: %w", err)
 	}
 

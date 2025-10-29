@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"go.gearno.de/kit/pg"
 )
@@ -44,7 +46,23 @@ type (
 	}
 
 	Tasks []*Task
+
+	ErrTaskNotFound struct {
+		Identifier string
+	}
+
+	ErrTaskAlreadyExists struct {
+		message string
+	}
 )
+
+func (e ErrTaskNotFound) Error() string {
+	return fmt.Sprintf("task not found: %q", e.Identifier)
+}
+
+func (e ErrTaskAlreadyExists) Error() string {
+	return e.message
+}
 
 func (c Task) CursorKey(orderBy TaskOrderField) page.CursorKey {
 	switch orderBy {
@@ -95,6 +113,10 @@ LIMIT 1;
 
 	task, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Task])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrTaskNotFound{Identifier: taskID.String()}
+		}
+
 		return fmt.Errorf("cannot collect tasks: %w", err)
 	}
 
@@ -158,7 +180,20 @@ VALUES (
 		"updated_at":      c.UpdatedAt,
 	}
 	_, err := conn.Exec(ctx, q, args)
-	return err
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "tasks_reference_id_unique" {
+				return &ErrTaskAlreadyExists{
+					message: fmt.Sprintf("task with measure_id %s and reference_id %q already exists", c.MeasureID, c.ReferenceID),
+				}
+			}
+		}
+		return fmt.Errorf("cannot insert task: %w", err)
+	}
+
+	return nil
 }
 
 func (c *Task) Upsert(

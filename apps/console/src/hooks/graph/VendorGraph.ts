@@ -36,7 +36,7 @@ export function useCreateVendorMutation() {
     createVendorMutation,
     {
       successMessage: __("Vendor created successfully."),
-      errorMessage: __("Failed to create vendor. Please try again."),
+      errorMessage: __("Failed to create vendor"),
     }
   );
 }

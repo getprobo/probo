@@ -41,11 +41,27 @@ type (
 
 	Frameworks []*Framework
 
+	ErrFrameworkNotFound struct {
+		Identifier string
+	}
+
+	ErrFrameworkAlreadyExists struct {
+		message string
+	}
+
 	ErrFrameworkReferenceIDAlreadyExists struct {
 		ReferenceID    string
 		OrganizationID gid.GID
 	}
 )
+
+func (e ErrFrameworkNotFound) Error() string {
+	return fmt.Sprintf("framework not found: %q", e.Identifier)
+}
+
+func (e ErrFrameworkAlreadyExists) Error() string {
+	return e.message
+}
 
 func (e ErrFrameworkReferenceIDAlreadyExists) Error() string {
 	return fmt.Sprintf("framework with reference ID %q already exists for organization %s", e.ReferenceID, e.OrganizationID)
@@ -169,6 +185,10 @@ LIMIT 1;
 
 	framework, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Framework])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrFrameworkNotFound{Identifier: referenceID}
+		}
+
 		return fmt.Errorf("cannot collect framework: %w", err)
 	}
 
@@ -211,6 +231,10 @@ LIMIT 1;
 
 	framework, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Framework])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrFrameworkNotFound{Identifier: frameworkID.String()}
+		}
+
 		return fmt.Errorf("cannot collect framework: %w", err)
 	}
 
@@ -311,7 +335,7 @@ SET
   name = @name,
   description = @description,
   updated_at = @updated_at
-WHERE 
+WHERE
   %s
   AND id = @framework_id
 `

@@ -40,7 +40,7 @@ export function useUpdateDocumentVisibilityMutation() {
     updateDocumentVisibilityMutation,
     {
       successMessage: __("Document visibility updated successfully."),
-      errorMessage: __("Failed to update document visibility. Please try again."),
+      errorMessage: __("Failed to update document visibility"),
     }
   );
 }

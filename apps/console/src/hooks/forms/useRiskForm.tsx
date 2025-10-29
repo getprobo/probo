@@ -32,10 +32,10 @@ export type RiskKey = useRiskFormFragment$key & { id: string };
 
 // Export the schema so it can be used elsewhere
 export const riskSchema = z.object({
-  category: z.string(),
-  name: z.string(),
-  description: z.string(),
-  ownerId: z.string(),
+  category: z.string().min(1, "Category is required"),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().min(1, "Description is required"),
+  ownerId: z.string().min(1, "Owner is required"),
   treatment: z.enum(["AVOIDED", "MITIGATED", "TRANSFERRED", "ACCEPTED"]),
   inherentLikelihood: z.number({ coerce: true }).min(1).max(5),
   inherentImpact: z.number({ coerce: true }).min(1).max(5),

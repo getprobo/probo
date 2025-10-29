@@ -82,10 +82,8 @@ export function ConfirmDialog() {
     const handleConfirm = () => {
         setLoading(true);
         onConfirm()
-            .then(() => {
-                close();
-            })
             .finally(() => {
+                close();
                 setLoading(false);
             });
     };

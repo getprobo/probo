@@ -34,7 +34,7 @@ export function useDeleteDocumentMutation() {
     deleteDocumentMutation,
     {
       successMessage: __("Document deleted successfully."),
-      errorMessage: __("Failed to delete document. Please try again."),
+      errorMessage: __("Failed to delete document"),
     }
   );
 }
@@ -57,7 +57,7 @@ export function useDeleteDraftDocumentVersionMutation() {
     deleteDraftDocumentVersionMutation,
     {
       successMessage: __("Draft deleted successfully."),
-      errorMessage: __("Failed to delete draft. Please try again."),
+      errorMessage: __("Failed to delete draft"),
     }
   );
 }
@@ -79,7 +79,7 @@ export function useBulkDeleteDocumentsMutation() {
     bulkDeleteDocumentsMutation,
     {
       successMessage: __("Documents deleted successfully."),
-      errorMessage: __("Failed to delete documents. Please try again."),
+      errorMessage: __("Failed to delete documents"),
     }
   );
 }
@@ -101,7 +101,7 @@ export function useSendSigningNotificationsMutation() {
     sendSigningNotificationsMutation,
     {
       successMessage: __("Signing notifications sent successfully."),
-      errorMessage: __("Failed to send signing notifications. Please try again."),
+      errorMessage: __("Failed to send signing notifications"),
     }
   );
 }
@@ -123,7 +123,7 @@ export function useBulkExportDocumentsMutation() {
     bulkExportDocumentsMutation,
     {
       successMessage: __("Document export started successfully. You will receive an email when the export is ready."),
-      errorMessage: __("Failed to start document export. Please try again."),
+      errorMessage: __("Failed to start document export"),
     }
   );
 }

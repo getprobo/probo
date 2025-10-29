@@ -68,7 +68,7 @@ export function CreatePeopleDialog({ children, connectionId }: Props) {
 
   const [mutate, isMutating] = useMutationWithToasts(createPeopleMutation, {
     successMessage: __("Person created successfully."),
-    errorMessage: __("Failed to create person. Please try again."),
+    errorMessage: __("Failed to create person"),
   });
 
   const onSubmit = handleSubmit((data) => {

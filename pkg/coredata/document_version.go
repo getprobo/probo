@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -43,7 +45,31 @@ type (
 	}
 
 	DocumentVersions []*DocumentVersion
+
+	ErrDocumentVersionNotFound struct {
+		Identifier string
+	}
+
+	ErrDocumentVersionAlreadyExists struct {
+		message string
+	}
+
+	ErrDocumentVersionNoChanges struct {
+		Message string
+	}
 )
+
+func (e ErrDocumentVersionNotFound) Error() string {
+	return fmt.Sprintf("document version not found: %q", e.Identifier)
+}
+
+func (e ErrDocumentVersionAlreadyExists) Error() string {
+	return e.message
+}
+
+func (e ErrDocumentVersionNoChanges) Error() string {
+	return e.Message
+}
 
 func (p *DocumentVersions) LoadByDocumentID(
 	ctx context.Context,
@@ -207,6 +233,21 @@ VALUES (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" {
+				if pgErr.ConstraintName == "document_versions_document_id_version_number_key" {
+					return &ErrDocumentVersionAlreadyExists{
+						message: fmt.Sprintf("document version with document_id %s and version_number %d already exists", p.DocumentID, p.VersionNumber),
+					}
+				}
+				if pgErr.ConstraintName == "document_one_draft_version_idx" {
+					return &ErrDocumentVersionAlreadyExists{
+						message: fmt.Sprintf("document %s already has a draft version", p.DocumentID),
+					}
+				}
+			}
+		}
 		return fmt.Errorf("error creating document version: %w", err)
 	}
 

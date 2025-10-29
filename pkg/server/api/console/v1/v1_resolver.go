@@ -20,6 +20,7 @@ import (
 	"github.com/getprobo/probo/pkg/probo"
 	"github.com/getprobo/probo/pkg/server/api/console/v1/schema"
 	"github.com/getprobo/probo/pkg/server/api/console/v1/types"
+	"github.com/getprobo/probo/pkg/server/graphql"
 	pgx "github.com/jackc/pgx/v5"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 )
@@ -30,11 +31,19 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Peo
 
 	asset, err := prb.Assets.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrAssetNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get asset: %w", err))
 	}
 
 	owner, err := prb.Peoples.Get(ctx, asset.OwnerID)
 	if err != nil {
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
 
@@ -72,6 +81,10 @@ func (r *assetResolver) AssetType(ctx context.Context, obj *types.Asset) (coreda
 
 	asset, err := prb.Assets.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrAssetNotFound
+		if errors.As(err, &errNotFound) {
+			return "", errNotFound
+		}
 		panic(fmt.Errorf("cannot get asset: %w", err))
 	}
 
@@ -88,6 +101,10 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 
 	org, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
@@ -121,11 +138,19 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrAuditNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, audit.OrganizationID)
 	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot load organization: %w", err))
 	}
 
@@ -138,11 +163,19 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrAuditNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
 
 	framework, err := prb.Frameworks.Get(ctx, audit.FrameworkID)
 	if err != nil {
+		var errNotFound *coredata.ErrFrameworkNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot load framework: %w", err))
 	}
 
@@ -155,6 +188,10 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 
 	audit, err := prb.Audits.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrAuditNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
 
@@ -238,6 +275,10 @@ func (r *continualImprovementResolver) Organization(ctx context.Context, obj *ty
 
 	organization, err := prb.Organizations.Get(ctx, continualImprovement.OrganizationID)
 	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get continual improvement organization: %w", err))
 	}
 
@@ -255,6 +296,10 @@ func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.Con
 
 	people, err := prb.Peoples.Get(ctx, continualImprovement.OwnerID)
 	if err != nil {
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get continual improvement owner: %w", err))
 	}
 
@@ -288,11 +333,19 @@ func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*t
 
 	control, err := prb.Controls.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrControlNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get control: %w", err))
 	}
 
 	framework, err := prb.Frameworks.Get(ctx, control.FrameworkID)
 	if err != nil {
+		var errNotFound *coredata.ErrFrameworkNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get framework: %w", err))
 	}
 
@@ -323,7 +376,7 @@ func (r *controlResolver) Measures(ctx context.Context, obj *types.Control, firs
 
 	page, err := prb.Measures.ListForControlID(ctx, obj.ID, cursor, measureFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measures: %w", err)
+		panic(fmt.Errorf("cannot list measures: %w", err))
 	}
 
 	return types.NewMeasureConnection(page, r, obj.ID, measureFilter), nil
@@ -353,7 +406,7 @@ func (r *controlResolver) Documents(ctx context.Context, obj *types.Control, fir
 
 	page, err := prb.Documents.ListForControlID(ctx, obj.ID, cursor, documentFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list documents: %w", err)
+		panic(fmt.Errorf("cannot list documents: %w", err))
 	}
 
 	return types.NewDocumentConnection(page, r, obj.ID, documentFilter), nil
@@ -378,7 +431,7 @@ func (r *controlResolver) Audits(ctx context.Context, obj *types.Control, first 
 
 	page, err := prb.Audits.ListForControlID(ctx, obj.ID, cursor)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list control audits: %w", err)
+		panic(fmt.Errorf("cannot list control audits: %w", err))
 	}
 
 	return types.NewAuditConnection(page, r, obj.ID), nil
@@ -418,31 +471,31 @@ func (r *controlConnectionResolver) TotalCount(ctx context.Context, obj *types.C
 	case *organizationResolver:
 		count, err := prb.Controls.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count controls: %w", err)
+			panic(fmt.Errorf("cannot count controls: %w", err))
 		}
 		return count, nil
 	case *frameworkResolver:
 		count, err := prb.Controls.CountForFrameworkID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count controls: %w", err)
+			panic(fmt.Errorf("cannot count controls: %w", err))
 		}
 		return count, nil
 	case *documentResolver:
 		count, err := prb.Controls.CountForDocumentID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count controls: %w", err)
+			panic(fmt.Errorf("cannot count controls: %w", err))
 		}
 		return count, nil
 	case *measureResolver:
 		count, err := prb.Controls.CountForMeasureID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count controls: %w", err)
+			panic(fmt.Errorf("cannot count controls: %w", err))
 		}
 		return count, nil
 	case *riskResolver:
 		count, err := prb.Controls.CountForRiskID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count controls: %w", err)
+			panic(fmt.Errorf("cannot count controls: %w", err))
 		}
 		return count, nil
 	}
@@ -461,6 +514,10 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Peo
 
 	people, err := prb.Peoples.Get(ctx, data.OwnerID)
 	if err != nil {
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		return nil, fmt.Errorf("cannot get owner: %w", err)
 	}
 
@@ -498,7 +555,11 @@ func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*ty
 
 	org, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get organization: %w", err)
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
 	return types.NewOrganization(org), nil
@@ -517,7 +578,7 @@ func (r *datumConnectionResolver) TotalCount(ctx context.Context, obj *types.Dat
 
 		count, err := prb.Data.CountForOrganizationID(ctx, obj.ParentID, datumFilter)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count data: %w", err)
+			panic(fmt.Errorf("cannot count data: %w", err))
 		}
 		return count, nil
 	}
@@ -531,12 +592,20 @@ func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*typ
 
 	document, err := prb.Documents.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrDocumentNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get document: %w", err))
 	}
 
 	// Get the owner
 	owner, err := prb.Peoples.Get(ctx, document.OwnerID)
 	if err != nil {
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
 
@@ -549,11 +618,19 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 
 	document, err := prb.Documents.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrDocumentNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get document: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, document.OrganizationID)
 	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
@@ -654,6 +731,10 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 
 	document, err := prb.Documents.Get(ctx, documentVersion.DocumentID)
 	if err != nil {
+		var errNotFound *coredata.ErrDocumentNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get document: %w", err))
 	}
 
@@ -671,6 +752,10 @@ func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.Document
 
 	owner, err := prb.Peoples.Get(ctx, documentVersion.OwnerID)
 	if err != nil {
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
 
@@ -736,6 +821,10 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 
 	people, err := prb.Peoples.Get(ctx, documentVersionSignature.SignedBy)
 	if err != nil {
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get people: %w", err))
 	}
 
@@ -748,7 +837,7 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 
 	evidence, err := prb.Evidences.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load evidence: %w", err)
+		panic(fmt.Errorf("cannot load evidence: %w", err))
 	}
 
 	if evidence.EvidenceFileId == nil {
@@ -757,7 +846,11 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 
 	file, err := prb.Files.Get(ctx, *evidence.EvidenceFileId)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load evidence file: %w", err)
+		var errNotFound *coredata.ErrFileNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load evidence file: %w", err))
 	}
 
 	return types.NewFile(file), nil
@@ -769,16 +862,20 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 
 	evidence, err := prb.Evidences.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load evidence: %w", err)
+		panic(fmt.Errorf("cannot load evidence: %w", err))
 	}
 
 	if evidence.TaskID == nil {
-		return nil, fmt.Errorf("evidence is not associated with a task")
+		panic(fmt.Errorf("evidence is not associated with a task"))
 	}
 
 	task, err := prb.Tasks.Get(ctx, *evidence.TaskID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load task: %w", err)
+		var errNotFound *coredata.ErrTaskNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load task: %w", err))
 	}
 
 	return types.NewTask(task), nil
@@ -790,12 +887,16 @@ func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*t
 
 	evidence, err := prb.Evidences.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load evidence: %w", err)
+		panic(fmt.Errorf("cannot load evidence: %w", err))
 	}
 
 	measure, err := prb.Measures.Get(ctx, evidence.MeasureID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load measure: %w", err)
+		var errNotFound *coredata.ErrMeasureNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load measure: %w", err))
 	}
 
 	return types.NewMeasure(measure), nil
@@ -809,13 +910,13 @@ func (r *evidenceConnectionResolver) TotalCount(ctx context.Context, obj *types.
 	case *measureResolver:
 		count, err := prb.Evidences.CountForMeasureID(ctx, obj.ParentID)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count tasks: %w", err)
+			panic(fmt.Errorf("cannot count tasks: %w", err))
 		}
 		return count, nil
 	case *taskResolver:
 		count, err := prb.Evidences.CountForTaskID(ctx, obj.ParentID)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count tasks: %w", err)
+			panic(fmt.Errorf("cannot count tasks: %w", err))
 		}
 		return count, nil
 	}
@@ -841,12 +942,20 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 
 	framework, err := prb.Frameworks.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load framework: %w", err)
+		var errNotFound *coredata.ErrFrameworkNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load framework: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, framework.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load organization: %w", err)
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load organization: %w", err))
 	}
 
 	return types.NewOrganization(organization), nil
@@ -876,7 +985,7 @@ func (r *frameworkResolver) Controls(ctx context.Context, obj *types.Framework, 
 
 	page, err := prb.Controls.ListForFrameworkID(ctx, obj.ID, cursor, controlFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list controls: %w", err)
+		panic(fmt.Errorf("cannot list controls: %w", err))
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -890,7 +999,7 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 	case *organizationResolver:
 		count, err := prb.Frameworks.CountForOrganizationID(ctx, obj.ParentID)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count frameworks: %w", err)
+			panic(fmt.Errorf("cannot count frameworks: %w", err))
 		}
 		return count, nil
 	}
@@ -949,7 +1058,7 @@ func (r *measureResolver) Evidences(ctx context.Context, obj *types.Measure, fir
 
 	page, err := prb.Evidences.ListForMeasureID(ctx, obj.ID, cursor)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measure evidences: %w", err)
+		panic(fmt.Errorf("cannot list measure evidences: %w", err))
 	}
 
 	return types.NewEvidenceConnection(page, r, obj.ID), nil
@@ -974,7 +1083,7 @@ func (r *measureResolver) Tasks(ctx context.Context, obj *types.Measure, first *
 
 	page, err := prb.Tasks.ListForMeasureID(ctx, obj.ID, cursor)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measure tasks: %w", err)
+		panic(fmt.Errorf("cannot list measure tasks: %w", err))
 	}
 
 	return types.NewTaskConnection(page, r, obj.ID), nil
@@ -1004,7 +1113,7 @@ func (r *measureResolver) Risks(ctx context.Context, obj *types.Measure, first *
 
 	page, err := prb.Risks.ListForMeasureID(ctx, obj.ID, cursor, riskFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measure risks: %w", err)
+		panic(fmt.Errorf("cannot list measure risks: %w", err))
 	}
 
 	return types.NewRiskConnection(page, r, obj.ID, riskFilter), nil
@@ -1034,7 +1143,7 @@ func (r *measureResolver) Controls(ctx context.Context, obj *types.Measure, firs
 
 	page, err := prb.Controls.ListForMeasureID(ctx, obj.ID, cursor, controlFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list measure controls: %w", err)
+		panic(fmt.Errorf("cannot list measure controls: %w", err))
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -1048,19 +1157,19 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 	case *organizationResolver:
 		count, err := prb.Measures.CountForOrganizationID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count measures: %w", err)
+			panic(fmt.Errorf("cannot count measures: %w", err))
 		}
 		return count, nil
 	case *controlResolver:
 		count, err := prb.Measures.CountForControlID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count measures: %w", err)
+			panic(fmt.Errorf("cannot count measures: %w", err))
 		}
 		return count, nil
 	case *riskResolver:
 		count, err := prb.Measures.CountForRiskID(ctx, obj.ParentID, obj.Filters)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count measures: %w", err)
+			panic(fmt.Errorf("cannot count measures: %w", err))
 		}
 		return count, nil
 	}
@@ -1116,7 +1225,15 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create organization: %w", err)
+		var errAlreadyExists *coredata.ErrOrganizationAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, graphql.Conflict(errAlreadyExists)
+		}
+		var errTrustCenterAlreadyExists *coredata.ErrTrustCenterAlreadyExists
+		if errors.As(err, &errTrustCenterAlreadyExists) {
+			return nil, graphql.Conflict(errTrustCenterAlreadyExists)
+		}
+		panic(fmt.Errorf("cannot create organization: %w", err))
 	}
 
 	err = authz.AddUserToOrganization(
@@ -1126,7 +1243,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		coredata.RoleMember,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot add user to organization: %w", err)
+		panic(fmt.Errorf("cannot add user to organization: %w", err))
 	}
 
 	_, err = prb.Peoples.Create(
@@ -1141,7 +1258,11 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create people: %w", err)
+		var errAlreadyExists *coredata.ErrPeopleAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, graphql.Conflict(errAlreadyExists)
+		}
+		panic(fmt.Errorf("cannot create people: %w", err))
 	}
 
 	// Append tenant to allowed one
@@ -1202,7 +1323,7 @@ func (r *mutationResolver) DeleteOrganizationHorizontalLogo(ctx context.Context,
 
 	organization, err := prb.Organizations.DeleteHorizontalLogo(ctx, input.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete horizontal logo: %w", err)
+		panic(fmt.Errorf("cannot delete horizontal logo: %w", err))
 	}
 
 	return &types.DeleteOrganizationHorizontalLogoPayload{
@@ -1216,7 +1337,7 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, input types.D
 
 	err := prb.Organizations.Delete(ctx, input.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete organization: %w", err)
+		panic(fmt.Errorf("cannot delete organization: %w", err))
 	}
 
 	return &types.DeleteOrganizationPayload{
@@ -1233,7 +1354,7 @@ func (r *mutationResolver) UpdateTrustCenter(ctx context.Context, input types.Up
 		Active: input.Active,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot update trust center: %w", err)
+		panic(fmt.Errorf("cannot update trust center: %w", err))
 	}
 
 	return &types.UpdateTrustCenterPayload{
@@ -1251,7 +1372,7 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 		FileName:      input.FileName,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot upload trust center NDA: %w", err)
+		panic(fmt.Errorf("cannot upload trust center NDA: %w", err))
 	}
 
 	return &types.UploadTrustCenterNDAPayload{
@@ -1267,7 +1388,7 @@ func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types
 		TrustCenterID: input.TrustCenterID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete trust center NDA: %w", err)
+		panic(fmt.Errorf("cannot delete trust center NDA: %w", err))
 	}
 
 	return &types.DeleteTrustCenterNDAPayload{
@@ -1285,7 +1406,11 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 		Name:          input.Name,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot create trust center access: %w", err)
+		var errAlreadyExists *coredata.ErrTrustCenterAccessAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, graphql.Conflict(errAlreadyExists)
+		}
+		panic(fmt.Errorf("cannot create trust center access: %w", err))
 	}
 
 	return &types.CreateTrustCenterAccessPayload{
@@ -1322,7 +1447,7 @@ func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input ty
 		ID: input.ID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete trust center access: %w", err)
+		panic(fmt.Errorf("cannot delete trust center access: %w", err))
 	}
 
 	return &types.DeleteTrustCenterAccessPayload{
@@ -1347,7 +1472,7 @@ func (r *mutationResolver) CreateTrustCenterReference(ctx context.Context, input
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot create trust center reference: %w", err)
+		panic(fmt.Errorf("cannot create trust center reference: %w", err))
 	}
 
 	return &types.CreateTrustCenterReferencePayload{
@@ -1378,7 +1503,7 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 
 	reference, err := prb.TrustCenterReferences.Update(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot update trust center reference: %w", err)
+		panic(fmt.Errorf("cannot update trust center reference: %w", err))
 	}
 
 	return &types.UpdateTrustCenterReferencePayload{
@@ -1394,7 +1519,7 @@ func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input
 		ID: input.ID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete trust center reference: %w", err)
+		panic(fmt.Errorf("cannot delete trust center reference: %w", err))
 	}
 
 	return &types.DeleteTrustCenterReferencePayload{
@@ -1419,7 +1544,7 @@ func (r *mutationResolver) CreateTrustCenterFile(ctx context.Context, input type
 		TrustCenterVisibility: input.TrustCenterVisibility,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot create trust center file: %w", err)
+		panic(fmt.Errorf("cannot create trust center file: %w", err))
 	}
 
 	return &types.CreateTrustCenterFilePayload{
@@ -1438,7 +1563,7 @@ func (r *mutationResolver) UpdateTrustCenterFile(ctx context.Context, input type
 		TrustCenterVisibility: input.TrustCenterVisibility,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot update trust center file: %w", err)
+		panic(fmt.Errorf("cannot update trust center file: %w", err))
 	}
 
 	return &types.UpdateTrustCenterFilePayload{
@@ -1452,7 +1577,7 @@ func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.G
 
 	file, err := prb.TrustCenterFiles.Get(ctx, input.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get trust center file: %w", err)
+		panic(fmt.Errorf("cannot get trust center file: %w", err))
 	}
 
 	return &types.GetTrustCenterFilePayload{
@@ -1468,7 +1593,7 @@ func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input type
 		ID: input.ID,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete trust center file: %w", err)
+		panic(fmt.Errorf("cannot delete trust center file: %w", err))
 	}
 
 	return &types.DeleteTrustCenterFilePayload{
@@ -1505,7 +1630,11 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 			Kind:                     coredata.PeopleKindEmployee,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("cannot create people record: %w", err)
+			var errAlreadyExists *coredata.ErrPeopleAlreadyExists
+			if errors.As(err, &errAlreadyExists) {
+				return nil, graphql.Conflict(errAlreadyExists)
+			}
+			return nil, fmt.Errorf("failed to create people record: %w", err)
 		}
 	}
 
@@ -1566,7 +1695,11 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create people: %w", err)
+		var errAlreadyExists *coredata.ErrPeopleAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, graphql.Conflict(errAlreadyExists)
+		}
+		panic(fmt.Errorf("cannot create people: %w", err))
 	}
 
 	return &types.CreatePeoplePayload{
@@ -1589,7 +1722,7 @@ func (r *mutationResolver) UpdatePeople(ctx context.Context, input types.UpdateP
 		ContractEndDate:          UnwrapOmittable(input.ContractEndDate),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot update people: %w", err)
+		panic(fmt.Errorf("cannot update people: %w", err))
 	}
 
 	return &types.UpdatePeoplePayload{
@@ -1603,7 +1736,7 @@ func (r *mutationResolver) DeletePeople(ctx context.Context, input types.DeleteP
 
 	err := prb.Peoples.Delete(ctx, input.PeopleID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete people: %w", err)
+		panic(fmt.Errorf("cannot delete people: %w", err))
 	}
 
 	return &types.DeletePeoplePayload{
@@ -1641,6 +1774,10 @@ func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateV
 		},
 	)
 	if err != nil {
+		var errAlreadyExists *coredata.ErrVendorAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, graphql.Conflict(errAlreadyExists)
+		}
 		return nil, fmt.Errorf("cannot create vendor: %w", err)
 	}
 	return &types.CreateVendorPayload{
@@ -1690,7 +1827,7 @@ func (r *mutationResolver) DeleteVendor(ctx context.Context, input types.DeleteV
 
 	err := prb.Vendors.Delete(ctx, input.VendorID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete vendor: %w", err)
+		panic(fmt.Errorf("cannot delete vendor: %w", err))
 	}
 
 	return &types.DeleteVendorPayload{
@@ -1734,7 +1871,7 @@ func (r *mutationResolver) UpdateVendorContact(ctx context.Context, input types.
 
 	vendorContact, err := prb.VendorContacts.Update(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot update vendor contact: %w", err)
+		panic(fmt.Errorf("failed to update vendor contact: %w", err))
 	}
 
 	return &types.UpdateVendorContactPayload{
@@ -1788,7 +1925,7 @@ func (r *mutationResolver) UpdateVendorService(ctx context.Context, input types.
 
 	vendorService, err := prb.VendorServices.Update(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot update vendor service: %w", err)
+		panic(fmt.Errorf("failed to update vendor service: %w", err))
 	}
 
 	return &types.UpdateVendorServicePayload{
@@ -1802,7 +1939,7 @@ func (r *mutationResolver) DeleteVendorService(ctx context.Context, input types.
 
 	err := prb.VendorServices.Delete(ctx, input.VendorServiceID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete vendor service: %w", err)
+		panic(fmt.Errorf("failed to delete vendor service: %w", err))
 	}
 
 	return &types.DeleteVendorServicePayload{
@@ -1851,7 +1988,7 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 
 	req := probo.ImportFrameworkRequest{}
 	if err := json.NewDecoder(input.File.File).Decode(&req.Framework); err != nil {
-		return nil, fmt.Errorf("cannot decode framework: %w", err)
+		panic(fmt.Errorf("cannot decode framework: %w", err))
 	}
 
 	framework, err := prb.Frameworks.Import(ctx, input.OrganizationID, req)
@@ -1862,12 +1999,13 @@ func (r *mutationResolver) ImportFramework(ctx context.Context, input types.Impo
 				Err:     err,
 				Message: fmt.Sprintf("framework %q already exists", req.Framework.Name),
 				Extensions: map[string]any{
+					"code":                 "CONFLICT",
 					"frameworkReferenceId": errFrameworkReferenceIDAlreadyExists.ReferenceID,
 				},
 			}
 		}
 
-		return nil, fmt.Errorf("cannot import framework: %w", err)
+		panic(fmt.Errorf("cannot import framework: %w", err))
 	}
 
 	return &types.ImportFrameworkPayload{
@@ -1881,7 +2019,7 @@ func (r *mutationResolver) DeleteFramework(ctx context.Context, input types.Dele
 
 	err := prb.Frameworks.Delete(ctx, input.FrameworkID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete framework: %w", err)
+		panic(fmt.Errorf("cannot delete framework: %w", err))
 	}
 
 	return &types.DeleteFrameworkPayload{
@@ -1895,7 +2033,7 @@ func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Con
 
 	soa, err := prb.Frameworks.StateOfApplicability(ctx, input.FrameworkID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot generate framework SOA: %w", err)
+		panic(fmt.Errorf("cannot generate framework SOA: %w", err))
 	}
 
 	return &types.GenerateFrameworkStateOfApplicabilityPayload{
@@ -1918,7 +2056,7 @@ func (r *mutationResolver) ExportFramework(ctx context.Context, input types.Expo
 		user.FullName,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot export framework: %w", err)
+		panic(fmt.Errorf("cannot export framework: %w", err))
 	}
 
 	return &types.ExportFrameworkPayload{
@@ -1939,7 +2077,11 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 		ExclusionJustification: input.ExclusionJustification,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot create control: %w", err)
+		var errAlreadyExists *coredata.ErrControlAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, graphql.Conflict(errAlreadyExists)
+		}
+		panic(fmt.Errorf("cannot create control: %w", err))
 	}
 
 	return &types.CreateControlPayload{
@@ -1961,7 +2103,11 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot update control: %w", err)
+		var errAlreadyExists *coredata.ErrControlAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, graphql.Conflict(errAlreadyExists)
+		}
+		panic(fmt.Errorf("cannot update control: %w", err))
 	}
 
 	return &types.UpdateControlPayload{
@@ -1975,7 +2121,7 @@ func (r *mutationResolver) DeleteControl(ctx context.Context, input types.Delete
 
 	err := prb.Controls.Delete(ctx, input.ControlID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete control: %w", err)
+		panic(fmt.Errorf("cannot delete control: %w", err))
 	}
 
 	return &types.DeleteControlPayload{
@@ -1994,6 +2140,10 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 		Category:       input.Category,
 	})
 	if err != nil {
+		var errAlreadyExists *coredata.ErrMeasureAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, graphql.Conflict(errAlreadyExists)
+		}
 		panic(fmt.Errorf("cannot create measure: %w", err))
 	}
 
@@ -2028,12 +2178,12 @@ func (r *mutationResolver) ImportMeasure(ctx context.Context, input types.Import
 
 	var req probo.ImportMeasureRequest
 	if err := json.NewDecoder(input.File.File).Decode(&req.Measures); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal measure: %w", err)
+		panic(fmt.Errorf("cannot unmarshal measure: %w", err))
 	}
 
 	measures, err := prb.Measures.Import(ctx, input.OrganizationID, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot import measure: %w", err)
+		panic(fmt.Errorf("cannot import measure: %w", err))
 	}
 
 	measureEdges := make([]*types.MeasureEdge, len(measures.Data))
@@ -2083,7 +2233,7 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 	if err != nil {
 		var errMappingExists *coredata.ErrControlDocumentMappingAlreadyExists
 		if errors.As(err, &errMappingExists) {
-			return nil, errors.New(errMappingExists.Error())
+			return nil, graphql.Conflict(errMappingExists)
 		}
 		panic(fmt.Errorf("cannot create control document mapping: %w", err))
 	}
@@ -2130,7 +2280,7 @@ func (r *mutationResolver) CreateControlAuditMapping(ctx context.Context, input 
 
 	control, audit, err := prb.Controls.CreateAuditMapping(ctx, input.ControlID, input.AuditID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create control audit mapping: %w", err)
+		panic(fmt.Errorf("cannot create control audit mapping: %w", err))
 	}
 
 	return &types.CreateControlAuditMappingPayload{
@@ -2145,7 +2295,7 @@ func (r *mutationResolver) DeleteControlAuditMapping(ctx context.Context, input 
 
 	control, audit, err := prb.Controls.DeleteAuditMapping(ctx, input.ControlID, input.AuditID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete control audit mapping: %w", err)
+		panic(fmt.Errorf("cannot delete control audit mapping: %w", err))
 	}
 
 	return &types.DeleteControlAuditMappingPayload{
@@ -2197,6 +2347,10 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 		Deadline:       input.Deadline,
 	})
 	if err != nil {
+		var errAlreadyExists *coredata.ErrTaskAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, graphql.Conflict(errAlreadyExists)
+		}
 		panic(fmt.Errorf("cannot create task: %w", err))
 	}
 
@@ -2289,6 +2443,10 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 		},
 	)
 	if err != nil {
+		var errAlreadyExists *coredata.ErrRiskAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, graphql.Conflict(errAlreadyExists)
+		}
 		panic(fmt.Errorf("cannot create risk: %w", err))
 	}
 
@@ -2521,7 +2679,7 @@ func (r *mutationResolver) UploadVendorBusinessAssociateAgreement(ctx context.Co
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot upload vendor business associate agreement: %w", err)
+		panic(fmt.Errorf("failed to upload vendor business associate agreement: %w", err))
 	}
 
 	return &types.UploadVendorBusinessAssociateAgreementPayload{
@@ -2542,7 +2700,7 @@ func (r *mutationResolver) UpdateVendorBusinessAssociateAgreement(ctx context.Co
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot update vendor business associate agreement: %w", err)
+		panic(fmt.Errorf("failed to update vendor business associate agreement: %w", err))
 	}
 
 	return &types.UpdateVendorBusinessAssociateAgreementPayload{
@@ -2556,7 +2714,7 @@ func (r *mutationResolver) DeleteVendorBusinessAssociateAgreement(ctx context.Co
 
 	err := prb.VendorBusinessAssociateAgreements.DeleteByVendorID(ctx, input.VendorID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete vendor business associate agreement: %w", err)
+		panic(fmt.Errorf("failed to delete vendor business associate agreement: %w", err))
 	}
 
 	return &types.DeleteVendorBusinessAssociateAgreementPayload{
@@ -2579,7 +2737,7 @@ func (r *mutationResolver) UploadVendorDataPrivacyAgreement(ctx context.Context,
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot upload vendor data privacy agreement: %w", err)
+		panic(fmt.Errorf("failed to upload vendor data privacy agreement: %w", err))
 	}
 
 	return &types.UploadVendorDataPrivacyAgreementPayload{
@@ -2600,7 +2758,7 @@ func (r *mutationResolver) UpdateVendorDataPrivacyAgreement(ctx context.Context,
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("cannot update vendor data privacy agreement: %w", err)
+		panic(fmt.Errorf("failed to update vendor data privacy agreement: %w", err))
 	}
 
 	return &types.UpdateVendorDataPrivacyAgreementPayload{
@@ -2614,7 +2772,7 @@ func (r *mutationResolver) DeleteVendorDataPrivacyAgreement(ctx context.Context,
 
 	err := prb.VendorDataPrivacyAgreements.DeleteByVendorID(ctx, input.VendorID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete vendor data privacy agreement: %w", err)
+		panic(fmt.Errorf("failed to delete vendor data privacy agreement: %w", err))
 	}
 
 	return &types.DeleteVendorDataPrivacyAgreementPayload{
@@ -2639,6 +2797,10 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 		},
 	)
 	if err != nil {
+		var errAlreadyExists *coredata.ErrDocumentAlreadyExists
+		if errors.As(err, &errAlreadyExists) {
+			return nil, graphql.Conflict(errAlreadyExists)
+		}
 		panic(fmt.Errorf("cannot create document: %w", err))
 	}
 
@@ -2665,7 +2827,7 @@ func (r *mutationResolver) UpdateDocument(ctx context.Context, input types.Updat
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot update document: %w", err)
+		panic(fmt.Errorf("cannot update document: %w", err))
 	}
 
 	return &types.UpdateDocumentPayload{
@@ -2694,6 +2856,10 @@ func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input typ
 
 	document, documentVersion, err := prb.Documents.PublishVersion(ctx, input.DocumentID, user.ID, input.Changelog)
 	if err != nil {
+		var errNoChanges *coredata.ErrDocumentVersionNoChanges
+		if errors.As(err, &errNoChanges) {
+			return nil, graphql.Invalid(errNoChanges)
+		}
 		panic(fmt.Errorf("cannot publish document version: %w", err))
 	}
 
@@ -2964,7 +3130,7 @@ func (r *mutationResolver) AssessVendor(ctx context.Context, input types.AssessV
 		WebsiteURL: input.WebsiteURL,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot assess vendor: %w", err)
+		panic(fmt.Errorf("cannot assess vendor: %w", err))
 	}
 
 	return &types.AssessVendorPayload{
@@ -2987,7 +3153,7 @@ func (r *mutationResolver) CreateAsset(ctx context.Context, input types.CreateAs
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create asset: %w", err)
+		panic(fmt.Errorf("cannot create asset: %w", err))
 	}
 
 	return &types.CreateAssetPayload{
@@ -3009,7 +3175,7 @@ func (r *mutationResolver) UpdateAsset(ctx context.Context, input types.UpdateAs
 		VendorIDs:       input.VendorIds,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot update asset: %w", err)
+		panic(fmt.Errorf("cannot update asset: %w", err))
 	}
 
 	return &types.UpdateAssetPayload{
@@ -3023,7 +3189,7 @@ func (r *mutationResolver) DeleteAsset(ctx context.Context, input types.DeleteAs
 
 	err := prb.Assets.Delete(ctx, input.AssetID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete asset: %w", err)
+		panic(fmt.Errorf("cannot delete asset: %w", err))
 	}
 
 	return &types.DeleteAssetPayload{
@@ -3044,7 +3210,7 @@ func (r *mutationResolver) CreateDatum(ctx context.Context, input types.CreateDa
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot create datum: %w", err)
+		panic(fmt.Errorf("cannot create datum: %w", err))
 	}
 
 	return &types.CreateDatumPayload{
@@ -3065,7 +3231,7 @@ func (r *mutationResolver) UpdateDatum(ctx context.Context, input types.UpdateDa
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot update datum: %w", err)
+		panic(fmt.Errorf("cannot update datum: %w", err))
 	}
 
 	return &types.UpdateDatumPayload{
@@ -3078,7 +3244,7 @@ func (r *mutationResolver) DeleteDatum(ctx context.Context, input types.DeleteDa
 	prb := r.ProboService(ctx, input.DatumID.TenantID())
 
 	if err := prb.Data.Delete(ctx, input.DatumID); err != nil {
-		return nil, fmt.Errorf("cannot delete datum: %w", err)
+		panic(fmt.Errorf("cannot delete datum: %w", err))
 	}
 
 	return &types.DeleteDatumPayload{
@@ -3177,7 +3343,7 @@ func (r *mutationResolver) DeleteAuditReport(ctx context.Context, input types.De
 
 	audit, err := prb.Audits.DeleteReport(ctx, input.AuditID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete audit report: %w", err)
+		panic(fmt.Errorf("cannot delete audit report: %w", err))
 	}
 
 	return &types.DeleteAuditReportPayload{
@@ -3247,7 +3413,7 @@ func (r *mutationResolver) DeleteNonconformity(ctx context.Context, input types.
 
 	err := prb.Nonconformities.Delete(ctx, input.NonconformityID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot delete nonconformity: %w", err)
+		panic(fmt.Errorf("cannot delete nonconformity: %w", err))
 	}
 
 	return &types.DeleteNonconformityPayload{
@@ -3508,7 +3674,7 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 		Domain:         input.Domain,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot create custom domain: %w", err)
+		panic(fmt.Errorf("failed to create custom domain: %w", err))
 	}
 
 	return &types.CreateCustomDomainPayload{
@@ -3523,7 +3689,7 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	// Get the current custom domain ID before deleting
 	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, input.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get custom domain: %w", err)
+		panic(fmt.Errorf("failed to get custom domain: %w", err))
 	}
 
 	if domain == nil {
@@ -3533,7 +3699,7 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	deletedDomainID := domain.ID
 
 	if err := prb.CustomDomains.DeleteCustomDomain(ctx, input.OrganizationID); err != nil {
-		return nil, fmt.Errorf("cannot delete custom domain: %w", err)
+		panic(fmt.Errorf("failed to delete custom domain: %w", err))
 	}
 
 	return &types.DeleteCustomDomainPayload{
@@ -3766,12 +3932,16 @@ func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Non
 
 	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity: %w", err)
+		panic(fmt.Errorf("cannot get nonconformity: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, nonconformity.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity organization: %w", err)
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot get nonconformity organization: %w", err))
 	}
 
 	return types.NewOrganization(organization), nil
@@ -3783,12 +3953,16 @@ func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconform
 
 	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity: %w", err)
+		panic(fmt.Errorf("cannot get nonconformity: %w", err))
 	}
 
 	audit, err := prb.Audits.Get(ctx, nonconformity.AuditID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity audit: %w", err)
+		var errNotFound *coredata.ErrAuditNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot get nonconformity audit: %w", err))
 	}
 
 	return types.NewAudit(audit), nil
@@ -3800,12 +3974,16 @@ func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconform
 
 	nonconformity, err := prb.Nonconformities.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity: %w", err)
+		panic(fmt.Errorf("cannot get nonconformity: %w", err))
 	}
 
 	people, err := prb.Peoples.Get(ctx, nonconformity.OwnerID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get nonconformity owner: %w", err)
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot get nonconformity owner: %w", err))
 	}
 
 	return types.NewPeople(people), nil
@@ -3824,12 +4002,12 @@ func (r *nonconformityConnectionResolver) TotalCount(ctx context.Context, obj *t
 
 		count, err := prb.Nonconformities.CountForOrganizationID(ctx, obj.ParentID, nonconformityFilter)
 		if err != nil {
-			return 0, fmt.Errorf("cannot count nonconformities: %w", err)
+			panic(fmt.Errorf("cannot count nonconformities: %w", err))
 		}
 		return count, nil
 	}
 
-	return 0, fmt.Errorf("unsupported resolver: %T", obj.Resolver)
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
 // Organization is the resolver for the organization field.
@@ -3838,12 +4016,16 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 
 	obligation, err := prb.Obligations.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation: %w", err)
+		panic(fmt.Errorf("cannot get obligation: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, obligation.OrganizationID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation organization: %w", err)
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot get obligation organization: %w", err))
 	}
 
 	return types.NewOrganization(organization), nil
@@ -3855,12 +4037,16 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 
 	obligation, err := prb.Obligations.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation: %w", err)
+		panic(fmt.Errorf("cannot get obligation: %w", err))
 	}
 
 	people, err := prb.Peoples.Get(ctx, obligation.OwnerID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get obligation owner: %w", err)
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot get obligation owner: %w", err))
 	}
 
 	return types.NewPeople(people), nil
@@ -3895,7 +4081,7 @@ func (r *obligationConnectionResolver) TotalCount(ctx context.Context, obj *type
 		return count, nil
 	}
 
-	return 0, fmt.Errorf("unsupported resolver: %T", obj.Resolver)
+	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
 // LogoURL is the resolver for the logoUrl field.
@@ -4037,7 +4223,7 @@ func (r *organizationResolver) Controls(ctx context.Context, obj *types.Organiza
 
 	page, err := prb.Controls.ListForOrganizationID(ctx, obj.ID, cursor, controlFilter)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list controls: %w", err)
+		panic(fmt.Errorf("cannot list controls: %w", err))
 	}
 
 	return types.NewControlConnection(page, r, obj.ID, controlFilter), nil
@@ -4495,7 +4681,7 @@ func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Orga
 
 	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get custom domain: %w", err)
+		panic(fmt.Errorf("failed to get custom domain: %w", err))
 	}
 
 	if domain == nil {
@@ -4554,6 +4740,10 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 
 	organization, err := prb.Organizations.Get(ctx, processingActivity.OrganizationID)
 	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
@@ -4614,6 +4804,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.OrganizationEntityType:
 		organization, err := prb.Organizations.Get(ctx, id)
 		if err != nil {
+			var errNotFound *coredata.ErrOrganizationNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, graphql.NotFound(errNotFound)
+			}
 			panic(fmt.Errorf("cannot get organization: %w", err))
 		}
 
@@ -4621,6 +4815,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.PeopleEntityType:
 		people, err := prb.Peoples.Get(ctx, id)
 		if err != nil {
+			var errNotFound *coredata.ErrPeopleNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, graphql.NotFound(errNotFound)
+			}
 			panic(fmt.Errorf("cannot get people: %w", err))
 		}
 
@@ -4628,6 +4826,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.VendorEntityType:
 		vendor, err := prb.Vendors.Get(ctx, id)
 		if err != nil {
+			var errNotFound *coredata.ErrVendorNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, graphql.NotFound(errNotFound)
+			}
 			panic(fmt.Errorf("cannot get vendor: %w", err))
 		}
 
@@ -4635,6 +4837,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.FrameworkEntityType:
 		framework, err := prb.Frameworks.Get(ctx, id)
 		if err != nil {
+			var errNotFound *coredata.ErrFrameworkNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, graphql.NotFound(errNotFound)
+			}
 			panic(fmt.Errorf("cannot get framework: %w", err))
 		}
 
@@ -4642,6 +4848,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.MeasureEntityType:
 		measure, err := prb.Measures.Get(ctx, id)
 		if err != nil {
+			var errNotFound *coredata.ErrMeasureNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, graphql.NotFound(errNotFound)
+			}
 			panic(fmt.Errorf("cannot get measure: %w", err))
 		}
 
@@ -4649,6 +4859,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.TaskEntityType:
 		task, err := prb.Tasks.Get(ctx, id)
 		if err != nil {
+			var errNotFound *coredata.ErrTaskNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, graphql.NotFound(errNotFound)
+			}
 			panic(fmt.Errorf("cannot get task: %w", err))
 		}
 
@@ -4663,12 +4877,20 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.DocumentEntityType:
 		document, err := prb.Documents.Get(ctx, id)
 		if err != nil {
+			var errNotFound *coredata.ErrDocumentNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, graphql.NotFound(errNotFound)
+			}
 			panic(fmt.Errorf("cannot get document: %w", err))
 		}
 		return types.NewDocument(document), nil
 	case coredata.ControlEntityType:
 		control, err := prb.Controls.Get(ctx, id)
 		if err != nil {
+			var errNotFound *coredata.ErrControlNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, graphql.NotFound(errNotFound)
+			}
 			panic(fmt.Errorf("cannot get control: %w", err))
 		}
 
@@ -4676,6 +4898,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.RiskEntityType:
 		risk, err := prb.Risks.Get(ctx, id)
 		if err != nil {
+			var errNotFound *coredata.ErrRiskNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, graphql.NotFound(errNotFound)
+			}
 			panic(fmt.Errorf("cannot get risk: %w", err))
 		}
 		return types.NewRisk(risk), nil
@@ -4712,6 +4938,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.AssetEntityType:
 		asset, err := prb.Assets.Get(ctx, id)
 		if err != nil {
+			var errNotFound *coredata.ErrAssetNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, graphql.NotFound(errNotFound)
+			}
 			panic(fmt.Errorf("cannot get asset: %w", err))
 		}
 		return types.NewAsset(asset), nil
@@ -4724,6 +4954,10 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.AuditEntityType:
 		audit, err := prb.Audits.Get(ctx, id)
 		if err != nil {
+			var errNotFound *coredata.ErrAuditNotFound
+			if errors.As(err, &errNotFound) {
+				return nil, graphql.NotFound(errNotFound)
+			}
 			panic(fmt.Errorf("cannot get audit: %w", err))
 		}
 		return types.NewAudit(audit), nil
@@ -4780,7 +5014,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	default:
 	}
 
-	return nil, gqlerror.Errorf("node %q not found", id)
+	panic(fmt.Errorf("unknown entity type: %d", id.EntityType()))
 }
 
 // Viewer is the resolver for the viewer field.
@@ -4812,7 +5046,7 @@ func (r *reportResolver) Audit(ctx context.Context, obj *types.Report) (*types.A
 
 	audit, err := prb.Audits.GetByReportID(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load audit for report: %w", err)
+		panic(fmt.Errorf("cannot load audit for report: %w", err))
 	}
 
 	return types.NewAudit(audit), nil
@@ -4824,6 +5058,10 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Peopl
 
 	risk, err := prb.Risks.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrRiskNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get risk: %w", err))
 	}
 
@@ -4833,6 +5071,10 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Peopl
 
 	owner, err := prb.Peoples.Get(ctx, *risk.OwnerID)
 	if err != nil {
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
 
@@ -4845,11 +5087,19 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 
 	risk, err := prb.Risks.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrRiskNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get risk: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, risk.OrganizationID)
 	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
@@ -5044,6 +5294,10 @@ func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot
 
 	organization, err := prb.Organizations.Get(ctx, snapshot.OrganizationID)
 	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
@@ -5102,6 +5356,10 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 
 	task, err := prb.Tasks.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrTaskNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get task: %w", err))
 	}
 
@@ -5111,6 +5369,10 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 
 	people, err := prb.Peoples.Get(ctx, *task.AssignedToID)
 	if err != nil {
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get assigned to: %w", err))
 	}
 
@@ -5123,11 +5385,19 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 
 	task, err := prb.Tasks.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrTaskNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get task: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, task.OrganizationID)
 	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
@@ -5140,11 +5410,19 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 
 	task, err := prb.Tasks.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrTaskNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get task: %w", err))
 	}
 
 	measure, err := prb.Measures.Get(ctx, *task.MeasureID)
 	if err != nil {
+		var errNotFound *coredata.ErrMeasureNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get measure: %w", err))
 	}
 
@@ -5215,6 +5493,10 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 
 	organization, err := prb.Organizations.Get(ctx, obj.Organization.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
@@ -5330,6 +5612,10 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 
 	document, err := prb.Documents.Get(ctx, *obj.DocumentID)
 	if err != nil {
+		var errNotFound *coredata.ErrDocumentNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		return nil, fmt.Errorf("cannot load document: %w", err)
 	}
 
@@ -5346,7 +5632,7 @@ func (r *trustCenterDocumentAccessResolver) Report(ctx context.Context, obj *typ
 
 	report, err := prb.Reports.Get(ctx, *obj.ReportID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load report: %w", err)
+		panic(fmt.Errorf("cannot load report: %w", err))
 	}
 
 	return types.NewReport(report), nil
@@ -5362,7 +5648,7 @@ func (r *trustCenterDocumentAccessResolver) TrustCenterFile(ctx context.Context,
 
 	trustCenterFile, err := prb.TrustCenterFiles.Get(ctx, *obj.TrustCenterFileID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load trust center file: %w", err)
+		panic(fmt.Errorf("cannot load trust center file: %w", err))
 	}
 
 	return types.NewTrustCenterFile(trustCenterFile), nil
@@ -5374,7 +5660,7 @@ func (r *trustCenterDocumentAccessConnectionResolver) TotalCount(ctx context.Con
 
 	count, err := prb.TrustCenterAccesses.CountDocumentAccesses(ctx, obj.ParentID)
 	if err != nil {
-		return 0, fmt.Errorf("cannot count trust center document accesses: %w", err)
+		panic(fmt.Errorf("cannot count trust center document accesses: %w", err))
 	}
 
 	return count, nil
@@ -5403,6 +5689,10 @@ func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.T
 
 	organization, err := prb.Organizations.Get(ctx, file.OrganizationID)
 	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
@@ -5464,11 +5754,19 @@ func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
+		var errNotFound *coredata.ErrVendorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
 
 	organization, err := prb.Organizations.Get(ctx, vendor.OrganizationID)
 	if err != nil {
+		var errNotFound *coredata.ErrOrganizationNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
 
@@ -5613,7 +5911,11 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get vendor: %w", err))
+		var errNotFound *coredata.ErrVendorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("failed to get vendor: %w", err))
 	}
 
 	if vendor.BusinessOwnerID == nil {
@@ -5622,7 +5924,11 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 
 	people, err := prb.Peoples.Get(ctx, *vendor.BusinessOwnerID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get business owner: %w", err))
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("failed to get business owner: %w", err))
 	}
 
 	return types.NewPeople(people), nil
@@ -5633,7 +5939,11 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 	prb := r.ProboService(ctx, obj.ID.TenantID())
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get vendor: %w", err))
+		var errNotFound *coredata.ErrVendorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("failed to get vendor: %w", err))
 	}
 
 	if vendor.SecurityOwnerID == nil {
@@ -5642,7 +5952,11 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 
 	people, err := prb.Peoples.Get(ctx, *vendor.SecurityOwnerID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get security owner: %w", err))
+		var errNotFound *coredata.ErrPeopleNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("failed to get security owner: %w", err))
 	}
 
 	return types.NewPeople(people), nil
@@ -5654,7 +5968,11 @@ func (r *vendorBusinessAssociateAgreementResolver) Vendor(ctx context.Context, o
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get vendor: %w", err)
+		var errNotFound *coredata.ErrVendorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		return nil, fmt.Errorf("failed to get vendor: %w", err)
 	}
 
 	return types.NewVendor(vendor), nil
@@ -5666,7 +5984,7 @@ func (r *vendorBusinessAssociateAgreementResolver) FileURL(ctx context.Context, 
 
 	fileURL, err := prb.VendorBusinessAssociateAgreements.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
-		return "", fmt.Errorf("cannot generate file URL: %w", err)
+		panic(fmt.Errorf("failed to generate file URL: %w", err))
 	}
 
 	return fileURL, nil
@@ -5678,7 +5996,11 @@ func (r *vendorComplianceReportResolver) Vendor(ctx context.Context, obj *types.
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get vendor: %w", err))
+		var errNotFound *coredata.ErrVendorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("failed to get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil
@@ -5690,7 +6012,7 @@ func (r *vendorComplianceReportResolver) File(ctx context.Context, obj *types.Ve
 
 	evidence, err := prb.VendorComplianceReports.Get(ctx, obj.ID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load evidence: %w", err)
+		panic(fmt.Errorf("cannot load evidence: %w", err))
 	}
 
 	if evidence.ReportFileId == nil {
@@ -5699,7 +6021,11 @@ func (r *vendorComplianceReportResolver) File(ctx context.Context, obj *types.Ve
 
 	file, err := prb.Files.Get(ctx, *evidence.ReportFileId)
 	if err != nil {
-		return nil, fmt.Errorf("cannot load evidence file: %w", err)
+		var errNotFound *coredata.ErrFileNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("cannot load evidence file: %w", err))
 	}
 
 	return types.NewFile(file), nil
@@ -5745,7 +6071,11 @@ func (r *vendorContactResolver) Vendor(ctx context.Context, obj *types.VendorCon
 
 	vendor, err := prb.Vendors.Get(ctx, vendorContact.VendorID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get vendor: %w", err))
+		var errNotFound *coredata.ErrVendorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("failed to get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil
@@ -5757,7 +6087,11 @@ func (r *vendorDataPrivacyAgreementResolver) Vendor(ctx context.Context, obj *ty
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get vendor: %w", err))
+		var errNotFound *coredata.ErrVendorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("failed to get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil
@@ -5781,7 +6115,11 @@ func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.Ve
 
 	vendor, err := prb.Vendors.Get(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get vendor: %w", err))
+		var errNotFound *coredata.ErrVendorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("failed to get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil
@@ -5799,7 +6137,11 @@ func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorSer
 
 	vendor, err := prb.Vendors.Get(ctx, vendorService.VendorID)
 	if err != nil {
-		panic(fmt.Errorf("cannot get vendor: %w", err))
+		var errNotFound *coredata.ErrVendorNotFound
+		if errors.As(err, &errNotFound) {
+			return nil, graphql.NotFound(errNotFound)
+		}
+		panic(fmt.Errorf("failed to get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil

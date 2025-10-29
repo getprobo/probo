@@ -137,7 +137,7 @@ export function useCreateSAMLConfigurationMutation() {
     createSAMLConfigurationMutation,
     {
       successMessage: "SAML configuration created successfully.",
-      errorMessage: "Failed to create SAML configuration. Please try again.",
+      errorMessage: "Failed to create SAML configuration",
     }
   );
 }

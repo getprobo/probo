@@ -21,6 +21,7 @@ import { useCreateNonconformity } from "../../../../hooks/graph/NonconformityGra
 import { PeopleSelectField } from "/components/form/PeopleSelectField";
 import { AuditSelectField } from "/components/form/AuditSelectField";
 import { Controller } from "react-hook-form";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import { formatDatetime, getStatusOptions } from "@probo/helpers";
 
 const schema = z.object({
@@ -98,7 +99,7 @@ export function CreateNonconformityDialog({
     } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to create nonconformity"),
+        description: formatError(__("Failed to create nonconformity"), error as GraphQLError),
         variant: "error",
       });
     }

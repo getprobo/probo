@@ -22,7 +22,7 @@ export function useTrustCenterVendorUpdate() {
     trustCenterVendorUpdateMutation,
     {
       successMessage: __("Vendor visibility updated successfully."),
-      errorMessage: __("Failed to update vendor visibility. Please try again."),
+      errorMessage: __("Failed to update vendor visibility"),
     }
   );
 }

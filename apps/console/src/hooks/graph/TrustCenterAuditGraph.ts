@@ -22,7 +22,7 @@ export function useTrustCenterAuditUpdate() {
     trustCenterAuditUpdateMutation,
     {
       successMessage: __("Audit visibility updated successfully."),
-      errorMessage: __("Failed to update audit visibility. Please try again."),
+      errorMessage: __("Failed to update audit visibility"),
     }
   );
 }

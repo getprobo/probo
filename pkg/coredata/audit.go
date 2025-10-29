@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -42,7 +43,23 @@ type (
 	}
 
 	Audits []*Audit
+
+	ErrAuditNotFound struct {
+		Identifier string
+	}
+
+	ErrAuditAlreadyExists struct {
+		message string
+	}
 )
+
+func (e ErrAuditNotFound) Error() string {
+	return fmt.Sprintf("audit not found: %q", e.Identifier)
+}
+
+func (e ErrAuditAlreadyExists) Error() string {
+	return e.message
+}
 
 func (a *Audit) CursorKey(field AuditOrderField) page.CursorKey {
 	switch field {
@@ -98,6 +115,10 @@ LIMIT 1;
 
 	audit, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Audit])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrAuditNotFound{Identifier: auditID.String()}
+		}
+
 		return fmt.Errorf("cannot collect audit: %w", err)
 	}
 
@@ -508,6 +529,10 @@ LIMIT 1;
 
 	audit, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Audit])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrAuditNotFound{Identifier: reportID.String()}
+		}
+
 		return fmt.Errorf("cannot collect audit: %w", err)
 	}
 

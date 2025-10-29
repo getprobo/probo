@@ -20,6 +20,7 @@ import (
 	"runtime/debug"
 
 	"github.com/getprobo/probo/pkg/auth"
+	"github.com/getprobo/probo/pkg/authz"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
@@ -32,29 +33,26 @@ func RecoverFunc(ctx context.Context, err any) error {
 
 	var errSAMLRequired auth.ErrSAMLAuthRequired
 	if errors.As(asError(err), &errSAMLRequired) {
-		return &gqlerror.Error{
-			Message: "Additional authentication required to access this organization",
-			Extensions: map[string]any{
-				"code":           "AUTHENTICATION_REQUIRED",
-				"requiresSaml":   true,
-				"redirectUrl":    errSAMLRequired.RedirectURL,
-				"samlConfigId":   errSAMLRequired.ConfigID.String(),
-				"organizationId": errSAMLRequired.OrganizationID.String(),
-			},
-		}
+		return AuthenticationRequired(map[string]any{
+			"requiresSaml":   true,
+			"redirectUrl":    errSAMLRequired.RedirectURL,
+			"samlConfigId":   errSAMLRequired.ConfigID.String(),
+			"organizationId": errSAMLRequired.OrganizationID.String(),
+		})
 	}
 
 	var errPasswordRequired auth.ErrPasswordAuthRequired
 	if errors.As(asError(err), &errPasswordRequired) {
-		return &gqlerror.Error{
-			Message: "Additional authentication required to access this organization",
-			Extensions: map[string]any{
-				"code":           "AUTHENTICATION_REQUIRED",
-				"requiresSaml":   false,
-				"redirectUrl":    errPasswordRequired.RedirectURL,
-				"organizationId": errPasswordRequired.OrganizationID.String(),
-			},
-		}
+		return AuthenticationRequired(map[string]any{
+			"requiresSaml":   false,
+			"redirectUrl":    errPasswordRequired.RedirectURL,
+			"organizationId": errPasswordRequired.OrganizationID.String(),
+		})
+	}
+
+	var tenantAccessErr *authz.TenantAccessError
+	if errTyped, ok := err.(error); ok && errors.As(errTyped, &tenantAccessErr) {
+		return Unauthorized()
 	}
 
 	logger := httpserver.LoggerFromContext(ctx)

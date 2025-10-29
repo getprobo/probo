@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -56,7 +57,23 @@ type (
 	RiskSnapshotter interface {
 		InsertRiskSnapshots(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error
 	}
+
+	ErrRiskNotFound struct {
+		Identifier string
+	}
+
+	ErrRiskAlreadyExists struct {
+		message string
+	}
 )
+
+func (e ErrRiskNotFound) Error() string {
+	return fmt.Sprintf("risk not found: %q", e.Identifier)
+}
+
+func (e ErrRiskAlreadyExists) Error() string {
+	return e.message
+}
 
 func (r *Risk) CursorKey(orderBy RiskOrderField) page.CursorKey {
 	switch orderBy {
@@ -374,6 +391,10 @@ LIMIT 1;
 
 	risk, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Risk])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrRiskNotFound{Identifier: riskID.String()}
+		}
+
 		return fmt.Errorf("cannot collect risk: %w", err)
 	}
 

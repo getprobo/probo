@@ -89,7 +89,7 @@ export default function UpdateVersionDialog({
       UpdateDocumentMutation,
       {
         successMessage: __("Document updated successfully."),
-        errorMessage: __("Failed to update document. Please try again."),
+        errorMessage: __("Failed to update document"),
       }
     );
   const { handleSubmit, register } = useFormWithSchema(versionSchema, {

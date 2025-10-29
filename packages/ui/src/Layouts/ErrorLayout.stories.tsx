@@ -12,6 +12,6 @@ type Story = StoryObj<typeof ErrorLayout>;
 export const Default: Story = {
     args: {
         title: "Something went wrong",
-        description: "An unexpected error occurred. Please try again later.",
+        description: "An unexpected error occurred",
     },
 };

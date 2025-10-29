@@ -69,13 +69,28 @@ export const taskUpdateMutation = graphql`
   }
 `;
 
-const schema = z.object({
-  name: z.string(),
+const createTaskSchema = z.object({
+  name: z.string().min(1),
   description: z.string(),
-  timeEstimate: z.string().nullable(),
-  assignedToId: z.string(),
-  measureId: z.string(),
-  deadline: z.string().optional(),
+  timeEstimate: z.string().optional().nullable(),
+  assignedToId: z.preprocess(
+    (val) => (val === "" || val == null ? undefined : val),
+    z.string({ required_error: "Assigned to is required" }).min(1, "Assigned to is required")
+  ),
+  measureId: z.preprocess(
+    (val) => (val === "" || val == null ? undefined : val),
+    z.string({ required_error: "Measure is required" }).min(1, "Measure is required")
+  ),
+  deadline: z.string().optional().nullable(),
+});
+
+const updateTaskSchema = z.object({
+  name: z.string().min(1),
+  description: z.string(),
+  timeEstimate: z.string().optional().nullable(),
+  assignedToId: z.string().optional(),
+  measureId: z.string().optional(),
+  deadline: z.string().optional().nullable(),
 });
 
 type Props = {
@@ -95,15 +110,17 @@ export default function TaskFormDialog(props: Props) {
   const [mutate] = task
     ? useMutationWithToasts(taskUpdateMutation, {
         successMessage: __("Task updated successfully."),
-        errorMessage: __("Failed to update task. Please try again."),
+        errorMessage: __("Failed to update task"),
       })
     : useMutationWithToasts(taskCreateMutation, {
         successMessage: __("Task created successfully."),
-        errorMessage: __("Failed to create task. Please try again."),
+        errorMessage: __("Failed to create task"),
       });
 
+  const isUpdating = !!task;
+
   const { control, handleSubmit, register, formState, reset } =
-    useFormWithSchema(schema, {
+    useFormWithSchema(isUpdating ? updateTaskSchema : createTaskSchema, {
       defaultValues: {
         name: task?.name ?? "",
         description: task?.description ?? "",
@@ -142,7 +159,7 @@ export default function TaskFormDialog(props: Props) {
           connections: [props.connection!],
         },
         onCompleted: (_response, errors) => {
-          if (!errors) {
+          if (!errors && data.measureId) {
             updateStoreCounter(relayEnv, data.measureId, "tasks(first:0)", 1);
           }
         },
@@ -151,7 +168,6 @@ export default function TaskFormDialog(props: Props) {
     }
     dialogRef.current?.close();
   });
-  const isUpdating = !!task;
   const showMeasure = !props.measureId && !isUpdating;
   const isCreating = !isUpdating;
 
@@ -217,9 +233,10 @@ export default function TaskFormDialog(props: Props) {
               <Controller
                 name="timeEstimate"
                 control={control}
-                render={({ field: { onChange, ...field } }) => (
+                render={({ field: { onChange, value, ...field } }) => (
                   <DurationPicker
                     {...field}
+                    value={value ?? null}
                     onValueChange={(value) => onChange(value)}
                   />
                 )}

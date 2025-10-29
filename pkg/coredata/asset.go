@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -42,7 +43,23 @@ type (
 	}
 
 	Assets []*Asset
+
+	ErrAssetNotFound struct {
+		Identifier string
+	}
+
+	ErrAssetAlreadyExists struct {
+		message string
+	}
 )
+
+func (e ErrAssetNotFound) Error() string {
+	return fmt.Sprintf("asset not found: %q", e.Identifier)
+}
+
+func (e ErrAssetAlreadyExists) Error() string {
+	return e.message
+}
 
 func (a *Asset) CursorKey(field AssetOrderField) page.CursorKey {
 	switch field {
@@ -94,6 +111,10 @@ LIMIT 1;
 
 	asset, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Asset])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrAssetNotFound{Identifier: assetID.String()}
+		}
+
 		return fmt.Errorf("cannot collect asset: %w", err)
 	}
 
@@ -140,6 +161,10 @@ LIMIT 1;
 
 	asset, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Asset])
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrAssetNotFound{Identifier: a.OwnerID.String()}
+		}
+
 		return fmt.Errorf("cannot collect asset: %w", err)
 	}
 

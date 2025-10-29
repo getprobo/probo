@@ -27,6 +27,7 @@ import { useOrganizationId } from "/hooks/useOrganizationId";
 import { useParams } from "react-router";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { Controller } from "react-hook-form";
+import { formatError, type GraphQLError } from "@probo/helpers";
 import z from "zod";
 import { validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
@@ -146,7 +147,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
     } catch (error) {
       toast({
         title: __("Error"),
-        description: __("Failed to update processing activity"),
+        description: formatError(__("Failed to update processing activity"), error as GraphQLError),
         variant: "error",
       });
     }

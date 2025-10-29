@@ -441,7 +441,7 @@ func validateTenantAccess(ctx context.Context, tenantID gid.TenantID) {
 	access, _ := ctx.Value(userTenantContextKey).(*userTenantAccess)
 
 	if access == nil {
-		panic(fmt.Errorf("tenant not found"))
+		panic(&authz.TenantAccessError{Message: "tenant not found"})
 	}
 
 	if !slices.Contains(access.tenantIDs, tenantID) {
@@ -451,6 +451,6 @@ func validateTenantAccess(ctx context.Context, tenantID gid.TenantID) {
 			}
 		}
 
-		panic(fmt.Errorf("access denied to tenant"))
+		panic(&authz.TenantAccessError{Message: "tenant not found"})
 	}
 }

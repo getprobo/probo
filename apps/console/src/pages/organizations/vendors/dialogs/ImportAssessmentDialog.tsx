@@ -52,7 +52,7 @@ export function ImportAssessmentDialog({ vendorId, children }: Props) {
     importAssessmentMutation,
     {
       successMessage: __("Vendor assessed successfully."),
-      errorMessage: __("Failed to assess vendor. Please try again."),
+      errorMessage: __("Failed to assess vendor"),
     }
   );
 

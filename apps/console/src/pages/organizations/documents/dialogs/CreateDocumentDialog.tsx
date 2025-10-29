@@ -67,7 +67,7 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
         connections: [connection!],
       },
       successMessage: __("Document created successfully."),
-      errorMessage: __("Failed to create document. Please try again."),
+      errorMessage: __("Failed to create document"),
       onSuccess: () => {
         dialogRef.current?.close();
         reset();

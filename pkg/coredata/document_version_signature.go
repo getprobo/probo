@@ -16,6 +16,7 @@ package coredata
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
 )
 
@@ -46,7 +48,23 @@ type (
 	}
 
 	DocumentVersionSignaturesWithPeople []*DocumentVersionSignatureWithPeople
+
+	ErrDocumentVersionSignatureNotFound struct {
+		Identifier string
+	}
+
+	ErrDocumentVersionSignatureAlreadyExists struct {
+		message string
+	}
 )
+
+func (e ErrDocumentVersionSignatureNotFound) Error() string {
+	return fmt.Sprintf("document version signature not found: %q", e.Identifier)
+}
+
+func (e ErrDocumentVersionSignatureAlreadyExists) Error() string {
+	return e.message
+}
 
 func (pvs DocumentVersionSignature) CursorKey(orderBy DocumentVersionSignatureOrderField) page.CursorKey {
 	switch orderBy {
@@ -191,6 +209,14 @@ INSERT INTO document_version_signatures (
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "policy_version_signatures_policy_version_id_signed_by_key" {
+				return &ErrDocumentVersionSignatureAlreadyExists{
+					message: fmt.Sprintf("document version signature with document_version_id %s and signed_by %s already exists", pvs.DocumentVersionID, pvs.SignedBy),
+				}
+			}
+		}
 		return fmt.Errorf("cannot insert document version signature: %w", err)
 	}
 
