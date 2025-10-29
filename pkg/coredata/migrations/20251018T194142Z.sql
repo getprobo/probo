@@ -142,7 +142,9 @@ CREATE TABLE auth_saml_relay_states (
     CONSTRAINT fk_auth_saml_relay_states_organization FOREIGN KEY (organization_id)
         REFERENCES organizations(id) ON DELETE CASCADE,
     CONSTRAINT fk_auth_saml_relay_states_saml_config FOREIGN KEY (saml_config_id)
-        REFERENCES auth_saml_configurations(id) ON DELETE CASCADE
+        REFERENCES auth_saml_configurations(id) ON DELETE CASCADE,
+    CONSTRAINT fk_auth_saml_relay_states_request FOREIGN KEY (request_id)
+        REFERENCES auth_saml_requests(id) ON DELETE CASCADE
 );
 
 -- Index for fast token lookup during callback
