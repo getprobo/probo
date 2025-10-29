@@ -33,6 +33,9 @@ For a complete setup with dependencies, you can use our `compose.prod.yml` Docke
 You can either provide environment variables directly in the docker-compose file or use a config file mounted as a volume.
 
 #### With Environment Variables
+
+You can find environment variable options in the [docker environment variables](./DOCKER_ENVIRONMENT_VARIABLES.md).
+
 ```yaml
 services:
   probo:
@@ -140,6 +143,9 @@ volumes:
   minio-data:
 ```
 #### With mounted Config File
+
+You can find an example configuration file [here](../cfg/dev.yaml) and modify it as needed.
+
 ```yaml
 services:
   probo:
