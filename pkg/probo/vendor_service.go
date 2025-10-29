@@ -583,7 +583,7 @@ func (s VendorService) Assess(
 ) (*coredata.Vendor, error) {
 	vendorInfo, err := s.svc.agent.AssessVendor(ctx, req.WebsiteURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to assess vendor info: %w", err)
+		return nil, fmt.Errorf("cannot assess vendor info: %w", err)
 	}
 
 	vendor := &coredata.Vendor{

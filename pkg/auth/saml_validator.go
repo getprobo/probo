@@ -36,7 +36,7 @@ func PreventReplayAttack(
 	var assertion coredata.SAMLAssertion
 	exists, err := assertion.CheckExists(ctx, conn, assertionID)
 	if err != nil {
-		return fmt.Errorf("failed to check assertion ID: %w", err)
+		return fmt.Errorf("cannot check assertion ID: %w", err)
 	}
 
 	if exists {
@@ -52,7 +52,7 @@ func PreventReplayAttack(
 	}
 
 	if err := assertion.Insert(ctx, conn, scope); err != nil {
-		return fmt.Errorf("failed to store assertion ID: %w", err)
+		return fmt.Errorf("cannot store assertion ID: %w", err)
 	}
 
 	return nil

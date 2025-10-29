@@ -592,56 +592,56 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 	case coredata.OrganizationEntityType:
 		organization, err := publicTrustService.Organizations.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("failed to get organization: %w", err))
+			panic(fmt.Errorf("cannot get organization: %w", err))
 		}
 		return types.NewOrganization(organization), nil
 
 	case coredata.DocumentEntityType:
 		document, err := publicTrustService.Documents.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("failed to get document: %w", err))
+			panic(fmt.Errorf("cannot get document: %w", err))
 		}
 		return types.NewDocument(document), nil
 
 	case coredata.FrameworkEntityType:
 		framework, err := publicTrustService.Frameworks.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("failed to get framework: %w", err))
+			panic(fmt.Errorf("cannot get framework: %w", err))
 		}
 		return types.NewFramework(framework), nil
 
 	case coredata.ReportEntityType:
 		report, err := publicTrustService.Reports.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("failed to get report: %w", err))
+			panic(fmt.Errorf("cannot get report: %w", err))
 		}
 		return types.NewReport(report), nil
 
 	case coredata.AuditEntityType:
 		audit, err := publicTrustService.Audits.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("failed to get audit: %w", err))
+			panic(fmt.Errorf("cannot get audit: %w", err))
 		}
 		return types.NewAudit(audit), nil
 
 	case coredata.VendorEntityType:
 		vendor, err := publicTrustService.Vendors.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("failed to get vendor: %w", err))
+			panic(fmt.Errorf("cannot get vendor: %w", err))
 		}
 		return types.NewVendor(vendor), nil
 
 	case coredata.TrustCenterEntityType:
 		trustCenter, file, err := publicTrustService.TrustCenters.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("failed to get trust center: %w", err))
+			panic(fmt.Errorf("cannot get trust center: %w", err))
 		}
 		return types.NewTrustCenter(trustCenter, file), nil
 
 	case coredata.TrustCenterReferenceEntityType:
 		reference, err := publicTrustService.TrustCenterReferences.Get(ctx, id)
 		if err != nil {
-			panic(fmt.Errorf("failed to get trust center reference: %w", err))
+			panic(fmt.Errorf("cannot get trust center reference: %w", err))
 		}
 		return types.NewTrustCenterReference(reference), nil
 

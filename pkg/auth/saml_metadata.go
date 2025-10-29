@@ -84,7 +84,7 @@ func GenerateServiceProviderMetadata(
 
 	xmlBytes, err := xml.MarshalIndent(metadata, "", "  ")
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal SP metadata to XML: %w", err)
+		return nil, fmt.Errorf("cannot marshal SP metadata to XML: %w", err)
 	}
 
 	return xmlBytes, nil
@@ -93,12 +93,12 @@ func GenerateServiceProviderMetadata(
 func ParseIdPCertificate(certPEM string) (*x509.Certificate, error) {
 	block, _ := pem.Decode([]byte(certPEM))
 	if block == nil {
-		return nil, fmt.Errorf("failed to decode PEM block from IdP certificate")
+		return nil, fmt.Errorf("cannot decode PEM block from IdP certificate")
 	}
 
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse X.509 certificate: %w", err)
+		return nil, fmt.Errorf("cannot parse X.509 certificate: %w", err)
 	}
 
 	return cert, nil
@@ -114,7 +114,7 @@ type IdPMetadata struct {
 func ParseIdPMetadata(metadataXML string) (*IdPMetadata, error) {
 	var entityDescriptor saml.EntityDescriptor
 	if err := xml.Unmarshal([]byte(metadataXML), &entityDescriptor); err != nil {
-		return nil, fmt.Errorf("failed to parse IdP metadata XML: %w", err)
+		return nil, fmt.Errorf("cannot parse IdP metadata XML: %w", err)
 	}
 
 	if len(entityDescriptor.IDPSSODescriptors) == 0 {
@@ -144,7 +144,7 @@ func ParseIdPMetadata(metadataXML string) (*IdPMetadata, error) {
 				certData := keyDescriptor.KeyInfo.X509Data.X509Certificates[0].Data
 				certDER, err := base64.StdEncoding.DecodeString(certData)
 				if err != nil {
-					return nil, fmt.Errorf("failed to decode certificate: %w", err)
+					return nil, fmt.Errorf("cannot decode certificate: %w", err)
 				}
 				certPEM = string(pem.EncodeToMemory(&pem.Block{
 					Type:  "CERTIFICATE",
@@ -168,13 +168,13 @@ func ParseIdPMetadata(metadataXML string) (*IdPMetadata, error) {
 func GenerateSelfSignedCertificate(entityID string) (*x509.Certificate, *rsa.PrivateKey, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate RSA private key: %w", err)
+		return nil, nil, fmt.Errorf("cannot generate RSA private key: %w", err)
 	}
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate serial number: %w", err)
+		return nil, nil, fmt.Errorf("cannot generate serial number: %w", err)
 	}
 
 	template := x509.Certificate{
@@ -192,12 +192,12 @@ func GenerateSelfSignedCertificate(entityID string) (*x509.Certificate, *rsa.Pri
 
 	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create certificate: %w", err)
+		return nil, nil, fmt.Errorf("cannot create certificate: %w", err)
 	}
 
 	cert, err := x509.ParseCertificate(certDER)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to parse created certificate: %w", err)
+		return nil, nil, fmt.Errorf("cannot parse created certificate: %w", err)
 	}
 
 	return cert, privateKey, nil

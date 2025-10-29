@@ -57,14 +57,14 @@ func AddConfidentialWithTimestamp(pdfData []byte, email string) ([]byte, error) 
 
 	textImage, err := generateTextImage(watermarkLines)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate watermark image: %w", err)
+		return nil, fmt.Errorf("cannot generate watermark image: %w", err)
 	}
 
 	// Apply rotation before pdfcpu scaling instead of using pdfcpu's rotation API
 	// to ensure the scaled watermark covers the full page properly
 	imageData, err := rotateImage(textImage, watermarkRotationDegree)
 	if err != nil {
-		return nil, fmt.Errorf("failed to rotate image: %w", err)
+		return nil, fmt.Errorf("cannot rotate image: %w", err)
 	}
 
 	imageReader := bytes.NewReader(imageData)
@@ -75,13 +75,13 @@ func AddConfidentialWithTimestamp(pdfData []byte, email string) ([]byte, error) 
 	)
 	watermarkConf, err := api.ImageWatermarkForReader(imageReader, desc, true, false, types.POINTS)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create watermark from reader: %w", err)
+		return nil, fmt.Errorf("cannot create watermark from reader: %w", err)
 	}
 
 	var buf bytes.Buffer
 	err = api.AddWatermarks(reader, &buf, nil, watermarkConf, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to add watermark: %w", err)
+		return nil, fmt.Errorf("cannot add watermark: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -104,7 +104,7 @@ func generateTextImage(lines []string) (*image.RGBA, error) {
 
 	ttf, err := opentype.Parse(goregular.TTF)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse font: %w", err)
+		return nil, fmt.Errorf("cannot parse font: %w", err)
 	}
 
 	face, err := opentype.NewFace(ttf, &opentype.FaceOptions{
@@ -113,7 +113,7 @@ func generateTextImage(lines []string) (*image.RGBA, error) {
 		Hinting: font.HintingFull,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create font face: %w", err)
+		return nil, fmt.Errorf("cannot create font face: %w", err)
 	}
 
 	d := &font.Drawer{
@@ -176,7 +176,7 @@ func rotateImage(src image.Image, angleDegrees float64) ([]byte, error) {
 
 	var buf bytes.Buffer
 	if err := png.Encode(&buf, dst); err != nil {
-		return nil, fmt.Errorf("failed to encode rotated image: %w", err)
+		return nil, fmt.Errorf("cannot encode rotated image: %w", err)
 	}
 
 	return buf.Bytes(), nil

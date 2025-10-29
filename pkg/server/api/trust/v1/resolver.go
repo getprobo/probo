@@ -266,7 +266,7 @@ func updateSessionIfNeeded(ctx context.Context, authSvc *auth.Service) {
 	session := SessionFromContext(ctx)
 	if session != nil {
 		if _, err := authSvc.UpdateSession(ctx, session.ID); err != nil {
-			panic(fmt.Errorf("failed to update session: %w", err))
+			panic(fmt.Errorf("cannot update session: %w", err))
 		}
 	}
 }

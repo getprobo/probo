@@ -127,7 +127,7 @@ func ListInvitationsHandler(authSvc *authsvc.Service, authzSvc *authz.Service, a
 				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("user not found"))
 			},
 			OnTenantError: func(err error) {
-				panic(fmt.Errorf("failed to list tenants for user: %w", err))
+				panic(fmt.Errorf("cannot list tenants for user: %w", err))
 			},
 		}
 
@@ -152,7 +152,7 @@ func ListInvitationsHandler(authSvc *authsvc.Service, authzSvc *authz.Service, a
 
 		invitationsPage, err := authzSvc.GetUserInvitations(ctx, authResult.User.EmailAddress, cursor, invitationFilter)
 		if err != nil {
-			panic(fmt.Errorf("failed to list invitations for user: %w", err))
+			panic(fmt.Errorf("cannot list invitations for user: %w", err))
 		}
 
 		// Build response
@@ -195,7 +195,7 @@ func ListInvitationsHandler(authSvc *authsvc.Service, authzSvc *authz.Service, a
 			return nil
 		})
 		if err != nil {
-			panic(fmt.Errorf("failed to load organization details: %w", err))
+			panic(fmt.Errorf("cannot load organization details: %w", err))
 		}
 
 		httpserver.RenderJSON(w, http.StatusOK, response)

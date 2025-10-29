@@ -62,7 +62,7 @@ func AcceptInvitationHandler(authSvc *authsvc.Service, authzSvc *authz.Service, 
 				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("user not found"))
 			},
 			OnTenantError: func(err error) {
-				panic(fmt.Errorf("failed to list tenants for user: %w", err))
+				panic(fmt.Errorf("cannot list tenants for user: %w", err))
 			},
 		}
 

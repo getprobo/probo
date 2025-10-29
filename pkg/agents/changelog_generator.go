@@ -60,7 +60,7 @@ func (a *Agent) GenerateChangelog(ctx context.Context, oldContent string, newCon
 		Temperature: param.NewOpt(a.cfg.Temperature),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse vendor info: %w", err)
+		return nil, fmt.Errorf("cannot parse vendor info: %w", err)
 	}
 
 	if len(chatCompletion.Choices) == 0 {

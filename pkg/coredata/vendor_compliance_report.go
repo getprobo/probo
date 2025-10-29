@@ -219,13 +219,13 @@ RETURNING report_file_id
 	err := conn.QueryRow(ctx, q, args).Scan(&vcrFileId)
 
 	if err != nil {
-		return fmt.Errorf("failed to delete vendor compliance report: %w", err)
+		return fmt.Errorf("cannot delete vendor compliance report: %w", err)
 	}
 
 	if vcrFileId != nil {
 		file := &File{ID: *vcrFileId}
 		if err = file.SoftDelete(ctx, conn, scope); err != nil {
-			return fmt.Errorf("failed to soft delete vendor compliance file: %w", err)
+			return fmt.Errorf("cannot soft delete vendor compliance file: %w", err)
 		}
 	}
 	return nil

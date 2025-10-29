@@ -113,7 +113,7 @@ func ListOrganizationsHandler(authSvc *authsvc.Service, authzSvc *authz.Service,
 				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("user not found"))
 			},
 			OnTenantError: func(err error) {
-				panic(fmt.Errorf("failed to list tenants for user: %w", err))
+				panic(fmt.Errorf("cannot list tenants for user: %w", err))
 			},
 		}
 
@@ -126,7 +126,7 @@ func ListOrganizationsHandler(authSvc *authsvc.Service, authzSvc *authz.Service,
 		// Get all organizations for the user (without filtering by authentication state)
 		organizations, err := authzSvc.GetAllUserOrganizations(ctx, authResult.User.ID)
 		if err != nil {
-			panic(fmt.Errorf("failed to list organizations for user: %w", err))
+			panic(fmt.Errorf("cannot list organizations for user: %w", err))
 		}
 
 		// Build response with authentication requirements for each organization

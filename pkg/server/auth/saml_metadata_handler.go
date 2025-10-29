@@ -27,7 +27,7 @@ func SAMLMetadataHandler(samlSvc *authsvc.SAMLService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		metadataXML, err := samlSvc.GenerateMetadata()
 		if err != nil {
-			http.Error(w, fmt.Sprintf("failed to generate metadata: %v", err), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("cannot generate metadata: %v", err), http.StatusInternalServerError)
 			return
 		}
 

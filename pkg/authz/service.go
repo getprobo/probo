@@ -98,7 +98,7 @@ func (s *Service) GetAllUserOrganizations(
 	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
 		var organizationList coredata.Organizations
 		if err := organizationList.LoadAllByUserID(ctx, conn, userID); err != nil {
-			return fmt.Errorf("failed to load user organizations: %w", err)
+			return fmt.Errorf("cannot load user organizations: %w", err)
 		}
 
 		organizations = organizationList
@@ -120,7 +120,7 @@ func (s *Service) GetUserOrganizations(
 
 	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
 		if err := organizations.LoadByUserID(ctx, conn, userID, cursor); err != nil {
-			return fmt.Errorf("failed to load user organizations: %w", err)
+			return fmt.Errorf("cannot load user organizations: %w", err)
 		}
 		return nil
 	})
@@ -179,12 +179,12 @@ func (s *Service) AcceptInvitation(
 			}
 
 			if err := membership.Create(ctx, tx, scope); err != nil {
-				return fmt.Errorf("failed to add user to organization: %w", err)
+				return fmt.Errorf("cannot add user to organization: %w", err)
 			}
 
 			invitation.AcceptedAt = &now
 			if err := invitation.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("failed to mark invitation as accepted: %w", err)
+				return fmt.Errorf("cannot mark invitation as accepted: %w", err)
 			}
 
 			return nil
@@ -243,12 +243,12 @@ func (s *Service) AcceptInvitationByID(
 			}
 
 			if err := membership.Create(ctx, tx, scope); err != nil {
-				return fmt.Errorf("failed to add user to organization: %w", err)
+				return fmt.Errorf("cannot add user to organization: %w", err)
 			}
 
 			invitation.AcceptedAt = &now
 			if err := invitation.Update(ctx, tx, scope); err != nil {
-				return fmt.Errorf("failed to mark invitation as accepted: %w", err)
+				return fmt.Errorf("cannot mark invitation as accepted: %w", err)
 			}
 
 			acceptedInvitation = invitation
@@ -295,7 +295,7 @@ func (s *Service) EnsureSAMLMembership(
 				}
 
 				if err := membership.Create(ctx, tx, scope); err != nil {
-					return fmt.Errorf("failed to create membership: %w", err)
+					return fmt.Errorf("cannot create membership: %w", err)
 				}
 
 				return nil
@@ -307,7 +307,7 @@ func (s *Service) EnsureSAMLMembership(
 				membership.UpdatedAt = now
 
 				if err := membership.Update(ctx, tx, scope); err != nil {
-					return fmt.Errorf("failed to update membership role: %w", err)
+					return fmt.Errorf("cannot update membership role: %w", err)
 				}
 			}
 
@@ -330,7 +330,7 @@ func (s *Service) GetUserInvitations(
 		ctx,
 		func(conn pg.Conn) error {
 			if err := invitations.LoadByEmail(ctx, conn, email, cursor, filter); err != nil {
-				return fmt.Errorf("failed to load invitations: %w", err)
+				return fmt.Errorf("cannot load invitations: %w", err)
 			}
 
 			return nil
@@ -379,11 +379,11 @@ func (s *Service) GetOrganizationByInvitationID(
 		func(conn pg.Conn) error {
 			var invitation coredata.Invitation
 			if err := invitation.LoadByID(ctx, conn, scope, invitationID); err != nil {
-				return fmt.Errorf("failed to load invitation: %w", err)
+				return fmt.Errorf("cannot load invitation: %w", err)
 			}
 
 			if err := organization.LoadByID(ctx, conn, scope, invitation.OrganizationID); err != nil {
-				return fmt.Errorf("failed to load organization: %w", err)
+				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
 			return nil
@@ -422,7 +422,7 @@ func (s *Service) AddUserToOrganization(
 		ctx,
 		func(conn pg.Conn) error {
 			if err := membership.Create(ctx, conn, scope); err != nil {
-				return fmt.Errorf("failed to add user to organization: %w", err)
+				return fmt.Errorf("cannot add user to organization: %w", err)
 			}
 			return nil
 		},
@@ -441,7 +441,7 @@ func (s *TenantAuthzService) GetInvitationsByOrganizationID(
 		ctx,
 		func(conn pg.Conn) error {
 			if err := invitations.LoadByOrganizationID(ctx, conn, s.scope, orgID, cursor, filter); err != nil {
-				return fmt.Errorf("failed to load organization invitations: %w", err)
+				return fmt.Errorf("cannot load organization invitations: %w", err)
 			}
 
 			return nil
@@ -470,7 +470,7 @@ func (s *TenantAuthzService) CountOrganizationInvitations(
 		},
 	)
 	if err != nil {
-		return 0, fmt.Errorf("failed to count invitations: %w", err)
+		return 0, fmt.Errorf("cannot count invitations: %w", err)
 	}
 
 	return count, nil
@@ -485,7 +485,7 @@ func (s *TenantAuthzService) GetInvitationByID(
 		ctx,
 		func(conn pg.Conn) error {
 			if err := invitation.LoadByID(ctx, conn, s.scope, invitationID); err != nil {
-				return fmt.Errorf("failed to load invitation: %w", err)
+				return fmt.Errorf("cannot load invitation: %w", err)
 			}
 			return nil
 		},
@@ -505,11 +505,11 @@ func (s *TenantAuthzService) DeleteInvitation(
 		func(conn pg.Conn) error {
 			invitation := &coredata.Invitation{}
 			if err := invitation.LoadByID(ctx, conn, s.scope, invitationID); err != nil {
-				return fmt.Errorf("failed to load invitation: %w", err)
+				return fmt.Errorf("cannot load invitation: %w", err)
 			}
 
 			if err := invitation.Delete(ctx, conn, s.scope); err != nil {
-				return fmt.Errorf("failed to delete invitation: %w", err)
+				return fmt.Errorf("cannot delete invitation: %w", err)
 			}
 
 			return nil
@@ -528,7 +528,7 @@ func (s *TenantAuthzService) GetMembershipsByOrganizationID(
 		ctx,
 		func(conn pg.Conn) error {
 			if err := memberships.LoadByOrganizationID(ctx, conn, s.scope, orgID, cursor); err != nil {
-				return fmt.Errorf("failed to load organization memberships: %w", err)
+				return fmt.Errorf("cannot load organization memberships: %w", err)
 			}
 
 			return nil
@@ -556,7 +556,7 @@ func (s *TenantAuthzService) CountOrganizationMemberships(
 		},
 	)
 	if err != nil {
-		return 0, fmt.Errorf("failed to count memberships: %w", err)
+		return 0, fmt.Errorf("cannot count memberships: %w", err)
 	}
 
 	return count, nil
@@ -577,7 +577,7 @@ func (s *TenantAuthzService) CountOrganizationUsers(
 		},
 	)
 	if err != nil {
-		return 0, fmt.Errorf("failed to count users: %w", err)
+		return 0, fmt.Errorf("cannot count users: %w", err)
 	}
 
 	return count, nil
@@ -599,7 +599,7 @@ func (s *TenantAuthzService) CanUserAccessOrganization(
 				if _, ok := err.(coredata.ErrMembershipNotFound); ok {
 					return nil // Not an error, just no access
 				}
-				return fmt.Errorf("failed to check organization access: %w", err)
+				return fmt.Errorf("cannot check organization access: %w", err)
 			}
 			haveAccess = true
 			return nil
@@ -624,7 +624,7 @@ func (s *TenantAuthzService) GetUserRoleInOrganization(
 		ctx,
 		func(conn pg.Conn) error {
 			if err := membership.LoadByUserAndOrg(ctx, conn, s.scope, userID, orgID); err != nil {
-				return fmt.Errorf("failed to get user role: %w", err)
+				return fmt.Errorf("cannot get user role: %w", err)
 			}
 			return nil
 		},
@@ -648,7 +648,7 @@ func (s *TenantAuthzService) RemoveMemberFromOrganization(
 		ctx,
 		func(tx pg.Conn) error {
 			if err := membership.LoadByID(ctx, tx, s.scope, memberID); err != nil {
-				return fmt.Errorf("failed to load membership: %w", err)
+				return fmt.Errorf("cannot load membership: %w", err)
 			}
 
 			if membership.OrganizationID != orgID {
@@ -656,7 +656,7 @@ func (s *TenantAuthzService) RemoveMemberFromOrganization(
 			}
 
 			if err := membership.Delete(ctx, tx, s.scope); err != nil {
-				return fmt.Errorf("failed to delete membership: %w", err)
+				return fmt.Errorf("cannot delete membership: %w", err)
 			}
 
 			return nil
@@ -675,14 +675,14 @@ func (s *TenantAuthzService) UpdateUserRole(
 		func(tx pg.Conn) error {
 			membership := &coredata.Membership{}
 			if err := membership.LoadByUserAndOrg(ctx, tx, s.scope, userID, orgID); err != nil {
-				return fmt.Errorf("failed to find membership: %w", err)
+				return fmt.Errorf("cannot find membership: %w", err)
 			}
 
 			membership.Role = newRole
 			membership.UpdatedAt = time.Now()
 
 			if err := membership.Update(ctx, tx, s.scope); err != nil {
-				return fmt.Errorf("failed to update user role: %w", err)
+				return fmt.Errorf("cannot update user role: %w", err)
 			}
 
 			return nil
@@ -707,13 +707,13 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 			if errors.As(err, &userNotFound) {
 				userExists = false
 			} else {
-				return fmt.Errorf("failed to check if user exists: %w", err)
+				return fmt.Errorf("cannot check if user exists: %w", err)
 			}
 		}
 
 		organization := &coredata.Organization{}
 		if err := organization.LoadByID(ctx, tx, s.scope, organizationID); err != nil {
-			return fmt.Errorf("failed to load organization: %w", err)
+			return fmt.Errorf("cannot load organization: %w", err)
 		}
 
 		invitationID := gid.New(s.scope.GetTenantID(), coredata.InvitationEntityType)
@@ -752,7 +752,7 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 				invitationData,
 			)
 			if err != nil {
-				return fmt.Errorf("failed to generate invitation token: %w", err)
+				return fmt.Errorf("cannot generate invitation token: %w", err)
 			}
 
 			invitationURL = fmt.Sprintf("https://%s/auth/signup-from-invitation?token=%s&fullName=%s", s.hostname, invitationToken, url.QueryEscape(fullName))
@@ -765,7 +765,7 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 			invitationURL,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to render invitation email: %w", err)
+			return fmt.Errorf("cannot render invitation email: %w", err)
 		}
 
 		email := coredata.NewEmail(

@@ -75,7 +75,7 @@ func DefaultConfig(name, secret string) Config {
 func Set(w http.ResponseWriter, config Config, value string) error {
 	signedValue, err := Sign(value, config.Secret)
 	if err != nil {
-		return fmt.Errorf("failed to sign cookie value: %w", err)
+		return fmt.Errorf("cannot sign cookie value: %w", err)
 	}
 
 	cookie := &http.Cookie{
@@ -153,7 +153,7 @@ func Verify(signedValue, secret string) (string, error) {
 
 	expectedSignedValue, err := Sign(value, secret)
 	if err != nil {
-		return "", fmt.Errorf("failed to sign value: %w", err)
+		return "", fmt.Errorf("cannot sign value: %w", err)
 	}
 
 	if signedValue != expectedSignedValue {

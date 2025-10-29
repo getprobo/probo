@@ -154,7 +154,7 @@ func (s *Selector) rebuildCacheEntry(ctx context.Context, conn pg.Conn, domain s
 	}
 
 	if err := cache.Upsert(ctx, conn); err != nil {
-		return fmt.Errorf("failed to insert cache entry: %w", err)
+		return fmt.Errorf("cannot insert cache entry: %w", err)
 	}
 
 	return nil

@@ -91,7 +91,7 @@ func (c *Client) CreateMessage(ctx context.Context, accessToken string, channelI
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, fmt.Errorf("cannot read response body: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -101,7 +101,7 @@ func (c *Client) CreateMessage(ctx context.Context, accessToken string, channelI
 	var slackResponse SlackResponse
 
 	if err := json.Unmarshal(responseBody, &slackResponse); err != nil {
-		return nil, fmt.Errorf("failed to parse Slack response: %w (body: %s)", err, string(responseBody))
+		return nil, fmt.Errorf("cannot parse Slack response: %w (body: %s)", err, string(responseBody))
 	}
 
 	if !slackResponse.OK {
@@ -142,7 +142,7 @@ func (c *Client) UpdateInteractiveMessage(ctx context.Context, responseURL strin
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+		return fmt.Errorf("cannot read response body: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -197,7 +197,7 @@ func (c *Client) UpdateMessage(ctx context.Context, accessToken string, channelI
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+		return fmt.Errorf("cannot read response body: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -206,7 +206,7 @@ func (c *Client) UpdateMessage(ctx context.Context, accessToken string, channelI
 
 	var slackResponse SlackResponse
 	if err := json.NewDecoder(bytes.NewReader(responseBody)).Decode(&slackResponse); err != nil {
-		return fmt.Errorf("failed to parse Slack response: %w (body: %s)", err, string(responseBody))
+		return fmt.Errorf("cannot parse Slack response: %w (body: %s)", err, string(responseBody))
 	}
 
 	if !slackResponse.OK {
@@ -242,7 +242,7 @@ func (c *Client) JoinChannel(ctx context.Context, accessToken string, channelID 
 
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response body: %w", err)
+		return fmt.Errorf("cannot read response body: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -252,7 +252,7 @@ func (c *Client) JoinChannel(ctx context.Context, accessToken string, channelID 
 	var slackResponse SlackJoinResponse
 
 	if err := json.Unmarshal(responseBody, &slackResponse); err != nil {
-		return fmt.Errorf("failed to parse Slack response: %w (body: %s)", err, string(responseBody))
+		return fmt.Errorf("cannot parse Slack response: %w (body: %s)", err, string(responseBody))
 	}
 
 	if !slackResponse.OK {

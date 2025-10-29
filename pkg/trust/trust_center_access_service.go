@@ -436,7 +436,7 @@ func (s *TrustCenterAccessService) AcceptByIDs(
 			}
 
 			if err := s.sendAccessEmail(ctx, tx, access); err != nil {
-				return fmt.Errorf("failed to send access email: %w", err)
+				return fmt.Errorf("cannot send access email: %w", err)
 			}
 		}
 

@@ -189,7 +189,7 @@ func (s *SlackMessageService) UpdateSlackAccessMessage(
 		}
 
 		if err := s.slackClient.UpdateInteractiveMessage(ctx, responseURL, updatedBody); err != nil {
-			return fmt.Errorf("failed to update Slack message: %w", err)
+			return fmt.Errorf("cannot update Slack message: %w", err)
 		}
 
 		return nil
@@ -437,12 +437,12 @@ func (s *SlackMessageService) buildAccessRequestMessage(
 
 	var buf bytes.Buffer
 	if err := accessRequestTemplate.Execute(&buf, templateData); err != nil {
-		return nil, fmt.Errorf("failed to execute template: %w", err)
+		return nil, fmt.Errorf("cannot execute template: %w", err)
 	}
 
 	var body map[string]any
 	if err := json.NewDecoder(&buf).Decode(&body); err != nil {
-		return nil, fmt.Errorf("failed to parse template JSON: %w", err)
+		return nil, fmt.Errorf("cannot parse template JSON: %w", err)
 	}
 
 	return body, nil

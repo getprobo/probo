@@ -214,7 +214,7 @@ func (p *Provisioner) provisionDomainCertificate(
 		if err != nil {
 			p.logger.ErrorCtx(
 				ctx,
-				"failed to get HTTP challenge",
+				"cannot get HTTP challenge",
 				log.String("domain", domain.Domain),
 				log.Error(err),
 			)
@@ -233,7 +233,7 @@ func (p *Provisioner) provisionDomainCertificate(
 		fullDomain.SSLStatus = coredata.CustomDomainSSLStatusProvisioning
 
 		if err := fullDomain.Update(ctx, conn, coredata.NewNoScope(), p.encryptionKey); err != nil {
-			return fmt.Errorf("failed to update domain with challenge: %w", err)
+			return fmt.Errorf("cannot update domain with challenge: %w", err)
 		}
 
 		p.logger.InfoCtx(

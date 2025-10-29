@@ -187,14 +187,14 @@ func (s *Sender) sendMessage(ctx context.Context, tx pg.Conn, message *coredata.
 
 	if message.Type == coredata.SlackMessageTypeWelcome {
 		if err := client.JoinChannel(ctx, slackConn.AccessToken, slackConn.Settings.ChannelID); err != nil {
-			s.logger.ErrorCtx(ctx, "failed to join Slack channel", log.Error(err))
+			s.logger.ErrorCtx(ctx, "cannot join Slack channel", log.Error(err))
 		}
 	}
 
 	slackResp, err := client.CreateMessage(ctx, slackConn.AccessToken, slackConn.Settings.ChannelID, message.Body)
 	if err != nil {
-		s.logger.ErrorCtx(ctx, "failed to post message to Slack", log.Error(err))
-		return nil, nil, fmt.Errorf("failed to post message to Slack: %w", err)
+		s.logger.ErrorCtx(ctx, "cannot post message to Slack", log.Error(err))
+		return nil, nil, fmt.Errorf("cannot post message to Slack: %w", err)
 	}
 
 	return &slackResp.Channel, &slackResp.TS, nil
@@ -309,8 +309,8 @@ func (s *Sender) updateMessage(ctx context.Context, tx pg.Conn, updateMessage *c
 	client := NewClient(s.logger)
 
 	if err := client.UpdateMessage(ctx, slackConn.AccessToken, *updateMessage.ChannelID, *updateMessage.MessageTS, updateMessage.Body); err != nil {
-		s.logger.ErrorCtx(ctx, "failed to update message on Slack", log.Error(err))
-		return fmt.Errorf("failed to update message on Slack: %w", err)
+		s.logger.ErrorCtx(ctx, "cannot update message on Slack", log.Error(err))
+		return fmt.Errorf("cannot update message on Slack: %w", err)
 	}
 
 	return nil

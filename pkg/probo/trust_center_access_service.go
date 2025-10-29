@@ -319,9 +319,15 @@ func (s TrustCenterAccessService) Update(
 				return fmt.Errorf("cannot upsert document accesses: %w", err)
 			}
 
+			if req.ReportIDs != nil {
+				if err := coredata.ActivateByReportIDs(ctx, tx, s.svc.scope, access.ID, req.ReportIDs, now); err != nil {
+					return fmt.Errorf("cannot activate report accesses: %w", err)
+				}
+			}
+
 			if shouldSendEmail {
 				if err := s.sendAccessEmail(ctx, tx, access); err != nil {
-					return fmt.Errorf("failed to send access email: %w", err)
+					return fmt.Errorf("cannot send access email: %w", err)
 				}
 			}
 

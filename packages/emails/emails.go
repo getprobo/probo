@@ -174,13 +174,13 @@ func RenderTrustCenterAccess(hostname, fullName, organizationName, accessUrl str
 func renderEmail(textTemplate *texttemplate.Template, htmlTemplate *htmltemplate.Template, data any) (textBody string, htmlBody *string, err error) {
 	var textBuf bytes.Buffer
 	if err := textTemplate.Execute(&textBuf, data); err != nil {
-		return "", nil, fmt.Errorf("failed to execute text template: %w", err)
+		return "", nil, fmt.Errorf("cannot execute text template: %w", err)
 	}
 	textBody = textBuf.String()
 
 	var htmlBuf bytes.Buffer
 	if err := htmlTemplate.Execute(&htmlBuf, data); err != nil {
-		return "", nil, fmt.Errorf("failed to execute html template: %w", err)
+		return "", nil, fmt.Errorf("cannot execute html template: %w", err)
 	}
 	htmlBodyStr := htmlBuf.String()
 	htmlBody = &htmlBodyStr

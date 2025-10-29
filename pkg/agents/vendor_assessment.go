@@ -133,7 +133,7 @@ func (a *Agent) AssessVendor(ctx context.Context, websiteURL string) (*vendorInf
 		Temperature: param.NewOpt(a.cfg.Temperature),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse vendor info: %w", err)
+		return nil, fmt.Errorf("cannot parse vendor info: %w", err)
 	}
 
 	if len(chatCompletion.Choices) == 0 {
@@ -143,7 +143,7 @@ func (a *Agent) AssessVendor(ctx context.Context, websiteURL string) (*vendorInf
 	var vendorInfo vendorInfo
 	err = json.Unmarshal([]byte(chatCompletion.Choices[0].Message.Content), &vendorInfo)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse vendor info: %w", err)
+		return nil, fmt.Errorf("cannot parse vendor info: %w", err)
 	}
 
 	return &vendorInfo, nil

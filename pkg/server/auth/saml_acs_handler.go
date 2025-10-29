@@ -44,8 +44,8 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 		ctx := r.Context()
 
 		if err := r.ParseForm(); err != nil {
-			logger.ErrorCtx(ctx, "failed to parse form", log.Error(err))
-			http.Error(w, "failed to parse form", http.StatusBadRequest)
+			logger.ErrorCtx(ctx, "cannot parse form", log.Error(err))
+			http.Error(w, "cannot parse form", http.StatusBadRequest)
 			return
 		}
 
@@ -71,14 +71,14 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 		user, err := authSvc.CreateOrGetSAMLUser(ctx, userInfo.Email, userInfo.FullName, userInfo.SAMLSubject)
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot create or get SAML user", log.Error(err), log.String("email", userInfo.Email))
-			http.Error(w, "failed to create user", http.StatusInternalServerError)
+			http.Error(w, "cannot create user", http.StatusInternalServerError)
 			return
 		}
 
 		err = authzSvc.EnsureSAMLMembership(ctx, userInfo.TenantID, user.ID, userInfo.OrganizationID, userInfo.Role)
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot ensure membership", log.Error(err), log.String("user_id", user.ID.String()), log.String("org_id", userInfo.OrganizationID.String()))
-			http.Error(w, "failed to create membership", http.StatusInternalServerError)
+			http.Error(w, "cannot create membership", http.StatusInternalServerError)
 			return
 		}
 
@@ -93,7 +93,7 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 			session, err = authSvc.CreateSessionForUser(ctx, user.ID, authCfg.SessionDuration)
 			if err != nil {
 				logger.ErrorCtx(ctx, "cannot create session", log.Error(err), log.String("user_id", user.ID.String()))
-				http.Error(w, "failed to create session", http.StatusInternalServerError)
+				http.Error(w, "cannot create session", http.StatusInternalServerError)
 				return
 			}
 		}
@@ -110,7 +110,7 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 		err = authSvc.UpdateSessionData(ctx, session.ID, session.Data)
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot update session data", log.Error(err), log.String("session_id", session.ID.String()))
-			http.Error(w, "failed to update session", http.StatusInternalServerError)
+			http.Error(w, "cannot update session", http.StatusInternalServerError)
 			return
 		}
 

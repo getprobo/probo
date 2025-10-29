@@ -316,7 +316,7 @@ func (impl *Implm) Run(
 	if impl.cfg.CustomDomains.ACME.AccountKey != "" {
 		accountKey, err = pem.DecodePrivateKey([]byte(impl.cfg.CustomDomains.ACME.AccountKey))
 		if err != nil {
-			return fmt.Errorf("failed to decode ACME account key: %w", err)
+			return fmt.Errorf("cannot decode ACME account key: %w", err)
 		}
 		l.Info("using configured ACME account key")
 	}
@@ -325,7 +325,7 @@ func (impl *Implm) Run(
 	if impl.cfg.CustomDomains.ACME.RootCA != "" {
 		rootCAs = x509.NewCertPool()
 		if !rootCAs.AppendCertsFromPEM([]byte(impl.cfg.CustomDomains.ACME.RootCA)) {
-			return fmt.Errorf("failed to parse ACME root CA certificate")
+			return fmt.Errorf("cannot parse ACME root CA certificate")
 		}
 	}
 
@@ -338,7 +338,7 @@ func (impl *Implm) Run(
 		l,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to initialize ACME service: %w", err)
+		return fmt.Errorf("cannot initialize ACME service: %w", err)
 	}
 
 	proboService, err := probo.NewService(

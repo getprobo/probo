@@ -172,7 +172,7 @@ func (s DocumentService) GenerateChangelog(
 	if changelog == nil {
 		changelog, err = s.svc.agent.GenerateChangelog(ctx, publishedVersion.Content, draftVersion.Content)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate changelog: %w", err)
+			return nil, fmt.Errorf("cannot generate changelog: %w", err)
 		}
 	}
 

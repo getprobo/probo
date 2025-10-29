@@ -202,7 +202,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			reportIDs,
 			fileIDs,
 		); err != nil {
-			logger.ErrorCtx(ctx, "failed to grant access", log.Error(err))
+			logger.ErrorCtx(ctx, "cannot grant access", log.Error(err))
 			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
 			return
 		}
@@ -213,7 +213,7 @@ func slackHandler(trustSvc *trust.Service, slackSigningSecret string, logger *lo
 			slackPayload.ResponseURL,
 			requesterEmail,
 		); err != nil {
-			logger.ErrorCtx(ctx, "failed to update Slack message", log.Error(err))
+			logger.ErrorCtx(ctx, "cannot update Slack message", log.Error(err))
 			httpserver.RenderJSON(w, http.StatusInternalServerError, SlackInteractiveResponse{Success: false, Message: "internal server error"})
 			return
 		}

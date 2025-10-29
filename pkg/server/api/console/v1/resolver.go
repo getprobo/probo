@@ -157,7 +157,7 @@ func NewMux(
 			// Get the people to get their email for watermark
 			people, err := svc.Peoples.Get(r.Context(), data.Data.PeopleID)
 			if err != nil {
-				http.Error(w, "failed to get user", http.StatusInternalServerError)
+				http.Error(w, "cannot get user", http.StatusInternalServerError)
 				return
 			}
 
@@ -174,7 +174,7 @@ func NewMux(
 
 			uuid, err := uuid.NewV7()
 			if err != nil {
-				http.Error(w, "failed to generate uuid", http.StatusInternalServerError)
+				http.Error(w, "cannot generate uuid", http.StatusInternalServerError)
 				return
 			}
 
@@ -227,7 +227,7 @@ func NewMux(
 
 		organizationID, err := gid.ParseGID(r.URL.Query().Get("organization_id"))
 		if err != nil {
-			panic(fmt.Errorf("failed to parse organization id: %w", err))
+			panic(fmt.Errorf("cannot parse organization id: %w", err))
 		}
 
 		_ = GetTenantService(r.Context(), proboSvc, organizationID.TenantID())
@@ -266,7 +266,7 @@ func NewMux(
 
 		connection, organizationID, err := connectorRegistry.Complete(r.Context(), provider, r)
 		if err != nil {
-			panic(fmt.Errorf("failed to complete connector: %w", err))
+			panic(fmt.Errorf("cannot complete connector: %w", err))
 		}
 
 		continueURL := r.URL.Query().Get("continue")
@@ -283,7 +283,7 @@ func NewMux(
 			},
 		)
 		if err != nil {
-			panic(fmt.Errorf("failed to create or update connector: %w", err))
+			panic(fmt.Errorf("cannot create or update connector: %w", err))
 		}
 
 		if continueURL != "" {
@@ -364,7 +364,7 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthCon
 
 		errorHandler := session.ErrorHandler{
 			OnCookieError: func(err error) {
-				panic(fmt.Errorf("failed to get session: %w", err))
+				panic(fmt.Errorf("cannot get session: %w", err))
 			},
 			OnParseError: func(w http.ResponseWriter, authCfg session.AuthConfig) {
 				session.ClearCookie(w, authCfg)
@@ -376,7 +376,7 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthCon
 				session.ClearCookie(w, authCfg)
 			},
 			OnTenantError: func(err error) {
-				panic(fmt.Errorf("failed to list tenants for user: %w", err))
+				panic(fmt.Errorf("cannot list tenants for user: %w", err))
 			},
 		}
 
@@ -397,7 +397,7 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthCon
 
 		// Update session after the handler completes
 		if _, err := authSvc.UpdateSession(ctx, authResult.Session.ID); err != nil {
-			panic(fmt.Errorf("failed to update session: %w", err))
+			panic(fmt.Errorf("cannot update session: %w", err))
 		}
 	}
 }

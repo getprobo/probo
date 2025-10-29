@@ -98,7 +98,7 @@ func (r *Renewer) checkAndRenew(ctx context.Context) error {
 			domains := coredata.CustomDomains{}
 			scope := coredata.NewNoScope()
 			if err := domains.ListDomainsForRenewal(ctx, conn, scope); err != nil {
-				return fmt.Errorf("failed to list domains for renewal: %w", err)
+				return fmt.Errorf("cannot list domains for renewal: %w", err)
 			}
 
 			if len(domains) == 0 {

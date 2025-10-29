@@ -36,7 +36,7 @@ func New(tenantID TenantID, entityType uint16) GID {
 	id, err := NewGID(tenantID, entityType)
 	if err != nil {
 		// This should never happen with a valid random source
-		panic(fmt.Sprintf("failed to generate GID: %v", err))
+		panic(fmt.Sprintf("cannot generate GID: %v", err))
 	}
 	return id
 }
@@ -63,7 +63,7 @@ func NewGID(tenantID TenantID, entityType uint16) (GID, error) {
 	// Fill the rest with random data (6 bytes)
 	_, err := rand.Read(id[18:24])
 	if err != nil {
-		return Nil, fmt.Errorf("failed to generate random bytes: %v", err)
+		return Nil, fmt.Errorf("cannot generate random bytes: %v", err)
 	}
 
 	return id, nil

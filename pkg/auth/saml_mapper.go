@@ -114,7 +114,7 @@ func ExtractUserAttributes(
 		if assertion.Subject != nil && assertion.Subject.NameID != nil {
 			email = assertion.Subject.NameID.Value
 		} else {
-			return "", "", "", fmt.Errorf("failed to extract email: %w", err)
+			return "", "", "", fmt.Errorf("cannot extract email: %w", err)
 		}
 	}
 

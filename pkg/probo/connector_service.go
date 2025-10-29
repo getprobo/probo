@@ -142,12 +142,12 @@ func (s *ConnectorService) Create(
 
 					var buf bytes.Buffer
 					if err := welcomeTemplate.Execute(&buf, data); err != nil {
-						return fmt.Errorf("failed to execute template: %w", err)
+						return fmt.Errorf("cannot execute template: %w", err)
 					}
 
 					var body map[string]any
 					if err := json.NewDecoder(&buf).Decode(&body); err != nil {
-						return fmt.Errorf("failed to parse template JSON: %w", err)
+						return fmt.Errorf("cannot parse template JSON: %w", err)
 					}
 
 					slackMessage := coredata.NewSlackMessage(s.svc.scope, req.OrganizationID, coredata.SlackMessageTypeWelcome, body, nil)

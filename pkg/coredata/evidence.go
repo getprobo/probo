@@ -434,7 +434,7 @@ WHERE
 
 	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
-		return fmt.Errorf("failed to delete evidence: %w", err)
+		return fmt.Errorf("cannot delete evidence: %w", err)
 	}
 
 	return nil

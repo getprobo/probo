@@ -79,7 +79,7 @@ func NewToken[T any](secret string, tokenType string, expirationTime time.Durati
 
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal token payload: %w", err)
+		return "", fmt.Errorf("cannot marshal token payload: %w", err)
 	}
 
 	encodedPayload := base64.RawURLEncoding.EncodeToString(payloadBytes)
@@ -114,12 +114,12 @@ func ValidateToken[T any](secret string, tokenType string, tokenString string) (
 
 	payloadBytes, err := base64.RawURLEncoding.DecodeString(encodedPayload)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode token payload: %w", err)
+		return nil, fmt.Errorf("cannot decode token payload: %w", err)
 	}
 
 	var payload Payload[T]
 	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal token payload: %w", err)
+		return nil, fmt.Errorf("cannot unmarshal token payload: %w", err)
 	}
 
 	if time.Now().After(payload.ExpiresAt) {

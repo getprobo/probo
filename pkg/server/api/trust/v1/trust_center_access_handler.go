@@ -91,7 +91,7 @@ func authTokenHandler(trustSvc *trust.Service, trustAuthCfg TrustAuthConfig) htt
 			*accessData,
 		)
 		if err != nil {
-			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("failed to create token: %w", err))
+			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("cannot create token: %w", err))
 			return
 		}
 

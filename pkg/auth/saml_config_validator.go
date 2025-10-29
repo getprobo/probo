@@ -111,7 +111,7 @@ func validateCertificate(certPEM string) error {
 
 	block, _ := pem.Decode([]byte(certPEM))
 	if block == nil {
-		return fmt.Errorf("failed to parse certificate PEM")
+		return fmt.Errorf("cannot parse certificate PEM")
 	}
 
 	if block.Type != "CERTIFICATE" {
@@ -120,7 +120,7 @@ func validateCertificate(certPEM string) error {
 
 	_, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return fmt.Errorf("failed to parse X.509 certificate: %w", err)
+		return fmt.Errorf("cannot parse X.509 certificate: %w", err)
 	}
 
 	return nil

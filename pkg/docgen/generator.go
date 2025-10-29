@@ -94,7 +94,7 @@ const (
 func RenderHTML(data DocumentData) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := documentTemplate.Execute(&buf, data); err != nil {
-		return nil, fmt.Errorf("failed to execute template: %w", err)
+		return nil, fmt.Errorf("cannot execute template: %w", err)
 	}
 
 	return buf.Bytes(), nil

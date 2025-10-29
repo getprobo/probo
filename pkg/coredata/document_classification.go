@@ -41,7 +41,7 @@ func (dc *DocumentClassification) Scan(value interface{}) error {
 	case []byte:
 		sv = string(v)
 	default:
-		return fmt.Errorf("failed to scan DocumentClassification: expected string or []byte, got %T", value)
+		return fmt.Errorf("cannot scan DocumentClassification: expected string or []byte, got %T", value)
 	}
 
 	*dc = DocumentClassification(sv)
