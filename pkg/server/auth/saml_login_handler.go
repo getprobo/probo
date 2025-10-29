@@ -53,12 +53,12 @@ func SAMLLoginHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, lo
 
 		redirectURL, err := samlSvc.InitiateSAMLLogin(ctx, config.OrganizationID, tenantID, config.EmailDomain)
 		if err != nil {
-			logger.ErrorCtx(ctx, "cannot initiate SAML login", log.Error(err), log.String("saml_config_id", samlConfigID.String()), log.String("org_id", config.OrganizationID.String()), log.String("email_domain", config.EmailDomain))
+			logger.ErrorCtx(ctx, "cannot initiate SAML login", log.Error(err), log.String("saml_config_id", samlConfigID.String()), log.String("org_id", config.OrganizationID.String()))
 			http.Error(w, fmt.Sprintf("SAML login failed: %v", err), http.StatusInternalServerError)
 			return
 		}
 
-		logger.InfoCtx(ctx, "SAML login initiated", log.String("saml_config_id", samlConfigID.String()), log.String("org_id", config.OrganizationID.String()), log.String("email_domain", config.EmailDomain))
+		logger.InfoCtx(ctx, "SAML login initiated", log.String("saml_config_id", samlConfigID.String()), log.String("org_id", config.OrganizationID.String()))
 
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 	}

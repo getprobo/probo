@@ -54,7 +54,7 @@ func SAMLCheckSSOHandler(authSvc *authsvc.Service, logger *log.Logger) http.Hand
 
 		configs, err := authSvc.CheckSSOAvailabilityByEmail(ctx, req.Email)
 		if err != nil {
-			logger.ErrorCtx(ctx, "cannot check SSO availability", log.Error(err), log.String("email", req.Email))
+			logger.ErrorCtx(ctx, "cannot check SSO availability", log.Error(err))
 			httpserver.RenderError(w, http.StatusInternalServerError, fmt.Errorf("cannot check SSO availability"))
 			return
 		}
@@ -69,7 +69,7 @@ func SAMLCheckSSOHandler(authSvc *authsvc.Service, logger *log.Logger) http.Hand
 
 		// Multiple SAML configs found - ambiguous, user must use organization-specific SSO URL
 		if len(configs) > 1 {
-			logger.WarnCtx(ctx, "multiple SAML configurations found for domain", log.String("email", req.Email), log.Int("count", len(configs)))
+			logger.WarnCtx(ctx, "multiple SAML configurations found for domain", log.Int("count", len(configs)))
 			httpserver.RenderError(w, http.StatusConflict, fmt.Errorf("multiple SSO configurations found for this domain. Please use your organization-specific SSO login URL"))
 			return
 		}

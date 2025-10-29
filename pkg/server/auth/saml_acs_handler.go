@@ -70,7 +70,7 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 
 		user, err := authSvc.CreateOrGetSAMLUser(ctx, userInfo.Email, userInfo.FullName, userInfo.SAMLSubject)
 		if err != nil {
-			logger.ErrorCtx(ctx, "cannot create or get SAML user", log.Error(err), log.String("email", userInfo.Email))
+			logger.ErrorCtx(ctx, "cannot create or get SAML user", log.Error(err))
 			http.Error(w, "cannot create user", http.StatusInternalServerError)
 			return
 		}
