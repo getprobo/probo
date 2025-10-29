@@ -30,9 +30,6 @@ import (
 )
 
 type (
-	// Service handles all authorization logic including organization
-	// membership and permissions. This service is completely independent
-	// of authentication methods.
 	Service struct {
 		pg                      *pg.Client
 		hostname                string
@@ -109,8 +106,6 @@ func (s *Service) GetAllUserOrganizations(
 	return organizations, err
 }
 
-// This method is on Service (not TenantAuthzService) because it operates across tenants
-// and doesn't require tenant-scoped access.
 func (s *Service) GetUserOrganizations(
 	ctx context.Context,
 	userID gid.GID,
@@ -118,18 +113,19 @@ func (s *Service) GetUserOrganizations(
 ) ([]*coredata.Organization, error) {
 	var organizations coredata.Organizations
 
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		if err := organizations.LoadByUserID(ctx, conn, userID, cursor); err != nil {
-			return fmt.Errorf("cannot load user organizations: %w", err)
-		}
-		return nil
-	})
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := organizations.LoadByUserID(ctx, conn, userID, cursor); err != nil {
+				return fmt.Errorf("cannot load user organizations: %w", err)
+			}
+			return nil
+		},
+	)
 
 	return organizations, err
 }
 
-// This method is on Service (not TenantAuthzService) because the user accepting
-// the invitation doesn't have tenant access yet.
 func (s *Service) AcceptInvitation(
 	ctx context.Context,
 	token string,
@@ -140,9 +136,11 @@ func (s *Service) AcceptInvitation(
 		TokenTypeOrganizationInvitation,
 		token,
 	)
+
 	if err != nil {
 		return fmt.Errorf("invalid invitation token: %w", err)
 	}
+
 	invitationData := payload.Data
 	scope := coredata.NewScope(invitationData.InvitationID.TenantID())
 
@@ -192,8 +190,6 @@ func (s *Service) AcceptInvitation(
 	)
 }
 
-// This method is on Service (not TenantAuthzService) because the user accepting
-// the invitation doesn't have tenant access yet.
 func (s *Service) AcceptInvitationByID(
 	ctx context.Context,
 	invitationID gid.GID,
@@ -261,64 +257,6 @@ func (s *Service) AcceptInvitationByID(
 	return acceptedInvitation, nil
 }
 
-// EnsureSAMLMembership creates or updates a user's membership in an organization.
-// This is used during SAML authentication to ensure the user has the correct role.
-// This method is on Service (not TenantAuthzService) because SAML authentication
-// happens before the user has tenant access.
-func (s *Service) EnsureSAMLMembership(
-	ctx context.Context,
-	tenantID gid.TenantID,
-	userID gid.GID,
-	organizationID gid.GID,
-	role string,
-) error {
-	scope := coredata.NewScope(tenantID)
-	now := time.Now()
-
-	return s.pg.WithTx(
-		ctx,
-		func(tx pg.Conn) error {
-			var membership coredata.Membership
-
-			err := membership.LoadByUserAndOrg(ctx, tx, scope, userID, organizationID)
-			if err != nil {
-				if _, ok := err.(coredata.ErrMembershipNotFound); !ok {
-					return fmt.Errorf("cannot load membership: %w", err)
-				}
-
-				membershipID := gid.New(tenantID, coredata.MembershipEntityType)
-				membership = coredata.Membership{
-					ID:             membershipID,
-					UserID:         userID,
-					OrganizationID: organizationID,
-					Role:           role,
-					CreatedAt:      now,
-					UpdatedAt:      now,
-				}
-
-				if err := membership.Create(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot create membership: %w", err)
-				}
-
-				return nil
-			}
-
-			if membership.Role != role {
-				membership.Role = role
-				membership.UpdatedAt = now
-
-				if err := membership.Update(ctx, tx, scope); err != nil {
-					return fmt.Errorf("cannot update membership role: %w", err)
-				}
-			}
-
-			return nil
-		},
-	)
-}
-
-// This method is on Service (not TenantAuthzService) because the user viewing
-// their invitations doesn't have tenant access yet, and it operates across multiple tenants.
 func (s *Service) GetUserInvitations(
 	ctx context.Context,
 	email string,
@@ -344,8 +282,6 @@ func (s *Service) GetUserInvitations(
 	return page.NewPage(invitations, cursor), nil
 }
 
-// This method is on Service (not TenantAuthzService) because the user viewing
-// their invitations doesn't have tenant access yet, and it operates across multiple tenants.
 func (s *Service) CountUserInvitations(
 	ctx context.Context,
 	email string,
@@ -793,6 +729,58 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 	}
 
 	return invitation, nil
+}
+
+// EnsureSAMLMembership creates or updates a user's membership in an organization.
+// This is used during SAML authentication to ensure the user has the correct role.
+func (s *TenantAuthzService) EnsureSAMLMembership(
+	ctx context.Context,
+	userID gid.GID,
+	organizationID gid.GID,
+	role string,
+) error {
+	now := time.Now()
+
+	return s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			var membership coredata.Membership
+
+			err := membership.LoadByUserAndOrg(ctx, tx, s.scope, userID, organizationID)
+			if err != nil {
+				if _, ok := err.(coredata.ErrMembershipNotFound); !ok {
+					return fmt.Errorf("cannot load membership: %w", err)
+				}
+
+				membershipID := gid.New(s.scope.GetTenantID(), coredata.MembershipEntityType)
+				membership = coredata.Membership{
+					ID:             membershipID,
+					UserID:         userID,
+					OrganizationID: organizationID,
+					Role:           role,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				if err := membership.Create(ctx, tx, s.scope); err != nil {
+					return fmt.Errorf("cannot create membership: %w", err)
+				}
+
+				return nil
+			}
+
+			if membership.Role != role {
+				membership.Role = role
+				membership.UpdatedAt = now
+
+				if err := membership.Update(ctx, tx, s.scope); err != nil {
+					return fmt.Errorf("cannot update membership role: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
 }
 
 // This is a placeholder for future permission system

@@ -288,8 +288,8 @@ func (s Service) SignUp(
 	}
 
 	session := &coredata.Session{
-		ID:        gid.New(gid.NilTenant, coredata.SessionEntityType),
-		UserID:    user.ID,
+		ID:     gid.New(gid.NilTenant, coredata.SessionEntityType),
+		UserID: user.ID,
 		Data: coredata.SessionData{
 			PasswordAuthenticated: true,
 			SAMLAuthenticatedOrgs: make(map[string]coredata.SAMLAuthInfo),
@@ -389,39 +389,24 @@ func (s Service) CreateOrGetSAMLUser(
 	err := s.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
-			// Try to load existing user by email
 			if err := user.LoadByEmail(ctx, tx, emailAddress); err == nil {
-				// User exists - update SAML subject and full name if needed
-				needsUpdate := false
+				user.SAMLSubject = &samlSubject
+				user.FullName = fullName
+				user.EmailAddressVerified = true
+				user.UpdatedAt = now
 
-				if user.SAMLSubject == nil || *user.SAMLSubject != samlSubject {
-					user.SAMLSubject = &samlSubject
-					needsUpdate = true
-				}
-				if user.FullName != fullName {
-					user.FullName = fullName
-					needsUpdate = true
-				}
-				if !user.EmailAddressVerified {
-					user.EmailAddressVerified = true
-					needsUpdate = true
+				if err := user.Update(ctx, tx); err != nil {
+					return fmt.Errorf("cannot update user: %w", err)
 				}
 
-				if needsUpdate {
-					user.UpdatedAt = now
-					if err := user.Update(ctx, tx); err != nil {
-						return fmt.Errorf("cannot update user: %w", err)
-					}
-				}
 				return nil
 			}
 
-			// No existing user, create new user (all users are global now)
 			user = coredata.User{
 				ID:                   gid.New(gid.NilTenant, coredata.UserEntityType),
 				EmailAddress:         emailAddress,
-				HashedPassword:       nil, // SAML users don't have passwords initially
-				EmailAddressVerified: true, // SAML users are verified by IdP
+				HashedPassword:       nil,
+				EmailAddressVerified: true,
 				FullName:             fullName,
 				SAMLSubject:          &samlSubject,
 				CreatedAt:            now,
@@ -449,6 +434,7 @@ func (s Service) CreateSessionForUser(
 	sessionDuration time.Duration,
 ) (*coredata.Session, error) {
 	now := time.Now()
+
 	session := &coredata.Session{
 		ID:        gid.New(gid.NilTenant, coredata.SessionEntityType),
 		UserID:    userID,
@@ -511,8 +497,8 @@ func (s Service) SignIn(
 			// Create new session with password authentication flag set
 			now := time.Now()
 			session = &coredata.Session{
-				ID:        gid.New(gid.NilTenant, coredata.SessionEntityType),
-				UserID:    user.ID,
+				ID:     gid.New(gid.NilTenant, coredata.SessionEntityType),
+				UserID: user.ID,
 				Data: coredata.SessionData{
 					PasswordAuthenticated: true,
 					SAMLAuthenticatedOrgs: make(map[string]coredata.SAMLAuthInfo),
@@ -587,8 +573,8 @@ func (s Service) SignInWithExistingSession(
 			} else {
 				now := time.Now()
 				session = &coredata.Session{
-					ID:        gid.New(gid.NilTenant, coredata.SessionEntityType),
-					UserID:    user.ID,
+					ID:     gid.New(gid.NilTenant, coredata.SessionEntityType),
+					UserID: user.ID,
 					Data: coredata.SessionData{
 						PasswordAuthenticated: true,
 						SAMLAuthenticatedOrgs: make(map[string]coredata.SAMLAuthInfo),
@@ -918,8 +904,8 @@ func (s Service) SignupFromInvitation(
 			}
 
 			session = &coredata.Session{
-				ID:        gid.New(gid.NilTenant, coredata.SessionEntityType),
-				UserID:    user.ID,
+				ID:     gid.New(gid.NilTenant, coredata.SessionEntityType),
+				UserID: user.ID,
 				Data: coredata.SessionData{
 					PasswordAuthenticated: true,
 					SAMLAuthenticatedOrgs: make(map[string]coredata.SAMLAuthInfo),

@@ -75,7 +75,8 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 			return
 		}
 
-		err = authzSvc.EnsureSAMLMembership(ctx, userInfo.TenantID, user.ID, userInfo.OrganizationID, userInfo.Role)
+		tenantAuthzSvc := authzSvc.WithTenant(userInfo.OrganizationID.TenantID())
+		err = tenantAuthzSvc.EnsureSAMLMembership(ctx, user.ID, userInfo.OrganizationID, userInfo.Role)
 		if err != nil {
 			logger.ErrorCtx(ctx, "cannot ensure membership", log.Error(err), log.String("user_id", user.ID.String()), log.String("org_id", userInfo.OrganizationID.String()))
 			http.Error(w, "cannot create membership", http.StatusInternalServerError)

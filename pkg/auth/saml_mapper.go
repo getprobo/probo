@@ -81,7 +81,6 @@ func MapSAMLRoleToSystemRole(samlRole string) string {
 		return samlRole
 	}
 
-	// Default to MEMBER role if SAML role is missing or invalid
 	return "MEMBER"
 }
 

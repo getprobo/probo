@@ -409,7 +409,6 @@ type SAMLUserInfo struct {
 	Role           string
 	SAMLSubject    string
 	OrganizationID gid.GID
-	TenantID       gid.TenantID
 	SAMLConfigID   gid.GID
 }
 
@@ -560,7 +559,6 @@ func (s *SAMLService) HandleSAMLAssertion(
 		Role:           systemRole,
 		SAMLSubject:    samlSubject,
 		OrganizationID: relayState.OrganizationID,
-		TenantID:       org.TenantID,
 		SAMLConfigID:   relayState.SAMLConfigID,
 	}, nil
 }
