@@ -9,7 +9,7 @@ unit:
     max-queue-size: 2048
 
 probod:
-  hostname: "localhost:8080"
+  hostname: "https://gearnode.probo.engineering"
   encryption-key: "thisisnotasecretAAAAAAAAAAAAAAAAAAAAAAAAAAA="
   chrome-dp-addr: "localhost:9222"
 

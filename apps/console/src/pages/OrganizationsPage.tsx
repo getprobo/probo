@@ -1,110 +1,138 @@
 import { useTranslate } from "@probo/i18n";
-import { useLazyLoadQuery } from "react-relay";
-import { graphql } from "relay-runtime";
-import type { OrganizationsPageQuery as OrganizationsPageQueryType } from "./__generated__/OrganizationsPageQuery.graphql";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   Avatar,
   Button,
   Card,
   IconPlusLarge,
+  IconCheckmark1,
+  IconLock,
+  IconClock,
+  Badge,
 } from "@probo/ui";
 import { usePageTitle } from "@probo/hooks";
-import { useMutationWithToasts } from "/hooks/useMutationWithToasts";
 import { formatDate } from "@probo/helpers";
 
-const OrganizationsPageQuery = graphql`
-  query OrganizationsPageQuery {
-    viewer {
-      organizations(first: 1000, orderBy: {field: NAME, direction: ASC}) @connection(key: "OrganizationsPage_organizations") {
-        __id
-        edges {
-          node {
-            id
-            name
-            logoUrl
-          }
-        }
-      }
-      invitations(first: 1000, orderBy: {field: CREATED_AT, direction: DESC}, filter: {statuses: [PENDING]}) @connection(key: "OrganizationsPage_invitations") {
-        __id
-        edges {
-          node {
-            id
-            email
-            fullName
-            role
-            expiresAt
-            acceptedAt
-            createdAt
-            organization {
-              id
-              name
-            }
-          }
-        }
-      }
-    }
-  }
-`;
+interface Organization {
+  id: string;
+  name: string;
+  logoUrl?: string | null;
+  authenticationMethod: string;
+  authStatus: "authenticated" | "unauthenticated" | "expired";
+  loginUrl: string;
+}
 
-const acceptInvitationMutation = graphql`
-  mutation OrganizationsPage_AcceptInvitationMutation($input: AcceptInvitationInput!) {
-    acceptInvitation(input: $input) {
-      invitation {
-        id
-      }
-    }
-  }
-`;
+interface Invitation {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  expiresAt: string;
+  acceptedAt?: string | null;
+  createdAt: string;
+  organization: {
+    id: string;
+    name: string;
+  };
+}
 
 export default function OrganizationsPage() {
   const { __ } = useTranslate();
   const navigate = useNavigate();
-  const data = useLazyLoadQuery<OrganizationsPageQueryType>(
-    OrganizationsPageQuery,
-    {}
-  );
 
-  const organizations = data.viewer.organizations.edges.map(
-    (edge) => edge.node
-  );
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(true);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [isLoadingInvitations, setIsLoadingInvitations] = useState(true);
+  const [isAccepting, setIsAccepting] = useState(false);
 
-  const pendingInvitations = data.viewer.invitations.edges.map(
-    (edge) => edge.node
-  );
+  // Fetch organizations from REST endpoint
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        const response = await fetch('/auth/organizations', {
+          credentials: 'include',
+        });
 
-  const [acceptInvitation, isAccepting] = useMutationWithToasts(
-    acceptInvitationMutation,
-    {
-      successMessage: __("Invitation accepted successfully"),
-      errorMessage: __("Failed to accept invitation"),
-    }
-  );
+        if (!response.ok) {
+          throw new Error('Failed to fetch organizations');
+        }
 
-  const handleAcceptInvitation = (invitationId: string, organizationId: string) => {
-    acceptInvitation({
-      variables: {
-        input: {
-          invitationId,
+        const data: { organizations: Organization[] } = await response.json();
+        setOrganizations(data.organizations);
+      } catch (err) {
+        console.error('Failed to fetch organizations:', err);
+      } finally {
+        setIsLoadingOrganizations(false);
+      }
+    };
+
+    fetchOrganizations();
+  }, []);
+
+  // Fetch pending invitations from REST endpoint
+  useEffect(() => {
+    const fetchInvitations = async () => {
+      try {
+        const response = await fetch('/auth/invitations', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch invitations');
+        }
+
+        const data: { invitations: Invitation[] } = await response.json();
+        setInvitations(data.invitations);
+      } catch (err) {
+        console.error('Failed to fetch invitations:', err);
+      } finally {
+        setIsLoadingInvitations(false);
+      }
+    };
+
+    fetchInvitations();
+  }, []);
+
+  const handleAcceptInvitation = async (invitationId: string, organizationId: string) => {
+    setIsAccepting(true);
+    try {
+      const response = await fetch('/auth/invitations/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      },
-      onSuccess: () => {
-        navigate(`/organizations/${organizationId}`);
-      },
-    });
+        credentials: 'include',
+        body: JSON.stringify({ invitationId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to accept invitation');
+      }
+
+      // Navigate to the organization after successful acceptance
+      navigate(`/organizations/${organizationId}`);
+    } catch (err) {
+      console.error('Failed to accept invitation:', err);
+      alert(__('Failed to accept invitation'));
+    } finally {
+      setIsAccepting(false);
+    }
   };
 
   usePageTitle(__("Select an organization"));
 
   useEffect(() => {
-    if (organizations.length === 1 && pendingInvitations.length === 0) {
-      navigate(`/organizations/${organizations[0].id}`);
-    } else if (organizations.length === 0 && pendingInvitations.length === 0) {
-      navigate("/organizations/new");
+    // Only auto-navigate once both organizations and invitations are loaded
+    if (!isLoadingOrganizations && !isLoadingInvitations) {
+      if (organizations.length === 1 && invitations.length === 0) {
+        navigate(`/organizations/${organizations[0].id}`);
+      } else if (organizations.length === 0 && invitations.length === 0) {
+        navigate("/organizations/new");
+      }
     }
-  }, [organizations, pendingInvitations]);
+  }, [organizations, invitations, isLoadingOrganizations, isLoadingInvitations, navigate]);
 
   return (
     <>
@@ -113,12 +141,12 @@ export default function OrganizationsPage() {
           {__("Select an organization")}
         </h1>
         <div className="space-y-4 w-full">
-          {pendingInvitations.length > 0 && (
+          {invitations.length > 0 && (
             <div className="space-y-3">
               <h2 className="text-xl font-semibold">
                 {__("Pending invitations")}
               </h2>
-              {pendingInvitations.map((invitation) => (
+              {invitations.map((invitation) => (
                 <InvitationCard
                   key={invitation.id}
                   invitation={invitation}
@@ -130,7 +158,7 @@ export default function OrganizationsPage() {
           )}
           {organizations.length > 0 && (
             <div className="space-y-3">
-              {pendingInvitations.length > 0 && (
+              {invitations.length > 0 && (
                 <h2 className="text-xl font-semibold">
                   {__("Your organizations")}
                 </h2>
@@ -166,18 +194,7 @@ export default function OrganizationsPage() {
 }
 
 type InvitationCardProps = {
-  invitation: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: string;
-    expiresAt: string;
-    createdAt: string;
-    organization: {
-      id: string;
-      name: string;
-    };
-  };
+  invitation: Invitation;
   onAccept: (invitationId: string, organizationId: string) => void;
   isAccepting: boolean;
 };
@@ -211,35 +228,106 @@ function InvitationCard({ invitation, onAccept, isAccepting }: InvitationCardPro
 }
 
 type OrganizationCardProps = {
-  organization: {
-    id: string;
-    name: string;
-    logoUrl: string | null | undefined;
-  };
+  organization: Organization;
 };
 
 function OrganizationCard({ organization }: OrganizationCardProps) {
   const { __ } = useTranslate();
 
+  const isAuthenticated = organization.authStatus === "authenticated";
+  const isExpired = organization.authStatus === "expired";
+  const needsAuth = organization.authStatus === "unauthenticated";
+
+  // Determine target URL and button text based on auth status
+  const targetUrl = isAuthenticated
+    ? `/organizations/${organization.id}`
+    : organization.loginUrl;
+
+  const getAuthBadge = () => {
+    if (isAuthenticated) {
+      return (
+        <Badge variant="success" className="flex items-center gap-1">
+          <IconCheckmark1 size={14} />
+          {__("Authenticated")}
+        </Badge>
+      );
+    }
+
+    if (isExpired) {
+      return (
+        <Badge variant="warning" className="flex items-center gap-1">
+          <IconClock size={14} />
+          {__("Session expired")}
+        </Badge>
+      );
+    }
+
+    if (needsAuth) {
+      return (
+        <Badge variant="neutral" className="flex items-center gap-1">
+          <IconLock size={14} />
+          {__("Authentication required")}
+        </Badge>
+      );
+    }
+
+    return null;
+  };
+
+  const getButtonText = () => {
+    if (isAuthenticated) return __("Select");
+    if (organization.authenticationMethod === "saml") return __("Login with SAML");
+    return __("Login");
+  };
+
+  // Check if the URL is a backend SAML endpoint
+  const isSAMLUrl = targetUrl.includes('/auth/saml/');
+
   return (
     <Card padded className="w-full">
       <div className="flex items-center justify-between">
-        <Link
-          to={`/organizations/${organization.id}`}
-          className="flex items-center gap-4 hover:text-primary flex-1"
-        >
-          <Avatar
-            src={organization.logoUrl}
-            name={organization.name}
-            size="l"
-          />
-          <h2 className="font-semibold text-xl">{organization.name}</h2>
-        </Link>
+        {isSAMLUrl ? (
+          <a
+            href={targetUrl}
+            className="flex items-center gap-4 hover:text-primary flex-1"
+          >
+            <Avatar
+              src={organization.logoUrl}
+              name={organization.name}
+              size="l"
+            />
+            <div className="flex flex-col gap-1">
+              <h2 className="font-semibold text-xl">{organization.name}</h2>
+              {getAuthBadge()}
+            </div>
+          </a>
+        ) : (
+          <Link
+            to={targetUrl}
+            className="flex items-center gap-4 hover:text-primary flex-1"
+          >
+            <Avatar
+              src={organization.logoUrl}
+              name={organization.name}
+              size="l"
+            />
+            <div className="flex flex-col gap-1">
+              <h2 className="font-semibold text-xl">{organization.name}</h2>
+              {getAuthBadge()}
+            </div>
+          </Link>
+        )}
         <div className="flex items-center gap-3">
           <Button asChild>
-            <Link to={`/organizations/${organization.id}`}>
-              {__("Select")}
-            </Link>
+            {isSAMLUrl ? (
+              <a href={targetUrl}>
+                {getButtonText()}
+              </a>
+            ) : (
+              <Link to={targetUrl}>
+                {getButtonText()}
+              </Link>
+            )}
           </Button>
         </div>
       </div>

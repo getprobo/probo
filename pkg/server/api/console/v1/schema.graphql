@@ -162,6 +162,34 @@ enum AuditState
     @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AuditStateOutdated")
 }
 
+enum SAMLEnforcementPolicy
+  @goModel(
+    model: "github.com/getprobo/probo/pkg/coredata.SAMLEnforcementPolicy"
+  ) {
+  OFF
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SAMLEnforcementPolicyOff"
+    )
+  OPTIONAL
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SAMLEnforcementPolicyOptional"
+    )
+  REQUIRED
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.SAMLEnforcementPolicyRequired"
+    )
+}
+
+enum UserAuthMethod
+  @goModel(model: "github.com/getprobo/probo/pkg/coredata.UserAuthMethod") {
+  PASSWORD
+    @goEnum(
+      value: "github.com/getprobo/probo/pkg/coredata.UserAuthMethodPassword"
+    )
+  SAML
+    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.UserAuthMethodSAML")
+}
+
 enum TrustCenterVisibility
   @goModel(
     model: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibility"
@@ -1791,6 +1819,8 @@ type Organization implements Node {
 
   customDomain: CustomDomain @goField(forceResolver: true)
 
+  samlConfigurations: [SAMLConfiguration!]! @goField(forceResolver: true)
+
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -1810,6 +1840,7 @@ type Membership implements Node {
   role: String!
   fullName: String!
   emailAddress: String!
+  authMethod: UserAuthMethod! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -2693,7 +2724,6 @@ type VendorServiceEdge {
   node: VendorService!
 }
 
-
 type VendorRiskAssessmentConnection {
   edges: [VendorRiskAssessmentEdge!]!
   pageInfo: PageInfo!
@@ -3174,6 +3204,28 @@ type Mutation {
   deleteCustomDomain(
     input: DeleteCustomDomainInput!
   ): DeleteCustomDomainPayload!
+
+  # SAML Configuration mutations (OWNER/ADMIN only)
+  # Step 1: Initiate domain verification (creates SAML config with unverified domain)
+  initiateDomainVerification(
+    input: InitiateDomainVerificationInput!
+  ): InitiateDomainVerificationPayload!
+
+  # Step 2: Verify domain ownership via DNS TXT record
+  verifyDomain(input: VerifyDomainInput!): VerifyDomainPayload!
+
+  # Step 3: Configure SAML (only allowed after domain is verified)
+  createSAMLConfiguration(
+    input: CreateSAMLConfigurationInput!
+  ): CreateSAMLConfigurationPayload!
+  updateSAMLConfiguration(
+    input: UpdateSAMLConfigurationInput!
+  ): UpdateSAMLConfigurationPayload!
+  deleteSAMLConfiguration(
+    input: DeleteSAMLConfigurationInput!
+  ): DeleteSAMLConfigurationPayload!
+  enableSAML(input: EnableSAMLInput!): EnableSAMLPayload!
+  disableSAML(input: DisableSAMLInput!): DisableSAMLPayload!
 }
 
 # Input Types
@@ -4793,4 +4845,168 @@ type CreateCustomDomainPayload {
 
 type DeleteCustomDomainPayload {
   deletedCustomDomainId: ID!
+}
+
+# ============================================
+# SAML Configuration Types
+# ============================================
+
+type SAMLConfiguration implements Node {
+  id: ID!
+  organization: Organization! @goField(forceResolver: true)
+  emailDomain: String!
+  enabled: Boolean!
+  enforcementPolicy: SAMLEnforcementPolicy!
+
+  # Domain verification (required before SAML can be configured)
+  domainVerified: Boolean!
+  domainVerificationToken: String
+  domainVerifiedAt: Datetime
+
+  # Service Provider metadata (read-only, auto-generated)
+  spEntityId: String!
+  spAcsUrl: String!
+  spMetadataUrl: String! @goField(forceResolver: true)
+
+  # Identity Provider configuration
+  idpEntityId: String!
+  idpSsoUrl: String!
+  idpCertificate: String!
+  idpMetadataUrl: String
+
+  # Attribute mapping
+  attributeEmail: String!
+  attributeFirstname: String!
+  attributeLastname: String!
+  attributeRole: String!
+
+  # Default role for users when role attribute is missing or invalid
+  defaultRole: String!
+
+  # Auto-signup
+  autoSignupEnabled: Boolean!
+
+  # Test login URL for this configuration
+  testLoginUrl: String! @goField(forceResolver: true)
+
+  createdAt: Datetime!
+  updatedAt: Datetime!
+}
+
+# ============================================
+# SAML Configuration Inputs
+# ============================================
+
+input CreateSAMLConfigurationInput {
+  organizationId: ID!
+
+  # Email domain this config applies to
+  emailDomain: String!
+
+  # Enforcement policy for this SAML configuration
+  enforcementPolicy: SAMLEnforcementPolicy!
+
+  # SP configuration (optional - auto-generated if not provided)
+  spCertificate: String
+  spPrivateKey: String
+
+  # IdP configuration - Option 1: Provide metadata XML (recommended for Google Workspace)
+  # This will automatically extract entityId, ssoUrl, and certificate from the metadata
+  idpMetadataXml: String
+
+  # IdP configuration - Option 2: Provide individual fields manually
+  # Required if idpMetadataXml is not provided
+  idpEntityId: String
+  idpSsoUrl: String
+  idpCertificate: String
+  idpMetadataUrl: String
+
+  # Attribute mapping (optional, defaults provided)
+  attributeEmail: String
+  attributeFirstname: String
+  attributeLastname: String
+  attributeRole: String
+
+  defaultRole: String
+  autoSignupEnabled: Boolean
+}
+
+input UpdateSAMLConfigurationInput {
+  id: ID!
+
+  enabled: Boolean
+  enforcementPolicy: SAMLEnforcementPolicy
+  spCertificate: String
+  spPrivateKey: String
+  idpEntityId: String
+  idpSsoUrl: String
+  idpCertificate: String
+  idpMetadataUrl: String
+  attributeEmail: String
+  attributeFirstname: String
+  attributeLastname: String
+  attributeRole: String
+  defaultRole: String
+  autoSignupEnabled: Boolean
+}
+
+# ============================================
+# Domain Verification Inputs
+# ============================================
+
+input InitiateDomainVerificationInput {
+  organizationId: ID!
+  emailDomain: String!
+}
+
+input VerifyDomainInput {
+  id: ID!
+}
+
+input DeleteSAMLConfigurationInput {
+  id: ID!
+}
+
+input EnableSAMLInput {
+  id: ID!
+}
+
+input DisableSAMLInput {
+  id: ID!
+}
+
+# ============================================
+# SAML Configuration Payloads
+# ============================================
+
+type InitiateDomainVerificationPayload {
+  samlConfiguration: SAMLConfiguration!
+  # The TXT record value that needs to be added to DNS
+  # Format: probo-verification={token}
+  dnsRecord: String!
+}
+
+type VerifyDomainPayload {
+  samlConfiguration: SAMLConfiguration!
+  verified: Boolean!
+}
+
+type CreateSAMLConfigurationPayload {
+  samlConfiguration: SAMLConfiguration!
+}
+
+type UpdateSAMLConfigurationPayload {
+  samlConfiguration: SAMLConfiguration!
+}
+
+type DeleteSAMLConfigurationPayload {
+  deletedSAMLConfigurationId: ID!
+}
+
+type EnableSAMLPayload {
+  samlConfiguration: SAMLConfiguration!
+}
+
+type DisableSAMLPayload {
+  samlConfiguration: SAMLConfiguration!
 }

@@ -63,4 +63,5 @@ const (
 	MembershipEntityType
 	SlackMessageEntityType
 	TrustCenterFileEntityType
+	SAMLConfigurationEntityType
 )

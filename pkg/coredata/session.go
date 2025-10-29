@@ -35,7 +35,30 @@ type (
 		UpdatedAt time.Time   `db:"updated_at"`
 	}
 
-	SessionData struct{}
+	// SessionData stores authentication context for a user session
+	// Stored as JSONB in database
+	SessionData struct {
+		// PasswordAuthenticated indicates if user authenticated with email/password
+		// Required for accessing organizations without SAML
+		PasswordAuthenticated bool `json:"password_authenticated"`
+
+		// SAMLAuthenticatedOrgs tracks which organizations user has SAML-authenticated for
+		// Key: organization ID as string, Value: SAML authentication info
+		// Required for accessing organizations with SAML enforcement
+		SAMLAuthenticatedOrgs map[string]SAMLAuthInfo `json:"saml_authenticated_orgs,omitempty"`
+	}
+
+	// SAMLAuthInfo stores SAML authentication details for an organization
+	SAMLAuthInfo struct {
+		// AuthenticatedAt is when the user SAML-
+		AuthenticatedAt time.Time `json:"authenticated_at"`
+
+		// SAMLConfigID is the SAML configuration used for authentication
+		SAMLConfigID gid.GID `json:"saml_config_id"`
+
+		// SAMLSubject is the NameID from the SAML assertion (email address)
+		SAMLSubject string `json:"saml_subject"`
+	}
 )
 
 func (s Session) CursorKey(orderBy SessionOrderField) page.CursorKey {
@@ -47,7 +70,6 @@ func (s Session) CursorKey(orderBy SessionOrderField) page.CursorKey {
 	panic(fmt.Sprintf("unsupported order by: %s", orderBy))
 }
 
-// Tenant id scope is not applied because we want to access sessions across all tenants for authentication purposes.
 func (s *Session) LoadByID(
 	ctx context.Context,
 	conn pg.Conn,

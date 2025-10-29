@@ -261,6 +261,61 @@ func (s *Service) AcceptInvitationByID(
 	return acceptedInvitation, nil
 }
 
+// EnsureSAMLMembership creates or updates a user's membership in an organization.
+// This is used during SAML authentication to ensure the user has the correct role.
+// This method is on Service (not TenantAuthzService) because SAML authentication
+// happens before the user has tenant access.
+func (s *Service) EnsureSAMLMembership(
+	ctx context.Context,
+	tenantID gid.TenantID,
+	userID gid.GID,
+	organizationID gid.GID,
+	role string,
+) error {
+	scope := coredata.NewScope(tenantID)
+	now := time.Now()
+
+	return s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			var membership coredata.Membership
+
+			// Try to load existing membership
+			err := membership.LoadByUserAndOrg(ctx, tx, scope, userID, organizationID)
+			if err != nil {
+				// Membership doesn't exist, create it
+				membershipID := gid.New(tenantID, coredata.MembershipEntityType)
+				membership = coredata.Membership{
+					ID:             membershipID,
+					UserID:         userID,
+					OrganizationID: organizationID,
+					Role:           role,
+					CreatedAt:      now,
+					UpdatedAt:      now,
+				}
+
+				if err := membership.Create(ctx, tx, scope); err != nil {
+					return fmt.Errorf("failed to create membership: %w", err)
+				}
+
+				return nil
+			}
+
+			// Membership exists, update role if changed
+			if membership.Role != role {
+				membership.Role = role
+				membership.UpdatedAt = now
+
+				if err := membership.Update(ctx, tx, scope); err != nil {
+					return fmt.Errorf("failed to update membership role: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+}
+
 // This method is on Service (not TenantAuthzService) because the user viewing
 // their invitations doesn't have tenant access yet, and it operates across multiple tenants.
 func (s *Service) GetUserInvitations(

@@ -26,7 +26,7 @@ export default function RegisterPage() {
 
   const onSubmit = handleSubmit(async (data) => {
     const response = await fetch(
-      buildEndpoint("/api/console/v1/auth/register"),
+      buildEndpoint("/auth/register"),
       {
         method: "POST",
         headers: {
@@ -106,7 +106,7 @@ export default function RegisterPage() {
         <p className="text-sm text-txt-tertiary">
           {__("Already have an account?")}{" "}
           <Link
-            to="/auth/login"
+            to="/authentication/login"
             className="underline text-txt-primary hover:text-txt-secondary"
           >
             {__("Log in here")}

@@ -23,6 +23,27 @@ export class InternalServerError extends Error {
   }
 }
 
+export class AuthenticationRequiredError extends Error {
+  public redirectUrl: string;
+  public requiresSaml: boolean;
+  public organizationId: string;
+  public samlConfigId?: string;
+
+  constructor(extensions: {
+    redirectUrl: string;
+    requiresSaml: boolean;
+    organizationId: string;
+    samlConfigId?: string;
+  }) {
+    super("AUTHENTICATION_REQUIRED");
+    this.name = "AuthenticationRequiredError";
+    this.redirectUrl = extensions.redirectUrl;
+    this.requiresSaml = extensions.requiresSaml;
+    this.organizationId = extensions.organizationId;
+    this.samlConfigId = extensions.samlConfigId;
+  }
+}
+
 export function buildEndpoint(path: string): string {
   const host = import.meta.env.VITE_API_URL;
 
@@ -46,6 +67,9 @@ export function buildEndpoint(path: string): string {
 
 const hasUnauthenticatedError = (error: GraphQLError) =>
   error.extensions?.code == "UNAUTHENTICATED";
+
+const hasAuthenticationRequiredError = (error: GraphQLError) =>
+  error.extensions?.code == "AUTHENTICATION_REQUIRED";
 
 const fetchRelay: FetchFunction = async (
   request,
@@ -115,6 +139,20 @@ const fetchRelay: FetchFunction = async (
 
     if (errors.find(hasUnauthenticatedError)) {
       throw new UnAuthenticatedError();
+    }
+
+    // Check for authentication required errors
+    const authRequiredError = errors.find(hasAuthenticationRequiredError);
+    if (authRequiredError?.extensions) {
+      const { redirectUrl, requiresSaml, organizationId, samlConfigId } = authRequiredError.extensions;
+
+      // Throw the error with all the redirect information
+      throw new AuthenticationRequiredError({
+        redirectUrl: redirectUrl as string,
+        requiresSaml: requiresSaml as boolean,
+        organizationId: organizationId as string,
+        samlConfigId: samlConfigId as string | undefined,
+      });
     }
 
     throw new Error(

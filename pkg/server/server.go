@@ -24,10 +24,12 @@ import (
 	"github.com/getprobo/probo/pkg/auth"
 	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/connector"
+	"github.com/getprobo/probo/pkg/filemanager"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/probo"
 	"github.com/getprobo/probo/pkg/saferedirect"
 	"github.com/getprobo/probo/pkg/server/api"
+	auth_server "github.com/getprobo/probo/pkg/server/auth"
 	trust_v1 "github.com/getprobo/probo/pkg/server/api/trust/v1"
 	"github.com/getprobo/probo/pkg/server/trust"
 	"github.com/getprobo/probo/pkg/server/web"
@@ -35,6 +37,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 )
 
 type Config struct {
@@ -44,12 +47,15 @@ type Config struct {
 	Auth              *auth.Service
 	Authz             *authz.Service
 	Trust             *trust_pkg.Service
+	SAML              *auth.SAMLService
 	ConsoleAuth       api.ConsoleAuthConfig
 	TrustAuth         api.TrustAuthConfig
 	ConnectorRegistry *connector.ConnectorRegistry
 	Agent             *agents.Agent
 	SafeRedirect      *saferedirect.SafeRedirect
 	CustomDomainCname string
+	FileManager       *filemanager.Service
+	PGClient          *pg.Client
 	Logger            *log.Logger
 }
 
@@ -57,6 +63,7 @@ type Server struct {
 	apiServer         *api.Server
 	webServer         *web.Server
 	trustServer       *trust.Server
+	authServer        *auth_server.Server
 	router            *chi.Mux
 	extraHeaderFields map[string]string
 	proboService      *probo.Service
@@ -70,6 +77,7 @@ func NewServer(cfg Config) (*Server, error) {
 		Auth:              cfg.Auth,
 		Authz:             cfg.Authz,
 		Trust:             cfg.Trust,
+		SAML:              cfg.SAML,
 		ConsoleAuth:       cfg.ConsoleAuth,
 		TrustAuth:         cfg.TrustAuth,
 		ConnectorRegistry: cfg.ConnectorRegistry,
@@ -92,12 +100,29 @@ func NewServer(cfg Config) (*Server, error) {
 		return nil, err
 	}
 
+	authServer, err := auth_server.NewServer(auth_server.Config{
+		Auth:            cfg.Auth,
+		Authz:           cfg.Authz,
+		SAML:            cfg.SAML,
+		CookieName:      cfg.ConsoleAuth.CookieName,
+		CookieDomain:    cfg.ConsoleAuth.CookieDomain,
+		SessionDuration: cfg.ConsoleAuth.SessionDuration,
+		CookieSecret:    cfg.ConsoleAuth.CookieSecret,
+		FileManager:     cfg.FileManager,
+		PGClient:        cfg.PGClient,
+		Logger:          cfg.Logger.Named("auth"),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	router := chi.NewRouter()
 
 	server := &Server{
 		apiServer:         apiServer,
 		webServer:         webServer,
 		trustServer:       trustServer,
+		authServer:        authServer,
 		router:            router,
 		extraHeaderFields: cfg.ExtraHeaderFields,
 		proboService:      cfg.Probo,
@@ -111,6 +136,7 @@ func NewServer(cfg Config) (*Server, error) {
 
 func (s *Server) setupRoutes() {
 	s.router.Mount("/api", s.apiServer)
+	s.router.Mount("/auth", s.authServer)
 
 	s.router.Route("/trust/{slugOrId}", func(r chi.Router) {
 		r.Use(s.loadTrustCenterBySlugOrID)

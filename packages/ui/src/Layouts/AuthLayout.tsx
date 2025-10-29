@@ -5,7 +5,7 @@ export function AuthLayout() {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen text-txt-primary">
             <div className="bg-level-0 flex flex-col items-center justify-center">
-                <div className="max-w-112">
+                <div className="w-full max-w-md px-6">
                     <Outlet />
                 </div>
             </div>

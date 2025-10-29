@@ -51,7 +51,7 @@ export default function SignupFromInvitationPage() {
     }
 
     const response = await fetch(
-      buildEndpoint("/api/console/v1/auth/signup-from-invitation"),
+      buildEndpoint("/auth/signup-from-invitation"),
       {
         method: "POST",
         headers: {
@@ -125,7 +125,7 @@ export default function SignupFromInvitationPage() {
         <p className="text-sm text-txt-tertiary">
           {__("Already have an account?")}{" "}
           <Link
-            to="/auth/login"
+            to="/authentication/login"
             className="underline text-txt-primary hover:text-txt-secondary"
           >
             {__("Log in here")}

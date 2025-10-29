@@ -32,9 +32,10 @@ type AuthConfig struct {
 }
 
 type AuthResult struct {
-	Session   *coredata.Session
-	User      *coredata.User
-	TenantIDs []gid.TenantID
+	Session    *coredata.Session
+	User       *coredata.User
+	TenantIDs  []gid.TenantID
+	AuthErrors map[gid.TenantID]error // Maps tenant ID to authentication error
 }
 
 type ErrorHandler struct {
@@ -97,15 +98,28 @@ func TryAuth(
 		return nil
 	}
 
-	tenantIDs := make([]gid.TenantID, len(organizations))
-	for i, org := range organizations {
-		tenantIDs[i] = org.ID.TenantID()
+	// Validate organization access based on authentication requirements
+	// Only include organizations the user has proper authentication for
+	allowedTenantIDs := make([]gid.TenantID, 0, len(organizations))
+	authErrors := make(map[gid.TenantID]error)
+
+	for _, org := range organizations {
+		// Check if user has the required authentication for this organization
+		err := authSvc.CheckOrganizationAccess(ctx, user, org.ID, session)
+		if err == nil {
+			// User has proper authentication for this org
+			allowedTenantIDs = append(allowedTenantIDs, org.ID.TenantID())
+		} else {
+			// Store the authentication error for later use
+			authErrors[org.ID.TenantID()] = err
+		}
 	}
 
 	return &AuthResult{
 		Session:   session,
 		User:      user,
-		TenantIDs: tenantIDs,
+		TenantIDs: allowedTenantIDs,
+		AuthErrors: authErrors,
 	}
 }
 

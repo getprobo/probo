@@ -10,8 +10,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/getprobo/probo/pkg/auth"
 	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
@@ -1081,6 +1083,20 @@ func (r *measureConnectionResolver) TotalCount(ctx context.Context, obj *types.M
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
 }
 
+// AuthMethod is the resolver for the authMethod field.
+func (r *membershipResolver) AuthMethod(ctx context.Context, obj *types.Membership) (coredata.UserAuthMethod, error) {
+	session := SessionFromContext(ctx)
+	if session == nil {
+		return coredata.UserAuthMethodPassword, nil
+	}
+
+	authMethod, err := r.authSvc.GetUserAuthMethod(ctx, coredata.NewScope(obj.UserID.TenantID()), obj.UserID, obj.OrganizationID, session)
+	if err != nil {
+		return "", fmt.Errorf("cannot get user auth method: %w", err)
+	}
+	return authMethod, nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *types.MembershipConnection) (int, error) {
 	switch obj.Resolver.(type) {
@@ -1098,6 +1114,8 @@ func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *type
 
 // CreateOrganization is the resolver for the createOrganization field.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error) {
+	currentUser := UserFromContext(ctx)
+
 	prb := r.proboSvc.WithTenant(gid.NewTenantID())
 
 	organization, err := prb.Organizations.Create(
@@ -1112,7 +1130,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 
 	err = r.authzSvc.AddUserToOrganization(
 		ctx,
-		UserFromContext(ctx).ID,
+		currentUser.ID,
 		organization.ID,
 		string(authz.RoleMember),
 	)
@@ -1129,8 +1147,8 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		ctx,
 		probo.CreatePeopleRequest{
 			OrganizationID:           organization.ID,
-			FullName:                 UserFromContext(ctx).FullName,
-			PrimaryEmailAddress:      UserFromContext(ctx).EmailAddress,
+			FullName:                 currentUser.FullName,
+			PrimaryEmailAddress:      currentUser.EmailAddress,
 			AdditionalEmailAddresses: []string{},
 			Kind:                     coredata.PeopleKindEmployee,
 		},
@@ -3537,6 +3555,260 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	}, nil
 }
 
+// InitiateDomainVerification is the resolver for the initiateDomainVerification field.
+func (r *mutationResolver) InitiateDomainVerification(ctx context.Context, input types.InitiateDomainVerificationInput) (*types.InitiateDomainVerificationPayload, error) {
+	user := UserFromContext(ctx)
+	if user == nil {
+		return nil, fmt.Errorf("user not authenticated")
+	}
+
+	organizationID := input.OrganizationID
+	tenantID := organizationID.TenantID()
+
+	config, err := r.authSvc.InitiateDomainVerification(ctx, tenantID, organizationID, input.EmailDomain)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiate domain verification: %w", err)
+	}
+
+	dnsRecord := auth.GetDomainVerificationRecord(*config.DomainVerificationToken)
+
+	return &types.InitiateDomainVerificationPayload{
+		SamlConfiguration: types.NewSAMLConfigurationWithURLs(
+			config,
+			r.samlSvc.GetEntityID(),
+			r.samlSvc.GetAcsURL(),
+		),
+		DNSRecord: dnsRecord,
+	}, nil
+}
+
+// VerifyDomain is the resolver for the verifyDomain field.
+func (r *mutationResolver) VerifyDomain(ctx context.Context, input types.VerifyDomainInput) (*types.VerifyDomainPayload, error) {
+	user := UserFromContext(ctx)
+	if user == nil {
+		return nil, fmt.Errorf("user not authenticated")
+	}
+
+	configID := input.ID
+	tenantID := configID.TenantID()
+
+	config, verified, err := r.authSvc.VerifyDomain(ctx, tenantID, configID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify domain: %w", err)
+	}
+
+	return &types.VerifyDomainPayload{
+		SamlConfiguration: types.NewSAMLConfigurationWithURLs(
+			config,
+			r.samlSvc.GetEntityID(),
+			r.samlSvc.GetAcsURL(),
+		),
+		Verified: verified,
+	}, nil
+}
+
+// CreateSAMLConfiguration is the resolver for the createSAMLConfiguration field.
+func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input types.CreateSAMLConfigurationInput) (*types.CreateSAMLConfigurationPayload, error) {
+	user := UserFromContext(ctx)
+	if user == nil {
+		return nil, fmt.Errorf("user not authenticated")
+	}
+
+	organizationID := input.OrganizationID
+	tenantID := organizationID.TenantID()
+
+	var idpEntityID, idpSsoURL, idpCertificate string
+	var idpMetadataURL *string
+
+	if input.IdpMetadataXML != nil && *input.IdpMetadataXML != "" {
+		metadata, err := auth.ParseIdPMetadata(*input.IdpMetadataXML)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse IdP metadata XML: %w", err)
+		}
+		idpEntityID = metadata.EntityID
+		idpSsoURL = metadata.SsoURL
+		idpCertificate = metadata.Certificate
+		idpMetadataURL = metadata.MetadataURL
+	} else {
+		if input.IdpEntityID == nil || *input.IdpEntityID == "" {
+			return nil, fmt.Errorf("either idpMetadataXml or idpEntityId must be provided")
+		}
+		if input.IdpSsoURL == nil || *input.IdpSsoURL == "" {
+			return nil, fmt.Errorf("either idpMetadataXml or idpSsoUrl must be provided")
+		}
+		if input.IdpCertificate == nil || *input.IdpCertificate == "" {
+			return nil, fmt.Errorf("either idpMetadataXml or idpCertificate must be provided")
+		}
+		idpEntityID = *input.IdpEntityID
+		idpSsoURL = *input.IdpSsoURL
+		idpCertificate = *input.IdpCertificate
+		idpMetadataURL = input.IdpMetadataURL
+	}
+
+	attributeEmail := "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+	if input.AttributeEmail != nil {
+		attributeEmail = *input.AttributeEmail
+	}
+
+	attributeFirstname := "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
+	if input.AttributeFirstname != nil {
+		attributeFirstname = *input.AttributeFirstname
+	}
+
+	attributeLastname := "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
+	if input.AttributeLastname != nil {
+		attributeLastname = *input.AttributeLastname
+	}
+
+	attributeRole := "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"
+	if input.AttributeRole != nil {
+		attributeRole = *input.AttributeRole
+	}
+
+	defaultRole := "MEMBER"
+	if input.DefaultRole != nil {
+		defaultRole = *input.DefaultRole
+	}
+
+	autoSignupEnabled := false
+	if input.AutoSignupEnabled != nil {
+		autoSignupEnabled = *input.AutoSignupEnabled
+	}
+
+	config, err := r.authSvc.WithTenant(tenantID).CreateSAMLConfiguration(ctx, auth.CreateSAMLConfigurationRequest{
+		OrganizationID:     organizationID,
+		EmailDomain:        input.EmailDomain,
+		EnforcementPolicy:  input.EnforcementPolicy,
+		IdPEntityID:        idpEntityID,
+		IdPSsoURL:          idpSsoURL,
+		IdPCertificate:     idpCertificate,
+		IdPMetadataURL:     idpMetadataURL,
+		AttributeEmail:     attributeEmail,
+		AttributeFirstname: attributeFirstname,
+		AttributeLastname:  attributeLastname,
+		AttributeRole:      attributeRole,
+		DefaultRole:        defaultRole,
+		AutoSignupEnabled:  autoSignupEnabled,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SAML configuration: %w", err)
+	}
+
+	return &types.CreateSAMLConfigurationPayload{
+		SamlConfiguration: types.NewSAMLConfigurationWithURLs(
+			config,
+			r.samlSvc.GetEntityID(),
+			r.samlSvc.GetAcsURL(),
+		),
+	}, nil
+}
+
+// UpdateSAMLConfiguration is the resolver for the updateSAMLConfiguration field.
+func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input types.UpdateSAMLConfigurationInput) (*types.UpdateSAMLConfigurationPayload, error) {
+	user := UserFromContext(ctx)
+	if user == nil {
+		return nil, fmt.Errorf("user not authenticated")
+	}
+
+	configID := input.ID
+	tenantID := configID.TenantID()
+
+	updatedConfig, err := r.authSvc.WithTenant(tenantID).UpdateSAMLConfiguration(ctx, auth.UpdateSAMLConfigurationRequest{
+		ID:                 configID,
+		Enabled:            input.Enabled,
+		EnforcementPolicy:  input.EnforcementPolicy,
+		IdPEntityID:        input.IdpEntityID,
+		IdPSsoURL:          input.IdpSsoURL,
+		IdPCertificate:     input.IdpCertificate,
+		IdPMetadataURL:     input.IdpMetadataURL,
+		AttributeEmail:     input.AttributeEmail,
+		AttributeFirstname: input.AttributeFirstname,
+		AttributeLastname:  input.AttributeLastname,
+		AttributeRole:      input.AttributeRole,
+		DefaultRole:        input.DefaultRole,
+		AutoSignupEnabled:  input.AutoSignupEnabled,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to update SAML configuration: %w", err)
+	}
+
+	return &types.UpdateSAMLConfigurationPayload{
+		SamlConfiguration: types.NewSAMLConfigurationWithURLs(
+			updatedConfig,
+			r.samlSvc.GetEntityID(),
+			r.samlSvc.GetAcsURL(),
+		),
+	}, nil
+}
+
+// DeleteSAMLConfiguration is the resolver for the deleteSAMLConfiguration field.
+func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input types.DeleteSAMLConfigurationInput) (*types.DeleteSAMLConfigurationPayload, error) {
+	user := UserFromContext(ctx)
+	if user == nil {
+		return nil, fmt.Errorf("user not authenticated")
+	}
+
+	configID := input.ID
+	tenantID := configID.TenantID()
+
+	err := r.authSvc.WithTenant(tenantID).DeleteSAMLConfiguration(ctx, configID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete SAML configuration: %w", err)
+	}
+
+	return &types.DeleteSAMLConfigurationPayload{
+		DeletedSAMLConfigurationID: configID,
+	}, nil
+}
+
+// EnableSaml is the resolver for the enableSAML field.
+func (r *mutationResolver) EnableSaml(ctx context.Context, input types.EnableSAMLInput) (*types.EnableSAMLPayload, error) {
+	user := UserFromContext(ctx)
+	if user == nil {
+		return nil, fmt.Errorf("user not authenticated")
+	}
+
+	configID := input.ID
+	tenantID := configID.TenantID()
+
+	enabledConfig, err := r.authSvc.WithTenant(tenantID).EnableSAMLConfiguration(ctx, configID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to enable SAML: %w", err)
+	}
+
+	return &types.EnableSAMLPayload{
+		SamlConfiguration: types.NewSAMLConfigurationWithURLs(
+			enabledConfig,
+			r.samlSvc.GetEntityID(),
+			r.samlSvc.GetAcsURL(),
+		),
+	}, nil
+}
+
+// DisableSaml is the resolver for the disableSAML field.
+func (r *mutationResolver) DisableSaml(ctx context.Context, input types.DisableSAMLInput) (*types.DisableSAMLPayload, error) {
+	user := UserFromContext(ctx)
+	if user == nil {
+		return nil, fmt.Errorf("user not authenticated")
+	}
+
+	configID := input.ID
+	tenantID := configID.TenantID()
+
+	disabledConfig, err := r.authSvc.WithTenant(tenantID).DisableSAMLConfiguration(ctx, configID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to disable SAML: %w", err)
+	}
+
+	return &types.DisableSAMLPayload{
+		SamlConfiguration: types.NewSAMLConfigurationWithURLs(
+			disabledConfig,
+			r.samlSvc.GetEntityID(),
+			r.samlSvc.GetAcsURL(),
+		),
+	}, nil
+}
+
 // Organization is the resolver for the organization field.
 func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Nonconformity) (*types.Organization, error) {
 	prb := r.ProboService(ctx, obj.ID.TenantID())
@@ -4282,6 +4554,27 @@ func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Orga
 	return types.NewCustomDomain(domain, r.customDomainCname), nil
 }
 
+// SamlConfigurations is the resolver for the samlConfigurations field.
+func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *types.Organization) ([]*types.SAMLConfiguration, error) {
+	tenantID := obj.ID.TenantID()
+
+	configs, err := r.authSvc.WithTenant(tenantID).GetSAMLConfigurationsByOrganizationID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load SAML configurations: %w", err)
+	}
+
+	result := make([]*types.SAMLConfiguration, len(configs))
+	for i, config := range configs {
+		result[i] = types.NewSAMLConfigurationWithURLs(
+			config,
+			r.samlSvc.GetEntityID(),
+			r.samlSvc.GetAcsURL(),
+		)
+	}
+
+	return result, nil
+}
+
 // TotalCount is the resolver for the totalCount field.
 func (r *peopleConnectionResolver) TotalCount(ctx context.Context, obj *types.PeopleConnection) (int, error) {
 	prb := r.ProboService(ctx, obj.ParentID.TenantID())
@@ -4725,6 +5018,41 @@ func (r *riskConnectionResolver) TotalCount(ctx context.Context, obj *types.Risk
 	}
 
 	panic(fmt.Errorf("unsupported resolver: %T", obj.Resolver))
+}
+
+// Organization is the resolver for the organization field.
+func (r *sAMLConfigurationResolver) Organization(ctx context.Context, obj *types.SAMLConfiguration) (*types.Organization, error) {
+	tenantID := obj.ID.TenantID()
+	prb := r.ProboService(ctx, tenantID)
+
+	config, err := r.authSvc.WithTenant(tenantID).GetSAMLConfigurationByID(ctx, obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load SAML configuration: %w", err)
+	}
+
+	org, err := prb.Organizations.Get(ctx, config.OrganizationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load organization: %w", err)
+	}
+
+	return types.NewOrganization(org), nil
+}
+
+// SpMetadataURL is the resolver for the spMetadataUrl field.
+// Returns global Entity ID (same as spEntityId since metadata URL no longer needs config parameter)
+func (r *sAMLConfigurationResolver) SpMetadataURL(ctx context.Context, obj *types.SAMLConfiguration) (string, error) {
+	return r.samlSvc.GetEntityID(), nil
+}
+
+// TestLoginURL is the resolver for the testLoginUrl field.
+func (r *sAMLConfigurationResolver) TestLoginURL(ctx context.Context, obj *types.SAMLConfiguration) (string, error) {
+	entityID := r.samlSvc.GetEntityID()
+	parts := strings.Split(entityID, "/auth/saml/metadata")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid entity ID format")
+	}
+
+	return fmt.Sprintf("%s/auth/saml/login/%s", parts[0], obj.ID), nil
 }
 
 // Organization is the resolver for the organization field.
@@ -5520,6 +5848,8 @@ func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, f
 		panic(fmt.Errorf("failed to list organizations for user: %w", err))
 	}
 
+	// Show all organizations the user is a member of
+	// Authentication requirements will be enforced when switching to an organization
 	page := page.NewPage(organizations, cursor)
 
 	return types.NewOrganizationConnection(page), nil
@@ -5649,6 +5979,9 @@ func (r *Resolver) MeasureConnection() schema.MeasureConnectionResolver {
 	return &measureConnectionResolver{r}
 }
 
+// Membership returns schema.MembershipResolver implementation.
+func (r *Resolver) Membership() schema.MembershipResolver { return &membershipResolver{r} }
+
 // MembershipConnection returns schema.MembershipConnectionResolver implementation.
 func (r *Resolver) MembershipConnection() schema.MembershipConnectionResolver {
 	return &membershipConnectionResolver{r}
@@ -5702,6 +6035,11 @@ func (r *Resolver) Risk() schema.RiskResolver { return &riskResolver{r} }
 
 // RiskConnection returns schema.RiskConnectionResolver implementation.
 func (r *Resolver) RiskConnection() schema.RiskConnectionResolver { return &riskConnectionResolver{r} }
+
+// SAMLConfiguration returns schema.SAMLConfigurationResolver implementation.
+func (r *Resolver) SAMLConfiguration() schema.SAMLConfigurationResolver {
+	return &sAMLConfigurationResolver{r}
+}
 
 // Snapshot returns schema.SnapshotResolver implementation.
 func (r *Resolver) Snapshot() schema.SnapshotResolver { return &snapshotResolver{r} }
@@ -5818,6 +6156,7 @@ type invitationResolver struct{ *Resolver }
 type invitationConnectionResolver struct{ *Resolver }
 type measureResolver struct{ *Resolver }
 type measureConnectionResolver struct{ *Resolver }
+type membershipResolver struct{ *Resolver }
 type membershipConnectionResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type nonconformityResolver struct{ *Resolver }
@@ -5832,6 +6171,7 @@ type queryResolver struct{ *Resolver }
 type reportResolver struct{ *Resolver }
 type riskResolver struct{ *Resolver }
 type riskConnectionResolver struct{ *Resolver }
+type sAMLConfigurationResolver struct{ *Resolver }
 type snapshotResolver struct{ *Resolver }
 type snapshotConnectionResolver struct{ *Resolver }
 type taskResolver struct{ *Resolver }

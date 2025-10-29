@@ -67,7 +67,7 @@ func DefaultConfig(name, secret string) Config {
 		MaxAge:   86400 * 30, // 30 days
 		Secure:   true,
 		HTTPOnly: true,
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteNoneMode, // None mode required for SAML (cross-site POST from IdP)
 	}
 }
 

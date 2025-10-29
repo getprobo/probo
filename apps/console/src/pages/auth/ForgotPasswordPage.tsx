@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = handleSubmit(async (data) => {
     const response = await fetch(
-      buildEndpoint("/api/console/v1/auth/forget-password"),
+      buildEndpoint("/auth/forget-password"),
       {
         method: "POST",
         headers: {
@@ -81,7 +81,7 @@ export default function ForgotPasswordPage() {
           <p className="text-sm text-txt-tertiary">
             {__("Remember your password?")}{" "}
             <Link
-              to="/auth/login"
+              to="/authentication/login"
               className="underline text-txt-primary hover:text-txt-secondary"
             >
               {__("Back to login")}
@@ -124,7 +124,7 @@ export default function ForgotPasswordPage() {
         <p className="text-sm text-txt-tertiary">
           {__("Remember your password?")}{" "}
           <Link
-            to="/auth/login"
+            to="/authentication/login"
             className="underline text-txt-primary hover:text-txt-secondary"
           >
             {__("Back to login")}

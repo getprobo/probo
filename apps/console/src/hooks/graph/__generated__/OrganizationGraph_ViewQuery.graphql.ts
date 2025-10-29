@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e961390ac138b066af89b5b02169d66e>>
+ * @generated SignedSource<<220f85396d6d4c5c04f730d07aaa42e1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,7 @@ export type OrganizationGraph_ViewQuery$data = {
   readonly node: {
     readonly id?: string;
     readonly name?: string;
-    readonly " $fragmentSpreads": FragmentRefs<"SettingsPageFragment" | "SettingsPageInvitationsFragment" | "SettingsPageMembershipsFragment">;
+    readonly " $fragmentSpreads": FragmentRefs<"SettingsPageFragment">;
   };
 };
 export type OrganizationGraph_ViewQuery = {
@@ -82,52 +82,50 @@ v7 = {
   "name": "updatedAt",
   "storageKey": null
 },
-v8 = {
-  "kind": "Literal",
-  "name": "first",
-  "value": 20
-},
-v9 = {
-  "kind": "Literal",
-  "name": "orderBy",
-  "value": {
-    "direction": "ASC",
-    "field": "CREATED_AT"
+v8 = [
+  {
+    "kind": "Literal",
+    "name": "first",
+    "value": 20
+  },
+  {
+    "kind": "Literal",
+    "name": "orderBy",
+    "value": {
+      "direction": "ASC",
+      "field": "CREATED_AT"
+    }
   }
-},
-v10 = [
-  (v8/*: any*/),
-  (v9/*: any*/)
 ],
-v11 = {
+v9 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "totalCount",
   "storageKey": null
 },
-v12 = {
+v10 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "fullName",
   "storageKey": null
 },
-v13 = {
+v11 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "role",
   "storageKey": null
 },
-v14 = {
+v12 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "cursor",
   "storageKey": null
 },
-v15 = {
+v13 = {
   "alias": null,
   "args": null,
   "concreteType": "PageInfo",
@@ -166,7 +164,7 @@ v15 = {
   ],
   "storageKey": null
 },
-v16 = {
+v14 = {
   "kind": "ClientExtension",
   "selections": [
     {
@@ -178,19 +176,8 @@ v16 = {
     }
   ]
 },
-v17 = [
-  {
-    "kind": "Literal",
-    "name": "filter",
-    "value": {
-      "statuses": [
-        "PENDING",
-        "EXPIRED"
-      ]
-    }
-  },
-  (v8/*: any*/),
-  (v9/*: any*/)
+v15 = [
+  "orderBy"
 ];
 return {
   "fragment": {
@@ -216,16 +203,6 @@ return {
                 "args": null,
                 "kind": "FragmentSpread",
                 "name": "SettingsPageFragment"
-              },
-              {
-                "args": null,
-                "kind": "FragmentSpread",
-                "name": "SettingsPageMembershipsFragment"
-              },
-              {
-                "args": null,
-                "kind": "FragmentSpread",
-                "name": "SettingsPageInvitationsFragment"
               }
             ],
             "type": "Organization",
@@ -293,6 +270,146 @@ return {
                 "kind": "ScalarField",
                 "name": "headquarterAddress",
                 "storageKey": null
+              },
+              (v6/*: any*/),
+              (v7/*: any*/),
+              {
+                "alias": null,
+                "args": (v8/*: any*/),
+                "concreteType": "MembershipConnection",
+                "kind": "LinkedField",
+                "name": "memberships",
+                "plural": false,
+                "selections": [
+                  (v9/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "MembershipEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Membership",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          (v10/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "emailAddress",
+                            "storageKey": null
+                          },
+                          (v11/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "authMethod",
+                            "storageKey": null
+                          },
+                          (v6/*: any*/),
+                          (v4/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v12/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v13/*: any*/),
+                  (v14/*: any*/)
+                ],
+                "storageKey": "memberships(first:20,orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
+              },
+              {
+                "alias": null,
+                "args": (v8/*: any*/),
+                "filters": (v15/*: any*/),
+                "handle": "connection",
+                "key": "MembersSettingsTabMemberships_memberships",
+                "kind": "LinkedHandle",
+                "name": "memberships"
+              },
+              {
+                "alias": null,
+                "args": (v8/*: any*/),
+                "concreteType": "InvitationConnection",
+                "kind": "LinkedField",
+                "name": "invitations",
+                "plural": false,
+                "selections": [
+                  (v9/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "InvitationEdge",
+                    "kind": "LinkedField",
+                    "name": "edges",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Invitation",
+                        "kind": "LinkedField",
+                        "name": "node",
+                        "plural": false,
+                        "selections": [
+                          (v2/*: any*/),
+                          (v10/*: any*/),
+                          (v5/*: any*/),
+                          (v11/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "status",
+                            "storageKey": null
+                          },
+                          (v6/*: any*/),
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "expiresAt",
+                            "storageKey": null
+                          },
+                          {
+                            "alias": null,
+                            "args": null,
+                            "kind": "ScalarField",
+                            "name": "acceptedAt",
+                            "storageKey": null
+                          },
+                          (v4/*: any*/)
+                        ],
+                        "storageKey": null
+                      },
+                      (v12/*: any*/)
+                    ],
+                    "storageKey": null
+                  },
+                  (v13/*: any*/),
+                  (v14/*: any*/)
+                ],
+                "storageKey": "invitations(first:20,orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
+              },
+              {
+                "alias": null,
+                "args": (v8/*: any*/),
+                "filters": (v15/*: any*/),
+                "handle": "connection",
+                "key": "MembersSettingsTabInvitations_invitations",
+                "kind": "LinkedHandle",
+                "name": "invitations"
               },
               {
                 "alias": null,
@@ -369,143 +486,157 @@ return {
                 ],
                 "storageKey": null
               },
-              (v6/*: any*/),
-              (v7/*: any*/),
               {
                 "alias": null,
-                "args": (v10/*: any*/),
-                "concreteType": "MembershipConnection",
+                "args": null,
+                "concreteType": "SAMLConfiguration",
                 "kind": "LinkedField",
-                "name": "memberships",
-                "plural": false,
+                "name": "samlConfigurations",
+                "plural": true,
                 "selections": [
-                  (v11/*: any*/),
+                  (v2/*: any*/),
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "MembershipEdge",
-                    "kind": "LinkedField",
-                    "name": "edges",
-                    "plural": true,
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "Membership",
-                        "kind": "LinkedField",
-                        "name": "node",
-                        "plural": false,
-                        "selections": [
-                          (v2/*: any*/),
-                          (v12/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "emailAddress",
-                            "storageKey": null
-                          },
-                          (v13/*: any*/),
-                          (v6/*: any*/),
-                          (v4/*: any*/)
-                        ],
-                        "storageKey": null
-                      },
-                      (v14/*: any*/)
-                    ],
+                    "kind": "ScalarField",
+                    "name": "enabled",
                     "storageKey": null
                   },
-                  (v15/*: any*/),
-                  (v16/*: any*/)
-                ],
-                "storageKey": "memberships(first:20,orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
-              },
-              {
-                "alias": null,
-                "args": (v10/*: any*/),
-                "filters": [
-                  "orderBy"
-                ],
-                "handle": "connection",
-                "key": "SettingsPageMemberships_memberships",
-                "kind": "LinkedHandle",
-                "name": "memberships"
-              },
-              {
-                "alias": null,
-                "args": (v17/*: any*/),
-                "concreteType": "InvitationConnection",
-                "kind": "LinkedField",
-                "name": "invitations",
-                "plural": false,
-                "selections": [
-                  (v11/*: any*/),
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "InvitationEdge",
-                    "kind": "LinkedField",
-                    "name": "edges",
-                    "plural": true,
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "concreteType": "Invitation",
-                        "kind": "LinkedField",
-                        "name": "node",
-                        "plural": false,
-                        "selections": [
-                          (v2/*: any*/),
-                          (v5/*: any*/),
-                          (v12/*: any*/),
-                          (v13/*: any*/),
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "status",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "expiresAt",
-                            "storageKey": null
-                          },
-                          {
-                            "alias": null,
-                            "args": null,
-                            "kind": "ScalarField",
-                            "name": "acceptedAt",
-                            "storageKey": null
-                          },
-                          (v6/*: any*/),
-                          (v4/*: any*/)
-                        ],
-                        "storageKey": null
-                      },
-                      (v14/*: any*/)
-                    ],
+                    "kind": "ScalarField",
+                    "name": "emailDomain",
                     "storageKey": null
                   },
-                  (v15/*: any*/),
-                  (v16/*: any*/)
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "enforcementPolicy",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "domainVerified",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "domainVerificationToken",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "domainVerifiedAt",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "spEntityId",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "spAcsUrl",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "spMetadataUrl",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "testLoginUrl",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "idpEntityId",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "idpSsoUrl",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "idpCertificate",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "idpMetadataUrl",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "attributeEmail",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "attributeFirstname",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "attributeLastname",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "attributeRole",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "defaultRole",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "autoSignupEnabled",
+                    "storageKey": null
+                  }
                 ],
-                "storageKey": "invitations(filter:{\"statuses\":[\"PENDING\",\"EXPIRED\"]},first:20,orderBy:{\"direction\":\"ASC\",\"field\":\"CREATED_AT\"})"
-              },
-              {
-                "alias": null,
-                "args": (v17/*: any*/),
-                "filters": [
-                  "orderBy",
-                  "filter"
-                ],
-                "handle": "connection",
-                "key": "SettingsPageInvitations_invitations",
-                "kind": "LinkedHandle",
-                "name": "invitations"
+                "storageKey": null
               }
             ],
             "type": "Organization",
@@ -517,16 +648,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3d38000d9d2105ef8ae3d56edf31b372",
+    "cacheID": "782dc2328cea4f0c350427bda92a5615",
     "id": null,
     "metadata": {},
     "name": "OrganizationGraph_ViewQuery",
     "operationKind": "query",
-    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n      ...SettingsPageMembershipsFragment\n      ...SettingsPageInvitationsFragment\n    }\n    id\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    sslExpiresAt\n  }\n  createdAt\n  updatedAt\n}\n\nfragment SettingsPageInvitationsFragment on Organization {\n  invitations(first: 20, orderBy: {direction: ASC, field: CREATED_AT}, filter: {statuses: [PENDING, EXPIRED]}) {\n    totalCount\n    edges {\n      node {\n        id\n        email\n        fullName\n        role\n        status\n        expiresAt\n        acceptedAt\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SettingsPageMembershipsFragment on Organization {\n  memberships(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        fullName\n        emailAddress\n        role\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n"
+    "text": "query OrganizationGraph_ViewQuery(\n  $organizationId: ID!\n) {\n  node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      ...SettingsPageFragment\n    }\n    id\n  }\n}\n\nfragment DomainSettingsTabFragment on Organization {\n  id\n  customDomain {\n    id\n    domain\n    sslStatus\n    dnsRecords {\n      type\n      name\n      value\n      ttl\n      purpose\n    }\n    createdAt\n    updatedAt\n    sslExpiresAt\n  }\n}\n\nfragment GeneralSettingsTabFragment on Organization {\n  id\n  name\n  logoUrl\n  horizontalLogoUrl\n  description\n  websiteUrl\n  email\n  headquarterAddress\n  createdAt\n  updatedAt\n}\n\nfragment MembersSettingsTabInvitationsFragment on Organization {\n  invitations(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        fullName\n        email\n        role\n        status\n        createdAt\n        expiresAt\n        acceptedAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment MembersSettingsTabMembershipsFragment on Organization {\n  memberships(first: 20, orderBy: {direction: ASC, field: CREATED_AT}) {\n    totalCount\n    edges {\n      node {\n        id\n        fullName\n        emailAddress\n        role\n        authMethod\n        createdAt\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n      hasPreviousPage\n      startCursor\n    }\n  }\n  id\n}\n\nfragment SAMLSettingsTabFragment on Organization {\n  id\n  name\n  samlConfigurations {\n    id\n    enabled\n    emailDomain\n    enforcementPolicy\n    domainVerified\n    domainVerificationToken\n    domainVerifiedAt\n    spEntityId\n    spAcsUrl\n    spMetadataUrl\n    testLoginUrl\n    idpEntityId\n    idpSsoUrl\n    idpCertificate\n    idpMetadataUrl\n    attributeEmail\n    attributeFirstname\n    attributeLastname\n    attributeRole\n    defaultRole\n    autoSignupEnabled\n  }\n}\n\nfragment SettingsPageFragment on Organization {\n  id\n  name\n  ...GeneralSettingsTabFragment\n  ...MembersSettingsTabMembershipsFragment\n  ...MembersSettingsTabInvitationsFragment\n  ...DomainSettingsTabFragment\n  ...SAMLSettingsTabFragment\n}\n"
   }
 };
 })();
 
-(node as any).hash = "fda1489f2b80fd3d0b3962574bd7dfe3";
+(node as any).hash = "196e8c1fc9c2e0b3c76c8b338ed5c7f7";
 
 export default node;

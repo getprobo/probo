@@ -28,13 +28,13 @@ const (
 func (p MembershipOrderField) Column() string {
 	switch p {
 	case MembershipOrderFieldFullName:
-		return "u.fullname"
+		return "full_name"
 	case MembershipOrderFieldEmailAddress:
-		return "u.email_address"
+		return "email_address"
 	case MembershipOrderFieldRole:
-		return "m.role"
+		return "role"
 	case MembershipOrderFieldCreatedAt:
-		return "m.created_at"
+		return "created_at"
 	}
 	return string(p)
 }

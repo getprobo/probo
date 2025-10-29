@@ -59,6 +59,7 @@ type (
 		Auth              *auth.Service
 		Authz             *authz.Service
 		Trust             *trust.Service
+		SAML              *auth.SAMLService
 		ConsoleAuth       ConsoleAuthConfig
 		TrustAuth         TrustAuthConfig
 		ConnectorRegistry *connector.ConnectorRegistry
@@ -194,6 +195,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			s.cfg.ConnectorRegistry,
 			s.cfg.SafeRedirect,
 			s.cfg.CustomDomainCname,
+			s.cfg.SAML,
 		),
 	)
 

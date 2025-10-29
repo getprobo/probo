@@ -36,6 +36,7 @@ type (
 		HashedPassword       []byte    `db:"hashed_password"`
 		FullName             string    `db:"fullname"`
 		EmailAddressVerified bool      `db:"email_address_verified"`
+		SAMLSubject          *string   `db:"saml_subject"`
 		CreatedAt            time.Time `db:"created_at"`
 		UpdatedAt            time.Time `db:"updated_at"`
 	}
@@ -158,6 +159,7 @@ SELECT
     hashed_password,
     email_address_verified,
     fullname,
+    saml_subject,
     created_at,
     updated_at
 FROM
@@ -201,6 +203,7 @@ SELECT
     hashed_password,
 	email_address_verified,
     fullname,
+    saml_subject,
     created_at,
     updated_at
 FROM
@@ -234,16 +237,18 @@ LIMIT 1;
 func (u *User) Insert(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 ) error {
 	q := `
 INSERT INTO
-    users (id, email_address, hashed_password, email_address_verified, fullname, created_at, updated_at)
+    users (id, email_address, hashed_password, email_address_verified, fullname, saml_subject, created_at, updated_at)
 VALUES (
     @user_id,
     @email_address,
     @hashed_password,
     @email_address_verified,
     @fullname,
+    @saml_subject,
     @created_at,
     @updated_at
 )
@@ -254,6 +259,7 @@ VALUES (
 		"email_address":          u.EmailAddress,
 		"hashed_password":        u.HashedPassword,
 		"fullname":               u.FullName,
+		"saml_subject":           u.SAMLSubject,
 		"created_at":             u.CreatedAt,
 		"updated_at":             u.UpdatedAt,
 		"email_address_verified": u.EmailAddressVerified,
@@ -341,3 +347,107 @@ WHERE
 
 	return nil
 }
+
+func (u *User) Update(ctx context.Context, conn pg.Conn) error {
+	q := `
+UPDATE
+    users
+SET
+    email_address = @email_address,
+    email_address_verified = @email_address_verified,
+    saml_subject = @saml_subject,
+    updated_at = @updated_at
+WHERE
+    id = @user_id
+`
+
+	args := pgx.StrictNamedArgs{
+		"user_id":                 u.ID,
+		"email_address":           u.EmailAddress,
+		"email_address_verified":  u.EmailAddressVerified,
+		"saml_subject":            u.SAMLSubject,
+		"updated_at":              u.UpdatedAt,
+	}
+
+	_, err := conn.Exec(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot update user: %w", err)
+	}
+
+	return nil
+}
+
+// LoadBySAMLSubject loads a user by their SAML subject (NameID)
+func (u *User) LoadBySAMLSubject(
+	ctx context.Context,
+	conn pg.Conn,
+	samlSubject string,
+) error {
+	q := `
+SELECT
+    id,
+    email_address,
+    hashed_password,
+    email_address_verified,
+    fullname,
+    saml_subject,
+    created_at,
+    updated_at
+FROM
+    users
+WHERE
+    saml_subject = @saml_subject
+LIMIT 1;
+`
+
+	args := pgx.StrictNamedArgs{"saml_subject": samlSubject}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query user by SAML subject: %w", err)
+	}
+
+	user, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[User])
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return &ErrUserNotFound{Identifier: samlSubject}
+		}
+
+		return fmt.Errorf("cannot collect user: %w", err)
+	}
+
+	*u = user
+
+	return nil
+}
+
+// LoadByEmailAndTenant, LoadByEmailGlobal, and IsTenantUser methods removed
+// All users are now global (no tenant_id distinction)
+// Use LoadByEmail() for all email-based lookups
+
+func (u *User) CountMemberships(
+	ctx context.Context,
+	conn pg.Conn,
+) (int, error) {
+	q := `
+SELECT
+    COUNT(*)
+FROM
+    authz_memberships
+WHERE
+    user_id = @user_id
+`
+
+	args := pgx.StrictNamedArgs{"user_id": u.ID}
+
+	var count int
+	err := conn.QueryRow(ctx, q, args).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("cannot count user memberships: %w", err)
+	}
+
+	return count, nil
+}
+
+// ConvertToTenantUser method removed
+// All users are now global (no tenant conversion needed)

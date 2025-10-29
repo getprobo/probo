@@ -50,7 +50,7 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
   const error = useRouteError() ?? propsError;
 
   if (error instanceof UnAuthenticatedError) {
-    return <Navigate to="/auth/login" />;
+    return <Navigate to="/authentication/login" />;
   }
 
   return <PageError error={error?.toString()} />;
@@ -58,7 +58,7 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
 
 const routes = [
   {
-    path: "/auth",
+    path: "/authentication",
     Component: AuthLayout,
     children: [
       {
@@ -131,6 +131,30 @@ const routes = [
             organizationId,
           }),
         Component: lazy(() => import("./pages/organizations/SettingsPage")),
+        children: [
+          {
+            path: "",
+            loader: () => {
+              throw redirect("general");
+            },
+          },
+          {
+            path: "general",
+            Component: lazy(() => import("./pages/organizations/settings/GeneralSettingsTab")),
+          },
+          {
+            path: "members",
+            Component: lazy(() => import("./pages/organizations/settings/MembersSettingsTab")),
+          },
+          {
+            path: "domain",
+            Component: lazy(() => import("./pages/organizations/settings/DomainSettingsTab")),
+          },
+          {
+            path: "saml-sso",
+            Component: lazy(() => import("./pages/organizations/settings/SAMLSettingsTab")),
+          },
+        ],
       },
       ...riskRoutes,
       ...measureRoutes,

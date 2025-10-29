@@ -132,22 +132,33 @@ func (m *Membership) LoadByID(
 	membershipID gid.GID,
 ) error {
 	query := `
+WITH mbr AS (
+	SELECT
+		id,
+		user_id,
+		organization_id,
+		role,
+		created_at,
+		updated_at
+	FROM
+		authz_memberships
+	WHERE
+		id = @membership_id
+		AND %s
+)
 SELECT
-    m.id,
-    m.user_id,
-    m.organization_id,
-    m.role,
+    mbr.id,
+    mbr.user_id,
+    mbr.organization_id,
+    mbr.role,
     u.fullname as full_name,
     u.email_address,
-    m.created_at,
-    m.updated_at
+    mbr.created_at,
+    mbr.updated_at
 FROM
-    authz_memberships m
+    mbr
 JOIN
-    users u ON m.user_id = u.id
-WHERE
-    m.id = @membership_id
-    AND %s
+    users u ON mbr.user_id = u.id
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
@@ -182,23 +193,34 @@ func (m *Membership) LoadByUserAndOrg(
 	orgID gid.GID,
 ) error {
 	query := `
+WITH mbr AS (
+	SELECT
+		id,
+		user_id,
+		organization_id,
+		role,
+		created_at,
+		updated_at
+	FROM
+		authz_memberships
+	WHERE
+		user_id = @user_id
+		AND organization_id = @organization_id
+		AND %s
+)
 SELECT
-    m.id,
-    m.user_id,
-    m.organization_id,
-    m.role,
+    mbr.id,
+    mbr.user_id,
+    mbr.organization_id,
+    mbr.role,
     u.fullname as full_name,
     u.email_address,
-    m.created_at,
-    m.updated_at
+    mbr.created_at,
+    mbr.updated_at
 FROM
-    authz_memberships m
+    mbr
 JOIN
-    users u ON m.user_id = u.id
-WHERE
-    m.user_id = @user_id
-    AND m.organization_id = @organization_id
-    AND %s
+    users u ON mbr.user_id = u.id
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
@@ -294,24 +316,35 @@ func (m *Memberships) LoadByUserID(
 	userID gid.GID,
 ) error {
 	query := `
+WITH mbr AS (
+	SELECT
+		id,
+		user_id,
+		organization_id,
+		role,
+		created_at,
+		updated_at
+	FROM
+		authz_memberships
+	WHERE
+		user_id = @user_id
+		AND %s
+	ORDER BY
+		created_at DESC
+)
 SELECT
-    m.id,
-    m.user_id,
-    m.organization_id,
-    m.role,
+    mbr.id,
+    mbr.user_id,
+    mbr.organization_id,
+    mbr.role,
     u.fullname as full_name,
     u.email_address,
-    m.created_at,
-    m.updated_at
+    mbr.created_at,
+    mbr.updated_at
 FROM
-    authz_memberships m
+    mbr
 JOIN
-    users u ON m.user_id = u.id
-WHERE
-    m.user_id = @user_id
-    AND %s
-ORDER BY
-    m.created_at DESC
+    users u ON mbr.user_id = u.id
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
@@ -343,23 +376,45 @@ func (m *Memberships) LoadByOrganizationID(
 	cursor *page.Cursor[MembershipOrderField],
 ) error {
 	query := `
+WITH mbr AS (
+	SELECT
+		id,
+		user_id,
+		organization_id,
+		role,
+		created_at,
+		updated_at
+	FROM
+		authz_memberships
+	WHERE
+		organization_id = @organization_id
+		AND %s
+)
 SELECT
-    m.id,
-    m.user_id,
-    m.organization_id,
-    m.role,
-    u.fullname as full_name,
-    u.email_address,
-    m.created_at,
-    m.updated_at
-FROM
-    authz_memberships m
-JOIN
-    users u ON m.user_id = u.id
-WHERE
-    m.organization_id = @organization_id
-    AND %s
-    AND %s
+    id,
+    user_id,
+    organization_id,
+    role,
+    full_name,
+    email_address,
+    created_at,
+    updated_at
+FROM (
+	SELECT
+		mbr.id,
+		mbr.user_id,
+		mbr.organization_id,
+		mbr.role,
+		u.fullname as full_name,
+		u.email_address,
+		mbr.created_at,
+		mbr.updated_at
+	FROM
+		mbr
+	JOIN
+		users u ON mbr.user_id = u.id
+) AS membership_with_user
+WHERE %s
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment(), cursor.SQLFragment())
@@ -410,4 +465,68 @@ WHERE
 		return 0, fmt.Errorf("cannot count memberships: %w", err)
 	}
 	return count, nil
+}
+
+func LoadUserIDsByOrganizationID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+) ([]gid.GID, error) {
+	query := `
+SELECT user_id
+FROM authz_memberships
+WHERE organization_id = @organization_id AND %s
+`
+	query = fmt.Sprintf(query, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{"organization_id": organizationID}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, query, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query memberships: %w", err)
+	}
+
+	var userIDs []gid.GID
+	for rows.Next() {
+		var userID gid.GID
+		if err := rows.Scan(&userID); err != nil {
+			rows.Close()
+			return nil, fmt.Errorf("cannot scan user_id: %w", err)
+		}
+		userIDs = append(userIDs, userID)
+	}
+	rows.Close()
+
+	return userIDs, nil
+}
+
+func UpdateMembershipUserID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	oldUserID gid.GID,
+	newUserID gid.GID,
+	organizationID gid.GID,
+) error {
+	query := `
+UPDATE authz_memberships
+SET user_id = @new_user_id, updated_at = @updated_at
+WHERE user_id = @old_user_id AND organization_id = @organization_id AND %s
+`
+	query = fmt.Sprintf(query, scope.SQLFragment())
+	args := pgx.StrictNamedArgs{
+		"new_user_id":     newUserID,
+		"old_user_id":     oldUserID,
+		"organization_id": organizationID,
+		"updated_at":      time.Now(),
+	}
+	maps.Copy(args, scope.SQLArguments())
+
+	_, err := conn.Exec(ctx, query, args)
+	if err != nil {
+		return fmt.Errorf("cannot update membership: %w", err)
+	}
+
+	return nil
 }

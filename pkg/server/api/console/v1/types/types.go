@@ -505,6 +505,29 @@ type CreateRiskPayload struct {
 	RiskEdge *RiskEdge `json:"riskEdge"`
 }
 
+type CreateSAMLConfigurationInput struct {
+	OrganizationID     gid.GID                        `json:"organizationId"`
+	EmailDomain        string                         `json:"emailDomain"`
+	EnforcementPolicy  coredata.SAMLEnforcementPolicy `json:"enforcementPolicy"`
+	SpCertificate      *string                        `json:"spCertificate,omitempty"`
+	SpPrivateKey       *string                        `json:"spPrivateKey,omitempty"`
+	IdpMetadataXML     *string                        `json:"idpMetadataXml,omitempty"`
+	IdpEntityID        *string                        `json:"idpEntityId,omitempty"`
+	IdpSsoURL          *string                        `json:"idpSsoUrl,omitempty"`
+	IdpCertificate     *string                        `json:"idpCertificate,omitempty"`
+	IdpMetadataURL     *string                        `json:"idpMetadataUrl,omitempty"`
+	AttributeEmail     *string                        `json:"attributeEmail,omitempty"`
+	AttributeFirstname *string                        `json:"attributeFirstname,omitempty"`
+	AttributeLastname  *string                        `json:"attributeLastname,omitempty"`
+	AttributeRole      *string                        `json:"attributeRole,omitempty"`
+	DefaultRole        *string                        `json:"defaultRole,omitempty"`
+	AutoSignupEnabled  *bool                          `json:"autoSignupEnabled,omitempty"`
+}
+
+type CreateSAMLConfigurationPayload struct {
+	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
+}
+
 type CreateSnapshotInput struct {
 	OrganizationID gid.GID                `json:"organizationId"`
 	Name           string                 `json:"name"`
@@ -904,6 +927,14 @@ type DeleteRiskPayload struct {
 	DeletedRiskID gid.GID `json:"deletedRiskId"`
 }
 
+type DeleteSAMLConfigurationInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type DeleteSAMLConfigurationPayload struct {
+	DeletedSAMLConfigurationID gid.GID `json:"deletedSAMLConfigurationId"`
+}
+
 type DeleteSnapshotInput struct {
 	SnapshotID gid.GID `json:"snapshotId"`
 }
@@ -1000,6 +1031,14 @@ type DeleteVendorServicePayload struct {
 	DeletedVendorServiceID gid.GID `json:"deletedVendorServiceId"`
 }
 
+type DisableSAMLInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type DisableSAMLPayload struct {
+	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
+}
+
 type Document struct {
 	ID                      gid.GID                         `json:"id"`
 	Title                   string                          `json:"title"`
@@ -1092,6 +1131,14 @@ type DocumentVersionSignatureFilter struct {
 type DocumentVersionSignatureOrder struct {
 	Field     coredata.DocumentVersionSignatureOrderField `json:"field"`
 	Direction page.OrderDirection                         `json:"direction"`
+}
+
+type EnableSAMLInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type EnableSAMLPayload struct {
+	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
 }
 
 type Evidence struct {
@@ -1216,6 +1263,16 @@ type ImportMeasurePayload struct {
 	MeasureEdges []*MeasureEdge `json:"measureEdges"`
 }
 
+type InitiateDomainVerificationInput struct {
+	OrganizationID gid.GID `json:"organizationId"`
+	EmailDomain    string  `json:"emailDomain"`
+}
+
+type InitiateDomainVerificationPayload struct {
+	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
+	DNSRecord         string             `json:"dnsRecord"`
+}
+
 type Invitation struct {
 	ID           gid.GID                   `json:"id"`
 	Email        string                    `json:"email"`
@@ -1284,14 +1341,15 @@ type MeasureFilter struct {
 }
 
 type Membership struct {
-	ID             gid.GID   `json:"id"`
-	UserID         gid.GID   `json:"userID"`
-	OrganizationID gid.GID   `json:"organizationID"`
-	Role           string    `json:"role"`
-	FullName       string    `json:"fullName"`
-	EmailAddress   string    `json:"emailAddress"`
-	CreatedAt      time.Time `json:"createdAt"`
-	UpdatedAt      time.Time `json:"updatedAt"`
+	ID             gid.GID                 `json:"id"`
+	UserID         gid.GID                 `json:"userID"`
+	OrganizationID gid.GID                 `json:"organizationID"`
+	Role           string                  `json:"role"`
+	FullName       string                  `json:"fullName"`
+	EmailAddress   string                  `json:"emailAddress"`
+	AuthMethod     coredata.UserAuthMethod `json:"authMethod"`
+	CreatedAt      time.Time               `json:"createdAt"`
+	UpdatedAt      time.Time               `json:"updatedAt"`
 }
 
 func (Membership) IsNode()             {}
@@ -1396,6 +1454,7 @@ type Organization struct {
 	TrustCenterFiles      *TrustCenterFileConnection      `json:"trustCenterFiles"`
 	TrustCenter           *TrustCenter                    `json:"trustCenter,omitempty"`
 	CustomDomain          *CustomDomain                   `json:"customDomain,omitempty"`
+	SamlConfigurations    []*SAMLConfiguration            `json:"samlConfigurations"`
 	CreatedAt             time.Time                       `json:"createdAt"`
 	UpdatedAt             time.Time                       `json:"updatedAt"`
 }
@@ -1579,6 +1638,36 @@ type RiskFilter struct {
 	Query      *string  `json:"query,omitempty"`
 	SnapshotID *gid.GID `json:"snapshotId,omitempty"`
 }
+
+type SAMLConfiguration struct {
+	ID                      gid.GID                        `json:"id"`
+	Organization            *Organization                  `json:"organization"`
+	EmailDomain             string                         `json:"emailDomain"`
+	Enabled                 bool                           `json:"enabled"`
+	EnforcementPolicy       coredata.SAMLEnforcementPolicy `json:"enforcementPolicy"`
+	DomainVerified          bool                           `json:"domainVerified"`
+	DomainVerificationToken *string                        `json:"domainVerificationToken,omitempty"`
+	DomainVerifiedAt        *time.Time                     `json:"domainVerifiedAt,omitempty"`
+	SpEntityID              string                         `json:"spEntityId"`
+	SpAcsURL                string                         `json:"spAcsUrl"`
+	SpMetadataURL           string                         `json:"spMetadataUrl"`
+	IdpEntityID             string                         `json:"idpEntityId"`
+	IdpSsoURL               string                         `json:"idpSsoUrl"`
+	IdpCertificate          string                         `json:"idpCertificate"`
+	IdpMetadataURL          *string                        `json:"idpMetadataUrl,omitempty"`
+	AttributeEmail          string                         `json:"attributeEmail"`
+	AttributeFirstname      string                         `json:"attributeFirstname"`
+	AttributeLastname       string                         `json:"attributeLastname"`
+	AttributeRole           string                         `json:"attributeRole"`
+	DefaultRole             string                         `json:"defaultRole"`
+	AutoSignupEnabled       bool                           `json:"autoSignupEnabled"`
+	TestLoginURL            string                         `json:"testLoginUrl"`
+	CreatedAt               time.Time                      `json:"createdAt"`
+	UpdatedAt               time.Time                      `json:"updatedAt"`
+}
+
+func (SAMLConfiguration) IsNode()             {}
+func (this SAMLConfiguration) GetID() gid.GID { return this.ID }
 
 type SendSigningNotificationsInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
@@ -1973,6 +2062,28 @@ type UpdateRiskPayload struct {
 	Risk *Risk `json:"risk"`
 }
 
+type UpdateSAMLConfigurationInput struct {
+	ID                 gid.GID                         `json:"id"`
+	Enabled            *bool                           `json:"enabled,omitempty"`
+	EnforcementPolicy  *coredata.SAMLEnforcementPolicy `json:"enforcementPolicy,omitempty"`
+	SpCertificate      *string                         `json:"spCertificate,omitempty"`
+	SpPrivateKey       *string                         `json:"spPrivateKey,omitempty"`
+	IdpEntityID        *string                         `json:"idpEntityId,omitempty"`
+	IdpSsoURL          *string                         `json:"idpSsoUrl,omitempty"`
+	IdpCertificate     *string                         `json:"idpCertificate,omitempty"`
+	IdpMetadataURL     *string                         `json:"idpMetadataUrl,omitempty"`
+	AttributeEmail     *string                         `json:"attributeEmail,omitempty"`
+	AttributeFirstname *string                         `json:"attributeFirstname,omitempty"`
+	AttributeLastname  *string                         `json:"attributeLastname,omitempty"`
+	AttributeRole      *string                         `json:"attributeRole,omitempty"`
+	DefaultRole        *string                         `json:"defaultRole,omitempty"`
+	AutoSignupEnabled  *bool                           `json:"autoSignupEnabled,omitempty"`
+}
+
+type UpdateSAMLConfigurationPayload struct {
+	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
+}
+
 type UpdateTaskInput struct {
 	TaskID       gid.GID                           `json:"taskId"`
 	Name         *string                           `json:"name,omitempty"`
@@ -2357,6 +2468,15 @@ type VendorServiceConnection struct {
 type VendorServiceEdge struct {
 	Cursor page.CursorKey `json:"cursor"`
 	Node   *VendorService `json:"node"`
+}
+
+type VerifyDomainInput struct {
+	ID gid.GID `json:"id"`
+}
+
+type VerifyDomainPayload struct {
+	SamlConfiguration *SAMLConfiguration `json:"samlConfiguration"`
+	Verified          bool               `json:"verified"`
 }
 
 type Viewer struct {

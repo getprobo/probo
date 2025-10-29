@@ -111,7 +111,7 @@ export default function ConfirmEmailPage() {
           <p className="text-green-600 dark:text-green-400">
             {__("Your email has been confirmed successfully!")}
           </p>
-          <Button onClick={() => navigate("/auth/login")} className="w-full">
+          <Button onClick={() => navigate("/authentication/login")} className="w-full">
             {__("Proceed to Login")}
           </Button>
         </div>
@@ -141,7 +141,7 @@ export default function ConfirmEmailPage() {
         {!isConfirmed && (
           <p className="text-sm text-txt-tertiary">
             <Link
-              to="/auth/login"
+              to="/authentication/login"
               className="underline text-txt-primary hover:text-txt-secondary"
             >
               {__("Back to Login")}

@@ -60,11 +60,17 @@ type (
 		proboSvc          *probo.Service
 		authSvc           *auth.Service
 		authzSvc          *authz.Service
+		samlSvc           *auth.SAMLService
 		authCfg           AuthConfig
 		customDomainCname string
 	}
 
 	ctxKey struct{ name string }
+
+	userTenantAccess struct {
+		tenantIDs  []gid.TenantID
+		authErrors map[gid.TenantID]error
+	}
 )
 
 var (
@@ -92,6 +98,7 @@ func NewMux(
 	connectorRegistry *connector.ConnectorRegistry,
 	safeRedirect *saferedirect.SafeRedirect,
 	customDomainCname string,
+	samlSvc *auth.SAMLService,
 ) *chi.Mux {
 	r := chi.NewMux()
 
@@ -211,13 +218,6 @@ func NewMux(
 		},
 	)
 
-	r.Post("/auth/register", SignUpHandler(authSvc, authCfg))
-	r.Post("/auth/login", SignInHandler(authSvc, authCfg))
-	r.Delete("/auth/logout", SignOutHandler(authSvc, authCfg))
-	r.Post("/auth/signup-from-invitation", SignupFromInvitationHandler(authSvc, authCfg))
-	r.Post("/auth/forget-password", ForgetPasswordHandler(authSvc, authCfg))
-	r.Post("/auth/reset-password", ResetPasswordHandler(authSvc, authCfg))
-
 	r.Get("/connectors/initiate", WithSession(authSvc, authzSvc, authCfg, func(w http.ResponseWriter, r *http.Request) {
 		provider := r.URL.Query().Get("provider")
 		if provider != "SLACK" {
@@ -295,12 +295,12 @@ func NewMux(
 	})
 
 	r.Get("/", playground.Handler("GraphQL", "/api/console/v1/query"))
-	r.Post("/query", graphqlHandler(logger, proboSvc, authSvc, authzSvc, authCfg, customDomainCname))
+	r.Post("/query", graphqlHandler(logger, proboSvc, authSvc, authzSvc, samlSvc, authCfg, customDomainCname))
 
 	return r
 }
 
-func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthConfig, customDomainCname string) http.HandlerFunc {
+func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.Service, authzSvc *authz.Service, samlSvc *auth.SAMLService, authCfg AuthConfig, customDomainCname string) http.HandlerFunc {
 	var mb int64 = 1 << 20
 
 	es := schema.NewExecutableSchema(
@@ -309,6 +309,7 @@ func graphqlHandler(logger *log.Logger, proboSvc *probo.Service, authSvc *auth.S
 				proboSvc:          proboSvc,
 				authSvc:           authSvc,
 				authzSvc:          authzSvc,
+				samlSvc:           samlSvc,
 				authCfg:           authCfg,
 				customDomainCname: customDomainCname,
 			},
@@ -387,7 +388,10 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthCon
 
 		ctx = context.WithValue(ctx, sessionContextKey, authResult.Session)
 		ctx = context.WithValue(ctx, userContextKey, authResult.User)
-		ctx = context.WithValue(ctx, userTenantContextKey, &authResult.TenantIDs)
+		ctx = context.WithValue(ctx, userTenantContextKey, &userTenantAccess{
+			tenantIDs:  authResult.TenantIDs,
+			authErrors: authResult.AuthErrors,
+		})
 
 		next(w, r.WithContext(ctx))
 
@@ -425,13 +429,19 @@ func GetTenantAuthzService(ctx context.Context, authzSvc *authz.Service, tenantI
 }
 
 func validateTenantAccess(ctx context.Context, tenantID gid.TenantID) {
-	tenantIDs, _ := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
+	access, _ := ctx.Value(userTenantContextKey).(*userTenantAccess)
 
-	if tenantIDs == nil {
+	if access == nil {
 		panic(fmt.Errorf("tenant not found"))
 	}
 
-	if !slices.Contains(*tenantIDs, tenantID) {
-		panic(fmt.Errorf("tenant not found"))
+	if !slices.Contains(access.tenantIDs, tenantID) {
+		if access.authErrors != nil {
+			if authErr := access.authErrors[tenantID]; authErr != nil {
+				panic(authErr)
+			}
+		}
+
+		panic(fmt.Errorf("access denied to tenant"))
 	}
 }

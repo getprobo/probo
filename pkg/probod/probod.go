@@ -118,6 +118,10 @@ func New() *Implm {
 				},
 				DisableSignup:                       false,
 				InvitationConfirmationTokenValidity: 3600,
+				SAML: samlConfig{
+					SessionDuration:        604800,
+					CleanupIntervalSeconds: 86400,
+				},
 			},
 			TrustAuth: trustAuthConfig{
 				CookieName:        "TCT",
@@ -268,9 +272,11 @@ func (impl *Implm) Run(
 	authService, err := auth.NewService(
 		ctx,
 		pgClient,
+		impl.cfg.EncryptionKey,
 		hp,
 		impl.cfg.Auth.Cookie.Secret,
 		impl.cfg.Hostname,
+		fmt.Sprintf("https://%s", impl.cfg.Hostname),
 		impl.cfg.Auth.DisableSignup,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
 	)
@@ -290,6 +296,21 @@ func (impl *Implm) Run(
 	}
 
 	fileManagerService := filemanager.NewService(s3Client)
+
+	samlService, err := auth.NewSAMLService(
+		pgClient,
+		impl.cfg.EncryptionKey,
+		fmt.Sprintf("https://%s", impl.cfg.Hostname),
+		impl.cfg.Auth.SAML.SessionDurationTime(),
+		impl.cfg.Auth.Cookie.Name,
+		impl.cfg.Auth.Cookie.Secret,
+		impl.cfg.Auth.SAML.Certificate,
+		impl.cfg.Auth.SAML.PrivateKey,
+		l.Named("saml"),
+	)
+	if err != nil {
+		return fmt.Errorf("cannot create SAML service: %w", err)
+	}
 
 	var accountKey crypto.Signer
 	if impl.cfg.CustomDomains.ACME.AccountKey != "" {
@@ -368,10 +389,13 @@ func (impl *Implm) Run(
 			Auth:              authService,
 			Authz:             authzService,
 			Trust:             trustService,
+			SAML:              samlService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			Agent:             agent,
 			SafeRedirect:      &saferedirect.SafeRedirect{AllowedHost: impl.cfg.Hostname},
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
+			FileManager:       fileManagerService,
+			PGClient:          pgClient,
 			Logger:            l.Named("http.server"),
 			ConsoleAuth: api.ConsoleAuthConfig{
 				CookieName:      impl.cfg.Auth.Cookie.Name,
@@ -445,6 +469,20 @@ func (impl *Implm) Run(
 		},
 	)
 
+	samlCleanerCtx, stopSAMLCleaner := context.WithCancel(context.Background())
+	samlCleaner := auth.NewCleaner(
+		pgClient,
+		impl.cfg.Auth.SAML.CleanupInterval(),
+		l.Named("saml-cleaner"),
+	)
+	wg.Go(
+		func() {
+			if err := samlCleaner.Run(samlCleanerCtx); err != nil {
+				cancel(fmt.Errorf("saml cleaner crashed: %w", err))
+			}
+		},
+	)
+
 	trustCenterServerCtx, stopTrustCenterServer := context.WithCancel(context.Background())
 	defer stopTrustCenterServer()
 	wg.Go(
@@ -460,6 +498,7 @@ func (impl *Implm) Run(
 	stopMailer()
 	stopSlackSender()
 	stopExportJobExporter()
+	stopSAMLCleaner()
 	stopApiServer()
 	stopTrustCenterServer()
 

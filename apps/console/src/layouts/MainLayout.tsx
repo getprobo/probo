@@ -30,17 +30,16 @@ import {
   DropdownItem,
   IconChevronGrabberVertical,
   IconPlusLarge,
-  IconChevronDown,
   Avatar,
   IconPeopleAdd,
   Badge,
+  IconLock,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { graphql } from "relay-runtime";
-import { useLazyLoadQuery, usePaginationFragment } from "react-relay";
+import { useLazyLoadQuery } from "react-relay";
 import type { MainLayoutQuery as MainLayoutQueryType } from "./__generated__/MainLayoutQuery.graphql";
-import type { MainLayout_OrganizationSelector_viewer$key } from "./__generated__/MainLayout_OrganizationSelector_viewer.graphql";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useToast } from "@probo/ui";
 import { ErrorBoundary } from "react-error-boundary";
 import { PageError } from "/components/PageError";
@@ -54,7 +53,9 @@ const MainLayoutQuery = graphql`
         fullName
         email
       }
-      ...MainLayout_OrganizationSelector_viewer
+      invitations(first: 1, filter: {statuses: [PENDING]}) {
+        totalCount
+      }
     }
     organization: node(id: $organizationId) {
       ... on Organization {
@@ -62,33 +63,6 @@ const MainLayoutQuery = graphql`
         name
         logoUrl
       }
-    }
-  }
-`;
-
-const OrganizationSelectorFragment = graphql`
-  fragment MainLayout_OrganizationSelector_viewer on Viewer
-  @refetchable(queryName: "MainLayoutOrganizationSelectorPaginationQuery")
-  @argumentDefinitions(
-    first: { type: "Int", defaultValue: 25 }
-    after: { type: "CursorKey" }
-  ) {
-    organizations(first: $first, after: $after, orderBy: {field: NAME, direction: ASC})
-    @connection(key: "MainLayout_OrganizationSelector_organizations") {
-      edges {
-        node {
-          id
-          name
-          logoUrl
-        }
-      }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-    }
-    invitations(first: 1, filter: {statuses: [PENDING]}) {
-      totalCount
     }
   }
 `;
@@ -228,7 +202,7 @@ function UserDropdown({ organizationId }: { organizationId: string }) {
   ) => {
     e.preventDefault();
 
-    fetch(buildEndpoint("/api/console/v1/auth/logout"), {
+    fetch(buildEndpoint("/auth/logout"), {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -271,6 +245,19 @@ function UserDropdown({ organizationId }: { organizationId: string }) {
   );
 }
 
+interface Organization {
+  id: string;
+  name: string;
+  logoUrl?: string | null;
+  authenticationMethod: string;
+  authStatus: "authenticated" | "unauthenticated" | "expired";
+  loginUrl: string;
+}
+
+interface OrganizationsResponse {
+  organizations: Organization[];
+}
+
 function OrganizationSelectorWrapper({ organizationId }: { organizationId: string }) {
   const data = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, { organizationId });
   return <OrganizationSelector viewer={data.viewer} currentOrganization={data.organization} />;
@@ -280,31 +267,55 @@ function OrganizationSelector({
   viewer,
   currentOrganization
 }: {
-  viewer: MainLayout_OrganizationSelector_viewer$key;
+  viewer: MainLayoutQueryType["response"]["viewer"];
   currentOrganization: MainLayoutQueryType["response"]["organization"];
 }) {
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { __ } = useTranslate();
 
-  const { data, loadNext, hasNext } = usePaginationFragment(
-    OrganizationSelectorFragment,
-    viewer
-  );
+  const pendingInvitationsCount = viewer.invitations.totalCount;
 
-  const organizations = data.organizations.edges.map((edge) => edge.node);
-  const pendingInvitationsCount = data.invitations.totalCount;
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/auth/organizations', {
+          credentials: 'include',
+        });
 
-  const handleLoadMore = (e?: React.MouseEvent) => {
-    e?.preventDefault();
-    e?.stopPropagation();
+        if (!response.ok) {
+          throw new Error('Failed to fetch organizations');
+        }
 
-    if (hasNext && !isLoadingMore) {
-      setIsLoadingMore(true);
-      loadNext(25, {
-        onComplete: () => setIsLoadingMore(false),
-      });
-    }
-  };
+        const data: OrganizationsResponse = await response.json();
+        setOrganizations(data.organizations);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        console.error('Failed to fetch organizations:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrganizations();
+  }, []);
+
+  if (error) {
+    return (
+      <div className="flex items-center gap-1">
+        <Button
+          className="-ml-3"
+          variant="tertiary"
+          disabled
+        >
+          {__("Error loading organizations")}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center gap-1">
@@ -314,39 +325,70 @@ function OrganizationSelector({
             className="-ml-3"
             variant="tertiary"
             iconAfter={IconChevronGrabberVertical}
+            disabled={isLoading}
           >
-            {currentOrganization?.name || ""}
+            {isLoading ? __("Loading...") : (currentOrganization?.name || "")}
           </Button>
         }
       >
         <div className="max-h-150 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent hover:scrollbar-thumb-gray-400">
-          {organizations.map((organization) => (
-            <DropdownItem
-              asChild
-              key={organization.id}
-            >
-              <Link to={`/organizations/${organization.id}`}>
-                <Avatar src={organization.logoUrl} name={organization.name} />
-                {organization.name}
-              </Link>
-            </DropdownItem>
-          ))}
-          {hasNext && (
-            <div className="px-3 py-1 flex justify-center">
-              <Button
-                variant="tertiary"
-                onClick={handleLoadMore}
-                onMouseDown={(e: React.MouseEvent) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                className="mx-auto"
-                icon={IconChevronDown}
-                disabled={isLoadingMore}
-              >
-                {isLoadingMore ? __("Loading...") : __("Show More")}
-              </Button>
+          {isLoading ? (
+            <div className="px-3 py-2 text-gray-500">
+              {__("Loading organizations...")}
             </div>
+          ) : organizations.length === 0 ? (
+            <div className="px-3 py-2 text-gray-500">
+              {__("No organizations found")}
+            </div>
+          ) : (
+            organizations.map((organization) => {
+              const isAuthenticated = organization.authStatus === "authenticated";
+              const isExpired = organization.authStatus === "expired";
+              const needsAuth = organization.authStatus === "unauthenticated";
+
+              const targetUrl = isAuthenticated
+                ? `/organizations/${organization.id}`
+                : organization.loginUrl;
+
+              const isSAMLUrl = targetUrl.includes('/auth/saml/');
+
+              return (
+                <DropdownItem
+                  asChild
+                  key={organization.id}
+                >
+                  {isSAMLUrl ? (
+                    <a href={targetUrl} className="flex items-center gap-2">
+                      <Avatar name={organization.name} src={organization.logoUrl} />
+                      <span className="flex-1">{organization.name}</span>
+                      {isAuthenticated && (
+                        <IconCheckmark1 size={16} className="text-green-600" />
+                      )}
+                      {isExpired && (
+                        <IconClock size={16} className="text-orange-600" />
+                      )}
+                      {needsAuth && (
+                        <IconLock size={16} className="text-gray-400" />
+                      )}
+                    </a>
+                  ) : (
+                    <Link to={targetUrl} className="flex items-center gap-2">
+                      <Avatar name={organization.name} src={organization.logoUrl} />
+                      <span className="flex-1">{organization.name}</span>
+                      {isAuthenticated && (
+                        <IconCheckmark1 size={16} className="text-green-600" />
+                      )}
+                      {isExpired && (
+                        <IconClock size={16} className="text-orange-600" />
+                      )}
+                      {needsAuth && (
+                        <IconLock size={16} className="text-gray-400" />
+                      )}
+                    </Link>
+                  )}
+                </DropdownItem>
+              );
+            })
           )}
         </div>
         <DropdownSeparator />
