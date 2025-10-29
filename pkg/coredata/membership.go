@@ -345,6 +345,8 @@ FROM
     mbr
 JOIN
     users u ON mbr.user_id = u.id
+ORDER BY
+    mbr.created_at DESC
 `
 
 	query = fmt.Sprintf(query, scope.SQLFragment())
