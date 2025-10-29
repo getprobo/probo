@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/mail"
 
 	authsvc "github.com/getprobo/probo/pkg/auth"
 	"go.gearno.de/kit/httpserver"
@@ -49,6 +50,11 @@ func SAMLCheckSSOHandler(authSvc *authsvc.Service, logger *log.Logger) http.Hand
 
 		if req.Email == "" {
 			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("email is required"))
+			return
+		}
+
+		if _, err := mail.ParseAddress(req.Email); err != nil {
+			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid email format"))
 			return
 		}
 
