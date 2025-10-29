@@ -280,10 +280,12 @@ func (s *Service) EnsureSAMLMembership(
 		func(tx pg.Conn) error {
 			var membership coredata.Membership
 
-			// Try to load existing membership
 			err := membership.LoadByUserAndOrg(ctx, tx, scope, userID, organizationID)
 			if err != nil {
-				// Membership doesn't exist, create it
+				if _, ok := err.(coredata.ErrMembershipNotFound); !ok {
+					return fmt.Errorf("cannot load membership: %w", err)
+				}
+
 				membershipID := gid.New(tenantID, coredata.MembershipEntityType)
 				membership = coredata.Membership{
 					ID:             membershipID,
@@ -301,7 +303,6 @@ func (s *Service) EnsureSAMLMembership(
 				return nil
 			}
 
-			// Membership exists, update role if changed
 			if membership.Role != role {
 				membership.Role = role
 				membership.UpdatedAt = now
