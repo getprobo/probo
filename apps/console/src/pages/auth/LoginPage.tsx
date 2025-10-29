@@ -11,7 +11,12 @@ export default function LoginPage() {
   const [searchParams] = useSearchParams();
 
   const authMethod = searchParams.get("method");
-  const initialMode = authMethod === "password" ? "password" : authMethod === "sso" ? "sso" : "default";
+  let initialMode: "default" | "password" | "sso" = "default";
+  if (authMethod === "password") {
+    initialMode = "password";
+  } else if (authMethod === "sso") {
+    initialMode = "sso";
+  }
 
   const [mode, setMode] = useState<"default" | "password" | "sso">(initialMode);
   const [isLoading, setIsLoading] = useState(false);
