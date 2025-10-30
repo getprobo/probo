@@ -15,28 +15,31 @@
 package auth
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"net/http"
 
 	authsvc "github.com/getprobo/probo/pkg/auth"
 	"github.com/getprobo/probo/pkg/authz"
-	"github.com/getprobo/probo/pkg/gid"
+	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/server/session"
 	"go.gearno.de/kit/httpserver"
 )
 
-type (
-	AcceptInvitationRequest struct {
-		InvitationID gid.GID `json:"invitationId"`
-	}
+type ctxKey struct{ name string }
 
-	AcceptInvitationResponse struct {
-		InvitationID gid.GID `json:"invitationId"`
-	}
+var (
+	sessionContextKey = &ctxKey{name: "session"}
+	userContextKey    = &ctxKey{name: "user"}
 )
 
-func AcceptInvitationHandler(authSvc *authsvc.Service, authzSvc *authz.Service, cookieName string, cookieSecret string) http.HandlerFunc {
+func RequireAuth(
+	authSvc *authsvc.Service,
+	authzSvc *authz.Service,
+	cookieName string,
+	cookieSecret string,
+	next http.HandlerFunc,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -72,24 +75,19 @@ func AcceptInvitationHandler(authSvc *authsvc.Service, authzSvc *authz.Service, 
 			return
 		}
 
-		// Parse request body
-		var req AcceptInvitationRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, fmt.Errorf("invalid request body"))
-			return
-		}
+		ctx = context.WithValue(ctx, sessionContextKey, authResult.Session)
+		ctx = context.WithValue(ctx, userContextKey, authResult.User)
 
-		// Accept the invitation
-		_, err := authzSvc.AcceptInvitationByID(ctx, req.InvitationID, authResult.User.ID)
-		if err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, err)
-			return
-		}
-
-		response := AcceptInvitationResponse{
-			InvitationID: req.InvitationID,
-		}
-
-		httpserver.RenderJSON(w, http.StatusOK, response)
+		next(w, r.WithContext(ctx))
 	}
+}
+
+func SessionFromContext(ctx context.Context) *coredata.Session {
+	session, _ := ctx.Value(sessionContextKey).(*coredata.Session)
+	return session
+}
+
+func UserFromContext(ctx context.Context) *coredata.User {
+	user, _ := ctx.Value(userContextKey).(*coredata.User)
+	return user
 }

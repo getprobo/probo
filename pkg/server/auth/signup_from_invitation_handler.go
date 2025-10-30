@@ -35,7 +35,7 @@ type (
 	}
 )
 
-func SignupFromInvitationHandler(authSvc *authsvc.Service, authCfg RoutesConfig) http.HandlerFunc {
+func SignupFromInvitationHandler(authSvc *authsvc.Service, cookieName string, cookieSecret string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req SignupFromInvitationRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -52,8 +52,8 @@ func SignupFromInvitationHandler(authSvc *authsvc.Service, authCfg RoutesConfig)
 		securecookie.Set(
 			w,
 			securecookie.DefaultConfig(
-				authCfg.CookieName,
-				authCfg.CookieSecret,
+				cookieName,
+				cookieSecret,
 			),
 			session.ID.String(),
 		)

@@ -153,3 +153,52 @@ WHERE %s
 
 	return err
 }
+
+// LoadFilesByIDs loads multiple files by their IDs in a single query
+// Returns a map of file ID to File for efficient lookup
+func LoadFilesByIDs(
+	ctx context.Context,
+	conn pg.Conn,
+	fileIDs []gid.GID,
+) (map[gid.GID]*File, error) {
+	if len(fileIDs) == 0 {
+		return make(map[gid.GID]*File), nil
+	}
+
+	q := `
+SELECT
+    id,
+    bucket_name,
+    mime_type,
+    file_name,
+    file_key,
+    file_size,
+    created_at,
+    updated_at,
+    deleted_at
+FROM
+    files
+WHERE
+    id = ANY(@file_ids)
+    AND deleted_at IS NULL
+`
+
+	args := pgx.StrictNamedArgs{"file_ids": fileIDs}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query files: %w", err)
+	}
+
+	files, err := pgx.CollectRows(rows, pgx.RowToStructByName[File])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect files: %w", err)
+	}
+
+	result := make(map[gid.GID]*File, len(files))
+	for i := range files {
+		result[files[i].ID] = &files[i]
+	}
+
+	return result, nil
+}

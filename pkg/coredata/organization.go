@@ -106,10 +106,10 @@ LIMIT 1;
 	return nil
 }
 
-// Tenant id scope is not applied in this functions because we want to access all user's organizations.
 func (o *Organizations) LoadByUserID(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	userID gid.GID,
 	cursor *page.Cursor[OrganizationOrderField],
 ) error {
@@ -140,10 +140,11 @@ FROM
 INNER JOIN
 	user_org ON organizations.id = user_org.organization_id
 WHERE
-	%s
+	%S
+	AND %s
 `
 
-	q = fmt.Sprintf(q, cursor.SQLFragment())
+	q = fmt.Sprintf(q, scope.SQLFragment(), cursor.SQLFragment())
 
 	args := pgx.StrictNamedArgs{"user_id": userID}
 	maps.Copy(args, cursor.SQLArguments())
@@ -163,7 +164,6 @@ WHERE
 	return nil
 }
 
-// Tenant id scope is not applied in this function because we want to access all user's organizations.
 func (o *Organizations) LoadAllByUserID(
 	ctx context.Context,
 	conn pg.Conn,
@@ -376,6 +376,53 @@ LIMIT 1
 	}
 
 	*o = organization
+
+	return nil
+}
+
+func (o *Organizations) BatchLoadByID(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationIDs []gid.GID,
+) error {
+	q := `
+SELECT
+    tenant_id,
+    id,
+    name,
+    logo_file_id,
+    horizontal_logo_file_id,
+    description,
+    website_url,
+    email,
+    headquarter_address,
+    custom_domain_id,
+    created_at,
+    updated_at
+FROM
+    organizations
+WHERE
+	%s
+    AND id = ANY(@organization_ids)
+`
+
+	q = fmt.Sprintf(q, scope.SQLFragment())
+
+	args := pgx.StrictNamedArgs{"organization_ids": organizationIDs}
+	maps.Copy(args, scope.SQLArguments())
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query organizations: %w", err)
+	}
+
+	organizations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Organization])
+	if err != nil {
+		return fmt.Errorf("cannot collect organizations: %w", err)
+	}
+
+	*o = organizations
 
 	return nil
 }

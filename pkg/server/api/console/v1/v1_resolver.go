@@ -901,7 +901,9 @@ func (r *frameworkConnectionResolver) TotalCount(ctx context.Context, obj *types
 
 // Organization is the resolver for the organization field.
 func (r *invitationResolver) Organization(ctx context.Context, obj *types.Invitation) (*types.Organization, error) {
-	organization, err := r.authzSvc.GetOrganizationByInvitationID(ctx, obj.ID)
+	authz := r.AuthzService(ctx, obj.ID.TenantID())
+
+	organization, err := authz.GetOrganizationByInvitationID(ctx, obj.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot load organization: %w", err))
 	}
@@ -918,26 +920,10 @@ func (r *invitationConnectionResolver) TotalCount(ctx context.Context, obj *type
 			invitationFilter = coredata.NewInvitationFilter(obj.Filter.Statuses)
 		}
 
-		authzSvc := r.AuthzService(ctx, obj.ParentID.TenantID())
-		count, err := authzSvc.CountOrganizationInvitations(ctx, obj.ParentID, invitationFilter)
+		authz := r.AuthzService(ctx, obj.ParentID.TenantID())
+		count, err := authz.CountOrganizationInvitations(ctx, obj.ParentID, invitationFilter)
 		if err != nil {
 			panic(fmt.Errorf("cannot count organization invitations: %w", err))
-		}
-		return count, nil
-	case *viewerResolver:
-		user := UserFromContext(ctx)
-		if user == nil {
-			panic(fmt.Errorf("no authenticated user"))
-		}
-
-		invitationFilter := coredata.NewInvitationFilter(nil)
-		if obj.Filter != nil {
-			invitationFilter = coredata.NewInvitationFilter(obj.Filter.Statuses)
-		}
-
-		count, err := r.authzSvc.CountUserInvitations(ctx, user.EmailAddress, invitationFilter)
-		if err != nil {
-			panic(fmt.Errorf("cannot count user invitations: %w", err))
 		}
 		return count, nil
 	}
@@ -1090,7 +1076,9 @@ func (r *membershipResolver) AuthMethod(ctx context.Context, obj *types.Membersh
 		return coredata.UserAuthMethodPassword, nil
 	}
 
-	authMethod, err := r.authSvc.GetUserAuthMethod(ctx, coredata.NewScope(obj.UserID.TenantID()), obj.UserID, obj.OrganizationID, session)
+	auth := r.AuthService(ctx, obj.UserID.TenantID())
+
+	authMethod, err := auth.GetUserAuthMethod(ctx, obj.UserID, obj.OrganizationID, session)
 	if err != nil {
 		return "", fmt.Errorf("cannot get user auth method: %w", err)
 	}
@@ -1101,22 +1089,26 @@ func (r *membershipResolver) AuthMethod(ctx context.Context, obj *types.Membersh
 func (r *membershipConnectionResolver) TotalCount(ctx context.Context, obj *types.MembershipConnection) (int, error) {
 	switch obj.Resolver.(type) {
 	case *organizationResolver:
-		authzSvc := r.AuthzService(ctx, obj.ParentID.TenantID())
-		count, err := authzSvc.CountOrganizationMemberships(ctx, obj.ParentID)
+		authz := r.AuthzService(ctx, obj.ParentID.TenantID())
+		count, err := authz.CountOrganizationMemberships(ctx, obj.ParentID)
 		if err != nil {
 			panic(fmt.Errorf("cannot count organization memberships: %w", err))
 		}
+
 		return count, nil
-	default:
-		panic(fmt.Errorf("unknown resolver type for membership connection"))
 	}
+
+	panic(fmt.Errorf("unknown resolver type for membership connection"))
 }
 
 // CreateOrganization is the resolver for the createOrganization field.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.CreateOrganizationInput) (*types.CreateOrganizationPayload, error) {
 	currentUser := UserFromContext(ctx)
 
-	prb := r.proboSvc.WithTenant(gid.NewTenantID())
+	tenantID := gid.NewTenantID()
+
+	prb := r.proboSvc.WithTenant(tenantID)
+	authz := r.authzSvc.WithTenant(tenantID)
 
 	organization, err := prb.Organizations.Create(
 		ctx,
@@ -1128,20 +1120,15 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		return nil, fmt.Errorf("cannot create organization: %w", err)
 	}
 
-	err = r.authzSvc.AddUserToOrganization(
+	authz.AddUserToOrganization(
 		ctx,
 		currentUser.ID,
 		organization.ID,
-		string(authz.RoleMember),
+		"MEMBER",
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add user to organization: %w", err)
 	}
-
-	tenantIDs, _ := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
-	*tenantIDs = append(*tenantIDs, organization.ID.TenantID())
-
-	prb = r.ProboService(ctx, organization.ID.TenantID())
 
 	_, err = prb.Peoples.Create(
 		ctx,
@@ -1157,6 +1144,10 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	if err != nil {
 		return nil, fmt.Errorf("cannot create people: %w", err)
 	}
+
+	// Append tenant to allowed one
+	tenantIDs, _ := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
+	*tenantIDs = append(*tenantIDs, organization.ID.TenantID())
 
 	return &types.CreateOrganizationPayload{
 		OrganizationEdge: types.NewOrganizationEdge(organization, coredata.OrganizationOrderFieldCreatedAt),
@@ -1917,11 +1908,7 @@ func (r *mutationResolver) GenerateFrameworkStateOfApplicability(ctx context.Con
 // ExportFramework is the resolver for the exportFramework field.
 func (r *mutationResolver) ExportFramework(ctx context.Context, input types.ExportFrameworkInput) (*types.ExportFrameworkPayload, error) {
 	prb := r.ProboService(ctx, input.FrameworkID.TenantID())
-
 	user := UserFromContext(ctx)
-	if user == nil {
-		panic(fmt.Errorf("user not found"))
-	}
 
 	err, exportJobID := prb.Frameworks.RequestExport(
 		ctx,
@@ -2773,11 +2760,7 @@ func (r *mutationResolver) BulkExportDocuments(ctx context.Context, input types.
 	}
 
 	prb := r.ProboService(ctx, input.DocumentIds[0].TenantID())
-
 	user := UserFromContext(ctx)
-	if user == nil {
-		panic(fmt.Errorf("user not found"))
-	}
 
 	options := probo.BulkExportOptions{
 		WithWatermark:  input.WithWatermark,
@@ -3557,15 +3540,11 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 
 // InitiateDomainVerification is the resolver for the initiateDomainVerification field.
 func (r *mutationResolver) InitiateDomainVerification(ctx context.Context, input types.InitiateDomainVerificationInput) (*types.InitiateDomainVerificationPayload, error) {
-	user := UserFromContext(ctx)
-	if user == nil {
-		return nil, fmt.Errorf("user not authenticated")
-	}
-
 	organizationID := input.OrganizationID
 	tenantID := organizationID.TenantID()
 
-	config, err := r.authSvc.InitiateDomainVerification(ctx, tenantID, organizationID, input.EmailDomain)
+	authSvc := r.AuthService(ctx, tenantID)
+	config, err := authSvc.InitiateDomainVerification(ctx, organizationID, input.EmailDomain)
 	if err != nil {
 		return nil, fmt.Errorf("cannot initiate domain verification: %w", err)
 	}
@@ -3584,15 +3563,11 @@ func (r *mutationResolver) InitiateDomainVerification(ctx context.Context, input
 
 // VerifyDomain is the resolver for the verifyDomain field.
 func (r *mutationResolver) VerifyDomain(ctx context.Context, input types.VerifyDomainInput) (*types.VerifyDomainPayload, error) {
-	user := UserFromContext(ctx)
-	if user == nil {
-		return nil, fmt.Errorf("user not authenticated")
-	}
-
 	configID := input.ID
 	tenantID := configID.TenantID()
 
-	config, verified, err := r.authSvc.VerifyDomain(ctx, tenantID, configID)
+	authSvc := r.AuthService(ctx, tenantID)
+	config, verified, err := authSvc.VerifyDomain(ctx, configID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot verify domain: %w", err)
 	}
@@ -3609,11 +3584,6 @@ func (r *mutationResolver) VerifyDomain(ctx context.Context, input types.VerifyD
 
 // CreateSAMLConfiguration is the resolver for the createSAMLConfiguration field.
 func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input types.CreateSAMLConfigurationInput) (*types.CreateSAMLConfigurationPayload, error) {
-	user := UserFromContext(ctx)
-	if user == nil {
-		return nil, fmt.Errorf("user not authenticated")
-	}
-
 	organizationID := input.OrganizationID
 	tenantID := organizationID.TenantID()
 
@@ -3670,7 +3640,8 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 		autoSignupEnabled = *input.AutoSignupEnabled
 	}
 
-	config, err := r.authSvc.WithTenant(tenantID).CreateSAMLConfiguration(ctx, auth.CreateSAMLConfigurationRequest{
+	authSvc := r.AuthService(ctx, tenantID)
+	config, err := authSvc.CreateSAMLConfiguration(ctx, auth.CreateSAMLConfigurationRequest{
 		OrganizationID:     organizationID,
 		EmailDomain:        input.EmailDomain,
 		EnforcementPolicy:  input.EnforcementPolicy,
@@ -3699,15 +3670,11 @@ func (r *mutationResolver) CreateSAMLConfiguration(ctx context.Context, input ty
 
 // UpdateSAMLConfiguration is the resolver for the updateSAMLConfiguration field.
 func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input types.UpdateSAMLConfigurationInput) (*types.UpdateSAMLConfigurationPayload, error) {
-	user := UserFromContext(ctx)
-	if user == nil {
-		return nil, fmt.Errorf("user not authenticated")
-	}
-
 	configID := input.ID
 	tenantID := configID.TenantID()
 
-	updatedConfig, err := r.authSvc.WithTenant(tenantID).UpdateSAMLConfiguration(ctx, auth.UpdateSAMLConfigurationRequest{
+	authSvc := r.AuthService(ctx, tenantID)
+	updatedConfig, err := authSvc.UpdateSAMLConfiguration(ctx, auth.UpdateSAMLConfigurationRequest{
 		ID:                 configID,
 		Enabled:            input.Enabled,
 		EnforcementPolicy:  input.EnforcementPolicy,
@@ -3736,15 +3703,11 @@ func (r *mutationResolver) UpdateSAMLConfiguration(ctx context.Context, input ty
 
 // DeleteSAMLConfiguration is the resolver for the deleteSAMLConfiguration field.
 func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input types.DeleteSAMLConfigurationInput) (*types.DeleteSAMLConfigurationPayload, error) {
-	user := UserFromContext(ctx)
-	if user == nil {
-		return nil, fmt.Errorf("user not authenticated")
-	}
-
 	configID := input.ID
 	tenantID := configID.TenantID()
 
-	err := r.authSvc.WithTenant(tenantID).DeleteSAMLConfiguration(ctx, configID)
+	authSvc := r.AuthService(ctx, tenantID)
+	err := authSvc.DeleteSAMLConfiguration(ctx, configID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot delete SAML configuration: %w", err)
 	}
@@ -3756,15 +3719,11 @@ func (r *mutationResolver) DeleteSAMLConfiguration(ctx context.Context, input ty
 
 // EnableSaml is the resolver for the enableSAML field.
 func (r *mutationResolver) EnableSaml(ctx context.Context, input types.EnableSAMLInput) (*types.EnableSAMLPayload, error) {
-	user := UserFromContext(ctx)
-	if user == nil {
-		return nil, fmt.Errorf("user not authenticated")
-	}
-
 	configID := input.ID
 	tenantID := configID.TenantID()
 
-	enabledConfig, err := r.authSvc.WithTenant(tenantID).EnableSAMLConfiguration(ctx, configID)
+	authSvc := r.AuthService(ctx, tenantID)
+	enabledConfig, err := authSvc.EnableSAMLConfiguration(ctx, configID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot enable SAML: %w", err)
 	}
@@ -3780,15 +3739,11 @@ func (r *mutationResolver) EnableSaml(ctx context.Context, input types.EnableSAM
 
 // DisableSaml is the resolver for the disableSAML field.
 func (r *mutationResolver) DisableSaml(ctx context.Context, input types.DisableSAMLInput) (*types.DisableSAMLPayload, error) {
-	user := UserFromContext(ctx)
-	if user == nil {
-		return nil, fmt.Errorf("user not authenticated")
-	}
-
 	configID := input.ID
 	tenantID := configID.TenantID()
 
-	disabledConfig, err := r.authSvc.WithTenant(tenantID).DisableSAMLConfiguration(ctx, configID)
+	authSvc := r.AuthService(ctx, tenantID)
+	disabledConfig, err := authSvc.DisableSAMLConfiguration(ctx, configID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot disable SAML: %w", err)
 	}
@@ -4551,7 +4506,8 @@ func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Orga
 func (r *organizationResolver) SamlConfigurations(ctx context.Context, obj *types.Organization) ([]*types.SAMLConfiguration, error) {
 	tenantID := obj.ID.TenantID()
 
-	configs, err := r.authSvc.WithTenant(tenantID).GetSAMLConfigurationsByOrganizationID(ctx, obj.ID)
+	authSvc := r.AuthService(ctx, tenantID)
+	configs, err := authSvc.GetSAMLConfigurationsByOrganizationID(ctx, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load SAML configurations: %w", err)
 	}
@@ -5018,7 +4974,8 @@ func (r *sAMLConfigurationResolver) Organization(ctx context.Context, obj *types
 	tenantID := obj.ID.TenantID()
 	prb := r.ProboService(ctx, tenantID)
 
-	config, err := r.authSvc.WithTenant(tenantID).GetSAMLConfigurationByID(ctx, obj.ID)
+	authSvc := r.AuthService(ctx, tenantID)
+	config, err := authSvc.GetSAMLConfigurationByID(ctx, obj.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot load SAML configuration: %w", err)
 	}
@@ -5846,35 +5803,6 @@ func (r *viewerResolver) Organizations(ctx context.Context, obj *types.Viewer, f
 	page := page.NewPage(organizations, cursor)
 
 	return types.NewOrganizationConnection(page), nil
-}
-
-// Invitations is the resolver for the invitations field.
-func (r *viewerResolver) Invitations(ctx context.Context, obj *types.Viewer, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.InvitationOrder, filter *types.InvitationFilter) (*types.InvitationConnection, error) {
-	user := UserFromContext(ctx)
-
-	pageOrderBy := page.OrderBy[coredata.InvitationOrderField]{
-		Field:     coredata.InvitationOrderFieldCreatedAt,
-		Direction: page.OrderDirectionDesc,
-	}
-	if orderBy != nil {
-		pageOrderBy = page.OrderBy[coredata.InvitationOrderField]{
-			Field:     orderBy.Field,
-			Direction: orderBy.Direction,
-		}
-	}
-	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
-
-	invitationFilter := coredata.NewInvitationFilter(nil)
-	if filter != nil {
-		invitationFilter = coredata.NewInvitationFilter(filter.Statuses)
-	}
-
-	invitations, err := r.authzSvc.GetUserInvitations(ctx, user.EmailAddress, cursor, invitationFilter)
-	if err != nil {
-		panic(fmt.Errorf("cannot list invitations for user: %w", err))
-	}
-
-	return types.NewInvitationConnection(invitations, r, gid.GID{}, filter), nil
 }
 
 // Asset returns schema.AssetResolver implementation.

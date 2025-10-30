@@ -410,6 +410,10 @@ func (r *Resolver) AuthzService(ctx context.Context, tenantID gid.TenantID) *aut
 	return GetTenantAuthzService(ctx, r.authzSvc, tenantID)
 }
 
+func (r *Resolver) AuthService(ctx context.Context, tenantID gid.TenantID) *auth.TenantAuthService {
+	return GetTenantAuthService(ctx, r.authSvc, tenantID)
+}
+
 func UnwrapOmittable[T any](field graphql.Omittable[T]) *T {
 	if !field.IsSet() {
 		return nil
@@ -426,6 +430,11 @@ func GetTenantService(ctx context.Context, proboSvc *probo.Service, tenantID gid
 func GetTenantAuthzService(ctx context.Context, authzSvc *authz.Service, tenantID gid.TenantID) *authz.TenantAuthzService {
 	validateTenantAccess(ctx, tenantID)
 	return authzSvc.WithTenant(tenantID)
+}
+
+func GetTenantAuthService(ctx context.Context, authSvc *auth.Service, tenantID gid.TenantID) *auth.TenantAuthService {
+	validateTenantAccess(ctx, tenantID)
+	return authSvc.WithTenant(tenantID)
 }
 
 func validateTenantAccess(ctx context.Context, tenantID gid.TenantID) {

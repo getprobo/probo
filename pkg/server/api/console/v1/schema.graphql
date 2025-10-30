@@ -2402,15 +2402,6 @@ type Viewer {
     before: CursorKey
     orderBy: OrganizationOrder
   ): OrganizationConnection! @goField(forceResolver: true)
-
-  invitations(
-    first: Int
-    after: CursorKey
-    last: Int
-    before: CursorKey
-    orderBy: InvitationOrder
-    filter: InvitationFilter
-  ): InvitationConnection! @goField(forceResolver: true)
 }
 
 # Connection Types

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<26b3620e6aed7f97ffb1710be1eb267a>>
+ * @generated SignedSource<<b7983d3d3c089aa0efebaab639de76fb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,9 +20,6 @@ export type MainLayoutQuery$data = {
   };
   readonly viewer: {
     readonly id: string;
-    readonly invitations: {
-      readonly totalCount: number;
-    };
     readonly user: {
       readonly email: string;
       readonly fullName: string;
@@ -63,54 +60,21 @@ v3 = {
   "name": "email",
   "storageKey": null
 },
-v4 = {
-  "alias": null,
-  "args": [
-    {
-      "kind": "Literal",
-      "name": "filter",
-      "value": {
-        "statuses": [
-          "PENDING"
-        ]
-      }
-    },
-    {
-      "kind": "Literal",
-      "name": "first",
-      "value": 1
-    }
-  ],
-  "concreteType": "InvitationConnection",
-  "kind": "LinkedField",
-  "name": "invitations",
-  "plural": false,
-  "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "totalCount",
-      "storageKey": null
-    }
-  ],
-  "storageKey": "invitations(filter:{\"statuses\":[\"PENDING\"]},first:1)"
-},
-v5 = [
+v4 = [
   {
     "kind": "Variable",
     "name": "id",
     "variableName": "organizationId"
   }
 ],
-v6 = {
+v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "name",
   "storageKey": null
 },
-v7 = {
+v6 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -145,14 +109,13 @@ return {
               (v3/*: any*/)
             ],
             "storageKey": null
-          },
-          (v4/*: any*/)
+          }
         ],
         "storageKey": null
       },
       {
         "alias": "organization",
-        "args": (v5/*: any*/),
+        "args": (v4/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
@@ -162,8 +125,8 @@ return {
             "kind": "InlineFragment",
             "selections": [
               (v1/*: any*/),
-              (v6/*: any*/),
-              (v7/*: any*/)
+              (v5/*: any*/),
+              (v6/*: any*/)
             ],
             "type": "Organization",
             "abstractKey": null
@@ -203,14 +166,13 @@ return {
               (v1/*: any*/)
             ],
             "storageKey": null
-          },
-          (v4/*: any*/)
+          }
         ],
         "storageKey": null
       },
       {
         "alias": "organization",
-        "args": (v5/*: any*/),
+        "args": (v4/*: any*/),
         "concreteType": null,
         "kind": "LinkedField",
         "name": "node",
@@ -227,8 +189,8 @@ return {
           {
             "kind": "InlineFragment",
             "selections": [
-              (v6/*: any*/),
-              (v7/*: any*/)
+              (v5/*: any*/),
+              (v6/*: any*/)
             ],
             "type": "Organization",
             "abstractKey": null
@@ -239,16 +201,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "a8f9f58d27677c55b5a217617db83e27",
+    "cacheID": "ee5a60e709dee856df7d2fef13974c9f",
     "id": null,
     "metadata": {},
     "name": "MainLayoutQuery",
     "operationKind": "query",
-    "text": "query MainLayoutQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    id\n    user {\n      fullName\n      email\n      id\n    }\n    invitations(first: 1, filter: {statuses: [PENDING]}) {\n      totalCount\n    }\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      logoUrl\n    }\n    id\n  }\n}\n"
+    "text": "query MainLayoutQuery(\n  $organizationId: ID!\n) {\n  viewer {\n    id\n    user {\n      fullName\n      email\n      id\n    }\n  }\n  organization: node(id: $organizationId) {\n    __typename\n    ... on Organization {\n      id\n      name\n      logoUrl\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "17986fcea321c4567d86584d1a9f89c1";
+(node as any).hash = "9ea3e5a91a2d2be0993e7deebafa11b0";
 
 export default node;

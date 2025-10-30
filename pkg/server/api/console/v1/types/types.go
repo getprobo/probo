@@ -2480,5 +2480,4 @@ type Viewer struct {
 	ID            gid.GID                 `json:"id"`
 	User          *User                   `json:"user"`
 	Organizations *OrganizationConnection `json:"organizations"`
-	Invitations   *InvitationConnection   `json:"invitations"`
 }

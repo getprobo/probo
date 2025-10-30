@@ -15,6 +15,7 @@
 package auth
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -27,11 +28,14 @@ import (
 	"go.gearno.de/kit/log"
 )
 
-func getSessionIDFromCookie(r *http.Request, authCfg RoutesConfig) (gid.GID, error) {
-	cookieValue, err := securecookie.Get(r, securecookie.DefaultConfig(
-		authCfg.CookieName,
-		authCfg.CookieSecret,
-	))
+func getSessionIDFromCookie(r *http.Request, cookieName string, cookieSecret string) (gid.GID, error) {
+	cookieValue, err := securecookie.Get(
+		r,
+		securecookie.DefaultConfig(
+			cookieName,
+			cookieSecret,
+		),
+	)
 	if err != nil {
 		return gid.GID{}, err
 	}
@@ -39,7 +43,7 @@ func getSessionIDFromCookie(r *http.Request, authCfg RoutesConfig) (gid.GID, err
 	return gid.ParseGID(cookieValue)
 }
 
-func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, authzSvc *authz.Service, authCfg RoutesConfig, logger *log.Logger) http.HandlerFunc {
+func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, authzSvc *authz.Service, cookieName string, cookieSecret string, sessionDuration time.Duration, logger *log.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -68,10 +72,32 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 			return
 		}
 
-		user, err := authSvc.CreateOrGetSAMLUser(ctx, userInfo.Email, userInfo.FullName, userInfo.SAMLSubject)
+		var existingSession *coredata.Session
+		if existingSessionID, err := getSessionIDFromCookie(r, cookieName, cookieSecret); err == nil {
+			if session, err := authSvc.GetSession(ctx, existingSessionID); err == nil {
+				existingSession = session
+			}
+		}
+
+		session, user, err := authSvc.ProvisionSAMLUser(
+			ctx,
+			userInfo.SAMLConfigID,
+			userInfo.OrganizationID,
+			userInfo.Email,
+			userInfo.FullName,
+			userInfo.SAMLSubject,
+			existingSession,
+			sessionDuration,
+		)
 		if err != nil {
-			logger.ErrorCtx(ctx, "cannot create or get SAML user", log.Error(err))
-			http.Error(w, "cannot create user", http.StatusInternalServerError)
+			var autoSignupDisabledErr *authsvc.ErrSAMLAutoSignupDisabled
+			if errors.As(err, &autoSignupDisabledErr) {
+				logger.WarnCtx(ctx, "SAML auto-signup is disabled")
+				http.Error(w, "User does not exist and auto-signup is disabled for this organization", http.StatusForbidden)
+				return
+			}
+			logger.ErrorCtx(ctx, "cannot provision SAML user", log.Error(err))
+			http.Error(w, "cannot provision user", http.StatusInternalServerError)
 			return
 		}
 
@@ -83,43 +109,11 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 			return
 		}
 
-		var session *coredata.Session
-		if existingSessionID, err := getSessionIDFromCookie(r, authCfg); err == nil {
-			if existingSession, err := authSvc.GetSession(ctx, existingSessionID); err == nil && existingSession.UserID == user.ID {
-				session = existingSession
-			}
-		}
-
-		if session == nil {
-			session, err = authSvc.CreateSessionForUser(ctx, user.ID, authCfg.SessionDuration)
-			if err != nil {
-				logger.ErrorCtx(ctx, "cannot create session", log.Error(err), log.String("user_id", user.ID.String()))
-				http.Error(w, "cannot create session", http.StatusInternalServerError)
-				return
-			}
-		}
-
-		if session.Data.SAMLAuthenticatedOrgs == nil {
-			session.Data.SAMLAuthenticatedOrgs = make(map[string]coredata.SAMLAuthInfo)
-		}
-		session.Data.SAMLAuthenticatedOrgs[userInfo.OrganizationID.String()] = coredata.SAMLAuthInfo{
-			AuthenticatedAt: time.Now(),
-			SAMLConfigID:    userInfo.SAMLConfigID,
-			SAMLSubject:     userInfo.SAMLSubject,
-		}
-
-		err = authSvc.UpdateSessionData(ctx, session.ID, session.Data)
-		if err != nil {
-			logger.ErrorCtx(ctx, "cannot update session data", log.Error(err), log.String("session_id", session.ID.String()))
-			http.Error(w, "cannot update session", http.StatusInternalServerError)
-			return
-		}
-
 		securecookie.Set(
 			w,
 			securecookie.DefaultConfig(
-				authCfg.CookieName,
-				authCfg.CookieSecret,
+				cookieName,
+				cookieSecret,
 			),
 			session.ID.String(),
 		)

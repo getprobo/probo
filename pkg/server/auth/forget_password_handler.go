@@ -33,7 +33,7 @@ type (
 	}
 )
 
-func ForgetPasswordHandler(authSvc *authsvc.Service, authCfg RoutesConfig) http.HandlerFunc {
+func ForgetPasswordHandler(authSvc *authsvc.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req ForgetPasswordRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

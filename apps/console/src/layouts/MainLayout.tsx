@@ -53,9 +53,6 @@ const MainLayoutQuery = graphql`
         fullName
         email
       }
-      invitations(first: 1, filter: {statuses: [PENDING]}) {
-        totalCount
-      }
     }
     organization: node(id: $organizationId) {
       ... on Organization {
@@ -258,49 +255,79 @@ interface OrganizationsResponse {
   organizations: Organization[];
 }
 
+interface Invitation {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  expiresAt: string;
+  acceptedAt?: string | null;
+  createdAt: string;
+  organization: {
+    id: string;
+    name: string;
+  };
+}
+
+interface InvitationsResponse {
+  invitations: Invitation[];
+}
+
 function OrganizationSelectorWrapper({ organizationId }: { organizationId: string }) {
   const data = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, { organizationId });
-  return <OrganizationSelector viewer={data.viewer} currentOrganization={data.organization} />;
+  return <OrganizationSelector currentOrganization={data.organization} />;
 }
 
 function OrganizationSelector({
-  viewer,
   currentOrganization
 }: {
-  viewer: MainLayoutQueryType["response"]["viewer"];
   currentOrganization: MainLayoutQueryType["response"]["organization"];
 }) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [pendingInvitationsCount, setPendingInvitationsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { __ } = useTranslate();
 
-  const pendingInvitationsCount = viewer.invitations.totalCount;
-
   useEffect(() => {
-    const fetchOrganizations = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/auth/organizations', {
-          credentials: 'include',
-        });
 
-        if (!response.ok) {
+        // Fetch organizations and invitations in parallel
+        const [orgsResponse, invitationsResponse] = await Promise.all([
+          fetch('/auth/organizations', { credentials: 'include' }),
+          fetch('/auth/invitations', { credentials: 'include' })
+        ]);
+
+        if (!orgsResponse.ok) {
           throw new Error('Failed to fetch organizations');
         }
 
-        const data: OrganizationsResponse = await response.json();
-        setOrganizations(data.organizations);
+        if (!invitationsResponse.ok) {
+          throw new Error('Failed to fetch invitations');
+        }
+
+        const orgsData: OrganizationsResponse = await orgsResponse.json();
+        const invitationsData: InvitationsResponse = await invitationsResponse.json();
+
+        // Count pending invitations (those without acceptedAt)
+        const pendingCount = invitationsData.invitations.filter(
+          inv => !inv.acceptedAt
+        ).length;
+
+        setOrganizations(orgsData.organizations);
+        setPendingInvitationsCount(pendingCount);
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
-        console.error('Failed to fetch organizations:', err);
+        console.error('Failed to fetch data:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchOrganizations();
+    fetchData();
   }, []);
 
   if (error) {

@@ -109,7 +109,6 @@ func NewServer(cfg Config) (*Server, error) {
 		SessionDuration: cfg.ConsoleAuth.SessionDuration,
 		CookieSecret:    cfg.ConsoleAuth.CookieSecret,
 		FileManager:     cfg.FileManager,
-		PGClient:        cfg.PGClient,
 		Logger:          cfg.Logger.Named("auth"),
 	})
 	if err != nil {

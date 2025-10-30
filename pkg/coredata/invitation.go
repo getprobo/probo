@@ -237,11 +237,10 @@ WHERE
 	return nil
 }
 
-// Tenant scope is not applied because this is used to query invitations across all tenants
-// for a user who doesn't have tenant access yet (before accepting an invitation).
 func (i *Invitations) LoadByEmail(
 	ctx context.Context,
 	conn pg.Conn,
+	scope Scoper,
 	email string,
 	cursor *page.Cursor[InvitationOrderField],
 	filter *InvitationFilter,

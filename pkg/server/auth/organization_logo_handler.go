@@ -15,45 +15,44 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"time"
 
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/securecookie"
 	authsvc "github.com/getprobo/probo/pkg/auth"
-	"go.gearno.de/kit/httpserver"
+	"github.com/getprobo/probo/pkg/coredata"
+	"github.com/getprobo/probo/pkg/gid"
+	"github.com/go-chi/chi/v5"
 )
 
-func SignOutHandler(authSvc *authsvc.Service, cookieName string, cookieSecret string) http.HandlerFunc {
+func OrganizationLogoHandler(authSvc *authsvc.Service, fileManager interface {
+	GenerateFileUrl(ctx context.Context, file *coredata.File, duration time.Duration) (string, error)
+}) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		user := UserFromContext(ctx)
+		session := SessionFromContext(ctx)
 
-		sessionID, err := securecookie.Get(r, securecookie.DefaultConfig(
-			cookieName,
-			cookieSecret,
-		))
+		organizationIDStr := chi.URLParam(r, "organizationID")
+		organizationID, err := gid.ParseGID(organizationIDStr)
 		if err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, err)
+			http.Error(w, "Invalid organization ID", http.StatusBadRequest)
 			return
 		}
 
-		gid, err := gid.ParseGID(sessionID)
+		logoFile, err := authSvc.GetOrganizationLogoFile(ctx, user, organizationID, session)
 		if err != nil {
-			httpserver.RenderError(w, http.StatusBadRequest, err)
-			return
+			panic(fmt.Errorf("cannot get organization logo: %w", err))
 		}
 
-		err = authSvc.SignOut(r.Context(), gid)
+		presignedURL, err := fileManager.GenerateFileUrl(ctx, logoFile, 1*time.Hour)
 		if err != nil {
-			panic(fmt.Errorf("cannot sign out: %w", err))
+			panic(fmt.Errorf("cannot generate presigned URL: %w", err))
 		}
 
-		securecookie.Clear(w, securecookie.DefaultConfig(
-			cookieName,
-			cookieSecret,
-		))
+		w.Header().Set("Cache-Control", "public, max-age=3600")
 
-		w.Header().Set("Clear-Site-Data", "*")
-
-		httpserver.RenderJSON(w, http.StatusOK, map[string]bool{"success": true})
+		http.Redirect(w, r, presignedURL, http.StatusFound)
 	}
 }

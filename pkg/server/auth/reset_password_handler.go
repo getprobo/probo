@@ -36,7 +36,7 @@ type (
 	}
 )
 
-func ResetPasswordHandler(authSvc *authsvc.Service, authCfg RoutesConfig) http.HandlerFunc {
+func ResetPasswordHandler(authSvc *authsvc.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req ResetPasswordRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

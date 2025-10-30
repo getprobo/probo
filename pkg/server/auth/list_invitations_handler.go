@@ -15,18 +15,12 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
-	authsvc "github.com/getprobo/probo/pkg/auth"
 	"github.com/getprobo/probo/pkg/authz"
-	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/page"
-	"github.com/getprobo/probo/pkg/server/session"
 	"go.gearno.de/kit/httpserver"
-	"go.gearno.de/kit/pg"
 )
 
 type (
@@ -35,167 +29,56 @@ type (
 	}
 
 	InvitationResponse struct {
-		ID           gid.GID              `json:"id"`
-		Email        string               `json:"email"`
-		FullName     string               `json:"fullName"`
-		Role         string               `json:"role"`
-		ExpiresAt    string               `json:"expiresAt"`
-		AcceptedAt   *string              `json:"acceptedAt,omitempty"`
-		CreatedAt    string               `json:"createdAt"`
-		Organization OrganizationSummary  `json:"organization"`
+		ID           gid.GID                     `json:"id"`
+		Email        string                      `json:"email"`
+		FullName     string                      `json:"fullName"`
+		Role         string                      `json:"role"`
+		ExpiresAt    string                      `json:"expiresAt"`
+		AcceptedAt   *string                     `json:"acceptedAt,omitempty"`
+		CreatedAt    string                      `json:"createdAt"`
+		Organization OrganizationResponseSummary `json:"organization"`
 	}
 
-	OrganizationSummary struct {
+	OrganizationResponseSummary struct {
 		ID   gid.GID `json:"id"`
 		Name string  `json:"name"`
 	}
 )
 
-// loadOrganizationByID loads an organization by ID without tenant scope
-func loadOrganizationByID(
-	ctx context.Context,
-	conn pg.Conn,
-	orgID gid.GID,
-) (*coredata.Organization, error) {
-	query := `
-SELECT
-	id,
-	tenant_id,
-	name,
-	logo_file_id,
-	horizontal_logo_file_id,
-	description,
-	website_url,
-	email,
-	headquarter_address,
-	custom_domain_id,
-	created_at,
-	updated_at
-FROM
-	authz_organizations
-WHERE
-	id = $1
-`
-
-	row := conn.QueryRow(ctx, query, orgID)
-
-	var org coredata.Organization
-	err := row.Scan(
-		&org.ID,
-		&org.TenantID,
-		&org.Name,
-		&org.LogoFileID,
-		&org.HorizontalLogoFileID,
-		&org.Description,
-		&org.WebsiteURL,
-		&org.Email,
-		&org.HeadquarterAddress,
-		&org.CustomDomainID,
-		&org.CreatedAt,
-		&org.UpdatedAt,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load organization: %w", err)
-	}
-
-	return &org, nil
-}
-
-func ListInvitationsHandler(authSvc *authsvc.Service, authzSvc *authz.Service, authCfg RoutesConfig) http.HandlerFunc {
+func ListInvitationsHandler(authzSvc *authz.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		user := UserFromContext(ctx)
 
-		sessionAuthCfg := session.AuthConfig{
-			CookieName:   authCfg.CookieName,
-			CookieSecret: authCfg.CookieSecret,
-		}
-
-		errorHandler := session.ErrorHandler{
-			OnCookieError: func(err error) {
-				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("invalid session"))
-			},
-			OnParseError: func(w http.ResponseWriter, authCfg session.AuthConfig) {
-				session.ClearCookie(w, authCfg)
-				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("invalid session"))
-			},
-			OnSessionError: func(w http.ResponseWriter, authCfg session.AuthConfig) {
-				session.ClearCookie(w, authCfg)
-				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("session expired"))
-			},
-			OnUserError: func(w http.ResponseWriter, authCfg session.AuthConfig) {
-				session.ClearCookie(w, authCfg)
-				httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("user not found"))
-			},
-			OnTenantError: func(err error) {
-				panic(fmt.Errorf("cannot list tenants for user: %w", err))
-			},
-		}
-
-		authResult := session.TryAuth(ctx, w, r, authSvc, authzSvc, sessionAuthCfg, errorHandler)
-		if authResult == nil {
-			httpserver.RenderError(w, http.StatusUnauthorized, fmt.Errorf("authentication required"))
-			return
-		}
-
-		// Get pending invitations for the user
-		cursor := page.NewCursor(
-			1000,
-			nil,
-			page.Head,
-			page.OrderBy[coredata.InvitationOrderField]{
-				Field:     coredata.InvitationOrderFieldCreatedAt,
-				Direction: page.OrderDirectionDesc,
-			},
-		)
-
-		invitationFilter := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
-
-		invitationsPage, err := authzSvc.GetUserInvitations(ctx, authResult.User.EmailAddress, cursor, invitationFilter)
+		invitations, err := authzSvc.GetUserPendingInvitations(ctx, user.EmailAddress)
 		if err != nil {
 			panic(fmt.Errorf("cannot list invitations for user: %w", err))
 		}
 
-		// Build response
 		response := ListInvitationsResponse{
-			Invitations: make([]InvitationResponse, 0, len(invitationsPage.Data)),
+			Invitations: make([]InvitationResponse, 0, len(invitations)),
 		}
 
-		// Load organization data for each invitation
-		err = authCfg.PGClient.WithConn(ctx, func(conn pg.Conn) error {
-			for _, invitation := range invitationsPage.Data {
-				invitationResp := InvitationResponse{
-					ID:        invitation.ID,
-					Email:     invitation.Email,
-					FullName:  invitation.FullName,
-					Role:      invitation.Role,
-					ExpiresAt: invitation.ExpiresAt.Format("2006-01-02T15:04:05Z07:00"),
-					CreatedAt: invitation.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-				}
-
-				if invitation.AcceptedAt != nil {
-					acceptedAtStr := invitation.AcceptedAt.Format("2006-01-02T15:04:05Z07:00")
-					invitationResp.AcceptedAt = &acceptedAtStr
-				}
-
-				// Load organization details
-				org, err := loadOrganizationByID(ctx, conn, invitation.OrganizationID)
-				if err != nil {
-					// Log error but continue - organization might have been deleted
-					return nil
-				}
-
-				invitationResp.Organization = OrganizationSummary{
-					ID:   org.ID,
-					Name: org.Name,
-				}
-
-				response.Invitations = append(response.Invitations, invitationResp)
+		for _, invitation := range invitations {
+			invitationResp := InvitationResponse{
+				ID:        invitation.ID,
+				Email:     invitation.Email,
+				FullName:  invitation.FullName,
+				Role:      invitation.Role,
+				ExpiresAt: invitation.ExpiresAt.Format("2006-01-02T15:04:05Z07:00"),
+				CreatedAt: invitation.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+				Organization: OrganizationResponseSummary{
+					ID:   invitation.Organization.ID,
+					Name: invitation.Organization.Name,
+				},
 			}
 
-			return nil
-		})
-		if err != nil {
-			panic(fmt.Errorf("cannot load organization details: %w", err))
+			if invitation.AcceptedAt != nil {
+				acceptedAtStr := invitation.AcceptedAt.Format("2006-01-02T15:04:05Z07:00")
+				invitationResp.AcceptedAt = &acceptedAtStr
+			}
+
+			response.Invitations = append(response.Invitations, invitationResp)
 		}
 
 		httpserver.RenderJSON(w, http.StatusOK, response)

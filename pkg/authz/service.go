@@ -84,24 +84,22 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantAuthzService {
 	}
 }
 
-// This method is on Service (not TenantAuthzService) because it operates across tenants
-// and doesn't require tenant-scoped access.
 func (s *Service) GetAllUserOrganizations(
 	ctx context.Context,
 	userID gid.GID,
-) ([]*coredata.Organization, error) {
-	var organizations []*coredata.Organization
+) (coredata.Organizations, error) {
+	organizations := coredata.Organizations{}
 
-	err := s.pg.WithConn(ctx, func(conn pg.Conn) error {
-		var organizationList coredata.Organizations
-		if err := organizationList.LoadAllByUserID(ctx, conn, userID); err != nil {
-			return fmt.Errorf("cannot load user organizations: %w", err)
-		}
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := organizations.LoadAllByUserID(ctx, conn, userID); err != nil {
+				return fmt.Errorf("cannot load user organizations: %w", err)
+			}
 
-		organizations = organizationList
-
-		return nil
-	})
+			return nil
+		},
+	)
 
 	return organizations, err
 }
@@ -110,13 +108,13 @@ func (s *Service) GetUserOrganizations(
 	ctx context.Context,
 	userID gid.GID,
 	cursor *page.Cursor[coredata.OrganizationOrderField],
-) ([]*coredata.Organization, error) {
-	var organizations coredata.Organizations
+) (coredata.Organizations, error) {
+	organizations := coredata.Organizations{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := organizations.LoadByUserID(ctx, conn, userID, cursor); err != nil {
+			if err := organizations.LoadByUserID(ctx, conn, coredata.NewNoScope(), userID, cursor); err != nil {
 				return fmt.Errorf("cannot load user organizations: %w", err)
 			}
 			return nil
@@ -268,7 +266,7 @@ func (s *Service) GetUserInvitations(
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := invitations.LoadByEmail(ctx, conn, email, cursor, filter); err != nil {
+			if err := invitations.LoadByEmail(ctx, conn, coredata.NewNoScope(), email, cursor, filter); err != nil {
 				return fmt.Errorf("cannot load invitations: %w", err)
 			}
 
@@ -282,44 +280,107 @@ func (s *Service) GetUserInvitations(
 	return page.NewPage(invitations, cursor), nil
 }
 
-func (s *Service) CountUserInvitations(
+type UserInvitation struct {
+	ID             gid.GID
+	Email          string
+	FullName       string
+	Role           string
+	ExpiresAt      time.Time
+	AcceptedAt     *time.Time
+	CreatedAt      time.Time
+	OrganizationID gid.GID
+	Organization   OrganizationSummary
+}
+
+type OrganizationSummary struct {
+	ID   gid.GID
+	Name string
+}
+
+func (s *Service) GetUserPendingInvitations(
 	ctx context.Context,
 	email string,
-	filter *coredata.InvitationFilter,
-) (int, error) {
-	var count int
+) ([]*UserInvitation, error) {
+	userInvitations := []*UserInvitation{}
 
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			var invitations coredata.Invitations
-			var err error
-			count, err = invitations.CountByEmail(ctx, conn, email, filter)
-			return err
+			cursor := page.NewCursor(
+				1000,
+				nil,
+				page.Head,
+				page.OrderBy[coredata.InvitationOrderField]{
+					Field:     coredata.InvitationOrderFieldCreatedAt,
+					Direction: page.OrderDirectionDesc,
+				},
+			)
+			filter := coredata.NewInvitationFilter([]coredata.InvitationStatus{coredata.InvitationStatusPending})
+			invitations := coredata.Invitations{}
+
+			if err := invitations.LoadByEmail(ctx, conn, coredata.NewNoScope(), email, cursor, filter); err != nil {
+				return fmt.Errorf("cannot load invitations: %w", err)
+			}
+
+			organizationIDs := []gid.GID{}
+			for _, invitation := range invitations {
+				organizationIDs = append(organizationIDs, invitation.OrganizationID)
+			}
+
+			organizations := coredata.Organizations{}
+			if err := organizations.BatchLoadByID(ctx, conn, coredata.NewNoScope(), organizationIDs); err != nil {
+				return fmt.Errorf("cannot load organizations: %w", err)
+			}
+
+			for _, invitation := range invitations {
+				userInvitation := &UserInvitation{
+					ID:             invitation.ID,
+					Email:          invitation.Email,
+					FullName:       invitation.FullName,
+					Role:           invitation.Role,
+					ExpiresAt:      invitation.ExpiresAt,
+					AcceptedAt:     invitation.AcceptedAt,
+					CreatedAt:      invitation.CreatedAt,
+					OrganizationID: invitation.OrganizationID,
+				}
+
+				for _, org := range organizations {
+					if org.ID == invitation.OrganizationID {
+						userInvitation.Organization = OrganizationSummary{
+							ID:   org.ID,
+							Name: org.Name,
+						}
+					}
+				}
+
+				userInvitations = append(userInvitations, userInvitation)
+			}
+
+			return nil
 		},
 	)
 
-	return count, err
+	if err != nil {
+		return nil, err
+	}
+
+	return userInvitations, nil
 }
 
-// This method is on Service (not TenantAuthzService) because the user viewing
-// the invitation organization doesn't have tenant access yet.
-func (s *Service) GetOrganizationByInvitationID(
+func (s *TenantAuthzService) GetOrganizationByInvitationID(
 	ctx context.Context,
 	invitationID gid.GID,
 ) (*coredata.Organization, error) {
-	scope := coredata.NewScope(invitationID.TenantID())
-
 	var organization coredata.Organization
 	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
 			var invitation coredata.Invitation
-			if err := invitation.LoadByID(ctx, conn, scope, invitationID); err != nil {
+			if err := invitation.LoadByID(ctx, conn, s.scope, invitationID); err != nil {
 				return fmt.Errorf("cannot load invitation: %w", err)
 			}
 
-			if err := organization.LoadByID(ctx, conn, scope, invitation.OrganizationID); err != nil {
+			if err := organization.LoadByID(ctx, conn, s.scope, invitation.OrganizationID); err != nil {
 				return fmt.Errorf("cannot load organization: %w", err)
 			}
 
@@ -333,18 +394,14 @@ func (s *Service) GetOrganizationByInvitationID(
 	return &organization, nil
 }
 
-// This method is on Service (not TenantAuthzService) because the user added to the organization
-// doesn't have tenant access yet
-func (s *Service) AddUserToOrganization(
+func (s *TenantAuthzService) AddUserToOrganization(
 	ctx context.Context,
 	userID gid.GID,
 	orgID gid.GID,
 	role string,
 ) error {
 	now := time.Now()
-	tenantID := orgID.TenantID()
-	membershipID := gid.New(tenantID, coredata.MembershipEntityType)
-	scope := coredata.NewScope(tenantID)
+	membershipID := gid.New(s.scope.GetTenantID(), coredata.MembershipEntityType)
 
 	membership := &coredata.Membership{
 		ID:             membershipID,
@@ -358,7 +415,7 @@ func (s *Service) AddUserToOrganization(
 	return s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			if err := membership.Create(ctx, conn, scope); err != nil {
+			if err := membership.Create(ctx, conn, s.scope); err != nil {
 				return fmt.Errorf("cannot add user to organization: %w", err)
 			}
 			return nil
@@ -384,6 +441,7 @@ func (s *TenantAuthzService) GetInvitationsByOrganizationID(
 			return nil
 		},
 	)
+
 	if err != nil {
 		return nil, err
 	}
@@ -397,17 +455,23 @@ func (s *TenantAuthzService) CountOrganizationInvitations(
 	filter *coredata.InvitationFilter,
 ) (int, error) {
 	var count int
+
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(conn pg.Conn) (err error) {
 			var invitations coredata.Invitations
-			var err error
+
 			count, err = invitations.CountByOrganizationID(ctx, conn, s.scope, orgID, filter)
-			return err
+			if err != nil {
+				return fmt.Errorf("cannot count organization invitations: %w", err)
+			}
+
+			return nil
 		},
 	)
+
 	if err != nil {
-		return 0, fmt.Errorf("cannot count invitations: %w", err)
+		return 0, err
 	}
 
 	return count, nil
@@ -430,6 +494,7 @@ func (s *TenantAuthzService) GetInvitationByID(
 	if err != nil {
 		return nil, err
 	}
+
 	return invitation, nil
 }
 
@@ -504,13 +569,18 @@ func (s *TenantAuthzService) CountOrganizationUsers(
 	orgID gid.GID,
 ) (int, error) {
 	var count int
+
 	err := s.pg.WithConn(
 		ctx,
-		func(conn pg.Conn) error {
+		func(conn pg.Conn) (err error) {
 			var users coredata.Users
-			var err error
+
 			count, err = users.CountByOrganizationID(ctx, conn, s.scope, orgID)
-			return err
+			if err != nil {
+				return fmt.Errorf("cannot count organization users: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -636,93 +706,96 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 ) (*coredata.Invitation, error) {
 	var invitation *coredata.Invitation
 
-	err := s.pg.WithTx(ctx, func(tx pg.Conn) error {
-		user := &coredata.User{}
-		userExists := true
-		if err := user.LoadByEmail(ctx, tx, emailAddress); err != nil {
-			var userNotFound *coredata.ErrUserNotFound
-			if errors.As(err, &userNotFound) {
-				userExists = false
-			} else {
-				return fmt.Errorf("cannot check if user exists: %w", err)
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			user := &coredata.User{}
+			userExists := true
+			if err := user.LoadByEmail(ctx, tx, emailAddress); err != nil {
+				var userNotFound *coredata.ErrUserNotFound
+				if errors.As(err, &userNotFound) {
+					userExists = false
+				} else {
+					return fmt.Errorf("cannot check if user exists: %w", err)
+				}
 			}
-		}
 
-		organization := &coredata.Organization{}
-		if err := organization.LoadByID(ctx, tx, s.scope, organizationID); err != nil {
-			return fmt.Errorf("cannot load organization: %w", err)
-		}
+			organization := &coredata.Organization{}
+			if err := organization.LoadByID(ctx, tx, s.scope, organizationID); err != nil {
+				return fmt.Errorf("cannot load organization: %w", err)
+			}
 
-		invitationID := gid.New(s.scope.GetTenantID(), coredata.InvitationEntityType)
-		now := time.Now()
-		invitation = &coredata.Invitation{
-			ID:             invitationID,
-			OrganizationID: organizationID,
-			Email:          emailAddress,
-			FullName:       fullName,
-			Role:           role,
-			ExpiresAt:      now.Add(s.invitationTokenValidity),
-			CreatedAt:      now,
-		}
-
-		var err error
-		var invitationURL string
-		var recipientName string
-
-		if userExists {
-			recipientName = user.FullName
-			invitationURL = fmt.Sprintf("https://%s/", s.hostname)
-		} else {
-			recipientName = fullName
-			invitationData := coredata.InvitationData{
-				InvitationID:   invitationID,
+			invitationID := gid.New(s.scope.GetTenantID(), coredata.InvitationEntityType)
+			now := time.Now()
+			invitation = &coredata.Invitation{
+				ID:             invitationID,
 				OrganizationID: organizationID,
 				Email:          emailAddress,
 				FullName:       fullName,
 				Role:           role,
+				ExpiresAt:      now.Add(s.invitationTokenValidity),
+				CreatedAt:      now,
 			}
 
-			invitationToken, err := statelesstoken.NewToken(
-				s.tokenSecret,
-				TokenTypeOrganizationInvitation,
-				s.invitationTokenValidity,
-				invitationData,
+			var err error
+			var invitationURL string
+			var recipientName string
+
+			if userExists {
+				recipientName = user.FullName
+				invitationURL = fmt.Sprintf("https://%s/", s.hostname)
+			} else {
+				recipientName = fullName
+				invitationData := coredata.InvitationData{
+					InvitationID:   invitationID,
+					OrganizationID: organizationID,
+					Email:          emailAddress,
+					FullName:       fullName,
+					Role:           role,
+				}
+
+				invitationToken, err := statelesstoken.NewToken(
+					s.tokenSecret,
+					TokenTypeOrganizationInvitation,
+					s.invitationTokenValidity,
+					invitationData,
+				)
+				if err != nil {
+					return fmt.Errorf("cannot generate invitation token: %w", err)
+				}
+
+				invitationURL = fmt.Sprintf("https://%s/auth/signup-from-invitation?token=%s&fullName=%s", s.hostname, invitationToken, url.QueryEscape(fullName))
+			}
+
+			subject, textBody, htmlBody, err := emails.RenderInvitation(
+				s.hostname,
+				recipientName,
+				organization.Name,
+				invitationURL,
 			)
 			if err != nil {
-				return fmt.Errorf("cannot generate invitation token: %w", err)
+				return fmt.Errorf("cannot render invitation email: %w", err)
 			}
 
-			invitationURL = fmt.Sprintf("https://%s/auth/signup-from-invitation?token=%s&fullName=%s", s.hostname, invitationToken, url.QueryEscape(fullName))
-		}
+			email := coredata.NewEmail(
+				fullName,
+				emailAddress,
+				subject,
+				textBody,
+				htmlBody,
+			)
 
-		subject, textBody, htmlBody, err := emails.RenderInvitation(
-			s.hostname,
-			recipientName,
-			organization.Name,
-			invitationURL,
-		)
-		if err != nil {
-			return fmt.Errorf("cannot render invitation email: %w", err)
-		}
+			if err := email.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot insert email: %w", err)
+			}
 
-		email := coredata.NewEmail(
-			fullName,
-			emailAddress,
-			subject,
-			textBody,
-			htmlBody,
-		)
+			if err := invitation.Create(ctx, tx, s.scope); err != nil {
+				return fmt.Errorf("cannot create invitation: %w", err)
+			}
 
-		if err := email.Insert(ctx, tx); err != nil {
-			return fmt.Errorf("cannot insert email: %w", err)
-		}
-
-		if err := invitation.Create(ctx, tx, s.scope); err != nil {
-			return fmt.Errorf("cannot create invitation: %w", err)
-		}
-
-		return nil
-	})
+			return nil
+		},
+	)
 
 	if err != nil {
 		return nil, err
@@ -731,8 +804,6 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 	return invitation, nil
 }
 
-// EnsureSAMLMembership creates or updates a user's membership in an organization.
-// This is used during SAML authentication to ensure the user has the correct role.
 func (s *TenantAuthzService) EnsureSAMLMembership(
 	ctx context.Context,
 	userID gid.GID,

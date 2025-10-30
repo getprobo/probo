@@ -441,3 +441,66 @@ ORDER BY created_at ASC;
 	return result, nil
 }
 
+// LoadSAMLConfigurationsByOrganizationIDsAndEmailDomain loads SAML configurations for multiple organizations
+// and a given email domain in a single query. This is used to avoid N+1 queries.
+func LoadSAMLConfigurationsByOrganizationIDsAndEmailDomain(
+	ctx context.Context,
+	conn pg.Conn,
+	organizationIDs []gid.GID,
+	emailDomain string,
+) (map[gid.GID]*SAMLConfiguration, error) {
+	if len(organizationIDs) == 0 {
+		return make(map[gid.GID]*SAMLConfiguration), nil
+	}
+
+	q := `
+SELECT
+    id,
+    organization_id,
+    email_domain,
+    enabled,
+    enforcement_policy,
+    idp_entity_id,
+    idp_sso_url,
+    idp_certificate,
+    idp_metadata_url,
+    attribute_email,
+    attribute_firstname,
+    attribute_lastname,
+    attribute_role,
+    auto_signup_enabled,
+    domain_verified,
+    domain_verification_token,
+    domain_verified_at,
+    created_at,
+    updated_at
+FROM
+    auth_saml_configurations
+WHERE
+    organization_id = ANY(@organization_ids)
+    AND email_domain = @email_domain
+`
+
+	args := pgx.StrictNamedArgs{
+		"organization_ids": organizationIDs,
+		"email_domain":     emailDomain,
+	}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return nil, fmt.Errorf("cannot query auth_saml_configurations: %w", err)
+	}
+
+	configs, err := pgx.CollectRows(rows, pgx.RowToStructByName[SAMLConfiguration])
+	if err != nil {
+		return nil, fmt.Errorf("cannot collect saml_configurations: %w", err)
+	}
+
+	result := make(map[gid.GID]*SAMLConfiguration, len(configs))
+	for i := range configs {
+		result[configs[i].OrganizationID] = &configs[i]
+	}
+
+	return result, nil
+}
+

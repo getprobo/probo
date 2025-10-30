@@ -47,7 +47,7 @@ type (
 	}
 )
 
-func SignInHandler(authSvc *authsvc.Service, authCfg RoutesConfig) http.HandlerFunc {
+func SignInHandler(authSvc *authsvc.Service, cookieName string, cookieSecret string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		var req SignInRequest
@@ -57,13 +57,13 @@ func SignInHandler(authSvc *authsvc.Service, authCfg RoutesConfig) http.HandlerF
 		}
 
 		var existingSession *coredata.Session
-		if existingSessionID, err := getSessionIDFromCookie(r, authCfg); err == nil {
+		if existingSessionID, err := getSessionIDFromCookie(r, cookieName, cookieSecret); err == nil {
 			if session, err := authSvc.GetSession(r.Context(), existingSessionID); err == nil {
 				existingSession = session
 			}
 		}
 
-		session, user, err := authSvc.SignInWithExistingSession(r.Context(), req.Email, req.Password, existingSession)
+		session, user, err := authSvc.SignIn(r.Context(), req.Email, req.Password, existingSession)
 		if err != nil {
 			var ErrInvalidCredentials *authsvc.ErrInvalidCredentials
 			if errors.As(err, &ErrInvalidCredentials) {
@@ -77,8 +77,8 @@ func SignInHandler(authSvc *authsvc.Service, authCfg RoutesConfig) http.HandlerF
 		securecookie.Set(
 			w,
 			securecookie.DefaultConfig(
-				authCfg.CookieName,
-				authCfg.CookieSecret,
+				cookieName,
+				cookieSecret,
 			),
 			session.ID.String(),
 		)

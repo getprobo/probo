@@ -103,15 +103,30 @@ func TryAuth(
 	allowedTenantIDs := make([]gid.TenantID, 0, len(organizations))
 	authErrors := make(map[gid.TenantID]error)
 
+	// Extract organization IDs for batch check
+	orgIDs := make([]gid.GID, len(organizations))
+	for i, org := range organizations {
+		orgIDs[i] = org.ID
+	}
+
+	// Batch check access to all organizations in a single query
+	accessResults, err := authSvc.CheckOrganizationAccess(ctx, user, orgIDs, session)
+	if err != nil {
+		if errorHandler.OnTenantError != nil {
+			errorHandler.OnTenantError(err)
+		}
+		return nil
+	}
+
+	// Process results
 	for _, org := range organizations {
-		// Check if user has the required authentication for this organization
-		err := authSvc.CheckOrganizationAccess(ctx, user, org.ID, session)
-		if err == nil {
+		result := accessResults[org.ID]
+		if result.Allowed {
 			// User has proper authentication for this org
 			allowedTenantIDs = append(allowedTenantIDs, org.ID.TenantID())
 		} else {
 			// Store the authentication error for later use
-			authErrors[org.ID.TenantID()] = err
+			authErrors[org.ID.TenantID()] = result.ToError(authSvc.BaseURL())
 		}
 	}
 
