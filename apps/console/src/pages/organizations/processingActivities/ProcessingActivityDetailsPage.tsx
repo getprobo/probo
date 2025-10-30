@@ -30,6 +30,7 @@ import { Controller } from "react-hook-form";
 import z from "zod";
 import { validateSnapshotConsistency } from "@probo/helpers";
 import { SnapshotBanner } from "/components/SnapshotBanner";
+import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
 import {
   SpecialOrCriminalDataOptions,
   LawfulBasisOptions,
@@ -56,6 +57,7 @@ const updateProcessingActivitySchema = z.object({
   securityMeasures: z.string().optional(),
   dataProtectionImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
   transferImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
+  vendorIds: z.array(z.string()).optional(),
 });
 
 type Props = {
@@ -87,6 +89,9 @@ export default function ProcessingActivityDetailsPage(props: Props) {
 
   const deleteActivity = useDeleteProcessingActivity({ id: activity.id!, name: activity.name! }, connectionId);
 
+  const vendors = activity?.vendors?.edges.map((edge) => edge.node) ?? [];
+  const vendorIds = vendors.map((vendor) => vendor.id);
+
   const { register, handleSubmit, formState, control } = useFormWithSchema(
     updateProcessingActivitySchema,
     {
@@ -106,6 +111,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         securityMeasures: activity.securityMeasures || "",
         dataProtectionImpactAssessment: activity.dataProtectionImpactAssessment || "NOT_NEEDED" as const,
         transferImpactAssessment: activity.transferImpactAssessment || "NOT_NEEDED" as const,
+        vendorIds: vendorIds,
       },
     }
   );
@@ -129,6 +135,7 @@ export default function ProcessingActivityDetailsPage(props: Props) {
         securityMeasures: formData.securityMeasures || undefined,
         dataProtectionImpactAssessment: formData.dataProtectionImpactAssessment || undefined,
         transferImpactAssessment: formData.transferImpactAssessment || undefined,
+        vendorIds: formData.vendorIds,
       });
 
       toast({
@@ -387,6 +394,15 @@ export default function ProcessingActivityDetailsPage(props: Props) {
                 </div>
               </div>
             </div>
+
+            <VendorsMultiSelectField
+              organizationId={organizationId}
+              control={control}
+              name="vendorIds"
+              selectedVendors={vendors}
+              label={__("Vendors")}
+              disabled={isSnapshotMode}
+            />
 
             {!isSnapshotMode && (
               <div className="flex justify-end pt-4">

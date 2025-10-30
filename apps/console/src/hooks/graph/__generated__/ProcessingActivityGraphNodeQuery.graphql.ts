@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a78af4956f20232f8c6084f66ee6aac5>>
+ * @generated SignedSource<<5dea7ccaf98a1223d9e4cc1ecdfbb0bc>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,6 +14,7 @@ export type ProcessingActivityLawfulBasis = "CONSENT" | "CONTRACTUAL_NECESSITY" 
 export type ProcessingActivitySpecialOrCriminalData = "NO" | "POSSIBLE" | "YES";
 export type ProcessingActivityTransferImpactAssessment = "NEEDED" | "NOT_NEEDED";
 export type ProcessingActivityTransferSafeguards = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
+export type VendorCategory = "ANALYTICS" | "CLOUD_MONITORING" | "CLOUD_PROVIDER" | "COLLABORATION" | "CUSTOMER_SUPPORT" | "DATA_STORAGE_AND_PROCESSING" | "DOCUMENT_MANAGEMENT" | "EMPLOYEE_MANAGEMENT" | "ENGINEERING" | "FINANCE" | "IDENTITY_PROVIDER" | "IT" | "MARKETING" | "OFFICE_OPERATIONS" | "OTHER" | "PASSWORD_MANAGEMENT" | "PRODUCT_AND_DESIGN" | "PROFESSIONAL_SERVICES" | "RECRUITING" | "SALES" | "SECURITY" | "VERSION_CONTROL";
 export type ProcessingActivityGraphNodeQuery$variables = {
   processingActivityId: string;
 };
@@ -42,6 +43,16 @@ export type ProcessingActivityGraphNodeQuery$data = {
     readonly transferImpactAssessment?: ProcessingActivityTransferImpactAssessment;
     readonly transferSafeguards?: ProcessingActivityTransferSafeguards | null | undefined;
     readonly updatedAt?: any;
+    readonly vendors?: {
+      readonly edges: ReadonlyArray<{
+        readonly node: {
+          readonly category: VendorCategory;
+          readonly id: string;
+          readonly name: string;
+          readonly websiteUrl: string | null | undefined;
+        };
+      }>;
+    };
   };
 };
 export type ProcessingActivityGraphNodeQuery = {
@@ -185,6 +196,61 @@ v18 = {
 },
 v19 = {
   "alias": null,
+  "args": [
+    {
+      "kind": "Literal",
+      "name": "first",
+      "value": 50
+    }
+  ],
+  "concreteType": "VendorConnection",
+  "kind": "LinkedField",
+  "name": "vendors",
+  "plural": false,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "concreteType": "VendorEdge",
+      "kind": "LinkedField",
+      "name": "edges",
+      "plural": true,
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "Vendor",
+          "kind": "LinkedField",
+          "name": "node",
+          "plural": false,
+          "selections": [
+            (v2/*: any*/),
+            (v4/*: any*/),
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "websiteUrl",
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "category",
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        }
+      ],
+      "storageKey": null
+    }
+  ],
+  "storageKey": "vendors(first:50)"
+},
+v20 = {
+  "alias": null,
   "args": null,
   "concreteType": "Organization",
   "kind": "LinkedField",
@@ -196,14 +262,14 @@ v19 = {
   ],
   "storageKey": null
 },
-v20 = {
+v21 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
   "name": "createdAt",
   "storageKey": null
 },
-v21 = {
+v22 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
@@ -247,7 +313,8 @@ return {
               (v18/*: any*/),
               (v19/*: any*/),
               (v20/*: any*/),
-              (v21/*: any*/)
+              (v21/*: any*/),
+              (v22/*: any*/)
             ],
             "type": "ProcessingActivity",
             "abstractKey": null
@@ -302,7 +369,8 @@ return {
               (v18/*: any*/),
               (v19/*: any*/),
               (v20/*: any*/),
-              (v21/*: any*/)
+              (v21/*: any*/),
+              (v22/*: any*/)
             ],
             "type": "ProcessingActivity",
             "abstractKey": null
@@ -313,16 +381,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b2dd76939002ce8c523c7ac5a49c29f5",
+    "cacheID": "9e9d13d95bf99c04488b8bdd313e8f33",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphNodeQuery",
     "operationKind": "query",
-    "text": "query ProcessingActivityGraphNodeQuery(\n  $processingActivityId: ID!\n) {\n  node(id: $processingActivityId) {\n    __typename\n    ... on ProcessingActivity {\n      id\n      snapshotId\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
+    "text": "query ProcessingActivityGraphNodeQuery(\n  $processingActivityId: ID!\n) {\n  node(id: $processingActivityId) {\n    __typename\n    ... on ProcessingActivity {\n      id\n      snapshotId\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n            category\n          }\n        }\n      }\n      organization {\n        id\n        name\n      }\n      createdAt\n      updatedAt\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7beac09f84d60e20e73a5b8e958908dd";
+(node as any).hash = "0112adb4f323533e0ce7a0922c5866d2";
 
 export default node;

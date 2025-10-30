@@ -395,6 +395,24 @@ WHERE
 }
 
 func (pas ProcessingActivities) Snapshot(ctx context.Context, conn pg.Conn, scope Scoper, organizationID, snapshotID gid.GID) error {
+	snapshotters := []ProcessingActivitySnapshotter{ProcessingActivities{}, Vendors{}, ProcessingActivityVendors{}}
+
+	for _, snapshotter := range snapshotters {
+		if err := snapshotter.InsertProcessingActivitySnapshots(ctx, conn, scope, organizationID, snapshotID); err != nil {
+			return fmt.Errorf("cannot create processing activity snapshots: (%T) %w", snapshotter, err)
+		}
+	}
+
+	return nil
+}
+
+func (pas ProcessingActivities) InsertProcessingActivitySnapshots(
+	ctx context.Context,
+	conn pg.Conn,
+	scope Scoper,
+	organizationID gid.GID,
+	snapshotID gid.GID,
+) error {
 	query := `
 INSERT INTO processing_activities (
 	id,

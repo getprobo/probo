@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<48427eb821d3a0f4e53430bb384d0305>>
+ * @generated SignedSource<<08099a83039838c6c79dbf1ca7c99034>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -31,6 +31,7 @@ export type UpdateProcessingActivityInput = {
   specialOrCriminalData?: ProcessingActivitySpecialOrCriminalData | null | undefined;
   transferImpactAssessment?: ProcessingActivityTransferImpactAssessment | null | undefined;
   transferSafeguards?: ProcessingActivityTransferSafeguards | null | undefined;
+  vendorIds?: ReadonlyArray<string> | null | undefined;
 };
 export type ProcessingActivityGraphUpdateMutation$variables = {
   input: UpdateProcessingActivityInput;
@@ -55,6 +56,15 @@ export type ProcessingActivityGraphUpdateMutation$data = {
       readonly transferImpactAssessment: ProcessingActivityTransferImpactAssessment;
       readonly transferSafeguards: ProcessingActivityTransferSafeguards | null | undefined;
       readonly updatedAt: any;
+      readonly vendors: {
+        readonly edges: ReadonlyArray<{
+          readonly node: {
+            readonly id: string;
+            readonly name: string;
+            readonly websiteUrl: string | null | undefined;
+          };
+        }>;
+      };
     };
   };
 };
@@ -71,7 +81,21 @@ var v0 = [
     "name": "input"
   }
 ],
-v1 = [
+v1 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v3 = [
   {
     "alias": null,
     "args": [
@@ -94,20 +118,8 @@ v1 = [
         "name": "processingActivity",
         "plural": false,
         "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "id",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "name",
-            "storageKey": null
-          },
+          (v1/*: any*/),
+          (v2/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -208,6 +220,54 @@ v1 = [
           },
           {
             "alias": null,
+            "args": [
+              {
+                "kind": "Literal",
+                "name": "first",
+                "value": 50
+              }
+            ],
+            "concreteType": "VendorConnection",
+            "kind": "LinkedField",
+            "name": "vendors",
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "VendorEdge",
+                "kind": "LinkedField",
+                "name": "edges",
+                "plural": true,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "Vendor",
+                    "kind": "LinkedField",
+                    "name": "node",
+                    "plural": false,
+                    "selections": [
+                      (v1/*: any*/),
+                      (v2/*: any*/),
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "websiteUrl",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": "vendors(first:50)"
+          },
+          {
+            "alias": null,
             "args": null,
             "kind": "ScalarField",
             "name": "updatedAt",
@@ -226,7 +286,7 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "ProcessingActivityGraphUpdateMutation",
-    "selections": (v1/*: any*/),
+    "selections": (v3/*: any*/),
     "type": "Mutation",
     "abstractKey": null
   },
@@ -235,19 +295,19 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "ProcessingActivityGraphUpdateMutation",
-    "selections": (v1/*: any*/)
+    "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "9ede6451e111196c25a7a4cee9ad86bf",
+    "cacheID": "8050213c76270c28b5543a629a956d47",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphUpdateMutation",
     "operationKind": "mutation",
-    "text": "mutation ProcessingActivityGraphUpdateMutation(\n  $input: UpdateProcessingActivityInput!\n) {\n  updateProcessingActivity(input: $input) {\n    processingActivity {\n      id\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      updatedAt\n    }\n  }\n}\n"
+    "text": "mutation ProcessingActivityGraphUpdateMutation(\n  $input: UpdateProcessingActivityInput!\n) {\n  updateProcessingActivity(input: $input) {\n    processingActivity {\n      id\n      name\n      purpose\n      dataSubjectCategory\n      personalDataCategory\n      specialOrCriminalData\n      consentEvidenceLink\n      lawfulBasis\n      recipients\n      location\n      internationalTransfers\n      transferSafeguards\n      retentionPeriod\n      securityMeasures\n      dataProtectionImpactAssessment\n      transferImpactAssessment\n      vendors(first: 50) {\n        edges {\n          node {\n            id\n            name\n            websiteUrl\n          }\n        }\n      }\n      updatedAt\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "ee0c2f6027edae2b80f603503f5f3815";
+(node as any).hash = "cb14a2c41f4690c0079a185c8caad3f4";
 
 export default node;

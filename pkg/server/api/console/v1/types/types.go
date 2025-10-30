@@ -451,6 +451,7 @@ type CreateProcessingActivityInput struct {
 	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
 	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
 	TransferImpactAssessment       coredata.ProcessingActivityTransferImpactAssessment       `json:"transferImpactAssessment"`
+	VendorIds                      []gid.GID                                                 `json:"vendorIds,omitempty"`
 }
 
 type CreateProcessingActivityPayload struct {
@@ -1528,6 +1529,7 @@ type ProcessingActivity struct {
 	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
 	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
 	TransferImpactAssessment       coredata.ProcessingActivityTransferImpactAssessment       `json:"transferImpactAssessment"`
+	Vendors                        *VendorConnection                                         `json:"vendors"`
 	CreatedAt                      time.Time                                                 `json:"createdAt"`
 	UpdatedAt                      time.Time                                                 `json:"updatedAt"`
 }
@@ -2036,6 +2038,7 @@ type UpdateProcessingActivityInput struct {
 	SecurityMeasures               graphql.Omittable[*string]                                        `json:"securityMeasures,omitempty"`
 	DataProtectionImpactAssessment *coredata.ProcessingActivityDataProtectionImpactAssessment        `json:"dataProtectionImpactAssessment,omitempty"`
 	TransferImpactAssessment       *coredata.ProcessingActivityTransferImpactAssessment              `json:"transferImpactAssessment,omitempty"`
+	VendorIds                      []gid.GID                                                         `json:"vendorIds,omitempty"`
 }
 
 type UpdateProcessingActivityPayload struct {

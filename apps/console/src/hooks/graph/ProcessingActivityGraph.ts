@@ -38,6 +38,16 @@ export const processingActivityNodeQuery = graphql`
         securityMeasures
         dataProtectionImpactAssessment
         transferImpactAssessment
+        vendors(first: 50) {
+          edges {
+            node {
+              id
+              name
+              websiteUrl
+              category
+            }
+          }
+        }
         organization {
           id
           name
@@ -73,6 +83,15 @@ export const createProcessingActivityMutation = graphql`
           securityMeasures
           dataProtectionImpactAssessment
           transferImpactAssessment
+          vendors(first: 50) {
+            edges {
+              node {
+                id
+                name
+                websiteUrl
+              }
+            }
+          }
           createdAt
         }
       }
@@ -100,6 +119,15 @@ export const updateProcessingActivityMutation = graphql`
         securityMeasures
         dataProtectionImpactAssessment
         transferImpactAssessment
+        vendors(first: 50) {
+          edges {
+            node {
+              id
+              name
+              websiteUrl
+            }
+          }
+        }
         updatedAt
       }
     }
@@ -172,6 +200,7 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
     securityMeasures?: string;
     dataProtectionImpactAssessment?: string;
     transferImpactAssessment?: string;
+    vendorIds?: string[];
   }) => {
     if (!input.organizationId) {
       return alert(__("Failed to create processing activity: organization is required"));
@@ -199,6 +228,7 @@ export const useCreateProcessingActivity = (connectionId?: string) => {
           securityMeasures: input.securityMeasures,
           dataProtectionImpactAssessment: input.dataProtectionImpactAssessment,
           transferImpactAssessment: input.transferImpactAssessment,
+          vendorIds: input.vendorIds,
         },
         connections: connectionId ? [connectionId] : [],
       },
@@ -227,6 +257,7 @@ export const useUpdateProcessingActivity = () => {
     securityMeasures?: string;
     dataProtectionImpactAssessment?: string;
     transferImpactAssessment?: string;
+    vendorIds?: string[];
   }) => {
     if (!input.id) {
       return alert(__("Failed to update processing activity: ID is required"));

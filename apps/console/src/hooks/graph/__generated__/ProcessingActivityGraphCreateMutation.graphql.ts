@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d19bc7dbb1b1ec90138ba9e902dadd4a>>
+ * @generated SignedSource<<d01ca9f47a4ce6e732cffd5deb9150c6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -31,6 +31,7 @@ export type CreateProcessingActivityInput = {
   specialOrCriminalData: ProcessingActivitySpecialOrCriminalData;
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment;
   transferSafeguards?: ProcessingActivityTransferSafeguards | null | undefined;
+  vendorIds?: ReadonlyArray<string> | null | undefined;
 };
 export type ProcessingActivityGraphCreateMutation$variables = {
   connections: ReadonlyArray<string>;
@@ -57,6 +58,15 @@ export type ProcessingActivityGraphCreateMutation$data = {
         readonly specialOrCriminalData: ProcessingActivitySpecialOrCriminalData;
         readonly transferImpactAssessment: ProcessingActivityTransferImpactAssessment;
         readonly transferSafeguards: ProcessingActivityTransferSafeguards | null | undefined;
+        readonly vendors: {
+          readonly edges: ReadonlyArray<{
+            readonly node: {
+              readonly id: string;
+              readonly name: string;
+              readonly websiteUrl: string | null | undefined;
+            };
+          }>;
+        };
       };
     };
   };
@@ -87,6 +97,20 @@ v2 = [
 v3 = {
   "alias": null,
   "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "name",
+  "storageKey": null
+},
+v5 = {
+  "alias": null,
+  "args": null,
   "concreteType": "ProcessingActivityEdge",
   "kind": "LinkedField",
   "name": "processingActivityEdge",
@@ -100,20 +124,8 @@ v3 = {
       "name": "node",
       "plural": false,
       "selections": [
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "id",
-          "storageKey": null
-        },
-        {
-          "alias": null,
-          "args": null,
-          "kind": "ScalarField",
-          "name": "name",
-          "storageKey": null
-        },
+        (v3/*: any*/),
+        (v4/*: any*/),
         {
           "alias": null,
           "args": null,
@@ -214,6 +226,54 @@ v3 = {
         },
         {
           "alias": null,
+          "args": [
+            {
+              "kind": "Literal",
+              "name": "first",
+              "value": 50
+            }
+          ],
+          "concreteType": "VendorConnection",
+          "kind": "LinkedField",
+          "name": "vendors",
+          "plural": false,
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "concreteType": "VendorEdge",
+              "kind": "LinkedField",
+              "name": "edges",
+              "plural": true,
+              "selections": [
+                {
+                  "alias": null,
+                  "args": null,
+                  "concreteType": "Vendor",
+                  "kind": "LinkedField",
+                  "name": "node",
+                  "plural": false,
+                  "selections": [
+                    (v3/*: any*/),
+                    (v4/*: any*/),
+                    {
+                      "alias": null,
+                      "args": null,
+                      "kind": "ScalarField",
+                      "name": "websiteUrl",
+                      "storageKey": null
+                    }
+                  ],
+                  "storageKey": null
+                }
+              ],
+              "storageKey": null
+            }
+          ],
+          "storageKey": "vendors(first:50)"
+        },
+        {
+          "alias": null,
           "args": null,
           "kind": "ScalarField",
           "name": "createdAt",
@@ -243,7 +303,7 @@ return {
         "name": "createProcessingActivity",
         "plural": false,
         "selections": [
-          (v3/*: any*/)
+          (v5/*: any*/)
         ],
         "storageKey": null
       }
@@ -268,7 +328,7 @@ return {
         "name": "createProcessingActivity",
         "plural": false,
         "selections": [
-          (v3/*: any*/),
+          (v5/*: any*/),
           {
             "alias": null,
             "args": null,
@@ -291,16 +351,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "3a675caa3773822d9b478ad1669eb69f",
+    "cacheID": "4992c543938b28bc08d2316602d7bd1e",
     "id": null,
     "metadata": {},
     "name": "ProcessingActivityGraphCreateMutation",
     "operationKind": "mutation",
-    "text": "mutation ProcessingActivityGraphCreateMutation(\n  $input: CreateProcessingActivityInput!\n) {\n  createProcessingActivity(input: $input) {\n    processingActivityEdge {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        specialOrCriminalData\n        consentEvidenceLink\n        lawfulBasis\n        recipients\n        location\n        internationalTransfers\n        transferSafeguards\n        retentionPeriod\n        securityMeasures\n        dataProtectionImpactAssessment\n        transferImpactAssessment\n        createdAt\n      }\n    }\n  }\n}\n"
+    "text": "mutation ProcessingActivityGraphCreateMutation(\n  $input: CreateProcessingActivityInput!\n) {\n  createProcessingActivity(input: $input) {\n    processingActivityEdge {\n      node {\n        id\n        name\n        purpose\n        dataSubjectCategory\n        personalDataCategory\n        specialOrCriminalData\n        consentEvidenceLink\n        lawfulBasis\n        recipients\n        location\n        internationalTransfers\n        transferSafeguards\n        retentionPeriod\n        securityMeasures\n        dataProtectionImpactAssessment\n        transferImpactAssessment\n        vendors(first: 50) {\n          edges {\n            node {\n              id\n              name\n              websiteUrl\n            }\n          }\n        }\n        createdAt\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "bd2e03818df99d5b692216d738b18583";
+(node as any).hash = "2150e01b5dfb4ebf1553817b7cb39f08";
 
 export default node;

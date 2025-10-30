@@ -3405,6 +3405,7 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 		SecurityMeasures:               input.SecurityMeasures,
 		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
 		TransferImpactAssessment:       input.TransferImpactAssessment,
+		VendorIDs:                      input.VendorIds,
 	}
 
 	activity, err := prb.ProcessingActivities.Create(ctx, &req)
@@ -3437,6 +3438,7 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 		SecurityMeasures:               UnwrapOmittable(input.SecurityMeasures),
 		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
 		TransferImpactAssessment:       input.TransferImpactAssessment,
+		VendorIDs:                      &input.VendorIds,
 	}
 
 	activity, err := prb.ProcessingActivities.Update(ctx, &req)
@@ -4554,6 +4556,31 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 	}
 
 	return types.NewOrganization(organization), nil
+}
+
+// Vendors is the resolver for the vendors field.
+func (r *processingActivityResolver) Vendors(ctx context.Context, obj *types.ProcessingActivity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error) {
+	prb := r.ProboService(ctx, obj.ID.TenantID())
+
+	pageOrderBy := page.OrderBy[coredata.VendorOrderField]{
+		Field:     coredata.VendorOrderFieldCreatedAt,
+		Direction: page.OrderDirectionDesc,
+	}
+	if orderBy != nil {
+		pageOrderBy = page.OrderBy[coredata.VendorOrderField]{
+			Field:     orderBy.Field,
+			Direction: orderBy.Direction,
+		}
+	}
+
+	cursor := types.NewCursor(first, after, last, before, pageOrderBy)
+
+	page, err := prb.Vendors.ListForProcessingActivityID(ctx, obj.ID, cursor)
+	if err != nil {
+		panic(fmt.Errorf("cannot list processing activity vendors: %w", err))
+	}
+
+	return types.NewVendorConnection(page, r, obj.ID), nil
 }
 
 // TotalCount is the resolver for the totalCount field.

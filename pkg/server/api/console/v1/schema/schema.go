@@ -1149,6 +1149,7 @@ type ComplexityRoot struct {
 		TransferImpactAssessment       func(childComplexity int) int
 		TransferSafeguards             func(childComplexity int) int
 		UpdatedAt                      func(childComplexity int) int
+		Vendors                        func(childComplexity int, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) int
 	}
 
 	ProcessingActivityConnection struct {
@@ -2046,6 +2047,8 @@ type PeopleConnectionResolver interface {
 }
 type ProcessingActivityResolver interface {
 	Organization(ctx context.Context, obj *types.ProcessingActivity) (*types.Organization, error)
+
+	Vendors(ctx context.Context, obj *types.ProcessingActivity, first *int, after *page.CursorKey, last *int, before *page.CursorKey, orderBy *types.VendorOrderBy) (*types.VendorConnection, error)
 }
 type ProcessingActivityConnectionResolver interface {
 	TotalCount(ctx context.Context, obj *types.ProcessingActivityConnection) (int, error)
@@ -7103,6 +7106,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 
 		return e.complexity.ProcessingActivity.UpdatedAt(childComplexity), true
 
+	case "ProcessingActivity.vendors":
+		if e.complexity.ProcessingActivity.Vendors == nil {
+			break
+		}
+
+		args, err := ec.field_ProcessingActivity_vendors_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.ProcessingActivity.Vendors(childComplexity, args["first"].(*int), args["after"].(*page.CursorKey), args["last"].(*int), args["before"].(*page.CursorKey), args["orderBy"].(*types.VendorOrderBy)), true
+
 	case "ProcessingActivityConnection.edges":
 		if e.complexity.ProcessingActivityConnection.Edges == nil {
 			break
@@ -12084,6 +12099,13 @@ type ProcessingActivity implements Node {
   securityMeasures: String
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  vendors(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: VendorOrder
+  ): VendorConnection! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -13650,6 +13672,7 @@ input CreateProcessingActivityInput {
   securityMeasures: String
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  vendorIds: [ID!]
 }
 
 input UpdateProcessingActivityInput {
@@ -13670,6 +13693,7 @@ input UpdateProcessingActivityInput {
   securityMeasures: String @goField(omittable: true)
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment
+  vendorIds: [ID!]
 }
 
 input DeleteProcessingActivityInput {
@@ -21450,6 +21474,101 @@ func (ec *executionContext) field_Organization_vendors_argsFilter(
 	}
 
 	var zeroVal *types.VendorFilter
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_ProcessingActivity_vendors_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := ec.field_ProcessingActivity_vendors_argsFirst(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["first"] = arg0
+	arg1, err := ec.field_ProcessingActivity_vendors_argsAfter(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["after"] = arg1
+	arg2, err := ec.field_ProcessingActivity_vendors_argsLast(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["last"] = arg2
+	arg3, err := ec.field_ProcessingActivity_vendors_argsBefore(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["before"] = arg3
+	arg4, err := ec.field_ProcessingActivity_vendors_argsOrderBy(ctx, rawArgs)
+	if err != nil {
+		return nil, err
+	}
+	args["orderBy"] = arg4
+	return args, nil
+}
+func (ec *executionContext) field_ProcessingActivity_vendors_argsFirst(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+	if tmp, ok := rawArgs["first"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_ProcessingActivity_vendors_argsAfter(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+	if tmp, ok := rawArgs["after"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_ProcessingActivity_vendors_argsLast(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*int, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+	if tmp, ok := rawArgs["last"]; ok {
+		return ec.unmarshalOInt2ᚖint(ctx, tmp)
+	}
+
+	var zeroVal *int
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_ProcessingActivity_vendors_argsBefore(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*page.CursorKey, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
+	if tmp, ok := rawArgs["before"]; ok {
+		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+	}
+
+	var zeroVal *page.CursorKey
+	return zeroVal, nil
+}
+
+func (ec *executionContext) field_ProcessingActivity_vendors_argsOrderBy(
+	ctx context.Context,
+	rawArgs map[string]any,
+) (*types.VendorOrderBy, error) {
+	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("orderBy"))
+	if tmp, ok := rawArgs["orderBy"]; ok {
+		return ec.unmarshalOVendorOrder2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVendorOrderBy(ctx, tmp)
+	}
+
+	var zeroVal *types.VendorOrderBy
 	return zeroVal, nil
 }
 
@@ -53757,6 +53876,69 @@ func (ec *executionContext) fieldContext_ProcessingActivity_transferImpactAssess
 	return fc, nil
 }
 
+func (ec *executionContext) _ProcessingActivity_vendors(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProcessingActivity_vendors(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ProcessingActivity().Vendors(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*page.CursorKey), fc.Args["last"].(*int), fc.Args["before"].(*page.CursorKey), fc.Args["orderBy"].(*types.VendorOrderBy))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*types.VendorConnection)
+	fc.Result = res
+	return ec.marshalNVendorConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋconsoleᚋv1ᚋtypesᚐVendorConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProcessingActivity_vendors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProcessingActivity",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_VendorConnection_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_VendorConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_VendorConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type VendorConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_ProcessingActivity_vendors_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ProcessingActivity_createdAt(ctx context.Context, field graphql.CollectedField, obj *types.ProcessingActivity) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
 	if err != nil {
@@ -54114,6 +54296,8 @@ func (ec *executionContext) fieldContext_ProcessingActivityEdge_node(_ context.C
 				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
 			case "transferImpactAssessment":
 				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
+			case "vendors":
+				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
 			case "updatedAt":
@@ -63933,6 +64117,8 @@ func (ec *executionContext) fieldContext_UpdateProcessingActivityPayload_process
 				return ec.fieldContext_ProcessingActivity_dataProtectionImpactAssessment(ctx, field)
 			case "transferImpactAssessment":
 				return ec.fieldContext_ProcessingActivity_transferImpactAssessment(ctx, field)
+			case "vendors":
+				return ec.fieldContext_ProcessingActivity_vendors(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_ProcessingActivity_createdAt(ctx, field)
 			case "updatedAt":
@@ -74582,7 +74768,7 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"organizationId", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment"}
+	fieldsInOrder := [...]string{"organizationId", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment", "vendorIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -74701,6 +74887,13 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.TransferImpactAssessment = data
+		case "vendorIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vendorIds"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VendorIds = data
 		}
 	}
 
@@ -79266,7 +79459,7 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment"}
+	fieldsInOrder := [...]string{"id", "name", "purpose", "dataSubjectCategory", "personalDataCategory", "specialOrCriminalData", "consentEvidenceLink", "lawfulBasis", "recipients", "location", "internationalTransfers", "transferSafeguards", "retentionPeriod", "securityMeasures", "dataProtectionImpactAssessment", "transferImpactAssessment", "vendorIds"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -79385,6 +79578,13 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 				return it, err
 			}
 			it.TransferImpactAssessment = data
+		case "vendorIds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vendorIds"))
+			data, err := ec.unmarshalOID2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGIDᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.VendorIds = data
 		}
 	}
 
@@ -91809,6 +92009,42 @@ func (ec *executionContext) _ProcessingActivity(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
+		case "vendors":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ProcessingActivity_vendors(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
 		case "createdAt":
 			out.Values[i] = ec._ProcessingActivity_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

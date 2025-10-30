@@ -2358,6 +2358,13 @@ type ProcessingActivity implements Node {
   securityMeasures: String
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  vendors(
+    first: Int
+    after: CursorKey
+    last: Int
+    before: CursorKey
+    orderBy: VendorOrder
+  ): VendorConnection! @goField(forceResolver: true)
   createdAt: Datetime!
   updatedAt: Datetime!
 }
@@ -3924,6 +3931,7 @@ input CreateProcessingActivityInput {
   securityMeasures: String
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment!
+  vendorIds: [ID!]
 }
 
 input UpdateProcessingActivityInput {
@@ -3944,6 +3952,7 @@ input UpdateProcessingActivityInput {
   securityMeasures: String @goField(omittable: true)
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment
+  vendorIds: [ID!]
 }
 
 input DeleteProcessingActivityInput {

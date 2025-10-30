@@ -47,6 +47,7 @@ type (
 		SecurityMeasures               *string
 		DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment
 		TransferImpactAssessment       coredata.ProcessingActivityTransferImpactAssessment
+		VendorIDs                      []gid.GID
 	}
 
 	UpdateProcessingActivityRequest struct {
@@ -66,6 +67,7 @@ type (
 		SecurityMeasures               **string
 		DataProtectionImpactAssessment *coredata.ProcessingActivityDataProtectionImpactAssessment
 		TransferImpactAssessment       *coredata.ProcessingActivityTransferImpactAssessment
+		VendorIDs                      *[]gid.GID
 	}
 )
 
@@ -94,6 +96,7 @@ func (s *ProcessingActivityService) Create(
 	req *CreateProcessingActivityRequest,
 ) (*coredata.ProcessingActivity, error) {
 	now := time.Now()
+	processingActivityVendors := &coredata.ProcessingActivityVendors{}
 
 	processingActivity := &coredata.ProcessingActivity{
 		ID:                             gid.New(s.svc.scope.GetTenantID(), coredata.ProcessingActivityEntityType),
@@ -129,6 +132,12 @@ func (s *ProcessingActivityService) Create(
 				return fmt.Errorf("cannot insert processing activity: %w", err)
 			}
 
+			if len(req.VendorIDs) > 0 {
+				if err := processingActivityVendors.Insert(ctx, conn, s.svc.scope, processingActivity.ID, req.VendorIDs); err != nil {
+					return fmt.Errorf("cannot create processing activity vendors: %w", err)
+				}
+			}
+
 			return nil
 		},
 	)
@@ -145,6 +154,7 @@ func (s *ProcessingActivityService) Update(
 	req *UpdateProcessingActivityRequest,
 ) (*coredata.ProcessingActivity, error) {
 	processingActivity := &coredata.ProcessingActivity{}
+	processingActivityVendors := &coredata.ProcessingActivityVendors{}
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -203,6 +213,12 @@ func (s *ProcessingActivityService) Update(
 
 			if err := processingActivity.Update(ctx, conn, s.svc.scope); err != nil {
 				return fmt.Errorf("cannot update processing activity: %w", err)
+			}
+
+			if req.VendorIDs != nil {
+				if err := processingActivityVendors.Merge(ctx, conn, s.svc.scope, processingActivity.ID, *req.VendorIDs); err != nil {
+					return fmt.Errorf("cannot update processing activity vendors: %w", err)
+				}
 			}
 
 			return nil

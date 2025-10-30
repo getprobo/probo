@@ -18,6 +18,7 @@ import { z } from "zod";
 import { useFormWithSchema } from "/hooks/useFormWithSchema";
 import { useCreateProcessingActivity } from "../../../../hooks/graph/ProcessingActivityGraph";
 import { Controller } from "react-hook-form";
+import { VendorsMultiSelectField } from "/components/form/VendorsMultiSelectField";
 import {
   SpecialOrCriminalDataOptions,
   LawfulBasisOptions,
@@ -42,6 +43,7 @@ const schema = z.object({
   securityMeasures: z.string().optional(),
   dataProtectionImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
   transferImpactAssessment: z.enum(["NEEDED", "NOT_NEEDED"] as const),
+  vendorIds: z.array(z.string()).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -80,6 +82,7 @@ export function CreateProcessingActivityDialog({
       securityMeasures: "",
       dataProtectionImpactAssessment: "NOT_NEEDED" as const,
       transferImpactAssessment: "NOT_NEEDED" as const,
+      vendorIds: [],
     },
   });
 
@@ -102,6 +105,7 @@ export function CreateProcessingActivityDialog({
         securityMeasures: formData.securityMeasures || undefined,
         dataProtectionImpactAssessment: formData.dataProtectionImpactAssessment || undefined,
         transferImpactAssessment: formData.transferImpactAssessment || undefined,
+        vendorIds: formData.vendorIds,
       });
 
       toast({
@@ -330,6 +334,14 @@ export function CreateProcessingActivityDialog({
               </div>
             </div>
           </div>
+
+          <VendorsMultiSelectField
+            organizationId={organizationId}
+            control={control}
+            name="vendorIds"
+            selectedVendors={[]}
+            label={__("Vendors")}
+          />
         </DialogContent>
 
         <DialogFooter>

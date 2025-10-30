@@ -491,6 +491,32 @@ func (s VendorService) ListForAssetID(
 	return page.NewPage(vendors, cursor), nil
 }
 
+func (s VendorService) ListForProcessingActivityID(
+	ctx context.Context,
+	processingActivityID gid.GID,
+	cursor *page.Cursor[coredata.VendorOrderField],
+) (*page.Page[*coredata.Vendor, coredata.VendorOrderField], error) {
+	var vendors coredata.Vendors
+
+	err := s.svc.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			err := vendors.LoadByProcessingActivityID(ctx, conn, s.svc.scope, processingActivityID, cursor)
+			if err != nil {
+				return fmt.Errorf("cannot load vendors by processing activity: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return page.NewPage(vendors, cursor), nil
+}
+
 func (s VendorService) ListRiskAssessments(
 	ctx context.Context,
 	vendorID gid.GID,
