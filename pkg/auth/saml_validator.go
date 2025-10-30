@@ -48,6 +48,7 @@ func PreventReplayAttack(
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "auth_saml_assertions_pkey" {
 			return coredata.ErrAssertionAlreadyUsed{AssertionID: assertionID}
 		}
+
 		return fmt.Errorf("cannot store assertion ID: %w", err)
 	}
 
@@ -70,7 +71,7 @@ func ValidateAssertion(
 
 	if assertion.Conditions != nil && !assertion.Conditions.NotOnOrAfter.IsZero() {
 		if now.Add(-clockSkewTolerance).After(assertion.Conditions.NotOnOrAfter) ||
-		   now.Add(-clockSkewTolerance).Equal(assertion.Conditions.NotOnOrAfter) {
+			now.Add(-clockSkewTolerance).Equal(assertion.Conditions.NotOnOrAfter) {
 			return fmt.Errorf("assertion expired (NotOnOrAfter: %v, now: %v, tolerance: %v)",
 				assertion.Conditions.NotOnOrAfter, now, clockSkewTolerance)
 		}

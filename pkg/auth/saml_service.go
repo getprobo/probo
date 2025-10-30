@@ -21,6 +21,7 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -474,15 +475,19 @@ func (s *SAMLService) HandleSAMLAssertion(
 	err = s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
-			return config.LoadByID(ctx, conn, scope, relayState.SAMLConfigID)
+			if err := config.LoadByID(ctx, conn, scope, relayState.SAMLConfigID); err != nil {
+				return fmt.Errorf("cannot load SAML configuration: %w", err)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
-		return nil, ErrSAMLConfigurationNotFound{OrganizationID: relayState.OrganizationID}
+		return nil, fmt.Errorf("cannot load SAML configuration: %w", err)
 	}
 
 	if !config.Enabled {
-		return nil, ErrSAMLDisabled{OrganizationID: relayState.OrganizationID}
+		return nil, ErrSAMLDisabled{OrganizationID: config.OrganizationID}
 	}
 
 	sp, err := s.GetServiceProvider(ctx, &config)
@@ -500,8 +505,12 @@ func (s *SAMLService) HandleSAMLAssertion(
 	possibleRequestIDs := []string{samlRequest.ID}
 	assertion, err := sp.ParseResponse(req, possibleRequestIDs)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse SAML response (SP EntityID: %s, IdP EntityID: %s): %w",
-			s.GetEntityID(), config.IdPEntityID, err)
+		return nil, fmt.Errorf(
+			"cannot parse SAML response (SP EntityID: %s, IdP EntityID: %s): %w",
+			s.GetEntityID(),
+			config.IdPEntityID,
+			err,
+		)
 	}
 
 	if err := ValidateAssertion(assertion, s.GetEntityID(), now); err != nil {
@@ -519,11 +528,20 @@ func (s *SAMLService) HandleSAMLAssertion(
 		err = s.pg.WithTx(
 			ctx,
 			func(tx pg.Conn) error {
-				return PreventReplayAttack(ctx, tx, scope, assertion.ID, relayState.OrganizationID, expiresAt)
+				if err := PreventReplayAttack(ctx, tx, scope, assertion.ID, relayState.OrganizationID, expiresAt); err != nil {
+					return fmt.Errorf("cannot prevent replay attack: %w", err)
+				}
+
+				return nil
 			},
 		)
 		if err != nil {
-			return nil, ErrReplayAttackDetected{AssertionID: assertion.ID, Err: err}
+			var replayAttackErr *coredata.ErrAssertionAlreadyUsed
+			if errors.As(err, &replayAttackErr) {
+				return nil, ErrReplayAttackDetected{AssertionID: assertion.ID, Err: replayAttackErr}
+			}
+
+			return nil, fmt.Errorf("cannot prevent replay attack: %w", err)
 		}
 	}
 

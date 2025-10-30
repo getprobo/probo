@@ -503,4 +503,3 @@ WHERE
 
 	return result, nil
 }
-
