@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/getprobo/probo/pkg/auth"
-	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/page"
@@ -1489,7 +1488,7 @@ func (r *mutationResolver) ConfirmEmail(ctx context.Context, input types.Confirm
 // InviteUser is the resolver for the inviteUser field.
 func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUserInput) (*types.InviteUserPayload, error) {
 	authzSvc := r.AuthzService(ctx, input.OrganizationID.TenantID())
-	invitation, err := authzSvc.InviteUserToOrganization(ctx, input.OrganizationID, input.Email, input.FullName, string(authz.RoleMember))
+	invitation, err := authzSvc.InviteUserToOrganization(ctx, input.OrganizationID, input.Email, input.FullName, coredata.RoleMember)
 	if err != nil {
 		panic(fmt.Errorf("cannot invite user to organization: %w", err))
 	}

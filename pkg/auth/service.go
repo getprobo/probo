@@ -1055,15 +1055,9 @@ func (s Service) GetOrganizationLogoFile(
 	organizationID gid.GID,
 	session *coredata.Session,
 ) (*coredata.File, error) {
-	// Check authentication requirements before allowing access to logo
-	err := s.CheckSingleOrganizationAccess(ctx, user, organizationID, session)
-	if err != nil {
-		return nil, fmt.Errorf("access denied: %w", err)
-	}
-
 	var logoFile *coredata.File
 
-	err = s.pg.WithConn(
+	err := s.pg.WithConn(
 		ctx,
 		func(conn pg.Conn) error {
 			scope := coredata.NewScope(organizationID.TenantID())

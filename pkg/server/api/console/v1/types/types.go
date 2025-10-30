@@ -1276,7 +1276,7 @@ type Invitation struct {
 	ID           gid.GID                   `json:"id"`
 	Email        string                    `json:"email"`
 	FullName     string                    `json:"fullName"`
-	Role         string                    `json:"role"`
+	Role         coredata.Role             `json:"role"`
 	Status       coredata.InvitationStatus `json:"status"`
 	ExpiresAt    time.Time                 `json:"expiresAt"`
 	AcceptedAt   *time.Time                `json:"acceptedAt,omitempty"`
@@ -1343,7 +1343,7 @@ type Membership struct {
 	ID             gid.GID                 `json:"id"`
 	UserID         gid.GID                 `json:"userID"`
 	OrganizationID gid.GID                 `json:"organizationID"`
-	Role           string                  `json:"role"`
+	Role           coredata.Role           `json:"role"`
 	FullName       string                  `json:"fullName"`
 	EmailAddress   string                  `json:"emailAddress"`
 	AuthMethod     coredata.UserAuthMethod `json:"authMethod"`

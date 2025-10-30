@@ -33,7 +33,7 @@ type (
 		OrganizationID gid.GID          `db:"organization_id"`
 		Email          string           `db:"email"`
 		FullName       string           `db:"full_name"`
-		Role           string           `db:"role"`
+		Role           Role             `db:"role"`
 		Status         InvitationStatus `db:"status"`
 		ExpiresAt      time.Time        `db:"expires_at"`
 		AcceptedAt     *time.Time       `db:"accepted_at"`
@@ -47,7 +47,7 @@ type (
 		OrganizationID gid.GID `json:"organization_id"`
 		Email          string  `json:"email"`
 		FullName       string  `json:"full_name"`
-		Role           string  `json:"role"`
+		Role           Role    `json:"role"`
 	}
 
 	ErrInvitationNotFound struct {

@@ -44,15 +44,6 @@ type (
 		invitationTokenValidity time.Duration
 		scope                   coredata.Scoper
 	}
-
-	Role string
-)
-
-const (
-	RoleOwner  Role = "OWNER"
-	RoleAdmin  Role = "ADMIN"
-	RoleMember Role = "MEMBER"
-	RoleViewer Role = "VIEWER"
 )
 
 const (
@@ -284,7 +275,7 @@ type UserInvitation struct {
 	ID             gid.GID
 	Email          string
 	FullName       string
-	Role           string
+	Role           coredata.Role
 	ExpiresAt      time.Time
 	AcceptedAt     *time.Time
 	CreatedAt      time.Time
@@ -398,7 +389,7 @@ func (s *TenantAuthzService) AddUserToOrganization(
 	ctx context.Context,
 	userID gid.GID,
 	orgID gid.GID,
-	role string,
+	role coredata.Role,
 ) error {
 	now := time.Now()
 	membershipID := gid.New(s.scope.GetTenantID(), coredata.MembershipEntityType)
@@ -624,7 +615,7 @@ func (s *TenantAuthzService) GetUserRoleInOrganization(
 	ctx context.Context,
 	userID gid.GID,
 	orgID gid.GID,
-) (string, error) {
+) (coredata.Role, error) {
 	membership := &coredata.Membership{}
 
 	err := s.pg.WithConn(
@@ -675,7 +666,7 @@ func (s *TenantAuthzService) UpdateUserRole(
 	ctx context.Context,
 	userID gid.GID,
 	orgID gid.GID,
-	newRole string,
+	newRole coredata.Role,
 ) error {
 	return s.pg.WithTx(
 		ctx,
@@ -702,7 +693,7 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 	organizationID gid.GID,
 	emailAddress string,
 	fullName string,
-	role string,
+	role coredata.Role,
 ) (*coredata.Invitation, error) {
 	var invitation *coredata.Invitation
 
@@ -808,7 +799,7 @@ func (s *TenantAuthzService) EnsureSAMLMembership(
 	ctx context.Context,
 	userID gid.GID,
 	organizationID gid.GID,
-	role string,
+	role coredata.Role,
 ) error {
 	now := time.Now()
 

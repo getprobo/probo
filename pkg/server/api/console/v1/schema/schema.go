@@ -9834,6 +9834,13 @@ enum InvitationStatus
     )
 }
 
+enum Role @goModel(model: "github.com/getprobo/probo/pkg/coredata.Role") {
+  OWNER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleOwner")
+  ADMIN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleAdmin")
+  MEMBER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleMember")
+  VIEWER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleViewer")
+}
+
 enum DocumentStatus
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentStatus") {
   DRAFT
@@ -11563,7 +11570,7 @@ type Membership implements Node {
   id: ID!
   userID: ID!
   organizationID: ID!
-  role: String!
+  role: Role!
   fullName: String!
   emailAddress: String!
   authMethod: UserAuthMethod! @goField(forceResolver: true)
@@ -11575,7 +11582,7 @@ type Invitation implements Node {
   id: ID!
   email: String!
   fullName: String!
-  role: String!
+  role: Role!
   status: InvitationStatus!
   expiresAt: Datetime!
   acceptedAt: Datetime
@@ -38001,9 +38008,9 @@ func (ec *executionContext) _Invitation_role(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(coredata.Role)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNRole2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Invitation_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -38013,7 +38020,7 @@ func (ec *executionContext) fieldContext_Invitation_role(_ context.Context, fiel
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Role does not have child fields")
 		},
 	}
 	return fc, nil
@@ -39588,9 +39595,9 @@ func (ec *executionContext) _Membership_role(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(coredata.Role)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNRole2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Membership_role(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -39600,7 +39607,7 @@ func (ec *executionContext) fieldContext_Membership_role(_ context.Context, fiel
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Role does not have child fields")
 		},
 	}
 	return fc, nil
@@ -56563,6 +56570,8 @@ func (ec *executionContext) fieldContext_SAMLConfiguration_organization(_ contex
 				return ec.fieldContext_Organization_processingActivities(ctx, field)
 			case "snapshots":
 				return ec.fieldContext_Organization_snapshots(ctx, field)
+			case "trustCenterFiles":
+				return ec.fieldContext_Organization_trustCenterFiles(ctx, field)
 			case "trustCenter":
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
@@ -61954,6 +61963,8 @@ func (ec *executionContext) fieldContext_TrustCenterFile_organization(_ context.
 				return ec.fieldContext_Organization_trustCenter(ctx, field)
 			case "customDomain":
 				return ec.fieldContext_Organization_customDomain(ctx, field)
+			case "samlConfigurations":
+				return ec.fieldContext_Organization_samlConfigurations(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Organization_createdAt(ctx, field)
 			case "updatedAt":
@@ -104601,6 +104612,38 @@ var (
 		coredata.RiskTreatmentAccepted:    "ACCEPTED",
 		coredata.RiskTreatmentAvoided:     "AVOIDED",
 		coredata.RiskTreatmentTransferred: "TRANSFERRED",
+	}
+)
+
+func (ec *executionContext) unmarshalNRole2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐRole(ctx context.Context, v any) (coredata.Role, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := unmarshalNRole2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐRole[tmp]
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRole2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐRole(ctx context.Context, sel ast.SelectionSet, v coredata.Role) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalString(marshalNRole2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐRole[v])
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+var (
+	unmarshalNRole2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐRole = map[string]coredata.Role{
+		"OWNER":  coredata.RoleOwner,
+		"ADMIN":  coredata.RoleAdmin,
+		"MEMBER": coredata.RoleMember,
+		"VIEWER": coredata.RoleViewer,
+	}
+	marshalNRole2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐRole = map[coredata.Role]string{
+		coredata.RoleOwner:  "OWNER",
+		coredata.RoleAdmin:  "ADMIN",
+		coredata.RoleMember: "MEMBER",
+		coredata.RoleViewer: "VIEWER",
 	}
 )
 

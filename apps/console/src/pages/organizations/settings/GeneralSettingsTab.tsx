@@ -175,19 +175,23 @@ export default function GeneralSettingsTab() {
     const reader = new FileReader();
     reader.onload = () => {
       setLogoPreview(reader.result as string);
-      updateOrganization({
-        variables: {
-          input: {
-            organizationId: organization.id,
-            logo: file,
-          },
-        },
-        onCompleted: () => {
-          setLogoPreview(null);
-        },
-      });
     };
     reader.readAsDataURL(file);
+
+    updateOrganization({
+      variables: {
+        input: {
+          organizationId: organization.id,
+          logoFile: null,
+        },
+      },
+      uploadables: {
+        "input.logoFile": file,
+      },
+      onCompleted: () => {
+        setLogoPreview(null);
+      },
+    });
   };
 
   const handleHorizontalLogoChange: ChangeEventHandler<HTMLInputElement> = (
@@ -199,19 +203,23 @@ export default function GeneralSettingsTab() {
     const reader = new FileReader();
     reader.onload = () => {
       setHorizontalLogoPreview(reader.result as string);
-      updateOrganization({
-        variables: {
-          input: {
-            organizationId: organization.id,
-            horizontalLogo: file,
-          },
-        },
-        onCompleted: () => {
-          setHorizontalLogoPreview(null);
-        },
-      });
     };
     reader.readAsDataURL(file);
+
+    updateOrganization({
+      variables: {
+        input: {
+          organizationId: organization.id,
+          horizontalLogoFile: null,
+        },
+      },
+      uploadables: {
+        "input.horizontalLogoFile": file,
+      },
+      onCompleted: () => {
+        setHorizontalLogoPreview(null);
+      },
+    });
   };
 
   const handleDeleteHorizontalLogo = () => {

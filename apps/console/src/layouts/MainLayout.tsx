@@ -384,14 +384,14 @@ function OrganizationSelector({
 
               const isSAMLUrl = targetUrl.includes("/connect/saml/");
 
+              // Use organization endpoint for all logos for consistency
+              const logoUrl = organization.logoUrl;
+
               return (
                 <DropdownItem asChild key={organization.id}>
                   {isSAMLUrl ? (
                     <a href={targetUrl} className="flex items-center gap-2">
-                      <Avatar
-                        name={organization.name}
-                        src={organization.logoUrl}
-                      />
+                      <Avatar name={organization.name} src={logoUrl} />
                       <span className="flex-1">{organization.name}</span>
                       {isAuthenticated && (
                         <IconCheckmark1 size={16} className="text-green-600" />
@@ -405,10 +405,7 @@ function OrganizationSelector({
                     </a>
                   ) : (
                     <Link to={targetUrl} className="flex items-center gap-2">
-                      <Avatar
-                        name={organization.name}
-                        src={organization.logoUrl}
-                      />
+                      <Avatar name={organization.name} src={logoUrl} />
                       <span className="flex-1">{organization.name}</span>
                       {isAuthenticated && (
                         <IconCheckmark1 size={16} className="text-green-600" />

@@ -108,6 +108,13 @@ enum InvitationStatus
     )
 }
 
+enum Role @goModel(model: "github.com/getprobo/probo/pkg/coredata.Role") {
+  OWNER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleOwner")
+  ADMIN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleAdmin")
+  MEMBER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleMember")
+  VIEWER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleViewer")
+}
+
 enum DocumentStatus
   @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentStatus") {
   DRAFT
@@ -1837,7 +1844,7 @@ type Membership implements Node {
   id: ID!
   userID: ID!
   organizationID: ID!
-  role: String!
+  role: Role!
   fullName: String!
   emailAddress: String!
   authMethod: UserAuthMethod! @goField(forceResolver: true)
@@ -1849,7 +1856,7 @@ type Invitation implements Node {
   id: ID!
   email: String!
   fullName: String!
-  role: String!
+  role: Role!
   status: InvitationStatus!
   expiresAt: Datetime!
   acceptedAt: Datetime

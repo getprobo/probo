@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/crewjam/saml"
+	"github.com/getprobo/probo/pkg/coredata"
 )
 
 func ExtractAttributeValue(assertion *saml.Assertion, attributeName string) (string, error) {
@@ -76,12 +77,12 @@ func ExtractEmailDomain(email string) (string, error) {
 	return domain, nil
 }
 
-func MapSAMLRoleToSystemRole(samlRole string) string {
+func MapSAMLRoleToSystemRole(samlRole string) coredata.Role {
 	if samlRole != "" && isValidRole(samlRole) {
-		return samlRole
+		return coredata.Role(samlRole)
 	}
 
-	return "MEMBER"
+	return coredata.RoleMember
 }
 
 func isValidRole(role string) bool {

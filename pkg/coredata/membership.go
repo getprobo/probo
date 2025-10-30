@@ -33,7 +33,7 @@ type (
 		ID             gid.GID   `db:"id"`
 		UserID         gid.GID   `db:"user_id"`
 		OrganizationID gid.GID   `db:"organization_id"`
-		Role           string    `db:"role"`
+		Role           Role      `db:"role"`
 		FullName       string    `db:"full_name"`
 		EmailAddress   string    `db:"email_address"`
 		CreatedAt      time.Time `db:"created_at"`

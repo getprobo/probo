@@ -64,7 +64,7 @@ func ListInvitationsHandler(authzSvc *authz.Service) http.HandlerFunc {
 				ID:        invitation.ID,
 				Email:     invitation.Email,
 				FullName:  invitation.FullName,
-				Role:      invitation.Role,
+				Role:      invitation.Role.String(),
 				ExpiresAt: invitation.ExpiresAt.Format("2006-01-02T15:04:05Z07:00"),
 				CreatedAt: invitation.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 				Organization: OrganizationResponseSummary{
