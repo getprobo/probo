@@ -1123,7 +1123,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		ctx,
 		currentUser.ID,
 		organization.ID,
-		"MEMBER",
+		coredata.RoleMember,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("cannot add user to organization: %w", err)
