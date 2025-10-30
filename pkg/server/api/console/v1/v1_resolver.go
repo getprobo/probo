@@ -1076,7 +1076,7 @@ func (r *membershipResolver) AuthMethod(ctx context.Context, obj *types.Membersh
 		return coredata.UserAuthMethodPassword, nil
 	}
 
-	auth := r.AuthService(ctx, obj.UserID.TenantID())
+	auth := r.AuthService(ctx, obj.OrganizationID.TenantID())
 
 	authMethod, err := auth.GetUserAuthMethod(ctx, obj.UserID, obj.OrganizationID, session)
 	if err != nil {
