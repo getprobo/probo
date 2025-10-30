@@ -110,3 +110,5 @@ CREATE INDEX idx_auth_saml_relay_states_token ON auth_saml_relay_states(token);
 CREATE INDEX idx_auth_saml_relay_states_expires_at ON auth_saml_relay_states(expires_at);
 
 CREATE INDEX idx_auth_saml_relay_states_tenant_id ON auth_saml_relay_states(tenant_id);
+
+ALTER TABLE auth_saml_configurations DROP COLUMN default_role;
