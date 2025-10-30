@@ -4,6 +4,7 @@ import {
   IconArrowBoxLeft,
   IconBank,
   IconBook,
+  IconCheckmark1,
   IconCircleQuestionmark,
   IconClock,
   IconCrossLargeX,
