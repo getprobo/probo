@@ -45,7 +45,7 @@ type (
 		encryptionKey      cipher.EncryptionKey
 		tokenSecret        string
 		slackSigningSecret string
-		hostname           string
+		baseURL            string
 		auth               *auth.Service
 		html2pdfConverter  *html2pdf.Converter
 		fileManager        *filemanager.Service
@@ -61,7 +61,7 @@ type (
 		proboSvc              *probo.Service
 		encryptionKey         cipher.EncryptionKey
 		tokenSecret           string
-		hostname              string
+		baseURL               string
 		auth                  *auth.Service
 		html2pdfConverter     *html2pdf.Converter
 		fileManager           *filemanager.Service
@@ -85,7 +85,7 @@ func NewService(
 	pgClient *pg.Client,
 	s3Client *s3.Client,
 	bucket string,
-	hostname string,
+	baseURL string,
 	encryptionKey cipher.EncryptionKey,
 	tokenSecret string,
 	slackSigningSecret string,
@@ -102,7 +102,7 @@ func NewService(
 		encryptionKey:      encryptionKey,
 		tokenSecret:        tokenSecret,
 		slackSigningSecret: slackSigningSecret,
-		hostname:           hostname,
+		baseURL:            baseURL,
 		auth:               auth,
 		html2pdfConverter:  html2pdfConverter,
 		fileManager:        fileManagerService,
@@ -120,7 +120,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		proboSvc:          s.proboSvc,
 		encryptionKey:     s.encryptionKey,
 		tokenSecret:       s.tokenSecret,
-		hostname:          s.hostname,
+		baseURL:           s.baseURL,
 		auth:              s.auth,
 		html2pdfConverter: s.html2pdfConverter,
 		fileManager:       s.fileManager,

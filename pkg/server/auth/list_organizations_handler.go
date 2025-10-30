@@ -56,7 +56,7 @@ func buildOrganizationResponse(
 	// Generate logo URL path if organization has a logo
 	var logoURL *string
 	if org.LogoFileID != nil {
-		url := fmt.Sprintf("/auth/organizations/%s/logo", org.ID)
+		url := fmt.Sprintf("/connect/organizations/%s/logo", org.ID)
 		logoURL = &url
 	}
 
@@ -74,11 +74,11 @@ func buildOrganizationResponse(
 		case authsvc.AuthMethodSAML, authsvc.AuthMethodAny:
 			orgResponse.AuthenticationMethod = "saml"
 			if accessResult.SAMLConfig != nil {
-				orgResponse.LoginURL = fmt.Sprintf("/auth/saml/login/%s", accessResult.SAMLConfig.ID)
+				orgResponse.LoginURL = fmt.Sprintf("/connect/saml/login/%s", accessResult.SAMLConfig.ID)
 			}
 		case authsvc.AuthMethodPassword:
 			orgResponse.AuthenticationMethod = "password"
-			orgResponse.LoginURL = "/authentication/login?method=password"
+			orgResponse.LoginURL = "/auth/login?method=password"
 		}
 		return orgResponse
 	}
@@ -88,13 +88,13 @@ func buildOrganizationResponse(
 
 	if sessionData.PasswordAuthenticated {
 		orgResponse.AuthenticationMethod = "password"
-		orgResponse.LoginURL = "/authentication/login?method=password"
+		orgResponse.LoginURL = "/auth/login?method=password"
 	} else if samlInfo, ok := sessionData.SAMLAuthenticatedOrgs[org.ID.String()]; ok {
 		orgResponse.AuthenticationMethod = "saml"
-		orgResponse.LoginURL = fmt.Sprintf("/auth/saml/login/%s", samlInfo.SAMLConfigID)
+		orgResponse.LoginURL = fmt.Sprintf("/connect/saml/login/%s", samlInfo.SAMLConfigID)
 	} else {
 		orgResponse.AuthenticationMethod = "any"
-		orgResponse.LoginURL = "/authentication/login?method=password"
+		orgResponse.LoginURL = "/auth/login?method=password"
 	}
 
 	return orgResponse

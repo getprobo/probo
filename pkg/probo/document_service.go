@@ -457,9 +457,14 @@ func (s *DocumentService) SendSigningNotifications(
 					return fmt.Errorf("cannot create signing request token: %w", err)
 				}
 
+				baseURLParsed, err := url.Parse(s.svc.baseURL)
+				if err != nil {
+					return fmt.Errorf("cannot parse base URL: %w", err)
+				}
+
 				signRequestURL := url.URL{
-					Scheme: "https",
-					Host:   s.svc.hostname,
+					Scheme: baseURLParsed.Scheme,
+					Host:   baseURLParsed.Host,
 					Path:   "/documents/signing-requests",
 					RawQuery: url.Values{
 						"token": []string{token},
@@ -467,7 +472,7 @@ func (s *DocumentService) SendSigningNotifications(
 				}
 
 				subject, textBody, htmlBody, err := emails.RenderDocumentSigning(
-					s.svc.hostname,
+					s.svc.baseURL,
 					people.FullName,
 					organization.Name,
 					signRequestURL.String(),
@@ -1584,7 +1589,7 @@ func (s *DocumentService) SendExportEmail(
 			}
 
 			subject, textBody, htmlBody, err := emails.RenderDocumentExport(
-				s.svc.hostname,
+				s.svc.baseURL,
 				recipientName,
 				downloadURL,
 			)

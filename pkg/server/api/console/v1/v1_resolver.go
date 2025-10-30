@@ -4997,12 +4997,12 @@ func (r *sAMLConfigurationResolver) SpMetadataURL(ctx context.Context, obj *type
 // TestLoginURL is the resolver for the testLoginUrl field.
 func (r *sAMLConfigurationResolver) TestLoginURL(ctx context.Context, obj *types.SAMLConfiguration) (string, error) {
 	entityID := r.samlSvc.GetEntityID()
-	parts := strings.Split(entityID, "/auth/saml/metadata")
+	parts := strings.Split(entityID, "/connect/saml/metadata")
 	if len(parts) != 2 {
 		return "", fmt.Errorf("invalid entity ID format")
 	}
 
-	return fmt.Sprintf("%s/auth/saml/login/%s", parts[0], obj.ID), nil
+	return fmt.Sprintf("%s/connect/saml/login/%s", parts[0], obj.ID), nil
 }
 
 // Organization is the resolver for the organization field.

@@ -709,7 +709,7 @@ func (s FrameworkService) SendExportEmail(
 			}
 
 			subject, textBody, htmlBody, err := emails.RenderFrameworkExport(
-				s.svc.hostname,
+				s.svc.baseURL,
 				recipientName,
 				downloadURL,
 			)

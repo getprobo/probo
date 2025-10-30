@@ -50,7 +50,7 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
   const error = useRouteError() ?? propsError;
 
   if (error instanceof UnAuthenticatedError) {
-    return <Navigate to="/authentication/login" />;
+    return <Navigate to="/auth/login" />;
   }
 
   return <PageError error={error?.toString()} />;
@@ -58,7 +58,7 @@ function ErrorBoundary({ error: propsError }: { error?: string }) {
 
 const routes = [
   {
-    path: "/authentication",
+    path: "/auth",
     Component: AuthLayout,
     children: [
       {

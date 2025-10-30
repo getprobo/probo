@@ -154,7 +154,7 @@ export function MainLayout() {
             icon={IconBook}
             to={`${prefix}/obligations`}
           />
-           <SidebarItem
+          <SidebarItem
             label={__("Continual Improvements")}
             icon={IconRotateCw}
             to={`${prefix}/continual-improvements`}
@@ -192,15 +192,16 @@ export function MainLayout() {
 function UserDropdown({ organizationId }: { organizationId: string }) {
   const { __ } = useTranslate();
   const { toast } = useToast();
-  const user = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, { organizationId }).viewer
-    .user;
+  const user = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {
+    organizationId,
+  }).viewer.user;
 
   const handleLogout: React.MouseEventHandler<HTMLAnchorElement> = async (
     e
   ) => {
     e.preventDefault();
 
-    fetch(buildEndpoint("/auth/logout"), {
+    fetch(buildEndpoint("/connect/logout"), {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -274,13 +275,19 @@ interface InvitationsResponse {
   invitations: Invitation[];
 }
 
-function OrganizationSelectorWrapper({ organizationId }: { organizationId: string }) {
-  const data = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, { organizationId });
+function OrganizationSelectorWrapper({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
+  const data = useLazyLoadQuery<MainLayoutQueryType>(MainLayoutQuery, {
+    organizationId,
+  });
   return <OrganizationSelector currentOrganization={data.organization} />;
 }
 
 function OrganizationSelector({
-  currentOrganization
+  currentOrganization,
 }: {
   currentOrganization: MainLayoutQueryType["response"]["organization"];
 }) {
@@ -297,32 +304,32 @@ function OrganizationSelector({
 
         // Fetch organizations and invitations in parallel
         const [orgsResponse, invitationsResponse] = await Promise.all([
-          fetch('/auth/organizations', { credentials: 'include' }),
-          fetch('/auth/invitations', { credentials: 'include' })
+          fetch("/connect/organizations", { credentials: "include" }),
+          fetch("/connect/invitations", { credentials: "include" }),
         ]);
 
         if (!orgsResponse.ok) {
-          throw new Error('Failed to fetch organizations');
+          throw new Error("Failed to fetch organizations");
         }
 
         if (!invitationsResponse.ok) {
-          throw new Error('Failed to fetch invitations');
+          throw new Error("Failed to fetch invitations");
         }
 
         const orgsData: OrganizationsResponse = await orgsResponse.json();
-        const invitationsData: InvitationsResponse = await invitationsResponse.json();
+        const invitationsData: InvitationsResponse =
+          await invitationsResponse.json();
 
-        // Count pending invitations (those without acceptedAt)
         const pendingCount = invitationsData.invitations.filter(
-          inv => !inv.acceptedAt
+          (inv) => !inv.acceptedAt
         ).length;
 
         setOrganizations(orgsData.organizations);
         setPendingInvitationsCount(pendingCount);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        console.error('Failed to fetch data:', err);
+        setError(err instanceof Error ? err.message : "Unknown error");
+        console.error("Failed to fetch data:", err);
       } finally {
         setIsLoading(false);
       }
@@ -334,11 +341,7 @@ function OrganizationSelector({
   if (error) {
     return (
       <div className="flex items-center gap-1">
-        <Button
-          className="-ml-3"
-          variant="tertiary"
-          disabled
-        >
+        <Button className="-ml-3" variant="tertiary" disabled>
           {__("Error loading organizations")}
         </Button>
       </div>
@@ -355,7 +358,7 @@ function OrganizationSelector({
             iconAfter={IconChevronGrabberVertical}
             disabled={isLoading}
           >
-            {isLoading ? __("Loading...") : (currentOrganization?.name || "")}
+            {isLoading ? __("Loading...") : currentOrganization?.name || ""}
           </Button>
         }
       >
@@ -370,7 +373,8 @@ function OrganizationSelector({
             </div>
           ) : (
             organizations.map((organization) => {
-              const isAuthenticated = organization.authStatus === "authenticated";
+              const isAuthenticated =
+                organization.authStatus === "authenticated";
               const isExpired = organization.authStatus === "expired";
               const needsAuth = organization.authStatus === "unauthenticated";
 
@@ -378,16 +382,16 @@ function OrganizationSelector({
                 ? `/organizations/${organization.id}`
                 : organization.loginUrl;
 
-              const isSAMLUrl = targetUrl.includes('/auth/saml/');
+              const isSAMLUrl = targetUrl.includes("/connect/saml/");
 
               return (
-                <DropdownItem
-                  asChild
-                  key={organization.id}
-                >
+                <DropdownItem asChild key={organization.id}>
                   {isSAMLUrl ? (
                     <a href={targetUrl} className="flex items-center gap-2">
-                      <Avatar name={organization.name} src={organization.logoUrl} />
+                      <Avatar
+                        name={organization.name}
+                        src={organization.logoUrl}
+                      />
                       <span className="flex-1">{organization.name}</span>
                       {isAuthenticated && (
                         <IconCheckmark1 size={16} className="text-green-600" />
@@ -401,7 +405,10 @@ function OrganizationSelector({
                     </a>
                   ) : (
                     <Link to={targetUrl} className="flex items-center gap-2">
-                      <Avatar name={organization.name} src={organization.logoUrl} />
+                      <Avatar
+                        name={organization.name}
+                        src={organization.logoUrl}
+                      />
                       <span className="flex-1">{organization.name}</span>
                       {isAuthenticated && (
                         <IconCheckmark1 size={16} className="text-green-600" />

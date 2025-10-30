@@ -33,7 +33,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(buildEndpoint("/auth/login"), {
+      const res = await fetch(buildEndpoint("/connect/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -68,7 +68,7 @@ export default function LoginPage() {
     setIsChecking(true);
 
     try {
-      const res = await fetch(buildEndpoint("/auth/check-sso"), {
+      const res = await fetch(buildEndpoint("/connect/check-sso"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -85,7 +85,7 @@ export default function LoginPage() {
 
       if (data.ssoAvailable && data.samlConfigId) {
         window.location.href = buildEndpoint(
-          `/auth/saml/login/${data.samlConfigId}`
+          `/connect/saml/login/${data.samlConfigId}`
         );
       } else {
         throw new Error(__("SSO not available for this email domain"));
@@ -146,7 +146,7 @@ export default function LoginPage() {
 
         <div className="text-center mt-6 text-sm text-txt-secondary">
           {__("Don't have an account ?")}{" "}
-          <Link to="/authentication/register" className="underline hover:text-txt-primary">
+          <Link to="/auth/register" className="underline hover:text-txt-primary">
             {__("Register")}
           </Link>
         </div>
@@ -154,7 +154,7 @@ export default function LoginPage() {
         <div className="text-center text-sm text-txt-secondary">
           {__("Forgot password?")}{" "}
           <Link
-            to="/authentication/forgot-password"
+            to="/auth/forgot-password"
             className="underline hover:text-txt-primary"
           >
             {__("Reset password")}
@@ -206,7 +206,7 @@ export default function LoginPage() {
 
         <div className="text-center mt-6 text-sm text-txt-secondary">
           {__("Don't have an account ?")}{" "}
-          <Link to="/authentication/register" className="underline hover:text-txt-primary">
+          <Link to="/auth/register" className="underline hover:text-txt-primary">
             {__("Register")}
           </Link>
         </div>
@@ -214,7 +214,7 @@ export default function LoginPage() {
         <div className="text-center text-sm text-txt-secondary">
           {__("Forgot password?")}{" "}
           <Link
-            to="/authentication/forgot-password"
+            to="/auth/forgot-password"
             className="underline hover:text-txt-primary"
           >
             {__("Reset password")}
@@ -257,7 +257,7 @@ export default function LoginPage() {
 
       <div className="text-center mt-6 text-sm text-txt-secondary">
         {__("Don't have an account ?")}{" "}
-        <Link to="/authentication/register" className="underline hover:text-txt-primary">
+        <Link to="/auth/register" className="underline hover:text-txt-primary">
           {__("Register")}
         </Link>
       </div>

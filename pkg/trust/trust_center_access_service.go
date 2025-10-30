@@ -470,7 +470,13 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 		return fmt.Errorf("cannot load organization: %w", err)
 	}
 
-	hostname := s.svc.hostname
+	baseURLParsed, err := url.Parse(s.svc.baseURL)
+	if err != nil {
+		return fmt.Errorf("cannot parse base URL: %w", err)
+	}
+
+	hostname := baseURLParsed.Host
+	scheme := baseURLParsed.Scheme
 	path := "/trust/" + trustCenter.Slug + "/access"
 
 	if organization.CustomDomainID != nil {
@@ -484,11 +490,12 @@ func (s *TrustCenterAccessService) sendAccessEmail(ctx context.Context, tx pg.Co
 		}
 
 		hostname = customDomain.Domain
+		scheme = "https"
 		path = "/access"
 	}
 
 	accessURL := url.URL{
-		Scheme: "https",
+		Scheme: scheme,
 		Host:   hostname,
 		Path:   path,
 		RawQuery: url.Values{
@@ -517,7 +524,7 @@ func (s *TrustCenterAccessService) sendTrustCenterAccessEmail(
 	accessURL string,
 ) error {
 	subject, textBody, htmlBody, err := emails.RenderTrustCenterAccess(
-		s.svc.hostname,
+		s.svc.baseURL,
 		name,
 		companyName,
 		accessURL,

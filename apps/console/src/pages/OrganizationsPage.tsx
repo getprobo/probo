@@ -51,7 +51,7 @@ export default function OrganizationsPage() {
   useEffect(() => {
     const fetchOrganizations = async () => {
       try {
-        const response = await fetch('/auth/organizations', {
+        const response = await fetch('/connect/organizations', {
           credentials: 'include',
         });
 
@@ -75,7 +75,7 @@ export default function OrganizationsPage() {
   useEffect(() => {
     const fetchInvitations = async () => {
       try {
-        const response = await fetch('/auth/invitations', {
+        const response = await fetch('/connect/invitations', {
           credentials: 'include',
         });
 
@@ -98,7 +98,7 @@ export default function OrganizationsPage() {
   const handleAcceptInvitation = async (invitationId: string, organizationId: string) => {
     setIsAccepting(true);
     try {
-      const response = await fetch('/auth/invitations/accept', {
+      const response = await fetch('/connect/invitations/accept', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -281,7 +281,7 @@ function OrganizationCard({ organization }: OrganizationCardProps) {
   };
 
   // Check if the URL is a backend SAML endpoint
-  const isSAMLUrl = targetUrl.includes('/auth/saml/');
+  const isSAMLUrl = targetUrl.includes('/connect/saml/');
 
   return (
     <Card padded className="w-full">

@@ -22,10 +22,10 @@ import (
 	"fmt"
 	"net"
 	"net/mail"
-	"net/url"
 	"time"
 
 	"github.com/getprobo/probo/packages/emails"
+	"github.com/getprobo/probo/pkg/baseurl"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/crypto/cipher"
 	"github.com/getprobo/probo/pkg/crypto/passwdhash"
@@ -40,7 +40,6 @@ type (
 		pg                      *pg.Client
 		encryptionKey           cipher.EncryptionKey
 		hp                      *passwdhash.Profile
-		hostname                string
 		baseURL                 string
 		tokenSecret             string
 		disableSignup           bool
@@ -51,7 +50,6 @@ type (
 		pg            *pg.Client
 		encryptionKey cipher.EncryptionKey
 		hp            *passwdhash.Profile
-		hostname      string
 		baseURL       string
 		tokenSecret   string
 		scope         coredata.Scoper
@@ -187,7 +185,6 @@ func NewService(
 	encryptionKey cipher.EncryptionKey,
 	hp *passwdhash.Profile,
 	tokenSecret string,
-	hostname string,
 	baseURL string,
 	disableSignup bool,
 	invitationTokenValidity time.Duration,
@@ -196,7 +193,6 @@ func NewService(
 		pg:                      pgClient,
 		encryptionKey:           encryptionKey,
 		hp:                      hp,
-		hostname:                hostname,
 		baseURL:                 baseURL,
 		tokenSecret:             tokenSecret,
 		disableSignup:           disableSignup,
@@ -209,7 +205,6 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantAuthService {
 		pg:            s.pg,
 		encryptionKey: s.encryptionKey,
 		hp:            s.hp,
-		hostname:      s.hostname,
 		baseURL:       s.baseURL,
 		tokenSecret:   s.tokenSecret,
 		scope:         coredata.NewScope(tenantID),
@@ -232,13 +227,17 @@ func (s Service) ForgetPassword(
 		return fmt.Errorf("cannot generate password reset token: %w", err)
 	}
 
-	resetPasswordUrl := url.URL{
-		Scheme: "https",
-		Host:   s.hostname,
-		Path:   "/auth/reset-password",
-		RawQuery: url.Values{
-			"token": []string{passwordResetToken},
-		}.Encode(),
+	base, err := baseurl.Parse(s.baseURL)
+	if err != nil {
+		return fmt.Errorf("cannot parse base URL: %w", err)
+	}
+
+	resetPasswordUrl, err := base.
+		WithPath("/auth/reset-password").
+		WithQuery("token", passwordResetToken).
+		String()
+	if err != nil {
+		return fmt.Errorf("cannot build reset password URL: %w", err)
 	}
 
 	return s.pg.WithConn(
@@ -255,9 +254,9 @@ func (s Service) ForgetPassword(
 			}
 
 			subject, textBody, htmlBody, err := emails.RenderPasswordReset(
-				s.hostname,
+				s.baseURL,
 				user.FullName,
-				resetPasswordUrl.String(),
+				resetPasswordUrl,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot render password reset email: %w", err)
@@ -352,19 +351,23 @@ func (s Service) SignUp(
 				return fmt.Errorf("cannot generate confirmation token: %w", err)
 			}
 
-			confirmationUrl := url.URL{
-				Scheme: "https",
-				Host:   s.hostname,
-				Path:   "/auth/confirm-email",
-				RawQuery: url.Values{
-					"token": []string{confirmationToken},
-				}.Encode(),
+			base, err := baseurl.Parse(s.baseURL)
+			if err != nil {
+				return fmt.Errorf("cannot parse base URL: %w", err)
+			}
+
+			confirmationUrl, err := base.
+				WithPath("/auth/confirm-email").
+				WithQuery("token", confirmationToken).
+				String()
+			if err != nil {
+				return fmt.Errorf("cannot build confirmation URL: %w", err)
 			}
 
 			subject, textBody, htmlBody, err := emails.RenderConfirmEmail(
-				s.hostname,
+				s.baseURL,
 				user.FullName,
-				confirmationUrl.String(),
+				confirmationUrl,
 			)
 			if err != nil {
 				return fmt.Errorf("cannot render confirmation email: %w", err)

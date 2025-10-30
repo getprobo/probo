@@ -32,14 +32,14 @@ import (
 type (
 	Service struct {
 		pg                      *pg.Client
-		hostname                string
+		baseURL                 string
 		tokenSecret             string
 		invitationTokenValidity time.Duration
 	}
 
 	TenantAuthzService struct {
 		pg                      *pg.Client
-		hostname                string
+		baseURL                 string
 		tokenSecret             string
 		invitationTokenValidity time.Duration
 		scope                   coredata.Scoper
@@ -62,13 +62,13 @@ const (
 func NewService(
 	ctx context.Context,
 	pgClient *pg.Client,
-	hostname string,
+	baseURL string,
 	tokenSecret string,
 	invitationTokenValidity time.Duration,
 ) (*Service, error) {
 	return &Service{
 		pg:                      pgClient,
-		hostname:                hostname,
+		baseURL:                 baseURL,
 		tokenSecret:             tokenSecret,
 		invitationTokenValidity: invitationTokenValidity,
 	}, nil
@@ -77,7 +77,7 @@ func NewService(
 func (s *Service) WithTenant(tenantID gid.TenantID) *TenantAuthzService {
 	return &TenantAuthzService{
 		pg:                      s.pg,
-		hostname:                s.hostname,
+		baseURL:                 s.baseURL,
 		tokenSecret:             s.tokenSecret,
 		invitationTokenValidity: s.invitationTokenValidity,
 		scope:                   coredata.NewScope(tenantID),
@@ -743,7 +743,7 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 
 			if userExists {
 				recipientName = user.FullName
-				invitationURL = fmt.Sprintf("https://%s/", s.hostname)
+				invitationURL = s.baseURL + "/"
 			} else {
 				recipientName = fullName
 				invitationData := coredata.InvitationData{
@@ -764,11 +764,11 @@ func (s *TenantAuthzService) InviteUserToOrganization(
 					return fmt.Errorf("cannot generate invitation token: %w", err)
 				}
 
-				invitationURL = fmt.Sprintf("https://%s/auth/signup-from-invitation?token=%s&fullName=%s", s.hostname, invitationToken, url.QueryEscape(fullName))
+				invitationURL = fmt.Sprintf("%s/auth/signup-from-invitation?token=%s&fullName=%s", s.baseURL, invitationToken, url.QueryEscape(fullName))
 			}
 
 			subject, textBody, htmlBody, err := emails.RenderInvitation(
-				s.hostname,
+				s.baseURL,
 				recipientName,
 				organization.Name,
 				invitationURL,

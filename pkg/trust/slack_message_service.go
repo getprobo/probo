@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/getprobo/probo/pkg/baseurl"
 	"github.com/getprobo/probo/pkg/coredata"
 	"github.com/getprobo/probo/pkg/gid"
 	"github.com/getprobo/probo/pkg/slack"
@@ -409,6 +410,11 @@ func (s *SlackMessageService) buildAccessRequestMessage(
 		fileIDs = append(fileIDs, file.ID)
 	}
 
+	base, err := baseurl.Parse(s.svc.baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse base URL: %w", err)
+	}
+
 	templateData := struct {
 		RequesterName  string
 		RequesterEmail string
@@ -425,7 +431,7 @@ func (s *SlackMessageService) buildAccessRequestMessage(
 		RequesterName:  requesterName,
 		RequesterEmail: requesterEmail,
 		OrganizationID: organizationID.String(),
-		Domain:         s.svc.hostname,
+		Domain:         base.Host(),
 		SlackMessageID: slackMessageID.String(),
 		DocumentIDs:    documentIDs,
 		ReportIDs:      reportIDs,

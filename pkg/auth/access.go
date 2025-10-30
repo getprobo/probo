@@ -74,13 +74,13 @@ func (r AccessResult) ToError(baseURL string) error {
 	case AuthMethodPassword:
 		return ErrPasswordAuthRequired{
 			OrganizationID: r.OrganizationID,
-			RedirectURL:    fmt.Sprintf("%s/authentication/login?method=password", baseURL),
+			RedirectURL:    fmt.Sprintf("%s/auth/login?method=password", baseURL),
 		}
 	case AuthMethodSAML, AuthMethodAny:
 		return ErrSAMLAuthRequired{
 			ConfigID:       r.SAMLConfig.ID,
 			OrganizationID: r.OrganizationID,
-			RedirectURL:    fmt.Sprintf("%s/auth/saml/login/%s", baseURL, r.SAMLConfig.ID),
+			RedirectURL:    fmt.Sprintf("%s/connect/saml/login/%s", baseURL, r.SAMLConfig.ID),
 		}
 	default:
 		return fmt.Errorf("access denied to organization %s", r.OrganizationID)

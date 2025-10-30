@@ -44,7 +44,7 @@ export default function ResetPasswordPage() {
     }
 
     const response = await fetch(
-      buildEndpoint("/auth/reset-password"),
+      buildEndpoint("/connect/reset-password"),
       {
         method: "POST",
         headers: {
@@ -74,7 +74,7 @@ export default function ResetPasswordPage() {
       description: __("Password reset successfully"),
       variant: "success",
     });
-    navigate("/authentication/login", { replace: true });
+    navigate("/auth/login", { replace: true });
   });
 
   usePageTitle(__("Reset password"));
@@ -118,7 +118,7 @@ export default function ResetPasswordPage() {
         <p className="text-sm text-txt-tertiary">
           {__("Remember your password?")}{" "}
           <Link
-            to="/authentication/login"
+            to="/auth/login"
             className="underline text-txt-primary hover:text-txt-secondary"
           >
             {__("Log in here")}

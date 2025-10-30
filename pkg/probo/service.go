@@ -52,7 +52,7 @@ type (
 		s3                *s3.Client
 		bucket            string
 		encryptionKey     cipher.EncryptionKey
-		hostname          string
+		baseURL           string
 		tokenSecret       string
 		trustConfig       TrustConfig
 		agentConfig       agents.Config
@@ -70,7 +70,7 @@ type (
 		bucket                            string
 		encryptionKey                     cipher.EncryptionKey
 		scope                             coredata.Scoper
-		hostname                          string
+		baseURL                           string
 		tokenSecret                       string
 		trustConfig                       TrustConfig
 		agent                             *agents.Agent
@@ -115,7 +115,7 @@ func NewService(
 	pgClient *pg.Client,
 	s3Client *s3.Client,
 	bucket string,
-	hostname string,
+	baseURL string,
 	tokenSecret string,
 	trustConfig TrustConfig,
 	agentConfig agents.Config,
@@ -135,7 +135,7 @@ func NewService(
 		s3:                s3Client,
 		bucket:            bucket,
 		encryptionKey:     encryptionKey,
-		hostname:          hostname,
+		baseURL:           baseURL,
 		tokenSecret:       tokenSecret,
 		trustConfig:       trustConfig,
 		agentConfig:       agentConfig,
@@ -156,7 +156,7 @@ func (s *Service) WithTenant(tenantID gid.TenantID) *TenantService {
 		s3:            s.s3,
 		bucket:        s.bucket,
 		encryptionKey: s.encryptionKey,
-		hostname:      s.hostname,
+		baseURL:       s.baseURL,
 		scope:         coredata.NewScope(tenantID),
 		tokenSecret:   s.tokenSecret,
 		trustConfig:   s.trustConfig,

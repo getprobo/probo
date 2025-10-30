@@ -224,11 +224,11 @@ func NewSAMLService(
 }
 
 func (s *SAMLService) GetEntityID() string {
-	return fmt.Sprintf("%s/auth/saml/metadata", s.baseURL)
+	return fmt.Sprintf("%s/connect/saml/metadata", s.baseURL)
 }
 
 func (s *SAMLService) GetAcsURL() string {
-	return fmt.Sprintf("%s/auth/saml/consume", s.baseURL)
+	return fmt.Sprintf("%s/connect/saml/consume", s.baseURL)
 }
 
 func parseRawSAMLResponse(encodedResponse string) (*saml.Assertion, error) {
@@ -564,7 +564,7 @@ func (s *SAMLService) HandleSAMLAssertion(
 }
 
 func (s *SAMLService) GetMetadataURL(organizationID gid.GID) string {
-	return fmt.Sprintf("%s/auth/saml/metadata/%s", s.baseURL, organizationID)
+	return fmt.Sprintf("%s/connect/saml/metadata/%s", s.baseURL, organizationID)
 }
 
 func (s *SAMLService) GenerateMetadata() ([]byte, error) {

@@ -28,7 +28,7 @@ import (
 var Templates embed.FS
 
 const (
-	logoURLFormat = "https://%s/logos/probo.png"
+	logoURLPath = "/logos/probo.png"
 
 	subjectConfirmEmail      = "Confirm your email address"
 	subjectPasswordReset     = "Reset your password"
@@ -56,7 +56,7 @@ var (
 	trustCenterAccessTextTemplate = texttemplate.Must(texttemplate.ParseFS(Templates, "dist/trust-center-access.txt.tmpl"))
 )
 
-func RenderConfirmEmail(hostname, fullName, confirmationUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderConfirmEmail(baseURL, fullName, confirmationUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName        string
 		ConfirmationUrl string
@@ -64,14 +64,14 @@ func RenderConfirmEmail(hostname, fullName, confirmationUrl string) (subject str
 	}{
 		FullName:        fullName,
 		ConfirmationUrl: confirmationUrl,
-		LogoURL:         fmt.Sprintf(logoURLFormat, hostname),
+		LogoURL:         baseURL + logoURLPath,
 	}
 
 	textBody, htmlBody, err = renderEmail(confirmEmailTextTemplate, confirmEmailHTMLTemplate, data)
 	return subjectConfirmEmail, textBody, htmlBody, err
 }
 
-func RenderPasswordReset(hostname, fullName, resetUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderPasswordReset(baseURL, fullName, resetUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName string
 		ResetUrl string
@@ -79,14 +79,14 @@ func RenderPasswordReset(hostname, fullName, resetUrl string) (subject string, t
 	}{
 		FullName: fullName,
 		ResetUrl: resetUrl,
-		LogoURL:  fmt.Sprintf(logoURLFormat, hostname),
+		LogoURL:  baseURL + logoURLPath,
 	}
 
 	textBody, htmlBody, err = renderEmail(passwordResetTextTemplate, passwordResetHTMLTemplate, data)
 	return subjectPasswordReset, textBody, htmlBody, err
 }
 
-func RenderInvitation(hostname, fullName, organizationName, invitationUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderInvitation(baseURL, fullName, organizationName, invitationUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName         string
 		OrganizationName string
@@ -96,14 +96,14 @@ func RenderInvitation(hostname, fullName, organizationName, invitationUrl string
 		FullName:         fullName,
 		OrganizationName: organizationName,
 		InvitationUrl:    invitationUrl,
-		LogoURL:          fmt.Sprintf(logoURLFormat, hostname),
+		LogoURL:          baseURL + logoURLPath,
 	}
 
 	textBody, htmlBody, err = renderEmail(invitationTextTemplate, invitationHTMLTemplate, data)
 	return fmt.Sprintf(subjectInvitation, organizationName), textBody, htmlBody, err
 }
 
-func RenderDocumentSigning(hostname, fullName, organizationName, signingUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderDocumentSigning(baseURL, fullName, organizationName, signingUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName         string
 		OrganizationName string
@@ -113,14 +113,14 @@ func RenderDocumentSigning(hostname, fullName, organizationName, signingUrl stri
 		FullName:         fullName,
 		OrganizationName: organizationName,
 		SigningUrl:       signingUrl,
-		LogoURL:          fmt.Sprintf(logoURLFormat, hostname),
+		LogoURL:          baseURL + logoURLPath,
 	}
 
 	textBody, htmlBody, err = renderEmail(documentSigningTextTemplate, documentSigningHTMLTemplate, data)
 	return fmt.Sprintf(subjectDocumentSigning, organizationName), textBody, htmlBody, err
 }
 
-func RenderDocumentExport(hostname, fullName, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderDocumentExport(baseURL, fullName, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName    string
 		DownloadUrl string
@@ -128,14 +128,14 @@ func RenderDocumentExport(hostname, fullName, downloadUrl string) (subject strin
 	}{
 		FullName:    fullName,
 		DownloadUrl: downloadUrl,
-		LogoURL:     fmt.Sprintf(logoURLFormat, hostname),
+		LogoURL:     baseURL + logoURLPath,
 	}
 
 	textBody, htmlBody, err = renderEmail(documentExportTextTemplate, documentExportHTMLTemplate, data)
 	return subjectDocumentExport, textBody, htmlBody, err
 }
 
-func RenderFrameworkExport(hostname, fullName, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
+func RenderFrameworkExport(baseURL, fullName, downloadUrl string) (subject string, textBody string, htmlBody *string, err error) {
 	data := struct {
 		FullName    string
 		DownloadUrl string
@@ -143,14 +143,14 @@ func RenderFrameworkExport(hostname, fullName, downloadUrl string) (subject stri
 	}{
 		FullName:    fullName,
 		DownloadUrl: downloadUrl,
-		LogoURL:     fmt.Sprintf(logoURLFormat, hostname),
+		LogoURL:     baseURL + logoURLPath,
 	}
 
 	textBody, htmlBody, err = renderEmail(frameworkExportTextTemplate, frameworkExportHTMLTemplate, data)
 	return subjectFrameworkExport, textBody, htmlBody, err
 }
 
-func RenderTrustCenterAccess(hostname, fullName, organizationName, accessUrl string, tokenDuration time.Duration) (subject string, textBody string, htmlBody *string, err error) {
+func RenderTrustCenterAccess(baseURL, fullName, organizationName, accessUrl string, tokenDuration time.Duration) (subject string, textBody string, htmlBody *string, err error) {
 	durationInDays := int(math.Round(tokenDuration.Hours() / 24))
 
 	data := struct {
@@ -163,7 +163,7 @@ func RenderTrustCenterAccess(hostname, fullName, organizationName, accessUrl str
 		FullName:         fullName,
 		OrganizationName: organizationName,
 		AccessUrl:        accessUrl,
-		LogoURL:          fmt.Sprintf(logoURLFormat, hostname),
+		LogoURL:          baseURL + logoURLPath,
 		DurationInDays:   durationInDays,
 	}
 

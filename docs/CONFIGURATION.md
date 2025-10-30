@@ -23,7 +23,7 @@ unit:
     max-queue-size: 10000
 
 probod:
-  hostname: "localhost:8080"
+  base-url: "http://localhost:8080"
   encryption-key: "base64-encoded-encryption-key"
   chrome-dp-addr: "localhost:9222"
 
@@ -249,11 +249,11 @@ Probod provides automatic structured JSON logging with:
 
 ### General Settings
 
-#### `hostname` (string)
+#### `base-url` (string)
 
-**Default**: `"localhost:8080"`
+**Default**: `"http://localhost:8080"`
 
-The hostname and port where the Probod service will be accessible externally. This setting affects URL generation for redirects and API responses.
+The base URL where the Probod service will be accessible externally. This should include the scheme (http or https), hostname, and optionally port. This setting affects URL generation for emails, redirects, and API responses. For production deployments, use the full HTTPS URL (e.g., `"https://app.example.com"`).
 
 #### `encryption-key` (string)
 

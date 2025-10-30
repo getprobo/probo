@@ -31,6 +31,7 @@ import (
 	"github.com/getprobo/probo/pkg/auth"
 	"github.com/getprobo/probo/pkg/authz"
 	"github.com/getprobo/probo/pkg/awsconfig"
+	"github.com/getprobo/probo/pkg/baseurl"
 	"github.com/getprobo/probo/pkg/certmanager"
 	"github.com/getprobo/probo/pkg/connector"
 	"github.com/getprobo/probo/pkg/coredata"
@@ -64,7 +65,7 @@ type (
 	}
 
 	config struct {
-		Hostname      string               `json:"hostname"`
+		BaseURL       *baseurl.BaseURL     `json:"base-url"`
 		EncryptionKey cipher.EncryptionKey `json:"encryption-key"`
 		Pg            pgConfig             `json:"pg"`
 		Api           apiConfig            `json:"api"`
@@ -93,7 +94,7 @@ var (
 func New() *Implm {
 	return &Implm{
 		cfg: config{
-			Hostname: "localhost:8080",
+			BaseURL: baseurl.MustParse("http://localhost:8080"),
 			Api: apiConfig{
 				Addr: "localhost:8080",
 			},
@@ -275,8 +276,7 @@ func (impl *Implm) Run(
 		impl.cfg.EncryptionKey,
 		hp,
 		impl.cfg.Auth.Cookie.Secret,
-		impl.cfg.Hostname,
-		fmt.Sprintf("https://%s", impl.cfg.Hostname),
+		impl.cfg.BaseURL.String(),
 		impl.cfg.Auth.DisableSignup,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
 	)
@@ -287,7 +287,7 @@ func (impl *Implm) Run(
 	authzService, err := authz.NewService(
 		ctx,
 		pgClient,
-		impl.cfg.Hostname,
+		impl.cfg.BaseURL.String(),
 		impl.cfg.Auth.Cookie.Secret,
 		time.Duration(impl.cfg.Auth.InvitationConfirmationTokenValidity)*time.Second,
 	)
@@ -300,7 +300,7 @@ func (impl *Implm) Run(
 	samlService, err := auth.NewSAMLService(
 		pgClient,
 		impl.cfg.EncryptionKey,
-		fmt.Sprintf("https://%s", impl.cfg.Hostname),
+		impl.cfg.BaseURL.String(),
 		impl.cfg.Auth.SAML.SessionDurationTime(),
 		impl.cfg.Auth.Cookie.Name,
 		impl.cfg.Auth.Cookie.Secret,
@@ -347,7 +347,7 @@ func (impl *Implm) Run(
 		pgClient,
 		s3Client,
 		impl.cfg.AWS.Bucket,
-		impl.cfg.Hostname,
+		impl.cfg.BaseURL.String(),
 		impl.cfg.Auth.Cookie.Secret,
 		trustConfig,
 		agentConfig,
@@ -366,7 +366,7 @@ func (impl *Implm) Run(
 		pgClient,
 		s3Client,
 		impl.cfg.AWS.Bucket,
-		impl.cfg.Hostname,
+		impl.cfg.BaseURL.String(),
 		impl.cfg.EncryptionKey,
 		impl.cfg.TrustAuth.TokenSecret,
 		impl.cfg.GetSlackSigningSecret(),
@@ -392,7 +392,7 @@ func (impl *Implm) Run(
 			SAML:              samlService,
 			ConnectorRegistry: defaultConnectorRegistry,
 			Agent:             agent,
-			SafeRedirect:      &saferedirect.SafeRedirect{AllowedHost: impl.cfg.Hostname},
+			SafeRedirect:      &saferedirect.SafeRedirect{AllowedHost: impl.cfg.BaseURL.Host()},
 			CustomDomainCname: impl.cfg.CustomDomains.CnameTarget,
 			FileManager:       fileManagerService,
 			PGClient:          pgClient,
