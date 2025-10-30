@@ -4,13 +4,13 @@ import { useFragment, graphql } from "react-relay";
 import { Controller } from "react-hook-form";
 import { z } from "zod";
 import {
+  Breadcrumb,
   Button,
   Card,
   Checkbox,
   Dialog,
   DialogContent,
   DialogFooter,
-  DialogTitle,
   Field,
   Label,
   Option,
@@ -491,16 +491,23 @@ export default function SAMLSettingsTab() {
         )}
       </div>
 
-      <Dialog ref={dialogRef} onClose={handleCloseModal}>
-        <DialogContent>
-          <DialogTitle>
-            {currentStep === "initiate" && __("Step 1: Register Domain")}
-            {currentStep === "verify" && __("Step 2: Verify Domain Ownership")}
-            {currentStep === "configure" && (editingConfig?.domainVerified ? __("Configure SAML") : __("Step 3: Configure SAML"))}
-          </DialogTitle>
-
-          {currentStep === "initiate" && (
-            <form onSubmit={handleInitiateDomain} className="space-y-6 p-6">
+      <Dialog
+        ref={dialogRef}
+        onClose={handleCloseModal}
+        title={
+          <Breadcrumb
+            items={[
+              __("SAML Settings"),
+              currentStep === "initiate" && __("Register Domain"),
+              currentStep === "verify" && __("Verify Domain"),
+              currentStep === "configure" && (editingConfig?.domainVerified ? __("Configure SAML") : __("Configure SAML")),
+            ].filter(Boolean) as string[]}
+          />
+        }
+      >
+        {currentStep === "initiate" && (
+          <form onSubmit={handleInitiateDomain}>
+            <DialogContent padded className="space-y-6">
               <div>
                 <h3 className="text-base font-medium mb-4">
                   {__("Register Your Domain")}
@@ -520,11 +527,18 @@ export default function SAMLSettingsTab() {
                   </p>
                 </div>
               </div>
-            </form>
-          )}
+            </DialogContent>
+            <DialogFooter>
+              <Button type="submit" disabled={isInitiating}>
+                {__("Next: Verify Domain")}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
 
-          {currentStep === "verify" && (
-            <div className="space-y-6 p-6">
+        {currentStep === "verify" && (
+          <>
+            <DialogContent padded className="space-y-6">
               <div>
                 <h3 className="text-base font-medium mb-4">
                   {__("Verify Domain Ownership")}
@@ -566,12 +580,19 @@ export default function SAMLSettingsTab() {
                   </p>
                 </div>
               </div>
-            </div>
-          )}
+            </DialogContent>
+            <DialogFooter>
+              <Button onClick={handleVerifyDomain} disabled={isVerifying}>
+                {__("Verify and Continue")}
+              </Button>
+            </DialogFooter>
+          </>
+        )}
 
-          {currentStep === "configure" && (
-            <form onSubmit={onSubmit} className="space-y-6 p-6">
-            <div>
+        {currentStep === "configure" && (
+          <form onSubmit={onSubmit}>
+            <DialogContent padded className="space-y-6">
+              <div>
               <h3 className="text-base font-medium mb-4">
                 {__("Basic Configuration")}
               </h3>
@@ -710,48 +731,14 @@ export default function SAMLSettingsTab() {
                 )}
               />
             </div>
-
-          </form>
-          )}
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleCloseModal}
-              disabled={isCreating || isUpdating || isInitiating || isVerifying}
-            >
-              {__("Cancel")}
-            </Button>
-
-            {currentStep === "initiate" && (
-              <Button
-                onClick={handleInitiateDomain}
-                disabled={isInitiating}
-              >
-                {__("Next: Verify Domain")}
-              </Button>
-            )}
-
-            {currentStep === "verify" && (
-              <Button
-                onClick={handleVerifyDomain}
-                disabled={isVerifying}
-              >
-                {__("Verify and Continue")}
-              </Button>
-            )}
-
-            {currentStep === "configure" && (
-              <Button
-                onClick={onSubmit}
-                disabled={isCreating || isUpdating}
-              >
+            </DialogContent>
+            <DialogFooter>
+              <Button type="submit" disabled={isCreating || isUpdating}>
                 {editingConfig?.domainVerified ? __("Update Configuration") : __("Create Configuration")}
               </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
+            </DialogFooter>
+          </form>
+        )}
       </Dialog>
     </>
   );

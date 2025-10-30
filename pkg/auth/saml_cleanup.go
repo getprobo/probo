@@ -76,27 +76,30 @@ func (c *Cleaner) Run(ctx context.Context) error {
 func (c *Cleaner) cleanup(ctx context.Context) error {
 	var assertionsDeleted, requestsDeleted, relayStatesDeleted int64
 
-	err := c.pg.WithConn(ctx, func(conn pg.Conn) error {
-		count, err := CleanupExpiredAssertions(ctx, conn)
-		if err != nil {
-			return err
-		}
-		assertionsDeleted = count
+	err := c.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			count, err := CleanupExpiredAssertions(ctx, conn)
+			if err != nil {
+				return err
+			}
+			assertionsDeleted = count
 
-		count, err = CleanupExpiredRequests(ctx, conn)
-		if err != nil {
-			return err
-		}
-		requestsDeleted = count
+			count, err = CleanupExpiredRequests(ctx, conn)
+			if err != nil {
+				return err
+			}
+			requestsDeleted = count
 
-		count, err = CleanupExpiredRelayStates(ctx, conn)
-		if err != nil {
-			return err
-		}
-		relayStatesDeleted = count
+			count, err = CleanupExpiredRelayStates(ctx, conn)
+			if err != nil {
+				return err
+			}
+			relayStatesDeleted = count
 
-		return nil
-	})
+			return nil
+		},
+	)
 
 	if err != nil {
 		return err

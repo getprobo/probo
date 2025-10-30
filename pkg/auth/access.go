@@ -13,28 +13,23 @@ type AuthMethod int
 const (
 	AuthMethodPassword AuthMethod = iota
 	AuthMethodSAML
-	AuthMethodAny // Used when either password or SAML would work
+	AuthMethodAny
 )
 
-// OrgAuthRequirement encapsulates the authentication requirements for accessing an organization
 type OrgAuthRequirement struct {
 	OrganizationID gid.GID
 	EmailDomain    string
-	SAMLConfig     *coredata.SAMLConfiguration // nil if no SAML config applies to this org+domain
+	SAMLConfig     *coredata.SAMLConfiguration
 }
 
-// AccessResult represents the result of an organization access check
 type AccessResult struct {
 	OrganizationID gid.GID
 	Allowed        bool
-	MissingAuth    AuthMethod                  // Which auth method is missing (if not allowed)
-	SAMLConfig     *coredata.SAMLConfiguration // The SAML config involved (if any)
+	MissingAuth    AuthMethod
+	SAMLConfig     *coredata.SAMLConfiguration
 }
 
-// Check performs the access control decision based on session state
-// This is pure business logic with no side effects - easily testable
 func (r OrgAuthRequirement) Check(session coredata.SessionData) AccessResult {
-	// No SAML config or disabled → requires password authentication
 	if r.SAMLConfig == nil || !r.SAMLConfig.Enabled || !r.SAMLConfig.DomainVerified {
 		return AccessResult{
 			OrganizationID: r.OrganizationID,
@@ -44,11 +39,9 @@ func (r OrgAuthRequirement) Check(session coredata.SessionData) AccessResult {
 		}
 	}
 
-	// Check if user has SAML authentication for this specific organization
 	orgKey := r.OrganizationID.String()
 	_, hasSAML := session.SAMLAuthenticatedOrgs[orgKey]
 
-	// SAML enforcement: REQUIRED → must have SAML auth for this org
 	if r.SAMLConfig.EnforcementPolicy == coredata.SAMLEnforcementPolicyRequired {
 		return AccessResult{
 			OrganizationID: r.OrganizationID,
@@ -58,11 +51,10 @@ func (r OrgAuthRequirement) Check(session coredata.SessionData) AccessResult {
 		}
 	}
 
-	// SAML enforcement: OPTIONAL → needs either password (global) OR SAML (for this org)
 	hasAnyAuth := session.PasswordAuthenticated || hasSAML
 	missingAuth := AuthMethodAny
 	if hasAnyAuth {
-		missingAuth = AuthMethodPassword // Not actually missing, but need a value
+		missingAuth = AuthMethodPassword
 	}
 
 	return AccessResult{
@@ -73,8 +65,6 @@ func (r OrgAuthRequirement) Check(session coredata.SessionData) AccessResult {
 	}
 }
 
-// ToError converts an AccessResult to an error if access is denied
-// This handles the presentation layer concern of generating appropriate errors and redirect URLs
 func (r AccessResult) ToError(baseURL string) error {
 	if r.Allowed {
 		return nil

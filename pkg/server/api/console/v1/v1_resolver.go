@@ -1080,7 +1080,7 @@ func (r *membershipResolver) AuthMethod(ctx context.Context, obj *types.Membersh
 
 	authMethod, err := auth.GetUserAuthMethod(ctx, obj.UserID, obj.OrganizationID, session)
 	if err != nil {
-		return "", fmt.Errorf("cannot get user auth method: %w", err)
+		panic(fmt.Errorf("cannot get user auth method: %w", err))
 	}
 	return authMethod, nil
 }
