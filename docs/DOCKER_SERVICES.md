@@ -17,15 +17,17 @@ The development stack includes 10 services organized into the following categori
 
 **Image**: `postgres:17.4`
 **Port**: `5432`
-**Purpose**: Primary database for storing all compliance data
+**Purpose**: Database for storing all compliance data
 
-PostgreSQL is the main relational database that stores:
+PostgreSQL is the relational database that stores:
 - User accounts and organizations
 - Compliance frameworks and controls
 - Audit trails and evidence
 - Documents and policies
 - Risk assessments
 - Vendor information
+
+(This list is not exhaustive and can be extended as the application grows.)
 
 #### Configuration
 
