@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- Add SAML support
+
 ## [0.81.0] - 2025-10-29
 
 ### Added
