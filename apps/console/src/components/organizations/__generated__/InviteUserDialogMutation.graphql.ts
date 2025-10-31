@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8efbb638045cb24913b04b4de2033357>>
+ * @generated SignedSource<<617ea2708c8402c706671dc1a63b1316>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type Role = "ADMIN" | "MEMBER" | "OWNER" | "VIEWER";
 export type InviteUserInput = {
   createPeople: boolean;
   email: string;
@@ -29,7 +30,7 @@ export type InviteUserDialogMutation$data = {
         readonly expiresAt: any;
         readonly fullName: string;
         readonly id: string;
-        readonly role: string;
+        readonly role: Role;
       };
     };
   };
