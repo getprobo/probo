@@ -71,6 +71,13 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
     }
   };
 
+  const handleDownload = () => {
+    const link = document.createElement("a");
+    link.href = src;
+    link.download = name || "document.pdf";
+    link.click();
+  };
+
   return (
     <div className="grid grid-rows-[max-content_1fr] h-full bg-subtle">
       {/* Custom Zoom Controls */}
@@ -97,7 +104,7 @@ export function PDFPreview({ src, name }: { src: string; name?: string }) {
         <button onClick={zoomFactor(1.2)} className={btnClass}>
           <IconPlusLarge size={16} />
         </button>
-        <button onClick={zoomFactor(1.2)} className={btnClass}>
+        <button onClick={handleDownload} className={btnClass}>
           <IconArrowInbox size={16} />
         </button>
       </nav>
