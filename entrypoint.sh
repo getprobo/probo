@@ -25,7 +25,7 @@ unit:
     max-queue-size: ${TRACING_MAX_QUEUE_SIZE:-2048}
 
 probod:
-  hostname: "${PROBOD_HOSTNAME:-localhost:8080}"
+  base-url: "${PROBOD_BASE_URL:-http://localhost:8080}"
   encryption-key: "${PROBOD_ENCRYPTION_KEY:?PROBOD_ENCRYPTION_KEY is required}"
   chrome-dp-addr: "${CHROME_DP_ADDR:-localhost:9222}"
 

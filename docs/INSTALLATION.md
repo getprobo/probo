@@ -48,7 +48,7 @@ services:
       TRUST_AUTH_TOKEN_SECRET: "this-is-a-secure-secret-for-trust-token-signing-at-least-32-bytes"
 
       # Application settings
-      PROBOD_HOSTNAME: "localhost:8080"
+      PROBOD_BASE_URL: "http://localhost:8080"
       API_ADDR: "localhost:8080"
       API_CORS_ALLOWED_ORIGINS: "http://localhost:8080"
 
@@ -89,7 +89,6 @@ services:
       - minio
       - chrome
 
-
   postgres:
     image: "postgres:17.4"
     shm_size: "1g"
@@ -136,12 +135,12 @@ services:
       - "--disable-background-timer-throttling"
       - "--disable-extensions"
 
-
 volumes:
   probo-data:
   postgres-data:
   minio-data:
 ```
+
 #### With mounted Config File
 
 You can find an example configuration file [here](../cfg/dev.yaml) and modify it as needed.
@@ -164,7 +163,6 @@ services:
       - minio
       - chrome
 
-
   postgres:
     image: "postgres:17.4"
     shm_size: "1g"
@@ -210,7 +208,6 @@ services:
       - "--disable-background-networking"
       - "--disable-background-timer-throttling"
       - "--disable-extensions"
-
 
 volumes:
   probo-data:
