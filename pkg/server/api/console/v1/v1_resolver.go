@@ -1119,7 +1119,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 		return nil, fmt.Errorf("cannot create organization: %w", err)
 	}
 
-	authz.AddUserToOrganization(
+	err = authz.AddUserToOrganization(
 		ctx,
 		currentUser.ID,
 		organization.ID,
@@ -1145,8 +1145,10 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	}
 
 	// Append tenant to allowed one
-	tenantIDs, _ := ctx.Value(userTenantContextKey).(*[]gid.TenantID)
-	*tenantIDs = append(*tenantIDs, organization.ID.TenantID())
+	access, _ := ctx.Value(userTenantContextKey).(*userTenantAccess)
+	if access != nil {
+		access.tenantIDs = append(access.tenantIDs, organization.ID.TenantID())
+	}
 
 	return &types.CreateOrganizationPayload{
 		OrganizationEdge: types.NewOrganizationEdge(organization, coredata.OrganizationOrderFieldCreatedAt),
