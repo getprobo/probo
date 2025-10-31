@@ -1634,7 +1634,7 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 			if errors.As(err, &errAlreadyExists) {
 				return nil, graphql.Conflict(errAlreadyExists)
 			}
-			return nil, fmt.Errorf("failed to create people record: %w", err)
+			return nil, fmt.Errorf("cannot create people record: %w", err)
 		}
 	}
 
@@ -1871,7 +1871,7 @@ func (r *mutationResolver) UpdateVendorContact(ctx context.Context, input types.
 
 	vendorContact, err := prb.VendorContacts.Update(ctx, req)
 	if err != nil {
-		panic(fmt.Errorf("failed to update vendor contact: %w", err))
+		panic(fmt.Errorf("cannot update vendor contact: %w", err))
 	}
 
 	return &types.UpdateVendorContactPayload{
@@ -1925,7 +1925,7 @@ func (r *mutationResolver) UpdateVendorService(ctx context.Context, input types.
 
 	vendorService, err := prb.VendorServices.Update(ctx, req)
 	if err != nil {
-		panic(fmt.Errorf("failed to update vendor service: %w", err))
+		panic(fmt.Errorf("cannot update vendor service: %w", err))
 	}
 
 	return &types.UpdateVendorServicePayload{
@@ -1939,7 +1939,7 @@ func (r *mutationResolver) DeleteVendorService(ctx context.Context, input types.
 
 	err := prb.VendorServices.Delete(ctx, input.VendorServiceID)
 	if err != nil {
-		panic(fmt.Errorf("failed to delete vendor service: %w", err))
+		panic(fmt.Errorf("cannot delete vendor service: %w", err))
 	}
 
 	return &types.DeleteVendorServicePayload{
@@ -2679,7 +2679,7 @@ func (r *mutationResolver) UploadVendorBusinessAssociateAgreement(ctx context.Co
 		},
 	)
 	if err != nil {
-		panic(fmt.Errorf("failed to upload vendor business associate agreement: %w", err))
+		panic(fmt.Errorf("cannot upload vendor business associate agreement: %w", err))
 	}
 
 	return &types.UploadVendorBusinessAssociateAgreementPayload{
@@ -2700,7 +2700,7 @@ func (r *mutationResolver) UpdateVendorBusinessAssociateAgreement(ctx context.Co
 		},
 	)
 	if err != nil {
-		panic(fmt.Errorf("failed to update vendor business associate agreement: %w", err))
+		panic(fmt.Errorf("cannot update vendor business associate agreement: %w", err))
 	}
 
 	return &types.UpdateVendorBusinessAssociateAgreementPayload{
@@ -2714,7 +2714,7 @@ func (r *mutationResolver) DeleteVendorBusinessAssociateAgreement(ctx context.Co
 
 	err := prb.VendorBusinessAssociateAgreements.DeleteByVendorID(ctx, input.VendorID)
 	if err != nil {
-		panic(fmt.Errorf("failed to delete vendor business associate agreement: %w", err))
+		panic(fmt.Errorf("cannot delete vendor business associate agreement: %w", err))
 	}
 
 	return &types.DeleteVendorBusinessAssociateAgreementPayload{
@@ -2737,7 +2737,7 @@ func (r *mutationResolver) UploadVendorDataPrivacyAgreement(ctx context.Context,
 		},
 	)
 	if err != nil {
-		panic(fmt.Errorf("failed to upload vendor data privacy agreement: %w", err))
+		panic(fmt.Errorf("cannot upload vendor data privacy agreement: %w", err))
 	}
 
 	return &types.UploadVendorDataPrivacyAgreementPayload{
@@ -2758,7 +2758,7 @@ func (r *mutationResolver) UpdateVendorDataPrivacyAgreement(ctx context.Context,
 		},
 	)
 	if err != nil {
-		panic(fmt.Errorf("failed to update vendor data privacy agreement: %w", err))
+		panic(fmt.Errorf("cannot update vendor data privacy agreement: %w", err))
 	}
 
 	return &types.UpdateVendorDataPrivacyAgreementPayload{
@@ -2772,7 +2772,7 @@ func (r *mutationResolver) DeleteVendorDataPrivacyAgreement(ctx context.Context,
 
 	err := prb.VendorDataPrivacyAgreements.DeleteByVendorID(ctx, input.VendorID)
 	if err != nil {
-		panic(fmt.Errorf("failed to delete vendor data privacy agreement: %w", err))
+		panic(fmt.Errorf("cannot delete vendor data privacy agreement: %w", err))
 	}
 
 	return &types.DeleteVendorDataPrivacyAgreementPayload{
@@ -3674,7 +3674,7 @@ func (r *mutationResolver) CreateCustomDomain(ctx context.Context, input types.C
 		Domain:         input.Domain,
 	})
 	if err != nil {
-		panic(fmt.Errorf("failed to create custom domain: %w", err))
+		panic(fmt.Errorf("cannot create custom domain: %w", err))
 	}
 
 	return &types.CreateCustomDomainPayload{
@@ -3689,7 +3689,7 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	// Get the current custom domain ID before deleting
 	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, input.OrganizationID)
 	if err != nil {
-		panic(fmt.Errorf("failed to get custom domain: %w", err))
+		panic(fmt.Errorf("cannot get custom domain: %w", err))
 	}
 
 	if domain == nil {
@@ -3699,7 +3699,7 @@ func (r *mutationResolver) DeleteCustomDomain(ctx context.Context, input types.D
 	deletedDomainID := domain.ID
 
 	if err := prb.CustomDomains.DeleteCustomDomain(ctx, input.OrganizationID); err != nil {
-		panic(fmt.Errorf("failed to delete custom domain: %w", err))
+		panic(fmt.Errorf("cannot delete custom domain: %w", err))
 	}
 
 	return &types.DeleteCustomDomainPayload{
@@ -4681,7 +4681,7 @@ func (r *organizationResolver) CustomDomain(ctx context.Context, obj *types.Orga
 
 	domain, err := prb.CustomDomains.GetOrganizationCustomDomain(ctx, obj.ID)
 	if err != nil {
-		panic(fmt.Errorf("failed to get custom domain: %w", err))
+		panic(fmt.Errorf("cannot get custom domain: %w", err))
 	}
 
 	if domain == nil {
@@ -5672,7 +5672,7 @@ func (r *trustCenterFileResolver) FileURL(ctx context.Context, obj *types.TrustC
 
 	fileURL, err := prb.TrustCenterFiles.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
-		panic(fmt.Errorf("failed to generate file URL: %w", err))
+		panic(fmt.Errorf("cannot generate file URL: %w", err))
 	}
 
 	return fileURL, nil
@@ -5915,7 +5915,7 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 		if errors.As(err, &errNotFound) {
 			return nil, graphql.NotFound(errNotFound)
 		}
-		panic(fmt.Errorf("failed to get vendor: %w", err))
+		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
 
 	if vendor.BusinessOwnerID == nil {
@@ -5928,7 +5928,7 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 		if errors.As(err, &errNotFound) {
 			return nil, graphql.NotFound(errNotFound)
 		}
-		panic(fmt.Errorf("failed to get business owner: %w", err))
+		panic(fmt.Errorf("cannot get business owner: %w", err))
 	}
 
 	return types.NewPeople(people), nil
@@ -5943,7 +5943,7 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 		if errors.As(err, &errNotFound) {
 			return nil, graphql.NotFound(errNotFound)
 		}
-		panic(fmt.Errorf("failed to get vendor: %w", err))
+		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
 
 	if vendor.SecurityOwnerID == nil {
@@ -5956,7 +5956,7 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 		if errors.As(err, &errNotFound) {
 			return nil, graphql.NotFound(errNotFound)
 		}
-		panic(fmt.Errorf("failed to get security owner: %w", err))
+		panic(fmt.Errorf("cannot get security owner: %w", err))
 	}
 
 	return types.NewPeople(people), nil
@@ -5972,7 +5972,7 @@ func (r *vendorBusinessAssociateAgreementResolver) Vendor(ctx context.Context, o
 		if errors.As(err, &errNotFound) {
 			return nil, graphql.NotFound(errNotFound)
 		}
-		return nil, fmt.Errorf("failed to get vendor: %w", err)
+		return nil, fmt.Errorf("cannot get vendor: %w", err)
 	}
 
 	return types.NewVendor(vendor), nil
@@ -5984,7 +5984,7 @@ func (r *vendorBusinessAssociateAgreementResolver) FileURL(ctx context.Context, 
 
 	fileURL, err := prb.VendorBusinessAssociateAgreements.GenerateFileURL(ctx, obj.ID, 1*time.Hour)
 	if err != nil {
-		panic(fmt.Errorf("failed to generate file URL: %w", err))
+		panic(fmt.Errorf("cannot generate file URL: %w", err))
 	}
 
 	return fileURL, nil
@@ -6000,7 +6000,7 @@ func (r *vendorComplianceReportResolver) Vendor(ctx context.Context, obj *types.
 		if errors.As(err, &errNotFound) {
 			return nil, graphql.NotFound(errNotFound)
 		}
-		panic(fmt.Errorf("failed to get vendor: %w", err))
+		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil
@@ -6075,7 +6075,7 @@ func (r *vendorContactResolver) Vendor(ctx context.Context, obj *types.VendorCon
 		if errors.As(err, &errNotFound) {
 			return nil, graphql.NotFound(errNotFound)
 		}
-		panic(fmt.Errorf("failed to get vendor: %w", err))
+		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil
@@ -6091,7 +6091,7 @@ func (r *vendorDataPrivacyAgreementResolver) Vendor(ctx context.Context, obj *ty
 		if errors.As(err, &errNotFound) {
 			return nil, graphql.NotFound(errNotFound)
 		}
-		panic(fmt.Errorf("failed to get vendor: %w", err))
+		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil
@@ -6119,7 +6119,7 @@ func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.Ve
 		if errors.As(err, &errNotFound) {
 			return nil, graphql.NotFound(errNotFound)
 		}
-		panic(fmt.Errorf("failed to get vendor: %w", err))
+		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil
@@ -6141,7 +6141,7 @@ func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorSer
 		if errors.As(err, &errNotFound) {
 			return nil, graphql.NotFound(errNotFound)
 		}
-		panic(fmt.Errorf("failed to get vendor: %w", err))
+		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
 
 	return types.NewVendor(vendor), nil
