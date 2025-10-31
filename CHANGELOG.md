@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.83.0] - 2025-10-31
+
 ### Added
 
 - Add clearer error messages
@@ -11,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fix organization creation
+- Fix organization display order
 
 ## [0.82.0] - 2025-10-31
 
