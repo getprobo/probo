@@ -27,27 +27,27 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/getprobo/probo/pkg/agents"
-	"github.com/getprobo/probo/pkg/auth"
-	"github.com/getprobo/probo/pkg/authz"
-	"github.com/getprobo/probo/pkg/awsconfig"
-	"github.com/getprobo/probo/pkg/baseurl"
-	"github.com/getprobo/probo/pkg/certmanager"
-	"github.com/getprobo/probo/pkg/connector"
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/crypto/cipher"
-	"github.com/getprobo/probo/pkg/crypto/keys"
-	"github.com/getprobo/probo/pkg/crypto/passwdhash"
-	"github.com/getprobo/probo/pkg/crypto/pem"
-	"github.com/getprobo/probo/pkg/filemanager"
-	"github.com/getprobo/probo/pkg/html2pdf"
-	"github.com/getprobo/probo/pkg/mailer"
-	"github.com/getprobo/probo/pkg/probo"
-	"github.com/getprobo/probo/pkg/saferedirect"
-	"github.com/getprobo/probo/pkg/server"
-	"github.com/getprobo/probo/pkg/server/api"
-	"github.com/getprobo/probo/pkg/slack"
-	"github.com/getprobo/probo/pkg/trust"
+	"go.probo.inc/probo/pkg/agents"
+	"go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/awsconfig"
+	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/certmanager"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/crypto/keys"
+	"go.probo.inc/probo/pkg/crypto/passwdhash"
+	"go.probo.inc/probo/pkg/crypto/pem"
+	"go.probo.inc/probo/pkg/filemanager"
+	"go.probo.inc/probo/pkg/html2pdf"
+	"go.probo.inc/probo/pkg/mailer"
+	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/saferedirect"
+	"go.probo.inc/probo/pkg/server"
+	"go.probo.inc/probo/pkg/server/api"
+	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/trust"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/httpserver"
@@ -536,7 +536,7 @@ func (impl *Implm) runApiServer(
 	tp trace.TracerProvider,
 	handler http.Handler,
 ) error {
-	tracer := tp.Tracer("github.com/getprobo/probo/pkg/probod")
+	tracer := tp.Tracer("go.probo.inc/probo/pkg/probod")
 	ctx, span := tracer.Start(ctx, "probod.runApiServer")
 	defer span.End()
 
@@ -603,7 +603,7 @@ func (impl *Implm) runTrustCenterServer(
 	trustRouter http.Handler,
 	acmeService *certmanager.ACMEService,
 ) error {
-	tracer := tp.Tracer("github.com/getprobo/probo/pkg/probod")
+	tracer := tp.Tracer("go.probo.inc/probo/pkg/probod")
 	ctx, span := tracer.Start(ctx, "probod.runTrustCenterServer")
 	defer span.End()
 

@@ -19,11 +19,11 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/getprobo/probo/pkg/authz"
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/securecookie"
-	"github.com/getprobo/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/securecookie"
+	"go.probo.inc/probo/pkg/auth"
 )
 
 type AuthConfig struct {

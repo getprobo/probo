@@ -21,11 +21,11 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/getprobo/probo/packages/emails"
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/page"
-	"github.com/getprobo/probo/pkg/statelesstoken"
+	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.gearno.de/kit/pg"
 )
 

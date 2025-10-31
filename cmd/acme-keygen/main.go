@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/getprobo/probo/pkg/crypto/keys"
-	"github.com/getprobo/probo/pkg/crypto/pem"
+	"go.probo.inc/probo/pkg/crypto/keys"
+	"go.probo.inc/probo/pkg/crypto/pem"
 	"golang.org/x/crypto/acme"
 )
 

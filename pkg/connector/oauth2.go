@@ -25,8 +25,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/statelesstoken"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/statelesstoken"
 )
 
 // NOTE: I use client_secret as a salt for the state token, it's an antipattern to

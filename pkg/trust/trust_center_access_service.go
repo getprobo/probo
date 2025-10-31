@@ -25,12 +25,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/getprobo/probo/packages/emails"
-	"github.com/getprobo/probo/pkg/auth"
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/probo"
-	"github.com/getprobo/probo/pkg/statelesstoken"
+	"go.probo.inc/probo/packages/emails"
+	"go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/probo"
+	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 )

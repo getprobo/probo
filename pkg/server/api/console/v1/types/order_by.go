@@ -14,7 +14,7 @@
 
 package types
 
-import "github.com/getprobo/probo/pkg/page"
+import "go.probo.inc/probo/pkg/page"
 
 type (
 	OrderBy[T page.OrderField] struct {

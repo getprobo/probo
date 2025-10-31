@@ -20,7 +20,7 @@ import (
 	"strconv"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/getprobo/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type GIDScalar = gid.GID

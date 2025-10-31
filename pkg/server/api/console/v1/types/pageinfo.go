@@ -15,8 +15,8 @@
 package types
 
 import (
-	"github.com/getprobo/probo/pkg/page"
-	"github.com/getprobo/probo/pkg/server/graphql/types/pageinfo"
+	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/server/graphql/types/pageinfo"
 )
 
 func NewPageInfo[T page.Paginable[O], O page.OrderField](p *page.Page[T, O]) *PageInfo {

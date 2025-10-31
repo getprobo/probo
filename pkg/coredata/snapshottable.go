@@ -18,7 +18,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/getprobo/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/gid"
 	"go.gearno.de/kit/pg"
 )
 

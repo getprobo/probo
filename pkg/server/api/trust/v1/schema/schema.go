@@ -14,12 +14,12 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/page"
-	"github.com/getprobo/probo/pkg/server/api/trust/v1/types"
-	"github.com/getprobo/probo/pkg/server/graphql/types/cursor"
-	gid1 "github.com/getprobo/probo/pkg/server/graphql/types/gid"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
+	"go.probo.inc/probo/pkg/server/graphql/types/cursor"
+	gid1 "go.probo.inc/probo/pkg/server/graphql/types/gid"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -1208,14 +1208,14 @@ type Organization implements Node {
 }
 
 enum DocumentType
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentType") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentType") {
   OTHER
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeOther")
-  ISMS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeISMS")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")
+  ISMS @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeISMS")
   POLICY
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypePolicy")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePolicy")
   PROCEDURE
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeProcedure")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeProcedure")
 }
 
 type Document implements Node {
@@ -1265,340 +1265,340 @@ type AuditEdge {
 }
 
 enum CountryCode
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.CountryCode") {
-  AD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAD")
-  AE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAE")
-  AF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAF")
-  AG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAG")
-  AI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAI")
-  AL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAL")
-  AM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAM")
-  AO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAO")
-  AQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAQ")
-  AR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAR")
-  AS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAS")
-  AT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAT")
-  AU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAU")
-  AW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAW")
-  AX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAX")
-  AZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAZ")
-  BA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBA")
-  BB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBB")
-  BD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBD")
-  BE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBE")
-  BF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBF")
-  BG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBG")
-  BH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBH")
-  BI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBI")
-  BJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBJ")
-  BL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBL")
-  BM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBM")
-  BN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBN")
-  BO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBO")
-  BQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBQ")
-  BR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBR")
-  BS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBS")
-  BT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBT")
-  BV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBV")
-  BW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBW")
-  BY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBY")
-  BZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBZ")
-  CA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCA")
-  CC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCC")
-  CD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCD")
-  CF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCF")
-  CG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCG")
-  CH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCH")
-  CI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCI")
-  CK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCK")
-  CL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCL")
-  CM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCM")
-  CN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCN")
-  CO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCO")
-  CR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCR")
-  CU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCU")
-  CV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCV")
-  CW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCW")
-  CX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCX")
-  CY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCY")
-  CZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCZ")
-  DE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDE")
-  DJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDJ")
-  DK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDK")
-  DM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDM")
-  DO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDO")
-  DZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDZ")
-  EC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEC")
-  EE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEE")
-  EG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEG")
-  EH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEH")
-  ER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeER")
-  ES @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeES")
-  ET @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeET")
-  EU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEU")
-  FI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFI")
-  FJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFJ")
-  FK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFK")
-  FM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFM")
-  FO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFO")
-  FR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFR")
-  GA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGA")
-  GB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGB")
-  GD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGD")
-  GE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGE")
-  GF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGF")
-  GG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGG")
-  GH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGH")
-  GI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGI")
-  GL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGL")
-  GM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGM")
-  GN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGN")
-  GP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGP")
-  GQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGQ")
-  GR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGR")
-  GT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGT")
-  GU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGU")
-  GW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGW")
-  GY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGY")
-  HK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHK")
-  HM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHM")
-  HN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHN")
-  HR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHR")
-  HT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHT")
-  HU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHU")
-  ID @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeID")
-  IE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIE")
-  IL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIL")
-  IM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIM")
-  IN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIN")
-  IO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIO")
-  IQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIQ")
-  IR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIR")
-  IS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIS")
-  IT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIT")
-  JE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJE")
-  JM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJM")
-  JO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJO")
-  JP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJP")
-  KE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKE")
-  KG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKG")
-  KH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKH")
-  KI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKI")
-  KM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKM")
-  KN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKN")
-  KP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKP")
-  KR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKR")
-  KW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKW")
-  KY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKY")
-  KZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKZ")
-  LA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLA")
-  LB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLB")
-  LC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLC")
-  LI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLI")
-  LK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLK")
-  LR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLR")
-  LS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLS")
-  LT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLT")
-  LU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLU")
-  LV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLV")
-  LY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLY")
-  MA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMA")
-  MC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMC")
-  MD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMD")
-  ME @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeME")
-  MF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMF")
-  MG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMG")
-  MH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMH")
-  MK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMK")
-  ML @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeML")
-  MM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMM")
-  MN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMN")
-  MO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMO")
-  MP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMP")
-  MQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMQ")
-  MR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMR")
-  MS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMS")
-  MT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMT")
-  MU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMU")
-  MV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMV")
-  MW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMW")
-  MX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMX")
-  MY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMY")
-  MZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMZ")
-  NA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNA")
-  NC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNC")
-  NE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNE")
-  NF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNF")
-  NG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNG")
-  NI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNI")
-  NL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNL")
-  NO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNO")
-  NP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNP")
-  NR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNR")
-  NU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNU")
-  NZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNZ")
-  OM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeOM")
-  PA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePA")
-  PE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePE")
-  PF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePF")
-  PG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePG")
-  PH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePH")
-  PK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePK")
-  PL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePL")
-  PM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePM")
-  PN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePN")
-  PR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePR")
-  PS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePS")
-  PT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePT")
-  PW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePW")
-  PY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePY")
-  QA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeQA")
-  RE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRE")
-  RO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRO")
-  RS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRS")
-  RU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRU")
-  RW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRW")
-  SA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSA")
-  SB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSB")
-  SC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSC")
-  SD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSD")
-  SE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSE")
-  SG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSG")
-  SH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSH")
-  SI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSI")
-  SJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSJ")
-  SK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSK")
-  SL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSL")
-  SM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSM")
-  SN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSN")
-  SO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSO")
-  SR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSR")
-  SS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSS")
-  ST @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeST")
-  SV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSV")
-  SX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSX")
-  SY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSY")
-  SZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSZ")
-  TC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTC")
-  TD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTD")
-  TF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTF")
-  TG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTG")
-  TH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTH")
-  TJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTJ")
-  TK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTK")
-  TL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTL")
-  TM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTM")
-  TN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTN")
-  TO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTO")
-  TR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTR")
-  TT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTT")
-  TV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTV")
-  TW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTW")
-  TZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTZ")
-  UA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUA")
-  UG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUG")
-  UM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUM")
-  US @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUS")
-  UY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUY")
-  UZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUZ")
-  VA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVA")
-  VC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVC")
-  VE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVE")
-  VG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVG")
-  VI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVI")
-  VN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVN")
-  VU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVU")
-  WF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeWF")
-  WS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeWS")
-  YE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeYE")
-  YT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeYT")
-  ZA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeZA")
-  ZM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeZM")
-  ZW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeZW")
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.CountryCode") {
+  AD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAD")
+  AE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAE")
+  AF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAF")
+  AG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAG")
+  AI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAI")
+  AL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAL")
+  AM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAM")
+  AO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAO")
+  AQ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAQ")
+  AR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAR")
+  AS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAS")
+  AT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAT")
+  AU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAU")
+  AW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAW")
+  AX @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAX")
+  AZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAZ")
+  BA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBA")
+  BB @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBB")
+  BD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBD")
+  BE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBE")
+  BF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBF")
+  BG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBG")
+  BH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBH")
+  BI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBI")
+  BJ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBJ")
+  BL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBL")
+  BM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBM")
+  BN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBN")
+  BO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBO")
+  BQ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBQ")
+  BR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBR")
+  BS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBS")
+  BT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBT")
+  BV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBV")
+  BW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBW")
+  BY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBY")
+  BZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBZ")
+  CA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCA")
+  CC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCC")
+  CD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCD")
+  CF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCF")
+  CG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCG")
+  CH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCH")
+  CI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCI")
+  CK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCK")
+  CL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCL")
+  CM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCM")
+  CN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCN")
+  CO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCO")
+  CR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCR")
+  CU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCU")
+  CV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCV")
+  CW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCW")
+  CX @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCX")
+  CY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCY")
+  CZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCZ")
+  DE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDE")
+  DJ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDJ")
+  DK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDK")
+  DM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDM")
+  DO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDO")
+  DZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDZ")
+  EC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeEC")
+  EE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeEE")
+  EG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeEG")
+  EH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeEH")
+  ER @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeER")
+  ES @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeES")
+  ET @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeET")
+  EU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeEU")
+  FI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFI")
+  FJ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFJ")
+  FK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFK")
+  FM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFM")
+  FO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFO")
+  FR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFR")
+  GA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGA")
+  GB @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGB")
+  GD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGD")
+  GE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGE")
+  GF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGF")
+  GG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGG")
+  GH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGH")
+  GI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGI")
+  GL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGL")
+  GM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGM")
+  GN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGN")
+  GP @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGP")
+  GQ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGQ")
+  GR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGR")
+  GT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGT")
+  GU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGU")
+  GW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGW")
+  GY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGY")
+  HK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHK")
+  HM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHM")
+  HN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHN")
+  HR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHR")
+  HT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHT")
+  HU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHU")
+  ID @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeID")
+  IE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIE")
+  IL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIL")
+  IM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIM")
+  IN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIN")
+  IO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIO")
+  IQ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIQ")
+  IR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIR")
+  IS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIS")
+  IT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIT")
+  JE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeJE")
+  JM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeJM")
+  JO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeJO")
+  JP @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeJP")
+  KE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKE")
+  KG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKG")
+  KH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKH")
+  KI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKI")
+  KM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKM")
+  KN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKN")
+  KP @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKP")
+  KR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKR")
+  KW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKW")
+  KY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKY")
+  KZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKZ")
+  LA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLA")
+  LB @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLB")
+  LC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLC")
+  LI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLI")
+  LK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLK")
+  LR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLR")
+  LS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLS")
+  LT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLT")
+  LU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLU")
+  LV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLV")
+  LY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLY")
+  MA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMA")
+  MC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMC")
+  MD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMD")
+  ME @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeME")
+  MF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMF")
+  MG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMG")
+  MH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMH")
+  MK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMK")
+  ML @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeML")
+  MM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMM")
+  MN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMN")
+  MO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMO")
+  MP @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMP")
+  MQ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMQ")
+  MR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMR")
+  MS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMS")
+  MT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMT")
+  MU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMU")
+  MV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMV")
+  MW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMW")
+  MX @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMX")
+  MY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMY")
+  MZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMZ")
+  NA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNA")
+  NC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNC")
+  NE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNE")
+  NF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNF")
+  NG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNG")
+  NI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNI")
+  NL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNL")
+  NO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNO")
+  NP @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNP")
+  NR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNR")
+  NU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNU")
+  NZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNZ")
+  OM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeOM")
+  PA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePA")
+  PE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePE")
+  PF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePF")
+  PG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePG")
+  PH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePH")
+  PK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePK")
+  PL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePL")
+  PM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePM")
+  PN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePN")
+  PR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePR")
+  PS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePS")
+  PT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePT")
+  PW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePW")
+  PY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePY")
+  QA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeQA")
+  RE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeRE")
+  RO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeRO")
+  RS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeRS")
+  RU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeRU")
+  RW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeRW")
+  SA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSA")
+  SB @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSB")
+  SC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSC")
+  SD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSD")
+  SE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSE")
+  SG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSG")
+  SH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSH")
+  SI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSI")
+  SJ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSJ")
+  SK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSK")
+  SL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSL")
+  SM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSM")
+  SN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSN")
+  SO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSO")
+  SR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSR")
+  SS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSS")
+  ST @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeST")
+  SV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSV")
+  SX @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSX")
+  SY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSY")
+  SZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSZ")
+  TC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTC")
+  TD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTD")
+  TF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTF")
+  TG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTG")
+  TH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTH")
+  TJ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTJ")
+  TK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTK")
+  TL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTL")
+  TM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTM")
+  TN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTN")
+  TO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTO")
+  TR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTR")
+  TT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTT")
+  TV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTV")
+  TW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTW")
+  TZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTZ")
+  UA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUA")
+  UG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUG")
+  UM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUM")
+  US @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUS")
+  UY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUY")
+  UZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUZ")
+  VA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVA")
+  VC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVC")
+  VE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVE")
+  VG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVG")
+  VI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVI")
+  VN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVN")
+  VU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVU")
+  WF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeWF")
+  WS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeWS")
+  YE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeYE")
+  YT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeYT")
+  ZA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeZA")
+  ZM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeZM")
+  ZW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeZW")
 }
 
 enum VendorCategory
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.VendorCategory") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorCategory") {
   ANALYTICS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryAnalytics"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryAnalytics"
     )
   CLOUD_MONITORING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryCloudMonitoring"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCloudMonitoring"
     )
   CLOUD_PROVIDER
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryCloudProvider"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCloudProvider"
     )
   COLLABORATION
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryCollaboration"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCollaboration"
     )
   CUSTOMER_SUPPORT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryCustomerSupport"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCustomerSupport"
     )
   DATA_STORAGE_AND_PROCESSING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryDataStorageAndProcessing"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryDataStorageAndProcessing"
     )
   DOCUMENT_MANAGEMENT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryDocumentManagement"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryDocumentManagement"
     )
   EMPLOYEE_MANAGEMENT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryEmployeeManagement"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEmployeeManagement"
     )
   ENGINEERING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryEngineering"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEngineering"
     )
   FINANCE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryFinance"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryFinance"
     )
   IDENTITY_PROVIDER
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryIdentityProvider"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIdentityProvider"
     )
-  IT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryIT")
+  IT @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIT")
   MARKETING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryMarketing"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryMarketing"
     )
   OFFICE_OPERATIONS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryOfficeOperations"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOfficeOperations"
     )
   OTHER
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryOther")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOther")
   PASSWORD_MANAGEMENT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryPasswordManagement"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryPasswordManagement"
     )
   PRODUCT_AND_DESIGN
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryProductAndDesign"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryProductAndDesign"
     )
   PROFESSIONAL_SERVICES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryProfessionalServices"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryProfessionalServices"
     )
   RECRUITING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryRecruiting"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryRecruiting"
     )
   SALES
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.VendorCategorySales")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySales")
   SECURITY
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategorySecurity"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategorySecurity"
     )
   VERSION_CONTROL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryVersionControl"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryVersionControl"
     )
 }
 
@@ -3658,7 +3658,7 @@ func (ec *executionContext) _Mutation_requestAllAccesses(ctx context.Context, fi
 		if data, ok := tmp.(*types.RequestAccessesPayload); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.RequestAccessesPayload`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *go.probo.inc/probo/pkg/server/api/trust/v1/types.RequestAccessesPayload`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3744,7 +3744,7 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 		if data, ok := tmp.(*types.ExportDocumentPDFPayload); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.ExportDocumentPDFPayload`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *go.probo.inc/probo/pkg/server/api/trust/v1/types.ExportDocumentPDFPayload`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3830,7 +3830,7 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 		if data, ok := tmp.(*types.ExportReportPDFPayload); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.ExportReportPDFPayload`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *go.probo.inc/probo/pkg/server/api/trust/v1/types.ExportReportPDFPayload`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3916,7 +3916,7 @@ func (ec *executionContext) _Mutation_acceptNonDisclosureAgreement(ctx context.C
 		if data, ok := tmp.(*types.AcceptNonDisclosureAgreementPayload); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.AcceptNonDisclosureAgreementPayload`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *go.probo.inc/probo/pkg/server/api/trust/v1/types.AcceptNonDisclosureAgreementPayload`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4002,7 +4002,7 @@ func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context,
 		if data, ok := tmp.(*types.RequestAccessesPayload); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.RequestAccessesPayload`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *go.probo.inc/probo/pkg/server/api/trust/v1/types.RequestAccessesPayload`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4088,7 +4088,7 @@ func (ec *executionContext) _Mutation_requestReportAccess(ctx context.Context, f
 		if data, ok := tmp.(*types.RequestAccessesPayload); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.RequestAccessesPayload`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *go.probo.inc/probo/pkg/server/api/trust/v1/types.RequestAccessesPayload`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4174,7 +4174,7 @@ func (ec *executionContext) _Mutation_requestTrustCenterFileAccess(ctx context.C
 		if data, ok := tmp.(*types.RequestAccessesPayload); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.RequestAccessesPayload`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *go.probo.inc/probo/pkg/server/api/trust/v1/types.RequestAccessesPayload`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4260,7 +4260,7 @@ func (ec *executionContext) _Mutation_exportTrustCenterFile(ctx context.Context,
 		if data, ok := tmp.(*types.ExportTrustCenterFilePayload); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.ExportTrustCenterFilePayload`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *go.probo.inc/probo/pkg/server/api/trust/v1/types.ExportTrustCenterFilePayload`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4864,7 +4864,7 @@ func (ec *executionContext) _Query_trustCenterBySlug(ctx context.Context, field 
 		if data, ok := tmp.(*types.TrustCenter); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.TrustCenter`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *go.probo.inc/probo/pkg/server/api/trust/v1/types.TrustCenter`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4971,7 +4971,7 @@ func (ec *executionContext) _Query_currentTrustCenter(ctx context.Context, field
 		if data, ok := tmp.(*types.TrustCenter); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *github.com/getprobo/probo/pkg/server/api/trust/v1/types.TrustCenter`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *go.probo.inc/probo/pkg/server/api/trust/v1/types.TrustCenter`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)

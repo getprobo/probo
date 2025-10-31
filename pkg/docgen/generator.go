@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/getprobo/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/coredata"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
 	gmhtml "github.com/yuin/goldmark/renderer/html"

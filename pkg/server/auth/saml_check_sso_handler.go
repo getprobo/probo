@@ -20,7 +20,7 @@ import (
 	"net/http"
 	"net/mail"
 
-	authsvc "github.com/getprobo/probo/pkg/auth"
+	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 )

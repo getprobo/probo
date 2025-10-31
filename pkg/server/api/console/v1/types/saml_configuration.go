@@ -15,7 +15,7 @@
 package types
 
 import (
-	"github.com/getprobo/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func NewSAMLConfigurationWithURLs(c *coredata.SAMLConfiguration, spEntityID, spAcsURL string) *SAMLConfiguration {

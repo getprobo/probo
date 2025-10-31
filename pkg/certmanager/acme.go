@@ -25,9 +25,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/getprobo/probo/pkg/crypto/keys"
-	"github.com/getprobo/probo/pkg/crypto/pem"
-	"github.com/getprobo/probo/pkg/version"
+	"go.probo.inc/probo/pkg/crypto/keys"
+	"go.probo.inc/probo/pkg/crypto/pem"
+	"go.probo.inc/probo/pkg/version"
 	"go.gearno.de/kit/httpclient"
 	"go.gearno.de/kit/log"
 	"golang.org/x/crypto/acme"

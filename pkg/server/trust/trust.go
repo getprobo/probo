@@ -18,8 +18,8 @@ package trust
 import (
 	"net/http"
 
-	truststatics "github.com/getprobo/probo/apps/trust"
-	"github.com/getprobo/probo/pkg/server/statichandler"
+	truststatics "go.probo.inc/probo/apps/trust"
+	"go.probo.inc/probo/pkg/server/statichandler"
 )
 
 type Server struct {

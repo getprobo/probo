@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/getprobo/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (

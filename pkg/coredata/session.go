@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/page"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 )

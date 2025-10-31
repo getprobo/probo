@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"github.com/crewjam/saml"
-	"github.com/getprobo/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func ExtractAttributeValue(assertion *saml.Assertion, attributeName string) (string, error) {

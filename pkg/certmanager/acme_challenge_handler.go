@@ -19,8 +19,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 )

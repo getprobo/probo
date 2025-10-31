@@ -15,7 +15,7 @@
 package types
 
 import (
-	"github.com/getprobo/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func NewCustomDomain(d *coredata.CustomDomain, cnameTarget string) *CustomDomain {

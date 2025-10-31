@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"net/http"
 
-	authsvc "github.com/getprobo/probo/pkg/auth"
-	"github.com/getprobo/probo/pkg/securecookie"
+	authsvc "go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/securecookie"
 	"go.gearno.de/kit/httpserver"
 )
 

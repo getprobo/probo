@@ -17,8 +17,8 @@ package web
 import (
 	"net/http"
 
-	"github.com/getprobo/probo/apps/console"
-	"github.com/getprobo/probo/pkg/server/statichandler"
+	"go.probo.inc/probo/apps/console"
+	"go.probo.inc/probo/pkg/server/statichandler"
 )
 
 type Server struct {

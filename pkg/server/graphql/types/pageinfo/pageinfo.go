@@ -15,7 +15,7 @@
 package pageinfo
 
 import (
-	"github.com/getprobo/probo/pkg/page"
+	"go.probo.inc/probo/pkg/page"
 	"go.gearno.de/x/ref"
 )
 

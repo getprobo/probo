@@ -15,9 +15,9 @@
 package types
 
 import (
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/page"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type TrustCenterFileOrderBy = OrderBy[coredata.TrustCenterFileOrderField]

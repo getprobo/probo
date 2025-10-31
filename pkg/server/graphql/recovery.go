@@ -19,8 +19,8 @@ import (
 	"errors"
 	"runtime/debug"
 
-	"github.com/getprobo/probo/pkg/auth"
-	"github.com/getprobo/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/authz"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"

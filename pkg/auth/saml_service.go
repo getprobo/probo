@@ -28,9 +28,9 @@ import (
 	"time"
 
 	"github.com/crewjam/saml"
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/crypto/cipher"
-	"github.com/getprobo/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/gid"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"
 )

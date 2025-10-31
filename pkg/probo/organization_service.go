@@ -22,10 +22,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/filevalidation"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/slug"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/filevalidation"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/slug"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
 )

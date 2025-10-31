@@ -21,12 +21,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/probo"
-	console_v1 "github.com/getprobo/probo/pkg/server/api/console/v1"
-	"github.com/getprobo/probo/pkg/server/session"
-	"github.com/getprobo/probo/pkg/statelesstoken"
-	"github.com/getprobo/probo/pkg/trust"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/probo"
+	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
+	"go.probo.inc/probo/pkg/server/session"
+	"go.probo.inc/probo/pkg/statelesstoken"
+	"go.probo.inc/probo/pkg/trust"
 	"go.gearno.de/kit/httpserver"
 )
 

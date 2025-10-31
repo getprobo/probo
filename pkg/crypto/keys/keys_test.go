@@ -21,7 +21,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/getprobo/probo/pkg/crypto/keys"
+	"go.probo.inc/probo/pkg/crypto/keys"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

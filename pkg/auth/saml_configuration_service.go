@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 	"go.gearno.de/kit/pg"
 )
 

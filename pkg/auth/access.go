@@ -3,8 +3,8 @@ package auth
 import (
 	"fmt"
 
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 // AuthMethod represents a method of authentication

@@ -19,7 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/getprobo/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type CursorKey struct {

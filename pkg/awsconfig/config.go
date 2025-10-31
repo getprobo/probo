@@ -41,7 +41,7 @@ type (
 
 const (
 	DefaultRegion      = "us-east-2"
-	DefaultSessionName = "github.com/getprobo/probo"
+	DefaultSessionName = "go.probo.inc/probo"
 )
 
 func NewConfig(logger *log.Logger, httpClient *http.Client, opts Options) aws.Config {

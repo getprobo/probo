@@ -18,9 +18,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/securecookie"
-	authsvc "github.com/getprobo/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/securecookie"
+	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.gearno.de/kit/httpserver"
 )
 

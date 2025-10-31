@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"net/http"
 
-	authsvc "github.com/getprobo/probo/pkg/auth"
-	"github.com/getprobo/probo/pkg/gid"
+	authsvc "go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/gid"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 )

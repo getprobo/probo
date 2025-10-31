@@ -1,4 +1,4 @@
-module github.com/getprobo/probo
+module go.probo.inc/probo
 
 go 1.25
 

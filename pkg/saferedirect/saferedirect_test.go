@@ -19,7 +19,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/getprobo/probo/pkg/saferedirect"
+	"go.probo.inc/probo/pkg/saferedirect"
 )
 
 func TestSafeRedirect_Validate(t *testing.T) {

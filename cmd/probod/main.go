@@ -17,7 +17,7 @@ package main
 import (
 	"context"
 
-	"github.com/getprobo/probo/pkg/probod"
+	"go.probo.inc/probo/pkg/probod"
 	"go.gearno.de/kit/unit"
 )
 

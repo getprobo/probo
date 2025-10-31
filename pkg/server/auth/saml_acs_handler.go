@@ -20,11 +20,11 @@ import (
 	"net/http"
 	"time"
 
-	authsvc "github.com/getprobo/probo/pkg/auth"
-	"github.com/getprobo/probo/pkg/authz"
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/securecookie"
+	authsvc "go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/securecookie"
 	"go.gearno.de/kit/log"
 )
 

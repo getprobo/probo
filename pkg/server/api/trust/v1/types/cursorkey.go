@@ -15,8 +15,8 @@
 package types
 
 import (
-	"github.com/getprobo/probo/pkg/page"
-	"github.com/getprobo/probo/pkg/server/graphql/types/cursor"
+	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/server/graphql/types/cursor"
 )
 
 func NewCursor[O page.OrderField](

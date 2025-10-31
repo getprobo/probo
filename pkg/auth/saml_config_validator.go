@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"net/url"
 
-	pemutil "github.com/getprobo/probo/pkg/crypto/pem"
+	pemutil "go.probo.inc/probo/pkg/crypto/pem"
 )
 
 // ValidateIdPConfiguration validates only the IdP (Identity Provider) configuration.

@@ -22,10 +22,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/getprobo/probo/pkg/baseurl"
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/baseurl"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/slack"
 	"go.gearno.de/kit/pg"
 )
 

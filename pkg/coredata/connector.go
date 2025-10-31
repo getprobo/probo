@@ -21,10 +21,10 @@ import (
 	"maps"
 	"time"
 
-	"github.com/getprobo/probo/pkg/connector"
-	"github.com/getprobo/probo/pkg/crypto/cipher"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/page"
+	"go.probo.inc/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 )

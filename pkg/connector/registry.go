@@ -20,7 +20,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/getprobo/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 type (

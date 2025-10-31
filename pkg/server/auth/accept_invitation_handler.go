@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"net/http"
 
-	authsvc "github.com/getprobo/probo/pkg/auth"
-	"github.com/getprobo/probo/pkg/authz"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/server/session"
+	authsvc "go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/server/session"
 	"go.gearno.de/kit/httpserver"
 )
 

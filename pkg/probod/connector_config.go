@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/getprobo/probo/pkg/connector"
+	"go.probo.inc/probo/pkg/connector"
 )
 
 type (

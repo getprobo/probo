@@ -15,7 +15,7 @@
 package types
 
 import (
-	"github.com/getprobo/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/coredata"
 )
 
 func NewVendorBusinessAssociateAgreement(v *coredata.VendorBusinessAssociateAgreement, file *coredata.File) *VendorBusinessAssociateAgreement {

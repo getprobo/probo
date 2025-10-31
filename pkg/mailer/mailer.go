@@ -24,7 +24,7 @@ import (
 	"net/smtp"
 	"time"
 
-	"github.com/getprobo/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/coredata"
 	"github.com/jhillyerd/enmime"
 	"go.gearno.de/kit/log"
 	"go.gearno.de/kit/pg"

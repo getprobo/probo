@@ -23,9 +23,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/slack"
-	"github.com/getprobo/probo/pkg/trust"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/slack"
+	"go.probo.inc/probo/pkg/trust"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
 )

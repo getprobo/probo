@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"net/http"
 
-	authsvc "github.com/getprobo/probo/pkg/auth"
+	authsvc "go.probo.inc/probo/pkg/auth"
 )
 
 // SAMLMetadataHandler returns an HTTP handler that serves the SAML Service Provider metadata XML

@@ -18,9 +18,9 @@ import (
 	"net/http"
 	"time"
 
-	authsvc "github.com/getprobo/probo/pkg/auth"
-	"github.com/getprobo/probo/pkg/authz"
-	"github.com/getprobo/probo/pkg/filemanager"
+	authsvc "go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/filemanager"
 	"github.com/go-chi/chi/v5"
 	"go.gearno.de/kit/log"
 )

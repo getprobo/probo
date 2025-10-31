@@ -31,7 +31,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/getprobo/probo/pkg/crypto/pem"
+	"go.probo.inc/probo/pkg/crypto/pem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

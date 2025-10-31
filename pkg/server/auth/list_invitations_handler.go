@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/getprobo/probo/pkg/authz"
-	"github.com/getprobo/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/gid"
 	"go.gearno.de/kit/httpserver"
 )
 

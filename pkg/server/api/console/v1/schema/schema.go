@@ -14,13 +14,13 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/getprobo/probo/pkg/coredata"
-	"github.com/getprobo/probo/pkg/gid"
-	"github.com/getprobo/probo/pkg/page"
-	"github.com/getprobo/probo/pkg/server/api/console/v1/types"
-	"github.com/getprobo/probo/pkg/server/graphql/types/bigint"
-	"github.com/getprobo/probo/pkg/server/graphql/types/cursor"
-	gid1 "github.com/getprobo/probo/pkg/server/graphql/types/gid"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/server/api/console/v1/types"
+	"go.probo.inc/probo/pkg/server/graphql/types/bigint"
+	"go.probo.inc/probo/pkg/server/graphql/types/cursor"
+	gid1 "go.probo.inc/probo/pkg/server/graphql/types/gid"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -9776,1317 +9776,1317 @@ type PageInfo {
 
 # Enums
 enum OrderDirection
-  @goModel(model: "github.com/getprobo/probo/pkg/page.OrderDirection") {
-  ASC @goEnum(value: "github.com/getprobo/probo/pkg/page.OrderDirectionAsc")
-  DESC @goEnum(value: "github.com/getprobo/probo/pkg/page.OrderDirectionDesc")
+  @goModel(model: "go.probo.inc/probo/pkg/page.OrderDirection") {
+  ASC @goEnum(value: "go.probo.inc/probo/pkg/page.OrderDirectionAsc")
+  DESC @goEnum(value: "go.probo.inc/probo/pkg/page.OrderDirectionDesc")
 }
 
 enum MeasureState
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MeasureState") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MeasureState") {
   NOT_STARTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateNotStarted"
+      value: "go.probo.inc/probo/pkg/coredata.MeasureStateNotStarted"
     )
   IN_PROGRESS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateInProgress"
+      value: "go.probo.inc/probo/pkg/coredata.MeasureStateInProgress"
     )
   NOT_APPLICABLE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateNotApplicable"
+      value: "go.probo.inc/probo/pkg/coredata.MeasureStateNotApplicable"
     )
   IMPLEMENTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MeasureStateImplemented"
+      value: "go.probo.inc/probo/pkg/coredata.MeasureStateImplemented"
     )
 }
 
 enum TaskState
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TaskState") {
-  TODO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.TaskStateTodo")
-  DONE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.TaskStateDone")
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskState") {
+  TODO @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateTodo")
+  DONE @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateDone")
 }
 
 enum EvidenceState
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.EvidenceState") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.EvidenceState") {
   FULFILLED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.EvidenceStateFulfilled"
+      value: "go.probo.inc/probo/pkg/coredata.EvidenceStateFulfilled"
     )
   REQUESTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.EvidenceStateRequested"
+      value: "go.probo.inc/probo/pkg/coredata.EvidenceStateRequested"
     )
 }
 
 enum PeopleKind
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.PeopleKind") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleKind") {
   EMPLOYEE
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.PeopleKindEmployee")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleKindEmployee")
   CONTRACTOR
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PeopleKindContractor"
+      value: "go.probo.inc/probo/pkg/coredata.PeopleKindContractor"
     )
   SERVICE_ACCOUNT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PeopleKindServiceAccount"
+      value: "go.probo.inc/probo/pkg/coredata.PeopleKindServiceAccount"
     )
 }
 
 enum InvitationStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.InvitationStatus") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationStatus") {
   PENDING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusPending"
+      value: "go.probo.inc/probo/pkg/coredata.InvitationStatusPending"
     )
   ACCEPTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusAccepted"
+      value: "go.probo.inc/probo/pkg/coredata.InvitationStatusAccepted"
     )
   EXPIRED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.InvitationStatusExpired"
+      value: "go.probo.inc/probo/pkg/coredata.InvitationStatusExpired"
     )
 }
 
-enum Role @goModel(model: "github.com/getprobo/probo/pkg/coredata.Role") {
-  OWNER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleOwner")
-  ADMIN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleAdmin")
-  MEMBER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleMember")
-  VIEWER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RoleViewer")
+enum Role @goModel(model: "go.probo.inc/probo/pkg/coredata.Role") {
+  OWNER @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleOwner")
+  ADMIN @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleAdmin")
+  MEMBER @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleMember")
+  VIEWER @goEnum(value: "go.probo.inc/probo/pkg/coredata.RoleViewer")
 }
 
 enum DocumentStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentStatus") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentStatus") {
   DRAFT
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentStatusDraft")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentStatusDraft")
   PUBLISHED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentStatusPublished"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentStatusPublished"
     )
 }
 
 enum EvidenceType
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.EvidenceType") {
-  FILE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.EvidenceTypeFile")
-  LINK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.EvidenceTypeLink")
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.EvidenceType") {
+  FILE @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceTypeFile")
+  LINK @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceTypeLink")
 }
 
 enum RiskTreatment
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.RiskTreatment") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.RiskTreatment") {
   MITIGATED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.RiskTreatmentMitigated"
+      value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentMitigated"
     )
   ACCEPTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.RiskTreatmentAccepted"
+      value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentAccepted"
     )
   AVOIDED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.RiskTreatmentAvoided"
+      value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentAvoided"
     )
   TRANSFERRED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.RiskTreatmentTransferred"
+      value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentTransferred"
     )
 }
 
 enum AuditState
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.AuditState") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditState") {
   NOT_STARTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditStateNotStarted"
+      value: "go.probo.inc/probo/pkg/coredata.AuditStateNotStarted"
     )
   IN_PROGRESS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditStateInProgress"
+      value: "go.probo.inc/probo/pkg/coredata.AuditStateInProgress"
     )
   COMPLETED
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AuditStateCompleted")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateCompleted")
   REJECTED
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AuditStateRejected")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateRejected")
   OUTDATED
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AuditStateOutdated")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateOutdated")
 }
 
 enum SAMLEnforcementPolicy
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.SAMLEnforcementPolicy"
+    model: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicy"
   ) {
   OFF
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SAMLEnforcementPolicyOff"
+      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOff"
     )
   OPTIONAL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SAMLEnforcementPolicyOptional"
+      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOptional"
     )
   REQUIRED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SAMLEnforcementPolicyRequired"
+      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyRequired"
     )
 }
 
 enum UserAuthMethod
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.UserAuthMethod") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.UserAuthMethod") {
   PASSWORD
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.UserAuthMethodPassword"
+      value: "go.probo.inc/probo/pkg/coredata.UserAuthMethodPassword"
     )
   SAML
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.UserAuthMethodSAML")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.UserAuthMethodSAML")
 }
 
 enum TrustCenterVisibility
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibility"
+    model: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibility"
   ) {
   NONE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibilityNone"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityNone"
     )
   PRIVATE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibilityPrivate"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityPrivate"
     )
   PUBLIC
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterVisibilityPublic"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityPublic"
     )
 }
 
 enum NonconformityStatus
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.NonconformityStatus"
+    model: "go.probo.inc/probo/pkg/coredata.NonconformityStatus"
   ) {
   OPEN
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityStatusOpen"
+      value: "go.probo.inc/probo/pkg/coredata.NonconformityStatusOpen"
     )
   IN_PROGRESS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityStatusInProgress"
+      value: "go.probo.inc/probo/pkg/coredata.NonconformityStatusInProgress"
     )
   CLOSED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityStatusClosed"
+      value: "go.probo.inc/probo/pkg/coredata.NonconformityStatusClosed"
     )
 }
 
 enum ObligationStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ObligationStatus") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ObligationStatus") {
   NON_COMPLIANT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusNonCompliant"
+      value: "go.probo.inc/probo/pkg/coredata.ObligationStatusNonCompliant"
     )
   PARTIALLY_COMPLIANT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusPartiallyCompliant"
+      value: "go.probo.inc/probo/pkg/coredata.ObligationStatusPartiallyCompliant"
     )
   COMPLIANT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ObligationStatusCompliant"
+      value: "go.probo.inc/probo/pkg/coredata.ObligationStatusCompliant"
     )
 }
 
 enum ContinualImprovementStatus
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatus"
+    model: "go.probo.inc/probo/pkg/coredata.ContinualImprovementStatus"
   ) {
   OPEN
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatusOpen"
+      value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementStatusOpen"
     )
   IN_PROGRESS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatusInProgress"
+      value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementStatusInProgress"
     )
   CLOSED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementStatusClosed"
+      value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementStatusClosed"
     )
 }
 
 enum ContinualImprovementPriority
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriority"
+    model: "go.probo.inc/probo/pkg/coredata.ContinualImprovementPriority"
   ) {
   LOW
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriorityLow"
+      value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementPriorityLow"
     )
   MEDIUM
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriorityMedium"
+      value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementPriorityMedium"
     )
   HIGH
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementPriorityHigh"
+      value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementPriorityHigh"
     )
 }
 
 enum ProcessingActivitySpecialOrCriminalData
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalData"
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalData"
   ) {
   YES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataYes"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataYes"
     )
   NO
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataNo"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataNo"
     )
   POSSIBLE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataPossible"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataPossible"
     )
 }
 
 enum ProcessingActivityLawfulBasis
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasis"
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasis"
   ) {
   LEGITIMATE_INTEREST
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisLegitimateInterest"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisLegitimateInterest"
     )
   CONSENT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisConsent"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisConsent"
     )
   CONTRACTUAL_NECESSITY
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisContractualNecessity"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisContractualNecessity"
     )
   LEGAL_OBLIGATION
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisLegalObligation"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisLegalObligation"
     )
   VITAL_INTERESTS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisVitalInterests"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisVitalInterests"
     )
   PUBLIC_TASK
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityLawfulBasisPublicTask"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityLawfulBasisPublicTask"
     )
 }
 
 enum ProcessingActivityTransferSafeguards
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguards"
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguards"
   ) {
   STANDARD_CONTRACTUAL_CLAUSES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsStandardContractualClauses"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsStandardContractualClauses"
     )
   BINDING_CORPORATE_RULES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsBindingCorporateRules"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsBindingCorporateRules"
     )
   ADEQUACY_DECISION
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsAdequacyDecision"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsAdequacyDecision"
     )
   DEROGATIONS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsDerogations"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsDerogations"
     )
   CODES_OF_CONDUCT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsCodesOfConduct"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsCodesOfConduct"
     )
   CERTIFICATION_MECHANISMS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferSafeguardsCertificationMechanisms"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsCertificationMechanisms"
     )
 }
 
 enum ProcessingActivityDataProtectionImpactAssessment
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessment"
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessment"
   ) {
   NEEDED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessmentNeeded"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessmentNeeded"
     )
   NOT_NEEDED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessmentNotNeeded"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityDataProtectionImpactAssessmentNotNeeded"
     )
 }
 
 enum ProcessingActivityTransferImpactAssessment
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessment"
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferImpactAssessment"
   ) {
   NEEDED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessmentNeeded"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferImpactAssessmentNeeded"
     )
   NOT_NEEDED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityTransferImpactAssessmentNotNeeded"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferImpactAssessmentNotNeeded"
     )
 }
 
 # Order Field Enums
 enum UserOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.UserOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.UserOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.UserOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.UserOrderFieldCreatedAt"
     )
 }
 
 enum PeopleOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.PeopleOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleOrderField") {
   FULL_NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PeopleOrderFieldFullName"
+      value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldFullName"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PeopleOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldCreatedAt"
     )
   KIND
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.PeopleOrderFieldKind"
+      value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldKind"
     )
 }
 
 enum VendorOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.VendorOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorOrderField") {
   NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorOrderFieldName"
+      value: "go.probo.inc/probo/pkg/coredata.VendorOrderFieldName"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.VendorOrderFieldCreatedAt"
     )
   UPDATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorOrderFieldUpdatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.VendorOrderFieldUpdatedAt"
     )
 }
 
 enum FrameworkOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.FrameworkOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.FrameworkOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.FrameworkOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.FrameworkOrderFieldCreatedAt"
     )
 }
 
 enum ControlOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ControlOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ControlOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ControlOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.ControlOrderFieldCreatedAt"
     )
   SECTION_TITLE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ControlOrderFieldSectionTitle"
+      value: "go.probo.inc/probo/pkg/coredata.ControlOrderFieldSectionTitle"
     )
 }
 
 enum MeasureOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.MeasureOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MeasureOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MeasureOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.MeasureOrderFieldCreatedAt"
     )
   NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MeasureOrderFieldName"
+      value: "go.probo.inc/probo/pkg/coredata.MeasureOrderFieldName"
     )
 }
 
 enum TaskOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.TaskOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskOrderField") {
   CREATED_AT
 }
 
 enum DocumentOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentOrderField") {
   TITLE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentOrderFieldTitle"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldTitle"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldCreatedAt"
     )
   DOCUMENT_TYPE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentOrderFieldDocumentType"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldDocumentType"
     )
 }
 
 enum RiskOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.RiskOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.RiskOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldCreatedAt"
     )
   UPDATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldUpdatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldUpdatedAt"
     )
   NAME
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldName")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldName")
   CATEGORY
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldCategory"
+      value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldCategory"
     )
   TREATMENT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldTreatment"
+      value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldTreatment"
     )
   INHERENT_RISK_SCORE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldInherentRiskScore"
+      value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldInherentRiskScore"
     )
   RESIDUAL_RISK_SCORE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldResidualRiskScore"
+      value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldResidualRiskScore"
     )
   OWNER_FULL_NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.RiskOrderFieldOwnerFullName"
+      value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldOwnerFullName"
     )
 }
 
 enum EvidenceOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.EvidenceOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.EvidenceOrderField") {
   CREATED_AT
 }
 
 enum VendorComplianceReportOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.VendorComplianceReportOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.VendorComplianceReportOrderField"
   ) {
   REPORT_DATE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorComplianceReportOrderFieldReportDate"
+      value: "go.probo.inc/probo/pkg/coredata.VendorComplianceReportOrderFieldReportDate"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorComplianceReportOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.VendorComplianceReportOrderFieldCreatedAt"
     )
 }
 
 enum VendorContactOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.VendorContactOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.VendorContactOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorContactOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.VendorContactOrderFieldCreatedAt"
     )
   FULL_NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorContactOrderFieldFullName"
+      value: "go.probo.inc/probo/pkg/coredata.VendorContactOrderFieldFullName"
     )
   EMAIL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorContactOrderFieldEmail"
+      value: "go.probo.inc/probo/pkg/coredata.VendorContactOrderFieldEmail"
     )
 }
 
 enum VendorServiceOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.VendorServiceOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.VendorServiceOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorServiceOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.VendorServiceOrderFieldCreatedAt"
     )
   NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorServiceOrderFieldName"
+      value: "go.probo.inc/probo/pkg/coredata.VendorServiceOrderFieldName"
     )
 }
 
 enum OrganizationOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.OrganizationOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.OrganizationOrderField"
   ) {
   NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.OrganizationOrderFieldName"
+      value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldName"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.OrganizationOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldCreatedAt"
     )
   UPDATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.OrganizationOrderFieldUpdatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldUpdatedAt"
     )
 }
 
 enum DataSensitivity
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.DataSensitivity") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.DataSensitivity") {
   NONE
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DataSensitivityNone")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityNone")
   LOW
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DataSensitivityLow")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityLow")
   MEDIUM
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DataSensitivityMedium"
+      value: "go.probo.inc/probo/pkg/coredata.DataSensitivityMedium"
     )
   HIGH
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DataSensitivityHigh")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityHigh")
   CRITICAL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DataSensitivityCritical"
+      value: "go.probo.inc/probo/pkg/coredata.DataSensitivityCritical"
     )
 }
 
 enum BusinessImpact
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.BusinessImpact") {
-  LOW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.BusinessImpactLow")
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.BusinessImpact") {
+  LOW @goEnum(value: "go.probo.inc/probo/pkg/coredata.BusinessImpactLow")
   MEDIUM
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.BusinessImpactMedium"
+      value: "go.probo.inc/probo/pkg/coredata.BusinessImpactMedium"
     )
   HIGH
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.BusinessImpactHigh")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.BusinessImpactHigh")
   CRITICAL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.BusinessImpactCritical"
+      value: "go.probo.inc/probo/pkg/coredata.BusinessImpactCritical"
     )
 }
 
 enum DocumentVersionOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.DocumentVersionOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderField"
   ) {
   VERSION
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionOrderFieldVersion"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderFieldVersion"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderFieldCreatedAt"
     )
 }
 
 enum CountryCode
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.CountryCode") {
-  AD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAD")
-  AE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAE")
-  AF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAF")
-  AG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAG")
-  AI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAI")
-  AL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAL")
-  AM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAM")
-  AO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAO")
-  AQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAQ")
-  AR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAR")
-  AS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAS")
-  AT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAT")
-  AU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAU")
-  AW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAW")
-  AX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAX")
-  AZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeAZ")
-  BA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBA")
-  BB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBB")
-  BD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBD")
-  BE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBE")
-  BF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBF")
-  BG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBG")
-  BH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBH")
-  BI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBI")
-  BJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBJ")
-  BL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBL")
-  BM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBM")
-  BN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBN")
-  BO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBO")
-  BQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBQ")
-  BR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBR")
-  BS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBS")
-  BT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBT")
-  BV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBV")
-  BW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBW")
-  BY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBY")
-  BZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeBZ")
-  CA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCA")
-  CC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCC")
-  CD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCD")
-  CF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCF")
-  CG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCG")
-  CH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCH")
-  CI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCI")
-  CK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCK")
-  CL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCL")
-  CM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCM")
-  CN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCN")
-  CO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCO")
-  CR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCR")
-  CU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCU")
-  CV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCV")
-  CW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCW")
-  CX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCX")
-  CY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCY")
-  CZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeCZ")
-  DE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDE")
-  DJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDJ")
-  DK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDK")
-  DM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDM")
-  DO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDO")
-  DZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeDZ")
-  EC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEC")
-  EE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEE")
-  EG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEG")
-  EH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEH")
-  ER @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeER")
-  ES @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeES")
-  ET @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeET")
-  EU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeEU")
-  FI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFI")
-  FJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFJ")
-  FK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFK")
-  FM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFM")
-  FO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFO")
-  FR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeFR")
-  GA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGA")
-  GB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGB")
-  GD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGD")
-  GE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGE")
-  GF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGF")
-  GG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGG")
-  GH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGH")
-  GI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGI")
-  GL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGL")
-  GM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGM")
-  GN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGN")
-  GP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGP")
-  GQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGQ")
-  GR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGR")
-  GT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGT")
-  GU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGU")
-  GW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGW")
-  GY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeGY")
-  HK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHK")
-  HM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHM")
-  HN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHN")
-  HR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHR")
-  HT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHT")
-  HU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeHU")
-  ID @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeID")
-  IE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIE")
-  IL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIL")
-  IM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIM")
-  IN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIN")
-  IO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIO")
-  IQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIQ")
-  IR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIR")
-  IS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIS")
-  IT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeIT")
-  JE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJE")
-  JM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJM")
-  JO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJO")
-  JP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeJP")
-  KE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKE")
-  KG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKG")
-  KH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKH")
-  KI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKI")
-  KM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKM")
-  KN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKN")
-  KP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKP")
-  KR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKR")
-  KW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKW")
-  KY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKY")
-  KZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeKZ")
-  LA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLA")
-  LB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLB")
-  LC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLC")
-  LI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLI")
-  LK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLK")
-  LR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLR")
-  LS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLS")
-  LT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLT")
-  LU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLU")
-  LV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLV")
-  LY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeLY")
-  MA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMA")
-  MC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMC")
-  MD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMD")
-  ME @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeME")
-  MF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMF")
-  MG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMG")
-  MH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMH")
-  MK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMK")
-  ML @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeML")
-  MM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMM")
-  MN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMN")
-  MO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMO")
-  MP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMP")
-  MQ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMQ")
-  MR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMR")
-  MS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMS")
-  MT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMT")
-  MU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMU")
-  MV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMV")
-  MW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMW")
-  MX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMX")
-  MY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMY")
-  MZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeMZ")
-  NA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNA")
-  NC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNC")
-  NE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNE")
-  NF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNF")
-  NG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNG")
-  NI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNI")
-  NL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNL")
-  NO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNO")
-  NP @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNP")
-  NR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNR")
-  NU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNU")
-  NZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeNZ")
-  OM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeOM")
-  PA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePA")
-  PE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePE")
-  PF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePF")
-  PG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePG")
-  PH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePH")
-  PK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePK")
-  PL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePL")
-  PM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePM")
-  PN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePN")
-  PR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePR")
-  PS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePS")
-  PT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePT")
-  PW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePW")
-  PY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodePY")
-  QA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeQA")
-  RE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRE")
-  RO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRO")
-  RS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRS")
-  RU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRU")
-  RW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeRW")
-  SA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSA")
-  SB @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSB")
-  SC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSC")
-  SD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSD")
-  SE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSE")
-  SG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSG")
-  SH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSH")
-  SI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSI")
-  SJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSJ")
-  SK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSK")
-  SL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSL")
-  SM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSM")
-  SN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSN")
-  SO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSO")
-  SR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSR")
-  SS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSS")
-  ST @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeST")
-  SV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSV")
-  SX @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSX")
-  SY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSY")
-  SZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeSZ")
-  TC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTC")
-  TD @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTD")
-  TF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTF")
-  TG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTG")
-  TH @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTH")
-  TJ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTJ")
-  TK @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTK")
-  TL @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTL")
-  TM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTM")
-  TN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTN")
-  TO @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTO")
-  TR @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTR")
-  TT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTT")
-  TV @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTV")
-  TW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTW")
-  TZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeTZ")
-  UA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUA")
-  UG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUG")
-  UM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUM")
-  US @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUS")
-  UY @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUY")
-  UZ @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeUZ")
-  VA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVA")
-  VC @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVC")
-  VE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVE")
-  VG @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVG")
-  VI @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVI")
-  VN @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVN")
-  VU @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeVU")
-  WF @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeWF")
-  WS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeWS")
-  YE @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeYE")
-  YT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeYT")
-  ZA @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeZA")
-  ZM @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeZM")
-  ZW @goEnum(value: "github.com/getprobo/probo/pkg/coredata.CountryCodeZW")
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.CountryCode") {
+  AD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAD")
+  AE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAE")
+  AF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAF")
+  AG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAG")
+  AI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAI")
+  AL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAL")
+  AM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAM")
+  AO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAO")
+  AQ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAQ")
+  AR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAR")
+  AS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAS")
+  AT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAT")
+  AU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAU")
+  AW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAW")
+  AX @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAX")
+  AZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeAZ")
+  BA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBA")
+  BB @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBB")
+  BD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBD")
+  BE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBE")
+  BF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBF")
+  BG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBG")
+  BH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBH")
+  BI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBI")
+  BJ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBJ")
+  BL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBL")
+  BM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBM")
+  BN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBN")
+  BO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBO")
+  BQ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBQ")
+  BR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBR")
+  BS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBS")
+  BT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBT")
+  BV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBV")
+  BW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBW")
+  BY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBY")
+  BZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeBZ")
+  CA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCA")
+  CC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCC")
+  CD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCD")
+  CF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCF")
+  CG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCG")
+  CH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCH")
+  CI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCI")
+  CK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCK")
+  CL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCL")
+  CM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCM")
+  CN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCN")
+  CO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCO")
+  CR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCR")
+  CU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCU")
+  CV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCV")
+  CW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCW")
+  CX @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCX")
+  CY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCY")
+  CZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeCZ")
+  DE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDE")
+  DJ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDJ")
+  DK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDK")
+  DM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDM")
+  DO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDO")
+  DZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeDZ")
+  EC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeEC")
+  EE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeEE")
+  EG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeEG")
+  EH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeEH")
+  ER @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeER")
+  ES @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeES")
+  ET @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeET")
+  EU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeEU")
+  FI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFI")
+  FJ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFJ")
+  FK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFK")
+  FM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFM")
+  FO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFO")
+  FR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeFR")
+  GA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGA")
+  GB @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGB")
+  GD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGD")
+  GE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGE")
+  GF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGF")
+  GG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGG")
+  GH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGH")
+  GI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGI")
+  GL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGL")
+  GM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGM")
+  GN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGN")
+  GP @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGP")
+  GQ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGQ")
+  GR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGR")
+  GT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGT")
+  GU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGU")
+  GW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGW")
+  GY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeGY")
+  HK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHK")
+  HM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHM")
+  HN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHN")
+  HR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHR")
+  HT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHT")
+  HU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeHU")
+  ID @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeID")
+  IE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIE")
+  IL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIL")
+  IM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIM")
+  IN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIN")
+  IO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIO")
+  IQ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIQ")
+  IR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIR")
+  IS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIS")
+  IT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeIT")
+  JE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeJE")
+  JM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeJM")
+  JO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeJO")
+  JP @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeJP")
+  KE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKE")
+  KG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKG")
+  KH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKH")
+  KI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKI")
+  KM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKM")
+  KN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKN")
+  KP @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKP")
+  KR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKR")
+  KW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKW")
+  KY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKY")
+  KZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeKZ")
+  LA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLA")
+  LB @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLB")
+  LC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLC")
+  LI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLI")
+  LK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLK")
+  LR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLR")
+  LS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLS")
+  LT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLT")
+  LU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLU")
+  LV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLV")
+  LY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeLY")
+  MA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMA")
+  MC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMC")
+  MD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMD")
+  ME @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeME")
+  MF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMF")
+  MG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMG")
+  MH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMH")
+  MK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMK")
+  ML @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeML")
+  MM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMM")
+  MN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMN")
+  MO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMO")
+  MP @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMP")
+  MQ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMQ")
+  MR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMR")
+  MS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMS")
+  MT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMT")
+  MU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMU")
+  MV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMV")
+  MW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMW")
+  MX @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMX")
+  MY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMY")
+  MZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeMZ")
+  NA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNA")
+  NC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNC")
+  NE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNE")
+  NF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNF")
+  NG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNG")
+  NI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNI")
+  NL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNL")
+  NO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNO")
+  NP @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNP")
+  NR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNR")
+  NU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNU")
+  NZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeNZ")
+  OM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeOM")
+  PA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePA")
+  PE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePE")
+  PF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePF")
+  PG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePG")
+  PH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePH")
+  PK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePK")
+  PL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePL")
+  PM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePM")
+  PN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePN")
+  PR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePR")
+  PS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePS")
+  PT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePT")
+  PW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePW")
+  PY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodePY")
+  QA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeQA")
+  RE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeRE")
+  RO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeRO")
+  RS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeRS")
+  RU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeRU")
+  RW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeRW")
+  SA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSA")
+  SB @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSB")
+  SC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSC")
+  SD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSD")
+  SE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSE")
+  SG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSG")
+  SH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSH")
+  SI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSI")
+  SJ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSJ")
+  SK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSK")
+  SL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSL")
+  SM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSM")
+  SN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSN")
+  SO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSO")
+  SR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSR")
+  SS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSS")
+  ST @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeST")
+  SV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSV")
+  SX @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSX")
+  SY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSY")
+  SZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeSZ")
+  TC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTC")
+  TD @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTD")
+  TF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTF")
+  TG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTG")
+  TH @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTH")
+  TJ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTJ")
+  TK @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTK")
+  TL @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTL")
+  TM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTM")
+  TN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTN")
+  TO @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTO")
+  TR @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTR")
+  TT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTT")
+  TV @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTV")
+  TW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTW")
+  TZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeTZ")
+  UA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUA")
+  UG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUG")
+  UM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUM")
+  US @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUS")
+  UY @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUY")
+  UZ @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeUZ")
+  VA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVA")
+  VC @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVC")
+  VE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVE")
+  VG @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVG")
+  VI @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVI")
+  VN @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVN")
+  VU @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeVU")
+  WF @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeWF")
+  WS @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeWS")
+  YE @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeYE")
+  YT @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeYT")
+  ZA @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeZA")
+  ZM @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeZM")
+  ZW @goEnum(value: "go.probo.inc/probo/pkg/coredata.CountryCodeZW")
 }
 
 enum VendorCategory
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.VendorCategory") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorCategory") {
   ANALYTICS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryAnalytics"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryAnalytics"
     )
   CLOUD_MONITORING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryCloudMonitoring"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCloudMonitoring"
     )
   CLOUD_PROVIDER
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryCloudProvider"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCloudProvider"
     )
   COLLABORATION
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryCollaboration"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCollaboration"
     )
   CUSTOMER_SUPPORT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryCustomerSupport"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCustomerSupport"
     )
   DATA_STORAGE_AND_PROCESSING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryDataStorageAndProcessing"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryDataStorageAndProcessing"
     )
   DOCUMENT_MANAGEMENT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryDocumentManagement"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryDocumentManagement"
     )
   EMPLOYEE_MANAGEMENT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryEmployeeManagement"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEmployeeManagement"
     )
   ENGINEERING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryEngineering"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEngineering"
     )
   FINANCE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryFinance"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryFinance"
     )
   IDENTITY_PROVIDER
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryIdentityProvider"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIdentityProvider"
     )
-  IT @goEnum(value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryIT")
+  IT @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIT")
   MARKETING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryMarketing"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryMarketing"
     )
   OFFICE_OPERATIONS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryOfficeOperations"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOfficeOperations"
     )
   OTHER
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryOther")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOther")
   PASSWORD_MANAGEMENT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryPasswordManagement"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryPasswordManagement"
     )
   PRODUCT_AND_DESIGN
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryProductAndDesign"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryProductAndDesign"
     )
   PROFESSIONAL_SERVICES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryProfessionalServices"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryProfessionalServices"
     )
   RECRUITING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryRecruiting"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryRecruiting"
     )
   SALES
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.VendorCategorySales")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySales")
   SECURITY
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategorySecurity"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategorySecurity"
     )
   VERSION_CONTROL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorCategoryVersionControl"
+      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryVersionControl"
     )
 }
 
 enum DocumentType
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.DocumentType") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentType") {
   OTHER
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeOther")
-  ISMS @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeISMS")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")
+  ISMS @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeISMS")
   POLICY
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DocumentTypePolicy")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePolicy")
   PROCEDURE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentTypeProcedure"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentTypeProcedure"
     )
 }
 
 enum DocumentClassification
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.DocumentClassification"
+    model: "go.probo.inc/probo/pkg/coredata.DocumentClassification"
   ) {
   PUBLIC
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationPublic"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentClassificationPublic"
     )
   INTERNAL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationInternal"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentClassificationInternal"
     )
   CONFIDENTIAL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationConfidential"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentClassificationConfidential"
     )
   SECRET
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentClassificationSecret"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentClassificationSecret"
     )
 }
 
 enum AssetType
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.AssetType") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.AssetType") {
   PHYSICAL
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AssetTypePhysical")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetTypePhysical")
   VIRTUAL
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.AssetTypeVirtual")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetTypeVirtual")
 }
 
 enum AssetOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.AssetOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.AssetOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AssetOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.AssetOrderFieldCreatedAt"
     )
   AMOUNT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AssetOrderFieldAmount"
+      value: "go.probo.inc/probo/pkg/coredata.AssetOrderFieldAmount"
     )
 }
 
 enum DatumOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.DatumOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.DatumOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DatumOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldCreatedAt"
     )
   NAME
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.DatumOrderFieldName")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldName")
   DATA_CLASSIFICATION
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DatumOrderFieldDataClassification"
+      value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldDataClassification"
     )
 }
 
 enum DataClassification
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.DataClassification") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.DataClassification") {
   PUBLIC
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DataClassificationPublic"
+      value: "go.probo.inc/probo/pkg/coredata.DataClassificationPublic"
     )
   INTERNAL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DataClassificationInternal"
+      value: "go.probo.inc/probo/pkg/coredata.DataClassificationInternal"
     )
   CONFIDENTIAL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DataClassificationConfidential"
+      value: "go.probo.inc/probo/pkg/coredata.DataClassificationConfidential"
     )
   SECRET
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DataClassificationSecret"
+      value: "go.probo.inc/probo/pkg/coredata.DataClassificationSecret"
     )
 }
 
 enum ControlStatus
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.ControlStatus") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ControlStatus") {
   INCLUDED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ControlStatusIncluded"
+      value: "go.probo.inc/probo/pkg/coredata.ControlStatusIncluded"
     )
   EXCLUDED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ControlStatusExcluded"
+      value: "go.probo.inc/probo/pkg/coredata.ControlStatusExcluded"
     )
 }
 
 enum AuditOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.AuditOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldCreatedAt"
     )
   VALID_FROM
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditOrderFieldValidFrom"
+      value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldValidFrom"
     )
   VALID_UNTIL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditOrderFieldValidUntil"
+      value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldValidUntil"
     )
   STATE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.AuditOrderFieldState"
+      value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldState"
     )
 }
 
 enum NonconformityOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.NonconformityOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.NonconformityOrderFieldCreatedAt"
     )
   REFERENCE_ID
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldReferenceId"
+      value: "go.probo.inc/probo/pkg/coredata.NonconformityOrderFieldReferenceId"
     )
   DATE_IDENTIFIED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldDateIdentified"
+      value: "go.probo.inc/probo/pkg/coredata.NonconformityOrderFieldDateIdentified"
     )
   DUE_DATE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldDueDate"
+      value: "go.probo.inc/probo/pkg/coredata.NonconformityOrderFieldDueDate"
     )
   STATUS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.NonconformityOrderFieldStatus"
+      value: "go.probo.inc/probo/pkg/coredata.NonconformityOrderFieldStatus"
     )
 }
 
 enum ObligationOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ObligationOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.ObligationOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldCreatedAt"
     )
   LAST_REVIEW_DATE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldLastReviewDate"
+      value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldLastReviewDate"
     )
   DUE_DATE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldDueDate"
+      value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldDueDate"
     )
   STATUS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ObligationOrderFieldStatus"
+      value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldStatus"
     )
 }
 
 enum ContinualImprovementOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderFieldCreatedAt"
     )
   REFERENCE_ID
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldReferenceId"
+      value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderFieldReferenceId"
     )
   TARGET_DATE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldTargetDate"
+      value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderFieldTargetDate"
     )
   STATUS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldStatus"
+      value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderFieldStatus"
     )
   PRIORITY
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ContinualImprovementOrderFieldPriority"
+      value: "go.probo.inc/probo/pkg/coredata.ContinualImprovementOrderFieldPriority"
     )
 }
 
 enum ProcessingActivityOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityOrderFieldCreatedAt"
     )
   NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.ProcessingActivityOrderFieldName"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityOrderFieldName"
     )
 }
 
 enum TrustCenterAccessOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterAccessOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterAccessOrderFieldCreatedAt"
     )
 }
 
 enum TrustCenterDocumentAccessOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterDocumentAccessOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterDocumentAccessOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterDocumentAccessOrderFieldCreatedAt"
     )
 }
 
 enum TrustCenterReferenceOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderField"
   ) {
   RANK
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldRank"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderFieldRank"
     )
   NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldName"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderFieldName"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderFieldCreatedAt"
     )
   UPDATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterReferenceOrderFieldUpdatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterReferenceOrderFieldUpdatedAt"
     )
 }
 
 enum TrustCenterFileOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.TrustCenterFileOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderField"
   ) {
   NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterFileOrderFieldName"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderFieldName"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterFileOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderFieldCreatedAt"
     )
   UPDATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.TrustCenterFileOrderFieldUpdatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderFieldUpdatedAt"
     )
 }
 
 enum SnapshotsType
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.SnapshotsType") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SnapshotsType") {
   RISKS
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeRisks")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeRisks")
   VENDORS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeVendors"
+      value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeVendors"
     )
   ASSETS
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeAssets")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeAssets")
   DATA
-    @goEnum(value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeData")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeData")
   NONCONFORMITIES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeNonconformities"
+      value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeNonconformities"
     )
   OBLIGATIONS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeObligations"
+      value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeObligations"
     )
   CONTINUAL_IMPROVEMENTS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeContinualImprovements"
+      value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeContinualImprovements"
     )
   PROCESSING_ACTIVITIES
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotsTypeProcessingActivities"
+      value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeProcessingActivities"
     )
 }
 
 enum SnapshotOrderField
-  @goModel(model: "github.com/getprobo/probo/pkg/coredata.SnapshotOrderField") {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SnapshotOrderField") {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldCreatedAt"
     )
   NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotOrderFieldName"
+      value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldName"
     )
   TYPE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.SnapshotOrderFieldType"
+      value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldType"
     )
 }
 
 enum MembershipOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.MembershipOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField"
   ) {
   FULL_NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MembershipOrderFieldFullName"
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
     )
   EMAIL_ADDRESS
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
     )
   ROLE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MembershipOrderFieldRole"
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.MembershipOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldCreatedAt"
     )
 }
 
 enum InvitationOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.InvitationOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField"
   ) {
   FULL_NAME
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldFullName"
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldFullName"
     )
   EMAIL
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldEmail"
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldEmail"
     )
   ROLE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldRole"
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldRole"
     )
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
     )
   EXPIRES_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldExpiresAt"
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldExpiresAt"
     )
   ACCEPTED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.InvitationOrderFieldAcceptedAt"
+      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldAcceptedAt"
     )
 }
 
 # Input Types
 input UserOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.UserOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.UserOrderBy"
   ) {
   direction: OrderDirection!
   field: UserOrderField!
@@ -11094,7 +11094,7 @@ input UserOrder
 
 input PeopleOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.PeopleOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PeopleOrderBy"
   ) {
   direction: OrderDirection!
   field: PeopleOrderField!
@@ -11102,7 +11102,7 @@ input PeopleOrder
 
 input VendorOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.VendorOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.VendorOrderBy"
   ) {
   direction: OrderDirection!
   field: VendorOrderField!
@@ -11110,7 +11110,7 @@ input VendorOrder
 
 input FrameworkOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.FrameworkOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.FrameworkOrderBy"
   ) {
   direction: OrderDirection!
   field: FrameworkOrderField!
@@ -11118,7 +11118,7 @@ input FrameworkOrder
 
 input ControlOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ControlOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ControlOrderBy"
   ) {
   direction: OrderDirection!
   field: ControlOrderField!
@@ -11126,7 +11126,7 @@ input ControlOrder
 
 input MeasureOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.MeasureOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MeasureOrderBy"
   ) {
   direction: OrderDirection!
   field: MeasureOrderField!
@@ -11134,7 +11134,7 @@ input MeasureOrder
 
 input TaskOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TaskOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TaskOrderBy"
   ) {
   direction: OrderDirection!
   field: TaskOrderField!
@@ -11142,7 +11142,7 @@ input TaskOrder
 
 input DocumentOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.DocumentOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentOrderBy"
   ) {
   direction: OrderDirection!
   field: DocumentOrderField!
@@ -11150,7 +11150,7 @@ input DocumentOrder
 
 input RiskOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.RiskOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskOrderBy"
   ) {
   direction: OrderDirection!
   field: RiskOrderField!
@@ -11158,7 +11158,7 @@ input RiskOrder
 
 input AuditOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.AuditOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AuditOrderBy"
   ) {
   direction: OrderDirection!
   field: AuditOrderField!
@@ -11166,7 +11166,7 @@ input AuditOrder
 
 input NonconformityOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.NonconformityOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.NonconformityOrderBy"
   ) {
   direction: OrderDirection!
   field: NonconformityOrderField!
@@ -11174,7 +11174,7 @@ input NonconformityOrder
 
 input ObligationOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ObligationOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ObligationOrderBy"
   ) {
   direction: OrderDirection!
   field: ObligationOrderField!
@@ -11182,7 +11182,7 @@ input ObligationOrder
 
 input ContinualImprovementOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ContinualImprovementOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ContinualImprovementOrderBy"
   ) {
   direction: OrderDirection!
   field: ContinualImprovementOrderField!
@@ -11190,7 +11190,7 @@ input ContinualImprovementOrder
 
 input ProcessingActivityOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityOrderBy"
   ) {
   direction: OrderDirection!
   field: ProcessingActivityOrderField!
@@ -11198,7 +11198,7 @@ input ProcessingActivityOrder
 
 input TrustCenterAccessOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterAccessOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterAccessOrderBy"
   ) {
   direction: OrderDirection!
   field: TrustCenterAccessOrderField!
@@ -11206,7 +11206,7 @@ input TrustCenterAccessOrder
 
 input TrustCenterDocumentAccessOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccessOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccessOrderBy"
   ) {
   direction: OrderDirection!
   field: TrustCenterDocumentAccessOrderField!
@@ -11214,7 +11214,7 @@ input TrustCenterDocumentAccessOrder
 
 input TrustCenterReferenceOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterReferenceOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterReferenceOrderBy"
   ) {
   direction: OrderDirection!
   field: TrustCenterReferenceOrderField!
@@ -11222,7 +11222,7 @@ input TrustCenterReferenceOrder
 
 input TrustCenterFileOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterFileOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterFileOrderBy"
   ) {
   direction: OrderDirection!
   field: TrustCenterFileOrderField!
@@ -11230,7 +11230,7 @@ input TrustCenterFileOrder
 
 input EvidenceOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.EvidenceOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EvidenceOrderBy"
   ) {
   direction: OrderDirection!
   field: EvidenceOrderField!
@@ -11238,7 +11238,7 @@ input EvidenceOrder
 
 input VendorComplianceReportOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.VendorComplianceReportOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.VendorComplianceReportOrderBy"
   ) {
   direction: OrderDirection!
   field: VendorComplianceReportOrderField!
@@ -11246,7 +11246,7 @@ input VendorComplianceReportOrder
 
 input VendorContactOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.VendorContactOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.VendorContactOrderBy"
   ) {
   direction: OrderDirection!
   field: VendorContactOrderField!
@@ -11254,7 +11254,7 @@ input VendorContactOrder
 
 input VendorServiceOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.VendorServiceOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.VendorServiceOrderBy"
   ) {
   direction: OrderDirection!
   field: VendorServiceOrderField!
@@ -11267,7 +11267,7 @@ input OrganizationOrder {
 
 input DocumentVersionOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.DocumentVersionOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentVersionOrderBy"
   ) {
   direction: OrderDirection!
   field: DocumentVersionOrderField!
@@ -11275,7 +11275,7 @@ input DocumentVersionOrder
 
 input SnapshotOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.SnapshotOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SnapshotOrderBy"
   ) {
   direction: OrderDirection!
   field: SnapshotOrderField!
@@ -11283,7 +11283,7 @@ input SnapshotOrder
 
 input MembershipOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.MembershipOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MembershipOrderBy"
   ) {
   direction: OrderDirection!
   field: MembershipOrderField!
@@ -12203,7 +12203,7 @@ type TrustCenterAccess implements Node {
 
 type TrustCenterDocumentAccess
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccess"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccess"
   ) {
   active: Boolean!
   requested: Boolean!
@@ -12214,7 +12214,7 @@ type TrustCenterDocumentAccess
 
 type TrustCenterDocumentAccessConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccessConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterDocumentAccessConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [TrustCenterDocumentAccessEdge!]!
@@ -12249,7 +12249,7 @@ type TrustCenterReference implements Node {
 
 type TrustCenterReferenceConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterReferenceConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterReferenceConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [TrustCenterReferenceEdge!]!
@@ -12274,7 +12274,7 @@ type TrustCenterFile implements Node {
 
 type TrustCenterFileConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TrustCenterFileConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TrustCenterFileConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [TrustCenterFileEdge!]!
@@ -12288,7 +12288,7 @@ type TrustCenterFileEdge {
 
 type UserConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.UserConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.UserConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [UserEdge!]!
@@ -12297,7 +12297,7 @@ type UserConnection
 
 type MembershipConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.MembershipConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MembershipConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [MembershipEdge!]!
@@ -12316,7 +12316,7 @@ type UserEdge {
 
 type PeopleConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.PeopleConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.PeopleConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [PeopleEdge!]!
@@ -12330,7 +12330,7 @@ type PeopleEdge {
 
 type VendorConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.VendorConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.VendorConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [VendorEdge!]!
@@ -12344,7 +12344,7 @@ type VendorEdge {
 
 type FrameworkConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.FrameworkConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.FrameworkConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [FrameworkEdge!]!
@@ -12358,7 +12358,7 @@ type FrameworkEdge {
 
 type ControlConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ControlConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ControlConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [ControlEdge!]!
@@ -12372,7 +12372,7 @@ type ControlEdge {
 
 type MeasureConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.MeasureConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.MeasureConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [MeasureEdge!]!
@@ -12386,7 +12386,7 @@ type MeasureEdge {
 
 type TaskConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.TaskConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.TaskConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [TaskEdge!]!
@@ -12400,7 +12400,7 @@ type TaskEdge {
 
 type EvidenceConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.EvidenceConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.EvidenceConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [EvidenceEdge!]!
@@ -12414,7 +12414,7 @@ type EvidenceEdge {
 
 type DocumentConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.DocumentConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DocumentConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [DocumentEdge!]!
@@ -12428,7 +12428,7 @@ type DocumentEdge {
 
 type RiskConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.RiskConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.RiskConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [RiskEdge!]!
@@ -12492,7 +12492,7 @@ type DocumentVersionEdge {
 
 type DatumConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.DatumConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DatumConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [DatumEdge!]!
@@ -12506,7 +12506,7 @@ type DatumEdge {
 
 type AuditConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.AuditConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AuditConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [AuditEdge!]!
@@ -12520,7 +12520,7 @@ type AuditEdge {
 
 type NonconformityConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.NonconformityConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.NonconformityConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [NonconformityEdge!]!
@@ -12533,7 +12533,7 @@ type NonconformityEdge {
 }
 type ObligationConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ObligationConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ObligationConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [ObligationEdge!]!
@@ -12547,7 +12547,7 @@ type ObligationEdge {
 
 type ContinualImprovementConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ContinualImprovementConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ContinualImprovementConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [ContinualImprovementEdge!]!
@@ -12561,7 +12561,7 @@ type ContinualImprovementEdge {
 
 type ProcessingActivityConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.ProcessingActivityConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.ProcessingActivityConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [ProcessingActivityEdge!]!
@@ -12575,7 +12575,7 @@ type ProcessingActivityEdge {
 
 type SnapshotConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.SnapshotConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.SnapshotConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [SnapshotEdge!]!
@@ -12599,7 +12599,7 @@ type File {
 
 type InvitationConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.InvitationConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.InvitationConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [InvitationEdge!]!
@@ -14077,15 +14077,15 @@ type VendorRiskAssessment implements Node {
 
 enum VendorRiskAssessmentOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.VendorRiskAssessmentOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.VendorRiskAssessmentOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorRiskAssessmentOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.VendorRiskAssessmentOrderFieldCreatedAt"
     )
   EXPIRES_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.VendorRiskAssessmentOrderFieldExpiresAt"
+      value: "go.probo.inc/probo/pkg/coredata.VendorRiskAssessmentOrderFieldExpiresAt"
     )
 }
 
@@ -14155,29 +14155,29 @@ input DocumentVersionSignatureFilter {
 
 enum DocumentVersionSignatureState
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureState"
+    model: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureState"
   ) {
   REQUESTED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureStateRequested"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureStateRequested"
     )
   SIGNED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureStateSigned"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureStateSigned"
     )
 }
 
 enum DocumentVersionSignatureOrderField
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureOrderField"
+    model: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureOrderField"
   ) {
   CREATED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureOrderFieldCreatedAt"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureOrderFieldCreatedAt"
     )
   SIGNED_AT
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.DocumentVersionSignatureOrderFieldSignedAt"
+      value: "go.probo.inc/probo/pkg/coredata.DocumentVersionSignatureOrderFieldSignedAt"
     )
 }
 
@@ -14338,7 +14338,7 @@ type Asset implements Node {
 
 type AssetConnection
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.AssetConnection"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetConnection"
   ) {
   totalCount: Int! @goField(forceResolver: true)
   edges: [AssetEdge!]!
@@ -14352,7 +14352,7 @@ type AssetEdge {
 
 input AssetOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.AssetOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.AssetOrderBy"
   ) {
   direction: OrderDirection!
   field: AssetOrderField!
@@ -14414,7 +14414,7 @@ type Datum implements Node {
 
 input DatumOrder
   @goModel(
-    model: "github.com/getprobo/probo/pkg/server/api/console/v1/types.DatumOrderBy"
+    model: "go.probo.inc/probo/pkg/server/api/console/v1/types.DatumOrderBy"
   ) {
   direction: OrderDirection!
   field: DatumOrderField!
@@ -14531,31 +14531,31 @@ type DeleteSnapshotPayload {
 
 enum SSLStatus
   @goModel(
-    model: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatus"
+    model: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatus"
   ) {
   PENDING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusPending"
+      value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusPending"
     )
   PROVISIONING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusProvisioning"
+      value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusProvisioning"
     )
   ACTIVE
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusActive"
+      value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusActive"
     )
   RENEWING
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusRenewing"
+      value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusRenewing"
     )
   EXPIRED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusExpired"
+      value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusExpired"
     )
   FAILED
     @goEnum(
-      value: "github.com/getprobo/probo/pkg/coredata.CustomDomainSSLStatusFailed"
+      value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusFailed"
     )
 }
 

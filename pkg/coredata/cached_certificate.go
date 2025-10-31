@@ -19,8 +19,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/getprobo/probo/pkg/crypto/cipher"
-	"github.com/getprobo/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/crypto/cipher"
+	"go.probo.inc/probo/pkg/gid"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
 )
