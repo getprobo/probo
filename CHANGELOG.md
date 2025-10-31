@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Fixed
+
+- Fix organization creation
+
 ## [0.82.0] - 2025-10-31
 
 ### Added
