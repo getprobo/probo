@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Add SAML support
+- Add vendors to processing activities
 
 ## [0.81.0] - 2025-10-29
 
