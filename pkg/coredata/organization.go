@@ -217,7 +217,7 @@ FROM
 INNER JOIN
 	user_org ON organizations.id = user_org.organization_id
 ORDER BY
-	created_at DESC
+	name ASC
 `
 
 	args := pgx.StrictNamedArgs{"user_id": userID}
