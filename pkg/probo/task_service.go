@@ -24,6 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -51,10 +52,39 @@ type (
 	}
 )
 
+func (ctr *CreateTaskRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ctr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(ctr.MeasureID, "measure_id", validator.GID(coredata.MeasureEntityType))
+	v.Check(ctr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ctr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(ctr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
+	v.Check(ctr.AssignedToID, "assigned_to_id", validator.GID(coredata.PeopleEntityType))
+
+	return v.Error()
+}
+
+func (utr *UpdateTaskRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(utr.TaskID, "task_id", validator.Required(), validator.GID(coredata.TaskEntityType))
+	v.Check(utr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(utr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(utr.TimeEstimate, "time_estimate", validator.RangeDuration(0, 1000*time.Hour))
+	v.Check(utr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
+
+	return v.Error()
+}
+
 func (s TaskService) Create(
 	ctx context.Context,
 	req CreateTaskRequest,
 ) (*coredata.Task, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	taskID := gid.New(s.svc.scope.GetTenantID(), coredata.TaskEntityType)
 
@@ -180,6 +210,9 @@ func (s TaskService) Update(
 	ctx context.Context,
 	req UpdateTaskRequest,
 ) (*coredata.Task, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
 
 	task := &coredata.Task{}
 

@@ -19,12 +19,13 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -39,6 +40,16 @@ type (
 		File      FileUpload
 	}
 )
+
+func (umer *UploadMeasureEvidenceRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(umer.MeasureID, "measure_id", validator.Required(), validator.GID(coredata.MeasureEntityType))
+	v.Check(umer.URL, "url", validator.URL())
+	v.Check(umer.File, "file", validator.Required())
+
+	return v.Error()
+}
 
 func (s EvidenceService) Get(
 	ctx context.Context,
@@ -68,6 +79,10 @@ func (s EvidenceService) UploadMeasureEvidence(
 	ctx context.Context,
 	req UploadMeasureEvidenceRequest,
 ) (*coredata.Evidence, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	now := time.Now()
 	evidenceID := gid.New(s.svc.scope.GetTenantID(), coredata.EvidenceEntityType)
 

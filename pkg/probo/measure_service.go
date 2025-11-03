@@ -24,6 +24,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -68,6 +69,29 @@ type (
 		} `json:"measures"`
 	}
 )
+
+func (cmr *CreateMeasureRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cmr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cmr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(cmr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(cmr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
+
+	return v.Error()
+}
+
+func (umr *UpdateMeasureRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(umr.ID, "id", validator.Required(), validator.GID(coredata.MeasureEntityType))
+	v.Check(umr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(umr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(umr.Category, "category", validator.SafeText(TitleMaxLength))
+	v.Check(umr.State, "state", validator.OneOfSlice(coredata.MeasureStates()))
+
+	return v.Error()
+}
 
 func (s MeasureService) CountForRiskID(
 	ctx context.Context,
@@ -399,6 +423,10 @@ func (s MeasureService) Update(
 	ctx context.Context,
 	req UpdateMeasureRequest,
 ) (*coredata.Measure, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	measure := &coredata.Measure{ID: req.ID}
 
 	err := s.svc.pg.WithTx(
@@ -444,6 +472,10 @@ func (s MeasureService) Create(
 	ctx context.Context,
 	req CreateMeasureRequest,
 ) (*coredata.Measure, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	now := time.Now()
 	var measure *coredata.Measure
 	organization := &coredata.Organization{}

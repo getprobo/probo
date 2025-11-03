@@ -26,6 +26,13 @@ const (
 	ControlStatusExcluded ControlStatus = "EXCLUDED"
 )
 
+func ControlStatuses() []ControlStatus {
+	return []ControlStatus{
+		ControlStatusIncluded,
+		ControlStatusExcluded,
+	}
+}
+
 func (cs ControlStatus) String() string {
 	return string(cs)
 }

@@ -36,7 +36,7 @@ import { getAuditStateLabel, getAuditStateVariant, auditStates, fileSize, sprint
 import type { AuditGraphNodeQuery } from "/hooks/graph/__generated__/AuditGraphNodeQuery.graphql";
 
 const updateAuditSchema = z.object({
-  name: z.string().optional(),
+  name: z.string().nullable().optional(),
   validFrom: z.string().optional(),
   validUntil: z.string().optional(),
   state: z.enum(["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "REJECTED", "OUTDATED"]),
@@ -63,7 +63,7 @@ export default function AuditDetailsPage(props: Props) {
 
   const { control, formState, handleSubmit, register, reset } = useFormWithSchema(updateAuditSchema, {
     defaultValues: {
-      name: auditEntry.name || "",
+      name: auditEntry.name || null,
       validFrom: auditEntry.validFrom?.split('T')[0] || "",
       validUntil: auditEntry.validUntil?.split('T')[0] || "",
       state: auditEntry.state || "NOT_STARTED",
@@ -82,7 +82,7 @@ export default function AuditDetailsPage(props: Props) {
     try {
       await updateAudit({
         id: auditEntry.id,
-        name: formData.name,
+        name: formData.name || null,
         validFrom: formatDatetime(formData.validFrom) ?? null,
         validUntil: formatDatetime(formData.validUntil) ?? null,
         state: formData.state,

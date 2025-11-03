@@ -3,6 +3,7 @@ import { useMutation } from "react-relay";
 import { useConfirm } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
 import { promisifyMutation, sprintf } from "@probo/helpers";
+import { useMutationWithToasts } from "../useMutationWithToasts";
 
 export const assetsQuery = graphql`
   query AssetGraphListQuery($organizationId: ID!, $snapshotId: ID) {
@@ -197,8 +198,11 @@ export const useCreateAsset = (connectionId: string) => {
 };
 
 export const useUpdateAsset = () => {
-  const [mutate] = useMutation(updateAssetMutation);
   const { __ } = useTranslate();
+  const [mutate] = useMutationWithToasts(updateAssetMutation, {
+    successMessage: __("Asset updated successfully"),
+    errorMessage: __("Failed to update asset"),
+  });
 
   return (input: {
     id: string;
@@ -213,7 +217,7 @@ export const useUpdateAsset = () => {
       return alert(__("Failed to update asset: asset ID is required"));
     }
 
-    return promisifyMutation(mutate)({
+    return mutate({
       variables: {
         input,
       },

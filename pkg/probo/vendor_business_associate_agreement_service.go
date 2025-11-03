@@ -25,10 +25,11 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -48,6 +49,23 @@ type (
 		ValidUntil **time.Time
 	}
 )
+
+func (vbaacr *VendorBusinessAssociateAgreementCreateRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(vbaacr.FileName, "file_name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(vbaacr.ValidUntil, "valid_until", validator.After(vbaacr.ValidFrom))
+
+	return v.Error()
+}
+
+func (vbaaur *VendorBusinessAssociateAgreementUpdateRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(vbaaur.ValidUntil, "valid_until", validator.After(vbaaur.ValidFrom))
+
+	return v.Error()
+}
 
 func (s VendorBusinessAssociateAgreementService) GetByVendorID(
 	ctx context.Context,
@@ -85,6 +103,10 @@ func (s VendorBusinessAssociateAgreementService) Upload(
 	vendorID gid.GID,
 	req *VendorBusinessAssociateAgreementCreateRequest,
 ) (*coredata.VendorBusinessAssociateAgreement, *coredata.File, error) {
+	if err := req.Validate(); err != nil {
+		return nil, nil, err
+	}
+
 	objectKey, err := uuid.NewV7()
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot generate object key: %w", err)
@@ -255,6 +277,10 @@ func (s VendorBusinessAssociateAgreementService) Update(
 	vendorID gid.GID,
 	req *VendorBusinessAssociateAgreementUpdateRequest,
 ) (*coredata.VendorBusinessAssociateAgreement, *coredata.File, error) {
+	if err := req.Validate(); err != nil {
+		return nil, nil, err
+	}
+
 	existingAgreement := &coredata.VendorBusinessAssociateAgreement{}
 	file := &coredata.File{}
 

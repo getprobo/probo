@@ -31,6 +31,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -54,11 +55,29 @@ type (
 		LogoFile    *File
 		Rank        *int
 	}
-
-	DeleteTrustCenterReferenceRequest struct {
-		ID gid.GID
-	}
 )
+
+func (ctcrr *CreateTrustCenterReferenceRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ctcrr.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
+	v.Check(ctcrr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ctcrr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(ctcrr.WebsiteURL, "website_url", validator.Required(), validator.SafeText(2048))
+
+	return v.Error()
+}
+
+func (utcrr *UpdateTrustCenterReferenceRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(utcrr.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterReferenceEntityType))
+	v.Check(utcrr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(utcrr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(utcrr.WebsiteURL, "website_url", validator.SafeText(2048))
+
+	return v.Error()
+}
 
 func (s TrustCenterReferenceService) ListForTrustCenterID(
 	ctx context.Context,
@@ -132,12 +151,8 @@ func (s TrustCenterReferenceService) Create(
 	ctx context.Context,
 	req *CreateTrustCenterReferenceRequest,
 ) (*coredata.TrustCenterReference, error) {
-	if req.Name == "" {
-		return nil, fmt.Errorf("name is required")
-	}
-
-	if req.WebsiteURL == "" {
-		return nil, fmt.Errorf("website URL is required")
+	if err := req.Validate(); err != nil {
+		return nil, err
 	}
 
 	now := time.Now()
@@ -185,19 +200,14 @@ func (s TrustCenterReferenceService) Update(
 	ctx context.Context,
 	req *UpdateTrustCenterReferenceRequest,
 ) (*coredata.TrustCenterReference, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 
 	var reference *coredata.TrustCenterReference
 	var newFileID *gid.GID
-
-	if req.Name != nil && *req.Name == "" {
-		return nil, fmt.Errorf("name is required")
-	}
-
-	if req.WebsiteURL != nil && *req.WebsiteURL == "" {
-		return nil, fmt.Errorf("website URL is required")
-	}
-
 	var logoKey string
 
 	err := s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
@@ -254,12 +264,12 @@ func (s TrustCenterReferenceService) Update(
 
 func (s TrustCenterReferenceService) Delete(
 	ctx context.Context,
-	req *DeleteTrustCenterReferenceRequest,
+	trustCenterReferenceID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(ctx, func(tx pg.Conn) error {
 		reference := &coredata.TrustCenterReference{}
 
-		if err := reference.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+		if err := reference.LoadByID(ctx, tx, s.svc.scope, trustCenterReferenceID); err != nil {
 			return fmt.Errorf("cannot load trust center reference: %w", err)
 		}
 

@@ -26,6 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/html2pdf"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/statelesstoken"
+	"go.probo.inc/probo/pkg/validator"
 	"go.probo.inc/probo/pkg/watermarkpdf"
 )
 
@@ -85,6 +86,42 @@ type (
 		Changelog   string
 	}
 )
+
+func (cdr *CreateDocumentRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cdr.Title, "title", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(cdr.Content, "content", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(cdr.Classification, "classification", validator.Required(), validator.OneOfSlice(coredata.DocumentClassifications()))
+	v.Check(cdr.DocumentType, "document_type", validator.Required(), validator.OneOfSlice(coredata.DocumentTypes()))
+	v.Check(cdr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+
+	return v.Error()
+}
+
+func (udr *UpdateDocumentRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(udr.DocumentID, "document_id", validator.Required(), validator.GID(coredata.DocumentEntityType))
+	v.Check(udr.Title, "title", validator.SafeText(TitleMaxLength))
+	v.Check(udr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(udr.Classification, "classification", validator.OneOfSlice(coredata.DocumentClassifications()))
+	v.Check(udr.DocumentType, "document_type", validator.OneOfSlice(coredata.DocumentTypes()))
+	v.Check(udr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+
+	return v.Error()
+}
+
+func (udvr *UpdateDocumentVersionRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(udvr.ID, "id", validator.Required(), validator.GID(coredata.DocumentVersionEntityType))
+	v.Check(udvr.Content, "content", validator.Required(), validator.SafeText(ContentMaxLength))
+
+	return v.Error()
+}
 
 const (
 	TokenTypeSigningRequest = "signing_request"
@@ -308,6 +345,10 @@ func (s *DocumentService) Create(
 	ctx context.Context,
 	req CreateDocumentRequest,
 ) (*coredata.Document, *coredata.DocumentVersion, error) {
+	if err := req.Validate(); err != nil {
+		return nil, nil, err
+	}
+
 	now := time.Now()
 	documentID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentEntityType)
 	documentVersionID := gid.New(s.svc.scope.GetTenantID(), coredata.DocumentVersionEntityType)
@@ -1131,6 +1172,10 @@ func (s *DocumentService) Update(
 	ctx context.Context,
 	req UpdateDocumentRequest,
 ) (*coredata.Document, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	document := &coredata.Document{}
 	people := &coredata.People{}
 	now := time.Now()

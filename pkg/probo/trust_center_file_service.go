@@ -25,12 +25,13 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -53,11 +54,30 @@ type (
 		Category              *string
 		TrustCenterVisibility *coredata.TrustCenterVisibility
 	}
-
-	DeleteTrustCenterFileRequest struct {
-		ID gid.GID
-	}
 )
+
+func (ctcfr *CreateTrustCenterFileRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ctcfr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(ctcfr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ctcfr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ctcfr.File, "file", validator.Required())
+	v.Check(ctcfr.TrustCenterVisibility, "trust_center_visibility", validator.Required(), validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+
+	return v.Error()
+}
+
+func (utcfr *UpdateTrustCenterFileRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(utcfr.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterFileEntityType))
+	v.Check(utcfr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(utcfr.Category, "category", validator.SafeText(TitleMaxLength))
+	v.Check(utcfr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+
+	return v.Error()
+}
 
 func (s TrustCenterFileService) ListForOrganizationID(
 	ctx context.Context,
@@ -134,8 +154,8 @@ func (s TrustCenterFileService) Create(
 	ctx context.Context,
 	req *CreateTrustCenterFileRequest,
 ) (*coredata.TrustCenterFile, error) {
-	if req.Name == "" {
-		return nil, fmt.Errorf("name is required")
+	if err := req.Validate(); err != nil {
+		return nil, err
 	}
 
 	// Validate file
@@ -197,13 +217,13 @@ func (s TrustCenterFileService) Update(
 	ctx context.Context,
 	req *UpdateTrustCenterFileRequest,
 ) (*coredata.TrustCenterFile, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 
 	var file *coredata.TrustCenterFile
-
-	if req.Name != nil && *req.Name == "" {
-		return nil, fmt.Errorf("name is required")
-	}
 
 	err := s.svc.pg.WithTx(
 		ctx,
@@ -242,14 +262,14 @@ func (s TrustCenterFileService) Update(
 
 func (s TrustCenterFileService) Delete(
 	ctx context.Context,
-	req *DeleteTrustCenterFileRequest,
+	trustCenterFileID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
 			file := &coredata.TrustCenterFile{}
 
-			if err := file.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+			if err := file.LoadByID(ctx, tx, s.svc.scope, trustCenterFileID); err != nil {
 				return fmt.Errorf("cannot load trust center file: %w", err)
 			}
 

@@ -28,6 +28,13 @@ const (
 	TaskStateDone
 )
 
+func TaskStates() []TaskState {
+	return []TaskState{
+		TaskStateTodo,
+		TaskStateDone,
+	}
+}
+
 func (ts TaskState) MarshalText() ([]byte, error) {
 	return []byte(ts.String()), nil
 }

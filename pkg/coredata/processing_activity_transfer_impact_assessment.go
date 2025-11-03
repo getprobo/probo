@@ -26,6 +26,13 @@ const (
 	ProcessingActivityTransferImpactAssessmentNotNeeded ProcessingActivityTransferImpactAssessment = "NOT_NEEDED"
 )
 
+func ProcessingActivityTransferImpactAssessments() []ProcessingActivityTransferImpactAssessment {
+	return []ProcessingActivityTransferImpactAssessment{
+		ProcessingActivityTransferImpactAssessmentNeeded,
+		ProcessingActivityTransferImpactAssessmentNotNeeded,
+	}
+}
+
 func (p ProcessingActivityTransferImpactAssessment) String() string {
 	return string(p)
 }

@@ -29,6 +29,16 @@ const (
 	AuditStateOutdated   AuditState = "OUTDATED"
 )
 
+func AuditStates() []AuditState {
+	return []AuditState{
+		AuditStateNotStarted,
+		AuditStateInProgress,
+		AuditStateCompleted,
+		AuditStateRejected,
+		AuditStateOutdated,
+	}
+}
+
 func (as AuditState) String() string {
 	return string(as)
 }

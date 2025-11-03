@@ -80,15 +80,11 @@ export default function AssetDetailsPage(props: Props) {
   const updateAsset = useUpdateAsset();
 
   const onSubmit = handleSubmit(async (formData) => {
-    try {
-      await updateAsset({
-        id: assetEntry?.id,
-        ...formData,
-      });
-      reset(formData);
-    } catch (error) {
-      console.error("Failed to update asset:", error);
-    }
+    await updateAsset({
+      id: assetEntry?.id,
+      ...formData,
+    });
+    reset(formData);
   });
 
   const breadcrumbAssetsUrl = isSnapshotMode && snapshotId

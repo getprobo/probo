@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -90,6 +91,67 @@ type (
 		Notes           *string
 	}
 )
+
+func (cvr *CreateVendorRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cvr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cvr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(cvr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(cvr.HeadquarterAddress, "headquarter_address", validator.SafeText(ContentMaxLength))
+	v.Check(cvr.LegalName, "legal_name", validator.SafeText(TitleMaxLength))
+	v.Check(cvr.WebsiteURL, "website_url", validator.SafeText(2048))
+	v.Check(cvr.Category, "category", validator.OneOfSlice(coredata.VendorCategories()))
+	v.Check(cvr.PrivacyPolicyURL, "privacy_policy_url", validator.SafeText(2048))
+	v.Check(cvr.ServiceLevelAgreementURL, "service_level_agreement_url", validator.SafeText(2048))
+	v.Check(cvr.DataProcessingAgreementURL, "data_processing_agreement_url", validator.SafeText(2048))
+	v.Check(cvr.BusinessAssociateAgreementURL, "business_associate_agreement_url", validator.SafeText(2048))
+	v.Check(cvr.SubprocessorsListURL, "subprocessors_list_url", validator.SafeText(2048))
+	v.Check(cvr.SecurityPageURL, "security_page_url", validator.SafeText(2048))
+	v.Check(cvr.TrustPageURL, "trust_page_url", validator.SafeText(2048))
+	v.Check(cvr.TermsOfServiceURL, "terms_of_service_url", validator.SafeText(2048))
+	v.Check(cvr.StatusPageURL, "status_page_url", validator.SafeText(2048))
+	v.Check(cvr.BusinessOwnerID, "business_owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(cvr.SecurityOwnerID, "security_owner_id", validator.GID(coredata.PeopleEntityType))
+
+	return v.Error()
+}
+
+func (uvr *UpdateVendorRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(uvr.ID, "id", validator.Required(), validator.GID(coredata.VendorEntityType))
+	v.Check(uvr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(uvr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(uvr.HeadquarterAddress, "headquarter_address", validator.SafeText(ContentMaxLength))
+	v.Check(uvr.LegalName, "legal_name", validator.SafeText(TitleMaxLength))
+	v.Check(uvr.WebsiteURL, "website_url", validator.SafeText(2048))
+	v.Check(uvr.Category, "category", validator.OneOfSlice(coredata.VendorCategories()))
+	v.Check(uvr.PrivacyPolicyURL, "privacy_policy_url", validator.SafeText(2048))
+	v.Check(uvr.ServiceLevelAgreementURL, "service_level_agreement_url", validator.SafeText(2048))
+	v.Check(uvr.DataProcessingAgreementURL, "data_processing_agreement_url", validator.SafeText(2048))
+	v.Check(uvr.BusinessAssociateAgreementURL, "business_associate_agreement_url", validator.SafeText(2048))
+	v.Check(uvr.SubprocessorsListURL, "subprocessors_list_url", validator.SafeText(2048))
+	v.Check(uvr.SecurityPageURL, "security_page_url", validator.SafeText(2048))
+	v.Check(uvr.TrustPageURL, "trust_page_url", validator.SafeText(2048))
+	v.Check(uvr.TermsOfServiceURL, "terms_of_service_url", validator.SafeText(2048))
+	v.Check(uvr.StatusPageURL, "status_page_url", validator.SafeText(2048))
+	v.Check(uvr.BusinessOwnerID, "business_owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(uvr.SecurityOwnerID, "security_owner_id", validator.GID(coredata.PeopleEntityType))
+
+	return v.Error()
+}
+
+func (cvrar *CreateVendorRiskAssessmentRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cvrar.VendorID, "vendor_id", validator.Required(), validator.GID(coredata.VendorEntityType))
+	v.Check(cvrar.DataSensitivity, "data_sensitivity", validator.Required(), validator.OneOfSlice(coredata.DataSensitivities()))
+	v.Check(cvrar.BusinessImpact, "business_impact", validator.Required(), validator.OneOfSlice(coredata.BusinessImpacts()))
+	v.Check(cvrar.Notes, "notes", validator.SafeText(ContentMaxLength))
+
+	return v.Error()
+}
 
 func (s VendorService) CountForOrganizationID(
 	ctx context.Context,
@@ -208,6 +270,10 @@ func (s VendorService) Update(
 	ctx context.Context,
 	req UpdateVendorRequest,
 ) (*coredata.Vendor, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	vendor := &coredata.Vendor{}
 
 	err := s.svc.pg.WithTx(
@@ -373,6 +439,10 @@ func (s VendorService) Create(
 	ctx context.Context,
 	req CreateVendorRequest,
 ) (*coredata.Vendor, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	vendor := &coredata.Vendor{
 		ID:                            gid.New(s.svc.scope.GetTenantID(), coredata.VendorEntityType),
@@ -542,6 +612,10 @@ func (s VendorService) CreateRiskAssessment(
 	ctx context.Context,
 	req CreateVendorRiskAssessmentRequest,
 ) (*coredata.VendorRiskAssessment, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	vendorRiskAssessmentID := gid.New(s.svc.scope.GetTenantID(), coredata.VendorRiskAssessmentEntityType)
 
 	now := time.Now()

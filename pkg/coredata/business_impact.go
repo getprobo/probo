@@ -29,6 +29,15 @@ const (
 	BusinessImpactCritical BusinessImpact = "CRITICAL"
 )
 
+func BusinessImpacts() []BusinessImpact {
+	return []BusinessImpact{
+		BusinessImpactLow,
+		BusinessImpactMedium,
+		BusinessImpactHigh,
+		BusinessImpactCritical,
+	}
+}
+
 func (i BusinessImpact) String() string {
 	return string(i)
 }

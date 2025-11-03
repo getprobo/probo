@@ -30,6 +30,17 @@ const (
 	ProcessingActivityLawfulBasisPublicTask           ProcessingActivityLawfulBasis = "PUBLIC_TASK"
 )
 
+func ProcessingActivityLawfulBases() []ProcessingActivityLawfulBasis {
+	return []ProcessingActivityLawfulBasis{
+		ProcessingActivityLawfulBasisLegitimateInterest,
+		ProcessingActivityLawfulBasisConsent,
+		ProcessingActivityLawfulBasisContractualNecessity,
+		ProcessingActivityLawfulBasisLegalObligation,
+		ProcessingActivityLawfulBasisVitalInterests,
+		ProcessingActivityLawfulBasisPublicTask,
+	}
+}
+
 func (p ProcessingActivityLawfulBasis) String() string {
 	return string(p)
 }

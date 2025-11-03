@@ -21,11 +21,12 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type AuditService struct {
@@ -52,20 +53,44 @@ type (
 		TrustCenterVisibility *coredata.TrustCenterVisibility
 	}
 
-	UpdateAuditStateRequest struct {
-		ID    gid.GID
-		State coredata.AuditState
-	}
-
 	UploadAuditReportRequest struct {
 		AuditID gid.GID
 		File    File
 	}
-
-	DeleteAuditReportRequest struct {
-		ID gid.GID
-	}
 )
+
+func (car *CreateAuditRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(car.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
+	v.Check(car.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
+	v.Check(car.State, "state", validator.OneOfSlice(coredata.AuditStates()))
+	v.Check(car.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+
+	return v.Error()
+}
+
+func (uar *UpdateAuditRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(uar.ID, "id", validator.Required(), validator.GID(coredata.AuditEntityType))
+	v.Check(uar.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(uar.ValidUntil, "valid_until", validator.After(uar.ValidFrom))
+	v.Check(uar.State, "state", validator.OneOfSlice(coredata.AuditStates()))
+	v.Check(uar.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+
+	return v.Error()
+}
+
+func (uarr *UploadAuditReportRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(uarr.AuditID, "audit_id", validator.Required(), validator.GID(coredata.AuditEntityType))
+
+	return v.Error()
+}
 
 func (s AuditService) Get(
 	ctx context.Context,
@@ -111,8 +136,11 @@ func (s *AuditService) Create(
 	ctx context.Context,
 	req *CreateAuditRequest,
 ) (*coredata.Audit, error) {
-	now := time.Now()
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
 
+	now := time.Now()
 	audit := &coredata.Audit{
 		ID:                    gid.New(s.svc.scope.GetTenantID(), coredata.AuditEntityType),
 		Name:                  req.Name,
@@ -166,8 +194,11 @@ func (s *AuditService) Update(
 	ctx context.Context,
 	req *UpdateAuditRequest,
 ) (*coredata.Audit, error) {
-	audit := &coredata.Audit{}
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
 
+	audit := &coredata.Audit{}
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(conn pg.Conn) error {

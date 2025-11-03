@@ -29,6 +29,14 @@ const (
 	PeopleKindServiceAccount
 )
 
+func PeopleKinds() []PeopleKind {
+	return []PeopleKind{
+		PeopleKindEmployee,
+		PeopleKindContractor,
+		PeopleKindServiceAccount,
+	}
+}
+
 func (ps PeopleKind) MarshalText() ([]byte, error) {
 	return []byte(ps.String()), nil
 }

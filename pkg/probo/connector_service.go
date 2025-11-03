@@ -22,11 +22,12 @@ import (
 	"text/template"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/connector"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 var (
@@ -54,6 +55,15 @@ type (
 		Connection     connector.Connection
 	}
 )
+
+func (car *CreateConnectorRequest) Validate() error {
+	v := validator.New()
+	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(car.Provider, "provider", validator.Required(), validator.OneOfSlice(coredata.ConnectorProviders()))
+	v.Check(car.Protocol, "protocol", validator.Required(), validator.OneOfSlice(coredata.ConnectorProtocols()))
+	v.Check(car.Connection, "connection", validator.Required())
+	return v.Error()
+}
 
 func (s *ConnectorService) ListForOrganizationID(
 	ctx context.Context,
@@ -88,20 +98,8 @@ func (s *ConnectorService) Create(
 	ctx context.Context,
 	req CreateConnectorRequest,
 ) (*coredata.Connector, error) {
-	if req.OrganizationID == gid.Nil {
-		return nil, fmt.Errorf("organization ID is required")
-	}
-
-	if req.Provider == "" {
-		return nil, fmt.Errorf("connector provider is required")
-	}
-
-	if req.Protocol == "" {
-		return nil, fmt.Errorf("connector protocol is required")
-	}
-
-	if req.Connection == nil {
-		return nil, fmt.Errorf("connection configuration is required")
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	id := gid.New(s.svc.scope.GetTenantID(), coredata.ConnectorEntityType)

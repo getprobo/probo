@@ -25,10 +25,11 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -48,6 +49,23 @@ type (
 		ValidUntil **time.Time
 	}
 )
+
+func (vdpacr *VendorDataPrivacyAgreementCreateRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(vdpacr.FileName, "file_name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(vdpacr.ValidUntil, "valid_until", validator.After(vdpacr.ValidFrom))
+
+	return v.Error()
+}
+
+func (vdpaur *VendorDataPrivacyAgreementUpdateRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(vdpaur.ValidUntil, "valid_until", validator.After(vdpaur.ValidFrom))
+
+	return v.Error()
+}
 
 func (s VendorDataPrivacyAgreementService) GetByVendorID(
 	ctx context.Context,
@@ -85,6 +103,10 @@ func (s VendorDataPrivacyAgreementService) Upload(
 	vendorID gid.GID,
 	req *VendorDataPrivacyAgreementCreateRequest,
 ) (*coredata.VendorDataPrivacyAgreement, *coredata.File, error) {
+	if err := req.Validate(); err != nil {
+		return nil, nil, err
+	}
+
 	objectKey, err := uuid.NewV7()
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot generate object key: %w", err)
@@ -253,6 +275,10 @@ func (s VendorDataPrivacyAgreementService) Update(
 	vendorID gid.GID,
 	req *VendorDataPrivacyAgreementUpdateRequest,
 ) (*coredata.VendorDataPrivacyAgreement, *coredata.File, error) {
+	if err := req.Validate(); err != nil {
+		return nil, nil, err
+	}
+
 	existingAgreement := &coredata.VendorDataPrivacyAgreement{}
 	file := &coredata.File{}
 

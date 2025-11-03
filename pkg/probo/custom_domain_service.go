@@ -18,12 +18,13 @@ import (
 	"context"
 	"fmt"
 
+	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/certmanager"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/crypto/cipher"
 	"go.probo.inc/probo/pkg/gid"
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -39,6 +40,15 @@ type (
 		Domain         string
 	}
 )
+
+func (ccdr *CreateCustomDomainRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ccdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(ccdr.Domain, "domain", validator.Required(), validator.NotEmpty(), validator.Domain())
+
+	return v.Error()
+}
 
 func NewCustomDomainService(
 	svc *TenantService,
@@ -58,6 +68,10 @@ func (s *CustomDomainService) CreateCustomDomain(
 	ctx context.Context,
 	req CreateCustomDomainRequest,
 ) (*coredata.CustomDomain, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	var domain *coredata.CustomDomain
 
 	err := s.svc.pg.WithTx(

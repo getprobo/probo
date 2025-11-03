@@ -30,9 +30,7 @@ func Unauthorized() *gqlerror.Error {
 }
 
 func AuthenticationRequired(details map[string]any) *gqlerror.Error {
-	extensions := map[string]any{
-		"code": "AUTHENTICATION_REQUIRED",
-	}
+	extensions := map[string]any{"code": "AUTHENTICATION_REQUIRED"}
 	maps.Copy(extensions, details)
 
 	return &gqlerror.Error{
@@ -59,11 +57,14 @@ func Conflict(err error) *gqlerror.Error {
 	}
 }
 
-func Invalid(err error) *gqlerror.Error {
+func Invalid(err error, details map[string]any) *gqlerror.Error {
+	extensions := map[string]any{"code": "INVALID_REQUEST"}
+	if details != nil {
+		maps.Copy(extensions, details)
+	}
+
 	return &gqlerror.Error{
-		Message: err.Error(),
-		Extensions: map[string]any{
-			"code": "INVALID",
-		},
+		Message:    err.Error(),
+		Extensions: extensions,
 	}
 }

@@ -19,11 +19,12 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -39,6 +40,14 @@ type (
 		ReportName string
 	}
 )
+
+func (vcrcr *VendorComplianceReportCreateRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(vcrcr.ReportName, "report_name", validator.Required(), validator.SafeText(TitleMaxLength))
+
+	return v.Error()
+}
 
 func (s VendorComplianceReportService) ListForVendorID(
 	ctx context.Context,
@@ -66,6 +75,10 @@ func (s VendorComplianceReportService) Upload(
 	vendorID gid.GID,
 	req *VendorComplianceReportCreateRequest,
 ) (*coredata.VendorComplianceReport, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	vendor, err := s.svc.Vendors.Get(ctx, vendorID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get vendor: %w", err)

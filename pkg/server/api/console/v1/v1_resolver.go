@@ -1384,9 +1384,7 @@ func (r *mutationResolver) UploadTrustCenterNda(ctx context.Context, input types
 func (r *mutationResolver) DeleteTrustCenterNda(ctx context.Context, input types.DeleteTrustCenterNDAInput) (*types.DeleteTrustCenterNDAPayload, error) {
 	prb := r.ProboService(ctx, input.TrustCenterID.TenantID())
 
-	trustCenter, file, err := prb.TrustCenters.DeleteNDA(ctx, &probo.DeleteTrustCenterNDARequest{
-		TrustCenterID: input.TrustCenterID,
-	})
+	trustCenter, file, err := prb.TrustCenters.DeleteNDA(ctx, input.TrustCenterID)
 	if err != nil {
 		panic(fmt.Errorf("cannot delete trust center NDA: %w", err))
 	}
@@ -1443,9 +1441,7 @@ func (r *mutationResolver) UpdateTrustCenterAccess(ctx context.Context, input ty
 func (r *mutationResolver) DeleteTrustCenterAccess(ctx context.Context, input types.DeleteTrustCenterAccessInput) (*types.DeleteTrustCenterAccessPayload, error) {
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	err := prb.TrustCenterAccesses.Delete(ctx, &probo.DeleteTrustCenterAccessRequest{
-		ID: input.ID,
-	})
+	err := prb.TrustCenterAccesses.Delete(ctx, input.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot delete trust center access: %w", err))
 	}
@@ -1515,9 +1511,7 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 func (r *mutationResolver) DeleteTrustCenterReference(ctx context.Context, input types.DeleteTrustCenterReferenceInput) (*types.DeleteTrustCenterReferencePayload, error) {
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	err := prb.TrustCenterReferences.Delete(ctx, &probo.DeleteTrustCenterReferenceRequest{
-		ID: input.ID,
-	})
+	err := prb.TrustCenterReferences.Delete(ctx, input.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot delete trust center reference: %w", err))
 	}
@@ -1589,9 +1583,7 @@ func (r *mutationResolver) GetTrustCenterFile(ctx context.Context, input types.G
 func (r *mutationResolver) DeleteTrustCenterFile(ctx context.Context, input types.DeleteTrustCenterFileInput) (*types.DeleteTrustCenterFilePayload, error) {
 	prb := r.ProboService(ctx, input.ID.TenantID())
 
-	err := prb.TrustCenterFiles.Delete(ctx, &probo.DeleteTrustCenterFileRequest{
-		ID: input.ID,
-	})
+	err := prb.TrustCenterFiles.Delete(ctx, input.ID)
 	if err != nil {
 		panic(fmt.Errorf("cannot delete trust center file: %w", err))
 	}
@@ -2858,7 +2850,7 @@ func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input typ
 	if err != nil {
 		var errNoChanges *coredata.ErrDocumentVersionNoChanges
 		if errors.As(err, &errNoChanges) {
-			return nil, gqlutils.Invalid(errNoChanges)
+			return nil, gqlutils.Invalid(errNoChanges, nil)
 		}
 		panic(fmt.Errorf("cannot publish document version: %w", err))
 	}
@@ -3568,7 +3560,7 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 		Recipients:                     input.Recipients,
 		Location:                       input.Location,
 		InternationalTransfers:         input.InternationalTransfers,
-		TransferSafeguards:             input.TransferSafeguards,
+		TransferSafeguard:              input.TransferSafeguard,
 		RetentionPeriod:                input.RetentionPeriod,
 		SecurityMeasures:               input.SecurityMeasures,
 		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
@@ -3601,7 +3593,7 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 		Recipients:                     UnwrapOmittable(input.Recipients),
 		Location:                       UnwrapOmittable(input.Location),
 		InternationalTransfers:         input.InternationalTransfers,
-		TransferSafeguards:             UnwrapOmittable(input.TransferSafeguards),
+		TransferSafeguard:              UnwrapOmittable(input.TransferSafeguards),
 		RetentionPeriod:                UnwrapOmittable(input.RetentionPeriod),
 		SecurityMeasures:               UnwrapOmittable(input.SecurityMeasures),
 		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,

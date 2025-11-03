@@ -23,6 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -48,17 +49,34 @@ type (
 		Status                 *coredata.ControlStatus
 		ExclusionJustification *string
 	}
-
-	ConnectControlToMitigationRequest struct {
-		ControlID    gid.GID
-		MitigationID gid.GID
-	}
-
-	DisconnectControlFromMitigationRequest struct {
-		ControlID    gid.GID
-		MitigationID gid.GID
-	}
 )
+
+func (ccr *CreateControlRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ccr.ID, "id", validator.Required(), validator.GID(coredata.ControlEntityType))
+	v.Check(ccr.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
+	v.Check(ccr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ccr.Description, "description", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(ccr.SectionTitle, "section_title", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(ccr.Status, "status", validator.Required(), validator.OneOfSlice(coredata.ControlStatuses()))
+	v.Check(ccr.ExclusionJustification, "exclusion_justification", validator.Required(), validator.SafeText(TitleMaxLength))
+
+	return v.Error()
+}
+
+func (ucr *UpdateControlRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ucr.ID, "id", validator.Required(), validator.GID(coredata.ControlEntityType))
+	v.Check(ucr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(ucr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(ucr.SectionTitle, "section_title", validator.SafeText(TitleMaxLength))
+	v.Check(ucr.Status, "status", validator.OneOfSlice(coredata.ControlStatuses()))
+	v.Check(ucr.ExclusionJustification, "exclusion_justification", validator.SafeText(TitleMaxLength))
+
+	return v.Error()
+}
 
 func (s ControlService) CountForDocumentID(
 	ctx context.Context,
@@ -706,6 +724,10 @@ func (s ControlService) Create(
 	ctx context.Context,
 	req CreateControlRequest,
 ) (*coredata.Control, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	framework := &coredata.Framework{}
 
@@ -765,6 +787,10 @@ func (s ControlService) Update(
 	ctx context.Context,
 	req UpdateControlRequest,
 ) (*coredata.Control, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	control := &coredata.Control{ID: req.ID}
 
 	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {

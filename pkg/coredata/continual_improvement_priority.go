@@ -27,6 +27,14 @@ const (
 	ContinualImprovementPriorityHigh   ContinualImprovementPriority = "HIGH"
 )
 
+func ContinualImprovementPriorities() []ContinualImprovementPriority {
+	return []ContinualImprovementPriority{
+		ContinualImprovementPriorityLow,
+		ContinualImprovementPriorityMedium,
+		ContinualImprovementPriorityHigh,
+	}
+}
+
 func (cip ContinualImprovementPriority) String() string {
 	return string(cip)
 }

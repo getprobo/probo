@@ -69,7 +69,7 @@ func NewProcessingActivity(par *coredata.ProcessingActivity) *ProcessingActivity
 		Recipients:                     par.Recipients,
 		Location:                       par.Location,
 		InternationalTransfers:         par.InternationalTransfers,
-		TransferSafeguards:             par.TransferSafeguards,
+		TransferSafeguards:             par.TransferSafeguard,
 		RetentionPeriod:                par.RetentionPeriod,
 		SecurityMeasures:               par.SecurityMeasures,
 		DataProtectionImpactAssessment: par.DataProtectionImpactAssessment,

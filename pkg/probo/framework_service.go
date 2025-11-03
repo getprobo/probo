@@ -35,6 +35,7 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/soagen"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 const (
@@ -72,6 +73,26 @@ type (
 		}
 	}
 )
+
+func (cfr *CreateFrameworkRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cfr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cfr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(cfr.Description, "description", validator.SafeText(ContentMaxLength))
+
+	return v.Error()
+}
+
+func (ufr *UpdateFrameworkRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ufr.ID, "id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
+	v.Check(ufr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(ufr.Description, "description", validator.SafeText(ContentMaxLength))
+
+	return v.Error()
+}
 
 func (s FrameworkService) RequestExport(
 	ctx context.Context,
@@ -310,6 +331,10 @@ func (s FrameworkService) Create(
 	ctx context.Context,
 	req CreateFrameworkRequest,
 ) (*coredata.Framework, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	organization := &coredata.Organization{}
 
@@ -420,6 +445,10 @@ func (s FrameworkService) Update(
 	ctx context.Context,
 	req UpdateFrameworkRequest,
 ) (*coredata.Framework, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	framework := &coredata.Framework{ID: req.ID}
 
 	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {

@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -46,6 +47,30 @@ type (
 		Role     **string
 	}
 )
+
+func (cvcr *CreateVendorContactRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cvcr.VendorID, "vendor_id", validator.Required(), validator.GID(coredata.VendorEntityType))
+	v.Check(cvcr.FullName, "full_name", validator.SafeText(TitleMaxLength))
+	v.Check(cvcr.Email, "email", validator.Email())
+	v.Check(cvcr.Phone, "phone", validator.SafeText(NameMaxLength))
+	v.Check(cvcr.Role, "role", validator.SafeText(TitleMaxLength))
+
+	return v.Error()
+}
+
+func (uvcr *UpdateVendorContactRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(uvcr.ID, "id", validator.Required(), validator.GID(coredata.VendorContactEntityType))
+	v.Check(uvcr.FullName, "full_name", validator.SafeText(TitleMaxLength))
+	v.Check(uvcr.Email, "email", validator.Email())
+	v.Check(uvcr.Phone, "phone", validator.SafeText(NameMaxLength))
+	v.Check(uvcr.Role, "role", validator.SafeText(TitleMaxLength))
+
+	return v.Error()
+}
 
 func (s VendorContactService) Get(
 	ctx context.Context,
@@ -102,6 +127,10 @@ func (s VendorContactService) Create(
 	ctx context.Context,
 	req CreateVendorContactRequest,
 ) (*coredata.VendorContact, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	vendorContact := &coredata.VendorContact{
 		ID:        gid.New(s.svc.scope.GetTenantID(), coredata.VendorContactEntityType),
@@ -136,6 +165,10 @@ func (s VendorContactService) Update(
 	ctx context.Context,
 	req UpdateVendorContactRequest,
 ) (*coredata.VendorContact, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	vendorContact := &coredata.VendorContact{}
 
 	err := s.svc.pg.WithTx(

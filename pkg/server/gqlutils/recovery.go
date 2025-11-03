@@ -24,6 +24,7 @@ import (
 	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 func RecoverFunc(ctx context.Context, err any) error {
@@ -50,6 +51,27 @@ func RecoverFunc(ctx context.Context, err any) error {
 		})
 	}
 
+	var errValidations validator.ValidationErrors
+	if errors.As(asError(err), &errValidations) {
+		gqlErrors := gqlerror.List{}
+
+		for _, err := range errValidations {
+			gqlErrors = append(
+				gqlErrors,
+				Invalid(
+					err,
+					map[string]any{
+						"cause": err.Code,
+						"field": err.Field,
+						"value": err.Value,
+					},
+				),
+			)
+		}
+
+		return gqlErrors
+	}
+
 	var tenantAccessErr *authz.TenantAccessError
 	if errTyped, ok := err.(error); ok && errors.As(errTyped, &tenantAccessErr) {
 		return Unauthorized()
@@ -65,5 +87,6 @@ func asError(err any) error {
 	if e, ok := err.(error); ok {
 		return e
 	}
+
 	return errors.New("unknown panic")
 }

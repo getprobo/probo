@@ -30,6 +30,16 @@ const (
 	DataSensitivityCritical DataSensitivity = "CRITICAL"
 )
 
+func DataSensitivities() []DataSensitivity {
+	return []DataSensitivity{
+		DataSensitivityNone,
+		DataSensitivityLow,
+		DataSensitivityMedium,
+		DataSensitivityHigh,
+		DataSensitivityCritical,
+	}
+}
+
 func (i DataSensitivity) String() string {
 	return string(i)
 }

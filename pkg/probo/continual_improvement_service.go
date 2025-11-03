@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type ContinualImprovementService struct {
@@ -53,6 +54,34 @@ type (
 	}
 )
 
+func (ccir *CreateContinualImprovementRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ccir.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(ccir.ReferenceID, "reference_id", validator.SafeText(NameMaxLength))
+	v.Check(ccir.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(ccir.Source, "source", validator.SafeText(ContentMaxLength))
+	v.Check(ccir.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(ccir.Status, "status", validator.OneOfSlice(coredata.ContinualImprovementStatuses()))
+	v.Check(ccir.Priority, "priority", validator.OneOfSlice(coredata.ContinualImprovementPriorities()))
+
+	return v.Error()
+}
+
+func (ucir *UpdateContinualImprovementRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ucir.ID, "id", validator.Required(), validator.GID(coredata.ContinualImprovementEntityType))
+	v.Check(ucir.ReferenceID, "reference_id", validator.SafeText(NameMaxLength))
+	v.Check(ucir.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(ucir.Source, "source", validator.SafeText(ContentMaxLength))
+	v.Check(ucir.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(ucir.Status, "status", validator.OneOfSlice(coredata.ContinualImprovementStatuses()))
+	v.Check(ucir.Priority, "priority", validator.OneOfSlice(coredata.ContinualImprovementPriorities()))
+
+	return v.Error()
+}
+
 func (s ContinualImprovementService) Get(
 	ctx context.Context,
 	continualImprovementID gid.GID,
@@ -81,6 +110,10 @@ func (s *ContinualImprovementService) Create(
 	ctx context.Context,
 	req *CreateContinualImprovementRequest,
 ) (*coredata.ContinualImprovement, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 
 	improvement := &coredata.ContinualImprovement{

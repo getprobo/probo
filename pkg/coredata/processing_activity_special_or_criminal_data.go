@@ -19,19 +19,27 @@ import (
 	"fmt"
 )
 
-type ProcessingActivitySpecialOrCriminalData string
+type ProcessingActivitySpecialOrCriminalDatum string
 
 const (
-	ProcessingActivitySpecialOrCriminalDataYes      ProcessingActivitySpecialOrCriminalData = "YES"
-	ProcessingActivitySpecialOrCriminalDataNo       ProcessingActivitySpecialOrCriminalData = "NO"
-	ProcessingActivitySpecialOrCriminalDataPossible ProcessingActivitySpecialOrCriminalData = "POSSIBLE"
+	ProcessingActivitySpecialOrCriminalDatumYes      ProcessingActivitySpecialOrCriminalDatum = "YES"
+	ProcessingActivitySpecialOrCriminalDatumNo       ProcessingActivitySpecialOrCriminalDatum = "NO"
+	ProcessingActivitySpecialOrCriminalDatumPossible ProcessingActivitySpecialOrCriminalDatum = "POSSIBLE"
 )
 
-func (p ProcessingActivitySpecialOrCriminalData) String() string {
+func ProcessingActivitySpecialOrCriminalData() []ProcessingActivitySpecialOrCriminalDatum {
+	return []ProcessingActivitySpecialOrCriminalDatum{
+		ProcessingActivitySpecialOrCriminalDatumYes,
+		ProcessingActivitySpecialOrCriminalDatumNo,
+		ProcessingActivitySpecialOrCriminalDatumPossible,
+	}
+}
+
+func (p ProcessingActivitySpecialOrCriminalDatum) String() string {
 	return string(p)
 }
 
-func (p *ProcessingActivitySpecialOrCriminalData) Scan(value any) error {
+func (p *ProcessingActivitySpecialOrCriminalDatum) Scan(value any) error {
 	var s string
 	switch v := value.(type) {
 	case string:
@@ -39,22 +47,22 @@ func (p *ProcessingActivitySpecialOrCriminalData) Scan(value any) error {
 	case []byte:
 		s = string(v)
 	default:
-		return fmt.Errorf("unsupported type for ProcessingActivitySpecialOrCriminalData: %T", value)
+		return fmt.Errorf("unsupported type for ProcessingActivitySpecialOrCriminalDatum: %T", value)
 	}
 
 	switch s {
 	case "YES":
-		*p = ProcessingActivitySpecialOrCriminalDataYes
+		*p = ProcessingActivitySpecialOrCriminalDatumYes
 	case "NO":
-		*p = ProcessingActivitySpecialOrCriminalDataNo
+		*p = ProcessingActivitySpecialOrCriminalDatumNo
 	case "POSSIBLE":
-		*p = ProcessingActivitySpecialOrCriminalDataPossible
+		*p = ProcessingActivitySpecialOrCriminalDatumPossible
 	default:
-		return fmt.Errorf("invalid ProcessingActivitySpecialOrCriminalData value: %q", s)
+		return fmt.Errorf("invalid ProcessingActivitySpecialOrCriminalDatum value: %q", s)
 	}
 	return nil
 }
 
-func (p ProcessingActivitySpecialOrCriminalData) Value() (driver.Value, error) {
+func (p ProcessingActivitySpecialOrCriminalDatum) Value() (driver.Value, error) {
 	return p.String(), nil
 }

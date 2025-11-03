@@ -47,6 +47,33 @@ const (
 	VendorCategoryVersionControl           VendorCategory = "VERSION_CONTROL"
 )
 
+func VendorCategories() []VendorCategory {
+	return []VendorCategory{
+		VendorCategoryAnalytics,
+		VendorCategoryCloudMonitoring,
+		VendorCategoryCloudProvider,
+		VendorCategoryCollaboration,
+		VendorCategoryCustomerSupport,
+		VendorCategoryDataStorageAndProcessing,
+		VendorCategoryDocumentManagement,
+		VendorCategoryEmployeeManagement,
+		VendorCategoryEngineering,
+		VendorCategoryFinance,
+		VendorCategoryIdentityProvider,
+		VendorCategoryIT,
+		VendorCategoryMarketing,
+		VendorCategoryOfficeOperations,
+		VendorCategoryOther,
+		VendorCategoryPasswordManagement,
+		VendorCategoryProductAndDesign,
+		VendorCategoryProfessionalServices,
+		VendorCategoryRecruiting,
+		VendorCategorySales,
+		VendorCategorySecurity,
+		VendorCategoryVersionControl,
+	}
+}
+
 func (i VendorCategory) String() string {
 	return string(i)
 }

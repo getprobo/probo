@@ -30,6 +30,15 @@ const (
 	MeasureStateImplemented
 )
 
+func MeasureStates() []MeasureState {
+	return []MeasureState{
+		MeasureStateNotStarted,
+		MeasureStateInProgress,
+		MeasureStateNotApplicable,
+		MeasureStateImplemented,
+	}
+}
+
 func (ms MeasureState) MarshalText() ([]byte, error) {
 	return []byte(ms.String()), nil
 }

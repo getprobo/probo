@@ -20,6 +20,9 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
@@ -30,9 +33,12 @@ import (
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/html2pdf"
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
+)
+
+const (
+	NameMaxLength    = 100
+	TitleMaxLength   = 1000
+	ContentMaxLength = 5000
 )
 
 type ExportService interface {

@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type NonconformityService struct {
@@ -59,6 +60,36 @@ type (
 	}
 )
 
+func (cnr *CreateNonconformityRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cnr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cnr.ReferenceID, "reference_id", validator.Required(), validator.SafeText(NameMaxLength))
+	v.Check(cnr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(cnr.AuditID, "audit_id", validator.Required(), validator.GID(coredata.AuditEntityType))
+	v.Check(cnr.RootCause, "root_cause", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(cnr.CorrectiveAction, "corrective_action", validator.SafeText(ContentMaxLength))
+	v.Check(cnr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(cnr.Status, "status", validator.OneOfSlice(coredata.NonconformityStatuses()))
+	v.Check(cnr.EffectivenessCheck, "effectiveness_check", validator.SafeText(ContentMaxLength))
+
+	return v.Error()
+}
+
+func (unr *UpdateNonconformityRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(unr.ID, "id", validator.Required(), validator.GID(coredata.NonconformityEntityType))
+	v.Check(unr.ReferenceID, "reference_id", validator.SafeText(NameMaxLength))
+	v.Check(unr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(unr.RootCause, "root_cause", validator.SafeText(ContentMaxLength))
+	v.Check(unr.CorrectiveAction, "corrective_action", validator.SafeText(ContentMaxLength))
+	v.Check(unr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(unr.Status, "status", validator.OneOfSlice(coredata.NonconformityStatuses()))
+	v.Check(unr.EffectivenessCheck, "effectiveness_check", validator.SafeText(ContentMaxLength))
+
+	return v.Error()
+}
 func (s NonconformityService) Get(
 	ctx context.Context,
 	nonconformityID gid.GID,
@@ -83,6 +114,10 @@ func (s *NonconformityService) Create(
 	ctx context.Context,
 	req *CreateNonconformityRequest,
 ) (*coredata.Nonconformity, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	now := time.Now()
 
 	nonconformity := &coredata.Nonconformity{
@@ -143,6 +178,10 @@ func (s *NonconformityService) Update(
 	ctx context.Context,
 	req *UpdateNonconformityRequest,
 ) (*coredata.Nonconformity, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	nonconformity := &coredata.Nonconformity{}
 
 	err := s.svc.pg.WithTx(

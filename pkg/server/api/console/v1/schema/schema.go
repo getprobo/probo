@@ -9784,25 +9784,16 @@ enum OrderDirection
 enum MeasureState
   @goModel(model: "go.probo.inc/probo/pkg/coredata.MeasureState") {
   NOT_STARTED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MeasureStateNotStarted"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MeasureStateNotStarted")
   IN_PROGRESS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MeasureStateInProgress"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MeasureStateInProgress")
   NOT_APPLICABLE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MeasureStateNotApplicable"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MeasureStateNotApplicable")
   IMPLEMENTED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MeasureStateImplemented"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MeasureStateImplemented")
 }
 
-enum TaskState
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskState") {
+enum TaskState @goModel(model: "go.probo.inc/probo/pkg/coredata.TaskState") {
   TODO @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateTodo")
   DONE @goEnum(value: "go.probo.inc/probo/pkg/coredata.TaskStateDone")
 }
@@ -9810,43 +9801,27 @@ enum TaskState
 enum EvidenceState
   @goModel(model: "go.probo.inc/probo/pkg/coredata.EvidenceState") {
   FULFILLED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.EvidenceStateFulfilled"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceStateFulfilled")
   REQUESTED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.EvidenceStateRequested"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.EvidenceStateRequested")
 }
 
-enum PeopleKind
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleKind") {
-  EMPLOYEE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleKindEmployee")
+enum PeopleKind @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleKind") {
+  EMPLOYEE @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleKindEmployee")
   CONTRACTOR
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.PeopleKindContractor"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleKindContractor")
   SERVICE_ACCOUNT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.PeopleKindServiceAccount"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleKindServiceAccount")
 }
 
 enum InvitationStatus
   @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationStatus") {
   PENDING
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationStatusPending"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusPending")
   ACCEPTED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationStatusAccepted"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusAccepted")
   EXPIRED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationStatusExpired"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationStatusExpired")
 }
 
 enum Role @goModel(model: "go.probo.inc/probo/pkg/coredata.Role") {
@@ -9858,12 +9833,9 @@ enum Role @goModel(model: "go.probo.inc/probo/pkg/coredata.Role") {
 
 enum DocumentStatus
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentStatus") {
-  DRAFT
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentStatusDraft")
+  DRAFT @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentStatusDraft")
   PUBLISHED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.DocumentStatusPublished"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentStatusPublished")
 }
 
 enum EvidenceType
@@ -9875,49 +9847,28 @@ enum EvidenceType
 enum RiskTreatment
   @goModel(model: "go.probo.inc/probo/pkg/coredata.RiskTreatment") {
   MITIGATED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentMitigated"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentMitigated")
   ACCEPTED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentAccepted"
-    )
-  AVOIDED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentAvoided"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentAccepted")
+  AVOIDED @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentAvoided")
   TRANSFERRED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentTransferred"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskTreatmentTransferred")
 }
 
-enum AuditState
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditState") {
+enum AuditState @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditState") {
   NOT_STARTED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.AuditStateNotStarted"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateNotStarted")
   IN_PROGRESS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.AuditStateInProgress"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateInProgress")
   COMPLETED
     @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateCompleted")
-  REJECTED
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateRejected")
-  OUTDATED
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateOutdated")
+  REJECTED @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateRejected")
+  OUTDATED @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditStateOutdated")
 }
 
 enum SAMLEnforcementPolicy
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicy"
-  ) {
-  OFF
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOff"
-    )
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicy") {
+  OFF @goEnum(value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOff")
   OPTIONAL
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.SAMLEnforcementPolicyOptional"
@@ -9931,21 +9882,14 @@ enum SAMLEnforcementPolicy
 enum UserAuthMethod
   @goModel(model: "go.probo.inc/probo/pkg/coredata.UserAuthMethod") {
   PASSWORD
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.UserAuthMethodPassword"
-    )
-  SAML
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.UserAuthMethodSAML")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.UserAuthMethodPassword")
+  SAML @goEnum(value: "go.probo.inc/probo/pkg/coredata.UserAuthMethodSAML")
 }
 
 enum TrustCenterVisibility
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibility"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibility") {
   NONE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityNone"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityNone")
   PRIVATE
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.TrustCenterVisibilityPrivate"
@@ -9957,21 +9901,14 @@ enum TrustCenterVisibility
 }
 
 enum NonconformityStatus
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.NonconformityStatus"
-  ) {
-  OPEN
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.NonconformityStatusOpen"
-    )
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.NonconformityStatus") {
+  OPEN @goEnum(value: "go.probo.inc/probo/pkg/coredata.NonconformityStatusOpen")
   IN_PROGRESS
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.NonconformityStatusInProgress"
     )
   CLOSED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.NonconformityStatusClosed"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.NonconformityStatusClosed")
 }
 
 enum ObligationStatus
@@ -9985,9 +9922,7 @@ enum ObligationStatus
       value: "go.probo.inc/probo/pkg/coredata.ObligationStatusPartiallyCompliant"
     )
   COMPLIANT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ObligationStatusCompliant"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ObligationStatusCompliant")
 }
 
 enum ContinualImprovementStatus
@@ -10026,21 +9961,21 @@ enum ContinualImprovementPriority
     )
 }
 
-enum ProcessingActivitySpecialOrCriminalData
+enum ProcessingActivitySpecialOrCriminalDatum
   @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalData"
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatum"
   ) {
   YES
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataYes"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatumYes"
     )
   NO
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataNo"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatumNo"
     )
   POSSIBLE
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDataPossible"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivitySpecialOrCriminalDatumPossible"
     )
 }
 
@@ -10074,33 +10009,33 @@ enum ProcessingActivityLawfulBasis
     )
 }
 
-enum ProcessingActivityTransferSafeguards
+enum ProcessingActivityTransferSafeguard
   @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguards"
+    model: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguard"
   ) {
   STANDARD_CONTRACTUAL_CLAUSES
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsStandardContractualClauses"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardStandardContractualClauses"
     )
   BINDING_CORPORATE_RULES
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsBindingCorporateRules"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardBindingCorporateRules"
     )
   ADEQUACY_DECISION
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsAdequacyDecision"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardAdequacyDecision"
     )
   DEROGATIONS
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsDerogations"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardDerogations"
     )
   CODES_OF_CONDUCT
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsCodesOfConduct"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardCodesOfConduct"
     )
   CERTIFICATION_MECHANISMS
     @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardsCertificationMechanisms"
+      value: "go.probo.inc/probo/pkg/coredata.ProcessingActivityTransferSafeguardCertificationMechanisms"
     )
 }
 
@@ -10136,47 +10071,29 @@ enum ProcessingActivityTransferImpactAssessment
 enum UserOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.UserOrderField") {
   CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.UserOrderFieldCreatedAt"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.UserOrderFieldCreatedAt")
 }
 
 enum PeopleOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.PeopleOrderField") {
   FULL_NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldFullName"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldFullName")
   CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldCreatedAt"
-    )
-  KIND
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldKind"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldCreatedAt")
+  KIND @goEnum(value: "go.probo.inc/probo/pkg/coredata.PeopleOrderFieldKind")
 }
 
 enum VendorOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorOrderField") {
-  NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorOrderFieldName"
-    )
+  NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorOrderFieldName")
   CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorOrderFieldCreatedAt"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorOrderFieldCreatedAt")
   UPDATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorOrderFieldUpdatedAt"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorOrderFieldUpdatedAt")
 }
 
 enum FrameworkOrderField
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.FrameworkOrderField"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.FrameworkOrderField") {
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.FrameworkOrderFieldCreatedAt"
@@ -10186,9 +10103,7 @@ enum FrameworkOrderField
 enum ControlOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.ControlOrderField") {
   CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ControlOrderFieldCreatedAt"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ControlOrderFieldCreatedAt")
   SECTION_TITLE
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.ControlOrderFieldSectionTitle"
@@ -10198,13 +10113,8 @@ enum ControlOrderField
 enum MeasureOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.MeasureOrderField") {
   CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MeasureOrderFieldCreatedAt"
-    )
-  NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MeasureOrderFieldName"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MeasureOrderFieldCreatedAt")
+  NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.MeasureOrderFieldName")
 }
 
 enum TaskOrderField
@@ -10215,9 +10125,7 @@ enum TaskOrderField
 enum DocumentOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentOrderField") {
   TITLE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldTitle"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldTitle")
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.DocumentOrderFieldCreatedAt"
@@ -10231,23 +10139,14 @@ enum DocumentOrderField
 enum RiskOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.RiskOrderField") {
   CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldCreatedAt"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldCreatedAt")
   UPDATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldUpdatedAt"
-    )
-  NAME
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldName")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldUpdatedAt")
+  NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldName")
   CATEGORY
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldCategory"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldCategory")
   TREATMENT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldTreatment"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldTreatment")
   INHERENT_RISK_SCORE
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.RiskOrderFieldInherentRiskScore"
@@ -10282,9 +10181,7 @@ enum VendorComplianceReportOrderField
 }
 
 enum VendorContactOrderField
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.VendorContactOrderField"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorContactOrderField") {
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorContactOrderFieldCreatedAt"
@@ -10300,9 +10197,7 @@ enum VendorContactOrderField
 }
 
 enum VendorServiceOrderField
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.VendorServiceOrderField"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorServiceOrderField") {
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorServiceOrderFieldCreatedAt"
@@ -10314,13 +10209,9 @@ enum VendorServiceOrderField
 }
 
 enum OrganizationOrderField
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.OrganizationOrderField"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.OrganizationOrderField") {
   NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldName"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldName")
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.OrganizationOrderFieldCreatedAt"
@@ -10333,41 +10224,25 @@ enum OrganizationOrderField
 
 enum DataSensitivity
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DataSensitivity") {
-  NONE
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityNone")
-  LOW
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityLow")
-  MEDIUM
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.DataSensitivityMedium"
-    )
-  HIGH
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityHigh")
+  NONE @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityNone")
+  LOW @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityLow")
+  MEDIUM @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityMedium")
+  HIGH @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityHigh")
   CRITICAL
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.DataSensitivityCritical"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataSensitivityCritical")
 }
 
 enum BusinessImpact
   @goModel(model: "go.probo.inc/probo/pkg/coredata.BusinessImpact") {
   LOW @goEnum(value: "go.probo.inc/probo/pkg/coredata.BusinessImpactLow")
-  MEDIUM
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.BusinessImpactMedium"
-    )
-  HIGH
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.BusinessImpactHigh")
+  MEDIUM @goEnum(value: "go.probo.inc/probo/pkg/coredata.BusinessImpactMedium")
+  HIGH @goEnum(value: "go.probo.inc/probo/pkg/coredata.BusinessImpactHigh")
   CRITICAL
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.BusinessImpactCritical"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.BusinessImpactCritical")
 }
 
 enum DocumentVersionOrderField
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderField"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderField") {
   VERSION
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.DocumentVersionOrderFieldVersion"
@@ -10634,9 +10509,7 @@ enum CountryCode
 enum VendorCategory
   @goModel(model: "go.probo.inc/probo/pkg/coredata.VendorCategory") {
   ANALYTICS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryAnalytics"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryAnalytics")
   CLOUD_MONITORING
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryCloudMonitoring"
@@ -10666,28 +10539,21 @@ enum VendorCategory
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEmployeeManagement"
     )
   ENGINEERING
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEngineering"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryEngineering")
   FINANCE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryFinance"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryFinance")
   IDENTITY_PROVIDER
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIdentityProvider"
     )
   IT @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryIT")
   MARKETING
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryMarketing"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryMarketing")
   OFFICE_OPERATIONS
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOfficeOperations"
     )
-  OTHER
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOther")
+  OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryOther")
   PASSWORD_MANAGEMENT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryPasswordManagement"
@@ -10701,15 +10567,10 @@ enum VendorCategory
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryProfessionalServices"
     )
   RECRUITING
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategoryRecruiting"
-    )
-  SALES
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySales")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategoryRecruiting")
+  SALES @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySales")
   SECURITY
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.VendorCategorySecurity"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.VendorCategorySecurity")
   VERSION_CONTROL
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.VendorCategoryVersionControl"
@@ -10718,21 +10579,15 @@ enum VendorCategory
 
 enum DocumentType
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentType") {
-  OTHER
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")
+  OTHER @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeOther")
   ISMS @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeISMS")
-  POLICY
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePolicy")
+  POLICY @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypePolicy")
   PROCEDURE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.DocumentTypeProcedure"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DocumentTypeProcedure")
 }
 
 enum DocumentClassification
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.DocumentClassification"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.DocumentClassification") {
   PUBLIC
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.DocumentClassificationPublic"
@@ -10751,34 +10606,23 @@ enum DocumentClassification
     )
 }
 
-enum AssetType
-  @goModel(model: "go.probo.inc/probo/pkg/coredata.AssetType") {
-  PHYSICAL
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetTypePhysical")
-  VIRTUAL
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetTypeVirtual")
+enum AssetType @goModel(model: "go.probo.inc/probo/pkg/coredata.AssetType") {
+  PHYSICAL @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetTypePhysical")
+  VIRTUAL @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetTypeVirtual")
 }
 
 enum AssetOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.AssetOrderField") {
   CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.AssetOrderFieldCreatedAt"
-    )
-  AMOUNT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.AssetOrderFieldAmount"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetOrderFieldCreatedAt")
+  AMOUNT @goEnum(value: "go.probo.inc/probo/pkg/coredata.AssetOrderFieldAmount")
 }
 
 enum DatumOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DatumOrderField") {
   CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldCreatedAt"
-    )
-  NAME
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldName")
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldCreatedAt")
+  NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldName")
   DATA_CLASSIFICATION
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.DatumOrderFieldDataClassification"
@@ -10788,59 +10632,38 @@ enum DatumOrderField
 enum DataClassification
   @goModel(model: "go.probo.inc/probo/pkg/coredata.DataClassification") {
   PUBLIC
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.DataClassificationPublic"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataClassificationPublic")
   INTERNAL
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.DataClassificationInternal"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataClassificationInternal")
   CONFIDENTIAL
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.DataClassificationConfidential"
     )
   SECRET
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.DataClassificationSecret"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.DataClassificationSecret")
 }
 
 enum ControlStatus
   @goModel(model: "go.probo.inc/probo/pkg/coredata.ControlStatus") {
   INCLUDED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ControlStatusIncluded"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ControlStatusIncluded")
   EXCLUDED
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ControlStatusExcluded"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ControlStatusExcluded")
 }
 
 enum AuditOrderField
   @goModel(model: "go.probo.inc/probo/pkg/coredata.AuditOrderField") {
   CREATED_AT
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldCreatedAt"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldCreatedAt")
   VALID_FROM
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldValidFrom"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldValidFrom")
   VALID_UNTIL
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldValidUntil"
-    )
-  STATE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldState"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldValidUntil")
+  STATE @goEnum(value: "go.probo.inc/probo/pkg/coredata.AuditOrderFieldState")
 }
 
 enum NonconformityOrderField
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.NonconformityOrderField"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.NonconformityOrderField") {
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.NonconformityOrderFieldCreatedAt"
@@ -10864,9 +10687,7 @@ enum NonconformityOrderField
 }
 
 enum ObligationOrderField
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.ObligationOrderField"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.ObligationOrderField") {
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldCreatedAt"
@@ -10880,9 +10701,7 @@ enum ObligationOrderField
       value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldDueDate"
     )
   STATUS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldStatus"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.ObligationOrderFieldStatus")
 }
 
 enum ContinualImprovementOrderField
@@ -10968,9 +10787,7 @@ enum TrustCenterReferenceOrderField
 }
 
 enum TrustCenterFileOrderField
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderField"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderField") {
   NAME
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.TrustCenterFileOrderFieldName"
@@ -10987,24 +10804,16 @@ enum TrustCenterFileOrderField
 
 enum SnapshotsType
   @goModel(model: "go.probo.inc/probo/pkg/coredata.SnapshotsType") {
-  RISKS
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeRisks")
-  VENDORS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeVendors"
-    )
-  ASSETS
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeAssets")
-  DATA
-    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeData")
+  RISKS @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeRisks")
+  VENDORS @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeVendors")
+  ASSETS @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeAssets")
+  DATA @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeData")
   NONCONFORMITIES
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeNonconformities"
     )
   OBLIGATIONS
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeObligations"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeObligations")
   CONTINUAL_IMPROVEMENTS
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.SnapshotsTypeContinualImprovements"
@@ -11021,20 +10830,12 @@ enum SnapshotOrderField
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldCreatedAt"
     )
-  NAME
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldName"
-    )
-  TYPE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldType"
-    )
+  NAME @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldName")
+  TYPE @goEnum(value: "go.probo.inc/probo/pkg/coredata.SnapshotOrderFieldType")
 }
 
 enum MembershipOrderField
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.MembershipOrderField") {
   FULL_NAME
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldFullName"
@@ -11044,9 +10845,7 @@ enum MembershipOrderField
       value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldEmailAddress"
     )
   ROLE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldRole")
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.MembershipOrderFieldCreatedAt"
@@ -11054,21 +10853,15 @@ enum MembershipOrderField
 }
 
 enum InvitationOrderField
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.InvitationOrderField") {
   FULL_NAME
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldFullName"
     )
   EMAIL
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldEmail"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldEmail")
   ROLE
-    @goEnum(
-      value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldRole"
-    )
+    @goEnum(value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldRole")
   CREATED_AT
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.InvitationOrderFieldCreatedAt"
@@ -12088,13 +11881,13 @@ type ProcessingActivity implements Node {
   purpose: String
   dataSubjectCategory: String
   personalDataCategory: String
-  specialOrCriminalData: ProcessingActivitySpecialOrCriminalData!
+  specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum!
   consentEvidenceLink: String
   lawfulBasis: ProcessingActivityLawfulBasis!
   recipients: String
   location: String
   internationalTransfers: Boolean!
-  transferSafeguards: ProcessingActivityTransferSafeguards
+  transferSafeguards: ProcessingActivityTransferSafeguard
   retentionPeriod: String
   securityMeasures: String
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
@@ -13661,13 +13454,13 @@ input CreateProcessingActivityInput {
   purpose: String
   dataSubjectCategory: String
   personalDataCategory: String
-  specialOrCriminalData: ProcessingActivitySpecialOrCriminalData!
+  specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum!
   consentEvidenceLink: String
   lawfulBasis: ProcessingActivityLawfulBasis!
   recipients: String
   location: String
   internationalTransfers: Boolean!
-  transferSafeguards: ProcessingActivityTransferSafeguards
+  transferSafeguards: ProcessingActivityTransferSafeguard
   retentionPeriod: String
   securityMeasures: String
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment!
@@ -13681,13 +13474,13 @@ input UpdateProcessingActivityInput {
   purpose: String @goField(omittable: true)
   dataSubjectCategory: String @goField(omittable: true)
   personalDataCategory: String @goField(omittable: true)
-  specialOrCriminalData: ProcessingActivitySpecialOrCriminalData
+  specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum
   consentEvidenceLink: String
   lawfulBasis: ProcessingActivityLawfulBasis
   recipients: String @goField(omittable: true)
   location: String @goField(omittable: true)
   internationalTransfers: Boolean
-  transferSafeguards: ProcessingActivityTransferSafeguards
+  transferSafeguards: ProcessingActivityTransferSafeguard
     @goField(omittable: true)
   retentionPeriod: String @goField(omittable: true)
   securityMeasures: String @goField(omittable: true)
@@ -14530,9 +14323,7 @@ type DeleteSnapshotPayload {
 }
 
 enum SSLStatus
-  @goModel(
-    model: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatus"
-  ) {
+  @goModel(model: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatus") {
   PENDING
     @goEnum(
       value: "go.probo.inc/probo/pkg/coredata.CustomDomainSSLStatusPending"
@@ -53421,9 +53212,9 @@ func (ec *executionContext) _ProcessingActivity_specialOrCriminalData(ctx contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.(coredata.ProcessingActivitySpecialOrCriminalData)
+	res := resTmp.(coredata.ProcessingActivitySpecialOrCriminalDatum)
 	fc.Result = res
-	return ec.marshalNProcessingActivitySpecialOrCriminalData2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData(ctx, field.Selections, res)
+	return ec.marshalNProcessingActivitySpecialOrCriminalDatum2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ProcessingActivity_specialOrCriminalData(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -53433,7 +53224,7 @@ func (ec *executionContext) fieldContext_ProcessingActivity_specialOrCriminalDat
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ProcessingActivitySpecialOrCriminalData does not have child fields")
+			return nil, errors.New("field of type ProcessingActivitySpecialOrCriminalDatum does not have child fields")
 		},
 	}
 	return fc, nil
@@ -53673,9 +53464,9 @@ func (ec *executionContext) _ProcessingActivity_transferSafeguards(ctx context.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*coredata.ProcessingActivityTransferSafeguards)
+	res := resTmp.(*coredata.ProcessingActivityTransferSafeguard)
 	fc.Result = res
-	return ec.marshalOProcessingActivityTransferSafeguards2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguards(ctx, field.Selections, res)
+	return ec.marshalOProcessingActivityTransferSafeguard2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ProcessingActivity_transferSafeguards(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -53685,7 +53476,7 @@ func (ec *executionContext) fieldContext_ProcessingActivity_transferSafeguards(_
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ProcessingActivityTransferSafeguards does not have child fields")
+			return nil, errors.New("field of type ProcessingActivityTransferSafeguard does not have child fields")
 		},
 	}
 	return fc, nil
@@ -74788,7 +74579,7 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 			it.PersonalDataCategory = data
 		case "specialOrCriminalData":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("specialOrCriminalData"))
-			data, err := ec.unmarshalNProcessingActivitySpecialOrCriminalData2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData(ctx, v)
+			data, err := ec.unmarshalNProcessingActivitySpecialOrCriminalDatum2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -74830,11 +74621,11 @@ func (ec *executionContext) unmarshalInputCreateProcessingActivityInput(ctx cont
 			it.InternationalTransfers = data
 		case "transferSafeguards":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transferSafeguards"))
-			data, err := ec.unmarshalOProcessingActivityTransferSafeguards2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguards(ctx, v)
+			data, err := ec.unmarshalOProcessingActivityTransferSafeguard2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguard(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.TransferSafeguards = data
+			it.TransferSafeguard = data
 		case "retentionPeriod":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("retentionPeriod"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -79479,7 +79270,7 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 			it.PersonalDataCategory = graphql.OmittableOf(data)
 		case "specialOrCriminalData":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("specialOrCriminalData"))
-			data, err := ec.unmarshalOProcessingActivitySpecialOrCriminalData2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData(ctx, v)
+			data, err := ec.unmarshalOProcessingActivitySpecialOrCriminalDatum2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -79521,7 +79312,7 @@ func (ec *executionContext) unmarshalInputUpdateProcessingActivityInput(ctx cont
 			it.InternationalTransfers = data
 		case "transferSafeguards":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("transferSafeguards"))
-			data, err := ec.unmarshalOProcessingActivityTransferSafeguards2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguards(ctx, v)
+			data, err := ec.unmarshalOProcessingActivityTransferSafeguard2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguard(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -104538,15 +104329,15 @@ var (
 	}
 )
 
-func (ec *executionContext) unmarshalNProcessingActivitySpecialOrCriminalData2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData(ctx context.Context, v any) (coredata.ProcessingActivitySpecialOrCriminalData, error) {
+func (ec *executionContext) unmarshalNProcessingActivitySpecialOrCriminalDatum2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum(ctx context.Context, v any) (coredata.ProcessingActivitySpecialOrCriminalDatum, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNProcessingActivitySpecialOrCriminalData2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData[tmp]
+	res := unmarshalNProcessingActivitySpecialOrCriminalDatum2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNProcessingActivitySpecialOrCriminalData2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivitySpecialOrCriminalData) graphql.Marshaler {
+func (ec *executionContext) marshalNProcessingActivitySpecialOrCriminalDatum2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum(ctx context.Context, sel ast.SelectionSet, v coredata.ProcessingActivitySpecialOrCriminalDatum) graphql.Marshaler {
 	_ = sel
-	res := graphql.MarshalString(marshalNProcessingActivitySpecialOrCriminalData2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData[v])
+	res := graphql.MarshalString(marshalNProcessingActivitySpecialOrCriminalDatum2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -104556,15 +104347,15 @@ func (ec *executionContext) marshalNProcessingActivitySpecialOrCriminalData2go�
 }
 
 var (
-	unmarshalNProcessingActivitySpecialOrCriminalData2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData = map[string]coredata.ProcessingActivitySpecialOrCriminalData{
-		"YES":      coredata.ProcessingActivitySpecialOrCriminalDataYes,
-		"NO":       coredata.ProcessingActivitySpecialOrCriminalDataNo,
-		"POSSIBLE": coredata.ProcessingActivitySpecialOrCriminalDataPossible,
+	unmarshalNProcessingActivitySpecialOrCriminalDatum2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum = map[string]coredata.ProcessingActivitySpecialOrCriminalDatum{
+		"YES":      coredata.ProcessingActivitySpecialOrCriminalDatumYes,
+		"NO":       coredata.ProcessingActivitySpecialOrCriminalDatumNo,
+		"POSSIBLE": coredata.ProcessingActivitySpecialOrCriminalDatumPossible,
 	}
-	marshalNProcessingActivitySpecialOrCriminalData2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData = map[coredata.ProcessingActivitySpecialOrCriminalData]string{
-		coredata.ProcessingActivitySpecialOrCriminalDataYes:      "YES",
-		coredata.ProcessingActivitySpecialOrCriminalDataNo:       "NO",
-		coredata.ProcessingActivitySpecialOrCriminalDataPossible: "POSSIBLE",
+	marshalNProcessingActivitySpecialOrCriminalDatum2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum = map[coredata.ProcessingActivitySpecialOrCriminalDatum]string{
+		coredata.ProcessingActivitySpecialOrCriminalDatumYes:      "YES",
+		coredata.ProcessingActivitySpecialOrCriminalDatumNo:       "NO",
+		coredata.ProcessingActivitySpecialOrCriminalDatumPossible: "POSSIBLE",
 	}
 )
 
@@ -109222,35 +109013,35 @@ func (ec *executionContext) unmarshalOProcessingActivityOrder2ᚖgoᚗproboᚗin
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOProcessingActivitySpecialOrCriminalData2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData(ctx context.Context, v any) (*coredata.ProcessingActivitySpecialOrCriminalData, error) {
+func (ec *executionContext) unmarshalOProcessingActivitySpecialOrCriminalDatum2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum(ctx context.Context, v any) (*coredata.ProcessingActivitySpecialOrCriminalDatum, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalOProcessingActivitySpecialOrCriminalData2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData[tmp]
+	res := unmarshalOProcessingActivitySpecialOrCriminalDatum2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum[tmp]
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOProcessingActivitySpecialOrCriminalData2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivitySpecialOrCriminalData) graphql.Marshaler {
+func (ec *executionContext) marshalOProcessingActivitySpecialOrCriminalDatum2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivitySpecialOrCriminalDatum) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	_ = sel
 	_ = ctx
-	res := graphql.MarshalString(marshalOProcessingActivitySpecialOrCriminalData2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData[*v])
+	res := graphql.MarshalString(marshalOProcessingActivitySpecialOrCriminalDatum2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum[*v])
 	return res
 }
 
 var (
-	unmarshalOProcessingActivitySpecialOrCriminalData2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData = map[string]coredata.ProcessingActivitySpecialOrCriminalData{
-		"YES":      coredata.ProcessingActivitySpecialOrCriminalDataYes,
-		"NO":       coredata.ProcessingActivitySpecialOrCriminalDataNo,
-		"POSSIBLE": coredata.ProcessingActivitySpecialOrCriminalDataPossible,
+	unmarshalOProcessingActivitySpecialOrCriminalDatum2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum = map[string]coredata.ProcessingActivitySpecialOrCriminalDatum{
+		"YES":      coredata.ProcessingActivitySpecialOrCriminalDatumYes,
+		"NO":       coredata.ProcessingActivitySpecialOrCriminalDatumNo,
+		"POSSIBLE": coredata.ProcessingActivitySpecialOrCriminalDatumPossible,
 	}
-	marshalOProcessingActivitySpecialOrCriminalData2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalData = map[coredata.ProcessingActivitySpecialOrCriminalData]string{
-		coredata.ProcessingActivitySpecialOrCriminalDataYes:      "YES",
-		coredata.ProcessingActivitySpecialOrCriminalDataNo:       "NO",
-		coredata.ProcessingActivitySpecialOrCriminalDataPossible: "POSSIBLE",
+	marshalOProcessingActivitySpecialOrCriminalDatum2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivitySpecialOrCriminalDatum = map[coredata.ProcessingActivitySpecialOrCriminalDatum]string{
+		coredata.ProcessingActivitySpecialOrCriminalDatumYes:      "YES",
+		coredata.ProcessingActivitySpecialOrCriminalDatumNo:       "NO",
+		coredata.ProcessingActivitySpecialOrCriminalDatumPossible: "POSSIBLE",
 	}
 )
 
@@ -109284,41 +109075,41 @@ var (
 	}
 )
 
-func (ec *executionContext) unmarshalOProcessingActivityTransferSafeguards2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguards(ctx context.Context, v any) (*coredata.ProcessingActivityTransferSafeguards, error) {
+func (ec *executionContext) unmarshalOProcessingActivityTransferSafeguard2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguard(ctx context.Context, v any) (*coredata.ProcessingActivityTransferSafeguard, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalOProcessingActivityTransferSafeguards2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguards[tmp]
+	res := unmarshalOProcessingActivityTransferSafeguard2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguard[tmp]
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOProcessingActivityTransferSafeguards2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguards(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivityTransferSafeguards) graphql.Marshaler {
+func (ec *executionContext) marshalOProcessingActivityTransferSafeguard2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguard(ctx context.Context, sel ast.SelectionSet, v *coredata.ProcessingActivityTransferSafeguard) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	_ = sel
 	_ = ctx
-	res := graphql.MarshalString(marshalOProcessingActivityTransferSafeguards2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguards[*v])
+	res := graphql.MarshalString(marshalOProcessingActivityTransferSafeguard2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguard[*v])
 	return res
 }
 
 var (
-	unmarshalOProcessingActivityTransferSafeguards2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguards = map[string]coredata.ProcessingActivityTransferSafeguards{
-		"STANDARD_CONTRACTUAL_CLAUSES": coredata.ProcessingActivityTransferSafeguardsStandardContractualClauses,
-		"BINDING_CORPORATE_RULES":      coredata.ProcessingActivityTransferSafeguardsBindingCorporateRules,
-		"ADEQUACY_DECISION":            coredata.ProcessingActivityTransferSafeguardsAdequacyDecision,
-		"DEROGATIONS":                  coredata.ProcessingActivityTransferSafeguardsDerogations,
-		"CODES_OF_CONDUCT":             coredata.ProcessingActivityTransferSafeguardsCodesOfConduct,
-		"CERTIFICATION_MECHANISMS":     coredata.ProcessingActivityTransferSafeguardsCertificationMechanisms,
+	unmarshalOProcessingActivityTransferSafeguard2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguard = map[string]coredata.ProcessingActivityTransferSafeguard{
+		"STANDARD_CONTRACTUAL_CLAUSES": coredata.ProcessingActivityTransferSafeguardStandardContractualClauses,
+		"BINDING_CORPORATE_RULES":      coredata.ProcessingActivityTransferSafeguardBindingCorporateRules,
+		"ADEQUACY_DECISION":            coredata.ProcessingActivityTransferSafeguardAdequacyDecision,
+		"DEROGATIONS":                  coredata.ProcessingActivityTransferSafeguardDerogations,
+		"CODES_OF_CONDUCT":             coredata.ProcessingActivityTransferSafeguardCodesOfConduct,
+		"CERTIFICATION_MECHANISMS":     coredata.ProcessingActivityTransferSafeguardCertificationMechanisms,
 	}
-	marshalOProcessingActivityTransferSafeguards2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguards = map[coredata.ProcessingActivityTransferSafeguards]string{
-		coredata.ProcessingActivityTransferSafeguardsStandardContractualClauses: "STANDARD_CONTRACTUAL_CLAUSES",
-		coredata.ProcessingActivityTransferSafeguardsBindingCorporateRules:      "BINDING_CORPORATE_RULES",
-		coredata.ProcessingActivityTransferSafeguardsAdequacyDecision:           "ADEQUACY_DECISION",
-		coredata.ProcessingActivityTransferSafeguardsDerogations:                "DEROGATIONS",
-		coredata.ProcessingActivityTransferSafeguardsCodesOfConduct:             "CODES_OF_CONDUCT",
-		coredata.ProcessingActivityTransferSafeguardsCertificationMechanisms:    "CERTIFICATION_MECHANISMS",
+	marshalOProcessingActivityTransferSafeguard2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐProcessingActivityTransferSafeguard = map[coredata.ProcessingActivityTransferSafeguard]string{
+		coredata.ProcessingActivityTransferSafeguardStandardContractualClauses: "STANDARD_CONTRACTUAL_CLAUSES",
+		coredata.ProcessingActivityTransferSafeguardBindingCorporateRules:      "BINDING_CORPORATE_RULES",
+		coredata.ProcessingActivityTransferSafeguardAdequacyDecision:           "ADEQUACY_DECISION",
+		coredata.ProcessingActivityTransferSafeguardDerogations:                "DEROGATIONS",
+		coredata.ProcessingActivityTransferSafeguardCodesOfConduct:             "CODES_OF_CONDUCT",
+		coredata.ProcessingActivityTransferSafeguardCertificationMechanisms:    "CERTIFICATION_MECHANISMS",
 	}
 )
 

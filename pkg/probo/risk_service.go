@@ -23,6 +23,7 @@ import (
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -58,6 +59,42 @@ type (
 		Note               *string
 	}
 )
+
+func (crr *CreateRiskRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(crr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(crr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(crr.Description, "description", validator.Required(), validator.SafeText(ContentMaxLength))
+	v.Check(crr.Category, "category", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(crr.Treatment, "treatment", validator.Required(), validator.OneOfSlice(coredata.RiskTreatments()))
+	v.Check(crr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(crr.InherentLikelihood, "inherent_likelihood", validator.Required(), validator.Min(1), validator.Max(5))
+	v.Check(crr.InherentImpact, "inherent_impact", validator.Required(), validator.Min(1), validator.Max(5))
+	v.Check(crr.ResidualLikelihood, "residual_likelihood", validator.Min(1), validator.Max(5))
+	v.Check(crr.ResidualImpact, "residual_impact", validator.Min(1), validator.Max(5))
+	v.Check(crr.Note, "note", validator.SafeText(TitleMaxLength))
+
+	return v.Error()
+}
+
+func (urr *UpdateRiskRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(urr.ID, "id", validator.Required(), validator.GID(coredata.RiskEntityType))
+	v.Check(urr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(urr.Description, "description", validator.SafeText(ContentMaxLength))
+	v.Check(urr.Category, "category", validator.SafeText(TitleMaxLength))
+	v.Check(urr.Treatment, "treatment", validator.OneOfSlice(coredata.RiskTreatments()))
+	v.Check(urr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(urr.InherentLikelihood, "inherent_likelihood", validator.Min(1), validator.Max(5))
+	v.Check(urr.InherentImpact, "inherent_impact", validator.Min(1), validator.Max(5))
+	v.Check(urr.ResidualLikelihood, "residual_likelihood", validator.Min(1), validator.Max(5))
+	v.Check(urr.ResidualImpact, "residual_impact", validator.Min(1), validator.Max(5))
+	v.Check(urr.Note, "note", validator.SafeText(TitleMaxLength))
+
+	return v.Error()
+}
 
 func (s RiskService) CountForMeasureID(
 	ctx context.Context,

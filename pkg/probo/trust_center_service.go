@@ -25,10 +25,11 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"go.probo.inc/probo/pkg/coredata"
-	"go.probo.inc/probo/pkg/gid"
 	"go.gearno.de/crypto/uuid"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/coredata"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -48,11 +49,26 @@ type (
 		File          io.Reader
 		FileName      string
 	}
-
-	DeleteTrustCenterNDARequest struct {
-		TrustCenterID gid.GID
-	}
 )
+
+func (utcr *UpdateTrustCenterRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(utcr.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
+	v.Check(utcr.Slug, "slug", validator.SafeText(NameMaxLength))
+	v.Check(utcr.NonDisclosureAgreementFileID, "non_disclosure_agreement_file_id", validator.GID(coredata.FileEntityType))
+
+	return v.Error()
+}
+
+func (utcndar *UploadTrustCenterNDARequest) Validate() error {
+	v := validator.New()
+
+	v.Check(utcndar.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
+	v.Check(utcndar.FileName, "file_name", validator.Required(), validator.SafeText(TitleMaxLength))
+
+	return v.Error()
+}
 
 func (s TrustCenterService) Get(
 	ctx context.Context,
@@ -124,6 +140,10 @@ func (s TrustCenterService) Update(
 	ctx context.Context,
 	req *UpdateTrustCenterRequest,
 ) (*coredata.TrustCenter, *coredata.File, error) {
+	if err := req.Validate(); err != nil {
+		return nil, nil, err
+	}
+
 	var trustCenter *coredata.TrustCenter
 	var file *coredata.File
 
@@ -170,6 +190,10 @@ func (s TrustCenterService) UploadNDA(
 	ctx context.Context,
 	req *UploadTrustCenterNDARequest,
 ) (*coredata.TrustCenter, *coredata.File, error) {
+	if err := req.Validate(); err != nil {
+		return nil, nil, err
+	}
+
 	objectKey, err := uuid.NewV7()
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot generate object key: %w", err)
@@ -249,7 +273,7 @@ func (s TrustCenterService) UploadNDA(
 
 func (s TrustCenterService) DeleteNDA(
 	ctx context.Context,
-	req *DeleteTrustCenterNDARequest,
+	trustCenterID gid.GID,
 ) (*coredata.TrustCenter, *coredata.File, error) {
 	var trustCenter *coredata.TrustCenter
 
@@ -257,7 +281,7 @@ func (s TrustCenterService) DeleteNDA(
 		ctx,
 		func(conn pg.Conn) error {
 			trustCenter = &coredata.TrustCenter{}
-			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, req.TrustCenterID); err != nil {
+			if err := trustCenter.LoadByID(ctx, conn, s.svc.scope, trustCenterID); err != nil {
 				return fmt.Errorf("cannot load trust center: %w", err)
 			}
 
@@ -276,7 +300,7 @@ func (s TrustCenterService) DeleteNDA(
 		return nil, nil, err
 	}
 
-	return trustCenter, nil, nil // File is nil after deletion
+	return trustCenter, nil, nil
 }
 
 func (s TrustCenterService) GenerateNDAFileURL(

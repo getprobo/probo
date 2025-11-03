@@ -79,7 +79,7 @@ export function CreateAuditDialog({
       await createAudit({
         organizationId,
         frameworkId: data.frameworkId,
-        name: data.name,
+        name: data.name || null,
         validFrom: formatDatetime(data.validFrom),
         validUntil: formatDatetime(data.validUntil),
         state: data.state,

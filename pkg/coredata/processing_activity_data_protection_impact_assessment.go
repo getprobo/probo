@@ -26,6 +26,13 @@ const (
 	ProcessingActivityDataProtectionImpactAssessmentNotNeeded ProcessingActivityDataProtectionImpactAssessment = "NOT_NEEDED"
 )
 
+func ProcessingActivityDataProtectionImpactAssessments() []ProcessingActivityDataProtectionImpactAssessment {
+	return []ProcessingActivityDataProtectionImpactAssessment{
+		ProcessingActivityDataProtectionImpactAssessmentNeeded,
+		ProcessingActivityDataProtectionImpactAssessmentNotNeeded,
+	}
+}
+
 func (p ProcessingActivityDataProtectionImpactAssessment) String() string {
 	return string(p)
 }

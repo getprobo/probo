@@ -151,7 +151,7 @@ export const useCreateAudit = (connectionId: string) => {
   return (input: {
     organizationId: string;
     frameworkId: string;
-    name?: string;
+    name?: string | null;
     validFrom?: string;
     validUntil?: string;
     reportKey?: string;
@@ -187,7 +187,7 @@ export const useUpdateAudit = () => {
 
   return (input: {
     id: string;
-    name?: string;
+    name?: string | null;
     validFrom?: string | null;
     validUntil?: string | null;
     state?: string;

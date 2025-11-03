@@ -14,6 +14,15 @@ const (
 	DocumentClassificationSecret       DocumentClassification = "SECRET"
 )
 
+func DocumentClassifications() []DocumentClassification {
+	return []DocumentClassification{
+		DocumentClassificationPublic,
+		DocumentClassificationInternal,
+		DocumentClassificationConfidential,
+		DocumentClassificationSecret,
+	}
+}
+
 func (dc DocumentClassification) String() string {
 	switch dc {
 	case DocumentClassificationPublic:

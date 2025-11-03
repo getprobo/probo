@@ -30,6 +30,15 @@ const (
 	DocumentTypeProcedure DocumentType = "PROCEDURE"
 )
 
+func DocumentTypes() []DocumentType {
+	return []DocumentType{
+		DocumentTypeOther,
+		DocumentTypeISMS,
+		DocumentTypePolicy,
+		DocumentTypeProcedure,
+	}
+}
+
 func (dt DocumentType) MarshalText() ([]byte, error) {
 	return []byte(dt.String()), nil
 }

@@ -27,6 +27,14 @@ const (
 	ObligationStatusCompliant          ObligationStatus = "COMPLIANT"
 )
 
+func ObligationStatuses() []ObligationStatus {
+	return []ObligationStatus{
+		ObligationStatusNonCompliant,
+		ObligationStatusPartiallyCompliant,
+		ObligationStatusCompliant,
+	}
+}
+
 func (os ObligationStatus) String() string {
 	return string(os)
 }

@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -42,6 +43,26 @@ type (
 		Description **string
 	}
 )
+
+func (cvsr *CreateVendorServiceRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cvsr.VendorID, "vendor_id", validator.Required(), validator.GID(coredata.VendorEntityType))
+	v.Check(cvsr.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+	v.Check(cvsr.Description, "description", validator.SafeText(ContentMaxLength))
+
+	return v.Error()
+}
+
+func (uvsr *UpdateVendorServiceRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(uvsr.ID, "id", validator.Required(), validator.GID(coredata.VendorServiceEntityType))
+	v.Check(uvsr.Name, "name", validator.SafeText(TitleMaxLength))
+	v.Check(uvsr.Description, "description", validator.SafeText(ContentMaxLength))
+
+	return v.Error()
+}
 
 func (s VendorServiceService) Get(
 	ctx context.Context,
@@ -98,6 +119,10 @@ func (s VendorServiceService) Create(
 	ctx context.Context,
 	req CreateVendorServiceRequest,
 ) (*coredata.VendorService, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	vendorService := &coredata.VendorService{
 		ID:          gid.New(s.svc.scope.GetTenantID(), coredata.VendorServiceEntityType),
@@ -130,6 +155,10 @@ func (s VendorServiceService) Update(
 	ctx context.Context,
 	req UpdateVendorServiceRequest,
 ) (*coredata.VendorService, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	vendorService := &coredata.VendorService{}
 
 	err := s.svc.pg.WithTx(

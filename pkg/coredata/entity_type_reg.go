@@ -21,49 +21,49 @@ var (
 )
 
 const (
-	OrganizationEntityType uint16 = iota
-	FrameworkEntityType
-	MeasureEntityType
-	TaskEntityType
-	EvidenceEntityType
-	ConnectorEntityType
-	VendorRiskAssessmentEntityType
-	VendorEntityType
-	PeopleEntityType
-	VendorComplianceReportEntityType
-	DocumentEntityType
-	UserEntityType
-	SessionEntityType
-	EmailEntityType
-	ControlEntityType
-	RiskEntityType
-	DocumentVersionEntityType
-	DocumentVersionSignatureEntityType
-	AssetEntityType
-	DatumEntityType
-	AuditEntityType
-	ReportEntityType
-	TrustCenterEntityType
-	TrustCenterAccessEntityType
-	VendorBusinessAssociateAgreementEntityType
-	FileEntityType
-	VendorContactEntityType
-	VendorDataPrivacyAgreementEntityType
-	NonconformityEntityType
-	ObligationEntityType
-	VendorServiceEntityType
-	SnapshotEntityType
-	ContinualImprovementEntityType
-	ProcessingActivityEntityType
-	ExportJobEntityType
-	TrustCenterReferenceEntityType
-	TrustCenterDocumentAccessEntityType
-	CustomDomainEntityType
-	InvitationEntityType
-	MembershipEntityType
-	SlackMessageEntityType
-	TrustCenterFileEntityType
-	SAMLConfigurationEntityType
-	UserAPIKeyEntityType
-	UserAPIKeyMembershipEntityType
+	OrganizationEntityType                     uint16 = 0
+	FrameworkEntityType                        uint16 = 1
+	MeasureEntityType                          uint16 = 2
+	TaskEntityType                             uint16 = 3
+	EvidenceEntityType                         uint16 = 4
+	ConnectorEntityType                        uint16 = 5
+	VendorRiskAssessmentEntityType             uint16 = 6
+	VendorEntityType                           uint16 = 7
+	PeopleEntityType                           uint16 = 8
+	VendorComplianceReportEntityType           uint16 = 9
+	DocumentEntityType                         uint16 = 10
+	UserEntityType                             uint16 = 11
+	SessionEntityType                          uint16 = 12
+	EmailEntityType                            uint16 = 13
+	ControlEntityType                          uint16 = 14
+	RiskEntityType                             uint16 = 15
+	DocumentVersionEntityType                  uint16 = 16
+	DocumentVersionSignatureEntityType         uint16 = 17
+	AssetEntityType                            uint16 = 18
+	DatumEntityType                            uint16 = 19
+	AuditEntityType                            uint16 = 20
+	ReportEntityType                           uint16 = 21
+	TrustCenterEntityType                      uint16 = 22
+	TrustCenterAccessEntityType                uint16 = 23
+	VendorBusinessAssociateAgreementEntityType uint16 = 24
+	FileEntityType                             uint16 = 25
+	VendorContactEntityType                    uint16 = 26
+	VendorDataPrivacyAgreementEntityType       uint16 = 27
+	NonconformityEntityType                    uint16 = 28
+	ObligationEntityType                       uint16 = 29
+	VendorServiceEntityType                    uint16 = 30
+	SnapshotEntityType                         uint16 = 31
+	ContinualImprovementEntityType             uint16 = 32
+	ProcessingActivityEntityType               uint16 = 33
+	ExportJobEntityType                        uint16 = 34
+	TrustCenterReferenceEntityType             uint16 = 35
+	TrustCenterDocumentAccessEntityType        uint16 = 36
+	CustomDomainEntityType                     uint16 = 37
+	InvitationEntityType                       uint16 = 38
+	MembershipEntityType                       uint16 = 39
+	SlackMessageEntityType                     uint16 = 40
+	TrustCenterFileEntityType                  uint16 = 41
+	SAMLConfigurationEntityType                uint16 = 42
+	UserAPIKeyEntityType                       uint16 = 43
+	UserAPIKeyMembershipEntityType             uint16 = 44
 )

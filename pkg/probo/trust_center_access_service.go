@@ -17,7 +17,6 @@ package probo
 import (
 	"context"
 	"fmt"
-	"net/mail"
 	"net/url"
 	"time"
 
@@ -27,6 +26,7 @@ import (
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/statelesstoken"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -49,15 +49,39 @@ type (
 		TrustCenterFileIDs []gid.GID
 	}
 
-	DeleteTrustCenterAccessRequest struct {
-		ID gid.GID
-	}
-
 	TrustCenterAccessData struct {
 		TrustCenterID gid.GID `json:"trust_center_id"`
 		Email         string  `json:"email"`
 	}
 )
+
+func (ctcar *CreateTrustCenterAccessRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ctcar.TrustCenterID, "trust_center_id", validator.Required(), validator.GID(coredata.TrustCenterEntityType))
+	v.Check(ctcar.Email, "email", validator.Required(), validator.Email())
+	v.Check(ctcar.Name, "name", validator.Required(), validator.SafeText(TitleMaxLength))
+
+	return v.Error()
+}
+
+func (utcar *UpdateTrustCenterAccessRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(utcar.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterAccessEntityType))
+	v.Check(utcar.Name, "name", validator.SafeText(TitleMaxLength))
+	v.CheckEach(utcar.DocumentIDs, "document_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("document_ids[%d]", index), validator.Required(), validator.GID(coredata.DocumentEntityType))
+	})
+	v.CheckEach(utcar.ReportIDs, "report_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("report_ids[%d]", index), validator.Required(), validator.GID(coredata.ReportEntityType))
+	})
+	v.CheckEach(utcar.TrustCenterFileIDs, "trust_center_file_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("trust_center_file_ids[%d]", index), validator.Required(), validator.GID(coredata.TrustCenterFileEntityType))
+	})
+
+	return v.Error()
+}
 
 func (s TrustCenterAccessService) ListForTrustCenterID(
 	ctx context.Context,
@@ -239,18 +263,12 @@ func (s TrustCenterAccessService) Create(
 	ctx context.Context,
 	req *CreateTrustCenterAccessRequest,
 ) (*coredata.TrustCenterAccess, error) {
-	if _, err := mail.ParseAddress(req.Email); err != nil {
-		return nil, fmt.Errorf("invalid email address")
-	}
-
-	if req.Name == "" {
-		return nil, fmt.Errorf("name is required")
+	if err := req.Validate(); err != nil {
+		return nil, err
 	}
 
 	now := time.Now()
-
 	var access *coredata.TrustCenterAccess
-
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
@@ -285,14 +303,13 @@ func (s TrustCenterAccessService) Update(
 	ctx context.Context,
 	req *UpdateTrustCenterAccessRequest,
 ) (*coredata.TrustCenterAccess, error) {
-	now := time.Now()
 
-	var access *coredata.TrustCenterAccess
-
-	if req.Name != nil && *req.Name == "" {
-		return nil, fmt.Errorf("name is required")
+	if err := req.Validate(); err != nil {
+		return nil, err
 	}
 
+	now := time.Now()
+	var access *coredata.TrustCenterAccess
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
@@ -344,14 +361,14 @@ func (s TrustCenterAccessService) Update(
 
 func (s TrustCenterAccessService) Delete(
 	ctx context.Context,
-	req *DeleteTrustCenterAccessRequest,
+	trustCenterAccessID gid.GID,
 ) error {
 	err := s.svc.pg.WithTx(
 		ctx,
 		func(tx pg.Conn) error {
 			access := &coredata.TrustCenterAccess{}
 
-			if err := access.LoadByID(ctx, tx, s.svc.scope, req.ID); err != nil {
+			if err := access.LoadByID(ctx, tx, s.svc.scope, trustCenterAccessID); err != nil {
 				return fmt.Errorf("cannot load trust center access: %w", err)
 			}
 
