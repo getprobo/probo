@@ -294,9 +294,9 @@ func TestOneOf(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := OneOf(tt.allowed...)(tt.value)
+			err := OneOfSlice(tt.allowed)(tt.value)
 			if (err != nil) != tt.wantError {
-				t.Errorf("OneOf() error = %v, wantError %v", err, tt.wantError)
+				t.Errorf("OneOfSlice() error = %v, wantError %v", err, tt.wantError)
 			}
 		})
 	}

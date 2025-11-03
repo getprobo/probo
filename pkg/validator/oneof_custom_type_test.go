@@ -66,7 +66,7 @@ func TestOneOf_CustomStringType(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := New()
-			v.Check(tt.value, "asset_type", OneOf(tt.allowed...))
+			v.Check(tt.value, "asset_type", OneOfSlice(tt.allowed))
 
 			if tt.expectError {
 				if !v.HasErrors() {
