@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -48,17 +49,34 @@ type (
 		Status                 *coredata.ControlStatus
 		ExclusionJustification *string
 	}
-
-	ConnectControlToMitigationRequest struct {
-		ControlID    gid.GID
-		MitigationID gid.GID
-	}
-
-	DisconnectControlFromMitigationRequest struct {
-		ControlID    gid.GID
-		MitigationID gid.GID
-	}
 )
+
+func (ccr *CreateControlRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ccr.ID, "id", validator.Required(), validator.GID(coredata.ControlEntityType))
+	v.Check(ccr.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
+	v.Check(ccr.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(ccr.Description, "description", validator.Required(), validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText())
+	v.Check(ccr.SectionTitle, "section_title", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(ccr.Status, "status", validator.Required(), validator.OneOfSlice(coredata.ControlStatuses()))
+	v.Check(ccr.ExclusionJustification, "exclusion_justification", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+
+	return v.Error()
+}
+
+func (ucr *UpdateControlRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ucr.ID, "id", validator.Required(), validator.GID(coredata.ControlEntityType))
+	v.Check(ucr.Name, "name", validator.WhenSet(ucr.Name, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(ucr.Description, "description", validator.WhenSet(ucr.Description, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(ucr.SectionTitle, "section_title", validator.WhenSet(ucr.SectionTitle, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(ucr.Status, "status", validator.WhenSet(ucr.Status, validator.OneOfSlice(coredata.ControlStatuses())))
+	v.Check(ucr.ExclusionJustification, "exclusion_justification", validator.WhenSet(ucr.ExclusionJustification, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
+
+	return v.Error()
+}
 
 func (s ControlService) CountForDocumentID(
 	ctx context.Context,
