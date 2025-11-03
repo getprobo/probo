@@ -204,6 +204,10 @@ func UUID() ValidatorFunc {
 //   - GID(100, 200) validates GID with entity type 100 or 200
 func GID(entityTypes ...uint16) ValidatorFunc {
 	return func(value any) *ValidationError {
+		if value == nil {
+			return nil
+		}
+
 		var gidValue gid.GID
 
 		switch v := value.(type) {

@@ -20,8 +20,24 @@ import (
 )
 
 // After validates that a time is after the specified reference time.
-func After(t time.Time) ValidatorFunc {
+// The reference time can be either time.Time or *time.Time.
+func After(t any) ValidatorFunc {
 	return func(value any) *ValidationError {
+		// Extract the reference time
+		var refTime time.Time
+		switch ref := t.(type) {
+		case time.Time:
+			refTime = ref
+		case *time.Time:
+			if ref == nil {
+				return nil // No reference time to compare against
+			}
+			refTime = *ref
+		default:
+			return newValidationError(ErrorCodeInvalidFormat, "reference time must be time.Time or *time.Time")
+		}
+
+		// Extract the value being validated
 		var timeVal time.Time
 		switch v := value.(type) {
 		case time.Time:
@@ -35,10 +51,10 @@ func After(t time.Time) ValidatorFunc {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a time.Time")
 		}
 
-		if !timeVal.After(t) {
+		if !timeVal.After(refTime) {
 			return newValidationError(
 				ErrorCodeOutOfRange,
-				fmt.Sprintf("must be after %s", t.Format(time.RFC3339)),
+				fmt.Sprintf("must be after %s", refTime.Format(time.RFC3339)),
 			)
 		}
 
@@ -47,8 +63,24 @@ func After(t time.Time) ValidatorFunc {
 }
 
 // Before validates that a time is before the specified reference time.
-func Before(t time.Time) ValidatorFunc {
+// The reference time can be either time.Time or *time.Time.
+func Before(t any) ValidatorFunc {
 	return func(value any) *ValidationError {
+		// Extract the reference time
+		var refTime time.Time
+		switch ref := t.(type) {
+		case time.Time:
+			refTime = ref
+		case *time.Time:
+			if ref == nil {
+				return nil // No reference time to compare against
+			}
+			refTime = *ref
+		default:
+			return newValidationError(ErrorCodeInvalidFormat, "reference time must be time.Time or *time.Time")
+		}
+
+		// Extract the value being validated
 		var timeVal time.Time
 		switch v := value.(type) {
 		case time.Time:
@@ -62,10 +94,10 @@ func Before(t time.Time) ValidatorFunc {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a time.Time")
 		}
 
-		if !timeVal.Before(t) {
+		if !timeVal.Before(refTime) {
 			return newValidationError(
 				ErrorCodeOutOfRange,
-				fmt.Sprintf("must be before %s", t.Format(time.RFC3339)),
+				fmt.Sprintf("must be before %s", refTime.Format(time.RFC3339)),
 			)
 		}
 

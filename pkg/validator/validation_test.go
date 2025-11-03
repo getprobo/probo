@@ -188,9 +188,9 @@ func TestOptionalFieldExample(t *testing.T) {
 
 	v.Check(&req.Email, "email", Required(), Email())
 	v.Check(&req.Name, "name", Required(), MinLen(2))
-	v.Check(req.Website, "website", Optional(), URL())
-	v.Check(req.PhoneNumber, "phoneNumber", Optional(), MinLen(10))
-	v.Check(req.Age, "age", Optional(), Min(18), Max(120))
+	v.Check(req.Website, "website", URL())
+	v.Check(req.PhoneNumber, "phoneNumber", MinLen(10))
+	v.Check(req.Age, "age", Min(18), Max(120))
 
 	if !v.HasErrors() {
 		t.Fatal("expected validation errors")

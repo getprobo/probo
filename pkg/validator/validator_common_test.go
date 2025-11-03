@@ -18,54 +18,30 @@ import (
 	"testing"
 )
 
-func TestOptional(t *testing.T) {
-	t.Run("panic when used with Required", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("expected panic when using Optional() with Required()")
-			}
-		}()
-
+func TestOptionalByDefault(t *testing.T) {
+	t.Run("nil value skips validation by default", func(t *testing.T) {
 		v := New()
-		str := ""
-		v.Check(&str, "field", Optional(), Required())
-	})
-
-	t.Run("panic when used with Required (reverse order)", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r == nil {
-				t.Error("expected panic when using Required() with Optional()")
-			}
-		}()
-
-		v := New()
-		str := ""
-		v.Check(&str, "field", Required(), Optional())
-	})
-
-	t.Run("nil value skips validation", func(t *testing.T) {
-		v := New()
-		v.Check(nil, "field", Optional(), MinLen(5))
+		v.Check(nil, "field", MinLen(5))
 
 		if v.HasErrors() {
-			t.Errorf("expected no errors for nil with Optional(), got: %v", v.Errors())
+			t.Errorf("expected no errors for nil (optional by default), got: %v", v.Errors())
 		}
 	})
 
-	t.Run("nil pointer skips validation", func(t *testing.T) {
+	t.Run("nil pointer skips validation by default", func(t *testing.T) {
 		v := New()
 		var str *string
-		v.Check(str, "field", Optional(), MinLen(5))
+		v.Check(str, "field", MinLen(5))
 
 		if v.HasErrors() {
-			t.Errorf("expected no errors for nil pointer with Optional(), got: %v", v.Errors())
+			t.Errorf("expected no errors for nil pointer (optional by default), got: %v", v.Errors())
 		}
 	})
 
 	t.Run("valid value passes validation", func(t *testing.T) {
 		v := New()
 		str := "hello world"
-		v.Check(&str, "field", Optional(), MinLen(5))
+		v.Check(&str, "field", MinLen(5))
 
 		if v.HasErrors() {
 			t.Errorf("expected no errors, got: %v", v.Errors())
@@ -75,7 +51,7 @@ func TestOptional(t *testing.T) {
 	t.Run("invalid value fails validation", func(t *testing.T) {
 		v := New()
 		str := "hi"
-		v.Check(&str, "field", Optional(), MinLen(5))
+		v.Check(&str, "field", MinLen(5))
 
 		if !v.HasErrors() {
 			t.Error("expected validation error")
@@ -85,20 +61,30 @@ func TestOptional(t *testing.T) {
 	t.Run("multiple validators", func(t *testing.T) {
 		v := New()
 		str := "hello"
-		v.Check(&str, "field", Optional(), MinLen(3), MaxLen(10))
+		v.Check(&str, "field", MinLen(3), MaxLen(10))
 
 		if v.HasErrors() {
 			t.Errorf("expected no errors, got: %v", v.Errors())
 		}
 	})
 
-	t.Run("empty string is not nil", func(t *testing.T) {
+	t.Run("empty string is not nil and gets validated", func(t *testing.T) {
 		v := New()
 		str := ""
-		v.Check(&str, "field", Optional(), MinLen(5))
+		v.Check(&str, "field", MinLen(5))
 
 		if !v.HasErrors() {
 			t.Error("expected validation error for empty string")
+		}
+	})
+
+	t.Run("Required() validates nil values", func(t *testing.T) {
+		v := New()
+		var str *string
+		v.Check(str, "field", Required())
+
+		if !v.HasErrors() {
+			t.Error("expected validation error for nil with Required()")
 		}
 	})
 }

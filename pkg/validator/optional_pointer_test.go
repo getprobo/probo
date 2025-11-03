@@ -53,7 +53,7 @@ func TestOptional_WithGIDPointer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := New()
-			v.Check(tt.value, "owner_id", Optional(), GID(100))
+			v.Check(tt.value, "owner_id", GID(100))
 
 			if tt.expectError {
 				if !v.HasErrors() {
@@ -100,7 +100,7 @@ func TestOptional_WithCustomTypePointer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			v := New()
-			v.Check(tt.value, "asset_type", Optional(), OneOf("VALID", "ANOTHER"))
+			v.Check(tt.value, "asset_type", OneOf("VALID", "ANOTHER"))
 
 			if tt.expectError {
 				if !v.HasErrors() {

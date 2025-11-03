@@ -16,14 +16,6 @@ package validator
 
 import "strings"
 
-// Optional marks a field as optional, allowing nil or empty values.
-// When used with other validators, they will be skipped if the value is nil or empty.
-func Optional() ValidatorFunc {
-	return func(value any) *ValidationError {
-		return nil
-	}
-}
-
 // Required validates that a field has a value.
 // For strings, it also checks that the value is not empty or just whitespace.
 // For slices, it checks that the slice is not empty.
@@ -77,6 +69,10 @@ func Required() ValidatorFunc {
 // Similar to Required, but can be used independently.
 func NotEmpty() ValidatorFunc {
 	return func(value any) *ValidationError {
+		if value == nil {
+			return nil
+		}
+
 		switch v := value.(type) {
 		case string:
 			if strings.TrimSpace(v) == "" {

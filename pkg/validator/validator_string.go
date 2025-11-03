@@ -28,6 +28,10 @@ var (
 // MinLen validates that a string has at least the specified minimum length.
 func MinLen(minLength int) ValidatorFunc {
 	return func(value any) *ValidationError {
+		if value == nil {
+			return nil
+		}
+
 		var str string
 		switch v := value.(type) {
 		case string:
@@ -55,6 +59,10 @@ func MinLen(minLength int) ValidatorFunc {
 // MaxLen validates that a string does not exceed the specified maximum length.
 func MaxLen(maxLength int) ValidatorFunc {
 	return func(value any) *ValidationError {
+		if value == nil {
+			return nil
+		}
+
 		var str string
 		switch v := value.(type) {
 		case string:
@@ -200,6 +208,11 @@ func OneOf(allowed ...string) ValidatorFunc {
 	}
 
 	return func(value any) *ValidationError {
+		// Handle nil values first
+		if value == nil {
+			return nil
+		}
+
 		var str string
 		switch v := value.(type) {
 		case string:

@@ -19,6 +19,10 @@ import "fmt"
 // Min validates that a number is at least the specified minimum value.
 func Min(min int) ValidatorFunc {
 	return func(value any) *ValidationError {
+		if value == nil {
+			return nil
+		}
+
 		var num int
 		switch v := value.(type) {
 		case int:
@@ -60,6 +64,10 @@ func Min(min int) ValidatorFunc {
 // Max validates that a number does not exceed the specified maximum value.
 func Max(max int) ValidatorFunc {
 	return func(value any) *ValidationError {
+		if value == nil {
+			return nil
+		}
+
 		var num int
 		switch v := value.(type) {
 		case int:

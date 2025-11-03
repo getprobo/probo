@@ -49,7 +49,7 @@ func BenchmarkValidate_OptionalField(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := New()
-		v.Check(website, "website", Optional(), URL())
+		v.Check(website, "website", URL())
 	}
 }
 
@@ -259,8 +259,8 @@ func BenchmarkValidate_ComplexForm(b *testing.B) {
 		v.Check(&user.Email, "email", Required(), Email())
 		v.Check(&user.Name, "name", Required(), MinLen(2))
 		v.Check(&user.Age, "age", Min(18), Max(120))
-		v.Check(user.Website, "website", Optional(), URL())
-		v.Check(user.PhoneNumber, "phoneNumber", Optional(), MinLen(10))
+		v.Check(user.Website, "website", URL())
+		v.Check(user.PhoneNumber, "phoneNumber", MinLen(10))
 		v.Check(&user.Price, "price", MinFloat(0.01))
 
 		v.CheckNested("address", func(av *Validator) {

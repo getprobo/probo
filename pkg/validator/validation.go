@@ -34,44 +34,23 @@ func (v *Validator) Check(value any, field string, validators ...ValidatorFunc) 
 		return
 	}
 
-	hasRequired := false
-	hasOptional := false
-	var actualValidators []ValidatorFunc
+	// Dereference pointer values to get the actual value for validation
+	actualValue := value
+	if value != nil {
+		val := reflect.ValueOf(value)
+		// Dereference all pointer levels
+		for val.Kind() == reflect.Ptr && !val.IsNil() {
+			val = val.Elem()
+			actualValue = val.Interface()
+		}
+		// If we ended up with a nil pointer at any level, set actualValue to nil
+		if val.Kind() == reflect.Ptr && val.IsNil() {
+			actualValue = nil
+		}
+	}
 
 	for _, validator := range validators {
-		testErr := validator(nil)
-		if testErr == nil {
-			optionalErr := validator("")
-			if optionalErr == nil {
-				hasOptional = true
-				continue
-			}
-		}
-
-		testReqErr := validator(nil)
-		if testReqErr != nil && testReqErr.Code == ErrorCodeRequired {
-			hasRequired = true
-		}
-
-		actualValidators = append(actualValidators, validator)
-	}
-
-	if hasRequired && hasOptional {
-		panic("cannot use both Required() and Optional() on the same field")
-	}
-
-	if hasOptional {
-		if value == nil {
-			return
-		}
-		val := reflect.ValueOf(value)
-		if val.Kind() == reflect.Ptr && val.IsNil() {
-			return
-		}
-	}
-
-	for _, validator := range actualValidators {
-		if err := validator(value); err != nil {
+		if err := validator(actualValue); err != nil {
 			v.errors = append(v.errors, &ValidationError{
 				Field:   field,
 				Code:    err.Code,
