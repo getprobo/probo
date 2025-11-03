@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Update documentation
+
+### Fixed
+
+- Fix download button in pdf preview
+
 ## [0.83.0] - 2025-10-31
 
 ### Added
