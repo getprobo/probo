@@ -22,3 +22,12 @@ const (
 	DataClassificationConfidential DataClassification = "CONFIDENTIAL"
 	DataClassificationSecret       DataClassification = "SECRET"
 )
+
+func DataClassifications() []DataClassification {
+	return []DataClassification{
+		DataClassificationPublic,
+		DataClassificationInternal,
+		DataClassificationConfidential,
+		DataClassificationSecret,
+	}
+}

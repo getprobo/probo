@@ -19,30 +19,61 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
-type DatumService struct {
-	svc *TenantService
+type (
+	DatumService struct {
+		svc *TenantService
+	}
+
+	CreateDatumRequest struct {
+		OrganizationID     gid.GID
+		Name               string
+		DataClassification coredata.DataClassification
+		OwnerID            gid.GID
+		VendorIDs          []gid.GID
+	}
+
+	UpdateDatumRequest struct {
+		ID                 gid.GID
+		Name               *string
+		DataClassification *coredata.DataClassification
+		OwnerID            *gid.GID
+		VendorIDs          []gid.GID
+	}
+)
+
+func (cdr *CreateDatumRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cdr.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText())
+	v.Check(cdr.DataClassification, "data_classification", validator.Required(), validator.OneOfSlice(coredata.DataClassifications()))
+	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.CheckEach(cdr.VendorIDs, "vendor_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
+	})
+
+	return v.Error()
 }
 
-type CreateDatumRequest struct {
-	OrganizationID     gid.GID
-	Name               string
-	DataClassification coredata.DataClassification
-	OwnerID            gid.GID
-	VendorIDs          []gid.GID
-}
+func (udr *UpdateDatumRequest) Validate() error {
+	v := validator.New()
 
-type UpdateDatumRequest struct {
-	ID                 gid.GID
-	Name               *string
-	DataClassification *coredata.DataClassification
-	OwnerID            *gid.GID
-	VendorIDs          []gid.GID
+	v.Check(udr.ID, "id", validator.Required(), validator.GID(coredata.DatumEntityType))
+	v.Check(udr.Name, "name", validator.WhenSet(udr.Name, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(udr.DataClassification, "data_classification", validator.WhenSet(udr.DataClassification, validator.OneOfSlice(coredata.DataClassifications())))
+	v.Check(udr.OwnerID, "owner_id", validator.WhenSet(udr.OwnerID, validator.GID(coredata.PeopleEntityType)))
+	v.CheckEach(udr.VendorIDs, "vendor_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
+	})
+
+	return v.Error()
 }
 
 func (s DatumService) Get(
@@ -145,6 +176,10 @@ func (s DatumService) Update(
 	ctx context.Context,
 	req UpdateDatumRequest,
 ) (*coredata.Datum, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	now := time.Now()
 	datum := &coredata.Datum{}
 	datumVendors := &coredata.DatumVendors{}
@@ -189,6 +224,10 @@ func (s DatumService) Create(
 	ctx context.Context,
 	req CreateDatumRequest,
 ) (*coredata.Datum, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	now := time.Now()
 	datumID := gid.New(s.svc.scope.GetTenantID(), coredata.DatumEntityType)
 	datumVendors := &coredata.DatumVendors{}
