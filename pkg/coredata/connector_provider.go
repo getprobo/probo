@@ -25,6 +25,12 @@ const (
 	ConnectorProviderSlack ConnectorProvider = "SLACK"
 )
 
+func ConnectorProviders() []ConnectorProvider {
+	return []ConnectorProvider{
+		ConnectorProviderSlack,
+	}
+}
+
 func (cp ConnectorProvider) String() string {
 	return string(cp)
 }

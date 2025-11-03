@@ -25,6 +25,12 @@ const (
 	ConnectorProtocolOAuth2 ConnectorProtocol = "OAUTH2"
 )
 
+func ConnectorProtocols() []ConnectorProtocol {
+	return []ConnectorProtocol{
+		ConnectorProtocolOAuth2,
+	}
+}
+
 func (cp ConnectorProtocol) String() string {
 	return string(cp)
 }
