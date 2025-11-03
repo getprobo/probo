@@ -18,11 +18,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"go.gearno.de/kit/log"
 	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/filemanager"
-	"github.com/go-chi/chi/v5"
-	"go.gearno.de/kit/log"
 )
 
 type Config struct {
@@ -55,6 +55,12 @@ func NewServer(cfg Config) (*Server, error) {
 	router.Get("/organizations/{organizationID}/logo", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, OrganizationLogoHandler(cfg.Auth, cfg.FileManager)))
 	router.Get("/invitations", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, ListInvitationsHandler(cfg.Authz)))
 	router.Post("/invitations/accept", AcceptInvitationHandler(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret))
+
+	router.Get("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, ListUserAPIKeysHandler(cfg.Auth, cfg.Authz)))
+	router.Post("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, CreateUserAPIKeyHandler(cfg.Auth)))
+	router.Get("/api-keys/{id}", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, GetUserAPIKeyHandler(cfg.Auth)))
+	router.Put("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, UpdateUserAPIKeyHandler(cfg.Auth)))
+	router.Delete("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, DeleteUserAPIKeyHandler(cfg.Auth)))
 
 	router.Get("/saml/login/{samlConfigID}", SAMLLoginHandler(cfg.SAML, cfg.Auth, cfg.Logger))
 	router.Post("/saml/consume", SAMLACSHandler(cfg.SAML, cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.SessionDuration, cfg.Logger))

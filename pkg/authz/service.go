@@ -21,12 +21,12 @@ import (
 	"net/url"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/statelesstoken"
-	"go.gearno.de/kit/pg"
 )
 
 type TenantAccessError struct {
@@ -94,6 +94,26 @@ func (s *Service) GetAllUserOrganizations(
 		func(conn pg.Conn) error {
 			if err := organizations.LoadAllByUserID(ctx, conn, userID); err != nil {
 				return fmt.Errorf("cannot load user organizations: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	return organizations, err
+}
+
+func (s *Service) GetAllOrganizationsForUserAPIKeyId(
+	ctx context.Context,
+	userAPIKeyID gid.GID,
+) (coredata.Organizations, error) {
+	organizations := coredata.Organizations{}
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := organizations.LoadAllByUserAPIKeyID(ctx, conn, userAPIKeyID); err != nil {
+				return fmt.Errorf("cannot load user api key organizations: %w", err)
 			}
 
 			return nil

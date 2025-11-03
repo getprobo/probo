@@ -15,6 +15,10 @@ import (
 	"unicode"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/jackc/pgx/v5"
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/docgen"
@@ -23,10 +27,6 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/watermarkpdf"
-	"github.com/jackc/pgx/v5"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 )
 
 type (

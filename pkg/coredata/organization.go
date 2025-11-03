@@ -21,10 +21,10 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -161,7 +161,7 @@ FROM
 INNER JOIN
 	user_org ON organizations.id = user_org.organization_id
 WHERE
-	%S
+	%s
 	AND %s
 `
 
@@ -221,6 +221,60 @@ ORDER BY
 `
 
 	args := pgx.StrictNamedArgs{"user_id": userID}
+
+	rows, err := conn.Query(ctx, q, args)
+	if err != nil {
+		return fmt.Errorf("cannot query organizations: %w", err)
+	}
+
+	organizations, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByName[Organization])
+	if err != nil {
+		return fmt.Errorf("cannot collect organizations: %w", err)
+	}
+
+	*o = organizations
+
+	return nil
+}
+
+func (o *Organizations) LoadAllByUserAPIKeyID(
+	ctx context.Context,
+	conn pg.Conn,
+	userAPIKeyID gid.GID,
+) error {
+	q := `
+WITH user_api_key_org AS (
+	SELECT
+		am.organization_id
+	FROM
+		authz_api_keys_memberships akm
+	INNER JOIN
+		authz_memberships am ON akm.membership_id = am.id
+	WHERE
+		akm.auth_user_api_key_id = @auth_user_api_key_id
+)
+SELECT
+	tenant_id,
+    id,
+    name,
+    description,
+    website_url,
+    email,
+    headquarter_address,
+    custom_domain_id,
+    logo_file_id,
+    horizontal_logo_file_id,
+    created_at,
+    updated_at
+FROM
+	organizations
+INNER JOIN
+	user_api_key_org ON organizations.id = user_api_key_org.organization_id
+ORDER BY
+	name ASC
+`
+
+	args := pgx.StrictNamedArgs{"auth_user_api_key_id": userAPIKeyID}
 
 	rows, err := conn.Query(ctx, q, args)
 	if err != nil {

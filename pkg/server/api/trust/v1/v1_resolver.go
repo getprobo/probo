@@ -10,13 +10,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
 	"go.probo.inc/probo/pkg/trust"
-	"github.com/vektah/gqlparser/v2/gqlerror"
 )
 
 // Framework is the resolver for the framework field.

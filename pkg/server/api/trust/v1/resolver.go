@@ -26,6 +26,8 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/go-chi/chi/v5"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
@@ -34,12 +36,10 @@ import (
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/trustauth"
-	gqlutils "go.probo.inc/probo/pkg/server/graphql"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/session"
 	"go.probo.inc/probo/pkg/statelesstoken"
 	"go.probo.inc/probo/pkg/trust"
-	"github.com/go-chi/chi/v5"
-	"go.gearno.de/kit/log"
 )
 
 type (

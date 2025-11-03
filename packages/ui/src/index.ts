@@ -54,7 +54,7 @@ export {
     useDialogRef,
     type DialogRef,
 } from "./Molecules/Dialog/Dialog";
-export { useConfirm } from "./Molecules/Dialog/ConfirmDialog";
+export { useConfirm, ConfirmDialog } from "./Molecules/Dialog/ConfirmDialog";
 export { RiskBadge } from "./Molecules/Badge/RiskBadge";
 export { SeverityBadge } from "./Molecules/Badge/SeverityBadge.tsx";
 export { DocumentVersionBadge } from "./Molecules/Badge/DocumentVersionBadge.tsx";

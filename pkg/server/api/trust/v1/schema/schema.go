@@ -14,14 +14,14 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	gqlparser "github.com/vektah/gqlparser/v2"
+	"github.com/vektah/gqlparser/v2/ast"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/server/api/trust/v1/types"
-	"go.probo.inc/probo/pkg/server/graphql/types/cursor"
-	gid1 "go.probo.inc/probo/pkg/server/graphql/types/gid"
-	gqlparser "github.com/vektah/gqlparser/v2"
-	"github.com/vektah/gqlparser/v2/ast"
+	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
+	gid1 "go.probo.inc/probo/pkg/server/gqlutils/types/gid"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -1839,7 +1839,7 @@ func (ec *executionContext) dir_mustBeAuthenticated_argsRole(
 
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("role"))
 	if tmp, ok := rawArgs["role"]; ok {
-		return ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, tmp)
+		return ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, tmp)
 	}
 
 	var zeroVal *types.Role
@@ -1862,7 +1862,7 @@ func (ec *executionContext) field_Mutation_acceptNonDisclosureAgreement_argsInpu
 ) (types.AcceptNonDisclosureAgreementInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNAcceptNonDisclosureAgreementInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementInput(ctx, tmp)
+		return ec.unmarshalNAcceptNonDisclosureAgreementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementInput(ctx, tmp)
 	}
 
 	var zeroVal types.AcceptNonDisclosureAgreementInput
@@ -1885,7 +1885,7 @@ func (ec *executionContext) field_Mutation_exportDocumentPDF_argsInput(
 ) (types.ExportDocumentPDFInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNExportDocumentPDFInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFInput(ctx, tmp)
+		return ec.unmarshalNExportDocumentPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFInput(ctx, tmp)
 	}
 
 	var zeroVal types.ExportDocumentPDFInput
@@ -1908,7 +1908,7 @@ func (ec *executionContext) field_Mutation_exportReportPDF_argsInput(
 ) (types.ExportReportPDFInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNExportReportPDFInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFInput(ctx, tmp)
+		return ec.unmarshalNExportReportPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFInput(ctx, tmp)
 	}
 
 	var zeroVal types.ExportReportPDFInput
@@ -1931,7 +1931,7 @@ func (ec *executionContext) field_Mutation_exportTrustCenterFile_argsInput(
 ) (types.ExportTrustCenterFileInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNExportTrustCenterFileInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFileInput(ctx, tmp)
+		return ec.unmarshalNExportTrustCenterFileInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFileInput(ctx, tmp)
 	}
 
 	var zeroVal types.ExportTrustCenterFileInput
@@ -1954,7 +1954,7 @@ func (ec *executionContext) field_Mutation_requestAllAccesses_argsInput(
 ) (types.RequestAllAccessesInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNRequestAllAccessesInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAllAccessesInput(ctx, tmp)
+		return ec.unmarshalNRequestAllAccessesInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAllAccessesInput(ctx, tmp)
 	}
 
 	var zeroVal types.RequestAllAccessesInput
@@ -1977,7 +1977,7 @@ func (ec *executionContext) field_Mutation_requestDocumentAccess_argsInput(
 ) (types.RequestDocumentAccessInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNRequestDocumentAccessInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestDocumentAccessInput(ctx, tmp)
+		return ec.unmarshalNRequestDocumentAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestDocumentAccessInput(ctx, tmp)
 	}
 
 	var zeroVal types.RequestDocumentAccessInput
@@ -2000,7 +2000,7 @@ func (ec *executionContext) field_Mutation_requestReportAccess_argsInput(
 ) (types.RequestReportAccessInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNRequestReportAccessInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestReportAccessInput(ctx, tmp)
+		return ec.unmarshalNRequestReportAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestReportAccessInput(ctx, tmp)
 	}
 
 	var zeroVal types.RequestReportAccessInput
@@ -2023,7 +2023,7 @@ func (ec *executionContext) field_Mutation_requestTrustCenterFileAccess_argsInpu
 ) (types.RequestTrustCenterFileAccessInput, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 	if tmp, ok := rawArgs["input"]; ok {
-		return ec.unmarshalNRequestTrustCenterFileAccessInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestTrustCenterFileAccessInput(ctx, tmp)
+		return ec.unmarshalNRequestTrustCenterFileAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestTrustCenterFileAccessInput(ctx, tmp)
 	}
 
 	var zeroVal types.RequestTrustCenterFileAccessInput
@@ -2069,7 +2069,7 @@ func (ec *executionContext) field_Query_node_argsID(
 ) (gid.GID, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
 	if tmp, ok := rawArgs["id"]; ok {
-		return ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, tmp)
+		return ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, tmp)
 	}
 
 	var zeroVal gid.GID
@@ -2143,7 +2143,7 @@ func (ec *executionContext) field_TrustCenter_audits_argsAfter(
 ) (*page.CursorKey, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
 	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
 	}
 
 	var zeroVal *page.CursorKey
@@ -2169,7 +2169,7 @@ func (ec *executionContext) field_TrustCenter_audits_argsBefore(
 ) (*page.CursorKey, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
 	}
 
 	var zeroVal *page.CursorKey
@@ -2220,7 +2220,7 @@ func (ec *executionContext) field_TrustCenter_documents_argsAfter(
 ) (*page.CursorKey, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
 	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
 	}
 
 	var zeroVal *page.CursorKey
@@ -2246,7 +2246,7 @@ func (ec *executionContext) field_TrustCenter_documents_argsBefore(
 ) (*page.CursorKey, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
 	}
 
 	var zeroVal *page.CursorKey
@@ -2297,7 +2297,7 @@ func (ec *executionContext) field_TrustCenter_references_argsAfter(
 ) (*page.CursorKey, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
 	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
 	}
 
 	var zeroVal *page.CursorKey
@@ -2323,7 +2323,7 @@ func (ec *executionContext) field_TrustCenter_references_argsBefore(
 ) (*page.CursorKey, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
 	}
 
 	var zeroVal *page.CursorKey
@@ -2374,7 +2374,7 @@ func (ec *executionContext) field_TrustCenter_trustCenterFiles_argsAfter(
 ) (*page.CursorKey, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
 	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
 	}
 
 	var zeroVal *page.CursorKey
@@ -2400,7 +2400,7 @@ func (ec *executionContext) field_TrustCenter_trustCenterFiles_argsBefore(
 ) (*page.CursorKey, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
 	}
 
 	var zeroVal *page.CursorKey
@@ -2451,7 +2451,7 @@ func (ec *executionContext) field_TrustCenter_vendors_argsAfter(
 ) (*page.CursorKey, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
 	if tmp, ok := rawArgs["after"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
 	}
 
 	var zeroVal *page.CursorKey
@@ -2477,7 +2477,7 @@ func (ec *executionContext) field_TrustCenter_vendors_argsBefore(
 ) (*page.CursorKey, error) {
 	ctx = graphql.WithPathContext(ctx, graphql.NewPathWithField("before"))
 	if tmp, ok := rawArgs["before"]; ok {
-		return ec.unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
+		return ec.unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, tmp)
 	}
 
 	var zeroVal *page.CursorKey
@@ -2656,7 +2656,7 @@ func (ec *executionContext) _Audit_id(ctx context.Context, field graphql.Collect
 	}
 	res := resTmp.(gid.GID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+	return ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Audit_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2700,7 +2700,7 @@ func (ec *executionContext) _Audit_framework(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*types.Framework)
 	fc.Result = res
-	return ec.marshalNFramework2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐFramework(ctx, field.Selections, res)
+	return ec.marshalNFramework2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐFramework(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Audit_framework(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2747,7 +2747,7 @@ func (ec *executionContext) _Audit_report(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*types.Report)
 	fc.Result = res
-	return ec.marshalOReport2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐReport(ctx, field.Selections, res)
+	return ec.marshalOReport2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐReport(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Audit_report(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2801,7 +2801,7 @@ func (ec *executionContext) _AuditConnection_edges(ctx context.Context, field gr
 	}
 	res := resTmp.([]*types.AuditEdge)
 	fc.Result = res
-	return ec.marshalNAuditEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNAuditEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AuditConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2851,7 +2851,7 @@ func (ec *executionContext) _AuditConnection_pageInfo(ctx context.Context, field
 	}
 	res := resTmp.(*types.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AuditConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2905,7 +2905,7 @@ func (ec *executionContext) _AuditEdge_cursor(ctx context.Context, field graphql
 	}
 	res := resTmp.(page.CursorKey)
 	fc.Result = res
-	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+	return ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AuditEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2949,7 +2949,7 @@ func (ec *executionContext) _AuditEdge_node(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*types.Audit)
 	fc.Result = res
-	return ec.marshalNAudit2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAudit(ctx, field.Selections, res)
+	return ec.marshalNAudit2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAudit(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AuditEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3001,7 +3001,7 @@ func (ec *executionContext) _Document_id(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(gid.GID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+	return ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Document_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3089,7 +3089,7 @@ func (ec *executionContext) _Document_documentType(ctx context.Context, field gr
 	}
 	res := resTmp.(coredata.DocumentType)
 	fc.Result = res
-	return ec.marshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx, field.Selections, res)
+	return ec.marshalNDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Document_documentType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3221,7 +3221,7 @@ func (ec *executionContext) _DocumentConnection_edges(ctx context.Context, field
 	}
 	res := resTmp.([]*types.DocumentEdge)
 	fc.Result = res
-	return ec.marshalNDocumentEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNDocumentEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DocumentConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3271,7 +3271,7 @@ func (ec *executionContext) _DocumentConnection_pageInfo(ctx context.Context, fi
 	}
 	res := resTmp.(*types.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DocumentConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3325,7 +3325,7 @@ func (ec *executionContext) _DocumentEdge_cursor(ctx context.Context, field grap
 	}
 	res := resTmp.(page.CursorKey)
 	fc.Result = res
-	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+	return ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DocumentEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3369,7 +3369,7 @@ func (ec *executionContext) _DocumentEdge_node(ctx context.Context, field graphq
 	}
 	res := resTmp.(*types.Document)
 	fc.Result = res
-	return ec.marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
+	return ec.marshalNDocument2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocument(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DocumentEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3557,7 +3557,7 @@ func (ec *executionContext) _Framework_id(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(gid.GID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+	return ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Framework_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3636,7 +3636,7 @@ func (ec *executionContext) _Mutation_requestAllAccesses(ctx context.Context, fi
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+			role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
 			if err != nil {
 				var zeroVal *types.RequestAccessesPayload
 				return zeroVal, err
@@ -3672,7 +3672,7 @@ func (ec *executionContext) _Mutation_requestAllAccesses(ctx context.Context, fi
 	}
 	res := resTmp.(*types.RequestAccessesPayload)
 	fc.Result = res
-	return ec.marshalNRequestAccessesPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx, field.Selections, res)
+	return ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_requestAllAccesses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3722,7 +3722,7 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+			role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
 			if err != nil {
 				var zeroVal *types.ExportDocumentPDFPayload
 				return zeroVal, err
@@ -3758,7 +3758,7 @@ func (ec *executionContext) _Mutation_exportDocumentPDF(ctx context.Context, fie
 	}
 	res := resTmp.(*types.ExportDocumentPDFPayload)
 	fc.Result = res
-	return ec.marshalNExportDocumentPDFPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFPayload(ctx, field.Selections, res)
+	return ec.marshalNExportDocumentPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_exportDocumentPDF(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3808,7 +3808,7 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+			role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
 			if err != nil {
 				var zeroVal *types.ExportReportPDFPayload
 				return zeroVal, err
@@ -3844,7 +3844,7 @@ func (ec *executionContext) _Mutation_exportReportPDF(ctx context.Context, field
 	}
 	res := resTmp.(*types.ExportReportPDFPayload)
 	fc.Result = res
-	return ec.marshalNExportReportPDFPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload(ctx, field.Selections, res)
+	return ec.marshalNExportReportPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_exportReportPDF(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3894,7 +3894,7 @@ func (ec *executionContext) _Mutation_acceptNonDisclosureAgreement(ctx context.C
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "USER")
+			role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "USER")
 			if err != nil {
 				var zeroVal *types.AcceptNonDisclosureAgreementPayload
 				return zeroVal, err
@@ -3930,7 +3930,7 @@ func (ec *executionContext) _Mutation_acceptNonDisclosureAgreement(ctx context.C
 	}
 	res := resTmp.(*types.AcceptNonDisclosureAgreementPayload)
 	fc.Result = res
-	return ec.marshalNAcceptNonDisclosureAgreementPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload(ctx, field.Selections, res)
+	return ec.marshalNAcceptNonDisclosureAgreementPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_acceptNonDisclosureAgreement(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3980,7 +3980,7 @@ func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context,
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+			role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
 			if err != nil {
 				var zeroVal *types.RequestAccessesPayload
 				return zeroVal, err
@@ -4016,7 +4016,7 @@ func (ec *executionContext) _Mutation_requestDocumentAccess(ctx context.Context,
 	}
 	res := resTmp.(*types.RequestAccessesPayload)
 	fc.Result = res
-	return ec.marshalNRequestAccessesPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx, field.Selections, res)
+	return ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_requestDocumentAccess(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4066,7 +4066,7 @@ func (ec *executionContext) _Mutation_requestReportAccess(ctx context.Context, f
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+			role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
 			if err != nil {
 				var zeroVal *types.RequestAccessesPayload
 				return zeroVal, err
@@ -4102,7 +4102,7 @@ func (ec *executionContext) _Mutation_requestReportAccess(ctx context.Context, f
 	}
 	res := resTmp.(*types.RequestAccessesPayload)
 	fc.Result = res
-	return ec.marshalNRequestAccessesPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx, field.Selections, res)
+	return ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_requestReportAccess(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4152,7 +4152,7 @@ func (ec *executionContext) _Mutation_requestTrustCenterFileAccess(ctx context.C
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+			role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
 			if err != nil {
 				var zeroVal *types.RequestAccessesPayload
 				return zeroVal, err
@@ -4188,7 +4188,7 @@ func (ec *executionContext) _Mutation_requestTrustCenterFileAccess(ctx context.C
 	}
 	res := resTmp.(*types.RequestAccessesPayload)
 	fc.Result = res
-	return ec.marshalNRequestAccessesPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx, field.Selections, res)
+	return ec.marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_requestTrustCenterFileAccess(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4238,7 +4238,7 @@ func (ec *executionContext) _Mutation_exportTrustCenterFile(ctx context.Context,
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+			role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
 			if err != nil {
 				var zeroVal *types.ExportTrustCenterFilePayload
 				return zeroVal, err
@@ -4274,7 +4274,7 @@ func (ec *executionContext) _Mutation_exportTrustCenterFile(ctx context.Context,
 	}
 	res := resTmp.(*types.ExportTrustCenterFilePayload)
 	fc.Result = res
-	return ec.marshalNExportTrustCenterFilePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFilePayload(ctx, field.Selections, res)
+	return ec.marshalNExportTrustCenterFilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFilePayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_exportTrustCenterFile(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4333,7 +4333,7 @@ func (ec *executionContext) _Organization_id(ctx context.Context, field graphql.
 	}
 	res := resTmp.(gid.GID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+	return ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Organization_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4711,7 +4711,7 @@ func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field gra
 	}
 	res := resTmp.(*page.CursorKey)
 	fc.Result = res
-	return ec.marshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+	return ec.marshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PageInfo_startCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4752,7 +4752,7 @@ func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graph
 	}
 	res := resTmp.(*page.CursorKey)
 	fc.Result = res
-	return ec.marshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+	return ec.marshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PageInfo_endCursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4796,7 +4796,7 @@ func (ec *executionContext) _Query_node(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(types.Node)
 	fc.Result = res
-	return ec.marshalNNode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐNode(ctx, field.Selections, res)
+	return ec.marshalNNode2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐNode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4842,7 +4842,7 @@ func (ec *executionContext) _Query_trustCenterBySlug(ctx context.Context, field 
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+			role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
 			if err != nil {
 				var zeroVal *types.TrustCenter
 				return zeroVal, err
@@ -4875,7 +4875,7 @@ func (ec *executionContext) _Query_trustCenterBySlug(ctx context.Context, field 
 	}
 	res := resTmp.(*types.TrustCenter)
 	fc.Result = res
-	return ec.marshalOTrustCenter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter(ctx, field.Selections, res)
+	return ec.marshalOTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_trustCenterBySlug(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4949,7 +4949,7 @@ func (ec *executionContext) _Query_currentTrustCenter(ctx context.Context, field
 		}
 
 		directive1 := func(ctx context.Context) (any, error) {
-			role, err := ec.unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
+			role, err := ec.unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx, "NONE")
 			if err != nil {
 				var zeroVal *types.TrustCenter
 				return zeroVal, err
@@ -4982,7 +4982,7 @@ func (ec *executionContext) _Query_currentTrustCenter(ctx context.Context, field
 	}
 	res := resTmp.(*types.TrustCenter)
 	fc.Result = res
-	return ec.marshalOTrustCenter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter(ctx, field.Selections, res)
+	return ec.marshalOTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_currentTrustCenter(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5185,7 +5185,7 @@ func (ec *executionContext) _Report_id(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(gid.GID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+	return ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Report_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5361,7 +5361,7 @@ func (ec *executionContext) _RequestAccessesPayload_trustCenterAccess(ctx contex
 	}
 	res := resTmp.(*types.TrustCenterAccess)
 	fc.Result = res
-	return ec.marshalNTrustCenterAccess2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterAccess(ctx, field.Selections, res)
+	return ec.marshalNTrustCenterAccess2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterAccess(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_RequestAccessesPayload_trustCenterAccess(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5417,7 +5417,7 @@ func (ec *executionContext) _TrustCenter_id(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(gid.GID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+	return ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenter_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5631,7 +5631,7 @@ func (ec *executionContext) _TrustCenter_organization(ctx context.Context, field
 	}
 	res := resTmp.(*types.Organization)
 	fc.Result = res
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenter_organization(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5779,7 +5779,7 @@ func (ec *executionContext) _TrustCenter_documents(ctx context.Context, field gr
 	}
 	res := resTmp.(*types.DocumentConnection)
 	fc.Result = res
-	return ec.marshalNDocumentConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentConnection(ctx, field.Selections, res)
+	return ec.marshalNDocumentConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenter_documents(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5840,7 +5840,7 @@ func (ec *executionContext) _TrustCenter_audits(ctx context.Context, field graph
 	}
 	res := resTmp.(*types.AuditConnection)
 	fc.Result = res
-	return ec.marshalNAuditConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditConnection(ctx, field.Selections, res)
+	return ec.marshalNAuditConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenter_audits(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5901,7 +5901,7 @@ func (ec *executionContext) _TrustCenter_vendors(ctx context.Context, field grap
 	}
 	res := resTmp.(*types.VendorConnection)
 	fc.Result = res
-	return ec.marshalNVendorConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorConnection(ctx, field.Selections, res)
+	return ec.marshalNVendorConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenter_vendors(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5962,7 +5962,7 @@ func (ec *executionContext) _TrustCenter_references(ctx context.Context, field g
 	}
 	res := resTmp.(*types.TrustCenterReferenceConnection)
 	fc.Result = res
-	return ec.marshalNTrustCenterReferenceConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceConnection(ctx, field.Selections, res)
+	return ec.marshalNTrustCenterReferenceConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenter_references(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6023,7 +6023,7 @@ func (ec *executionContext) _TrustCenter_trustCenterFiles(ctx context.Context, f
 	}
 	res := resTmp.(*types.TrustCenterFileConnection)
 	fc.Result = res
-	return ec.marshalNTrustCenterFileConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileConnection(ctx, field.Selections, res)
+	return ec.marshalNTrustCenterFileConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenter_trustCenterFiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6084,7 +6084,7 @@ func (ec *executionContext) _TrustCenterAccess_id(ctx context.Context, field gra
 	}
 	res := resTmp.(gid.GID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+	return ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterAccess_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6304,7 +6304,7 @@ func (ec *executionContext) _TrustCenterFile_id(ctx context.Context, field graph
 	}
 	res := resTmp.(gid.GID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+	return ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterFile_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6524,7 +6524,7 @@ func (ec *executionContext) _TrustCenterFileConnection_edges(ctx context.Context
 	}
 	res := resTmp.([]*types.TrustCenterFileEdge)
 	fc.Result = res
-	return ec.marshalNTrustCenterFileEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNTrustCenterFileEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterFileConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6574,7 +6574,7 @@ func (ec *executionContext) _TrustCenterFileConnection_pageInfo(ctx context.Cont
 	}
 	res := resTmp.(*types.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterFileConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6628,7 +6628,7 @@ func (ec *executionContext) _TrustCenterFileEdge_cursor(ctx context.Context, fie
 	}
 	res := resTmp.(page.CursorKey)
 	fc.Result = res
-	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+	return ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterFileEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6672,7 +6672,7 @@ func (ec *executionContext) _TrustCenterFileEdge_node(ctx context.Context, field
 	}
 	res := resTmp.(*types.TrustCenterFile)
 	fc.Result = res
-	return ec.marshalNTrustCenterFile2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFile(ctx, field.Selections, res)
+	return ec.marshalNTrustCenterFile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterFileEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6728,7 +6728,7 @@ func (ec *executionContext) _TrustCenterReference_id(ctx context.Context, field 
 	}
 	res := resTmp.(gid.GID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+	return ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterReference_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6948,7 +6948,7 @@ func (ec *executionContext) _TrustCenterReferenceConnection_edges(ctx context.Co
 	}
 	res := resTmp.([]*types.TrustCenterReferenceEdge)
 	fc.Result = res
-	return ec.marshalNTrustCenterReferenceEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNTrustCenterReferenceEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterReferenceConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6998,7 +6998,7 @@ func (ec *executionContext) _TrustCenterReferenceConnection_pageInfo(ctx context
 	}
 	res := resTmp.(*types.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterReferenceConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7052,7 +7052,7 @@ func (ec *executionContext) _TrustCenterReferenceEdge_cursor(ctx context.Context
 	}
 	res := resTmp.(page.CursorKey)
 	fc.Result = res
-	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+	return ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterReferenceEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7096,7 +7096,7 @@ func (ec *executionContext) _TrustCenterReferenceEdge_node(ctx context.Context, 
 	}
 	res := resTmp.(*types.TrustCenterReference)
 	fc.Result = res
-	return ec.marshalNTrustCenterReference2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReference(ctx, field.Selections, res)
+	return ec.marshalNTrustCenterReference2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReference(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterReferenceEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7152,7 +7152,7 @@ func (ec *executionContext) _Vendor_id(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(gid.GID)
 	fc.Result = res
-	return ec.marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
+	return ec.marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Vendor_id(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7240,7 +7240,7 @@ func (ec *executionContext) _Vendor_category(ctx context.Context, field graphql.
 	}
 	res := resTmp.(coredata.VendorCategory)
 	fc.Result = res
-	return ec.marshalNVendorCategory2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐVendorCategory(ctx, field.Selections, res)
+	return ec.marshalNVendorCategory2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐVendorCategory(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Vendor_category(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7366,7 +7366,7 @@ func (ec *executionContext) _Vendor_countries(ctx context.Context, field graphql
 	}
 	res := resTmp.([]coredata.CountryCode)
 	fc.Result = res
-	return ec.marshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ(ctx, field.Selections, res)
+	return ec.marshalNCountryCode2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Vendor_countries(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7410,7 +7410,7 @@ func (ec *executionContext) _VendorConnection_edges(ctx context.Context, field g
 	}
 	res := resTmp.([]*types.VendorEdge)
 	fc.Result = res
-	return ec.marshalNVendorEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdgeᚄ(ctx, field.Selections, res)
+	return ec.marshalNVendorEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdgeᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VendorConnection_edges(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7460,7 +7460,7 @@ func (ec *executionContext) _VendorConnection_pageInfo(ctx context.Context, fiel
 	}
 	res := resTmp.(*types.PageInfo)
 	fc.Result = res
-	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
+	return ec.marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VendorConnection_pageInfo(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7514,7 +7514,7 @@ func (ec *executionContext) _VendorEdge_cursor(ctx context.Context, field graphq
 	}
 	res := resTmp.(page.CursorKey)
 	fc.Result = res
-	return ec.marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
+	return ec.marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VendorEdge_cursor(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7558,7 +7558,7 @@ func (ec *executionContext) _VendorEdge_node(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*types.Vendor)
 	fc.Result = res
-	return ec.marshalNVendor2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendor(ctx, field.Selections, res)
+	return ec.marshalNVendor2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendor(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VendorEdge_node(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9555,7 +9555,7 @@ func (ec *executionContext) unmarshalInputAcceptNonDisclosureAgreementInput(ctx 
 		switch k {
 		case "trustCenterId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9582,7 +9582,7 @@ func (ec *executionContext) unmarshalInputExportDocumentPDFInput(ctx context.Con
 		switch k {
 		case "documentId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9609,7 +9609,7 @@ func (ec *executionContext) unmarshalInputExportReportPDFInput(ctx context.Conte
 		switch k {
 		case "reportId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reportId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9636,7 +9636,7 @@ func (ec *executionContext) unmarshalInputExportTrustCenterFileInput(ctx context
 		switch k {
 		case "trustCenterFileId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterFileId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9663,7 +9663,7 @@ func (ec *executionContext) unmarshalInputRequestAllAccessesInput(ctx context.Co
 		switch k {
 		case "trustCenterId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9704,14 +9704,14 @@ func (ec *executionContext) unmarshalInputRequestDocumentAccessInput(ctx context
 		switch k {
 		case "trustCenterId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.TrustCenterID = data
 		case "documentId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("documentId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9752,14 +9752,14 @@ func (ec *executionContext) unmarshalInputRequestReportAccessInput(ctx context.C
 		switch k {
 		case "trustCenterId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.TrustCenterID = data
 		case "reportId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reportId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9800,14 +9800,14 @@ func (ec *executionContext) unmarshalInputRequestTrustCenterFileAccessInput(ctx 
 		switch k {
 		case "trustCenterId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.TrustCenterID = data
 		case "trustCenterFileId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("trustCenterFileId"))
-			data, err := ec.unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx, v)
+			data, err := ec.unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12319,16 +12319,16 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNAcceptNonDisclosureAgreementInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementInput(ctx context.Context, v any) (types.AcceptNonDisclosureAgreementInput, error) {
+func (ec *executionContext) unmarshalNAcceptNonDisclosureAgreementInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementInput(ctx context.Context, v any) (types.AcceptNonDisclosureAgreementInput, error) {
 	res, err := ec.unmarshalInputAcceptNonDisclosureAgreementInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAcceptNonDisclosureAgreementPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload(ctx context.Context, sel ast.SelectionSet, v types.AcceptNonDisclosureAgreementPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNAcceptNonDisclosureAgreementPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload(ctx context.Context, sel ast.SelectionSet, v types.AcceptNonDisclosureAgreementPayload) graphql.Marshaler {
 	return ec._AcceptNonDisclosureAgreementPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAcceptNonDisclosureAgreementPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload(ctx context.Context, sel ast.SelectionSet, v *types.AcceptNonDisclosureAgreementPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNAcceptNonDisclosureAgreementPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAcceptNonDisclosureAgreementPayload(ctx context.Context, sel ast.SelectionSet, v *types.AcceptNonDisclosureAgreementPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -12338,7 +12338,7 @@ func (ec *executionContext) marshalNAcceptNonDisclosureAgreementPayload2ᚖgithu
 	return ec._AcceptNonDisclosureAgreementPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNAudit2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAudit(ctx context.Context, sel ast.SelectionSet, v *types.Audit) graphql.Marshaler {
+func (ec *executionContext) marshalNAudit2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAudit(ctx context.Context, sel ast.SelectionSet, v *types.Audit) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -12348,11 +12348,11 @@ func (ec *executionContext) marshalNAudit2ᚖgithubᚗcomᚋgetproboᚋproboᚋp
 	return ec._Audit(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNAuditConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditConnection(ctx context.Context, sel ast.SelectionSet, v types.AuditConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNAuditConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditConnection(ctx context.Context, sel ast.SelectionSet, v types.AuditConnection) graphql.Marshaler {
 	return ec._AuditConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAuditConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditConnection(ctx context.Context, sel ast.SelectionSet, v *types.AuditConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNAuditConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditConnection(ctx context.Context, sel ast.SelectionSet, v *types.AuditConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -12362,7 +12362,7 @@ func (ec *executionContext) marshalNAuditConnection2ᚖgithubᚗcomᚋgetprobo�
 	return ec._AuditConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNAuditEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AuditEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNAuditEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.AuditEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -12386,7 +12386,7 @@ func (ec *executionContext) marshalNAuditEdge2ᚕᚖgithubᚗcomᚋgetproboᚋpr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNAuditEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNAuditEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -12406,7 +12406,7 @@ func (ec *executionContext) marshalNAuditEdge2ᚕᚖgithubᚗcomᚋgetproboᚋpr
 	return ret
 }
 
-func (ec *executionContext) marshalNAuditEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdge(ctx context.Context, sel ast.SelectionSet, v *types.AuditEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNAuditEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐAuditEdge(ctx context.Context, sel ast.SelectionSet, v *types.AuditEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -12432,15 +12432,15 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx context.Context, v any) (coredata.CountryCode, error) {
+func (ec *executionContext) unmarshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx context.Context, v any) (coredata.CountryCode, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode[tmp]
+	res := unmarshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx context.Context, sel ast.SelectionSet, v coredata.CountryCode) graphql.Marshaler {
+func (ec *executionContext) marshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx context.Context, sel ast.SelectionSet, v coredata.CountryCode) graphql.Marshaler {
 	_ = sel
-	res := graphql.MarshalString(marshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode[v])
+	res := graphql.MarshalString(marshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -12450,7 +12450,7 @@ func (ec *executionContext) marshalNCountryCode2githubᚗcomᚋgetproboᚋprobo�
 }
 
 var (
-	unmarshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode = map[string]coredata.CountryCode{
+	unmarshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode = map[string]coredata.CountryCode{
 		"AD": coredata.CountryCodeAD,
 		"AE": coredata.CountryCodeAE,
 		"AF": coredata.CountryCodeAF,
@@ -12701,7 +12701,7 @@ var (
 		"ZM": coredata.CountryCodeZM,
 		"ZW": coredata.CountryCodeZW,
 	}
-	marshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode = map[coredata.CountryCode]string{
+	marshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode = map[coredata.CountryCode]string{
 		coredata.CountryCodeAD: "AD",
 		coredata.CountryCodeAE: "AE",
 		coredata.CountryCodeAF: "AF",
@@ -12954,14 +12954,14 @@ var (
 	}
 )
 
-func (ec *executionContext) unmarshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ(ctx context.Context, v any) ([]coredata.CountryCode, error) {
+func (ec *executionContext) unmarshalNCountryCode2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ(ctx context.Context, v any) ([]coredata.CountryCode, error) {
 	var vSlice []any
 	vSlice = graphql.CoerceList(v)
 	var err error
 	res := make([]coredata.CountryCode, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -12969,7 +12969,7 @@ func (ec *executionContext) unmarshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋp
 	return res, nil
 }
 
-func (ec *executionContext) marshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ(ctx context.Context, sel ast.SelectionSet, v []coredata.CountryCode) graphql.Marshaler {
+func (ec *executionContext) marshalNCountryCode2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ(ctx context.Context, sel ast.SelectionSet, v []coredata.CountryCode) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -12993,7 +12993,7 @@ func (ec *executionContext) marshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋpro
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCountryCode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx, sel, v[i])
+			ret[i] = ec.marshalNCountryCode2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCode(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -13014,7 +13014,7 @@ func (ec *executionContext) marshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋpro
 }
 
 var (
-	unmarshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ = map[string]coredata.CountryCode{
+	unmarshalNCountryCode2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ = map[string]coredata.CountryCode{
 		"AD": coredata.CountryCodeAD,
 		"AE": coredata.CountryCodeAE,
 		"AF": coredata.CountryCodeAF,
@@ -13265,7 +13265,7 @@ var (
 		"ZM": coredata.CountryCodeZM,
 		"ZW": coredata.CountryCodeZW,
 	}
-	marshalNCountryCode2ᚕgithubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ = map[coredata.CountryCode]string{
+	marshalNCountryCode2ᚕgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐCountryCodeᚄ = map[coredata.CountryCode]string{
 		coredata.CountryCodeAD: "AD",
 		coredata.CountryCodeAE: "AE",
 		coredata.CountryCodeAF: "AF",
@@ -13518,12 +13518,12 @@ var (
 	}
 )
 
-func (ec *executionContext) unmarshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, v any) (page.CursorKey, error) {
+func (ec *executionContext) unmarshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, v any) (page.CursorKey, error) {
 	res, err := cursor.UnmarshalCursorKeyScalar(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCursorKey2githubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, sel ast.SelectionSet, v page.CursorKey) graphql.Marshaler {
+func (ec *executionContext) marshalNCursorKey2goᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, sel ast.SelectionSet, v page.CursorKey) graphql.Marshaler {
 	_ = sel
 	res := cursor.MarshalCursorKeyScalar(v)
 	if res == graphql.Null {
@@ -13550,7 +13550,7 @@ func (ec *executionContext) marshalNDatetime2timeᚐTime(ctx context.Context, se
 	return res
 }
 
-func (ec *executionContext) marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocument(ctx context.Context, sel ast.SelectionSet, v *types.Document) graphql.Marshaler {
+func (ec *executionContext) marshalNDocument2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocument(ctx context.Context, sel ast.SelectionSet, v *types.Document) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13560,11 +13560,11 @@ func (ec *executionContext) marshalNDocument2ᚖgithubᚗcomᚋgetproboᚋprobo�
 	return ec._Document(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNDocumentConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v types.DocumentConnection) graphql.Marshaler {
 	return ec._DocumentConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNDocumentConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v *types.DocumentConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentConnection(ctx context.Context, sel ast.SelectionSet, v *types.DocumentConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13574,7 +13574,7 @@ func (ec *executionContext) marshalNDocumentConnection2ᚖgithubᚗcomᚋgetprob
 	return ec._DocumentConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNDocumentEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.DocumentEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -13598,7 +13598,7 @@ func (ec *executionContext) marshalNDocumentEdge2ᚕᚖgithubᚗcomᚋgetprobo�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNDocumentEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -13618,7 +13618,7 @@ func (ec *executionContext) marshalNDocumentEdge2ᚕᚖgithubᚗcomᚋgetprobo�
 	return ret
 }
 
-func (ec *executionContext) marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdge(ctx context.Context, sel ast.SelectionSet, v *types.DocumentEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐDocumentEdge(ctx context.Context, sel ast.SelectionSet, v *types.DocumentEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13628,15 +13628,15 @@ func (ec *executionContext) marshalNDocumentEdge2ᚖgithubᚗcomᚋgetproboᚋpr
 	return ec._DocumentEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx context.Context, v any) (coredata.DocumentType, error) {
+func (ec *executionContext) unmarshalNDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx context.Context, v any) (coredata.DocumentType, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType[tmp]
+	res := unmarshalNDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentType[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentType) graphql.Marshaler {
+func (ec *executionContext) marshalNDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentType(ctx context.Context, sel ast.SelectionSet, v coredata.DocumentType) graphql.Marshaler {
 	_ = sel
-	res := graphql.MarshalString(marshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType[v])
+	res := graphql.MarshalString(marshalNDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentType[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13646,13 +13646,13 @@ func (ec *executionContext) marshalNDocumentType2githubᚗcomᚋgetproboᚋprobo
 }
 
 var (
-	unmarshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType = map[string]coredata.DocumentType{
+	unmarshalNDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentType = map[string]coredata.DocumentType{
 		"OTHER":     coredata.DocumentTypeOther,
 		"ISMS":      coredata.DocumentTypeISMS,
 		"POLICY":    coredata.DocumentTypePolicy,
 		"PROCEDURE": coredata.DocumentTypeProcedure,
 	}
-	marshalNDocumentType2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐDocumentType = map[coredata.DocumentType]string{
+	marshalNDocumentType2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐDocumentType = map[coredata.DocumentType]string{
 		coredata.DocumentTypeOther:     "OTHER",
 		coredata.DocumentTypeISMS:      "ISMS",
 		coredata.DocumentTypePolicy:    "POLICY",
@@ -13660,16 +13660,16 @@ var (
 	}
 )
 
-func (ec *executionContext) unmarshalNExportDocumentPDFInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFInput(ctx context.Context, v any) (types.ExportDocumentPDFInput, error) {
+func (ec *executionContext) unmarshalNExportDocumentPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFInput(ctx context.Context, v any) (types.ExportDocumentPDFInput, error) {
 	res, err := ec.unmarshalInputExportDocumentPDFInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNExportDocumentPDFPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFPayload(ctx context.Context, sel ast.SelectionSet, v types.ExportDocumentPDFPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNExportDocumentPDFPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFPayload(ctx context.Context, sel ast.SelectionSet, v types.ExportDocumentPDFPayload) graphql.Marshaler {
 	return ec._ExportDocumentPDFPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNExportDocumentPDFPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFPayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportDocumentPDFPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNExportDocumentPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportDocumentPDFPayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportDocumentPDFPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13679,16 +13679,16 @@ func (ec *executionContext) marshalNExportDocumentPDFPayload2ᚖgithubᚗcomᚋg
 	return ec._ExportDocumentPDFPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNExportReportPDFInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFInput(ctx context.Context, v any) (types.ExportReportPDFInput, error) {
+func (ec *executionContext) unmarshalNExportReportPDFInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFInput(ctx context.Context, v any) (types.ExportReportPDFInput, error) {
 	res, err := ec.unmarshalInputExportReportPDFInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNExportReportPDFPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload(ctx context.Context, sel ast.SelectionSet, v types.ExportReportPDFPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNExportReportPDFPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload(ctx context.Context, sel ast.SelectionSet, v types.ExportReportPDFPayload) graphql.Marshaler {
 	return ec._ExportReportPDFPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNExportReportPDFPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportReportPDFPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNExportReportPDFPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportReportPDFPayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportReportPDFPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13698,16 +13698,16 @@ func (ec *executionContext) marshalNExportReportPDFPayload2ᚖgithubᚗcomᚋget
 	return ec._ExportReportPDFPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNExportTrustCenterFileInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFileInput(ctx context.Context, v any) (types.ExportTrustCenterFileInput, error) {
+func (ec *executionContext) unmarshalNExportTrustCenterFileInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFileInput(ctx context.Context, v any) (types.ExportTrustCenterFileInput, error) {
 	res, err := ec.unmarshalInputExportTrustCenterFileInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNExportTrustCenterFilePayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFilePayload(ctx context.Context, sel ast.SelectionSet, v types.ExportTrustCenterFilePayload) graphql.Marshaler {
+func (ec *executionContext) marshalNExportTrustCenterFilePayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFilePayload(ctx context.Context, sel ast.SelectionSet, v types.ExportTrustCenterFilePayload) graphql.Marshaler {
 	return ec._ExportTrustCenterFilePayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNExportTrustCenterFilePayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFilePayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportTrustCenterFilePayload) graphql.Marshaler {
+func (ec *executionContext) marshalNExportTrustCenterFilePayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐExportTrustCenterFilePayload(ctx context.Context, sel ast.SelectionSet, v *types.ExportTrustCenterFilePayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13717,11 +13717,11 @@ func (ec *executionContext) marshalNExportTrustCenterFilePayload2ᚖgithubᚗcom
 	return ec._ExportTrustCenterFilePayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNFramework2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐFramework(ctx context.Context, sel ast.SelectionSet, v types.Framework) graphql.Marshaler {
+func (ec *executionContext) marshalNFramework2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐFramework(ctx context.Context, sel ast.SelectionSet, v types.Framework) graphql.Marshaler {
 	return ec._Framework(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNFramework2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐFramework(ctx context.Context, sel ast.SelectionSet, v *types.Framework) graphql.Marshaler {
+func (ec *executionContext) marshalNFramework2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐFramework(ctx context.Context, sel ast.SelectionSet, v *types.Framework) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13731,12 +13731,12 @@ func (ec *executionContext) marshalNFramework2ᚖgithubᚗcomᚋgetproboᚋprobo
 	return ec._Framework(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, v any) (gid.GID, error) {
+func (ec *executionContext) unmarshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, v any) (gid.GID, error) {
 	res, err := gid1.UnmarshalGIDScalar(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, sel ast.SelectionSet, v gid.GID) graphql.Marshaler {
+func (ec *executionContext) marshalNID2goᚗproboᚗincᚋproboᚋpkgᚋgidᚐGID(ctx context.Context, sel ast.SelectionSet, v gid.GID) graphql.Marshaler {
 	_ = sel
 	res := gid1.MarshalGIDScalar(v)
 	if res == graphql.Null {
@@ -13747,7 +13747,7 @@ func (ec *executionContext) marshalNID2githubᚗcomᚋgetproboᚋproboᚋpkgᚋg
 	return res
 }
 
-func (ec *executionContext) marshalNNode2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐNode(ctx context.Context, sel ast.SelectionSet, v types.Node) graphql.Marshaler {
+func (ec *executionContext) marshalNNode2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐNode(ctx context.Context, sel ast.SelectionSet, v types.Node) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13757,11 +13757,11 @@ func (ec *executionContext) marshalNNode2githubᚗcomᚋgetproboᚋproboᚋpkg�
 	return ec._Node(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOrganization2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐOrganization(ctx context.Context, sel ast.SelectionSet, v types.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐOrganization(ctx context.Context, sel ast.SelectionSet, v types.Organization) graphql.Marshaler {
 	return ec._Organization(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *types.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *types.Organization) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13771,7 +13771,7 @@ func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋgetproboᚋpr
 	return ec._Organization(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *types.PageInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNPageInfo2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *types.PageInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13781,11 +13781,11 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋgetproboᚋprobo�
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNRequestAccessesPayload2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx context.Context, sel ast.SelectionSet, v types.RequestAccessesPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNRequestAccessesPayload2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx context.Context, sel ast.SelectionSet, v types.RequestAccessesPayload) graphql.Marshaler {
 	return ec._RequestAccessesPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNRequestAccessesPayload2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx context.Context, sel ast.SelectionSet, v *types.RequestAccessesPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNRequestAccessesPayload2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAccessesPayload(ctx context.Context, sel ast.SelectionSet, v *types.RequestAccessesPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13795,22 +13795,22 @@ func (ec *executionContext) marshalNRequestAccessesPayload2ᚖgithubᚗcomᚋget
 	return ec._RequestAccessesPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNRequestAllAccessesInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAllAccessesInput(ctx context.Context, v any) (types.RequestAllAccessesInput, error) {
+func (ec *executionContext) unmarshalNRequestAllAccessesInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestAllAccessesInput(ctx context.Context, v any) (types.RequestAllAccessesInput, error) {
 	res, err := ec.unmarshalInputRequestAllAccessesInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNRequestDocumentAccessInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestDocumentAccessInput(ctx context.Context, v any) (types.RequestDocumentAccessInput, error) {
+func (ec *executionContext) unmarshalNRequestDocumentAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestDocumentAccessInput(ctx context.Context, v any) (types.RequestDocumentAccessInput, error) {
 	res, err := ec.unmarshalInputRequestDocumentAccessInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNRequestReportAccessInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestReportAccessInput(ctx context.Context, v any) (types.RequestReportAccessInput, error) {
+func (ec *executionContext) unmarshalNRequestReportAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestReportAccessInput(ctx context.Context, v any) (types.RequestReportAccessInput, error) {
 	res, err := ec.unmarshalInputRequestReportAccessInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNRequestTrustCenterFileAccessInput2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestTrustCenterFileAccessInput(ctx context.Context, v any) (types.RequestTrustCenterFileAccessInput, error) {
+func (ec *executionContext) unmarshalNRequestTrustCenterFileAccessInput2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRequestTrustCenterFileAccessInput(ctx context.Context, v any) (types.RequestTrustCenterFileAccessInput, error) {
 	res, err := ec.unmarshalInputRequestTrustCenterFileAccessInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -13831,7 +13831,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNTrustCenterAccess2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterAccess(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterAccess) graphql.Marshaler {
+func (ec *executionContext) marshalNTrustCenterAccess2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterAccess(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterAccess) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13841,7 +13841,7 @@ func (ec *executionContext) marshalNTrustCenterAccess2ᚖgithubᚗcomᚋgetprobo
 	return ec._TrustCenterAccess(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTrustCenterFile2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFile(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterFile) graphql.Marshaler {
+func (ec *executionContext) marshalNTrustCenterFile2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFile(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterFile) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13851,11 +13851,11 @@ func (ec *executionContext) marshalNTrustCenterFile2ᚖgithubᚗcomᚋgetprobo�
 	return ec._TrustCenterFile(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTrustCenterFileConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileConnection(ctx context.Context, sel ast.SelectionSet, v types.TrustCenterFileConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNTrustCenterFileConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileConnection(ctx context.Context, sel ast.SelectionSet, v types.TrustCenterFileConnection) graphql.Marshaler {
 	return ec._TrustCenterFileConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTrustCenterFileConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileConnection(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterFileConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNTrustCenterFileConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileConnection(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterFileConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13865,7 +13865,7 @@ func (ec *executionContext) marshalNTrustCenterFileConnection2ᚖgithubᚗcomᚋ
 	return ec._TrustCenterFileConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTrustCenterFileEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.TrustCenterFileEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNTrustCenterFileEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.TrustCenterFileEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -13889,7 +13889,7 @@ func (ec *executionContext) marshalNTrustCenterFileEdge2ᚕᚖgithubᚗcomᚋget
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTrustCenterFileEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNTrustCenterFileEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -13909,7 +13909,7 @@ func (ec *executionContext) marshalNTrustCenterFileEdge2ᚕᚖgithubᚗcomᚋget
 	return ret
 }
 
-func (ec *executionContext) marshalNTrustCenterFileEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdge(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterFileEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNTrustCenterFileEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterFileEdge(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterFileEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13919,7 +13919,7 @@ func (ec *executionContext) marshalNTrustCenterFileEdge2ᚖgithubᚗcomᚋgetpro
 	return ec._TrustCenterFileEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTrustCenterReference2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReference(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterReference) graphql.Marshaler {
+func (ec *executionContext) marshalNTrustCenterReference2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReference(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterReference) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13929,11 +13929,11 @@ func (ec *executionContext) marshalNTrustCenterReference2ᚖgithubᚗcomᚋgetpr
 	return ec._TrustCenterReference(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTrustCenterReferenceConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceConnection(ctx context.Context, sel ast.SelectionSet, v types.TrustCenterReferenceConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNTrustCenterReferenceConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceConnection(ctx context.Context, sel ast.SelectionSet, v types.TrustCenterReferenceConnection) graphql.Marshaler {
 	return ec._TrustCenterReferenceConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTrustCenterReferenceConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceConnection(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterReferenceConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNTrustCenterReferenceConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceConnection(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterReferenceConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13943,7 +13943,7 @@ func (ec *executionContext) marshalNTrustCenterReferenceConnection2ᚖgithubᚗc
 	return ec._TrustCenterReferenceConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTrustCenterReferenceEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.TrustCenterReferenceEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNTrustCenterReferenceEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.TrustCenterReferenceEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -13967,7 +13967,7 @@ func (ec *executionContext) marshalNTrustCenterReferenceEdge2ᚕᚖgithubᚗcom�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTrustCenterReferenceEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNTrustCenterReferenceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -13987,7 +13987,7 @@ func (ec *executionContext) marshalNTrustCenterReferenceEdge2ᚕᚖgithubᚗcom�
 	return ret
 }
 
-func (ec *executionContext) marshalNTrustCenterReferenceEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdge(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterReferenceEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNTrustCenterReferenceEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenterReferenceEdge(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenterReferenceEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -13997,7 +13997,7 @@ func (ec *executionContext) marshalNTrustCenterReferenceEdge2ᚖgithubᚗcomᚋg
 	return ec._TrustCenterReferenceEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNVendor2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendor(ctx context.Context, sel ast.SelectionSet, v *types.Vendor) graphql.Marshaler {
+func (ec *executionContext) marshalNVendor2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendor(ctx context.Context, sel ast.SelectionSet, v *types.Vendor) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -14007,15 +14007,15 @@ func (ec *executionContext) marshalNVendor2ᚖgithubᚗcomᚋgetproboᚋproboᚋ
 	return ec._Vendor(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNVendorCategory2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐVendorCategory(ctx context.Context, v any) (coredata.VendorCategory, error) {
+func (ec *executionContext) unmarshalNVendorCategory2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐVendorCategory(ctx context.Context, v any) (coredata.VendorCategory, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := unmarshalNVendorCategory2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐVendorCategory[tmp]
+	res := unmarshalNVendorCategory2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐVendorCategory[tmp]
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNVendorCategory2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐVendorCategory(ctx context.Context, sel ast.SelectionSet, v coredata.VendorCategory) graphql.Marshaler {
+func (ec *executionContext) marshalNVendorCategory2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐVendorCategory(ctx context.Context, sel ast.SelectionSet, v coredata.VendorCategory) graphql.Marshaler {
 	_ = sel
-	res := graphql.MarshalString(marshalNVendorCategory2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐVendorCategory[v])
+	res := graphql.MarshalString(marshalNVendorCategory2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐVendorCategory[v])
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -14025,7 +14025,7 @@ func (ec *executionContext) marshalNVendorCategory2githubᚗcomᚋgetproboᚋpro
 }
 
 var (
-	unmarshalNVendorCategory2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐVendorCategory = map[string]coredata.VendorCategory{
+	unmarshalNVendorCategory2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐVendorCategory = map[string]coredata.VendorCategory{
 		"ANALYTICS":                   coredata.VendorCategoryAnalytics,
 		"CLOUD_MONITORING":            coredata.VendorCategoryCloudMonitoring,
 		"CLOUD_PROVIDER":              coredata.VendorCategoryCloudProvider,
@@ -14049,7 +14049,7 @@ var (
 		"SECURITY":                    coredata.VendorCategorySecurity,
 		"VERSION_CONTROL":             coredata.VendorCategoryVersionControl,
 	}
-	marshalNVendorCategory2githubᚗcomᚋgetproboᚋproboᚋpkgᚋcoredataᚐVendorCategory = map[coredata.VendorCategory]string{
+	marshalNVendorCategory2goᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐVendorCategory = map[coredata.VendorCategory]string{
 		coredata.VendorCategoryAnalytics:                "ANALYTICS",
 		coredata.VendorCategoryCloudMonitoring:          "CLOUD_MONITORING",
 		coredata.VendorCategoryCloudProvider:            "CLOUD_PROVIDER",
@@ -14075,11 +14075,11 @@ var (
 	}
 )
 
-func (ec *executionContext) marshalNVendorConnection2githubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorConnection(ctx context.Context, sel ast.SelectionSet, v types.VendorConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNVendorConnection2goᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorConnection(ctx context.Context, sel ast.SelectionSet, v types.VendorConnection) graphql.Marshaler {
 	return ec._VendorConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNVendorConnection2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorConnection(ctx context.Context, sel ast.SelectionSet, v *types.VendorConnection) graphql.Marshaler {
+func (ec *executionContext) marshalNVendorConnection2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorConnection(ctx context.Context, sel ast.SelectionSet, v *types.VendorConnection) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -14089,7 +14089,7 @@ func (ec *executionContext) marshalNVendorConnection2ᚖgithubᚗcomᚋgetprobo�
 	return ec._VendorConnection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNVendorEdge2ᚕᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.VendorEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNVendorEdge2ᚕᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*types.VendorEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -14113,7 +14113,7 @@ func (ec *executionContext) marshalNVendorEdge2ᚕᚖgithubᚗcomᚋgetproboᚋp
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNVendorEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdge(ctx, sel, v[i])
+			ret[i] = ec.marshalNVendorEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -14133,7 +14133,7 @@ func (ec *executionContext) marshalNVendorEdge2ᚕᚖgithubᚗcomᚋgetproboᚋp
 	return ret
 }
 
-func (ec *executionContext) marshalNVendorEdge2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdge(ctx context.Context, sel ast.SelectionSet, v *types.VendorEdge) graphql.Marshaler {
+func (ec *executionContext) marshalNVendorEdge2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐVendorEdge(ctx context.Context, sel ast.SelectionSet, v *types.VendorEdge) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -14426,7 +14426,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, v any) (*page.CursorKey, error) {
+func (ec *executionContext) unmarshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, v any) (*page.CursorKey, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -14434,7 +14434,7 @@ func (ec *executionContext) unmarshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋpro
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOCursorKey2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, sel ast.SelectionSet, v *page.CursorKey) graphql.Marshaler {
+func (ec *executionContext) marshalOCursorKey2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋpageᚐCursorKey(ctx context.Context, sel ast.SelectionSet, v *page.CursorKey) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -14462,14 +14462,14 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalOReport2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐReport(ctx context.Context, sel ast.SelectionSet, v *types.Report) graphql.Marshaler {
+func (ec *executionContext) marshalOReport2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐReport(ctx context.Context, sel ast.SelectionSet, v *types.Report) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Report(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx context.Context, v any) (*types.Role, error) {
+func (ec *executionContext) unmarshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx context.Context, v any) (*types.Role, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -14478,7 +14478,7 @@ func (ec *executionContext) unmarshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx context.Context, sel ast.SelectionSet, v *types.Role) graphql.Marshaler {
+func (ec *executionContext) marshalORole2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐRole(ctx context.Context, sel ast.SelectionSet, v *types.Role) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -14539,7 +14539,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOTrustCenter2ᚖgithubᚗcomᚋgetproboᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenter) graphql.Marshaler {
+func (ec *executionContext) marshalOTrustCenter2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋserverᚋapiᚋtrustᚋv1ᚋtypesᚐTrustCenter(ctx context.Context, sel ast.SelectionSet, v *types.TrustCenter) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

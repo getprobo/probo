@@ -114,6 +114,10 @@ const routes = [
           () => import("./pages/DocumentSigningRequestsPage.tsx")
         ),
       },
+      {
+        path: "api-keys",
+        Component: lazy(() => import("./pages/APIKeysPage")),
+      },
     ],
   },
   {

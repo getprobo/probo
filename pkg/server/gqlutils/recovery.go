@@ -12,18 +12,18 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package graphql
+package gqlutils
 
 import (
 	"context"
 	"errors"
 	"runtime/debug"
 
-	"go.probo.inc/probo/pkg/auth"
-	"go.probo.inc/probo/pkg/authz"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.gearno.de/kit/httpserver"
 	"go.gearno.de/kit/log"
+	"go.probo.inc/probo/pkg/auth"
+	"go.probo.inc/probo/pkg/authz"
 )
 
 func RecoverFunc(ctx context.Context, err any) error {

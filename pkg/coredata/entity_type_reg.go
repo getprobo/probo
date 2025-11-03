@@ -64,4 +64,6 @@ const (
 	SlackMessageEntityType
 	TrustCenterFileEntityType
 	SAMLConfigurationEntityType
+	UserAPIKeyEntityType
+	UserAPIKeyMembershipEntityType
 )

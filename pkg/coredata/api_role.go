@@ -12,19 +12,43 @@
 // OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-package types
+package coredata
 
 import (
-	"go.probo.inc/probo/pkg/page"
-	"go.probo.inc/probo/pkg/server/gqlutils/types/cursor"
+	"database/sql/driver"
+	"fmt"
 )
 
-func NewCursor[O page.OrderField](
-	first *int,
-	after *page.CursorKey,
-	last *int,
-	before *page.CursorKey,
-	orderBy page.OrderBy[O],
-) *page.Cursor[O] {
-	return cursor.NewCursor(first, after, last, before, orderBy)
+type APIRole string
+
+const (
+	APIRoleFull APIRole = "FULL"
+)
+
+func (r APIRole) String() string {
+	return string(r)
+}
+
+func (r *APIRole) Scan(value any) error {
+	var s string
+	switch v := value.(type) {
+	case string:
+		s = v
+	case []byte:
+		s = string(v)
+	default:
+		return fmt.Errorf("unsupported type for APIRole: %T", value)
+	}
+
+	switch s {
+	case "FULL":
+		*r = APIRoleFull
+	default:
+		return fmt.Errorf("invalid APIRole value: %q", s)
+	}
+	return nil
+}
+
+func (r APIRole) Value() (driver.Value, error) {
+	return r.String(), nil
 }

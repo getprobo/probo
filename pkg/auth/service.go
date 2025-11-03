@@ -24,6 +24,8 @@ import (
 	"net/mail"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/baseurl"
 	"go.probo.inc/probo/pkg/coredata"
@@ -31,8 +33,6 @@ import (
 	"go.probo.inc/probo/pkg/crypto/passwdhash"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/statelesstoken"
-	"github.com/jackc/pgx/v5"
-	"go.gearno.de/kit/pg"
 )
 
 type (
@@ -124,11 +124,32 @@ type (
 		OrganizationID gid.GID
 		RedirectURL    string
 	}
+
+	UserAPIKeyMembershipRequest struct {
+		MembershipID gid.GID
+		Role         coredata.APIRole
+	}
+
+	UserAPIKeyOrganizationRequest struct {
+		OrganizationID gid.GID
+		Role           coredata.APIRole
+	}
+
+	UserAPIKeyWithMembershipsResponse struct {
+		UserAPIKey  *coredata.UserAPIKey
+		Memberships []*coredata.UserAPIKeyMembership
+	}
+
+	UserAPIKeyTokenData struct {
+		ID        gid.GID   `json:"id"`
+		CreatedAt time.Time `json:"created_at"`
+	}
 )
 
 const (
 	TokenTypeEmailConfirmation = "email_confirmation"
 	TokenTypePasswordReset     = "password_reset"
+	TokenTypeAPIKey            = "api_key"
 )
 
 func (e ErrInvalidCredentials) Error() string {
@@ -1234,4 +1255,389 @@ func verifyDomainOwnership(ctx context.Context, domain, expectedToken string) (b
 	}
 
 	return false, nil
+}
+
+func (s *Service) ValidateAndBuildUserAPIKeyMemberships(
+	ctx context.Context,
+	userID gid.GID,
+	organizationRequests []UserAPIKeyOrganizationRequest,
+) ([]UserAPIKeyMembershipRequest, error) {
+	memberships := make([]UserAPIKeyMembershipRequest, 0, len(organizationRequests))
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			for _, org := range organizationRequests {
+				tenantID := org.OrganizationID.TenantID()
+
+				var membership coredata.Membership
+				if err := membership.LoadByUserAndOrg(ctx, conn, coredata.NewScope(tenantID), userID, org.OrganizationID); err != nil {
+					return fmt.Errorf("you do not have access to organization %s", org.OrganizationID)
+				}
+
+				var role coredata.APIRole
+				switch org.Role {
+				case coredata.APIRoleFull:
+					role = coredata.APIRoleFull
+				default:
+					return fmt.Errorf("invalid role: %s", org.Role)
+				}
+
+				memberships = append(memberships, UserAPIKeyMembershipRequest{
+					MembershipID: membership.ID,
+					Role:         role,
+				})
+			}
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return memberships, nil
+}
+
+func (s *Service) CreateUserAPIKey(
+	ctx context.Context,
+	userID gid.GID,
+	name string,
+	expiresAt time.Time,
+	memberships []UserAPIKeyMembershipRequest,
+) (*coredata.UserAPIKey, string, error) {
+	var userAPIKey *coredata.UserAPIKey
+	var token string
+
+	err := s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			now := time.Now()
+
+			userAPIKey = &coredata.UserAPIKey{
+				ID:        gid.New(gid.NilTenant, coredata.UserAPIKeyEntityType),
+				UserID:    userID,
+				Name:      name,
+				ExpiresAt: expiresAt,
+				CreatedAt: now,
+				UpdatedAt: now,
+			}
+
+			if err := userAPIKey.Insert(ctx, tx); err != nil {
+				return fmt.Errorf("cannot insert user api key: %w", err)
+			}
+
+			if err := userAPIKey.LoadByID(ctx, tx, userAPIKey.ID); err != nil {
+				return fmt.Errorf("cannot load user api key: %w", err)
+			}
+
+			tokenData := UserAPIKeyTokenData{
+				ID:        userAPIKey.ID,
+				CreatedAt: userAPIKey.CreatedAt,
+			}
+
+			generatedToken, err := statelesstoken.NewDeterministicToken(
+				s.tokenSecret,
+				TokenTypeAPIKey,
+				userAPIKey.ExpiresAt,
+				userAPIKey.CreatedAt,
+				tokenData,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot generate user api key token: %w", err)
+			}
+
+			token = generatedToken
+
+			for _, membership := range memberships {
+				scope := coredata.NewScope(membership.MembershipID.TenantID())
+				userAPIKeyMembership := &coredata.UserAPIKeyMembership{
+					ID:           gid.New(membership.MembershipID.TenantID(), coredata.UserAPIKeyMembershipEntityType),
+					UserAPIKeyID: userAPIKey.ID,
+					MembershipID: membership.MembershipID,
+					Role:         membership.Role,
+					CreatedAt:    now,
+					UpdatedAt:    now,
+				}
+
+				if err := userAPIKeyMembership.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot insert user api key membership: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	return userAPIKey, token, nil
+}
+
+func (s *Service) ListUserAPIKeys(
+	ctx context.Context,
+	userID gid.GID,
+) ([]*coredata.UserAPIKey, error) {
+	var userAPIKeys coredata.UserAPIKeys
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := userAPIKeys.LoadByUserID(ctx, conn, userID); err != nil {
+				return fmt.Errorf("cannot load user api keys: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	return userAPIKeys, err
+}
+
+func (s *Service) ListUserAPIKeysWithMemberships(
+	ctx context.Context,
+	userID gid.GID,
+	tenantIDs []gid.TenantID,
+) ([]UserAPIKeyWithMembershipsResponse, error) {
+	var userAPIKeys coredata.UserAPIKeys
+	var result []UserAPIKeyWithMembershipsResponse
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			if err := userAPIKeys.LoadByUserID(ctx, conn, userID); err != nil {
+				return fmt.Errorf("cannot load user api keys: %w", err)
+			}
+
+			result = make([]UserAPIKeyWithMembershipsResponse, 0, len(userAPIKeys))
+			for _, userAPIKey := range userAPIKeys {
+				keyWithMemberships := UserAPIKeyWithMembershipsResponse{
+					UserAPIKey:  userAPIKey,
+					Memberships: make([]*coredata.UserAPIKeyMembership, 0),
+				}
+
+				for _, tenantID := range tenantIDs {
+					scope := coredata.NewScope(tenantID)
+					var memberships coredata.UserAPIKeyMemberships
+					if err := memberships.LoadByUserAPIKeyID(ctx, conn, scope, userAPIKey.ID); err != nil {
+						return fmt.Errorf("cannot load user api key memberships: %w", err)
+					}
+					keyWithMemberships.Memberships = append(keyWithMemberships.Memberships, memberships...)
+				}
+
+				result = append(result, keyWithMemberships)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (s *Service) GetUserAPIKey(
+	ctx context.Context,
+	userAPIKeyID gid.GID,
+	userID gid.GID,
+) (string, error) {
+	var token string
+
+	err := s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			userAPIKey := &coredata.UserAPIKey{}
+			if err := userAPIKey.LoadByID(ctx, conn, userAPIKeyID); err != nil {
+				return fmt.Errorf("cannot load user api key: %w", err)
+			}
+
+			if userAPIKey.UserID != userID {
+				return fmt.Errorf("user api key does not belong to user")
+			}
+
+			tokenData := UserAPIKeyTokenData{
+				ID:        userAPIKey.ID,
+				CreatedAt: userAPIKey.CreatedAt,
+			}
+
+			generatedToken, err := statelesstoken.NewDeterministicToken(
+				s.tokenSecret,
+				TokenTypeAPIKey,
+				userAPIKey.ExpiresAt,
+				userAPIKey.CreatedAt,
+				tokenData,
+			)
+			if err != nil {
+				return fmt.Errorf("cannot generate user api key token: %w", err)
+			}
+
+			token = generatedToken
+			return nil
+		},
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func (s *Service) UpdateUserAPIKeyMemberships(
+	ctx context.Context,
+	userAPIKeyID gid.GID,
+	userID gid.GID,
+	memberships []UserAPIKeyMembershipRequest,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			userAPIKey := &coredata.UserAPIKey{}
+			if err := userAPIKey.LoadByID(ctx, tx, userAPIKeyID); err != nil {
+				return fmt.Errorf("cannot load user api key: %w", err)
+			}
+
+			if userAPIKey.UserID != userID {
+				return fmt.Errorf("user api key does not belong to user")
+			}
+
+			if err := coredata.DeleteAllUserAPIKeyMembershipsByUserAPIKeyID(ctx, tx, userAPIKeyID); err != nil {
+				return fmt.Errorf("cannot delete existing memberships: %w", err)
+			}
+
+			now := time.Now()
+			for _, membership := range memberships {
+				scope := coredata.NewScope(membership.MembershipID.TenantID())
+				userAPIKeyMembership := &coredata.UserAPIKeyMembership{
+					ID:           gid.New(membership.MembershipID.TenantID(), coredata.UserAPIKeyMembershipEntityType),
+					UserAPIKeyID: userAPIKey.ID,
+					MembershipID: membership.MembershipID,
+					Role:         membership.Role,
+					CreatedAt:    now,
+					UpdatedAt:    now,
+				}
+
+				if err := userAPIKeyMembership.Insert(ctx, tx, scope); err != nil {
+					return fmt.Errorf("cannot insert user api key membership: %w", err)
+				}
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) UpdateUserAPIKeyName(
+	ctx context.Context,
+	userAPIKeyID gid.GID,
+	userID gid.GID,
+	name string,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			userAPIKey := &coredata.UserAPIKey{}
+			if err := userAPIKey.LoadByID(ctx, tx, userAPIKeyID); err != nil {
+				return fmt.Errorf("cannot load user api key: %w", err)
+			}
+
+			if userAPIKey.UserID != userID {
+				return fmt.Errorf("user api key does not belong to user")
+			}
+
+			userAPIKey.Name = name
+			userAPIKey.UpdatedAt = time.Now()
+
+			if err := userAPIKey.Update(ctx, tx); err != nil {
+				return fmt.Errorf("cannot update user api key: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) DeleteUserAPIKey(
+	ctx context.Context,
+	userAPIKeyID gid.GID,
+	userID gid.GID,
+) error {
+	return s.pg.WithTx(
+		ctx,
+		func(tx pg.Conn) error {
+			userAPIKey := &coredata.UserAPIKey{}
+			if err := userAPIKey.LoadByID(ctx, tx, userAPIKeyID); err != nil {
+				return fmt.Errorf("cannot load user api key: %w", err)
+			}
+
+			if userAPIKey.UserID != userID {
+				return fmt.Errorf("user api key does not belong to user")
+			}
+
+			if err := userAPIKey.Delete(ctx, tx); err != nil {
+				return fmt.Errorf("cannot delete user api key: %w", err)
+			}
+
+			return nil
+		},
+	)
+}
+
+func (s *Service) ValidateUserAPIKey(
+	ctx context.Context,
+	token string,
+) (*coredata.User, *coredata.UserAPIKey, error) {
+	payload, err := statelesstoken.ValidateToken[UserAPIKeyTokenData](
+		s.tokenSecret,
+		TokenTypeAPIKey,
+		token,
+	)
+	if err != nil {
+		return nil, nil, &ErrInvalidCredentials{message: "invalid user api key"}
+	}
+
+	tokenData := payload.Data
+
+	var user *coredata.User
+	var userAPIKey *coredata.UserAPIKey
+
+	err = s.pg.WithConn(
+		ctx,
+		func(conn pg.Conn) error {
+			userAPIKey = &coredata.UserAPIKey{}
+			if err := userAPIKey.LoadByID(ctx, conn, tokenData.ID); err != nil {
+				var errNotFound *coredata.ErrUserAPIKeyNotFound
+				if errors.As(err, &errNotFound) {
+					return &ErrInvalidCredentials{message: "invalid user api key"}
+				}
+				return fmt.Errorf("cannot load user api key: %w", err)
+			}
+
+			if !userAPIKey.CreatedAt.Equal(tokenData.CreatedAt) {
+				return &ErrInvalidCredentials{message: "invalid user api key"}
+			}
+
+			if time.Now().After(userAPIKey.ExpiresAt) {
+				return &ErrInvalidCredentials{message: "user api key expired"}
+			}
+
+			user = &coredata.User{}
+			if err := user.LoadByID(ctx, conn, userAPIKey.UserID); err != nil {
+				return fmt.Errorf("cannot load user: %w", err)
+			}
+
+			return nil
+		},
+	)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return user, userAPIKey, nil
 }

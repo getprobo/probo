@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	pgx "github.com/jackc/pgx/v5"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -20,9 +22,7 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
 	"go.probo.inc/probo/pkg/server/api/console/v1/types"
-	"go.probo.inc/probo/pkg/server/graphql"
-	pgx "github.com/jackc/pgx/v5"
-	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 )
 
 // Owner is the resolver for the owner field.
@@ -33,7 +33,7 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Peo
 	if err != nil {
 		var errNotFound *coredata.ErrAssetNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get asset: %w", err))
 	}
@@ -42,7 +42,7 @@ func (r *assetResolver) Owner(ctx context.Context, obj *types.Asset) (*types.Peo
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
@@ -103,7 +103,7 @@ func (r *assetResolver) Organization(ctx context.Context, obj *types.Asset) (*ty
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -140,7 +140,7 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 	if err != nil {
 		var errNotFound *coredata.ErrAuditNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
@@ -149,7 +149,7 @@ func (r *auditResolver) Organization(ctx context.Context, obj *types.Audit) (*ty
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot load organization: %w", err))
 	}
@@ -165,7 +165,7 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 	if err != nil {
 		var errNotFound *coredata.ErrAuditNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
@@ -174,7 +174,7 @@ func (r *auditResolver) Framework(ctx context.Context, obj *types.Audit) (*types
 	if err != nil {
 		var errNotFound *coredata.ErrFrameworkNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot load framework: %w", err))
 	}
@@ -190,7 +190,7 @@ func (r *auditResolver) Report(ctx context.Context, obj *types.Audit) (*types.Re
 	if err != nil {
 		var errNotFound *coredata.ErrAuditNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot load audit: %w", err))
 	}
@@ -277,7 +277,7 @@ func (r *continualImprovementResolver) Organization(ctx context.Context, obj *ty
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get continual improvement organization: %w", err))
 	}
@@ -298,7 +298,7 @@ func (r *continualImprovementResolver) Owner(ctx context.Context, obj *types.Con
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get continual improvement owner: %w", err))
 	}
@@ -335,7 +335,7 @@ func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*t
 	if err != nil {
 		var errNotFound *coredata.ErrControlNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get control: %w", err))
 	}
@@ -344,7 +344,7 @@ func (r *controlResolver) Framework(ctx context.Context, obj *types.Control) (*t
 	if err != nil {
 		var errNotFound *coredata.ErrFrameworkNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get framework: %w", err))
 	}
@@ -516,7 +516,7 @@ func (r *datumResolver) Owner(ctx context.Context, obj *types.Datum) (*types.Peo
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		return nil, fmt.Errorf("cannot get owner: %w", err)
 	}
@@ -557,7 +557,7 @@ func (r *datumResolver) Organization(ctx context.Context, obj *types.Datum) (*ty
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -594,7 +594,7 @@ func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*typ
 	if err != nil {
 		var errNotFound *coredata.ErrDocumentNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get document: %w", err))
 	}
@@ -604,7 +604,7 @@ func (r *documentResolver) Owner(ctx context.Context, obj *types.Document) (*typ
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
@@ -620,7 +620,7 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 	if err != nil {
 		var errNotFound *coredata.ErrDocumentNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get document: %w", err))
 	}
@@ -629,7 +629,7 @@ func (r *documentResolver) Organization(ctx context.Context, obj *types.Document
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -733,7 +733,7 @@ func (r *documentVersionResolver) Document(ctx context.Context, obj *types.Docum
 	if err != nil {
 		var errNotFound *coredata.ErrDocumentNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get document: %w", err))
 	}
@@ -754,7 +754,7 @@ func (r *documentVersionResolver) Owner(ctx context.Context, obj *types.Document
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
@@ -823,7 +823,7 @@ func (r *documentVersionSignatureResolver) SignedBy(ctx context.Context, obj *ty
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get people: %w", err))
 	}
@@ -848,7 +848,7 @@ func (r *evidenceResolver) File(ctx context.Context, obj *types.Evidence) (*type
 	if err != nil {
 		var errNotFound *coredata.ErrFileNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot load evidence file: %w", err))
 	}
@@ -873,7 +873,7 @@ func (r *evidenceResolver) Task(ctx context.Context, obj *types.Evidence) (*type
 	if err != nil {
 		var errNotFound *coredata.ErrTaskNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot load task: %w", err))
 	}
@@ -894,7 +894,7 @@ func (r *evidenceResolver) Measure(ctx context.Context, obj *types.Evidence) (*t
 	if err != nil {
 		var errNotFound *coredata.ErrMeasureNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot load measure: %w", err))
 	}
@@ -944,7 +944,7 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 	if err != nil {
 		var errNotFound *coredata.ErrFrameworkNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot load framework: %w", err))
 	}
@@ -953,7 +953,7 @@ func (r *frameworkResolver) Organization(ctx context.Context, obj *types.Framewo
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot load organization: %w", err))
 	}
@@ -1227,11 +1227,11 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	if err != nil {
 		var errAlreadyExists *coredata.ErrOrganizationAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, graphql.Conflict(errAlreadyExists)
+			return nil, gqlutils.Conflict(errAlreadyExists)
 		}
 		var errTrustCenterAlreadyExists *coredata.ErrTrustCenterAlreadyExists
 		if errors.As(err, &errTrustCenterAlreadyExists) {
-			return nil, graphql.Conflict(errTrustCenterAlreadyExists)
+			return nil, gqlutils.Conflict(errTrustCenterAlreadyExists)
 		}
 		panic(fmt.Errorf("cannot create organization: %w", err))
 	}
@@ -1260,7 +1260,7 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input types.C
 	if err != nil {
 		var errAlreadyExists *coredata.ErrPeopleAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, graphql.Conflict(errAlreadyExists)
+			return nil, gqlutils.Conflict(errAlreadyExists)
 		}
 		panic(fmt.Errorf("cannot create people: %w", err))
 	}
@@ -1408,7 +1408,7 @@ func (r *mutationResolver) CreateTrustCenterAccess(ctx context.Context, input ty
 	if err != nil {
 		var errAlreadyExists *coredata.ErrTrustCenterAccessAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, graphql.Conflict(errAlreadyExists)
+			return nil, gqlutils.Conflict(errAlreadyExists)
 		}
 		panic(fmt.Errorf("cannot create trust center access: %w", err))
 	}
@@ -1632,7 +1632,7 @@ func (r *mutationResolver) InviteUser(ctx context.Context, input types.InviteUse
 		if err != nil {
 			var errAlreadyExists *coredata.ErrPeopleAlreadyExists
 			if errors.As(err, &errAlreadyExists) {
-				return nil, graphql.Conflict(errAlreadyExists)
+				return nil, gqlutils.Conflict(errAlreadyExists)
 			}
 			return nil, fmt.Errorf("cannot create people record: %w", err)
 		}
@@ -1697,7 +1697,7 @@ func (r *mutationResolver) CreatePeople(ctx context.Context, input types.CreateP
 	if err != nil {
 		var errAlreadyExists *coredata.ErrPeopleAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, graphql.Conflict(errAlreadyExists)
+			return nil, gqlutils.Conflict(errAlreadyExists)
 		}
 		panic(fmt.Errorf("cannot create people: %w", err))
 	}
@@ -1776,7 +1776,7 @@ func (r *mutationResolver) CreateVendor(ctx context.Context, input types.CreateV
 	if err != nil {
 		var errAlreadyExists *coredata.ErrVendorAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, graphql.Conflict(errAlreadyExists)
+			return nil, gqlutils.Conflict(errAlreadyExists)
 		}
 		return nil, fmt.Errorf("cannot create vendor: %w", err)
 	}
@@ -2079,7 +2079,7 @@ func (r *mutationResolver) CreateControl(ctx context.Context, input types.Create
 	if err != nil {
 		var errAlreadyExists *coredata.ErrControlAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, graphql.Conflict(errAlreadyExists)
+			return nil, gqlutils.Conflict(errAlreadyExists)
 		}
 		panic(fmt.Errorf("cannot create control: %w", err))
 	}
@@ -2105,7 +2105,7 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 	if err != nil {
 		var errAlreadyExists *coredata.ErrControlAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, graphql.Conflict(errAlreadyExists)
+			return nil, gqlutils.Conflict(errAlreadyExists)
 		}
 		panic(fmt.Errorf("cannot update control: %w", err))
 	}
@@ -2142,7 +2142,7 @@ func (r *mutationResolver) CreateMeasure(ctx context.Context, input types.Create
 	if err != nil {
 		var errAlreadyExists *coredata.ErrMeasureAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, graphql.Conflict(errAlreadyExists)
+			return nil, gqlutils.Conflict(errAlreadyExists)
 		}
 		panic(fmt.Errorf("cannot create measure: %w", err))
 	}
@@ -2233,7 +2233,7 @@ func (r *mutationResolver) CreateControlDocumentMapping(ctx context.Context, inp
 	if err != nil {
 		var errMappingExists *coredata.ErrControlDocumentMappingAlreadyExists
 		if errors.As(err, &errMappingExists) {
-			return nil, graphql.Conflict(errMappingExists)
+			return nil, gqlutils.Conflict(errMappingExists)
 		}
 		panic(fmt.Errorf("cannot create control document mapping: %w", err))
 	}
@@ -2349,7 +2349,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, input types.CreateTas
 	if err != nil {
 		var errAlreadyExists *coredata.ErrTaskAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, graphql.Conflict(errAlreadyExists)
+			return nil, gqlutils.Conflict(errAlreadyExists)
 		}
 		panic(fmt.Errorf("cannot create task: %w", err))
 	}
@@ -2445,7 +2445,7 @@ func (r *mutationResolver) CreateRisk(ctx context.Context, input types.CreateRis
 	if err != nil {
 		var errAlreadyExists *coredata.ErrRiskAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, graphql.Conflict(errAlreadyExists)
+			return nil, gqlutils.Conflict(errAlreadyExists)
 		}
 		panic(fmt.Errorf("cannot create risk: %w", err))
 	}
@@ -2799,7 +2799,7 @@ func (r *mutationResolver) CreateDocument(ctx context.Context, input types.Creat
 	if err != nil {
 		var errAlreadyExists *coredata.ErrDocumentAlreadyExists
 		if errors.As(err, &errAlreadyExists) {
-			return nil, graphql.Conflict(errAlreadyExists)
+			return nil, gqlutils.Conflict(errAlreadyExists)
 		}
 		panic(fmt.Errorf("cannot create document: %w", err))
 	}
@@ -2858,7 +2858,7 @@ func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input typ
 	if err != nil {
 		var errNoChanges *coredata.ErrDocumentVersionNoChanges
 		if errors.As(err, &errNoChanges) {
-			return nil, graphql.Invalid(errNoChanges)
+			return nil, gqlutils.Invalid(errNoChanges)
 		}
 		panic(fmt.Errorf("cannot publish document version: %w", err))
 	}
@@ -3939,7 +3939,7 @@ func (r *nonconformityResolver) Organization(ctx context.Context, obj *types.Non
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get nonconformity organization: %w", err))
 	}
@@ -3960,7 +3960,7 @@ func (r *nonconformityResolver) Audit(ctx context.Context, obj *types.Nonconform
 	if err != nil {
 		var errNotFound *coredata.ErrAuditNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get nonconformity audit: %w", err))
 	}
@@ -3981,7 +3981,7 @@ func (r *nonconformityResolver) Owner(ctx context.Context, obj *types.Nonconform
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get nonconformity owner: %w", err))
 	}
@@ -4023,7 +4023,7 @@ func (r *obligationResolver) Organization(ctx context.Context, obj *types.Obliga
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get obligation organization: %w", err))
 	}
@@ -4044,7 +4044,7 @@ func (r *obligationResolver) Owner(ctx context.Context, obj *types.Obligation) (
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get obligation owner: %w", err))
 	}
@@ -4742,7 +4742,7 @@ func (r *processingActivityResolver) Organization(ctx context.Context, obj *type
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -4806,7 +4806,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			var errNotFound *coredata.ErrOrganizationNotFound
 			if errors.As(err, &errNotFound) {
-				return nil, graphql.NotFound(errNotFound)
+				return nil, gqlutils.NotFound(errNotFound)
 			}
 			panic(fmt.Errorf("cannot get organization: %w", err))
 		}
@@ -4817,7 +4817,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			var errNotFound *coredata.ErrPeopleNotFound
 			if errors.As(err, &errNotFound) {
-				return nil, graphql.NotFound(errNotFound)
+				return nil, gqlutils.NotFound(errNotFound)
 			}
 			panic(fmt.Errorf("cannot get people: %w", err))
 		}
@@ -4828,7 +4828,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			var errNotFound *coredata.ErrVendorNotFound
 			if errors.As(err, &errNotFound) {
-				return nil, graphql.NotFound(errNotFound)
+				return nil, gqlutils.NotFound(errNotFound)
 			}
 			panic(fmt.Errorf("cannot get vendor: %w", err))
 		}
@@ -4839,7 +4839,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			var errNotFound *coredata.ErrFrameworkNotFound
 			if errors.As(err, &errNotFound) {
-				return nil, graphql.NotFound(errNotFound)
+				return nil, gqlutils.NotFound(errNotFound)
 			}
 			panic(fmt.Errorf("cannot get framework: %w", err))
 		}
@@ -4850,7 +4850,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			var errNotFound *coredata.ErrMeasureNotFound
 			if errors.As(err, &errNotFound) {
-				return nil, graphql.NotFound(errNotFound)
+				return nil, gqlutils.NotFound(errNotFound)
 			}
 			panic(fmt.Errorf("cannot get measure: %w", err))
 		}
@@ -4861,7 +4861,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			var errNotFound *coredata.ErrTaskNotFound
 			if errors.As(err, &errNotFound) {
-				return nil, graphql.NotFound(errNotFound)
+				return nil, gqlutils.NotFound(errNotFound)
 			}
 			panic(fmt.Errorf("cannot get task: %w", err))
 		}
@@ -4879,7 +4879,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			var errNotFound *coredata.ErrDocumentNotFound
 			if errors.As(err, &errNotFound) {
-				return nil, graphql.NotFound(errNotFound)
+				return nil, gqlutils.NotFound(errNotFound)
 			}
 			panic(fmt.Errorf("cannot get document: %w", err))
 		}
@@ -4889,7 +4889,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			var errNotFound *coredata.ErrControlNotFound
 			if errors.As(err, &errNotFound) {
-				return nil, graphql.NotFound(errNotFound)
+				return nil, gqlutils.NotFound(errNotFound)
 			}
 			panic(fmt.Errorf("cannot get control: %w", err))
 		}
@@ -4900,7 +4900,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			var errNotFound *coredata.ErrRiskNotFound
 			if errors.As(err, &errNotFound) {
-				return nil, graphql.NotFound(errNotFound)
+				return nil, gqlutils.NotFound(errNotFound)
 			}
 			panic(fmt.Errorf("cannot get risk: %w", err))
 		}
@@ -4940,7 +4940,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			var errNotFound *coredata.ErrAssetNotFound
 			if errors.As(err, &errNotFound) {
-				return nil, graphql.NotFound(errNotFound)
+				return nil, gqlutils.NotFound(errNotFound)
 			}
 			panic(fmt.Errorf("cannot get asset: %w", err))
 		}
@@ -4956,7 +4956,7 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 		if err != nil {
 			var errNotFound *coredata.ErrAuditNotFound
 			if errors.As(err, &errNotFound) {
-				return nil, graphql.NotFound(errNotFound)
+				return nil, gqlutils.NotFound(errNotFound)
 			}
 			panic(fmt.Errorf("cannot get audit: %w", err))
 		}
@@ -5021,9 +5021,19 @@ func (r *queryResolver) Node(ctx context.Context, id gid.GID) (types.Node, error
 func (r *queryResolver) Viewer(ctx context.Context) (*types.Viewer, error) {
 	user := UserFromContext(ctx)
 	session := SessionFromContext(ctx)
+	apiKey := UserAPIKeyFromContext(ctx)
+
+	var viewerID gid.GID
+	if session != nil {
+		viewerID = session.ID
+	} else if apiKey != nil {
+		viewerID = apiKey.ID
+	} else {
+		viewerID = user.ID
+	}
 
 	return &types.Viewer{
-		ID:   session.ID,
+		ID:   viewerID,
 		User: types.NewUser(user),
 	}, nil
 }
@@ -5060,7 +5070,7 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Peopl
 	if err != nil {
 		var errNotFound *coredata.ErrRiskNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get risk: %w", err))
 	}
@@ -5073,7 +5083,7 @@ func (r *riskResolver) Owner(ctx context.Context, obj *types.Risk) (*types.Peopl
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get owner: %w", err))
 	}
@@ -5089,7 +5099,7 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 	if err != nil {
 		var errNotFound *coredata.ErrRiskNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get risk: %w", err))
 	}
@@ -5098,7 +5108,7 @@ func (r *riskResolver) Organization(ctx context.Context, obj *types.Risk) (*type
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -5296,7 +5306,7 @@ func (r *snapshotResolver) Organization(ctx context.Context, obj *types.Snapshot
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -5358,7 +5368,7 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 	if err != nil {
 		var errNotFound *coredata.ErrTaskNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get task: %w", err))
 	}
@@ -5371,7 +5381,7 @@ func (r *taskResolver) AssignedTo(ctx context.Context, obj *types.Task) (*types.
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get assigned to: %w", err))
 	}
@@ -5387,7 +5397,7 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 	if err != nil {
 		var errNotFound *coredata.ErrTaskNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get task: %w", err))
 	}
@@ -5396,7 +5406,7 @@ func (r *taskResolver) Organization(ctx context.Context, obj *types.Task) (*type
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -5412,7 +5422,7 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 	if err != nil {
 		var errNotFound *coredata.ErrTaskNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get task: %w", err))
 	}
@@ -5421,7 +5431,7 @@ func (r *taskResolver) Measure(ctx context.Context, obj *types.Task) (*types.Mea
 	if err != nil {
 		var errNotFound *coredata.ErrMeasureNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get measure: %w", err))
 	}
@@ -5495,7 +5505,7 @@ func (r *trustCenterResolver) Organization(ctx context.Context, obj *types.Trust
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -5614,7 +5624,7 @@ func (r *trustCenterDocumentAccessResolver) Document(ctx context.Context, obj *t
 	if err != nil {
 		var errNotFound *coredata.ErrDocumentNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		return nil, fmt.Errorf("cannot load document: %w", err)
 	}
@@ -5691,7 +5701,7 @@ func (r *trustCenterFileResolver) Organization(ctx context.Context, obj *types.T
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -5756,7 +5766,7 @@ func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*
 	if err != nil {
 		var errNotFound *coredata.ErrVendorNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
@@ -5765,7 +5775,7 @@ func (r *vendorResolver) Organization(ctx context.Context, obj *types.Vendor) (*
 	if err != nil {
 		var errNotFound *coredata.ErrOrganizationNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get organization: %w", err))
 	}
@@ -5913,7 +5923,7 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 	if err != nil {
 		var errNotFound *coredata.ErrVendorNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
@@ -5926,7 +5936,7 @@ func (r *vendorResolver) BusinessOwner(ctx context.Context, obj *types.Vendor) (
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get business owner: %w", err))
 	}
@@ -5941,7 +5951,7 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 	if err != nil {
 		var errNotFound *coredata.ErrVendorNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
@@ -5954,7 +5964,7 @@ func (r *vendorResolver) SecurityOwner(ctx context.Context, obj *types.Vendor) (
 	if err != nil {
 		var errNotFound *coredata.ErrPeopleNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get security owner: %w", err))
 	}
@@ -5970,7 +5980,7 @@ func (r *vendorBusinessAssociateAgreementResolver) Vendor(ctx context.Context, o
 	if err != nil {
 		var errNotFound *coredata.ErrVendorNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		return nil, fmt.Errorf("cannot get vendor: %w", err)
 	}
@@ -5998,7 +6008,7 @@ func (r *vendorComplianceReportResolver) Vendor(ctx context.Context, obj *types.
 	if err != nil {
 		var errNotFound *coredata.ErrVendorNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
@@ -6023,7 +6033,7 @@ func (r *vendorComplianceReportResolver) File(ctx context.Context, obj *types.Ve
 	if err != nil {
 		var errNotFound *coredata.ErrFileNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot load evidence file: %w", err))
 	}
@@ -6073,7 +6083,7 @@ func (r *vendorContactResolver) Vendor(ctx context.Context, obj *types.VendorCon
 	if err != nil {
 		var errNotFound *coredata.ErrVendorNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
@@ -6089,7 +6099,7 @@ func (r *vendorDataPrivacyAgreementResolver) Vendor(ctx context.Context, obj *ty
 	if err != nil {
 		var errNotFound *coredata.ErrVendorNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
@@ -6117,7 +6127,7 @@ func (r *vendorRiskAssessmentResolver) Vendor(ctx context.Context, obj *types.Ve
 	if err != nil {
 		var errNotFound *coredata.ErrVendorNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}
@@ -6139,7 +6149,7 @@ func (r *vendorServiceResolver) Vendor(ctx context.Context, obj *types.VendorSer
 	if err != nil {
 		var errNotFound *coredata.ErrVendorNotFound
 		if errors.As(err, &errNotFound) {
-			return nil, graphql.NotFound(errNotFound)
+			return nil, gqlutils.NotFound(errNotFound)
 		}
 		panic(fmt.Errorf("cannot get vendor: %w", err))
 	}

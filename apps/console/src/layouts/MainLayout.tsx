@@ -34,6 +34,7 @@ import {
   Avatar,
   IconPeopleAdd,
   Badge,
+  IconKey,
   IconLock,
 } from "@probo/ui";
 import { useTranslate } from "@probo/i18n";
@@ -227,6 +228,11 @@ function UserDropdown({ organizationId }: { organizationId: string }) {
 
   return (
     <UserDropdownRoot fullName={user.fullName} email={user.email}>
+      <UserDropdownItem
+        to="/api-keys"
+        icon={IconKey}
+        label={__("API Keys")}
+      />
       <UserDropdownItem
         to="mailto:support@getprobo.com"
         icon={IconCircleQuestionmark}

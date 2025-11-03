@@ -66,13 +66,15 @@ func (e ErrExpiredToken) Error() string {
 	return e.message
 }
 
-// NewToken creates a new token with the specified type, data, and expiration time
 func NewToken[T any](secret string, tokenType string, expirationTime time.Duration, data T) (string, error) {
 	now := time.Now()
+	return NewDeterministicToken(secret, tokenType, now.Add(expirationTime), now, data)
+}
 
+func NewDeterministicToken[T any](secret string, tokenType string, expiresAt time.Time, issuedAt time.Time, data T) (string, error) {
 	payload := Payload[T]{
-		ExpiresAt: now.Add(expirationTime),
-		IssuedAt:  now,
+		ExpiresAt: expiresAt,
+		IssuedAt:  issuedAt,
 		Type:      tokenType,
 		Data:      data,
 	}

@@ -30,6 +30,11 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi/v5"
+	"github.com/vektah/gqlparser/v2/gqlerror"
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/connector"
@@ -38,14 +43,9 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api/console/v1/schema"
-	gqlutils "go.probo.inc/probo/pkg/server/graphql"
+	"go.probo.inc/probo/pkg/server/gqlutils"
 	"go.probo.inc/probo/pkg/server/session"
 	"go.probo.inc/probo/pkg/statelesstoken"
-	"github.com/go-chi/chi/v5"
-	"github.com/vektah/gqlparser/v2/gqlerror"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/httpserver"
-	"go.gearno.de/kit/log"
 )
 
 type (
@@ -77,6 +77,7 @@ var (
 	sessionContextKey    = &ctxKey{name: "session"}
 	userContextKey       = &ctxKey{name: "user"}
 	userTenantContextKey = &ctxKey{name: "user_tenants"}
+	userAPIKeyContextKey = &ctxKey{name: "user_api_key"}
 )
 
 func SessionFromContext(ctx context.Context) *coredata.Session {
@@ -87,6 +88,11 @@ func SessionFromContext(ctx context.Context) *coredata.Session {
 func UserFromContext(ctx context.Context) *coredata.User {
 	user, _ := ctx.Value(userContextKey).(*coredata.User)
 	return user
+}
+
+func UserAPIKeyFromContext(ctx context.Context) *coredata.UserAPIKey {
+	userAPIKey, _ := ctx.Value(userAPIKeyContextKey).(*coredata.UserAPIKey)
+	return userAPIKey
 }
 
 func NewMux(
@@ -357,6 +363,11 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthCon
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		if authCtx := tryAPIKeyAuth(ctx, r, authSvc, authzSvc); authCtx != nil {
+			next(w, r.WithContext(authCtx))
+			return
+		}
+
 		sessionAuthCfg := session.AuthConfig{
 			CookieName:   authCfg.CookieName,
 			CookieSecret: authCfg.CookieSecret,
@@ -400,6 +411,43 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthCon
 			panic(fmt.Errorf("cannot update session: %w", err))
 		}
 	}
+}
+
+func tryAPIKeyAuth(ctx context.Context, r *http.Request, authSvc *auth.Service, authzSvc *authz.Service) context.Context {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return nil
+	}
+
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return nil
+	}
+
+	apiKeyString := strings.TrimPrefix(authHeader, "Bearer ")
+
+	user, userAPIKey, err := authSvc.ValidateUserAPIKey(ctx, apiKeyString)
+	if err != nil {
+		return nil
+	}
+
+	organizations, err := authzSvc.GetAllOrganizationsForUserAPIKeyId(ctx, userAPIKey.ID)
+	if err != nil {
+		return nil
+	}
+
+	tenantIDs := make([]gid.TenantID, 0, len(organizations))
+	for _, org := range organizations {
+		tenantIDs = append(tenantIDs, org.ID.TenantID())
+	}
+
+	ctx = context.WithValue(ctx, userContextKey, user)
+	ctx = context.WithValue(ctx, userAPIKeyContextKey, userAPIKey)
+	ctx = context.WithValue(ctx, userTenantContextKey, &userTenantAccess{
+		tenantIDs:  tenantIDs,
+		authErrors: make(map[gid.TenantID]error),
+	})
+
+	return ctx
 }
 
 func (r *Resolver) ProboService(ctx context.Context, tenantID gid.TenantID) *probo.TenantService {

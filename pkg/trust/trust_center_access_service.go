@@ -25,14 +25,14 @@ import (
 	"text/template"
 	"time"
 
+	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/statelesstoken"
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
 )
 
 var (
