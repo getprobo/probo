@@ -210,7 +210,11 @@ func OneOf(allowed ...string) ValidatorFunc {
 			}
 			str = *v
 		default:
-			return newValidationError(ErrorCodeInvalidEnum, "value must be a string")
+			if stringer, ok := value.(fmt.Stringer); ok {
+				str = stringer.String()
+			} else {
+				return newValidationError(ErrorCodeInvalidEnum, "value must be a string")
+			}
 		}
 
 		if !allowedMap[str] {

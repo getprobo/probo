@@ -16,6 +16,7 @@ package validator
 
 import (
 	"testing"
+	"time"
 )
 
 func TestWhen(t *testing.T) {
@@ -143,6 +144,70 @@ func TestNotEqualTo(t *testing.T) {
 		err := NotEqualTo(&str2)(&str1)
 		if err == nil {
 			t.Error("expected validation error")
+		}
+	})
+}
+
+func TestWhenSet(t *testing.T) {
+	t.Run("pointer is nil - skip validation", func(t *testing.T) {
+		var refTime *time.Time = nil
+		validUntil := time.Now().Add(24 * time.Hour)
+
+		err := WhenSet(refTime, After(time.Now()))(validUntil)
+		if err != nil {
+			t.Errorf("expected no error when pointer is nil, got: %v", err)
+		}
+	})
+
+	t.Run("pointer is set - run validation and pass", func(t *testing.T) {
+		refTime := time.Now()
+		validUntil := refTime.Add(24 * time.Hour)
+
+		err := WhenSet(&refTime, After(refTime))(&validUntil)
+		if err != nil {
+			t.Errorf("expected no error, got: %v", err)
+		}
+	})
+
+	t.Run("pointer is set - run validation and fail", func(t *testing.T) {
+		refTime := time.Now().Add(24 * time.Hour)
+		validUntil := time.Now()
+
+		err := WhenSet(&refTime, After(refTime))(&validUntil)
+		if err == nil {
+			t.Error("expected validation error")
+		}
+		if err.Code != ErrorCodeOutOfRange {
+			t.Errorf("expected error code %s, got %s", ErrorCodeOutOfRange, err.Code)
+		}
+	})
+
+	t.Run("pointer is set - multiple validators", func(t *testing.T) {
+		refTime := time.Now()
+		validUntil := refTime.Add(24 * time.Hour)
+
+		err := WhenSet(&refTime, After(refTime), Before(refTime.Add(48*time.Hour)))(&validUntil)
+		if err != nil {
+			t.Errorf("expected no error, got: %v", err)
+		}
+	})
+
+	t.Run("pointer is set - first validator fails", func(t *testing.T) {
+		refTime := time.Now()
+		validUntil := refTime.Add(-24 * time.Hour)
+
+		err := WhenSet(&refTime, After(refTime), Before(refTime.Add(48*time.Hour)))(&validUntil)
+		if err == nil {
+			t.Error("expected validation error")
+		}
+	})
+
+	t.Run("nil value directly", func(t *testing.T) {
+		validUntil := time.Now().Add(24 * time.Hour)
+
+		err := WhenSet(nil, After(time.Now()))(validUntil)
+		if err != nil {
+			t.Errorf("expected no error when pointer is nil, got: %v", err)
 		}
 	})
 }

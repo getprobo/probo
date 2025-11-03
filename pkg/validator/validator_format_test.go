@@ -18,7 +18,7 @@ import (
 	"strings"
 	"testing"
 
-	"getprobo.com/go/pkg/gid"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 func TestEmail(t *testing.T) {
@@ -339,27 +339,9 @@ func TestGID(t *testing.T) {
 	// Create a valid GID for testing
 	tenantID := gid.TenantID([8]byte{1, 2, 3, 4, 5, 6, 7, 8})
 	validGID := gid.New(tenantID, 100)
-	validGIDString := validGID.String()
-
-	anotherGID := gid.New(tenantID, 200)
-	anotherGIDString := anotherGID.String()
-
-	t.Run("valid GID string - no entity type validation", func(t *testing.T) {
-		err := GID()(validGIDString)
-		if err != nil {
-			t.Errorf("expected no error, got: %v", err)
-		}
-	})
 
 	t.Run("valid GID type - no entity type validation", func(t *testing.T) {
 		err := GID()(validGID)
-		if err != nil {
-			t.Errorf("expected no error, got: %v", err)
-		}
-	})
-
-	t.Run("valid GID string - with matching entity type", func(t *testing.T) {
-		err := GID(100)(validGIDString)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
 		}
@@ -372,15 +354,15 @@ func TestGID(t *testing.T) {
 		}
 	})
 
-	t.Run("valid GID string - with multiple entity types", func(t *testing.T) {
-		err := GID(100, 200, 300)(validGIDString)
+	t.Run("valid GID type - with multiple entity types", func(t *testing.T) {
+		err := GID(100, 200, 300)(validGID)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
 		}
 	})
 
 	t.Run("invalid - wrong entity type", func(t *testing.T) {
-		err := GID(200)(validGIDString)
+		err := GID(200)(validGID)
 		if err == nil {
 			t.Error("expected validation error for wrong entity type")
 		}
@@ -393,77 +375,58 @@ func TestGID(t *testing.T) {
 	})
 
 	t.Run("invalid - wrong entity type with multiple options", func(t *testing.T) {
-		err := GID(200, 300)(validGIDString)
+		err := GID(200, 300)(validGID)
 		if err == nil {
 			t.Error("expected validation error for wrong entity type")
 		}
 	})
 
 	t.Run("valid - entity type matches one of multiple options", func(t *testing.T) {
-		err := GID(99, 100, 101)(validGIDString)
+		err := GID(99, 100, 101)(validGID)
 		if err != nil {
 			t.Errorf("expected no error, got: %v", err)
 		}
 	})
 
-	t.Run("invalid GID format", func(t *testing.T) {
-		err := GID()("not-a-valid-gid")
-		if err == nil {
-			t.Error("expected validation error for invalid GID format")
-		}
-		if err.Code != ErrorCodeInvalidGID {
-			t.Errorf("expected error code %s, got %s", ErrorCodeInvalidGID, err.Code)
-		}
-		if err.Message != "invalid GID format" {
-			t.Errorf("unexpected error message: %s", err.Message)
-		}
-	})
-
-	t.Run("invalid - too short", func(t *testing.T) {
-		err := GID()("abc123")
-		if err == nil {
-			t.Error("expected validation error for short string")
-		}
-	})
-
-	t.Run("empty string", func(t *testing.T) {
-		err := GID()("")
+	t.Run("nil GID pointer", func(t *testing.T) {
+		var gidPtr *gid.GID
+		err := GID()(gidPtr)
 		if err != nil {
-			t.Errorf("expected no error for empty string, got: %v", err)
+			t.Errorf("expected no error for nil GID pointer, got: %v", err)
 		}
 	})
 
-	t.Run("nil pointer", func(t *testing.T) {
-		var str *string
-		err := GID()(str)
+	t.Run("valid GID pointer", func(t *testing.T) {
+		err := GID()(&validGID)
 		if err != nil {
-			t.Errorf("expected no error for nil, got: %v", err)
+			t.Errorf("expected no error, got: %v", err)
 		}
 	})
 
-	t.Run("non-string non-GID type", func(t *testing.T) {
+	t.Run("valid GID pointer with entity type validation", func(t *testing.T) {
+		err := GID(100)(&validGID)
+		if err != nil {
+			t.Errorf("expected no error, got: %v", err)
+		}
+	})
+
+	t.Run("non-GID type", func(t *testing.T) {
 		err := GID()(123)
 		if err == nil {
-			t.Error("expected validation error for non-string type")
+			t.Error("expected validation error for non-GID type")
 		}
-		if err.Message != "value must be a string or GID" {
+		if err.Message != "value must be a GID" {
 			t.Errorf("unexpected error message: %s", err.Message)
 		}
 	})
 
-	t.Run("string pointer with valid GID", func(t *testing.T) {
-		str := validGIDString
-		err := GID()(&str)
-		if err != nil {
-			t.Errorf("expected no error, got: %v", err)
+	t.Run("string type not supported", func(t *testing.T) {
+		err := GID()("some-string")
+		if err == nil {
+			t.Error("expected validation error for string type")
 		}
-	})
-
-	t.Run("string pointer with entity type validation", func(t *testing.T) {
-		str := validGIDString
-		err := GID(100)(&str)
-		if err != nil {
-			t.Errorf("expected no error, got: %v", err)
+		if err.Message != "value must be a GID" {
+			t.Errorf("unexpected error message: %s", err.Message)
 		}
 	})
 }

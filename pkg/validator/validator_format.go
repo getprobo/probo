@@ -18,7 +18,7 @@ import (
 	"net/url"
 	"regexp"
 
-	"getprobo.com/go/pkg/gid"
+	"go.probo.inc/probo/pkg/gid"
 )
 
 var (
@@ -202,51 +202,24 @@ func UUID() ValidatorFunc {
 //   - GID() validates any GID format
 //   - GID(100) validates GID with entity type 100
 //   - GID(100, 200) validates GID with entity type 100 or 200
-func GID(entityTypes ...gid.EntityType) ValidatorFunc {
+func GID(entityTypes ...uint16) ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
+		var gidValue gid.GID
+
 		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
+		case gid.GID:
+			gidValue = v
+		case *gid.GID:
 			if v == nil {
 				return nil
 			}
-			str = *v
-		case gid.GID:
-			// If the value is already a GID, validate it directly
-			if len(entityTypes) > 0 {
-				parsedEntityType := v.EntityType()
-				valid := false
-				for _, expected := range entityTypes {
-					if parsedEntityType == expected {
-						valid = true
-						break
-					}
-				}
-				if !valid {
-					return newValidationError(ErrorCodeInvalidGID, "GID has invalid entity type")
-				}
-			}
-
-			return nil
+			gidValue = *v
 		default:
-			return newValidationError(ErrorCodeInvalidGID, "value must be a string or GID")
+			return newValidationError(ErrorCodeInvalidGID, "value must be a GID")
 		}
 
-		if str == "" {
-			return nil
-		}
-
-		// Parse the GID to validate it
-		parsedGID, err := gid.ParseGID(str)
-		if err != nil {
-			return newValidationError(ErrorCodeInvalidGID, "invalid GID format")
-		}
-
-		// Validate entity type if specified
 		if len(entityTypes) > 0 {
-			parsedEntityType := parsedGID.EntityType()
+			parsedEntityType := gidValue.EntityType()
 			valid := false
 			for _, expected := range entityTypes {
 				if parsedEntityType == expected {

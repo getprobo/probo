@@ -16,6 +16,7 @@ package validator
 
 import (
 	"fmt"
+	"reflect"
 )
 
 type Validator struct {
@@ -63,15 +64,9 @@ func (v *Validator) Check(value any, field string, validators ...ValidatorFunc) 
 		if value == nil {
 			return
 		}
-		switch v := value.(type) {
-		case *string:
-			if v == nil {
-				return
-			}
-		case *int, *int8, *int16, *int32, *int64, *float32, *float64:
-			if v == nil {
-				return
-			}
+		val := reflect.ValueOf(value)
+		if val.Kind() == reflect.Ptr && val.IsNil() {
+			return
 		}
 	}
 
@@ -88,13 +83,30 @@ func (v *Validator) Check(value any, field string, validators ...ValidatorFunc) 
 }
 
 func (v *Validator) CheckEach(items any, field string, fn func(index int, item any)) {
-	switch slice := items.(type) {
-	case []any:
+	if items == nil {
+		return
+	}
+
+	if slice, ok := items.([]any); ok {
 		for i, item := range slice {
 			fn(i, item)
 		}
-	default:
-		fn(0, items)
+		return
+	}
+
+	val := reflect.ValueOf(items)
+	if val.Kind() != reflect.Slice {
+		v.errors = append(v.errors, &ValidationError{
+			Field:   field,
+			Code:    ErrorCodeInvalidFormat,
+			Message: "expected a slice",
+			Value:   items,
+		})
+		return
+	}
+
+	for i := 0; i < val.Len(); i++ {
+		fn(i, val.Index(i).Interface())
 	}
 }
 

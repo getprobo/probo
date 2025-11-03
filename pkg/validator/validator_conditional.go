@@ -57,3 +57,24 @@ func NotEqualTo(other any) ValidatorFunc {
 		return nil
 	}
 }
+
+// WhenSet conditionally applies validators only if the pointer value is not nil.
+func WhenSet(ptr any, validators ...ValidatorFunc) ValidatorFunc {
+	return func(value any) *ValidationError {
+		if ptr == nil {
+			return nil
+		}
+
+		v := reflect.ValueOf(ptr)
+		if v.Kind() == reflect.Ptr && v.IsNil() {
+			return nil
+		}
+
+		for _, validator := range validators {
+			if err := validator(value); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
