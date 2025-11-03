@@ -57,10 +57,6 @@ type (
 		AuditID gid.GID
 		File    File
 	}
-
-	DeleteAuditReportRequest struct {
-		ID gid.GID
-	}
 )
 
 func (car *CreateAuditRequest) Validate() error {
