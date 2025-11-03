@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -58,6 +59,42 @@ type (
 		Note               *string
 	}
 )
+
+func (crr *CreateRiskRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(crr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(crr.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText())
+	v.Check(crr.Description, "description", validator.Required(), validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText())
+	v.Check(crr.Category, "category", validator.Required(), validator.NotEmpty(), validator.NoHTML(), validator.PrintableText(), validator.MaxLen(1000))
+	v.Check(crr.Treatment, "treatment", validator.Required(), validator.OneOfSlice(coredata.RiskTreatments()))
+	v.Check(crr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(crr.InherentLikelihood, "inherent_likelihood", validator.Required(), validator.Min(1), validator.Max(5))
+	v.Check(crr.InherentImpact, "inherent_impact", validator.Required(), validator.Min(1), validator.Max(5))
+	v.Check(crr.ResidualLikelihood, "residual_likelihood", validator.WhenSet(crr.ResidualLikelihood, validator.Min(1), validator.Max(5)))
+	v.Check(crr.ResidualImpact, "residual_impact", validator.WhenSet(crr.ResidualImpact, validator.Min(1), validator.Max(5)))
+	v.Check(crr.Note, "note", validator.WhenSet(crr.Note, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
+
+	return v.Error()
+}
+
+func (urr *UpdateRiskRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(urr.ID, "id", validator.Required(), validator.GID(coredata.RiskEntityType))
+	v.Check(urr.Name, "name", validator.WhenSet(urr.Name, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(urr.Description, "description", validator.WhenSet(urr.Description, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(urr.Category, "category", validator.WhenSet(urr.Category, validator.NotEmpty(), validator.NoHTML(), validator.PrintableText(), validator.MaxLen(1000)))
+	v.Check(urr.Treatment, "treatment", validator.WhenSet(urr.Treatment, validator.OneOfSlice(coredata.RiskTreatments())))
+	v.Check(urr.OwnerID, "owner_id", validator.WhenSet(urr.OwnerID, validator.GID(coredata.PeopleEntityType)))
+	v.Check(urr.InherentLikelihood, "inherent_likelihood", validator.WhenSet(urr.InherentLikelihood, validator.Min(1), validator.Max(5)))
+	v.Check(urr.InherentImpact, "inherent_impact", validator.WhenSet(urr.InherentImpact, validator.Min(1), validator.Max(5)))
+	v.Check(urr.ResidualLikelihood, "residual_likelihood", validator.WhenSet(urr.ResidualLikelihood, validator.Min(1), validator.Max(5)))
+	v.Check(urr.ResidualImpact, "residual_impact", validator.WhenSet(urr.ResidualImpact, validator.Min(1), validator.Max(5)))
+	v.Check(urr.Note, "note", validator.WhenSet(urr.Note, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
+
+	return v.Error()
+}
 
 func (s RiskService) CountForMeasureID(
 	ctx context.Context,

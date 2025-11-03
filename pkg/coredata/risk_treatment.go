@@ -30,6 +30,15 @@ const (
 	RiskTreatmentTransferred RiskTreatment = "TRANSFERRED"
 )
 
+func RiskTreatments() []RiskTreatment {
+	return []RiskTreatment{
+		RiskTreatmentMitigated,
+		RiskTreatmentAccepted,
+		RiskTreatmentAvoided,
+		RiskTreatmentTransferred,
+	}
+}
+
 func (rt RiskTreatment) MarshalText() ([]byte, error) {
 	return []byte(rt.String()), nil
 }
