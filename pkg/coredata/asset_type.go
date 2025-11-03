@@ -28,6 +28,13 @@ const (
 	AssetTypeVirtual  AssetType = "VIRTUAL"
 )
 
+func AssetTypes() []AssetType {
+	return []AssetType{
+		AssetTypePhysical,
+		AssetTypeVirtual,
+	}
+}
+
 func (at AssetType) MarshalText() ([]byte, error) {
 	return []byte(at.String()), nil
 }

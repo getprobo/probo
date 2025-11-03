@@ -27,6 +27,22 @@ const (
 	TrustCenterVisibilityPublic  TrustCenterVisibility = "PUBLIC"
 )
 
+func TrustCenterVisibilities() []TrustCenterVisibility {
+	return []TrustCenterVisibility{
+		TrustCenterVisibilityNone,
+		TrustCenterVisibilityPrivate,
+		TrustCenterVisibilityPublic,
+	}
+}
+
+func TrustCenterVisibilitiesValues() []string {
+	return []string{
+		TrustCenterVisibilityNone.String(),
+		TrustCenterVisibilityPrivate.String(),
+		TrustCenterVisibilityPublic.String(),
+	}
+}
+
 func (tcv TrustCenterVisibility) String() string {
 	return string(tcv)
 }

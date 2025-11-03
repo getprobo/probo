@@ -43,10 +43,10 @@ func (car *CreateAssetRequest) Validate() error {
 	v.Check(car.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText())
 	v.Check(car.Amount, "amount", validator.Required(), validator.Min(1))
 	v.Check(car.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
-	v.Check(car.AssetType, "asset_type", validator.Required(), validator.OneOf(coredata.AssetTypePhysical.String(), coredata.AssetTypeVirtual.String()))
+	v.Check(car.AssetType, "asset_type", validator.Required(), validator.OneOfSlice(coredata.AssetTypes()))
 	v.Check(car.DataTypesStored, "data_types_stored", validator.Required(), validator.NotEmpty(), validator.NoHTML(), validator.PrintableText(), validator.MaxLen(5000))
 	v.CheckEach(car.VendorIDs, "vendor_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Optional(), validator.GID(coredata.VendorEntityType))
+		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
 	})
 
 	return v.Error()
@@ -59,10 +59,10 @@ func (uar *UpdateAssetRequest) Validate() error {
 	v.Check(uar.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText())
 	v.Check(uar.Amount, "amount", validator.Required(), validator.Min(1))
 	v.Check(uar.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
-	v.Check(uar.AssetType, "asset_type", validator.Required(), validator.OneOf(coredata.AssetTypePhysical.String(), coredata.AssetTypeVirtual.String()))
+	v.Check(uar.AssetType, "asset_type", validator.Required(), validator.OneOfSlice(coredata.AssetTypes()))
 	v.Check(uar.DataTypesStored, "data_types_stored", validator.Required(), validator.NotEmpty(), validator.NoHTML(), validator.PrintableText(), validator.MaxLen(5000))
 	v.CheckEach(uar.VendorIDs, "vendor_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Optional(), validator.GID(coredata.VendorEntityType))
+		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
 	})
 
 	return v.Error()
