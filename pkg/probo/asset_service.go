@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type AssetService struct {
@@ -33,6 +34,38 @@ type UpdateAssetRequest struct {
 	AssetType       *coredata.AssetType
 	DataTypesStored *string
 	VendorIDs       []gid.GID
+}
+
+func (car *CreateAssetRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(car.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText())
+	v.Check(car.Amount, "amount", validator.Required(), validator.Min(1))
+	v.Check(car.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(car.AssetType, "asset_type", validator.Required(), validator.OneOf(coredata.AssetTypePhysical.String(), coredata.AssetTypeVirtual.String()))
+	v.Check(car.DataTypesStored, "data_types_stored", validator.Required(), validator.NotEmpty(), validator.NoHTML(), validator.PrintableText(), validator.MaxLen(5000))
+	v.CheckEach(car.VendorIDs, "vendor_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Optional(), validator.GID(coredata.VendorEntityType))
+	})
+
+	return v.Error()
+}
+
+func (uar *UpdateAssetRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(uar.ID, "id", validator.Required(), validator.GID(coredata.AssetEntityType))
+	v.Check(uar.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText())
+	v.Check(uar.Amount, "amount", validator.Required(), validator.Min(1))
+	v.Check(uar.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(uar.AssetType, "asset_type", validator.Required(), validator.OneOf(coredata.AssetTypePhysical.String(), coredata.AssetTypeVirtual.String()))
+	v.Check(uar.DataTypesStored, "data_types_stored", validator.Required(), validator.NotEmpty(), validator.NoHTML(), validator.PrintableText(), validator.MaxLen(5000))
+	v.CheckEach(uar.VendorIDs, "vendor_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Optional(), validator.GID(coredata.VendorEntityType))
+	})
+
+	return v.Error()
 }
 
 func (s AssetService) Get(
@@ -135,6 +168,10 @@ func (s AssetService) Update(
 	ctx context.Context,
 	req UpdateAssetRequest,
 ) (*coredata.Asset, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	now := time.Now()
 	asset := &coredata.Asset{ID: req.ID}
 	assetVendors := &coredata.AssetVendors{}
@@ -185,6 +222,10 @@ func (s AssetService) Create(
 	ctx context.Context,
 	req CreateAssetRequest,
 ) (*coredata.Asset, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	now := time.Now()
 	assetID := gid.New(s.svc.scope.GetTenantID(), coredata.AssetEntityType)
 	assetVendors := &coredata.AssetVendors{}
