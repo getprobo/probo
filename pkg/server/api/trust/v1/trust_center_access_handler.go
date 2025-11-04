@@ -110,7 +110,7 @@ func authTokenHandler(trustSvc *trust.Service, trustAuthCfg TrustAuthConfig) htt
 			Domain:   cookieDomain,
 			Path:     "/",
 			MaxAge:   int(trustAuthCfg.CookieDuration / time.Second),
-			Secure:   true,
+			Secure:   trustAuthCfg.CookieSecure,
 			HttpOnly: true,
 			SameSite: http.SameSiteStrictMode,
 		}
@@ -159,7 +159,7 @@ func trustCenterLogoutHandler(authCfg console_v1.AuthConfig, trustAuthCfg TrustA
 			Domain:   cookieDomain,
 			Path:     "/",
 			MaxAge:   -1,
-			Secure:   true,
+			Secure:   trustAuthCfg.CookieSecure,
 			HttpOnly: true,
 			SameSite: http.SameSiteStrictMode,
 		})
@@ -167,6 +167,7 @@ func trustCenterLogoutHandler(authCfg console_v1.AuthConfig, trustAuthCfg TrustA
 		session.ClearCookie(w, session.AuthConfig{
 			CookieName:   authCfg.CookieName,
 			CookieSecret: authCfg.CookieSecret,
+			CookieSecure: authCfg.CookieSecure,
 		})
 
 		httpserver.RenderJSON(w, http.StatusOK, map[string]string{

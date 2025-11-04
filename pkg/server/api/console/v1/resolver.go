@@ -54,6 +54,7 @@ type (
 		CookieDomain    string
 		SessionDuration time.Duration
 		CookieSecret    string
+		CookieSecure    bool
 	}
 
 	Resolver struct {
@@ -371,6 +372,7 @@ func WithSession(authSvc *auth.Service, authzSvc *authz.Service, authCfg AuthCon
 		sessionAuthCfg := session.AuthConfig{
 			CookieName:   authCfg.CookieName,
 			CookieSecret: authCfg.CookieSecret,
+			CookieSecure: authCfg.CookieSecure,
 		}
 
 		errorHandler := session.ErrorHandler{

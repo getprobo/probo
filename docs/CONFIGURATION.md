@@ -363,6 +363,12 @@ Secret key used for signing session cookies. Should be at least 32 bytes for sec
 
 Session cookie lifetime in hours.
 
+#### `auth.cookie.secure` (boolean)
+
+**Default**: `true`
+
+Controls whether the Secure flag is set on session cookies. When true, cookies are only sent over HTTPS connections.
+
 #### `auth.password.pepper` (string)
 
 **Default**: Auto-generated

@@ -52,6 +52,7 @@ type (
 		TokenSecret       string
 		Scope             string
 		TokenType         string
+		CookieSecure      bool
 	}
 
 	Resolver struct {
@@ -186,6 +187,7 @@ func trySessionAuth(ctx context.Context, w http.ResponseWriter, r *http.Request,
 	sessionAuthCfg := session.AuthConfig{
 		CookieName:   authCfg.CookieName,
 		CookieSecret: authCfg.CookieSecret,
+		CookieSecure: authCfg.CookieSecure,
 	}
 
 	errorHandler := session.ErrorHandler{
@@ -256,7 +258,7 @@ func clearTokenCookie(w http.ResponseWriter, trustAuthCfg TrustAuthConfig) {
 		Domain:   trustAuthCfg.CookieDomain,
 		Path:     "/",
 		MaxAge:   -1,
-		Secure:   true,
+		Secure:   trustAuthCfg.CookieSecure,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 	})

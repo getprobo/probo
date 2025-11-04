@@ -19,11 +19,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"go.gearno.de/kit/httpserver"
 	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/server/session"
-	"go.gearno.de/kit/httpserver"
 )
 
 type (
@@ -36,13 +36,14 @@ type (
 	}
 )
 
-func AcceptInvitationHandler(authSvc *authsvc.Service, authzSvc *authz.Service, cookieName string, cookieSecret string) http.HandlerFunc {
+func AcceptInvitationHandler(authSvc *authsvc.Service, authzSvc *authz.Service, cookieName string, cookieSecret string, cookieSecure bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		sessionAuthCfg := session.AuthConfig{
 			CookieName:   cookieName,
 			CookieSecret: cookieSecret,
+			CookieSecure: cookieSecure,
 		}
 
 		errorHandler := session.ErrorHandler{

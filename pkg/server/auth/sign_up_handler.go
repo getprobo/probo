@@ -20,9 +20,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"go.gearno.de/kit/httpserver"
 	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/securecookie"
-	"go.gearno.de/kit/httpserver"
 )
 
 type (
@@ -37,7 +37,7 @@ type (
 	}
 )
 
-func SignUpHandler(authSvc *authsvc.Service, cookieName string, cookieSecret string) http.HandlerFunc {
+func SignUpHandler(authSvc *authsvc.Service, cookieName string, cookieSecret string, cookieSecure bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req SignUpRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -72,6 +72,7 @@ func SignUpHandler(authSvc *authsvc.Service, cookieName string, cookieSecret str
 			securecookie.DefaultConfig(
 				cookieName,
 				cookieSecret,
+				cookieSecure,
 			),
 			session.ID.String(),
 		)

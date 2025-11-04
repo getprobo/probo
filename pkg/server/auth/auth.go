@@ -33,6 +33,7 @@ type Config struct {
 	CookieDomain    string
 	SessionDuration time.Duration
 	CookieSecret    string
+	CookieSecure    bool
 	FileManager     *filemanager.Service
 	Logger          *log.Logger
 }
@@ -44,26 +45,26 @@ type Server struct {
 func NewServer(cfg Config) (*Server, error) {
 	router := chi.NewRouter()
 
-	router.Post("/register", SignUpHandler(cfg.Auth, cfg.CookieName, cfg.CookieSecret))
-	router.Post("/login", SignInHandler(cfg.Auth, cfg.CookieName, cfg.CookieSecret))
-	router.Delete("/logout", SignOutHandler(cfg.Auth, cfg.CookieName, cfg.CookieSecret))
-	router.Post("/signup-from-invitation", SignupFromInvitationHandler(cfg.Auth, cfg.CookieName, cfg.CookieSecret))
+	router.Post("/register", SignUpHandler(cfg.Auth, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure))
+	router.Post("/login", SignInHandler(cfg.Auth, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure))
+	router.Delete("/logout", SignOutHandler(cfg.Auth, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure))
+	router.Post("/signup-from-invitation", SignupFromInvitationHandler(cfg.Auth, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure))
 	router.Post("/forget-password", ForgetPasswordHandler(cfg.Auth))
 	router.Post("/reset-password", ResetPasswordHandler(cfg.Auth))
 	router.Post("/check-sso", SAMLCheckSSOHandler(cfg.Auth, cfg.Logger))
-	router.Get("/organizations", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, ListOrganizationsHandler(cfg.Auth, cfg.Authz)))
-	router.Get("/organizations/{organizationID}/logo", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, OrganizationLogoHandler(cfg.Auth, cfg.FileManager)))
-	router.Get("/invitations", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, ListInvitationsHandler(cfg.Authz)))
-	router.Post("/invitations/accept", AcceptInvitationHandler(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret))
+	router.Get("/organizations", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, ListOrganizationsHandler(cfg.Auth, cfg.Authz)))
+	router.Get("/organizations/{organizationID}/logo", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, OrganizationLogoHandler(cfg.Auth, cfg.FileManager)))
+	router.Get("/invitations", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, ListInvitationsHandler(cfg.Authz)))
+	router.Post("/invitations/accept", AcceptInvitationHandler(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure))
 
-	router.Get("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, ListUserAPIKeysHandler(cfg.Auth, cfg.Authz)))
-	router.Post("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, CreateUserAPIKeyHandler(cfg.Auth)))
-	router.Get("/api-keys/{id}", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, GetUserAPIKeyHandler(cfg.Auth)))
-	router.Put("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, UpdateUserAPIKeyHandler(cfg.Auth)))
-	router.Delete("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, DeleteUserAPIKeyHandler(cfg.Auth)))
+	router.Get("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, ListUserAPIKeysHandler(cfg.Auth, cfg.Authz)))
+	router.Post("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, CreateUserAPIKeyHandler(cfg.Auth)))
+	router.Get("/api-keys/{id}", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, GetUserAPIKeyHandler(cfg.Auth)))
+	router.Put("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, UpdateUserAPIKeyHandler(cfg.Auth)))
+	router.Delete("/api-keys", RequireAuth(cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, DeleteUserAPIKeyHandler(cfg.Auth)))
 
 	router.Get("/saml/login/{samlConfigID}", SAMLLoginHandler(cfg.SAML, cfg.Auth, cfg.Logger))
-	router.Post("/saml/consume", SAMLACSHandler(cfg.SAML, cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.SessionDuration, cfg.Logger))
+	router.Post("/saml/consume", SAMLACSHandler(cfg.SAML, cfg.Auth, cfg.Authz, cfg.CookieName, cfg.CookieSecret, cfg.CookieSecure, cfg.SessionDuration, cfg.Logger))
 	router.Get("/saml/metadata", SAMLMetadataHandler(cfg.SAML))
 
 	return &Server{

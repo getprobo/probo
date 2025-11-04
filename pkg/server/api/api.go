@@ -20,6 +20,10 @@ import (
 
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
+	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/connector"
@@ -28,10 +32,6 @@ import (
 	console_v1 "go.probo.inc/probo/pkg/server/api/console/v1"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
 	"go.probo.inc/probo/pkg/trust"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/cors"
-	"go.gearno.de/kit/httpserver"
-	"go.gearno.de/kit/log"
 )
 
 type (
@@ -40,6 +40,7 @@ type (
 		CookieDomain    string
 		SessionDuration time.Duration
 		CookieSecret    string
+		CookieSecure    bool
 	}
 
 	TrustAuthConfig struct {
@@ -51,6 +52,7 @@ type (
 		TokenSecret       string
 		Scope             string
 		TokenType         string
+		CookieSecure      bool
 	}
 
 	Config struct {
@@ -128,6 +130,7 @@ func NewServer(cfg Config) (*Server, error) {
 			CookieDomain:    cfg.ConsoleAuth.CookieDomain,
 			SessionDuration: cfg.ConsoleAuth.SessionDuration,
 			CookieSecret:    cfg.ConsoleAuth.CookieSecret,
+			CookieSecure:    cfg.ConsoleAuth.CookieSecure,
 		},
 		trust_v1.TrustAuthConfig{
 			CookieName:        cfg.TrustAuth.CookieName,
@@ -138,6 +141,7 @@ func NewServer(cfg Config) (*Server, error) {
 			TokenSecret:       cfg.TrustAuth.TokenSecret,
 			Scope:             cfg.TrustAuth.Scope,
 			TokenType:         cfg.TrustAuth.TokenType,
+			CookieSecure:      cfg.TrustAuth.CookieSecure,
 		},
 	)
 
@@ -191,6 +195,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				CookieDomain:    s.cfg.ConsoleAuth.CookieDomain,
 				SessionDuration: s.cfg.ConsoleAuth.SessionDuration,
 				CookieSecret:    s.cfg.ConsoleAuth.CookieSecret,
+				CookieSecure:    s.cfg.ConsoleAuth.CookieSecure,
 			},
 			s.cfg.ConnectorRegistry,
 			s.cfg.SafeRedirect,

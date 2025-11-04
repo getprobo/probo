@@ -19,11 +19,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"go.gearno.de/kit/httpserver"
 	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/server/session"
-	"go.gearno.de/kit/httpserver"
 )
 
 type ctxKey struct{ name string }
@@ -38,6 +38,7 @@ func RequireAuth(
 	authzSvc *authz.Service,
 	cookieName string,
 	cookieSecret string,
+	cookieSecure bool,
 	next http.HandlerFunc,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -46,6 +47,7 @@ func RequireAuth(
 		sessionAuthCfg := session.AuthConfig{
 			CookieName:   cookieName,
 			CookieSecret: cookieSecret,
+			CookieSecure: cookieSecure,
 		}
 
 		errorHandler := session.ErrorHandler{

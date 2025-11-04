@@ -21,11 +21,11 @@ import (
 	"net/http"
 	"time"
 
+	"go.gearno.de/kit/httpserver"
 	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/securecookie"
-	"go.gearno.de/kit/httpserver"
 )
 
 type (
@@ -47,7 +47,7 @@ type (
 	}
 )
 
-func SignInHandler(authSvc *authsvc.Service, cookieName string, cookieSecret string) http.HandlerFunc {
+func SignInHandler(authSvc *authsvc.Service, cookieName string, cookieSecret string, cookieSecure bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		var req SignInRequest
@@ -57,7 +57,7 @@ func SignInHandler(authSvc *authsvc.Service, cookieName string, cookieSecret str
 		}
 
 		var existingSession *coredata.Session
-		if existingSessionID, err := getSessionIDFromCookie(r, cookieName, cookieSecret); err == nil {
+		if existingSessionID, err := getSessionIDFromCookie(r, cookieName, cookieSecret, cookieSecure); err == nil {
 			if session, err := authSvc.GetSession(r.Context(), existingSessionID); err == nil {
 				existingSession = session
 			}
@@ -79,6 +79,7 @@ func SignInHandler(authSvc *authsvc.Service, cookieName string, cookieSecret str
 			securecookie.DefaultConfig(
 				cookieName,
 				cookieSecret,
+				cookieSecure,
 			),
 			session.ID.String(),
 		)

@@ -27,6 +27,14 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.gearno.de/kit/httpclient"
+	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/migrator"
+	"go.gearno.de/kit/pg"
+	"go.gearno.de/kit/unit"
+	"go.opentelemetry.io/otel/trace"
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
@@ -48,14 +56,6 @@ import (
 	"go.probo.inc/probo/pkg/server/api"
 	"go.probo.inc/probo/pkg/slack"
 	"go.probo.inc/probo/pkg/trust"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.gearno.de/kit/httpclient"
-	"go.gearno.de/kit/httpserver"
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/migrator"
-	"go.gearno.de/kit/pg"
-	"go.gearno.de/kit/unit"
-	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -116,6 +116,7 @@ func New() *Implm {
 					Secret:   "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes",
 					Duration: 24,
 					Domain:   "localhost",
+					Secure:   true,
 				},
 				DisableSignup:                       false,
 				InvitationConfirmationTokenValidity: 3600,
@@ -402,6 +403,7 @@ func (impl *Implm) Run(
 				CookieDomain:    impl.cfg.Auth.Cookie.Domain,
 				SessionDuration: time.Duration(impl.cfg.Auth.Cookie.Duration) * time.Hour,
 				CookieSecret:    impl.cfg.Auth.Cookie.Secret,
+				CookieSecure:    impl.cfg.Auth.Cookie.Secure,
 			},
 			TrustAuth: api.TrustAuthConfig{
 				CookieName:        impl.cfg.TrustAuth.CookieName,
@@ -412,6 +414,7 @@ func (impl *Implm) Run(
 				TokenSecret:       impl.cfg.TrustAuth.TokenSecret,
 				Scope:             impl.cfg.TrustAuth.Scope,
 				TokenType:         impl.cfg.TrustAuth.TokenType,
+				CookieSecure:      impl.cfg.Auth.Cookie.Secure,
 			},
 		},
 	)

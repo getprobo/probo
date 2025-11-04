@@ -68,6 +68,7 @@ This document provides a comprehensive reference for all environment variables u
 | `AUTH_COOKIE_DOMAIN`   | Domain for the session cookie                      | `localhost`   | No       |
 | `AUTH_COOKIE_SECRET`   | Secret key for signing session cookies (32+ bytes) | -             | **Yes**  |
 | `AUTH_COOKIE_DURATION` | Session cookie validity duration in hours          | `24`          | No       |
+| `AUTH_COOKIE_SECURE`   | Set Secure flag on cookies (use false for HTTP)    | `true`        | No       |
 
 ### Password Security
 

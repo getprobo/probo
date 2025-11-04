@@ -59,13 +59,13 @@ type Config struct {
 }
 
 // DefaultConfig returns a default secure cookie configuration
-func DefaultConfig(name, secret string) Config {
+func DefaultConfig(name, secret string, secure bool) Config {
 	return Config{
 		Name:     name,
 		Secret:   secret,
 		Path:     "/",
 		MaxAge:   86400 * 30, // 30 days
-		Secure:   true,
+		Secure:   secure,
 		HTTPOnly: true,
 		SameSite: http.SameSiteNoneMode, // None mode required for SAML (cross-site POST from IdP)
 	}

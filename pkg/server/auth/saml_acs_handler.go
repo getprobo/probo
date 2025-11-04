@@ -20,20 +20,21 @@ import (
 	"net/http"
 	"time"
 
+	"go.gearno.de/kit/log"
 	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/securecookie"
-	"go.gearno.de/kit/log"
 )
 
-func getSessionIDFromCookie(r *http.Request, cookieName string, cookieSecret string) (gid.GID, error) {
+func getSessionIDFromCookie(r *http.Request, cookieName string, cookieSecret string, cookieSecure bool) (gid.GID, error) {
 	cookieValue, err := securecookie.Get(
 		r,
 		securecookie.DefaultConfig(
 			cookieName,
 			cookieSecret,
+			cookieSecure,
 		),
 	)
 	if err != nil {
@@ -43,7 +44,7 @@ func getSessionIDFromCookie(r *http.Request, cookieName string, cookieSecret str
 	return gid.ParseGID(cookieValue)
 }
 
-func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, authzSvc *authz.Service, cookieName string, cookieSecret string, sessionDuration time.Duration, logger *log.Logger) http.HandlerFunc {
+func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, authzSvc *authz.Service, cookieName string, cookieSecret string, cookieSecure bool, sessionDuration time.Duration, logger *log.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -73,7 +74,7 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 		}
 
 		var existingSession *coredata.Session
-		if existingSessionID, err := getSessionIDFromCookie(r, cookieName, cookieSecret); err == nil {
+		if existingSessionID, err := getSessionIDFromCookie(r, cookieName, cookieSecret, cookieSecure); err == nil {
 			if session, err := authSvc.GetSession(ctx, existingSessionID); err == nil {
 				existingSession = session
 			}
@@ -114,6 +115,7 @@ func SAMLACSHandler(samlSvc *authsvc.SAMLService, authSvc *authsvc.Service, auth
 			securecookie.DefaultConfig(
 				cookieName,
 				cookieSecret,
+				cookieSecure,
 			),
 			session.ID.String(),
 		)

@@ -18,18 +18,19 @@ import (
 	"fmt"
 	"net/http"
 
+	"go.gearno.de/kit/httpserver"
+	authsvc "go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/securecookie"
-	authsvc "go.probo.inc/probo/pkg/auth"
-	"go.gearno.de/kit/httpserver"
 )
 
-func SignOutHandler(authSvc *authsvc.Service, cookieName string, cookieSecret string) http.HandlerFunc {
+func SignOutHandler(authSvc *authsvc.Service, cookieName string, cookieSecret string, cookieSecure bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		sessionID, err := securecookie.Get(r, securecookie.DefaultConfig(
 			cookieName,
 			cookieSecret,
+			cookieSecure,
 		))
 		if err != nil {
 			httpserver.RenderError(w, http.StatusBadRequest, err)
@@ -50,6 +51,7 @@ func SignOutHandler(authSvc *authsvc.Service, cookieName string, cookieSecret st
 		securecookie.Clear(w, securecookie.DefaultConfig(
 			cookieName,
 			cookieSecret,
+			cookieSecure,
 		))
 
 		w.Header().Set("Clear-Site-Data", "*")

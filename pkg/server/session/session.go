@@ -19,16 +19,17 @@ import (
 	"errors"
 	"net/http"
 
+	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/securecookie"
-	"go.probo.inc/probo/pkg/auth"
 )
 
 type AuthConfig struct {
 	CookieName   string
 	CookieSecret string
+	CookieSecure bool
 }
 
 type AuthResult struct {
@@ -58,6 +59,7 @@ func TryAuth(
 	cookieValue, err := securecookie.Get(r, securecookie.DefaultConfig(
 		authCfg.CookieName,
 		authCfg.CookieSecret,
+		authCfg.CookieSecure,
 	))
 	if err != nil {
 		if !errors.Is(err, securecookie.ErrCookieNotFound) && errorHandler.OnCookieError != nil {
@@ -131,9 +133,9 @@ func TryAuth(
 	}
 
 	return &AuthResult{
-		Session:   session,
-		User:      user,
-		TenantIDs: allowedTenantIDs,
+		Session:    session,
+		User:       user,
+		TenantIDs:  allowedTenantIDs,
 		AuthErrors: authErrors,
 	}
 }
@@ -142,5 +144,6 @@ func ClearCookie(w http.ResponseWriter, authCfg AuthConfig) {
 	securecookie.Clear(w, securecookie.DefaultConfig(
 		authCfg.CookieName,
 		authCfg.CookieSecret,
+		authCfg.CookieSecure,
 	))
 }

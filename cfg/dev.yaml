@@ -34,6 +34,7 @@ probod:
       domain: "localhost"
       secret: "this-is-a-secure-secret-for-cookie-signing-at-least-32-bytes"
       duration: 24
+      secure: true
     password:
       pepper: "this-is-a-secure-pepper-for-password-hashing-at-least-32-bytes"
       iterations: 1000000

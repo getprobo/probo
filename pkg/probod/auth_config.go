@@ -44,6 +44,7 @@ type (
 		Secret   string `json:"secret"`
 		Duration int    `json:"duration"`
 		Name     string `json:"name"`
+		Secure   bool   `json:"secure"`
 	}
 
 	passwordConfig struct {

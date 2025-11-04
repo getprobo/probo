@@ -20,6 +20,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
+	"go.gearno.de/kit/httpserver"
+	"go.gearno.de/kit/log"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/agents"
 	"go.probo.inc/probo/pkg/auth"
 	"go.probo.inc/probo/pkg/authz"
@@ -29,15 +33,11 @@ import (
 	"go.probo.inc/probo/pkg/probo"
 	"go.probo.inc/probo/pkg/saferedirect"
 	"go.probo.inc/probo/pkg/server/api"
-	auth_server "go.probo.inc/probo/pkg/server/auth"
 	trust_v1 "go.probo.inc/probo/pkg/server/api/trust/v1"
+	auth_server "go.probo.inc/probo/pkg/server/auth"
 	"go.probo.inc/probo/pkg/server/trust"
 	"go.probo.inc/probo/pkg/server/web"
 	trust_pkg "go.probo.inc/probo/pkg/trust"
-	"github.com/go-chi/chi/v5"
-	"go.gearno.de/kit/httpserver"
-	"go.gearno.de/kit/log"
-	"go.gearno.de/kit/pg"
 )
 
 type Config struct {
@@ -108,6 +108,7 @@ func NewServer(cfg Config) (*Server, error) {
 		CookieDomain:    cfg.ConsoleAuth.CookieDomain,
 		SessionDuration: cfg.ConsoleAuth.SessionDuration,
 		CookieSecret:    cfg.ConsoleAuth.CookieSecret,
+		CookieSecure:    cfg.ConsoleAuth.CookieSecure,
 		FileManager:     cfg.FileManager,
 		Logger:          cfg.Logger.Named("auth"),
 	})
