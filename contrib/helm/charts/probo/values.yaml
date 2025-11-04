@@ -169,7 +169,7 @@ metrics:
 probo:
   # Public hostname where Probo will be accessible
   # This should match your ingress host
-  hostname: probo.example.com
+  baseUrl: probo.example.com
 
   # Base64-encoded encryption key (REQUIRED)
   # Generate with: openssl rand -base64 32
@@ -220,6 +220,19 @@ probo:
     # Generate with: openssl rand -base64 32
     passwordPepper: ""
     passwordIterations: 1000000
+
+  # SAML authentication (optional)
+  saml:
+    # Enable SAML authentication
+    enabled: false
+    # SAML session validity duration in seconds (default: 604800 = 7 days)
+    sessionDuration: 604800
+    # Cleanup interval in seconds for expired SAML sessions (0 = disabled)
+    cleanupIntervalSeconds: 0
+    # SAML service provider certificate in PEM format
+    certificate: ""
+    # SAML service provider private key in PEM format
+    privateKey: ""
 
   # Trust center authentication
   trustAuth:

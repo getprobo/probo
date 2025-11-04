@@ -95,7 +95,7 @@ ingress:
 # Probo application configuration
 probo:
   # Must match your ingress hostname
-  hostname: "probo.example.com"
+  baseUrl: "probo.example.com"
 
   # REQUIRED: Generate with: openssl rand -base64 32
   encryptionKey: "CHANGE_ME_ENCRYPTION_KEY"

@@ -72,7 +72,7 @@
 📚 Next Steps:
 
 1. Update the hostname to match your domain:
-   probo.hostname: "{{ .Values.probo.hostname }}"
+   probo.baseUrl: "{{ .Values.probo.baseUrl }}"
 
 2. Configure email delivery:
    Update probo.mailer.smtp settings with your SMTP server details

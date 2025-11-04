@@ -27,7 +27,7 @@ echo "Save these secrets securely!"
 
 ```bash
 helm install probo . \
-  --set probo.hostname="probo.example.com" \
+  --set probo.baseUrl="probo.example.com" \
   --set probo.encryptionKey="$ENCRYPTION_KEY" \
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
@@ -67,7 +67,7 @@ ingress:
         - probo.example.com
 
 probo:
-  hostname: "probo.example.com"
+  baseUrl: "probo.example.com"
   encryptionKey: "<secret>"
   cors:
     allowedOrigins:
@@ -128,22 +128,22 @@ The following parameters **must** be configured:
 
 ### Key Configuration Parameters
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `image.repository` | Probo image repository | `ghcr.io/getprobo/probo` |
-| `image.tag` | Probo image tag | Chart appVersion |
-| `replicaCount` | Number of Probo replicas | `1` |
-| `probo.hostname` | Public hostname | `probo.example.com` |
-| `postgresql.host` | PostgreSQL host | `""` (required) |
-| `postgresql.port` | PostgreSQL port | `5432` |
-| `postgresql.database` | Database name | `probod` |
-| `postgresql.username` | Database user | `probod` |
-| `s3.bucket` | S3 bucket name | `probod` |
-| `s3.region` | AWS region | `us-east-1` |
-| `s3.endpoint` | S3 endpoint (for S3-compatible) | `""` |
-| `chrome.enabled` | Deploy Chrome | `true` |
-| `chrome.external.addr` | External Chrome (if disabled) | `""` |
-| `ingress.enabled` | Enable ingress | `false` |
+| Parameter              | Description                     | Default |
+|------------------------|---------------------------------|---------|
+| `image.repository`     | Probo image repository          | `ghcr.io/getprobo/probo` |
+| `image.tag`            | Probo image tag                 | Chart appVersion |
+| `replicaCount`         | Number of Probo replicas        | `1` |
+| `probo.baseUrl`        | Public baseUrl                  | `probo.example.com` |
+| `postgresql.host`      | PostgreSQL host                 | `""` (required) |
+| `postgresql.port`      | PostgreSQL port                 | `5432` |
+| `postgresql.database`  | Database name                   | `probod` |
+| `postgresql.username`  | Database user                   | `probod` |
+| `s3.bucket`            | S3 bucket name                  | `probod` |
+| `s3.region`            | AWS region                      | `us-east-1` |
+| `s3.endpoint`          | S3 endpoint (for S3-compatible) | `""` |
+| `chrome.enabled`       | Deploy Chrome                   | `true` |
+| `chrome.external.addr` | External Chrome (if disabled)   | `""` |
+| `ingress.enabled`      | Enable ingress                  | `false` |
 
 See [values.yaml](values.yaml) for all available options.
 

@@ -56,7 +56,7 @@ spec:
             {{- end }}
             # Application Configuration
             - name: PROBOD_BASE_URL
-              value: {{ printf "https://%s" .Values.probo.hostname | quote }}
+              value: {{ printf "https://%s" .Values.probo.baseUrl | quote }}
             - name: PROBOD_ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
@@ -106,6 +106,27 @@ spec:
                   key: password-pepper
             - name: AUTH_PASSWORD_ITERATIONS
               value: {{ .Values.probo.auth.passwordIterations | quote }}
+            {{- if .Values.probo.saml.enabled }}
+            # SAML Authentication
+            - name: SAML_SESSION_DURATION
+              value: {{ .Values.probo.saml.sessionDuration | quote }}
+            - name: SAML_CLEANUP_INTERVAL_SECONDS
+              value: {{ .Values.probo.saml.cleanupIntervalSeconds | quote }}
+            {{- if .Values.probo.saml.certificate }}
+            - name: SAML_CERTIFICATE
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: saml-certificate
+            {{- end }}
+            {{- if .Values.probo.saml.privateKey }}
+            - name: SAML_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: saml-private-key
+            {{- end }}
+            {{- end }}
             # Trust Center Authentication
             - name: TRUST_AUTH_COOKIE_NAME
               value: {{ .Values.probo.trustAuth.cookieName | quote }}
