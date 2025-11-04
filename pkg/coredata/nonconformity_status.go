@@ -27,6 +27,14 @@ const (
 	NonconformityStatusClosed     NonconformityStatus = "CLOSED"
 )
 
+func NonconformityStatuses() []NonconformityStatus {
+	return []NonconformityStatus{
+		NonconformityStatusOpen,
+		NonconformityStatusInProgress,
+		NonconformityStatusClosed,
+	}
+}
+
 func (ncs NonconformityStatus) String() string {
 	return string(ncs)
 }
