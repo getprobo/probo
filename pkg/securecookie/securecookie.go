@@ -60,6 +60,11 @@ type Config struct {
 
 // DefaultConfig returns a default secure cookie configuration
 func DefaultConfig(name, secret string, secure bool) Config {
+	sameSite := http.SameSiteNoneMode // None mode required for SAML (cross-site POST from IdP)
+	if !secure {
+		sameSite = http.SameSiteLaxMode
+	}
+
 	return Config{
 		Name:     name,
 		Secret:   secret,
@@ -67,7 +72,7 @@ func DefaultConfig(name, secret string, secure bool) Config {
 		MaxAge:   86400 * 30, // 30 days
 		Secure:   secure,
 		HTTPOnly: true,
-		SameSite: http.SameSiteNoneMode, // None mode required for SAML (cross-site POST from IdP)
+		SameSite: sameSite,
 	}
 }
 

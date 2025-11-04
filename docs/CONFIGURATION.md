@@ -369,6 +369,8 @@ Session cookie lifetime in hours.
 
 Controls whether the Secure flag is set on session cookies. When true, cookies are only sent over HTTPS connections.
 
+**Important**: This must be set to `true` for SAML authentication to work properly. SAML requires `SameSite=None` cookies for cross-site POST requests from identity providers, and modern browsers require the `Secure` flag to be set when using `SameSite=None`. Setting this to `false` will cause SAML authentication to fail as session cookies will be rejected by browsers.
+
 #### `auth.password.pepper` (string)
 
 **Default**: Auto-generated
