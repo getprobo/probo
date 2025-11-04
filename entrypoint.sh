@@ -127,8 +127,10 @@ EOF
 saml:
   session-duration: ${SAML_SESSION_DURATION:-604800}
   cleanup-interval-seconds: ${SAML_CLEANUP_INTERVAL_SECONDS:-0}
-  certificate: "${SAML_CERTIFICATE:-}"
-  private-key: "${SAML_PRIVATE_KEY:-}"
+  certificate: |
+$(echo "${SAML_CERTIFICATE:-}" | sed 's/^/    /')
+  private-key: |
+$(echo "${SAML_PRIVATE_KEY:-}" | sed 's/^/    /')
 EOF
   fi
 
