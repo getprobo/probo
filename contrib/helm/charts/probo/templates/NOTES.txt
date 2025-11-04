@@ -84,5 +84,5 @@
 
 4. Review CORS allowed origins:
    probo.cors.allowedOrigins
-   
+
 ✨ Thank you for using Probo!

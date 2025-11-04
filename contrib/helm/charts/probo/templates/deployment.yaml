@@ -14,7 +14,6 @@ spec:
   template:
     metadata:
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
@@ -38,52 +37,122 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["/bin/sh", "-c"] # replaces ENTRYPOINT
-          args: ["exec /usr/local/bin/probod -cfg-file /etc/probod/config.yml"]
-
-#          args:
-#            - "-cfg-file"
-#            - "/etc/probod/config.yml"
           env:
-            # Database credentials
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "probo.fullname" . }}
-                  key: db-password
-            # S3 credentials
-            - name: S3_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "probo.fullname" . }}
-                  key: s3-access-key
-            - name: S3_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "probo.fullname" . }}
-                  key: s3-secret-key
-            # Application secrets
-            - name: ENCRYPTION_KEY
+            # Observability - Metrics
+            - name: METRICS_ADDR
+              value: "0.0.0.0:{{ .Values.probo.metrics.port }}"
+            {{- if .Values.probo.tracing.enabled }}
+            # Observability - Tracing
+            - name: TRACING_ADDR
+              value: {{ .Values.probo.tracing.addr | quote }}
+            - name: TRACING_MAX_BATCH_SIZE
+              value: {{ .Values.probo.tracing.maxBatchSize | quote }}
+            - name: TRACING_BATCH_TIMEOUT
+              value: {{ .Values.probo.tracing.batchTimeout | quote }}
+            - name: TRACING_EXPORT_TIMEOUT
+              value: {{ .Values.probo.tracing.exportTimeout | quote }}
+            - name: TRACING_MAX_QUEUE_SIZE
+              value: {{ .Values.probo.tracing.maxQueueSize | quote }}
+            {{- end }}
+            # Application Configuration
+            - name: PROBOD_BASE_URL
+              value: {{ printf "https://%s" .Values.probo.hostname | quote }}
+            - name: PROBOD_ENCRYPTION_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: encryption-key
-            - name: COOKIE_SECRET
+            - name: CHROME_DP_ADDR
+              value: {{ include "probo.chrome.addr" . | quote }}
+            # API Configuration
+            - name: API_ADDR
+              value: ":{{ .Values.service.port }}"
+            - name: API_CORS_ALLOWED_ORIGINS
+              value: {{ join "," .Values.probo.cors.allowedOrigins | quote }}
+            # PostgreSQL Database
+            - name: PG_ADDR
+              value: {{ printf "%s:%s" (include "probo.postgresql.host" .) (include "probo.postgresql.port" .) | quote }}
+            - name: PG_USERNAME
+              value: {{ include "probo.postgresql.username" . | quote }}
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: db-password
+            - name: PG_DATABASE
+              value: {{ include "probo.postgresql.database" . | quote }}
+            - name: PG_POOL_SIZE
+              value: {{ .Values.postgresql.poolSize | default "100" | quote }}
+            # Authentication
+            - name: AUTH_DISABLE_SIGNUP
+              value: {{ .Values.probo.auth.disableSignup | quote }}
+            - name: AUTH_INVITATION_TOKEN_VALIDITY
+              value: {{ .Values.probo.auth.invitationTokenValidity | quote }}
+            - name: AUTH_COOKIE_NAME
+              value: {{ .Values.probo.auth.cookieName | quote }}
+            - name: AUTH_COOKIE_DOMAIN
+              value: {{ .Values.probo.auth.cookieDomain | quote }}
+            - name: AUTH_COOKIE_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: cookie-secret
-            - name: PASSWORD_PEPPER
+            - name: AUTH_COOKIE_DURATION
+              value: {{ .Values.probo.auth.cookieDuration | quote }}
+            - name: AUTH_PASSWORD_PEPPER
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: password-pepper
-            - name: TRUST_TOKEN_SECRET
+            - name: AUTH_PASSWORD_ITERATIONS
+              value: {{ .Values.probo.auth.passwordIterations | quote }}
+            # Trust Center Authentication
+            - name: TRUST_AUTH_COOKIE_NAME
+              value: {{ .Values.probo.trustAuth.cookieName | quote }}
+            - name: TRUST_AUTH_COOKIE_DOMAIN
+              value: {{ .Values.probo.trustAuth.cookieDomain | quote }}
+            - name: TRUST_AUTH_COOKIE_DURATION
+              value: {{ .Values.probo.trustAuth.cookieDuration | quote }}
+            - name: TRUST_AUTH_TOKEN_DURATION
+              value: {{ .Values.probo.trustAuth.tokenDuration | quote }}
+            - name: TRUST_AUTH_REPORT_URL_DURATION
+              value: {{ .Values.probo.trustAuth.reportUrlDuration | quote }}
+            - name: TRUST_AUTH_TOKEN_SECRET
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: trust-token-secret
-            # Optional SMTP credentials
+            - name: TRUST_AUTH_SCOPE
+              value: {{ .Values.probo.trustAuth.scope | quote }}
+            - name: TRUST_AUTH_TOKEN_TYPE
+              value: {{ .Values.probo.trustAuth.tokenType | quote }}
+            # AWS / S3 Storage
+            - name: AWS_REGION
+              value: {{ .Values.s3.region | quote }}
+            - name: AWS_BUCKET
+              value: {{ .Values.s3.bucket | quote }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: s3-access-key
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" . }}
+                  key: s3-secret-key
+            {{- $s3Endpoint := include "probo.s3.endpoint" . }}
+            {{- if $s3Endpoint }}
+            - name: AWS_ENDPOINT
+              value: {{ $s3Endpoint | quote }}
+            {{- end }}
+            # Email (SMTP)
+            - name: MAILER_SENDER_NAME
+              value: {{ .Values.probo.mailer.senderName | quote }}
+            - name: MAILER_SENDER_EMAIL
+              value: {{ .Values.probo.mailer.senderEmail | quote }}
+            - name: SMTP_ADDR
+              value: {{ .Values.probo.mailer.smtp.addr | quote }}
             {{- if .Values.probo.mailer.smtp.user }}
             - name: SMTP_USER
               valueFrom:
@@ -98,13 +167,68 @@ spec:
                   name: {{ include "probo.fullname" . }}
                   key: smtp-password
             {{- end }}
-            # Optional OpenAI API key
+            - name: SMTP_TLS_REQUIRED
+              value: {{ .Values.probo.mailer.smtp.tlsRequired | quote }}
+            # OpenAI Integration
             {{- if .Values.probo.openai.apiKey }}
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "probo.fullname" . }}
                   key: openai-api-key
+            - name: OPENAI_TEMPERATURE
+              value: {{ .Values.probo.openai.temperature | quote }}
+            - name: OPENAI_MODEL_NAME
+              value: {{ .Values.probo.openai.modelName | quote }}
+            {{- end }}
+            # Custom Domains
+            {{- if .Values.probo.customDomains.enabled }}
+            - name: CUSTOM_DOMAINS_RENEWAL_INTERVAL
+              value: {{ .Values.probo.customDomains.renewalInterval | quote }}
+            - name: CUSTOM_DOMAINS_PROVISION_INTERVAL
+              value: {{ .Values.probo.customDomains.provisionInterval | quote }}
+            - name: CUSTOM_DOMAINS_CNAME_TARGET
+              value: {{ .Values.probo.customDomains.cnameTarget | quote }}
+            - name: ACME_DIRECTORY
+              value: {{ .Values.probo.customDomains.acme.directory | quote }}
+            - name: ACME_EMAIL
+              value: {{ .Values.probo.customDomains.acme.email | quote }}
+            - name: ACME_KEY_TYPE
+              value: {{ .Values.probo.customDomains.acme.keyType | quote }}
+            {{- end }}
+            # Connectors (Slack OAuth2)
+            {{- range .Values.probo.connectors }}
+            {{- if eq .name "slack" }}
+            - name: CONNECTOR_SLACK_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-slack-client-id
+            - name: CONNECTOR_SLACK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-slack-client-secret
+            {{- if .config.redirectUri }}
+            - name: CONNECTOR_SLACK_REDIRECT_URI
+              value: {{ .config.redirectUri | quote }}
+            {{- end }}
+            {{- if .config.authUrl }}
+            - name: CONNECTOR_SLACK_AUTH_URL
+              value: {{ .config.authUrl | quote }}
+            {{- end }}
+            {{- if .config.tokenUrl }}
+            - name: CONNECTOR_SLACK_TOKEN_URL
+              value: {{ .config.tokenUrl | quote }}
+            {{- end }}
+            {{- if .config.signingSecret }}
+            - name: CONNECTOR_SLACK_SIGNING_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "probo.fullname" $ }}
+                  key: connector-slack-signing-secret
+            {{- end }}
+            {{- end }}
             {{- end }}
           ports:
             - name: http
@@ -126,18 +250,12 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: config
-              mountPath: /etc/probod
-              readOnly: false
             - name: data
               mountPath: /data
           {{- with .Values.volumeMounts }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
       volumes:
-        - name: config
-          configMap:
-            name: {{ include "probo.fullname" . }}
         - name: data
         {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
