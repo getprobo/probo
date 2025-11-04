@@ -29,20 +29,13 @@ var (
 // MinLen validates that a string has at least the specified minimum length.
 func MinLen(minLength int) ValidatorFunc {
 	return func(value any) *ValidationError {
-		if value == nil {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
 			return nil
 		}
 
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
 
@@ -60,20 +53,13 @@ func MinLen(minLength int) ValidatorFunc {
 // MaxLen validates that a string does not exceed the specified maximum length.
 func MaxLen(maxLength int) ValidatorFunc {
 	return func(value any) *ValidationError {
-		if value == nil {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
 			return nil
 		}
 
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
 
@@ -93,16 +79,13 @@ func Pattern(pattern string, message string) ValidatorFunc {
 	regex := regexp.MustCompile(pattern)
 
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
 
@@ -120,16 +103,13 @@ func Pattern(pattern string, message string) ValidatorFunc {
 // AlphaNumeric validates that a string contains only letters and numbers.
 func AlphaNumeric() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
 
@@ -148,16 +128,13 @@ func AlphaNumeric() ValidatorFunc {
 // NoSpaces validates that a string does not contain any spaces.
 func NoSpaces() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
 
@@ -176,16 +153,13 @@ func NoSpaces() ValidatorFunc {
 // Slug validates that a string is a valid URL slug (lowercase letters, numbers, and hyphens).
 func Slug() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
 
@@ -272,22 +246,17 @@ func OneOf(allowed ...any) ValidatorFunc {
 	}
 
 	return func(value any) *ValidationError {
-		// Handle nil values first
-		if value == nil {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
 			return nil
 		}
 
 		var str string
-		switch v := value.(type) {
+		switch v := actualValue.(type) {
 		case string:
 			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
 		default:
-			if stringer, ok := value.(fmt.Stringer); ok {
+			if stringer, ok := actualValue.(fmt.Stringer); ok {
 				str = stringer.String()
 			} else {
 				return newValidationError(ErrorCodeInvalidEnum, "value must be a string or implement fmt.Stringer")

@@ -24,30 +24,24 @@ import (
 func After(t any) ValidatorFunc {
 	return func(value any) *ValidationError {
 		// Extract the reference time
-		var refTime time.Time
-		switch ref := t.(type) {
-		case time.Time:
-			refTime = ref
-		case *time.Time:
-			if ref == nil {
-				return nil // No reference time to compare against
-			}
-			refTime = *ref
-		default:
-			return newValidationError(ErrorCodeInvalidFormat, "reference time must be time.Time or *time.Time")
+		refValue, refIsNil := dereferenceValue(t)
+		if refIsNil {
+			return nil // No reference time to compare against
+		}
+
+		refTime, ok := refValue.(time.Time)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "reference time must be time.Time")
 		}
 
 		// Extract the value being validated
-		var timeVal time.Time
-		switch v := value.(type) {
-		case time.Time:
-			timeVal = v
-		case *time.Time:
-			if v == nil {
-				return nil
-			}
-			timeVal = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		timeVal, ok := actualValue.(time.Time)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a time.Time")
 		}
 
@@ -67,30 +61,24 @@ func After(t any) ValidatorFunc {
 func Before(t any) ValidatorFunc {
 	return func(value any) *ValidationError {
 		// Extract the reference time
-		var refTime time.Time
-		switch ref := t.(type) {
-		case time.Time:
-			refTime = ref
-		case *time.Time:
-			if ref == nil {
-				return nil // No reference time to compare against
-			}
-			refTime = *ref
-		default:
-			return newValidationError(ErrorCodeInvalidFormat, "reference time must be time.Time or *time.Time")
+		refValue, refIsNil := dereferenceValue(t)
+		if refIsNil {
+			return nil // No reference time to compare against
+		}
+
+		refTime, ok := refValue.(time.Time)
+		if !ok {
+			return newValidationError(ErrorCodeInvalidFormat, "reference time must be time.Time")
 		}
 
 		// Extract the value being validated
-		var timeVal time.Time
-		switch v := value.(type) {
-		case time.Time:
-			timeVal = v
-		case *time.Time:
-			if v == nil {
-				return nil
-			}
-			timeVal = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		timeVal, ok := actualValue.(time.Time)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a time.Time")
 		}
 
@@ -108,16 +96,13 @@ func Before(t any) ValidatorFunc {
 // FutureDate validates that a time is in the future.
 func FutureDate() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var timeVal time.Time
-		switch v := value.(type) {
-		case time.Time:
-			timeVal = v
-		case *time.Time:
-			if v == nil {
-				return nil
-			}
-			timeVal = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		timeVal, ok := actualValue.(time.Time)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a time.Time")
 		}
 
@@ -132,16 +117,13 @@ func FutureDate() ValidatorFunc {
 // PastDate validates that a time is in the past.
 func PastDate() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var timeVal time.Time
-		switch v := value.(type) {
-		case time.Time:
-			timeVal = v
-		case *time.Time:
-			if v == nil {
-				return nil
-			}
-			timeVal = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		timeVal, ok := actualValue.(time.Time)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a time.Time")
 		}
 

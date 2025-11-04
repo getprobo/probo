@@ -33,16 +33,13 @@ var (
 // Combine with PrintableText() for comprehensive text field validation.
 func NoHTML() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
 
@@ -78,16 +75,13 @@ func NoHTML() ValidatorFunc {
 // where only printable characters should be allowed.
 func PrintableText() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
 

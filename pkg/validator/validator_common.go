@@ -21,38 +21,14 @@ import "strings"
 // For slices, it checks that the slice is not empty.
 func Required() ValidatorFunc {
 	return func(value any) *ValidationError {
-		if value == nil {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
 			return newValidationError(ErrorCodeRequired, "field is required")
 		}
 
-		switch v := value.(type) {
+		switch v := actualValue.(type) {
 		case string:
 			if strings.TrimSpace(v) == "" {
-				return newValidationError(ErrorCodeRequired, "field is required")
-			}
-		case *string:
-			if v == nil || strings.TrimSpace(*v) == "" {
-				return newValidationError(ErrorCodeRequired, "field is required")
-			}
-		case int, int8, int16, int32, int64:
-		case *int:
-			if v == nil {
-				return newValidationError(ErrorCodeRequired, "field is required")
-			}
-		case *int8:
-			if v == nil {
-				return newValidationError(ErrorCodeRequired, "field is required")
-			}
-		case *int16:
-			if v == nil {
-				return newValidationError(ErrorCodeRequired, "field is required")
-			}
-		case *int32:
-			if v == nil {
-				return newValidationError(ErrorCodeRequired, "field is required")
-			}
-		case *int64:
-			if v == nil {
 				return newValidationError(ErrorCodeRequired, "field is required")
 			}
 		case []any:
@@ -69,17 +45,14 @@ func Required() ValidatorFunc {
 // Similar to Required, but can be used independently.
 func NotEmpty() ValidatorFunc {
 	return func(value any) *ValidationError {
-		if value == nil {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
 			return nil
 		}
 
-		switch v := value.(type) {
+		switch v := actualValue.(type) {
 		case string:
 			if strings.TrimSpace(v) == "" {
-				return newValidationError(ErrorCodeRequired, "field cannot be empty")
-			}
-		case *string:
-			if v == nil || strings.TrimSpace(*v) == "" {
 				return newValidationError(ErrorCodeRequired, "field cannot be empty")
 			}
 		case []any:

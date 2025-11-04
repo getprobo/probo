@@ -31,16 +31,13 @@ var (
 // Email validates that a string is a valid email address.
 func Email() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidEmail, "value must be a string")
 		}
 
@@ -59,16 +56,13 @@ func Email() ValidatorFunc {
 // URL validates that a string is a valid URL with http or https scheme.
 func URL() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidURL, "value must be a string")
 		}
 
@@ -96,16 +90,13 @@ func URL() ValidatorFunc {
 // HTTPUrl validates that a string is a valid HTTP URL (not HTTPS).
 func HTTPUrl() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidURL, "value must be a string")
 		}
 
@@ -133,16 +124,13 @@ func HTTPUrl() ValidatorFunc {
 // HTTPSUrl validates that a string is a valid HTTPS URL (not HTTP).
 func HTTPSUrl() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidURL, "value must be a string")
 		}
 
@@ -170,16 +158,13 @@ func HTTPSUrl() ValidatorFunc {
 // UUID validates that a string is a valid UUID.
 func UUID() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
 
@@ -243,16 +228,13 @@ func GID(entityTypes ...uint16) ValidatorFunc {
 // Domain validates that a string is a valid domain name.
 func Domain() ValidatorFunc {
 	return func(value any) *ValidationError {
-		var str string
-		switch v := value.(type) {
-		case string:
-			str = v
-		case *string:
-			if v == nil {
-				return nil
-			}
-			str = *v
-		default:
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
+		str, ok := actualValue.(string)
+		if !ok {
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a string")
 		}
 

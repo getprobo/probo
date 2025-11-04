@@ -120,3 +120,22 @@ func (v *Validator) Error() error {
 }
 
 type ValidatorFunc func(value any) *ValidationError
+
+// dereferenceValue recursively dereferences all pointer levels.
+// Returns the final dereferenced value and a boolean indicating if any pointer in the chain was nil.
+func dereferenceValue(value any) (any, bool) {
+	if value == nil {
+		return nil, true
+	}
+
+	val := reflect.ValueOf(value)
+	// Dereference all pointer levels
+	for val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return nil, true
+		}
+		val = val.Elem()
+	}
+
+	return val.Interface(), false
+}

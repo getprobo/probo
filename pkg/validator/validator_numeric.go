@@ -19,33 +19,19 @@ import "fmt"
 // Min validates that a number is at least the specified minimum value.
 func Min(min int) ValidatorFunc {
 	return func(value any) *ValidationError {
-		if value == nil {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
 			return nil
 		}
 
 		var num int
-		switch v := value.(type) {
+		switch v := actualValue.(type) {
 		case int:
 			num = v
-		case *int:
-			if v == nil {
-				return nil
-			}
-			num = *v
 		case int32:
 			num = int(v)
-		case *int32:
-			if v == nil {
-				return nil
-			}
-			num = int(*v)
 		case int64:
 			num = int(v)
-		case *int64:
-			if v == nil {
-				return nil
-			}
-			num = int(*v)
 		default:
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a number")
 		}
@@ -64,33 +50,19 @@ func Min(min int) ValidatorFunc {
 // Max validates that a number does not exceed the specified maximum value.
 func Max(max int) ValidatorFunc {
 	return func(value any) *ValidationError {
-		if value == nil {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
 			return nil
 		}
 
 		var num int
-		switch v := value.(type) {
+		switch v := actualValue.(type) {
 		case int:
 			num = v
-		case *int:
-			if v == nil {
-				return nil
-			}
-			num = *v
 		case int32:
 			num = int(v)
-		case *int32:
-			if v == nil {
-				return nil
-			}
-			num = int(*v)
 		case int64:
 			num = int(v)
-		case *int64:
-			if v == nil {
-				return nil
-			}
-			num = int(*v)
 		default:
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a number")
 		}
@@ -109,29 +81,19 @@ func Max(max int) ValidatorFunc {
 // Range validates that a number is within the specified range (inclusive).
 func Range(min, max int) ValidatorFunc {
 	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
 		var num int
-		switch v := value.(type) {
+		switch v := actualValue.(type) {
 		case int:
 			num = v
-		case *int:
-			if v == nil {
-				return nil
-			}
-			num = *v
 		case int32:
 			num = int(v)
-		case *int32:
-			if v == nil {
-				return nil
-			}
-			num = int(*v)
 		case int64:
 			num = int(v)
-		case *int64:
-			if v == nil {
-				return nil
-			}
-			num = int(*v)
 		default:
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a number")
 		}
@@ -150,29 +112,19 @@ func Range(min, max int) ValidatorFunc {
 // MinFloat validates that a floating-point number is at least the specified minimum value.
 func MinFloat(min float64) ValidatorFunc {
 	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
 		var num float64
-		switch v := value.(type) {
+		switch v := actualValue.(type) {
 		case float32:
 			num = float64(v)
-		case *float32:
-			if v == nil {
-				return nil
-			}
-			num = float64(*v)
 		case float64:
 			num = v
-		case *float64:
-			if v == nil {
-				return nil
-			}
-			num = *v
 		case int:
 			num = float64(v)
-		case *int:
-			if v == nil {
-				return nil
-			}
-			num = float64(*v)
 		default:
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a number")
 		}
@@ -191,29 +143,19 @@ func MinFloat(min float64) ValidatorFunc {
 // MaxFloat validates that a floating-point number does not exceed the specified maximum value.
 func MaxFloat(max float64) ValidatorFunc {
 	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
 		var num float64
-		switch v := value.(type) {
+		switch v := actualValue.(type) {
 		case float32:
 			num = float64(v)
-		case *float32:
-			if v == nil {
-				return nil
-			}
-			num = float64(*v)
 		case float64:
 			num = v
-		case *float64:
-			if v == nil {
-				return nil
-			}
-			num = *v
 		case int:
 			num = float64(v)
-		case *int:
-			if v == nil {
-				return nil
-			}
-			num = float64(*v)
 		default:
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a number")
 		}
@@ -232,29 +174,19 @@ func MaxFloat(max float64) ValidatorFunc {
 // RangeFloat validates that a floating-point number is within the specified range (inclusive).
 func RangeFloat(min, max float64) ValidatorFunc {
 	return func(value any) *ValidationError {
+		actualValue, isNil := dereferenceValue(value)
+		if isNil {
+			return nil
+		}
+
 		var num float64
-		switch v := value.(type) {
+		switch v := actualValue.(type) {
 		case float32:
 			num = float64(v)
-		case *float32:
-			if v == nil {
-				return nil
-			}
-			num = float64(*v)
 		case float64:
 			num = v
-		case *float64:
-			if v == nil {
-				return nil
-			}
-			num = *v
 		case int:
 			num = float64(v)
-		case *int:
-			if v == nil {
-				return nil
-			}
-			num = float64(*v)
 		default:
 			return newValidationError(ErrorCodeInvalidFormat, "value must be a number")
 		}
