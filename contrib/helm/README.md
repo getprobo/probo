@@ -57,12 +57,6 @@ export ENCRYPTION_KEY=$(openssl rand -base64 32)
 export COOKIE_SECRET=$(openssl rand -base64 32)
 export PASSWORD_PEPPER=$(openssl rand -base64 32)
 export TRUST_TOKEN_SECRET=$(openssl rand -base64 32)
-
-# Save these somewhere secure!
-echo "ENCRYPTION_KEY=$ENCRYPTION_KEY"
-echo "COOKIE_SECRET=$COOKIE_SECRET"
-echo "PASSWORD_PEPPER=$PASSWORD_PEPPER"
-echo "TRUST_TOKEN_SECRET=$TRUST_TOKEN_SECRET"
 ```
 
 ##### Install using Chart and set values
