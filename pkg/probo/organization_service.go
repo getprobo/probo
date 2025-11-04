@@ -22,12 +22,13 @@ import (
 	"path/filepath"
 	"time"
 
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/slug"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 var (
@@ -74,10 +75,37 @@ type (
 	}
 )
 
+func (cor *CreateOrganizationRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cor.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+
+	return v.Error()
+}
+
+func (uor *UpdateOrganizationRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(uor.ID, "id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(uor.Name, "name", validator.WhenSet(uor.Name, validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(uor.Description, "description", validator.WhenSet(uor.Description, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(uor.WebsiteURL, "website_url", validator.WhenSet(uor.WebsiteURL, validator.NotEmpty(), validator.MaxLen(2048), validator.NoHTML(), validator.PrintableText()))
+	v.Check(uor.Email, "email", validator.WhenSet(uor.Email, validator.NotEmpty(), validator.MaxLen(255), validator.NoHTML(), validator.PrintableText()))
+	v.Check(uor.HeadquarterAddress, "headquarter_address", validator.WhenSet(uor.HeadquarterAddress, validator.NotEmpty(), validator.MaxLen(2048), validator.NoHTML(), validator.PrintableText()))
+	v.Check(uor.File, "file", validator.WhenSet(uor.File, validator.Required(), validator.NotEmpty()))
+	v.Check(uor.HorizontalLogoFile, "horizontal_logo_file", validator.WhenSet(uor.HorizontalLogoFile, validator.Required(), validator.NotEmpty()))
+
+	return v.Error()
+}
+
 func (s OrganizationService) Create(
 	ctx context.Context,
 	req CreateOrganizationRequest,
 ) (*coredata.Organization, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	now := time.Now()
 	organizationID := gid.New(s.svc.scope.GetTenantID(), coredata.OrganizationEntityType)
 
@@ -154,6 +182,10 @@ func (s OrganizationService) Update(
 	ctx context.Context,
 	req UpdateOrganizationRequest,
 ) (*coredata.Organization, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	organization := &coredata.Organization{}
 
 	err := s.svc.pg.WithTx(
