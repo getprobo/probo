@@ -16,7 +16,7 @@
   Watch the status:
     kubectl get svc --namespace {{ .Release.Namespace }} {{ include "probo.fullname" . }} -w
 
-  Once available, access the application at the EXTERNAL-IP shown
+  Once available, access the application at: http://<EXTERNAL-IP>:{{ .Values.service.port }}
 {{- else if contains "ClusterIP" .Values.service.type }}
   Application is available only within the cluster.
 

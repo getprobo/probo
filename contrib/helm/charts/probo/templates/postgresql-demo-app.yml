@@ -62,7 +62,7 @@ data:
 
     psql -v ON_ERROR_STOP=1 -U $POSTGRES_USER <<-EOF
     ALTER USER probod WITH SUPERUSER;
-    ALTER USER probod PASSWORD '{{ .Values.postgresql.auth.postgresPassword }}';
+    ALTER USER probod PASSWORD '{{ .Values.postgresql.auth.postgresPassword | squote }}';
     GRANT ALL PRIVILEGES ON DATABASE probod TO probod;
     CREATE DATABASE probod_test;
     GRANT ALL PRIVILEGES ON DATABASE probod_test TO probod;

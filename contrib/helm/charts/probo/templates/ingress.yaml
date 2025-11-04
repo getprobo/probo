@@ -34,7 +34,8 @@ spec:
             backend:
               service:
                 name: {{ default (include "probo.fullname" $) .backend.service.name }}
-                port: {{ default $.Values.service.port .backend.service.port.number }}
+                port:
+                  number: {{ default $.Values.service.port .backend.service.port.number }}
           {{- end }}
     {{- end }}
 {{- end }}
