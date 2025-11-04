@@ -24,6 +24,8 @@ spec:
     {{- end }}
   {{- end }}
   rules:
+    {{- $fullName := include "probo.fullname" . }}
+    {{- $servicePort := .Values.service.port }}
     {{- range .Values.ingress.hosts }}
     - host: {{ .host | quote }}
       http:
@@ -33,9 +35,9 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
-                name: {{ default (include "probo.fullname" $) .backend.service.name }}
+                name: {{ if and .backend .backend.service .backend.service.name }}{{ .backend.service.name }}{{ else }}{{ $fullName }}{{ end }}
                 port:
-                  number: {{ default $.Values.service.port .backend.service.port.number }}
+                  number: {{ if and .backend .backend.service .backend.service.port .backend.service.port.number }}{{ .backend.service.port.number }}{{ else }}{{ $servicePort }}{{ end }}
           {{- end }}
     {{- end }}
 {{- end }}
