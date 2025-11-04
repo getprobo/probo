@@ -39,7 +39,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["/bin/sh", "-c"] # replaces ENTRYPOINT
-          args: ["echo $DB_PASSWORD && cat /etc/probod/config.yml && exec /usr/local/bin/probod -cfg-file /etc/probod/config.yml"]
+          args: ["exec /usr/local/bin/probod -cfg-file /etc/probod/config.yml"]
 
 #          args:
 #            - "-cfg-file"
