@@ -19,7 +19,7 @@ data:
       {{- end }}
 
     probod:
-      hostname: {{ .Values.probo.hostname | quote }}
+      base-url: {{ .Values.probo.base-url | quote }}
       encryption-key: {{ .Values.probo.encryptionKey | quote }}
       chrome-dp-addr: {{ include "probo.chrome.addr" . | quote }}
 
