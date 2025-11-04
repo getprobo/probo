@@ -20,7 +20,7 @@ spec:
             - name: POSTGRES_USER
               value: {{ .Values.postgresql.auth.postgresUser }}
             - name: POSTGRES_PASSWORD
-              value: {{ .Values.postgresql.auth.postgresPassword }}
+              value: {{ .Values.postgresql.auth.postgresPassword | quote }}
             - name: POSTGRES_DB
               value: {{ .Values.postgresql.auth.database }}
           ports:
@@ -62,7 +62,7 @@ data:
 
     psql -v ON_ERROR_STOP=1 -U $POSTGRES_USER <<-EOF
     ALTER USER probod WITH SUPERUSER;
-    ALTER USER probod PASSWORD 'probod';
+    ALTER USER probod PASSWORD '{{ .Values.postgresql.auth.postgresPassword }}';
     GRANT ALL PRIVILEGES ON DATABASE probod TO probod;
     CREATE DATABASE probod_test;
     GRANT ALL PRIVILEGES ON DATABASE probod_test TO probod;

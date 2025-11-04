@@ -33,9 +33,8 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
-                name: {{ include "probo.fullname" $ }}
-                port:
-                  number: {{ $.Values.service.port }}
+                name: {{ default (include "probo.fullname" $) .backend.service.name }}
+                port: {{ default $.Values.service.port .backend.service.port.number }}
           {{- end }}
     {{- end }}
 {{- end }}
