@@ -16,37 +16,7 @@ Before deploying Probo, ensure you have:
 3. **PostgreSQL Database** - Managed service (AWS RDS, GCP Cloud SQL, Azure Database, etc.)
 4. **S3 Storage** - AWS S3 or S3-compatible storage (GCS, DigitalOcean Spaces, MinIO, etc.)
 
-## Quick Start
-
-### 1. Generate Secrets
-
-```bash
-export ENCRYPTION_KEY=$(openssl rand -base64 32)
-export COOKIE_SECRET=$(openssl rand -base64 32)
-export PASSWORD_PEPPER=$(openssl rand -base64 32)
-export TRUST_TOKEN_SECRET=$(openssl rand -base64 32)
-
-echo "Save these secrets securely!"
-```
-
-### 2. Install
-
 ## Install
-
-#### Using Official Chart Repository
-> Have Helm 3 [installed](https://helm.sh/docs/intro/install).
-
-```sh
-helm repo add probo https://getprobo.github.io/probo-helm-charts/
-helm install probo probo/probo -n probo --create-namespace --values values.yaml
-```
-
-To update versions:
-
-```
-helm repo update probo
-helm upgrade probo probo/probo -n probo --values values.yaml
-```
 
 #### Using Local Chart
 
@@ -59,6 +29,12 @@ export PASSWORD_PEPPER=$(openssl rand -base64 32)
 export TRUST_TOKEN_SECRET=$(openssl rand -base64 32)
 ```
 
+#### Download remote dependencies 
+
+```bash
+helm dependency update ./charts/probo
+```
+
 ##### Install using Chart and set values
 
 ```bash
@@ -69,9 +45,9 @@ helm install my-probo ./charts/probo \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
   --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
   --set postgresql.enabled=true \
-  --set postgres.auth.postgresUser="probod" \
-  --set postgres.auth.postgresPassword="your-db-password" \
-  --set postgres.auth.database="probod" \
+  --set postgresql.auth.postgresUser="probod" \
+  --set postgresql.auth.postgresPassword="your-db-password" \
+  --set postgresql.auth.database="probod" \
   --set minio.enabled=true \
   --set s3.bucket="your-bucket-name" \
   --set s3.accessKeyId="your-access-key" \
@@ -87,6 +63,11 @@ helm install my-probo ./charts/probo \
   --set probo.auth.cookieSecret="$COOKIE_SECRET" \
   --set probo.auth.passwordPepper="$PASSWORD_PEPPER" \
   --set probo.trustAuth.tokenSecret="$TRUST_TOKEN_SECRET" \
+  --set probo.mailer.smtp.password="smtp-password" \
+  --set postgresql.enabled=true \
+  --set postgresql.auth.postgresPassword="probod" \
+  --set s3.accessKeyId="your-access-key" \
+  --set s3.secretAccessKey="your-secret-key" \
   -f ./charts/probo/values.yaml
 ```
 

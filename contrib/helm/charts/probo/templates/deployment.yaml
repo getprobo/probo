@@ -38,6 +38,8 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            - name: CONFIG_FILE
+              value: "/data/probod/config.yml"
             # Observability - Metrics
             - name: METRICS_ADDR
               value: "0.0.0.0:{{ .Values.probo.metrics.port }}"
@@ -71,7 +73,7 @@ spec:
               value: {{ join "," .Values.probo.cors.allowedOrigins | quote }}
             # PostgreSQL Database
             - name: PG_ADDR
-              value: {{ printf "%s:%s" (include "probo.postgresql.host" .) (include "probo.postgresql.port" .) | quote }}
+              value: {{ if .Values.postgresql.enabled }}{{ printf "%s-postgresql-demo:5432" .Release.Name | quote }}{{ else }}{{ .Values.probo.pg.addr | required "probo.pg.addr is required when postgresql.enabled=false" | quote }}{{ end }}
             - name: PG_USERNAME
               value: {{ include "probo.postgresql.username" . | quote }}
             - name: PG_PASSWORD

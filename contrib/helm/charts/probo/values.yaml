@@ -171,10 +171,6 @@ probo:
   # This should match your ingress host
   baseUrl: probo.example.com
 
-  # Base64-encoded encryption key (REQUIRED)
-  # Generate with: openssl rand -base64 32
-  encryptionKey: ""
-
   service:
     port: 8080
 
@@ -212,13 +208,7 @@ probo:
     invitationTokenValidity: 3600
     cookieName: "SSID"
     cookieDomain: "probo.example.com"
-    # Cookie signing secret (REQUIRED, at least 32 bytes)
-    # Generate with: openssl rand -base64 32
-    cookieSecret: ""
     cookieDuration: 24
-    # Password hashing pepper (REQUIRED, at least 32 bytes)
-    # Generate with: openssl rand -base64 32
-    passwordPepper: ""
     passwordIterations: 1000000
 
   # SAML authentication (optional)
@@ -246,7 +236,6 @@ probo:
       tlsHttpServer: 443
     # Trust token signing secret (REQUIRED, at least 32 bytes)
     # Generate with: openssl rand -base64 32
-    tokenSecret: ""
     scope: "trust_center_readonly"
     tokenType: "trust_center_access"
 
@@ -308,6 +297,13 @@ postgresql:
     postgresUser: probod
     postgresPassword: probod
     database: probod
+  # External PostgreSQL configuration (used when enabled=false)
+  host: ""  # REQUIRED when enabled=false: PostgreSQL host
+  port: 5432
+  username: probod
+  password: ""  # REQUIRED when enabled=false: PostgreSQL password
+  database: probod
+  poolSize: 100
 
 # S3 storage configuration
 # For production: Use external S3 (AWS S3, GCS, etc.)
