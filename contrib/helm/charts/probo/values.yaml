@@ -242,9 +242,9 @@ probo:
     senderName: "Probo"
     senderEmail: "no-reply@notification.getprobo.com"
     smtp:
-      addr: "sandbox.smtp.mailtrap.io:2525"
-      user: "2d1b1d0e8b3d0b"
-      password: "25a8eb11e75e8d"
+      addr: ""
+      user: ""
+      password: ""
       tlsRequired: true
 #    smtp:
 #      addr: "localhost:1025"
