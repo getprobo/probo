@@ -16,9 +16,8 @@ package validator
 
 import "reflect"
 
-// When conditionally applies validators based on a condition.
-// If the condition is true, the specified validators are applied.
-// If the condition is false, all validators are skipped.
+// When conditionally applies validators based on a boolean condition.
+// If condition is true, all provided validators are run. If false, validation is skipped.
 func When(condition bool, validators ...ValidatorFunc) ValidatorFunc {
 	return func(value any) *ValidationError {
 		if !condition {
@@ -33,9 +32,36 @@ func When(condition bool, validators ...ValidatorFunc) ValidatorFunc {
 	}
 }
 
-// RequiredIf validates that a field is required when the condition is true.
+// RequiredIf conditionally requires a field based on a boolean condition.
+// If condition is true, the field must have a value (using Required validation).
+// If condition is false, the field is optional.
 func RequiredIf(condition bool) ValidatorFunc {
-	return When(condition, Required())
+	return func(value any) *ValidationError {
+		if !condition {
+			return nil
+		}
+		return Required()(value)
+	}
+}
+
+// WhenSet conditionally applies validators based on whether a pointer is non-nil.
+// If ptr is nil, validation is skipped. If ptr is non-nil, all provided validators are run.
+func WhenSet(ptr any, validators ...ValidatorFunc) ValidatorFunc {
+	return func(value any) *ValidationError {
+		if ptr == nil {
+			return nil
+		}
+		val := reflect.ValueOf(ptr)
+		if val.Kind() == reflect.Ptr && val.IsNil() {
+			return nil
+		}
+		for _, validator := range validators {
+			if err := validator(value); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 }
 
 // EqualTo validates that a value equals another value using deep equality.
@@ -53,27 +79,6 @@ func NotEqualTo(other any) ValidatorFunc {
 	return func(value any) *ValidationError {
 		if reflect.DeepEqual(value, other) {
 			return newValidationError(ErrorCodeInvalidFormat, "values must not match")
-		}
-		return nil
-	}
-}
-
-// WhenSet conditionally applies validators only if the pointer value is not nil.
-func WhenSet(ptr any, validators ...ValidatorFunc) ValidatorFunc {
-	return func(value any) *ValidationError {
-		if ptr == nil {
-			return nil
-		}
-
-		v := reflect.ValueOf(ptr)
-		if v.Kind() == reflect.Ptr && v.IsNil() {
-			return nil
-		}
-
-		for _, validator := range validators {
-			if err := validator(value); err != nil {
-				return err
-			}
 		}
 		return nil
 	}

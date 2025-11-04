@@ -69,11 +69,11 @@ func (ucr *UpdateControlRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(ucr.ID, "id", validator.Required(), validator.GID(coredata.ControlEntityType))
-	v.Check(ucr.Name, "name", validator.WhenSet(ucr.Name, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
-	v.Check(ucr.Description, "description", validator.WhenSet(ucr.Description, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
-	v.Check(ucr.SectionTitle, "section_title", validator.WhenSet(ucr.SectionTitle, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
-	v.Check(ucr.Status, "status", validator.WhenSet(ucr.Status, validator.OneOfSlice(coredata.ControlStatuses())))
-	v.Check(ucr.ExclusionJustification, "exclusion_justification", validator.WhenSet(ucr.ExclusionJustification, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(ucr.Name, "name", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(ucr.Description, "description", validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText())
+	v.Check(ucr.SectionTitle, "section_title", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(ucr.Status, "status", validator.OneOfSlice(coredata.ControlStatuses()))
+	v.Check(ucr.ExclusionJustification, "exclusion_justification", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
 
 	return v.Error()
 }
@@ -724,6 +724,10 @@ func (s ControlService) Create(
 	ctx context.Context,
 	req CreateControlRequest,
 ) (*coredata.Control, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	now := time.Now()
 	framework := &coredata.Framework{}
 
@@ -783,6 +787,10 @@ func (s ControlService) Update(
 	ctx context.Context,
 	req UpdateControlRequest,
 ) (*coredata.Control, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
 	params := coredata.UpdateControlParams{
 		Name:                   req.Name,
 		Description:            req.Description,

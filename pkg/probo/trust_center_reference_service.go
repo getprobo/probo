@@ -26,11 +26,12 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -59,6 +60,24 @@ type (
 		ID gid.GID
 	}
 )
+
+func (ctcrr *CreateTrustCenterReferenceRequest) Validate() error {
+	v := validator.New()
+
+	return v.Error()
+}
+
+func (utcrr *UpdateTrustCenterReferenceRequest) Validate() error {
+	v := validator.New()
+
+	return v.Error()
+}
+
+func (dtr *DeleteTrustCenterReferenceRequest) Validate() error {
+	v := validator.New()
+
+	return v.Error()
+}
 
 func (s TrustCenterReferenceService) ListForTrustCenterID(
 	ctx context.Context,

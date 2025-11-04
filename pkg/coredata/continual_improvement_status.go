@@ -27,6 +27,14 @@ const (
 	ContinualImprovementStatusClosed     ContinualImprovementStatus = "CLOSED"
 )
 
+func ContinualImprovementStatuses() []ContinualImprovementStatus {
+	return []ContinualImprovementStatus{
+		ContinualImprovementStatusOpen,
+		ContinualImprovementStatusInProgress,
+		ContinualImprovementStatusClosed,
+	}
+}
+
 func (cis ContinualImprovementStatus) String() string {
 	return string(cis)
 }

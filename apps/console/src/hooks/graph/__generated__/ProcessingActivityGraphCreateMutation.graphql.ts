@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d01ca9f47a4ce6e732cffd5deb9150c6>>
+ * @generated SignedSource<<a804557b48f2dbc4749c8399e708b9fe>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,9 +11,9 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type ProcessingActivityDataProtectionImpactAssessment = "NEEDED" | "NOT_NEEDED";
 export type ProcessingActivityLawfulBasis = "CONSENT" | "CONTRACTUAL_NECESSITY" | "LEGAL_OBLIGATION" | "LEGITIMATE_INTEREST" | "PUBLIC_TASK" | "VITAL_INTERESTS";
-export type ProcessingActivitySpecialOrCriminalData = "NO" | "POSSIBLE" | "YES";
+export type ProcessingActivitySpecialOrCriminalDatum = "NO" | "POSSIBLE" | "YES";
 export type ProcessingActivityTransferImpactAssessment = "NEEDED" | "NOT_NEEDED";
-export type ProcessingActivityTransferSafeguards = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
+export type ProcessingActivityTransferSafeguard = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
 export type CreateProcessingActivityInput = {
   consentEvidenceLink?: string | null | undefined;
   dataProtectionImpactAssessment: ProcessingActivityDataProtectionImpactAssessment;
@@ -28,9 +28,9 @@ export type CreateProcessingActivityInput = {
   recipients?: string | null | undefined;
   retentionPeriod?: string | null | undefined;
   securityMeasures?: string | null | undefined;
-  specialOrCriminalData: ProcessingActivitySpecialOrCriminalData;
+  specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum;
   transferImpactAssessment: ProcessingActivityTransferImpactAssessment;
-  transferSafeguards?: ProcessingActivityTransferSafeguards | null | undefined;
+  transferSafeguards?: ProcessingActivityTransferSafeguard | null | undefined;
   vendorIds?: ReadonlyArray<string> | null | undefined;
 };
 export type ProcessingActivityGraphCreateMutation$variables = {
@@ -55,9 +55,9 @@ export type ProcessingActivityGraphCreateMutation$data = {
         readonly recipients: string | null | undefined;
         readonly retentionPeriod: string | null | undefined;
         readonly securityMeasures: string | null | undefined;
-        readonly specialOrCriminalData: ProcessingActivitySpecialOrCriminalData;
+        readonly specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum;
         readonly transferImpactAssessment: ProcessingActivityTransferImpactAssessment;
-        readonly transferSafeguards: ProcessingActivityTransferSafeguards | null | undefined;
+        readonly transferSafeguards: ProcessingActivityTransferSafeguard | null | undefined;
         readonly vendors: {
           readonly edges: ReadonlyArray<{
             readonly node: {

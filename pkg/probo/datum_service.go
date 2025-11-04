@@ -56,7 +56,7 @@ func (cdr *CreateDatumRequest) Validate() error {
 	v.Check(cdr.DataClassification, "data_classification", validator.Required(), validator.OneOfSlice(coredata.DataClassifications()))
 	v.Check(cdr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
 	v.CheckEach(cdr.VendorIDs, "vendor_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
+		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
 	})
 
 	return v.Error()
@@ -66,11 +66,11 @@ func (udr *UpdateDatumRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(udr.ID, "id", validator.Required(), validator.GID(coredata.DatumEntityType))
-	v.Check(udr.Name, "name", validator.WhenSet(udr.Name, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
-	v.Check(udr.DataClassification, "data_classification", validator.WhenSet(udr.DataClassification, validator.OneOfSlice(coredata.DataClassifications())))
-	v.Check(udr.OwnerID, "owner_id", validator.WhenSet(udr.OwnerID, validator.GID(coredata.PeopleEntityType)))
+	v.Check(udr.Name, "name", validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText())
+	v.Check(udr.DataClassification, "data_classification", validator.OneOfSlice(coredata.DataClassifications()))
+	v.Check(udr.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
 	v.CheckEach(udr.VendorIDs, "vendor_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
+		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
 	})
 
 	return v.Error()

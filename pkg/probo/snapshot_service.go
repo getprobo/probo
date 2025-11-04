@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type SnapshotService struct {
@@ -44,6 +45,28 @@ type (
 		Type        *coredata.SnapshotsType
 	}
 )
+
+func (csr *CreateSnapshotRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(csr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(csr.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(csr.Description, "description", validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText())
+	v.Check(csr.Type, "type", validator.Required(), validator.OneOfSlice(coredata.SnapshotsTypes()))
+
+	return v.Error()
+}
+
+func (usr *UpdateSnapshotRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(usr.ID, "id", validator.Required(), validator.GID(coredata.SnapshotEntityType))
+	v.Check(usr.Name, "name", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(usr.Description, "description", validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText())
+	v.Check(usr.Type, "type", validator.OneOfSlice(coredata.SnapshotsTypes()))
+
+	return v.Error()
+}
 
 func (s *SnapshotService) Get(
 	ctx context.Context,

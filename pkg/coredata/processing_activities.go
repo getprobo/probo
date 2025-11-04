@@ -20,10 +20,10 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -36,13 +36,13 @@ type (
 		Purpose                        *string                                          `db:"purpose"`
 		DataSubjectCategory            *string                                          `db:"data_subject_category"`
 		PersonalDataCategory           *string                                          `db:"personal_data_category"`
-		SpecialOrCriminalData          ProcessingActivitySpecialOrCriminalData          `db:"special_or_criminal_data"`
+		SpecialOrCriminalData          ProcessingActivitySpecialOrCriminalDatum         `db:"special_or_criminal_data"`
 		ConsentEvidenceLink            *string                                          `db:"consent_evidence_link"`
 		LawfulBasis                    ProcessingActivityLawfulBasis                    `db:"lawful_basis"`
 		Recipients                     *string                                          `db:"recipients"`
 		Location                       *string                                          `db:"location"`
 		InternationalTransfers         bool                                             `db:"international_transfers"`
-		TransferSafeguards             *ProcessingActivityTransferSafeguards            `db:"transfer_safeguards"`
+		TransferSafeguard              *ProcessingActivityTransferSafeguard             `db:"transfer_safeguards"`
 		RetentionPeriod                *string                                          `db:"retention_period"`
 		SecurityMeasures               *string                                          `db:"security_measures"`
 		DataProtectionImpactAssessment ProcessingActivityDataProtectionImpactAssessment `db:"data_protection_impact_assessment"`
@@ -290,7 +290,7 @@ INSERT INTO processing_activities (
 		"recipients":                        p.Recipients,
 		"location":                          p.Location,
 		"international_transfers":           p.InternationalTransfers,
-		"transfer_safeguards":               p.TransferSafeguards,
+		"transfer_safeguards":               p.TransferSafeguard,
 		"retention_period":                  p.RetentionPeriod,
 		"security_measures":                 p.SecurityMeasures,
 		"data_protection_impact_assessment": p.DataProtectionImpactAssessment,
@@ -351,7 +351,7 @@ WHERE
 		"recipients":                        p.Recipients,
 		"location":                          p.Location,
 		"international_transfers":           p.InternationalTransfers,
-		"transfer_safeguards":               p.TransferSafeguards,
+		"transfer_safeguards":               p.TransferSafeguard,
 		"retention_period":                  p.RetentionPeriod,
 		"security_measures":                 p.SecurityMeasures,
 		"data_protection_impact_assessment": p.DataProtectionImpactAssessment,

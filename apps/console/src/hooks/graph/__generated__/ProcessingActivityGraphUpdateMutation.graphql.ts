@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<08099a83039838c6c79dbf1ca7c99034>>
+ * @generated SignedSource<<7004a9f42c1d7e16eadf8adbdb613b2a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,9 +11,9 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type ProcessingActivityDataProtectionImpactAssessment = "NEEDED" | "NOT_NEEDED";
 export type ProcessingActivityLawfulBasis = "CONSENT" | "CONTRACTUAL_NECESSITY" | "LEGAL_OBLIGATION" | "LEGITIMATE_INTEREST" | "PUBLIC_TASK" | "VITAL_INTERESTS";
-export type ProcessingActivitySpecialOrCriminalData = "NO" | "POSSIBLE" | "YES";
+export type ProcessingActivitySpecialOrCriminalDatum = "NO" | "POSSIBLE" | "YES";
 export type ProcessingActivityTransferImpactAssessment = "NEEDED" | "NOT_NEEDED";
-export type ProcessingActivityTransferSafeguards = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
+export type ProcessingActivityTransferSafeguard = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
 export type UpdateProcessingActivityInput = {
   consentEvidenceLink?: string | null | undefined;
   dataProtectionImpactAssessment?: ProcessingActivityDataProtectionImpactAssessment | null | undefined;
@@ -28,9 +28,9 @@ export type UpdateProcessingActivityInput = {
   recipients?: string | null | undefined;
   retentionPeriod?: string | null | undefined;
   securityMeasures?: string | null | undefined;
-  specialOrCriminalData?: ProcessingActivitySpecialOrCriminalData | null | undefined;
+  specialOrCriminalData?: ProcessingActivitySpecialOrCriminalDatum | null | undefined;
   transferImpactAssessment?: ProcessingActivityTransferImpactAssessment | null | undefined;
-  transferSafeguards?: ProcessingActivityTransferSafeguards | null | undefined;
+  transferSafeguards?: ProcessingActivityTransferSafeguard | null | undefined;
   vendorIds?: ReadonlyArray<string> | null | undefined;
 };
 export type ProcessingActivityGraphUpdateMutation$variables = {
@@ -52,9 +52,9 @@ export type ProcessingActivityGraphUpdateMutation$data = {
       readonly recipients: string | null | undefined;
       readonly retentionPeriod: string | null | undefined;
       readonly securityMeasures: string | null | undefined;
-      readonly specialOrCriminalData: ProcessingActivitySpecialOrCriminalData;
+      readonly specialOrCriminalData: ProcessingActivitySpecialOrCriminalDatum;
       readonly transferImpactAssessment: ProcessingActivityTransferImpactAssessment;
-      readonly transferSafeguards: ProcessingActivityTransferSafeguards | null | undefined;
+      readonly transferSafeguards: ProcessingActivityTransferSafeguard | null | undefined;
       readonly updatedAt: any;
       readonly vendors: {
         readonly edges: ReadonlyArray<{

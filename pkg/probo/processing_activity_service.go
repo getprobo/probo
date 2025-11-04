@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type ProcessingActivityService struct {
@@ -36,13 +37,13 @@ type (
 		Purpose                        *string
 		DataSubjectCategory            *string
 		PersonalDataCategory           *string
-		SpecialOrCriminalData          coredata.ProcessingActivitySpecialOrCriminalData
+		SpecialOrCriminalData          coredata.ProcessingActivitySpecialOrCriminalDatum
 		ConsentEvidenceLink            *string
 		LawfulBasis                    coredata.ProcessingActivityLawfulBasis
 		Recipients                     *string
 		Location                       *string
 		InternationalTransfers         bool
-		TransferSafeguards             *coredata.ProcessingActivityTransferSafeguards
+		TransferSafeguard              *coredata.ProcessingActivityTransferSafeguard
 		RetentionPeriod                *string
 		SecurityMeasures               *string
 		DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment
@@ -56,13 +57,13 @@ type (
 		Purpose                        **string
 		DataSubjectCategory            **string
 		PersonalDataCategory           **string
-		SpecialOrCriminalData          *coredata.ProcessingActivitySpecialOrCriminalData
+		SpecialOrCriminalData          *coredata.ProcessingActivitySpecialOrCriminalDatum
 		ConsentEvidenceLink            **string
 		LawfulBasis                    *coredata.ProcessingActivityLawfulBasis
 		Recipients                     **string
 		Location                       **string
 		InternationalTransfers         *bool
-		TransferSafeguards             **coredata.ProcessingActivityTransferSafeguards
+		TransferSafeguard              **coredata.ProcessingActivityTransferSafeguard
 		RetentionPeriod                **string
 		SecurityMeasures               **string
 		DataProtectionImpactAssessment *coredata.ProcessingActivityDataProtectionImpactAssessment
@@ -70,6 +71,58 @@ type (
 		VendorIDs                      *[]gid.GID
 	}
 )
+
+func (cpar *CreateProcessingActivityRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cpar.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cpar.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpar.Purpose, "purpose", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpar.DataSubjectCategory, "data_subject_category", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpar.PersonalDataCategory, "personal_data_category", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpar.SpecialOrCriminalData, "special_or_criminal_data", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivitySpecialOrCriminalData()))
+	v.Check(cpar.ConsentEvidenceLink, "consent_evidence_link", validator.NotEmpty(), validator.MaxLen(2048), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpar.LawfulBasis, "lawful_basis", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityLawfulBases()))
+	v.Check(cpar.Recipients, "recipients", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpar.Location, "location", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpar.InternationalTransfers, "international_transfers", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpar.TransferSafeguard, "transfer_safeguard", validator.OneOfSlice(coredata.ProcessingActivityTransferSafeguards()))
+	v.Check(cpar.RetentionPeriod, "retention_period", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpar.SecurityMeasures, "security_measures", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpar.DataProtectionImpactAssessment, "data_protection_impact_assessment", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityDataProtectionImpactAssessments()))
+	v.Check(cpar.TransferImpactAssessment, "transfer_impact_assessment", validator.Required(), validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
+	v.CheckEach(cpar.VendorIDs, "vendor_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
+	})
+
+	return v.Error()
+}
+
+func (upar *UpdateProcessingActivityRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(upar.ID, "id", validator.Required(), validator.GID(coredata.ProcessingActivityEntityType))
+	v.Check(upar.Name, "name", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(upar.Purpose, "purpose", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(upar.DataSubjectCategory, "data_subject_category", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(upar.PersonalDataCategory, "personal_data_category", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(upar.SpecialOrCriminalData, "special_or_criminal_data", validator.OneOfSlice(coredata.ProcessingActivitySpecialOrCriminalData()))
+	v.Check(upar.ConsentEvidenceLink, "consent_evidence_link", validator.NotEmpty(), validator.MaxLen(2048), validator.NoHTML(), validator.PrintableText())
+	v.Check(upar.LawfulBasis, "lawful_basis", validator.OneOfSlice(coredata.ProcessingActivityLawfulBases()))
+	v.Check(upar.Recipients, "recipients", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(upar.Location, "location", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(upar.InternationalTransfers, "international_transfers", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(upar.TransferSafeguard, "transfer_safeguards", validator.OneOfSlice(coredata.ProcessingActivityTransferSafeguards()))
+	v.Check(upar.RetentionPeriod, "retention_period", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(upar.SecurityMeasures, "security_measures", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(upar.DataProtectionImpactAssessment, "data_protection_impact_assessment", validator.OneOfSlice(coredata.ProcessingActivityDataProtectionImpactAssessments()))
+	v.Check(upar.TransferImpactAssessment, "transfer_impact_assessment", validator.OneOfSlice(coredata.ProcessingActivityTransferImpactAssessments()))
+	v.CheckEach(upar.VendorIDs, "vendor_ids", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
+	})
+
+	return v.Error()
+}
 
 func (s ProcessingActivityService) Get(
 	ctx context.Context,
@@ -111,7 +164,7 @@ func (s *ProcessingActivityService) Create(
 		Recipients:                     req.Recipients,
 		Location:                       req.Location,
 		InternationalTransfers:         req.InternationalTransfers,
-		TransferSafeguards:             req.TransferSafeguards,
+		TransferSafeguard:              req.TransferSafeguard,
 		RetentionPeriod:                req.RetentionPeriod,
 		SecurityMeasures:               req.SecurityMeasures,
 		DataProtectionImpactAssessment: req.DataProtectionImpactAssessment,
@@ -193,8 +246,8 @@ func (s *ProcessingActivityService) Update(
 			if req.InternationalTransfers != nil {
 				processingActivity.InternationalTransfers = *req.InternationalTransfers
 			}
-			if req.TransferSafeguards != nil {
-				processingActivity.TransferSafeguards = *req.TransferSafeguards
+			if req.TransferSafeguard != nil {
+				processingActivity.TransferSafeguard = *req.TransferSafeguard
 			}
 			if req.RetentionPeriod != nil {
 				processingActivity.RetentionPeriod = *req.RetentionPeriod

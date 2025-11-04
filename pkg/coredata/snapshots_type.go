@@ -34,6 +34,16 @@ const (
 	SnapshotsTypeProcessingActivities  SnapshotsType = "PROCESSING_ACTIVITIES"
 )
 
+func SnapshotsTypes() []SnapshotsType {
+	return []SnapshotsType{
+		SnapshotsTypeRisks,
+		SnapshotsTypeVendors,
+		SnapshotsTypeAssets,
+		SnapshotsTypeData,
+		SnapshotsTypeNonconformities,
+	}
+}
+
 func (st SnapshotsType) String() string {
 	return string(st)
 }

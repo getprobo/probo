@@ -1,7 +1,7 @@
 import { useTranslate } from "@probo/i18n";
 import { Option } from "@probo/ui";
 import type {
-  ProcessingActivitySpecialOrCriminalData,
+  ProcessingActivitySpecialOrCriminalDatum,
   ProcessingActivityLawfulBasis,
   ProcessingActivityDataProtectionImpactAssessment,
   ProcessingActivityTransferImpactAssessment,
@@ -11,7 +11,7 @@ export function SpecialOrCriminalDataOptions() {
   const { __ } = useTranslate();
 
   const options: Array<{
-    value: ProcessingActivitySpecialOrCriminalData;
+    value: ProcessingActivitySpecialOrCriminalDatum;
     label: string;
   }> = [
     { value: "YES", label: __("Yes") },
@@ -56,16 +56,19 @@ export function LawfulBasisOptions() {
   );
 }
 
-export function getLawfulBasisLabel(value: ProcessingActivityLawfulBasis | null | undefined, __: (key: string) => string): string {
+export function getLawfulBasisLabel(
+  value: ProcessingActivityLawfulBasis | null | undefined,
+  __: (key: string) => string
+): string {
   if (!value) return "-";
 
   const labels = {
-    "CONSENT": __("Consent"),
-    "CONTRACTUAL_NECESSITY": __("Contractual Necessity"),
-    "LEGAL_OBLIGATION": __("Legal Obligation"),
-    "LEGITIMATE_INTEREST": __("Legitimate Interest"),
-    "PUBLIC_TASK": __("Public Task"),
-    "VITAL_INTERESTS": __("Vital Interests"),
+    CONSENT: __("Consent"),
+    CONTRACTUAL_NECESSITY: __("Contractual Necessity"),
+    LEGAL_OBLIGATION: __("Legal Obligation"),
+    LEGITIMATE_INTEREST: __("Legitimate Interest"),
+    PUBLIC_TASK: __("Public Task"),
+    VITAL_INTERESTS: __("Vital Interests"),
   };
 
   return labels[value] || value;
@@ -79,12 +82,18 @@ export function TransferSafeguardsOptions() {
     label: string;
   }> = [
     { value: "__NONE__", label: __("None") },
-    { value: "STANDARD_CONTRACTUAL_CLAUSES", label: __("Standard Contractual Clauses") },
+    {
+      value: "STANDARD_CONTRACTUAL_CLAUSES",
+      label: __("Standard Contractual Clauses"),
+    },
     { value: "BINDING_CORPORATE_RULES", label: __("Binding Corporate Rules") },
     { value: "ADEQUACY_DECISION", label: __("Adequacy Decision") },
     { value: "DEROGATIONS", label: __("Derogations") },
     { value: "CODES_OF_CONDUCT", label: __("Codes of Conduct") },
-    { value: "CERTIFICATION_MECHANISMS", label: __("Certification Mechanisms") },
+    {
+      value: "CERTIFICATION_MECHANISMS",
+      label: __("Certification Mechanisms"),
+    },
   ];
 
   return (

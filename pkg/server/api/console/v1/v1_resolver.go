@@ -2858,7 +2858,7 @@ func (r *mutationResolver) PublishDocumentVersion(ctx context.Context, input typ
 	if err != nil {
 		var errNoChanges *coredata.ErrDocumentVersionNoChanges
 		if errors.As(err, &errNoChanges) {
-			return nil, gqlutils.Invalid(errNoChanges)
+			return nil, gqlutils.Invalid(errNoChanges, nil)
 		}
 		panic(fmt.Errorf("cannot publish document version: %w", err))
 	}
@@ -3568,7 +3568,7 @@ func (r *mutationResolver) CreateProcessingActivity(ctx context.Context, input t
 		Recipients:                     input.Recipients,
 		Location:                       input.Location,
 		InternationalTransfers:         input.InternationalTransfers,
-		TransferSafeguards:             input.TransferSafeguards,
+		TransferSafeguard:              input.TransferSafeguard,
 		RetentionPeriod:                input.RetentionPeriod,
 		SecurityMeasures:               input.SecurityMeasures,
 		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,
@@ -3601,7 +3601,7 @@ func (r *mutationResolver) UpdateProcessingActivity(ctx context.Context, input t
 		Recipients:                     UnwrapOmittable(input.Recipients),
 		Location:                       UnwrapOmittable(input.Location),
 		InternationalTransfers:         input.InternationalTransfers,
-		TransferSafeguards:             UnwrapOmittable(input.TransferSafeguards),
+		TransferSafeguard:              UnwrapOmittable(input.TransferSafeguards),
 		RetentionPeriod:                UnwrapOmittable(input.RetentionPeriod),
 		SecurityMeasures:               UnwrapOmittable(input.SecurityMeasures),
 		DataProtectionImpactAssessment: input.DataProtectionImpactAssessment,

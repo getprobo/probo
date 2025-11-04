@@ -64,11 +64,11 @@ func (car *CreateAuditRequest) Validate() error {
 
 	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
 	v.Check(car.FrameworkID, "framework_id", validator.Required(), validator.GID(coredata.FrameworkEntityType))
-	v.Check(car.Name, "name", validator.WhenSet(car.Name, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(car.Name, "name", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
 	v.Check(car.ValidFrom, "valid_from")
-	v.Check(car.ValidUntil, "valid_until", validator.WhenSet(car.ValidFrom, validator.After(car.ValidFrom)))
-	v.Check(car.State, "state", validator.WhenSet(car.State, validator.Required(), validator.OneOfSlice(coredata.AuditStates())))
-	v.Check(car.TrustCenterVisibility, "trust_center_visibility", validator.WhenSet(car.TrustCenterVisibility, validator.OneOfSlice(coredata.TrustCenterVisibilities())))
+	v.Check(car.ValidUntil, "valid_until", validator.After(car.ValidFrom))
+	v.Check(car.State, "state", validator.OneOfSlice(coredata.AuditStates()))
+	v.Check(car.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
 
 	return v.Error()
 }
@@ -77,11 +77,11 @@ func (uar *UpdateAuditRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(uar.ID, "id", validator.Required(), validator.GID(coredata.AuditEntityType))
-	v.Check(uar.Name, "name", validator.WhenSet(uar.Name, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(uar.Name, "name", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
 	v.Check(uar.ValidFrom, "valid_from")
-	v.Check(uar.ValidUntil, "valid_until", validator.WhenSet(uar.ValidFrom, validator.After(uar.ValidFrom)))
-	v.Check(uar.State, "state", validator.WhenSet(uar.State, validator.Required(), validator.OneOfSlice(coredata.AuditStates())))
-	v.Check(uar.TrustCenterVisibility, "trust_center_visibility", validator.WhenSet(uar.TrustCenterVisibility, validator.OneOfSlice(coredata.TrustCenterVisibilities())))
+	v.Check(uar.ValidUntil, "valid_until", validator.After(uar.ValidFrom))
+	v.Check(uar.State, "state", validator.OneOfSlice(coredata.AuditStates()))
+	v.Check(uar.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
 
 	return v.Error()
 }

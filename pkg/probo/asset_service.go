@@ -40,13 +40,13 @@ func (car *CreateAssetRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(car.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(car.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText())
+	v.Check(car.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
 	v.Check(car.Amount, "amount", validator.Required(), validator.Min(1))
 	v.Check(car.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
 	v.Check(car.AssetType, "asset_type", validator.Required(), validator.OneOfSlice(coredata.AssetTypes()))
 	v.Check(car.DataTypesStored, "data_types_stored", validator.Required(), validator.NotEmpty(), validator.NoHTML(), validator.PrintableText(), validator.MaxLen(5000))
 	v.CheckEach(car.VendorIDs, "vendor_ids", func(index int, item any) {
-		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
+		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.Required(), validator.GID(coredata.VendorEntityType))
 	})
 
 	return v.Error()
@@ -56,11 +56,11 @@ func (uar *UpdateAssetRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(uar.ID, "id", validator.Required(), validator.GID(coredata.AssetEntityType))
-	v.Check(uar.Name, "name", validator.WhenSet(uar.Name, validator.Required(), validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
-	v.Check(uar.Amount, "amount", validator.WhenSet(uar.Amount, validator.Required(), validator.Min(1)))
-	v.Check(uar.OwnerID, "owner_id", validator.WhenSet(uar.OwnerID, validator.Required(), validator.GID(coredata.PeopleEntityType)))
-	v.Check(uar.AssetType, "asset_type", validator.WhenSet(uar.AssetType, validator.Required(), validator.OneOfSlice(coredata.AssetTypes())))
-	v.Check(uar.DataTypesStored, "data_types_stored", validator.WhenSet(uar.DataTypesStored, validator.Required(), validator.NotEmpty(), validator.NoHTML(), validator.PrintableText(), validator.MaxLen(5000)))
+	v.Check(uar.Name, "name", validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText())
+	v.Check(uar.Amount, "amount", validator.Min(1))
+	v.Check(uar.OwnerID, "owner_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(uar.AssetType, "asset_type", validator.OneOfSlice(coredata.AssetTypes()))
+	v.Check(uar.DataTypesStored, "data_types_stored", validator.NotEmpty(), validator.NoHTML(), validator.PrintableText(), validator.MaxLen(5000))
 	v.CheckEach(uar.VendorIDs, "vendor_ids", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("vendor_ids[%d]", index), validator.GID(coredata.VendorEntityType))
 	})

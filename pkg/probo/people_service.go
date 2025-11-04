@@ -65,7 +65,7 @@ func (cpr *CreatePeopleRequest) Validate() error {
 	})
 	v.Check(cpr.Kind, "kind", validator.Required(), validator.OneOfSlice(coredata.PeopleKinds()))
 	v.Check(cpr.Position, "position", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
-	v.Check(cpr.ContractStartDate, "contract_start_date")
+	v.Check(cpr.ContractStartDate, "contract_start_date", validator.Before(cpr.ContractEndDate))
 	v.Check(cpr.ContractEndDate, "contract_end_date", validator.After(cpr.ContractStartDate))
 
 	return v.Error()
@@ -75,15 +75,15 @@ func (upr *UpdatePeopleRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(upr.ID, "id", validator.Required(), validator.GID(coredata.PeopleEntityType))
-	v.Check(upr.Kind, "kind", validator.WhenSet(upr.Kind, validator.Required(), validator.OneOfSlice(coredata.PeopleKinds())))
-	v.Check(upr.FullName, "full_name", validator.WhenSet(upr.FullName, validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
-	v.Check(upr.PrimaryEmailAddress, "primary_email_address", validator.WhenSet(upr.PrimaryEmailAddress, validator.Required(), validator.NotEmpty(), validator.Email()))
+	v.Check(upr.Kind, "kind", validator.OneOfSlice(coredata.PeopleKinds()))
+	v.Check(upr.FullName, "full_name", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(upr.PrimaryEmailAddress, "primary_email_address", validator.NotEmpty(), validator.Email())
 	v.CheckEach(upr.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
 		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty(), validator.Email())
 	})
-	v.Check(upr.Position, "position", validator.WhenSet(upr.Position, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
-	v.Check(upr.ContractStartDate, "contract_start_date", validator.WhenSet(upr.ContractStartDate))
-	v.Check(upr.ContractEndDate, "contract_end_date", validator.WhenSet(upr.ContractEndDate, validator.After(upr.ContractStartDate)))
+	v.Check(upr.Position, "position", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(upr.ContractStartDate, "contract_start_date", validator.Before(upr.ContractEndDate))
+	v.Check(upr.ContractEndDate, "contract_end_date", validator.After(upr.ContractStartDate))
 
 	return v.Error()
 }

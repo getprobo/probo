@@ -440,13 +440,13 @@ type CreateProcessingActivityInput struct {
 	Purpose                        *string                                                   `json:"purpose,omitempty"`
 	DataSubjectCategory            *string                                                   `json:"dataSubjectCategory,omitempty"`
 	PersonalDataCategory           *string                                                   `json:"personalDataCategory,omitempty"`
-	SpecialOrCriminalData          coredata.ProcessingActivitySpecialOrCriminalData          `json:"specialOrCriminalData"`
+	SpecialOrCriminalData          coredata.ProcessingActivitySpecialOrCriminalDatum         `json:"specialOrCriminalData"`
 	ConsentEvidenceLink            *string                                                   `json:"consentEvidenceLink,omitempty"`
 	LawfulBasis                    coredata.ProcessingActivityLawfulBasis                    `json:"lawfulBasis"`
 	Recipients                     *string                                                   `json:"recipients,omitempty"`
 	Location                       *string                                                   `json:"location,omitempty"`
 	InternationalTransfers         bool                                                      `json:"internationalTransfers"`
-	TransferSafeguards             *coredata.ProcessingActivityTransferSafeguards            `json:"transferSafeguards,omitempty"`
+	TransferSafeguard              *coredata.ProcessingActivityTransferSafeguard             `json:"transferSafeguards,omitempty"`
 	RetentionPeriod                *string                                                   `json:"retentionPeriod,omitempty"`
 	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
 	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
@@ -1518,13 +1518,13 @@ type ProcessingActivity struct {
 	Purpose                        *string                                                   `json:"purpose,omitempty"`
 	DataSubjectCategory            *string                                                   `json:"dataSubjectCategory,omitempty"`
 	PersonalDataCategory           *string                                                   `json:"personalDataCategory,omitempty"`
-	SpecialOrCriminalData          coredata.ProcessingActivitySpecialOrCriminalData          `json:"specialOrCriminalData"`
+	SpecialOrCriminalData          coredata.ProcessingActivitySpecialOrCriminalDatum         `json:"specialOrCriminalData"`
 	ConsentEvidenceLink            *string                                                   `json:"consentEvidenceLink,omitempty"`
 	LawfulBasis                    coredata.ProcessingActivityLawfulBasis                    `json:"lawfulBasis"`
 	Recipients                     *string                                                   `json:"recipients,omitempty"`
 	Location                       *string                                                   `json:"location,omitempty"`
 	InternationalTransfers         bool                                                      `json:"internationalTransfers"`
-	TransferSafeguards             *coredata.ProcessingActivityTransferSafeguards            `json:"transferSafeguards,omitempty"`
+	TransferSafeguards             *coredata.ProcessingActivityTransferSafeguard             `json:"transferSafeguards,omitempty"`
 	RetentionPeriod                *string                                                   `json:"retentionPeriod,omitempty"`
 	SecurityMeasures               *string                                                   `json:"securityMeasures,omitempty"`
 	DataProtectionImpactAssessment coredata.ProcessingActivityDataProtectionImpactAssessment `json:"dataProtectionImpactAssessment"`
@@ -2022,23 +2022,23 @@ type UpdatePeoplePayload struct {
 }
 
 type UpdateProcessingActivityInput struct {
-	ID                             gid.GID                                                           `json:"id"`
-	Name                           *string                                                           `json:"name,omitempty"`
-	Purpose                        graphql.Omittable[*string]                                        `json:"purpose,omitempty"`
-	DataSubjectCategory            graphql.Omittable[*string]                                        `json:"dataSubjectCategory,omitempty"`
-	PersonalDataCategory           graphql.Omittable[*string]                                        `json:"personalDataCategory,omitempty"`
-	SpecialOrCriminalData          *coredata.ProcessingActivitySpecialOrCriminalData                 `json:"specialOrCriminalData,omitempty"`
-	ConsentEvidenceLink            *string                                                           `json:"consentEvidenceLink,omitempty"`
-	LawfulBasis                    *coredata.ProcessingActivityLawfulBasis                           `json:"lawfulBasis,omitempty"`
-	Recipients                     graphql.Omittable[*string]                                        `json:"recipients,omitempty"`
-	Location                       graphql.Omittable[*string]                                        `json:"location,omitempty"`
-	InternationalTransfers         *bool                                                             `json:"internationalTransfers,omitempty"`
-	TransferSafeguards             graphql.Omittable[*coredata.ProcessingActivityTransferSafeguards] `json:"transferSafeguards,omitempty"`
-	RetentionPeriod                graphql.Omittable[*string]                                        `json:"retentionPeriod,omitempty"`
-	SecurityMeasures               graphql.Omittable[*string]                                        `json:"securityMeasures,omitempty"`
-	DataProtectionImpactAssessment *coredata.ProcessingActivityDataProtectionImpactAssessment        `json:"dataProtectionImpactAssessment,omitempty"`
-	TransferImpactAssessment       *coredata.ProcessingActivityTransferImpactAssessment              `json:"transferImpactAssessment,omitempty"`
-	VendorIds                      []gid.GID                                                         `json:"vendorIds,omitempty"`
+	ID                             gid.GID                                                          `json:"id"`
+	Name                           *string                                                          `json:"name,omitempty"`
+	Purpose                        graphql.Omittable[*string]                                       `json:"purpose,omitempty"`
+	DataSubjectCategory            graphql.Omittable[*string]                                       `json:"dataSubjectCategory,omitempty"`
+	PersonalDataCategory           graphql.Omittable[*string]                                       `json:"personalDataCategory,omitempty"`
+	SpecialOrCriminalData          *coredata.ProcessingActivitySpecialOrCriminalDatum               `json:"specialOrCriminalData,omitempty"`
+	ConsentEvidenceLink            *string                                                          `json:"consentEvidenceLink,omitempty"`
+	LawfulBasis                    *coredata.ProcessingActivityLawfulBasis                          `json:"lawfulBasis,omitempty"`
+	Recipients                     graphql.Omittable[*string]                                       `json:"recipients,omitempty"`
+	Location                       graphql.Omittable[*string]                                       `json:"location,omitempty"`
+	InternationalTransfers         *bool                                                            `json:"internationalTransfers,omitempty"`
+	TransferSafeguards             graphql.Omittable[*coredata.ProcessingActivityTransferSafeguard] `json:"transferSafeguards,omitempty"`
+	RetentionPeriod                graphql.Omittable[*string]                                       `json:"retentionPeriod,omitempty"`
+	SecurityMeasures               graphql.Omittable[*string]                                       `json:"securityMeasures,omitempty"`
+	DataProtectionImpactAssessment *coredata.ProcessingActivityDataProtectionImpactAssessment       `json:"dataProtectionImpactAssessment,omitempty"`
+	TransferImpactAssessment       *coredata.ProcessingActivityTransferImpactAssessment             `json:"transferImpactAssessment,omitempty"`
+	VendorIds                      []gid.GID                                                        `json:"vendorIds,omitempty"`
 }
 
 type UpdateProcessingActivityPayload struct {

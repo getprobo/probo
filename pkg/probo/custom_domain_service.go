@@ -45,7 +45,7 @@ func (ccdr *CreateCustomDomainRequest) Validate() error {
 	v := validator.New()
 
 	v.Check(ccdr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
-	v.Check(ccdr.Domain, "domain", validator.Required(), validator.NotEmpty(), validator.MaxLen(255), validator.NoHTML(), validator.PrintableText())
+	v.Check(ccdr.Domain, "domain", validator.Required(), validator.NotEmpty(), validator.Domain())
 
 	return v.Error()
 }

@@ -25,12 +25,13 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/filevalidation"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -58,6 +59,37 @@ type (
 		ID gid.GID
 	}
 )
+
+func (ctcfr *CreateTrustCenterFileRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ctcfr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(ctcfr.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(ctcfr.Category, "category", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(ctcfr.File, "file", validator.Required())
+	v.Check(ctcfr.TrustCenterVisibility, "trust_center_visibility", validator.Required(), validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+
+	return v.Error()
+}
+
+func (utcfr *UpdateTrustCenterFileRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(utcfr.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterFileEntityType))
+	v.Check(utcfr.Name, "name", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(utcfr.Category, "category", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(utcfr.TrustCenterVisibility, "trust_center_visibility", validator.OneOfSlice(coredata.TrustCenterVisibilities()))
+
+	return v.Error()
+}
+
+func (dtr *DeleteTrustCenterFileRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(dtr.ID, "id", validator.Required(), validator.GID(coredata.TrustCenterFileEntityType))
+
+	return v.Error()
+}
 
 func (s TrustCenterFileService) ListForOrganizationID(
 	ctx context.Context,

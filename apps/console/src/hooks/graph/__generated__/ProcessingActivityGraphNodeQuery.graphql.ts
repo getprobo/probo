@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5dea7ccaf98a1223d9e4cc1ecdfbb0bc>>
+ * @generated SignedSource<<736925258373b1116c286fc16d19ad7d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,9 +11,9 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type ProcessingActivityDataProtectionImpactAssessment = "NEEDED" | "NOT_NEEDED";
 export type ProcessingActivityLawfulBasis = "CONSENT" | "CONTRACTUAL_NECESSITY" | "LEGAL_OBLIGATION" | "LEGITIMATE_INTEREST" | "PUBLIC_TASK" | "VITAL_INTERESTS";
-export type ProcessingActivitySpecialOrCriminalData = "NO" | "POSSIBLE" | "YES";
+export type ProcessingActivitySpecialOrCriminalDatum = "NO" | "POSSIBLE" | "YES";
 export type ProcessingActivityTransferImpactAssessment = "NEEDED" | "NOT_NEEDED";
-export type ProcessingActivityTransferSafeguards = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
+export type ProcessingActivityTransferSafeguard = "ADEQUACY_DECISION" | "BINDING_CORPORATE_RULES" | "CERTIFICATION_MECHANISMS" | "CODES_OF_CONDUCT" | "DEROGATIONS" | "STANDARD_CONTRACTUAL_CLAUSES";
 export type VendorCategory = "ANALYTICS" | "CLOUD_MONITORING" | "CLOUD_PROVIDER" | "COLLABORATION" | "CUSTOMER_SUPPORT" | "DATA_STORAGE_AND_PROCESSING" | "DOCUMENT_MANAGEMENT" | "EMPLOYEE_MANAGEMENT" | "ENGINEERING" | "FINANCE" | "IDENTITY_PROVIDER" | "IT" | "MARKETING" | "OFFICE_OPERATIONS" | "OTHER" | "PASSWORD_MANAGEMENT" | "PRODUCT_AND_DESIGN" | "PROFESSIONAL_SERVICES" | "RECRUITING" | "SALES" | "SECURITY" | "VERSION_CONTROL";
 export type ProcessingActivityGraphNodeQuery$variables = {
   processingActivityId: string;
@@ -39,9 +39,9 @@ export type ProcessingActivityGraphNodeQuery$data = {
     readonly retentionPeriod?: string | null | undefined;
     readonly securityMeasures?: string | null | undefined;
     readonly snapshotId?: string | null | undefined;
-    readonly specialOrCriminalData?: ProcessingActivitySpecialOrCriminalData;
+    readonly specialOrCriminalData?: ProcessingActivitySpecialOrCriminalDatum;
     readonly transferImpactAssessment?: ProcessingActivityTransferImpactAssessment;
-    readonly transferSafeguards?: ProcessingActivityTransferSafeguards | null | undefined;
+    readonly transferSafeguards?: ProcessingActivityTransferSafeguard | null | undefined;
     readonly updatedAt?: any;
     readonly vendors?: {
       readonly edges: ReadonlyArray<{

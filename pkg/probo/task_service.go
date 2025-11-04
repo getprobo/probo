@@ -19,11 +19,12 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -50,6 +51,33 @@ type (
 		Deadline     **time.Time
 	}
 )
+
+func (ctr *CreateTaskRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(ctr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(ctr.MeasureID, "measure_id", validator.GID(coredata.MeasureEntityType))
+	v.Check(ctr.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(ctr.Description, "description", validator.Required(), validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText())
+	v.Check(ctr.TimeEstimate, "time_estimate", validator.Min(0), validator.Max(1000))
+	v.Check(ctr.AssignedToID, "assigned_to_id", validator.GID(coredata.PeopleEntityType))
+	v.Check(ctr.Deadline, "deadline")
+
+	return v.Error()
+}
+
+func (utr *UpdateTaskRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(utr.TaskID, "task_id", validator.Required(), validator.GID(coredata.TaskEntityType))
+	v.Check(utr.Name, "name", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(utr.Description, "description", validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText())
+	v.Check(utr.TimeEstimate, "time_estimate", validator.Min(0), validator.Max(1000))
+	v.Check(utr.State, "state", validator.OneOfSlice(coredata.TaskStates()))
+	v.Check(utr.Deadline, "deadline")
+
+	return v.Error()
+}
 
 func (s TaskService) Create(
 	ctx context.Context,

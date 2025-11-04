@@ -19,22 +19,33 @@ import (
 	"fmt"
 )
 
-type ProcessingActivityTransferSafeguards string
+type ProcessingActivityTransferSafeguard string
 
 const (
-	ProcessingActivityTransferSafeguardsStandardContractualClauses ProcessingActivityTransferSafeguards = "STANDARD_CONTRACTUAL_CLAUSES"
-	ProcessingActivityTransferSafeguardsBindingCorporateRules      ProcessingActivityTransferSafeguards = "BINDING_CORPORATE_RULES"
-	ProcessingActivityTransferSafeguardsAdequacyDecision           ProcessingActivityTransferSafeguards = "ADEQUACY_DECISION"
-	ProcessingActivityTransferSafeguardsDerogations                ProcessingActivityTransferSafeguards = "DEROGATIONS"
-	ProcessingActivityTransferSafeguardsCodesOfConduct             ProcessingActivityTransferSafeguards = "CODES_OF_CONDUCT"
-	ProcessingActivityTransferSafeguardsCertificationMechanisms    ProcessingActivityTransferSafeguards = "CERTIFICATION_MECHANISMS"
+	ProcessingActivityTransferSafeguardStandardContractualClauses ProcessingActivityTransferSafeguard = "STANDARD_CONTRACTUAL_CLAUSES"
+	ProcessingActivityTransferSafeguardBindingCorporateRules      ProcessingActivityTransferSafeguard = "BINDING_CORPORATE_RULES"
+	ProcessingActivityTransferSafeguardAdequacyDecision           ProcessingActivityTransferSafeguard = "ADEQUACY_DECISION"
+	ProcessingActivityTransferSafeguardDerogations                ProcessingActivityTransferSafeguard = "DEROGATIONS"
+	ProcessingActivityTransferSafeguardCodesOfConduct             ProcessingActivityTransferSafeguard = "CODES_OF_CONDUCT"
+	ProcessingActivityTransferSafeguardCertificationMechanisms    ProcessingActivityTransferSafeguard = "CERTIFICATION_MECHANISMS"
 )
 
-func (p ProcessingActivityTransferSafeguards) String() string {
+func ProcessingActivityTransferSafeguards() []ProcessingActivityTransferSafeguard {
+	return []ProcessingActivityTransferSafeguard{
+		ProcessingActivityTransferSafeguardStandardContractualClauses,
+		ProcessingActivityTransferSafeguardBindingCorporateRules,
+		ProcessingActivityTransferSafeguardAdequacyDecision,
+		ProcessingActivityTransferSafeguardDerogations,
+		ProcessingActivityTransferSafeguardCodesOfConduct,
+		ProcessingActivityTransferSafeguardCertificationMechanisms,
+	}
+}
+
+func (p ProcessingActivityTransferSafeguard) String() string {
 	return string(p)
 }
 
-func (p *ProcessingActivityTransferSafeguards) Scan(value any) error {
+func (p *ProcessingActivityTransferSafeguard) Scan(value any) error {
 	var s string
 	switch v := value.(type) {
 	case string:
@@ -42,28 +53,28 @@ func (p *ProcessingActivityTransferSafeguards) Scan(value any) error {
 	case []byte:
 		s = string(v)
 	default:
-		return fmt.Errorf("unsupported type for ProcessingActivityTransferSafeguards: %T", value)
+		return fmt.Errorf("unsupported type for ProcessingActivityTransferSafeguard: %T", value)
 	}
 
 	switch s {
 	case "STANDARD_CONTRACTUAL_CLAUSES":
-		*p = ProcessingActivityTransferSafeguardsStandardContractualClauses
+		*p = ProcessingActivityTransferSafeguardStandardContractualClauses
 	case "BINDING_CORPORATE_RULES":
-		*p = ProcessingActivityTransferSafeguardsBindingCorporateRules
+		*p = ProcessingActivityTransferSafeguardBindingCorporateRules
 	case "ADEQUACY_DECISION":
-		*p = ProcessingActivityTransferSafeguardsAdequacyDecision
+		*p = ProcessingActivityTransferSafeguardAdequacyDecision
 	case "DEROGATIONS":
-		*p = ProcessingActivityTransferSafeguardsDerogations
+		*p = ProcessingActivityTransferSafeguardDerogations
 	case "CODES_OF_CONDUCT":
-		*p = ProcessingActivityTransferSafeguardsCodesOfConduct
+		*p = ProcessingActivityTransferSafeguardCodesOfConduct
 	case "CERTIFICATION_MECHANISMS":
-		*p = ProcessingActivityTransferSafeguardsCertificationMechanisms
+		*p = ProcessingActivityTransferSafeguardCertificationMechanisms
 	default:
-		return fmt.Errorf("invalid ProcessingActivityTransferSafeguards value: %q", s)
+		return fmt.Errorf("invalid ProcessingActivityTransferSafeguard value: %q", s)
 	}
 	return nil
 }
 
-func (p ProcessingActivityTransferSafeguards) Value() (driver.Value, error) {
+func (p ProcessingActivityTransferSafeguard) Value() (driver.Value, error) {
 	return p.String(), nil
 }
