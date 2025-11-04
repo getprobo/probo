@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type NonconformityService struct {
@@ -59,6 +60,40 @@ type (
 	}
 )
 
+func (cnr *CreateNonconformityRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cnr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cnr.ReferenceID, "reference_id", validator.Required(), validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText())
+	v.Check(cnr.Description, "description", validator.WhenSet(cnr.Description, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(cnr.AuditID, "audit_id", validator.Required(), validator.GID(coredata.AuditEntityType))
+	v.Check(cnr.DateIdentified, "date_identified", validator.WhenSet(cnr.DateIdentified, validator.Required()))
+	v.Check(cnr.RootCause, "root_cause", validator.Required(), validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cnr.CorrectiveAction, "corrective_action", validator.WhenSet(cnr.CorrectiveAction, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(cnr.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(cnr.DueDate, "due_date", validator.WhenSet(cnr.DueDate))
+	v.Check(cnr.Status, "status", validator.Required(), validator.OneOfSlice(coredata.NonconformityStatuses()))
+	v.Check(cnr.EffectivenessCheck, "effectiveness_check", validator.WhenSet(cnr.EffectivenessCheck, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+
+	return v.Error()
+}
+
+func (unr *UpdateNonconformityRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(unr.ID, "id", validator.Required(), validator.GID(coredata.NonconformityEntityType))
+	v.Check(unr.ReferenceID, "reference_id", validator.WhenSet(unr.ReferenceID, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(unr.Description, "description", validator.WhenSet(unr.Description, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(unr.DateIdentified, "date_identified", validator.WhenSet(unr.DateIdentified))
+	v.Check(unr.RootCause, "root_cause", validator.WhenSet(unr.RootCause, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(unr.CorrectiveAction, "corrective_action", validator.WhenSet(unr.CorrectiveAction, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(unr.OwnerID, "owner_id", validator.WhenSet(unr.OwnerID, validator.GID(coredata.PeopleEntityType)))
+	v.Check(unr.DueDate, "due_date", validator.WhenSet(unr.DueDate))
+	v.Check(unr.Status, "status", validator.WhenSet(unr.Status, validator.OneOfSlice(coredata.NonconformityStatuses())))
+	v.Check(unr.EffectivenessCheck, "effectiveness_check", validator.WhenSet(unr.EffectivenessCheck, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+
+	return v.Error()
+}
 func (s NonconformityService) Get(
 	ctx context.Context,
 	nonconformityID gid.GID,
@@ -83,6 +118,10 @@ func (s *NonconformityService) Create(
 	ctx context.Context,
 	req *CreateNonconformityRequest,
 ) (*coredata.Nonconformity, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	now := time.Now()
 
 	nonconformity := &coredata.Nonconformity{
@@ -143,6 +182,10 @@ func (s *NonconformityService) Update(
 	ctx context.Context,
 	req *UpdateNonconformityRequest,
 ) (*coredata.Nonconformity, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	nonconformity := &coredata.Nonconformity{}
 
 	err := s.svc.pg.WithTx(
