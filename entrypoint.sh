@@ -24,12 +24,6 @@ unit:
     export-timeout: ${TRACING_EXPORT_TIMEOUT:-30}
     max-queue-size: ${TRACING_MAX_QUEUE_SIZE:-2048}
 
-saml:
-  session-duration: ${SAML_SESSION_DURATION:-604800}
-  cleanup-interval-seconds: ${SAML_CLEANUP_INTERVAL_SECONDS:-0}
-  certificate: "${SAML_CERTIFICATE:-}"
-  private-key: "${SAML_PRIVATE_KEY:-}"
-
 probod:
   base-url: "${PROBOD_BASE_URL:-http://localhost:8080}"
   encryption-key: "${PROBOD_ENCRYPTION_KEY:?PROBOD_ENCRYPTION_KEY is required}"
@@ -123,6 +117,18 @@ EOF
           - "incoming-webhook"
       settings:
         signing-secret: "${CONNECTOR_SLACK_SIGNING_SECRET:?CONNECTOR_SLACK_SIGNING_SECRET is required when CONNECTOR_SLACK_CLIENT_ID is set}"
+EOF
+  fi
+
+  # Add SAML config if any SAML variable is configured
+  if [ -n "$SAML_SESSION_DURATION" ] || [ -n "$SAML_CLEANUP_INTERVAL_SECONDS" ] || [ -n "$SAML_CERTIFICATE" ] || [ -n "$SAML_PRIVATE_KEY" ]; then
+    cat >> "$CONFIG_FILE" <<EOF
+
+saml:
+  session-duration: ${SAML_SESSION_DURATION:-604800}
+  cleanup-interval-seconds: ${SAML_CLEANUP_INTERVAL_SECONDS:-0}
+  certificate: "${SAML_CERTIFICATE:-}"
+  private-key: "${SAML_PRIVATE_KEY:-}"
 EOF
   fi
 
