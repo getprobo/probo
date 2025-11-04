@@ -19,11 +19,12 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
@@ -68,6 +69,29 @@ type (
 		} `json:"measures"`
 	}
 )
+
+func (cmr *CreateMeasureRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cmr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cmr.Name, "name", validator.Required(), validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText())
+	v.Check(cmr.Description, "description", validator.WhenSet(cmr.Description, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(cmr.Category, "category", validator.Required(), validator.NotEmpty(), validator.NoHTML(), validator.PrintableText(), validator.MaxLen(1000))
+
+	return v.Error()
+}
+
+func (umr *UpdateMeasureRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(umr.ID, "id", validator.Required(), validator.GID(coredata.MeasureEntityType))
+	v.Check(umr.Name, "name", validator.WhenSet(umr.Name, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(umr.Description, "description", validator.WhenSet(umr.Description, validator.NotEmpty(), validator.MaxLen(5000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(umr.Category, "category", validator.WhenSet(umr.Category, validator.NotEmpty(), validator.NoHTML(), validator.PrintableText(), validator.MaxLen(1000)))
+	v.Check(umr.State, "state", validator.WhenSet(umr.State, validator.Required(), validator.OneOfSlice(coredata.MeasureStates())))
+
+	return v.Error()
+}
 
 func (s MeasureService) CountForRiskID(
 	ctx context.Context,
