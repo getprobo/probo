@@ -19,10 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type ObligationService struct {
@@ -57,6 +58,40 @@ type (
 	}
 )
 
+func (cor *CreateObligationRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cor.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cor.Area, "area", validator.WhenSet(cor.Area, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(cor.Source, "source", validator.WhenSet(cor.Source, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(cor.Requirement, "requirement", validator.WhenSet(cor.Requirement, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(cor.ActionsToBeImplemented, "actions_to_be_implemented", validator.WhenSet(cor.ActionsToBeImplemented, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(cor.Regulator, "regulator", validator.WhenSet(cor.Regulator, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(cor.OwnerID, "owner_id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(cor.LastReviewDate, "last_review_date", validator.WhenSet(cor.LastReviewDate))
+	v.Check(cor.DueDate, "due_date", validator.WhenSet(cor.DueDate))
+	v.Check(cor.Status, "status", validator.Required(), validator.OneOfSlice(coredata.ObligationStatuses()))
+
+	return v.Error()
+}
+
+func (uor *UpdateObligationRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(uor.ID, "id", validator.Required(), validator.GID(coredata.ObligationEntityType))
+	v.Check(uor.Area, "area", validator.WhenSet(uor.Area, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(uor.Source, "source", validator.WhenSet(uor.Source, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(uor.Requirement, "requirement", validator.WhenSet(uor.Requirement, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(uor.ActionsToBeImplemented, "actions_to_be_implemented", validator.WhenSet(uor.ActionsToBeImplemented, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(uor.Regulator, "regulator", validator.WhenSet(uor.Regulator, validator.NotEmpty(), validator.MaxLen(100), validator.NoHTML(), validator.PrintableText()))
+	v.Check(uor.OwnerID, "owner_id", validator.WhenSet(uor.OwnerID, validator.GID(coredata.PeopleEntityType)))
+	v.Check(uor.LastReviewDate, "last_review_date", validator.WhenSet(uor.LastReviewDate))
+	v.Check(uor.DueDate, "due_date", validator.WhenSet(uor.DueDate))
+	v.Check(uor.Status, "status", validator.WhenSet(uor.Status, validator.OneOfSlice(coredata.ObligationStatuses())))
+
+	return v.Error()
+}
+
 func (s ObligationService) Get(
 	ctx context.Context,
 	obligationID gid.GID,
@@ -85,6 +120,10 @@ func (s *ObligationService) Create(
 	ctx context.Context,
 	req *CreateObligationRequest,
 ) (*coredata.Obligation, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	now := time.Now()
 
 	obligation := &coredata.Obligation{
@@ -135,6 +174,10 @@ func (s *ObligationService) Update(
 	ctx context.Context,
 	req *UpdateObligationRequest,
 ) (*coredata.Obligation, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	obligation := &coredata.Obligation{}
 
 	err := s.svc.pg.WithTx(
