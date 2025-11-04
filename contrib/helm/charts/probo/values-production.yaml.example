@@ -1,0 +1,311 @@
+# Production values for probo.
+# This file provides a template for production deployment.
+# Copy this file to values-production.yaml and customize it for your environment.
+
+# Use specific version tag
+image:
+  repository: ghcr.io/getprobo/probo
+  tag: "0.74.7"
+  pullPolicy: IfNotPresent
+
+# Scale for high availability
+replicaCount: 3
+
+# Production security context (non-root user)
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000  # probo user (UID defined in Dockerfile)
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false  # /data directory requires write access
+  runAsUser: 1000
+  runAsGroup: 1000
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8080
+  httpPort: 80
+  httpsPort: 443
+  annotations: {}
+
+# Production resource limits
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+# Enable horizontal pod autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# HAProxy Ingress Controller configuration
+haproxy-ingress:
+  enabled: true
+  controller:
+    ingressClass: haproxy
+    ingressClassResource:
+      enabled: true
+      name: haproxy
+      default: false
+    name: controller
+    service:
+      type: LoadBalancer
+      annotations:
+        # Cloud provider annotations for LoadBalancer
+        # AWS example:
+        # service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+        # GCP example:
+        # cloud.google.com/load-balancer-type: "External"
+    extraArgs:
+      - --tcp-services-configmap=$(POD_NAMESPACE)/haproxy-tcp-services
+    config:
+      ssl-redirect: "false"  # Probo handles SSL internally
+
+# Configure ingress with TLS
+ingress:
+  enabled: true
+  className: "haproxy"
+  annotations:
+    kubernetes.io/ingress.class: haproxy
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: probo.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: probo-tls
+      hosts:
+        - probo.example.com
+
+# Probo application configuration
+probo:
+  # Must match your ingress hostname
+  hostname: "probo.example.com"
+
+  # REQUIRED: Generate with: openssl rand -base64 32
+  encryptionKey: "CHANGE_ME_ENCRYPTION_KEY"
+
+  service:
+    port: 8080
+
+  metrics:
+    port: 8081
+
+  # CORS configuration - add all domains that will access the API
+  cors:
+    allowedOrigins:
+      - "https://probo.example.com"
+
+  # Extra HTTP headers to add to responses
+  extraHeaderFields: {}
+    # X-Custom-Header: "custom-value"
+
+  # Authentication
+  auth:
+    # Set to true to disable public signup
+    disableSignup: false
+    # Cookie domain should be your root domain
+    cookieDomain: "example.com"
+    # REQUIRED: Generate with: openssl rand -base64 32
+    cookieSecret: "CHANGE_ME_COOKIE_SECRET"
+    # REQUIRED: Generate with: openssl rand -base64 32
+    passwordPepper: "CHANGE_ME_PASSWORD_PEPPER"
+
+  # Trust center authentication
+  trustAuth:
+    cookieName: "TCT"
+    cookieDomain: "example.com"
+    cookieDuration: 24
+    tokenDuration: 168
+    reportUrlDuration: 15
+    ports:
+      httpChallenge: 80
+      tlsHttpServer: 443
+    # REQUIRED: Generate with: openssl rand -base64 32
+    tokenSecret: "CHANGE_ME_TRUST_TOKEN_SECRET"
+    scope: "trust_center_readonly"
+    tokenType: "trust_center_access"
+
+  # Email configuration
+  mailer:
+    senderName: "Probo"
+    senderEmail: "noreply@example.com"
+    smtp:
+      # Use your SMTP provider (e.g., SendGrid, Mailgun, AWS SES)
+      addr: "smtp.sendgrid.net:587"
+      user: "apikey"
+      password: "CHANGE_ME_SMTP_PASSWORD"
+      tlsRequired: true
+
+  # OpenAI integration for AI features (optional)
+  openai:
+    apiKey: "CHANGE_ME_OPENAI_API_KEY"
+    temperature: 0.1
+    modelName: "gpt-4o"
+
+  # OpenTelemetry tracing (optional)
+  tracing:
+    enabled: true
+    addr: "tempo.monitoring:4317"
+    maxBatchSize: 1000
+    batchTimeout: 10
+    exportTimeout: 30
+    maxQueueSize: 10000
+
+  # Custom domains with Let's Encrypt (optional)
+  customDomains:
+    enabled: true
+    renewalInterval: 86400  # 24 hours
+    provisionInterval: 300  # 5 minutes
+    cnameTarget: "custom.example.com"
+    acme:
+      directory: "https://acme-v02.api.letsencrypt.org/directory"
+      email: "admin@example.com"
+      keyType: "EC256"
+      insecureTls: false
+
+  # External OAuth2 connectors (optional)
+  connectors:
+    - name: "github"
+      type: "oauth2"
+      config:
+        client-id: "CHANGE_ME_GITHUB_CLIENT_ID"
+        client-secret: "CHANGE_ME_GITHUB_CLIENT_SECRET"
+        redirect-uri: "https://probo.example.com/api/console/v1/connectors/complete"
+        auth-url: "https://github.com/login/oauth/authorize"
+        token-url: "https://github.com/login/oauth/access_token"
+
+# PostgreSQL configuration (REQUIRED)
+# For production: Use external managed PostgreSQL (AWS RDS, GCP Cloud SQL, etc.)
+# Disable the included PostgreSQL chart
+postgresql:
+  # Disable the included PostgreSQL for production
+  enabled: false
+
+  # External PostgreSQL connection (configure these when enabled=false)
+  # Examples:
+  # - AWS RDS: mydb.abc123.us-east-1.rds.amazonaws.com
+  # - GCP Cloud SQL: 10.0.0.5 (private IP)
+  # - Azure Database: myserver.postgres.database.azure.com
+  # - DigitalOcean: db-postgresql-nyc1-12345.ondigitalocean.com
+  host: "CHANGE_ME_POSTGRES_HOST"
+  port: 5432
+  database: "probod"
+  username: "probod"
+  password: "CHANGE_ME_DB_PASSWORD"
+  poolSize: 200
+  # Uncomment if using TLS with custom CA
+  # caCertBundle: |
+  #   -----BEGIN CERTIFICATE-----
+  #   ...
+  #   -----END CERTIFICATE-----
+
+# MinIO configuration
+# Disable included MinIO for production - use external S3 instead
+minio:
+  enabled: false
+
+# S3 storage configuration (REQUIRED)
+s3:
+  # AWS S3 example:
+  region: "us-east-1"
+  bucket: "probo-production"
+  # Leave endpoint empty for AWS S3
+  endpoint: ""
+  accessKeyId: "CHANGE_ME_AWS_ACCESS_KEY_ID"
+  secretAccessKey: "CHANGE_ME_AWS_SECRET_ACCESS_KEY"
+
+  # GCP Cloud Storage example (uncomment and adjust):
+  # region: "us-east1"
+  # bucket: "probo-production"
+  # endpoint: "https://storage.googleapis.com"
+  # accessKeyId: "GOOG1E..." # HMAC access key
+  # secretAccessKey: "..." # HMAC secret
+
+  # DigitalOcean Spaces example (uncomment and adjust):
+  # region: "nyc3"
+  # bucket: "probo-production"
+  # endpoint: "https://nyc3.digitaloceanspaces.com"
+  # accessKeyId: "..." # Spaces access key
+  # secretAccessKey: "..." # Spaces secret
+
+# Chrome for PDF generation
+chrome:
+  enabled: true
+  # Scale for concurrent PDF generation
+  replicaCount: 3
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+  # To use external Chrome service instead, set enabled=false and configure:
+  # external:
+  #   addr: "chrome.browserless.io:3000"
+
+# Persistent data volume (optional)
+persistence:
+  enabled: true
+  # Use existing PVC or let Helm create one
+  # existingClaim: "probo-data-pvc"
+  storageClass: ""  # Use default storage class or specify one
+  accessMode: ReadWriteOnce
+  size: 50Gi
+  annotations: {}
+
+# Enable Prometheus monitoring
+metrics:
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 10s
+    labels:
+      prometheus: kube-prometheus
+
+# Pod placement (optional)
+nodeSelector: {}
+  # node-role.kubernetes.io/worker: "true"
+
+tolerations: []
+
+# Anti-affinity for high availability
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - probo
+          topologyKey: kubernetes.io/hostname
+
+# Service account annotations (for workload identity, IRSA, etc.)
+serviceAccount:
+  create: true
+  annotations: {}
+    # AWS EKS example (uncomment and adjust):
+    # eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/probo-role
+
+    # GCP GKE example (uncomment and adjust):
+    # iam.gke.io/gcp-service-account: probo@PROJECT_ID.iam.gserviceaccount.com

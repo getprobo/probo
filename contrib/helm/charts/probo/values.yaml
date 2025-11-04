@@ -1,0 +1,352 @@
+# Default values for probo.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/getprobo/probo
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Automatically mount a ServiceAccount's API credentials?
+  automount: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  runAsUser: 0
+  runAsGroup: 0
+#  runAsNonRoot: false
+#  runAsUser: 1000  # probo user (UID defined in Dockerfile)
+#  fsGroup: 1000    # probo group
+
+securityContext:
+  runAsUser: 0
+  runAsGroup: 0
+  privileged: true
+#  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false  # /data directory requires write access for file uploads
+
+service:
+  type: ClusterIP
+  port: 8080
+  httpPort: 80
+  httpsPort: 443
+  # nodePort: 30080
+  # clusterIP: ""
+  # loadBalancerIP: ""
+  # loadBalancerSourceRanges: []
+  annotations: {}
+
+haproxy-ingress:
+  enabled: true
+  controller:
+    ingressClass: haproxy  # This tells the controller to create an IngressClass
+    ingressClassResource:
+      enabled: true  # Enable IngressClass resource creation
+      name: haproxy
+      default: false
+    name: controller
+    service:
+      type: LoadBalancer
+      annotations: {}
+    extraArgs:
+      - --tcp-services-configmap=$(POD_NAMESPACE)/haproxy-tcp-services
+    config:
+      # HAProxy Ingress global config
+      ssl-redirect: "false"
+
+ingress:
+  enabled: true
+  className: "haproxy"
+  annotations:
+    kubernetes.io/ingress.class: haproxy
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: probo.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: probo
+              port:
+                number: 8080
+  tls: []
+  #  - secretName: probo-tls
+  #    hosts:
+  #      - probo.example.com
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: backoffice
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: backoffice
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# Additional volumes on the output Deployment definition.
+volumes: []
+# - name: foo
+#   secret:
+#     secretName: mysecret
+#     optional: false
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts: []
+# - name: foo
+#   mountPath: "/etc/foo"
+#   readOnly: true
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Persistent data volume
+persistence:
+  enabled: false
+  # existingClaim: ""
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+
+# Prometheus Operator ServiceMonitor
+metrics:
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+    relabelings: []
+
+# Probo application configuration
+probo:
+  # Public hostname where Probo will be accessible
+  # This should match your ingress host
+  hostname: probo.example.com
+
+  # Base64-encoded encryption key (REQUIRED)
+  # Generate with: openssl rand -base64 32
+  encryptionKey: ""
+
+  service:
+    port: 8080
+
+  metrics:
+    port: 8081
+
+  # OpenTelemetry tracing configuration
+  tracing:
+    enabled: false
+    # OTLP gRPC endpoint (e.g., tempo:4317)
+    addr: ""
+    maxBatchSize: 512
+    batchTimeout: 5
+    exportTimeout: 30
+    maxQueueSize: 2048
+#  pg:
+#    addr: "probo-postgresql-demo-app:5432"
+#    username: "postgres"
+#    password: "probod"
+#    database: "probod"
+#    pool-size: 100
+
+  # CORS configuration
+  cors:
+    allowedOrigins:
+      - "https://probo.example.com"
+      - "http://probo.example.com"
+
+  # Extra HTTP headers to add to responses
+  extraHeaderFields: {}
+
+  # Authentication configuration
+  auth:
+    disableSignup: false
+    invitationTokenValidity: 3600
+    cookieName: "SSID"
+    cookieDomain: "probo.example.com"
+    # Cookie signing secret (REQUIRED, at least 32 bytes)
+    # Generate with: openssl rand -base64 32
+    cookieSecret: ""
+    cookieDuration: 24
+    # Password hashing pepper (REQUIRED, at least 32 bytes)
+    # Generate with: openssl rand -base64 32
+    passwordPepper: ""
+    passwordIterations: 1000000
+
+  # Trust center authentication
+  trustAuth:
+    cookieName: "TCT"
+    cookieDomain: "probo.example.com"
+    cookieDuration: 24
+    tokenDuration: 168
+    reportUrlDuration: 15
+    ports:
+      httpChallenge: 80
+      tlsHttpServer: 443
+    # Trust token signing secret (REQUIRED, at least 32 bytes)
+    # Generate with: openssl rand -base64 32
+    tokenSecret: ""
+    scope: "trust_center_readonly"
+    tokenType: "trust_center_access"
+
+  # Email configuration
+  mailer:
+    senderName: "Probo"
+    senderEmail: "no-reply@notification.getprobo.com"
+    smtp:
+      addr: "sandbox.smtp.mailtrap.io:2525"
+      user: "2d1b1d0e8b3d0b"
+      password: "25a8eb11e75e8d"
+      tlsRequired: true
+#    smtp:
+#      addr: "localhost:1025"
+#      user: ""
+#      password: ""
+#      tlsRequired: false
+
+  # OpenAI integration (optional)
+  openai:
+    apiKey: ""
+    temperature: 0.1
+    modelName: "gpt-4o"
+
+  # Custom domains configuration (optional)
+  customDomains:
+    enabled: false
+    renewalInterval: 3600
+    provisionInterval: 30
+    cnameTarget: "probo.example.com"
+    acme:
+      directory: "https://acme-v02.api.letsencrypt.org/directory"
+      email: "admin@example.com"
+      keyType: "EC256"
+      insecureTls: false
+
+  # External OAuth2 connectors (optional)
+  connectors: []
+  # - name: "github"
+  #   type: "oauth2"
+  #   config:
+  #     client-id: "github-client-id"
+  #     client-secret: "github-client-secret"
+  #     redirect-uri: "https://probo.example.com/api/console/v1/connectors/complete"
+  #     auth-url: "https://github.com/login/oauth/authorize"
+  #     token-url: "https://github.com/login/oauth/access_token"
+
+# PostgreSQL configuration
+# For production: Use external managed PostgreSQL (AWS RDS, GCP Cloud SQL, etc.)
+# For testing: Enable the included PostgreSQL chart
+postgresql:
+  # -- enabled included Postgres container for demo purposes only using cloudnative-pg
+  enabled: true
+  resources:
+    limits:
+      memory: "2Gi"
+      ephemeral-storage: "5Gi"
+  auth:
+    postgresUser: probod
+    postgresPassword: probod
+    database: probod
+
+# S3 storage configuration
+# For production: Use external S3 (AWS S3, GCS, etc.)
+# For testing: Enable the included MinIO chart
+s3:
+  # External S3 configuration (used when minio.enabled=false)
+  region: "us-east-1"
+  bucket: "probod"
+  # For AWS S3, leave endpoint empty
+  # For S3-compatible storage (MinIO, DigitalOcean Spaces, etc.), set the endpoint
+  endpoint: ""
+  accessKeyId: ""  # REQUIRED when minio.enabled=false: S3 access key
+  secretAccessKey: ""  # REQUIRED when minio.enabled=false: S3 secret key
+
+# MinIO configuration
+# Enable included MinIO for testing/development (NOT for production)
+minio:
+  # -- enabled included Minio operator for s3 resource demo purposes
+  enabled: true
+  mode: standalone
+  persistence:
+    enabled: false
+  resources:
+    requests:
+      memory: 128Mi
+  primary:
+    enabled: true
+  auth:
+    rootUser: probod
+    rootPassword: probod
+
+# Headless Chrome for PDF generation
+chrome:
+  # Deploy Chrome in the cluster
+  enabled: true
+
+  replicaCount: 1
+
+  image:
+    repository: chromedp/headless-shell
+    tag: "140.0.7259.2"
+    pullPolicy: IfNotPresent
+
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+  # External Chrome configuration
+  # Used when chrome.enabled=false
+  external:
+    addr: ""

@@ -1,0 +1,29 @@
+apiVersion: v2
+name: probo
+description: A Helm chart for deploying Probo - Open Source Compliance Platform
+type: application
+version: 0.1.0
+appVersion: "0.74.7"
+keywords:
+  - compliance
+  - soc2
+  - security
+  - governance
+home: https://getprobo.com
+sources:
+  - https://github.com/getprobo/probo
+maintainers:
+  - name: Probo Team
+    email: hello@getprobo.com
+icon: https://github.com/getprobo/probo/blob/main/.github/cover_v3.png
+
+dependencies:
+  - name: minio
+    condition: minio.enabled
+    repository: https://charts.min.io/
+    version: 5.4.0 # Latest stable version
+  - name: kubernetes-ingress
+    alias: haproxy-ingress
+    condition: haproxy-ingress.enabled
+    version: 1.45.1
+    repository: https://haproxytech.github.io/helm-charts

@@ -1,0 +1,81 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "probo.fullname" . }}-postgresql-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "probo.fullname" . }}-postgresql-demo
+  template:
+    metadata:
+      labels:
+        app: {{ include "probo.fullname" . }}-postgresql-demo
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:18
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.postgresql.auth.postgresUser }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.postgresql.auth.postgresPassword }}
+            - name: POSTGRES_DB
+              value: {{ .Values.postgresql.auth.database }}
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+          resources:
+            {{- toYaml .Values.postgresql.resources | nindent 12 }}
+      volumes:
+        - name: postgres-init
+          configMap:
+            name: {{ include "probo.fullname" . }}-postgres-init
+            defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-postgresql-demo
+spec:
+  selector:
+    app: {{ include "probo.fullname" . }}-postgresql-demo
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "probo.fullname" . }}-postgres-init
+  labels:
+    {{- include "probo.labels" . | nindent 4 }}
+data:
+  01_probod.sh: |
+    #!/bin/sh
+
+    set -eu
+
+    psql -v ON_ERROR_STOP=1 -U $POSTGRES_USER <<-EOF
+    ALTER USER probod WITH SUPERUSER;
+    ALTER USER probod PASSWORD 'probod';
+    GRANT ALL PRIVILEGES ON DATABASE probod TO probod;
+    CREATE DATABASE probod_test;
+    GRANT ALL PRIVILEGES ON DATABASE probod_test TO probod;
+    EOF
+
+    psql -v ON_ERROR_STOP=1 -U $POSTGRES_USER -d probod <<-EOF
+    ALTER SCHEMA public OWNER TO probod;
+    GRANT ALL ON SCHEMA public TO probod;
+    EOF
+
+    psql -v ON_ERROR_STOP=1 -U $POSTGRES_USER -d probod_test <<-EOF
+    ALTER SCHEMA public OWNER TO probod;
+    GRANT ALL ON SCHEMA public TO probod;
+    EOF
+---
+{{- end -}}

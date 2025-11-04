@@ -1,0 +1,84 @@
+🎉 Probo has been successfully deployed!
+
+📋 Release Information:
+   Name:      {{ .Release.Name }}
+   Namespace: {{ .Release.Namespace }}
+   Version:   {{ .Chart.AppVersion }}
+
+🌐 Accessing Probo:
+
+{{- if .Values.ingress.enabled }}
+{{- range $host := .Values.ingress.hosts }}
+   Application: {{ if $.Values.ingress.tls }}https{{ else }}http{{ end }}://{{ $host.host }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+   Get the application URL by running:
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "probo.fullname" . }})
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "Application: http://$NODE_IP:$NODE_PORT"
+{{- else if contains "LoadBalancer" .Values.service.type }}
+   NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+   You can watch the status by running:
+   kubectl get --namespace {{ .Release.Namespace }} svc -w {{ include "probo.fullname" . }}
+
+   Once available, get the application URL by running:
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "probo.fullname" . }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+   echo "Application: http://$SERVICE_IP:{{ .Values.service.port }}"
+{{- else if contains "ClusterIP" .Values.service.type }}
+   Application is available only within the cluster.
+
+   To access it from your local machine, run:
+   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "probo.fullname" . }} 8080:{{ .Values.service.port }}
+
+   Then visit: http://localhost:8080
+{{- end }}
+
+📊 Monitoring:
+   Metrics endpoint: http://{{ include "probo.fullname" . }}:{{ .Values.probo.metrics.port }}/metrics
+
+   To access metrics from your local machine, run:
+   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "probo.fullname" . }} 8081:{{ .Values.probo.metrics.port }}
+
+🔍 View Logs:
+   kubectl --namespace {{ .Release.Namespace }} logs -f deployment/{{ include "probo.fullname" . }}
+
+🗄️  Database:
+   Using external PostgreSQL at: {{ .Values.postgresql.host }}:{{ .Values.postgresql.port }}
+   Database: {{ .Values.postgresql.database }}
+
+💾 Object Storage:
+   Using S3 storage
+   Bucket: {{ .Values.s3.bucket }}
+   Region: {{ .Values.s3.region }}
+   {{- if .Values.s3.endpoint }}
+   Endpoint: {{ .Values.s3.endpoint }}
+   {{- end }}
+
+⚠️  Important Security Notes:
+
+{{- if not .Values.ingress.tls }}
+   ⚠️  TLS is not enabled! Enable it for production by configuring ingress.tls
+{{- end }}
+
+📚 Next Steps:
+
+1. Update the hostname in values.yaml to match your domain:
+   probo.hostname: "{{ .Values.probo.hostname }}"
+
+2. Configure email delivery:
+   Update probo.mailer.smtp settings with your SMTP server details.
+
+{{- if not .Values.probo.openai.apiKey }}
+3. (Optional) Configure OpenAI integration for AI-powered features:
+   Set probo.openai.apiKey in values.yaml
+{{- end }}
+
+4. Review and update CORS allowed origins:
+   probo.cors.allowedOrigins
+
+📖 Documentation:
+   - GitHub: https://github.com/getprobo/probo
+   - Discord: https://discord.gg/8qfdJYfvpY
+   - Website: https://getprobo.com
+
+✨ Thank you for using Probo!

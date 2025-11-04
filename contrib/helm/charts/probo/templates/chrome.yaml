@@ -1,0 +1,77 @@
+{{- if .Values.chrome.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "probo.fullname" . }}-chrome
+  labels:
+    {{- include "probo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: chrome
+spec:
+  replicas: {{ .Values.chrome.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "probo.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: chrome
+  template:
+    metadata:
+      labels:
+        {{- include "probo.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: chrome
+    spec:
+      containers:
+        - name: chrome
+          image: "{{ .Values.chrome.image.repository }}:{{ .Values.chrome.image.tag }}"
+          imagePullPolicy: {{ .Values.chrome.image.pullPolicy }}
+          args:
+            - --headless
+            - --disable-gpu
+            - --disable-dev-shm-usage
+            - --hide-scrollbars
+            - --mute-audio
+            - --no-default-browser-check
+            - --no-first-run
+            - --disable-background-networking
+            - --disable-background-timer-throttling
+            - --disable-extensions
+          ports:
+            - name: devtools
+              containerPort: 9222
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /json/version
+              port: devtools
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /json/version
+              port: devtools
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.chrome.resources | nindent 12 }}
+          securityContext:
+            capabilities:
+              add:
+                - SYS_ADMIN
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "probo.fullname" . }}-chrome
+  labels:
+    {{- include "probo.labels" . | nindent 4 }}
+    app.kubernetes.io/component: chrome
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9222
+      targetPort: devtools
+      protocol: TCP
+      name: devtools
+  selector:
+    {{- include "probo.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: chrome
+{{- end }}

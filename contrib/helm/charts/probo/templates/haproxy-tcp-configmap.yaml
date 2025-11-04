@@ -1,0 +1,16 @@
+{{- if index .Values "haproxy-ingress" "enabled" -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haproxy-tcp-services
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "probo.labels" . | nindent 4 }}
+data:
+  # TCP passthrough for port 80 (HTTP)
+  # Format: "<port>": "<namespace>/<service>:<port>"
+  "80": "{{ .Release.Namespace }}/{{ include "probo.fullname" . }}:{{ .Values.service.httpPort }}"
+
+  # TCP passthrough for port 443 (HTTPS)
+  "443": "{{ .Release.Namespace }}/{{ include "probo.fullname" . }}:{{ .Values.service.httpsPort }}"
+{{- end }}
