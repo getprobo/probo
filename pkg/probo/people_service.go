@@ -19,26 +19,16 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/validator"
 )
 
 type (
 	PeopleService struct {
 		svc *TenantService
-	}
-
-	UpdatePeopleRequest struct {
-		ID                       gid.GID
-		Kind                     *coredata.PeopleKind
-		FullName                 *string
-		PrimaryEmailAddress      *string
-		AdditionalEmailAddresses *[]string
-		Position                 **string
-		ContractStartDate        **time.Time
-		ContractEndDate          **time.Time
 	}
 
 	CreatePeopleRequest struct {
@@ -51,7 +41,52 @@ type (
 		ContractStartDate        *time.Time
 		ContractEndDate          *time.Time
 	}
+
+	UpdatePeopleRequest struct {
+		ID                       gid.GID
+		Kind                     *coredata.PeopleKind
+		FullName                 *string
+		PrimaryEmailAddress      *string
+		AdditionalEmailAddresses *[]string
+		Position                 **string
+		ContractStartDate        **time.Time
+		ContractEndDate          **time.Time
+	}
 )
+
+func (cpr *CreatePeopleRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(cpr.OrganizationID, "organization_id", validator.Required(), validator.GID(coredata.OrganizationEntityType))
+	v.Check(cpr.FullName, "full_name", validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpr.PrimaryEmailAddress, "primary_email_address", validator.Required(), validator.NotEmpty(), validator.Email())
+	v.CheckEach(cpr.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty(), validator.Email())
+	})
+	v.Check(cpr.Kind, "kind", validator.Required(), validator.OneOfSlice(coredata.PeopleKinds()))
+	v.Check(cpr.Position, "position", validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText())
+	v.Check(cpr.ContractStartDate, "contract_start_date")
+	v.Check(cpr.ContractEndDate, "contract_end_date", validator.After(cpr.ContractStartDate))
+
+	return v.Error()
+}
+
+func (upr *UpdatePeopleRequest) Validate() error {
+	v := validator.New()
+
+	v.Check(upr.ID, "id", validator.Required(), validator.GID(coredata.PeopleEntityType))
+	v.Check(upr.Kind, "kind", validator.WhenSet(upr.Kind, validator.Required(), validator.OneOfSlice(coredata.PeopleKinds())))
+	v.Check(upr.FullName, "full_name", validator.WhenSet(upr.FullName, validator.Required(), validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(upr.PrimaryEmailAddress, "primary_email_address", validator.WhenSet(upr.PrimaryEmailAddress, validator.Required(), validator.NotEmpty(), validator.Email()))
+	v.CheckEach(upr.AdditionalEmailAddresses, "additional_email_addresses", func(index int, item any) {
+		v.Check(item, fmt.Sprintf("additional_email_addresses[%d]", index), validator.Required(), validator.NotEmpty(), validator.Email())
+	})
+	v.Check(upr.Position, "position", validator.WhenSet(upr.Position, validator.NotEmpty(), validator.MaxLen(1000), validator.NoHTML(), validator.PrintableText()))
+	v.Check(upr.ContractStartDate, "contract_start_date", validator.WhenSet(upr.ContractStartDate))
+	v.Check(upr.ContractEndDate, "contract_end_date", validator.WhenSet(upr.ContractEndDate, validator.After(upr.ContractStartDate)))
+
+	return v.Error()
+}
 
 func (s PeopleService) Get(
 	ctx context.Context,
@@ -133,6 +168,10 @@ func (s PeopleService) Update(
 	ctx context.Context,
 	req UpdatePeopleRequest,
 ) (*coredata.People, error) {
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
 	people := &coredata.People{}
 
 	err := s.svc.pg.WithTx(
@@ -191,10 +230,8 @@ func (s PeopleService) Create(
 	ctx context.Context,
 	req CreatePeopleRequest,
 ) (*coredata.People, error) {
-	if req.ContractStartDate != nil && req.ContractEndDate != nil {
-		if req.ContractEndDate.Before(*req.ContractStartDate) {
-			return nil, fmt.Errorf("contract end date must be after or equal to start date")
-		}
+	if err := req.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
 	now := time.Now()
