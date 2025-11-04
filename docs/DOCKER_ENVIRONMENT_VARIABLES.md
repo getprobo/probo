@@ -126,6 +126,15 @@ This document provides a comprehensive reference for all environment variables u
 | `OPENAI_TEMPERATURE` | Temperature parameter for OpenAI completions (0.0-2.0) | `0.1`         | No       |
 | `OPENAI_MODEL_NAME`  | OpenAI model name to use                               | `gpt-4o`      | No       |
 
+## SAML Authentication
+
+| Variable                        | Description                                                       | Default Value           | Required |
+| ------------------------------- | ----------------------------------------------------------------- | ----------------------- | -------- |
+| `SAML_SESSION_DURATION`         | SAML session validity duration in seconds                         | `604800` (7 days)       | No       |
+| `SAML_CLEANUP_INTERVAL_SECONDS` | Interval in seconds for cleaning up expired SAML sessions (0=off) | `0` (disabled)          | No       |
+| `SAML_CERTIFICATE`              | SAML service provider certificate in PEM format                   | -                       | No       |
+| `SAML_PRIVATE_KEY`              | SAML service provider private key in PEM format                   | -                       | No       |
+
 ## Custom Domains
 
 | Variable                            | Description                                           | Default Value         | Required |

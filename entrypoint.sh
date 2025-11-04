@@ -24,6 +24,12 @@ unit:
     export-timeout: ${TRACING_EXPORT_TIMEOUT:-30}
     max-queue-size: ${TRACING_MAX_QUEUE_SIZE:-2048}
 
+saml:
+  session-duration: ${SAML_SESSION_DURATION:-604800}
+  cleanup-interval-seconds: ${SAML_CLEANUP_INTERVAL_SECONDS:-0}
+  certificate: "${SAML_CERTIFICATE:-}"
+  private-key: "${SAML_PRIVATE_KEY:-}"
+
 probod:
   base-url: "${PROBOD_BASE_URL:-http://localhost:8080}"
   encryption-key: "${PROBOD_ENCRYPTION_KEY:?PROBOD_ENCRYPTION_KEY is required}"
