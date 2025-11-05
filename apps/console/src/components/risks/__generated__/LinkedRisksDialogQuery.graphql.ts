@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ac10f3fa76fc76951f4c08e38ef0a185>>
+ * @generated SignedSource<<b39754dc6d5d5f02e4310f0db334add3>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,7 @@ export type LinkedRisksDialogQuery$data = {
       readonly edges: ReadonlyArray<{
         readonly node: {
           readonly category: string;
-          readonly description: string;
+          readonly description: string | null | undefined;
           readonly id: string;
           readonly inherentRiskScore: number;
           readonly name: string;

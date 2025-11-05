@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f3eadb5ecfeb7b2304712f74b6ac8863>>
+ * @generated SignedSource<<36175d4a9f9c3b377ec502f518a47015>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -19,7 +19,7 @@ export type RiskGraphNodeQuery$data = {
     readonly controlsInfo?: {
       readonly totalCount: number;
     };
-    readonly description?: string;
+    readonly description?: string | null | undefined;
     readonly documentsInfo?: {
       readonly totalCount: number;
     };

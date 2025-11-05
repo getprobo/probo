@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f6a6c2f623522098263a3b556d3c3658>>
+ * @generated SignedSource<<4a6e4730ab80df159c005156b71a7f3d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type DocumentVersionSignatureState = "REQUESTED" | "SIGNED";
 import { FragmentRefs } from "relay-runtime";
 export type DocumentDetailPageRowFragment$data = {
   readonly classification: DocumentClassification;
-  readonly description: string;
+  readonly description: string | null | undefined;
   readonly documentType: DocumentType;
   readonly id: string;
   readonly owner: {

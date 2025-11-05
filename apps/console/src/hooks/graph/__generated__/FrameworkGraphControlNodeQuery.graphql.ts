@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0e6281a892cbd711d75d22153d4710ea>>
+ * @generated SignedSource<<54b072cf5a78b17f86e5fc810cac517a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -25,7 +25,7 @@ export type FrameworkGraphControlNodeQuery$data = {
         };
       }>;
     };
-    readonly description?: string;
+    readonly description?: string | null | undefined;
     readonly documents?: {
       readonly __id: string;
       readonly edges: ReadonlyArray<{

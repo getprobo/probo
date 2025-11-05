@@ -21,11 +21,11 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -34,7 +34,7 @@ type (
 		SectionTitle           string        `db:"section_title"`
 		FrameworkID            gid.GID       `db:"framework_id"`
 		Name                   string        `db:"name"`
-		Description            string        `db:"description"`
+		Description            *string       `db:"description"`
 		Status                 ControlStatus `db:"status"`
 		ExclusionJustification *string       `db:"exclusion_justification"`
 		CreatedAt              time.Time     `db:"created_at"`
@@ -42,14 +42,6 @@ type (
 	}
 
 	Controls []*Control
-
-	UpdateControlParams struct {
-		Name                   *string
-		Description            *string
-		SectionTitle           *string
-		Status                 *ControlStatus
-		ExclusionJustification *string
-	}
 
 	ErrControlNotFound struct {
 		Identifier string
@@ -793,78 +785,44 @@ func (c *Control) Update(
 	ctx context.Context,
 	conn pg.Conn,
 	scope Scoper,
-	params UpdateControlParams,
 ) error {
 	q := `
 UPDATE controls SET
-    name = COALESCE(@name, name),
-    description = COALESCE(@description, description),
-    section_title = COALESCE(@section_title, section_title),
-	status = COALESCE(@status, status),
-	exclusion_justification = COALESCE(@exclusion_justification, exclusion_justification),
+    name = @name,
+    description = @description,
+    section_title = @section_title,
+	status = @status,
+	exclusion_justification = @exclusion_justification,
     updated_at = @updated_at
 WHERE %s
     AND id = @control_id
-RETURNING
-    id,
-    framework_id,
-    name,
-    description,
-	section_title,
-	status,
-	exclusion_justification,
-    created_at,
-    updated_at
 `
 	q = fmt.Sprintf(q, scope.SQLFragment())
 
 	args := pgx.StrictNamedArgs{
 		"control_id":              c.ID,
-		"section_title":           params.SectionTitle,
-		"status":                  params.Status,
-		"exclusion_justification": params.ExclusionJustification,
-		"updated_at":              time.Now(),
-	}
-
-	if params.Name != nil {
-		args["name"] = *params.Name
-	}
-	if params.Description != nil {
-		args["description"] = *params.Description
-	}
-
-	if params.Status != nil {
-		args["status"] = *params.Status
-	}
-	if params.ExclusionJustification != nil {
-		args["exclusion_justification"] = *params.ExclusionJustification
+		"name":                    c.Name,
+		"description":             c.Description,
+		"section_title":           c.SectionTitle,
+		"status":                  c.Status,
+		"exclusion_justification": c.ExclusionJustification,
+		"updated_at":              c.UpdatedAt,
 	}
 
 	maps.Copy(args, scope.SQLArguments())
 
-	rows, err := conn.Query(ctx, q, args)
-	if err != nil {
-		return fmt.Errorf("cannot query controls: %w", err)
-	}
-
-	control, err := pgx.CollectExactlyOneRow(rows, pgx.RowToStructByName[Control])
+	_, err := conn.Exec(ctx, q, args)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "controls_framework_ref_unique" {
-				sectionTitle := ""
-				if params.SectionTitle != nil {
-					sectionTitle = *params.SectionTitle
-				}
 				return &ErrControlAlreadyExists{
-					message: fmt.Sprintf("control with section_title %q already exists", sectionTitle),
+					message: fmt.Sprintf("control with section_title %q already exists", c.SectionTitle),
 				}
 			}
 		}
-		return fmt.Errorf("cannot collect control: %w", err)
+		return fmt.Errorf("cannot update control: %w", err)
 	}
-
-	*c = control
 
 	return nil
 }

@@ -220,7 +220,7 @@ type TrustCenterFileEdge struct {
 type TrustCenterReference struct {
 	ID          gid.GID `json:"id"`
 	Name        string  `json:"name"`
-	Description string  `json:"description"`
+	Description *string `json:"description,omitempty"`
 	WebsiteURL  string  `json:"websiteUrl"`
 	LogoURL     string  `json:"logoUrl"`
 }

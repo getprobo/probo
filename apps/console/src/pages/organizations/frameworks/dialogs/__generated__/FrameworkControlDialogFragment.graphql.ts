@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<8b52b1e3fd91d74821361d9ae652d9bd>>
+ * @generated SignedSource<<67703eb04d68c2798f5549ed6d948339>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ReaderFragment } from 'relay-runtime';
 export type ControlStatus = "EXCLUDED" | "INCLUDED";
 import { FragmentRefs } from "relay-runtime";
 export type FrameworkControlDialogFragment$data = {
-  readonly description: string;
+  readonly description: string | null | undefined;
   readonly exclusionJustification: string | null | undefined;
   readonly id: string;
   readonly name: string;

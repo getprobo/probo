@@ -52,7 +52,7 @@ const measureCreateMutation = graphql`
 
 const measureSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().optional().nullable(),
   category: z.string().min(1, "Category is required"),
   state: z.enum(measureStates),
 });
@@ -93,7 +93,7 @@ export default function MeasureFormDialog(props: Props) {
           input: {
             id: measure.id,
             name: data.name,
-            description: data.description,
+            description: data.description || null,
             category: data.category,
             state: data.state,
           },
@@ -105,7 +105,7 @@ export default function MeasureFormDialog(props: Props) {
           input: {
             organizationId,
             name: data.name,
-            description: data.description,
+            description: data.description || null,
             category: data.category,
           },
           connections: [props.connection!],
@@ -145,7 +145,6 @@ export default function MeasureFormDialog(props: Props) {
               label={__("Description")}
               placeholder={__("Add description")}
               type="textarea"
-              required
             />
           </div>
           {/* Properties form */}

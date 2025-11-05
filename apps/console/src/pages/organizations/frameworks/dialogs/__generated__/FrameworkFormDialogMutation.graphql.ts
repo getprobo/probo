@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fef15c2f99a731cf6c49a99487e37c59>>
+ * @generated SignedSource<<b8d5c939f1b3a4337be9a4ecc2e8fd98>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type CreateFrameworkInput = {
-  description: string;
+  description?: string | null | undefined;
   name: string;
   organizationId: string;
 };

@@ -38,7 +38,7 @@ type Props = {
     id: string;
     name: string;
     state: "TODO" | "DONE";
-    description: string;
+    description?: string | null;
     measure?: {
       id: string;
       name: string;

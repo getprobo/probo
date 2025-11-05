@@ -1,0 +1,8 @@
+ALTER TABLE controls ALTER COLUMN description DROP NOT NULL;
+ALTER TABLE documents ALTER COLUMN description DROP NOT NULL;
+ALTER TABLE documents ALTER COLUMN description DROP DEFAULT;
+ALTER TABLE evidences ALTER COLUMN description DROP NOT NULL;
+ALTER TABLE frameworks ALTER COLUMN description DROP NOT NULL;
+ALTER TABLE measures ALTER COLUMN description DROP NOT NULL;
+ALTER TABLE tasks ALTER COLUMN description DROP NOT NULL;
+ALTER TABLE trust_center_references ALTER COLUMN description DROP NOT NULL;

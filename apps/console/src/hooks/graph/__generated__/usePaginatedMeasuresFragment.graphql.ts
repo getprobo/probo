@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4b559d5e004d1657ab8d52cf5770ac79>>
+ * @generated SignedSource<<53e0a105a9b28a70a1083500cd6b4577>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,7 @@ export type usePaginatedMeasuresFragment$data = {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly category: string;
-        readonly description: string;
+        readonly description: string | null | undefined;
         readonly id: string;
         readonly name: string;
         readonly state: MeasureState;

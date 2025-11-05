@@ -21,11 +21,11 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -33,7 +33,7 @@ type (
 		ID            gid.GID   `db:"id"`
 		TrustCenterID gid.GID   `db:"trust_center_id"`
 		Name          string    `db:"name"`
-		Description   string    `db:"description"`
+		Description   *string   `db:"description"`
 		WebsiteURL    string    `db:"website_url"`
 		LogoFileID    gid.GID   `db:"logo_file_id"`
 		Rank          int       `db:"rank"`

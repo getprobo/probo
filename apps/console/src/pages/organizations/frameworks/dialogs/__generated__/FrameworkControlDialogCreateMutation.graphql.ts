@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<be64518840fd2564cffe1646a58c3762>>
+ * @generated SignedSource<<7985268ac23df51ae6187b72c4f33d83>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type ControlStatus = "EXCLUDED" | "INCLUDED";
 export type CreateControlInput = {
-  description: string;
+  description?: string | null | undefined;
   exclusionJustification?: string | null | undefined;
   frameworkId: string;
   name: string;

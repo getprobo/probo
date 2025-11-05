@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<530c955a326f52f3c668e9f43788a54f>>
+ * @generated SignedSource<<d60cc1832963c81fe19cfe8a71992273>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type FrameworkFormDialogUpdateMutation$variables = {
 export type FrameworkFormDialogUpdateMutation$data = {
   readonly updateFramework: {
     readonly framework: {
-      readonly description: string;
+      readonly description: string | null | undefined;
       readonly id: string;
       readonly name: string;
     };

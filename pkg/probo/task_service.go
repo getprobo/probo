@@ -19,11 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
 )
 
 type (
@@ -35,7 +35,7 @@ type (
 		OrganizationID gid.GID
 		MeasureID      *gid.GID
 		Name           string
-		Description    string
+		Description    *string
 		TimeEstimate   *time.Duration
 		AssignedToID   *gid.GID
 		Deadline       *time.Time
@@ -44,7 +44,7 @@ type (
 	UpdateTaskRequest struct {
 		TaskID       gid.GID
 		Name         *string
-		Description  *string
+		Description  **string
 		State        *coredata.TaskState
 		TimeEstimate **time.Duration
 		Deadline     **time.Time

@@ -1487,7 +1487,7 @@ func (r *mutationResolver) UpdateTrustCenterReference(ctx context.Context, input
 	req := &probo.UpdateTrustCenterReferenceRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: input.Description,
+		Description: UnwrapOmittable(input.Description),
 		WebsiteURL:  input.WebsiteURL,
 		Rank:        input.Rank,
 	}
@@ -1971,7 +1971,7 @@ func (r *mutationResolver) UpdateFramework(ctx context.Context, input types.Upda
 	framework, err := prb.Frameworks.Update(ctx, probo.UpdateFrameworkRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: input.Description,
+		Description: UnwrapOmittable(input.Description),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot update framework: %w", err)
@@ -2096,7 +2096,7 @@ func (r *mutationResolver) UpdateControl(ctx context.Context, input types.Update
 	control, err := prb.Controls.Update(ctx, probo.UpdateControlRequest{
 		ID:                     input.ID,
 		Name:                   input.Name,
-		Description:            input.Description,
+		Description:            UnwrapOmittable(input.Description),
 		SectionTitle:           input.SectionTitle,
 		Status:                 input.Status,
 		ExclusionJustification: input.ExclusionJustification,
@@ -2159,7 +2159,7 @@ func (r *mutationResolver) UpdateMeasure(ctx context.Context, input types.Update
 	measure, err := prb.Measures.Update(ctx, probo.UpdateMeasureRequest{
 		ID:          input.ID,
 		Name:        input.Name,
-		Description: input.Description,
+		Description: UnwrapOmittable(input.Description),
 		Category:    input.Category,
 		State:       input.State,
 	})
@@ -2366,7 +2366,7 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, input types.UpdateTas
 	task, err := prb.Tasks.Update(ctx, probo.UpdateTaskRequest{
 		TaskID:       input.TaskID,
 		Name:         input.Name,
-		Description:  input.Description,
+		Description:  UnwrapOmittable(input.Description),
 		State:        input.State,
 		TimeEstimate: UnwrapOmittable(input.TimeEstimate),
 		Deadline:     UnwrapOmittable(input.Deadline),
@@ -2464,7 +2464,7 @@ func (r *mutationResolver) UpdateRisk(ctx context.Context, input types.UpdateRis
 		probo.UpdateRiskRequest{
 			ID:                 input.ID,
 			Name:               input.Name,
-			Description:        input.Description,
+			Description:        UnwrapOmittable(input.Description),
 			Category:           input.Category,
 			Treatment:          input.Treatment,
 			OwnerID:            UnwrapOmittable(input.OwnerID),

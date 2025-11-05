@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<67fd0b26613189fa036f7873138787d7>>
+ * @generated SignedSource<<cfddd118e2b6db135ad87fe157c89151>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type MeasureTasksTabFragment$data = {
           readonly fullName: string;
           readonly id: string;
         } | null | undefined;
-        readonly description: string;
+        readonly description: string | null | undefined;
         readonly id: string;
         readonly name: string;
         readonly state: TaskState;

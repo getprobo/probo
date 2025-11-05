@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<285497dfb150c3f02c055a091769f301>>
+ * @generated SignedSource<<bfffdd69a2b1f565b60beee5e96d430a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -58,7 +58,7 @@ export type TrustCenterGraphQuery$data = {
         readonly edges: ReadonlyArray<{
           readonly node: {
             readonly createdAt: any;
-            readonly description: string;
+            readonly description: string | null | undefined;
             readonly id: string;
             readonly logoUrl: string;
             readonly name: string;

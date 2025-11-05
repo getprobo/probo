@@ -21,11 +21,11 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"go.gearno.de/kit/pg"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 )
 
 type (
@@ -38,7 +38,7 @@ type (
 		Type           EvidenceType  `db:"type"`
 		URL            string        `db:"url"`
 		EvidenceFileId *gid.GID      `db:"evidence_file_id"`
-		Description    string        `db:"description"`
+		Description    *string       `db:"description"`
 		CreatedAt      time.Time     `db:"created_at"`
 		UpdatedAt      time.Time     `db:"updated_at"`
 	}

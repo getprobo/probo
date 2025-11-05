@@ -65,7 +65,7 @@ const updateMutation = graphql`
 
 const schema = z.object({
   name: z.string(),
-  description: z.string(),
+  description: z.string().optional().nullable(),
   sectionTitle: z.string(),
   status: z.enum(["INCLUDED", "EXCLUDED"]),
   exclusionJustification: z.string().optional(),
@@ -120,7 +120,7 @@ export function FrameworkControlDialog(props: Props) {
           input: {
             id: frameworkControl.id,
             name: data.name,
-            description: data.description,
+            description: data.description || null,
             sectionTitle: data.sectionTitle,
             status: data.status,
             exclusionJustification: data.status === "EXCLUDED" ? data.exclusionJustification : null,
@@ -134,7 +134,7 @@ export function FrameworkControlDialog(props: Props) {
           input: {
             frameworkId: props.frameworkId,
             name: data.name,
-            description: data.description,
+            description: data.description || null,
             sectionTitle: data.sectionTitle,
             status: data.status,
             exclusionJustification: data.status === "EXCLUDED" ? data.exclusionJustification : null,

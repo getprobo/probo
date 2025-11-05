@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
 )
 
 type (
@@ -34,7 +34,7 @@ type (
 		ID                     gid.GID
 		FrameworkID            gid.GID
 		Name                   string
-		Description            string
+		Description            *string
 		SectionTitle           string
 		Status                 *coredata.ControlStatus
 		ExclusionJustification *string
@@ -43,7 +43,7 @@ type (
 	UpdateControlRequest struct {
 		ID                     gid.GID
 		Name                   *string
-		Description            *string
+		Description            **string
 		SectionTitle           *string
 		Status                 *coredata.ControlStatus
 		ExclusionJustification *string
@@ -765,21 +765,37 @@ func (s ControlService) Update(
 	ctx context.Context,
 	req UpdateControlRequest,
 ) (*coredata.Control, error) {
-	params := coredata.UpdateControlParams{
-		Name:                   req.Name,
-		Description:            req.Description,
-		SectionTitle:           req.SectionTitle,
-		Status:                 req.Status,
-		ExclusionJustification: req.ExclusionJustification,
-	}
-
 	control := &coredata.Control{ID: req.ID}
 
-	err := s.svc.pg.WithTx(
-		ctx,
-		func(conn pg.Conn) error {
-			return control.Update(ctx, conn, s.svc.scope, params)
-		})
+	err := s.svc.pg.WithTx(ctx, func(conn pg.Conn) error {
+		if err := control.LoadByID(ctx, conn, s.svc.scope, req.ID); err != nil {
+			return fmt.Errorf("cannot load control: %w", err)
+		}
+
+		if req.Name != nil {
+			control.Name = *req.Name
+		}
+
+		if req.Description != nil {
+			control.Description = *req.Description
+		}
+
+		if req.SectionTitle != nil {
+			control.SectionTitle = *req.SectionTitle
+		}
+
+		if req.Status != nil {
+			control.Status = *req.Status
+		}
+
+		if req.ExclusionJustification != nil {
+			control.ExclusionJustification = req.ExclusionJustification
+		}
+
+		control.UpdatedAt = time.Now()
+
+		return control.Update(ctx, conn, s.svc.scope)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("cannot update control: %w", err)
 	}

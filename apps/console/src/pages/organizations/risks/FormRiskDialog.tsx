@@ -110,6 +110,7 @@ export default function FormRiskDialog({
           input: {
             id: risk.id,
             ...data,
+            description: data.description || null,
           },
         },
         successMessage: __("Risk updated successfully."),
@@ -124,6 +125,7 @@ export default function FormRiskDialog({
       variables: {
         input: {
           ...data,
+          description: data.description || null,
           organizationId,
         },
         connections: [connection!],

@@ -2020,7 +2020,7 @@ type VendorDataPrivacyAgreement implements Node {
 type Framework implements Node {
   id: ID!
   name: String!
-  description: String!
+  description: String
 
   organization: Organization! @goField(forceResolver: true)
 
@@ -2041,7 +2041,7 @@ type Control implements Node {
   id: ID!
   sectionTitle: String!
   name: String!
-  description: String!
+  description: String
   status: ControlStatus!
   exclusionJustification: String
 
@@ -2089,7 +2089,7 @@ type Measure implements Node {
   id: ID!
   category: String!
   name: String!
-  description: String!
+  description: String
   state: MeasureState!
 
   evidences(
@@ -2133,7 +2133,7 @@ type Measure implements Node {
 type Task implements Node {
   id: ID!
   name: String!
-  description: String!
+  description: String
   state: TaskState!
   timeEstimate: Duration
   deadline: Datetime
@@ -2161,7 +2161,7 @@ type Evidence implements Node {
   type: EvidenceType!
   file: File @goField(forceResolver: true)
   url: String
-  description: String!
+  description: String
 
   task: Task @goField(forceResolver: true)
   measure: Measure! @goField(forceResolver: true)
@@ -2173,7 +2173,7 @@ type Evidence implements Node {
 type Document implements Node {
   id: ID!
   title: String!
-  description: String!
+  description: String
   documentType: DocumentType!
   classification: DocumentClassification!
   currentPublishedVersion: Int
@@ -2207,7 +2207,7 @@ type Risk implements Node {
   id: ID!
   snapshotId: ID
   name: String!
-  description: String!
+  description: String
   category: String!
   treatment: RiskTreatment!
   inherentLikelihood: Int!
@@ -2498,7 +2498,7 @@ type TrustCenterAccessEdge {
 type TrustCenterReference implements Node {
   id: ID!
   name: String!
-  description: String!
+  description: String
   websiteUrl: String!
   logoUrl: String! @goField(forceResolver: true)
   rank: Int!
@@ -3303,7 +3303,7 @@ input DeleteTrustCenterAccessInput {
 input CreateTrustCenterReferenceInput {
   trustCenterId: ID!
   name: String!
-  description: String!
+  description: String
   websiteUrl: String!
   logoFile: Upload!
 }
@@ -3311,7 +3311,7 @@ input CreateTrustCenterReferenceInput {
 input UpdateTrustCenterReferenceInput {
   id: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
   websiteUrl: String
   logoFile: Upload
   rank: Int
@@ -3464,13 +3464,13 @@ input DeletePeopleInput {
 input CreateFrameworkInput {
   organizationId: ID!
   name: String!
-  description: String!
+  description: String
 }
 
 input UpdateFrameworkInput {
   id: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
 }
 
 input ImportFrameworkInput {
@@ -3489,14 +3489,14 @@ input ExportFrameworkInput {
 input CreateMeasureInput {
   organizationId: ID!
   name: String!
-  description: String!
+  description: String
   category: String!
 }
 
 input UpdateMeasureInput {
   id: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
   category: String
   state: MeasureState
 }
@@ -3510,7 +3510,7 @@ input CreateTaskInput {
   organizationId: ID!
   measureId: ID
   name: String!
-  description: String!
+  description: String
   timeEstimate: Duration
   assignedToId: ID
   deadline: Datetime
@@ -3519,7 +3519,7 @@ input CreateTaskInput {
 input UpdateTaskInput {
   taskId: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
   state: TaskState
   timeEstimate: Duration @goField(omittable: true)
   deadline: Datetime @goField(omittable: true)
@@ -3581,7 +3581,7 @@ input DeleteControlSnapshotMappingInput {
 input CreateRiskInput {
   organizationId: ID!
   name: String!
-  description: String!
+  description: String
   category: String!
   ownerId: ID
   treatment: RiskTreatment!
@@ -3595,7 +3595,7 @@ input CreateRiskInput {
 input UpdateRiskInput {
   id: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
   category: String
   ownerId: ID @goField(omittable: true)
   treatment: RiskTreatment
@@ -3644,7 +3644,7 @@ input RequestEvidenceInput {
   taskId: ID!
   name: String!
   type: EvidenceType!
-  description: String!
+  description: String
 }
 
 input FulfillEvidenceInput {
@@ -3660,7 +3660,7 @@ input CreateEvidenceInput {
   type: EvidenceType!
   url: String
   file: Upload
-  description: String!
+  description: String
 }
 
 input DeleteEvidenceInput {
@@ -3774,7 +3774,7 @@ input CreateControlInput {
   frameworkId: ID!
   sectionTitle: String!
   name: String!
-  description: String!
+  description: String
   status: ControlStatus!
   exclusionJustification: String
 }
@@ -3783,7 +3783,7 @@ input UpdateControlInput {
   id: ID!
   sectionTitle: String
   name: String
-  description: String
+  description: String @goField(omittable: true)
   status: ControlStatus
   exclusionJustification: String
 }

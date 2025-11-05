@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9d17f089c36e0567d217fe339b6382fd>>
+ * @generated SignedSource<<566b652d24d80b551827cb5d3bf5518c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type CreateTrustCenterReferenceInput = {
-  description: string;
+  description?: string | null | undefined;
   logoFile: any;
   name: string;
   trustCenterId: string;
@@ -26,7 +26,7 @@ export type TrustCenterReferenceGraphCreateMutation$data = {
       readonly cursor: any;
       readonly node: {
         readonly createdAt: any;
-        readonly description: string;
+        readonly description: string | null | undefined;
         readonly id: string;
         readonly logoUrl: string;
         readonly name: string;

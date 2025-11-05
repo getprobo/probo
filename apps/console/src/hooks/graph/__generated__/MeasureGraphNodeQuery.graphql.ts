@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<1f413a42110dae78274cf3250fa4db4e>>
+ * @generated SignedSource<<02c0b1d637edafea060ddb9ee3b3f130>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type MeasureGraphNodeQuery$data = {
     readonly controlsInfos?: {
       readonly totalCount: number;
     };
-    readonly description?: string;
+    readonly description?: string | null | undefined;
     readonly evidencesInfos?: {
       readonly totalCount: number;
     };

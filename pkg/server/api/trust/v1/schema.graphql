@@ -461,7 +461,7 @@ type VendorEdge {
 type TrustCenterReference implements Node {
   id: ID!
   name: String!
-  description: String!
+  description: String
   websiteUrl: String!
   logoUrl: String! @goField(forceResolver: true)
 }

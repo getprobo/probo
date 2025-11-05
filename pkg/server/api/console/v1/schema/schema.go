@@ -11761,7 +11761,7 @@ type VendorDataPrivacyAgreement implements Node {
 type Framework implements Node {
   id: ID!
   name: String!
-  description: String!
+  description: String
 
   organization: Organization! @goField(forceResolver: true)
 
@@ -11782,7 +11782,7 @@ type Control implements Node {
   id: ID!
   sectionTitle: String!
   name: String!
-  description: String!
+  description: String
   status: ControlStatus!
   exclusionJustification: String
 
@@ -11830,7 +11830,7 @@ type Measure implements Node {
   id: ID!
   category: String!
   name: String!
-  description: String!
+  description: String
   state: MeasureState!
 
   evidences(
@@ -11874,7 +11874,7 @@ type Measure implements Node {
 type Task implements Node {
   id: ID!
   name: String!
-  description: String!
+  description: String
   state: TaskState!
   timeEstimate: Duration
   deadline: Datetime
@@ -11902,7 +11902,7 @@ type Evidence implements Node {
   type: EvidenceType!
   file: File @goField(forceResolver: true)
   url: String
-  description: String!
+  description: String
 
   task: Task @goField(forceResolver: true)
   measure: Measure! @goField(forceResolver: true)
@@ -11914,7 +11914,7 @@ type Evidence implements Node {
 type Document implements Node {
   id: ID!
   title: String!
-  description: String!
+  description: String
   documentType: DocumentType!
   classification: DocumentClassification!
   currentPublishedVersion: Int
@@ -11948,7 +11948,7 @@ type Risk implements Node {
   id: ID!
   snapshotId: ID
   name: String!
-  description: String!
+  description: String
   category: String!
   treatment: RiskTreatment!
   inherentLikelihood: Int!
@@ -12239,7 +12239,7 @@ type TrustCenterAccessEdge {
 type TrustCenterReference implements Node {
   id: ID!
   name: String!
-  description: String!
+  description: String
   websiteUrl: String!
   logoUrl: String! @goField(forceResolver: true)
   rank: Int!
@@ -13044,7 +13044,7 @@ input DeleteTrustCenterAccessInput {
 input CreateTrustCenterReferenceInput {
   trustCenterId: ID!
   name: String!
-  description: String!
+  description: String
   websiteUrl: String!
   logoFile: Upload!
 }
@@ -13052,7 +13052,7 @@ input CreateTrustCenterReferenceInput {
 input UpdateTrustCenterReferenceInput {
   id: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
   websiteUrl: String
   logoFile: Upload
   rank: Int
@@ -13205,13 +13205,13 @@ input DeletePeopleInput {
 input CreateFrameworkInput {
   organizationId: ID!
   name: String!
-  description: String!
+  description: String
 }
 
 input UpdateFrameworkInput {
   id: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
 }
 
 input ImportFrameworkInput {
@@ -13230,14 +13230,14 @@ input ExportFrameworkInput {
 input CreateMeasureInput {
   organizationId: ID!
   name: String!
-  description: String!
+  description: String
   category: String!
 }
 
 input UpdateMeasureInput {
   id: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
   category: String
   state: MeasureState
 }
@@ -13251,7 +13251,7 @@ input CreateTaskInput {
   organizationId: ID!
   measureId: ID
   name: String!
-  description: String!
+  description: String
   timeEstimate: Duration
   assignedToId: ID
   deadline: Datetime
@@ -13260,7 +13260,7 @@ input CreateTaskInput {
 input UpdateTaskInput {
   taskId: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
   state: TaskState
   timeEstimate: Duration @goField(omittable: true)
   deadline: Datetime @goField(omittable: true)
@@ -13322,7 +13322,7 @@ input DeleteControlSnapshotMappingInput {
 input CreateRiskInput {
   organizationId: ID!
   name: String!
-  description: String!
+  description: String
   category: String!
   ownerId: ID
   treatment: RiskTreatment!
@@ -13336,7 +13336,7 @@ input CreateRiskInput {
 input UpdateRiskInput {
   id: ID!
   name: String
-  description: String
+  description: String @goField(omittable: true)
   category: String
   ownerId: ID @goField(omittable: true)
   treatment: RiskTreatment
@@ -13385,7 +13385,7 @@ input RequestEvidenceInput {
   taskId: ID!
   name: String!
   type: EvidenceType!
-  description: String!
+  description: String
 }
 
 input FulfillEvidenceInput {
@@ -13401,7 +13401,7 @@ input CreateEvidenceInput {
   type: EvidenceType!
   url: String
   file: Upload
-  description: String!
+  description: String
 }
 
 input DeleteEvidenceInput {
@@ -13515,7 +13515,7 @@ input CreateControlInput {
   frameworkId: ID!
   sectionTitle: String!
   name: String!
-  description: String!
+  description: String
   status: ControlStatus!
   exclusionJustification: String
 }
@@ -13524,7 +13524,7 @@ input UpdateControlInput {
   id: ID!
   sectionTitle: String
   name: String
-  description: String
+  description: String @goField(omittable: true)
   status: ControlStatus
   exclusionJustification: String
 }
@@ -26564,14 +26564,11 @@ func (ec *executionContext) _Control_description(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Control_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -33282,14 +33279,11 @@ func (ec *executionContext) _Document_description(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Document_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -35984,14 +35978,11 @@ func (ec *executionContext) _Evidence_description(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Evidence_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -36995,14 +36986,11 @@ func (ec *executionContext) _Framework_description(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Framework_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -38889,14 +38877,11 @@ func (ec *executionContext) _Measure_description(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Measure_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -55403,14 +55388,11 @@ func (ec *executionContext) _Risk_description(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Risk_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -58991,14 +58973,11 @@ func (ec *executionContext) _Task_description(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Task_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -62523,14 +62502,11 @@ func (ec *executionContext) _TrustCenterReference_description(ctx context.Contex
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TrustCenterReference_description(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -74042,7 +74018,7 @@ func (ec *executionContext) unmarshalInputCreateControlInput(ctx context.Context
 			it.Name = data
 		case "description":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -74371,7 +74347,7 @@ func (ec *executionContext) unmarshalInputCreateEvidenceInput(ctx context.Contex
 			it.File = data
 		case "description":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -74412,7 +74388,7 @@ func (ec *executionContext) unmarshalInputCreateFrameworkInput(ctx context.Conte
 			it.Name = data
 		case "description":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -74453,7 +74429,7 @@ func (ec *executionContext) unmarshalInputCreateMeasureInput(ctx context.Context
 			it.Name = data
 		case "description":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -74964,7 +74940,7 @@ func (ec *executionContext) unmarshalInputCreateRiskInput(ctx context.Context, o
 			it.Name = data
 		case "description":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -75309,7 +75285,7 @@ func (ec *executionContext) unmarshalInputCreateTaskInput(ctx context.Context, o
 			it.Name = data
 		case "description":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -75474,7 +75450,7 @@ func (ec *executionContext) unmarshalInputCreateTrustCenterReferenceInput(ctx co
 			it.Name = data
 		case "description":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -78219,7 +78195,7 @@ func (ec *executionContext) unmarshalInputRequestEvidenceInput(ctx context.Conte
 			it.Type = data
 		case "description":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -78838,7 +78814,7 @@ func (ec *executionContext) unmarshalInputUpdateControlInput(ctx context.Context
 			if err != nil {
 				return it, err
 			}
-			it.Description = data
+			it.Description = graphql.OmittableOf(data)
 		case "status":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
 			data, err := ec.unmarshalOControlStatus2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐControlStatus(ctx, v)
@@ -79051,7 +79027,7 @@ func (ec *executionContext) unmarshalInputUpdateFrameworkInput(ctx context.Conte
 			if err != nil {
 				return it, err
 			}
-			it.Description = data
+			it.Description = graphql.OmittableOf(data)
 		}
 	}
 
@@ -79092,7 +79068,7 @@ func (ec *executionContext) unmarshalInputUpdateMeasureInput(ctx context.Context
 			if err != nil {
 				return it, err
 			}
-			it.Description = data
+			it.Description = graphql.OmittableOf(data)
 		case "category":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -79625,7 +79601,7 @@ func (ec *executionContext) unmarshalInputUpdateRiskInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-			it.Description = data
+			it.Description = graphql.OmittableOf(data)
 		case "category":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -79840,7 +79816,7 @@ func (ec *executionContext) unmarshalInputUpdateTaskInput(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-			it.Description = data
+			it.Description = graphql.OmittableOf(data)
 		case "state":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
 			data, err := ec.unmarshalOTaskState2ᚖgoᚗproboᚗincᚋproboᚋpkgᚋcoredataᚐTaskState(ctx, v)
@@ -80046,7 +80022,7 @@ func (ec *executionContext) unmarshalInputUpdateTrustCenterReferenceInput(ctx co
 			if err != nil {
 				return it, err
 			}
-			it.Description = data
+			it.Description = graphql.OmittableOf(data)
 		case "websiteUrl":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("websiteUrl"))
 			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
@@ -82585,9 +82561,6 @@ func (ec *executionContext) _Control(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "description":
 			out.Values[i] = ec._Control_description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "status":
 			out.Values[i] = ec._Control_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -86378,9 +86351,6 @@ func (ec *executionContext) _Document(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "description":
 			out.Values[i] = ec._Document_description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "documentType":
 			out.Values[i] = ec._Document_documentType(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -87304,9 +87274,6 @@ func (ec *executionContext) _Evidence(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._Evidence_url(ctx, field, obj)
 		case "description":
 			out.Values[i] = ec._Evidence_description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "task":
 			field := field
 
@@ -87734,9 +87701,6 @@ func (ec *executionContext) _Framework(ctx context.Context, sel ast.SelectionSet
 			}
 		case "description":
 			out.Values[i] = ec._Framework_description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "organization":
 			field := field
 
@@ -88542,9 +88506,6 @@ func (ec *executionContext) _Measure(ctx context.Context, sel ast.SelectionSet, 
 			}
 		case "description":
 			out.Values[i] = ec._Measure_description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "state":
 			out.Values[i] = ec._Measure_state(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -92617,9 +92578,6 @@ func (ec *executionContext) _Risk(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "description":
 			out.Values[i] = ec._Risk_description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "category":
 			out.Values[i] = ec._Risk_category(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -93767,9 +93725,6 @@ func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "description":
 			out.Values[i] = ec._Task_description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "state":
 			out.Values[i] = ec._Task_state(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -95176,9 +95131,6 @@ func (ec *executionContext) _TrustCenterReference(ctx context.Context, sel ast.S
 			}
 		case "description":
 			out.Values[i] = ec._TrustCenterReference_description(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		case "websiteUrl":
 			out.Values[i] = ec._TrustCenterReference_websiteUrl(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

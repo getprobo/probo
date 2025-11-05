@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<09acdf5a03dd4ad1fab64c2c08564a2a>>
+ * @generated SignedSource<<a1cf7f654fe2f662c446e60ce82e3ae9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type CreateMeasureInput = {
   category: string;
-  description: string;
+  description?: string | null | undefined;
   name: string;
   organizationId: string;
 };

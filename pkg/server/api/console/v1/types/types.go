@@ -178,7 +178,7 @@ type Control struct {
 	ID                     gid.GID                `json:"id"`
 	SectionTitle           string                 `json:"sectionTitle"`
 	Name                   string                 `json:"name"`
-	Description            string                 `json:"description"`
+	Description            *string                `json:"description,omitempty"`
 	Status                 coredata.ControlStatus `json:"status"`
 	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
 	Framework              *Framework             `json:"framework"`
@@ -269,7 +269,7 @@ type CreateControlInput struct {
 	FrameworkID            gid.GID                `json:"frameworkId"`
 	SectionTitle           string                 `json:"sectionTitle"`
 	Name                   string                 `json:"name"`
-	Description            string                 `json:"description"`
+	Description            *string                `json:"description,omitempty"`
 	Status                 coredata.ControlStatus `json:"status"`
 	ExclusionJustification *string                `json:"exclusionJustification,omitempty"`
 }
@@ -348,7 +348,7 @@ type CreateEvidenceInput struct {
 	Type        coredata.EvidenceType `json:"type"`
 	URL         *string               `json:"url,omitempty"`
 	File        *graphql.Upload       `json:"file,omitempty"`
-	Description string                `json:"description"`
+	Description *string               `json:"description,omitempty"`
 }
 
 type CreateEvidencePayload struct {
@@ -358,7 +358,7 @@ type CreateEvidencePayload struct {
 type CreateFrameworkInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Name           string  `json:"name"`
-	Description    string  `json:"description"`
+	Description    *string `json:"description,omitempty"`
 }
 
 type CreateFrameworkPayload struct {
@@ -368,7 +368,7 @@ type CreateFrameworkPayload struct {
 type CreateMeasureInput struct {
 	OrganizationID gid.GID `json:"organizationId"`
 	Name           string  `json:"name"`
-	Description    string  `json:"description"`
+	Description    *string `json:"description,omitempty"`
 	Category       string  `json:"category"`
 }
 
@@ -471,7 +471,7 @@ type CreateRiskDocumentMappingPayload struct {
 type CreateRiskInput struct {
 	OrganizationID     gid.GID                `json:"organizationId"`
 	Name               string                 `json:"name"`
-	Description        string                 `json:"description"`
+	Description        *string                `json:"description,omitempty"`
 	Category           string                 `json:"category"`
 	OwnerID            *gid.GID               `json:"ownerId,omitempty"`
 	Treatment          coredata.RiskTreatment `json:"treatment"`
@@ -543,7 +543,7 @@ type CreateTaskInput struct {
 	OrganizationID gid.GID        `json:"organizationId"`
 	MeasureID      *gid.GID       `json:"measureId,omitempty"`
 	Name           string         `json:"name"`
-	Description    string         `json:"description"`
+	Description    *string        `json:"description,omitempty"`
 	TimeEstimate   *time.Duration `json:"timeEstimate,omitempty"`
 	AssignedToID   *gid.GID       `json:"assignedToId,omitempty"`
 	Deadline       *time.Time     `json:"deadline,omitempty"`
@@ -579,7 +579,7 @@ type CreateTrustCenterFilePayload struct {
 type CreateTrustCenterReferenceInput struct {
 	TrustCenterID gid.GID        `json:"trustCenterId"`
 	Name          string         `json:"name"`
-	Description   string         `json:"description"`
+	Description   *string        `json:"description,omitempty"`
 	WebsiteURL    string         `json:"websiteUrl"`
 	LogoFile      graphql.Upload `json:"logoFile"`
 }
@@ -1042,7 +1042,7 @@ type DisableSAMLPayload struct {
 type Document struct {
 	ID                      gid.GID                         `json:"id"`
 	Title                   string                          `json:"title"`
-	Description             string                          `json:"description"`
+	Description             *string                         `json:"description,omitempty"`
 	DocumentType            coredata.DocumentType           `json:"documentType"`
 	Classification          coredata.DocumentClassification `json:"classification"`
 	CurrentPublishedVersion *int                            `json:"currentPublishedVersion,omitempty"`
@@ -1148,7 +1148,7 @@ type Evidence struct {
 	Type        coredata.EvidenceType  `json:"type"`
 	File        *File                  `json:"file,omitempty"`
 	URL         *string                `json:"url,omitempty"`
-	Description string                 `json:"description"`
+	Description *string                `json:"description,omitempty"`
 	Task        *Task                  `json:"task,omitempty"`
 	Measure     *Measure               `json:"measure"`
 	CreatedAt   time.Time              `json:"createdAt"`
@@ -1195,7 +1195,7 @@ type File struct {
 type Framework struct {
 	ID           gid.GID            `json:"id"`
 	Name         string             `json:"name"`
-	Description  string             `json:"description"`
+	Description  *string            `json:"description,omitempty"`
 	Organization *Organization      `json:"organization"`
 	Controls     *ControlConnection `json:"controls"`
 	CreatedAt    time.Time          `json:"createdAt"`
@@ -1317,7 +1317,7 @@ type Measure struct {
 	ID          gid.GID               `json:"id"`
 	Category    string                `json:"category"`
 	Name        string                `json:"name"`
-	Description string                `json:"description"`
+	Description *string               `json:"description,omitempty"`
 	State       coredata.MeasureState `json:"state"`
 	Evidences   *EvidenceConnection   `json:"evidences"`
 	Tasks       *TaskConnection       `json:"tasks"`
@@ -1587,7 +1587,7 @@ type RequestEvidenceInput struct {
 	TaskID      gid.GID               `json:"taskId"`
 	Name        string                `json:"name"`
 	Type        coredata.EvidenceType `json:"type"`
-	Description string                `json:"description"`
+	Description *string               `json:"description,omitempty"`
 }
 
 type RequestEvidencePayload struct {
@@ -1607,7 +1607,7 @@ type Risk struct {
 	ID                 gid.GID                `json:"id"`
 	SnapshotID         *gid.GID               `json:"snapshotId,omitempty"`
 	Name               string                 `json:"name"`
-	Description        string                 `json:"description"`
+	Description        *string                `json:"description,omitempty"`
 	Category           string                 `json:"category"`
 	Treatment          coredata.RiskTreatment `json:"treatment"`
 	InherentLikelihood int                    `json:"inherentLikelihood"`
@@ -1721,7 +1721,7 @@ type SnapshotEdge struct {
 type Task struct {
 	ID           gid.GID             `json:"id"`
 	Name         string              `json:"name"`
-	Description  string              `json:"description"`
+	Description  *string             `json:"description,omitempty"`
 	State        coredata.TaskState  `json:"state"`
 	TimeEstimate *time.Duration      `json:"timeEstimate,omitempty"`
 	Deadline     *time.Time          `json:"deadline,omitempty"`
@@ -1820,7 +1820,7 @@ type TrustCenterFileEdge struct {
 type TrustCenterReference struct {
 	ID          gid.GID   `json:"id"`
 	Name        string    `json:"name"`
-	Description string    `json:"description"`
+	Description *string   `json:"description,omitempty"`
 	WebsiteURL  string    `json:"websiteUrl"`
 	LogoURL     string    `json:"logoUrl"`
 	Rank        int       `json:"rank"`
@@ -1887,12 +1887,12 @@ type UpdateContinualImprovementPayload struct {
 }
 
 type UpdateControlInput struct {
-	ID                     gid.GID                 `json:"id"`
-	SectionTitle           *string                 `json:"sectionTitle,omitempty"`
-	Name                   *string                 `json:"name,omitempty"`
-	Description            *string                 `json:"description,omitempty"`
-	Status                 *coredata.ControlStatus `json:"status,omitempty"`
-	ExclusionJustification *string                 `json:"exclusionJustification,omitempty"`
+	ID                     gid.GID                    `json:"id"`
+	SectionTitle           *string                    `json:"sectionTitle,omitempty"`
+	Name                   *string                    `json:"name,omitempty"`
+	Description            graphql.Omittable[*string] `json:"description,omitempty"`
+	Status                 *coredata.ControlStatus    `json:"status,omitempty"`
+	ExclusionJustification *string                    `json:"exclusionJustification,omitempty"`
 }
 
 type UpdateControlPayload struct {
@@ -1935,9 +1935,9 @@ type UpdateDocumentVersionPayload struct {
 }
 
 type UpdateFrameworkInput struct {
-	ID          gid.GID `json:"id"`
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
+	ID          gid.GID                    `json:"id"`
+	Name        *string                    `json:"name,omitempty"`
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
 }
 
 type UpdateFrameworkPayload struct {
@@ -1945,11 +1945,11 @@ type UpdateFrameworkPayload struct {
 }
 
 type UpdateMeasureInput struct {
-	ID          gid.GID                `json:"id"`
-	Name        *string                `json:"name,omitempty"`
-	Description *string                `json:"description,omitempty"`
-	Category    *string                `json:"category,omitempty"`
-	State       *coredata.MeasureState `json:"state,omitempty"`
+	ID          gid.GID                    `json:"id"`
+	Name        *string                    `json:"name,omitempty"`
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	Category    *string                    `json:"category,omitempty"`
+	State       *coredata.MeasureState     `json:"state,omitempty"`
 }
 
 type UpdateMeasurePayload struct {
@@ -2048,7 +2048,7 @@ type UpdateProcessingActivityPayload struct {
 type UpdateRiskInput struct {
 	ID                 gid.GID                     `json:"id"`
 	Name               *string                     `json:"name,omitempty"`
-	Description        *string                     `json:"description,omitempty"`
+	Description        graphql.Omittable[*string]  `json:"description,omitempty"`
 	Category           *string                     `json:"category,omitempty"`
 	OwnerID            graphql.Omittable[*gid.GID] `json:"ownerId,omitempty"`
 	Treatment          *coredata.RiskTreatment     `json:"treatment,omitempty"`
@@ -2087,7 +2087,7 @@ type UpdateSAMLConfigurationPayload struct {
 type UpdateTaskInput struct {
 	TaskID       gid.GID                           `json:"taskId"`
 	Name         *string                           `json:"name,omitempty"`
-	Description  *string                           `json:"description,omitempty"`
+	Description  graphql.Omittable[*string]        `json:"description,omitempty"`
 	State        *coredata.TaskState               `json:"state,omitempty"`
 	TimeEstimate graphql.Omittable[*time.Duration] `json:"timeEstimate,omitempty"`
 	Deadline     graphql.Omittable[*time.Time]     `json:"deadline,omitempty"`
@@ -2131,12 +2131,12 @@ type UpdateTrustCenterPayload struct {
 }
 
 type UpdateTrustCenterReferenceInput struct {
-	ID          gid.GID         `json:"id"`
-	Name        *string         `json:"name,omitempty"`
-	Description *string         `json:"description,omitempty"`
-	WebsiteURL  *string         `json:"websiteUrl,omitempty"`
-	LogoFile    *graphql.Upload `json:"logoFile,omitempty"`
-	Rank        *int            `json:"rank,omitempty"`
+	ID          gid.GID                    `json:"id"`
+	Name        *string                    `json:"name,omitempty"`
+	Description graphql.Omittable[*string] `json:"description,omitempty"`
+	WebsiteURL  *string                    `json:"websiteUrl,omitempty"`
+	LogoFile    *graphql.Upload            `json:"logoFile,omitempty"`
+	Rank        *int                       `json:"rank,omitempty"`
 }
 
 type UpdateTrustCenterReferencePayload struct {

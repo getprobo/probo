@@ -49,7 +49,7 @@ type Props = {
   framework?: {
     id: string;
     name: string;
-    description: string;
+    description?: string | null;
   };
   ref?: DialogRef;
   children?: React.ReactNode;
@@ -57,7 +57,7 @@ type Props = {
 
 const schema = z.object({
   name: z.string().min(1).max(255),
-  description: z.string().max(255).optional(),
+  description: z.string().max(255).optional().nullable(),
 });
 
 /**
@@ -87,6 +87,7 @@ export function FrameworkFormDialog(props: Props) {
           input: {
             id: props.framework.id,
             ...data,
+            description: data.description || null,
           },
         },
       });
@@ -98,6 +99,7 @@ export function FrameworkFormDialog(props: Props) {
       variables: {
         input: {
           ...data,
+          description: data.description || null,
           organizationId: props.organizationId,
         },
         connections: [props.connectionId],

@@ -21,10 +21,10 @@ import (
 	"maps"
 	"time"
 
-	"go.probo.inc/probo/pkg/gid"
-	"go.probo.inc/probo/pkg/page"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"go.probo.inc/probo/pkg/gid"
+	"go.probo.inc/probo/pkg/page"
 
 	"go.gearno.de/kit/pg"
 )
@@ -35,7 +35,7 @@ type (
 		OrganizationID gid.GID        `db:"organization_id"`
 		MeasureID      *gid.GID       `db:"measure_id"`
 		Name           string         `db:"name"`
-		Description    string         `db:"description"`
+		Description    *string        `db:"description"`
 		State          TaskState      `db:"state"`
 		ReferenceID    string         `db:"reference_id"`
 		TimeEstimate   *time.Duration `db:"time_estimate"`

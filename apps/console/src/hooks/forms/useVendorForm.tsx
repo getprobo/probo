@@ -9,7 +9,7 @@ import { useEffect, useMemo } from "react";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().optional().nullable(),
   category: z.string().nullish(),
   statusPageUrl: z.string().optional(),
   termsOfServiceUrl: z.string().optional(),
@@ -106,6 +106,7 @@ export function useVendorForm(vendorKey: useVendorFormFragment$key) {
         input: {
           id: vendor.id,
           ...data,
+          description: data.description || null,
         },
       },
     }).then(() => {

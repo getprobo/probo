@@ -71,7 +71,7 @@ export const taskUpdateMutation = graphql`
 
 const createTaskSchema = z.object({
   name: z.string().min(1),
-  description: z.string(),
+  description: z.string().optional().nullable(),
   timeEstimate: z.string().optional().nullable(),
   assignedToId: z.preprocess(
     (val) => (val === "" || val == null ? undefined : val),
@@ -86,7 +86,7 @@ const createTaskSchema = z.object({
 
 const updateTaskSchema = z.object({
   name: z.string().min(1),
-  description: z.string(),
+  description: z.string().optional().nullable(),
   timeEstimate: z.string().optional().nullable(),
   assignedToId: z.string().optional(),
   measureId: z.string().optional(),
@@ -138,7 +138,7 @@ export default function TaskFormDialog(props: Props) {
           input: {
             taskId: task.id,
             name: data.name,
-            description: data.description,
+            description: data.description || null,
             timeEstimate: data.timeEstimate || null,
             deadline: formatDatetime(data.deadline) ?? null,
           },
@@ -150,7 +150,7 @@ export default function TaskFormDialog(props: Props) {
           input: {
             organizationId,
             name: data.name,
-            description: data.description,
+            description: data.description || null,
             timeEstimate: data.timeEstimate || null,
             deadline: formatDatetime(data.deadline) ?? null,
             assignedToId: data.assignedToId,

@@ -32,7 +32,7 @@ export type TrustCenterReferenceDialogRef = {
   openEdit: (reference: {
     id: string;
     name: string;
-    description: string;
+    description?: string | null;
     websiteUrl: string;
     rank: number;
   }) => void;
@@ -41,7 +41,7 @@ export type TrustCenterReferenceDialogRef = {
 type Reference = {
   id: string;
   name: string;
-  description: string;
+  description?: string | null;
   websiteUrl: string;
   rank: number;
 };
@@ -90,7 +90,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
         setUploadedFile(null);
         reset({
           name: reference.name,
-          description: reference.description,
+          description: reference.description ?? undefined,
           websiteUrl: reference.websiteUrl,
           rank: reference.rank,
         });
@@ -116,7 +116,7 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
             input: {
               trustCenterId,
               name: data.name,
-              description: data.description,
+              description: data.description || null,
               websiteUrl: data.websiteUrl,
               logoFile: null,
             },
@@ -135,14 +135,14 @@ export const TrustCenterReferenceDialog = forwardRef<TrustCenterReferenceDialogR
         const input: {
           id: string;
           name: string;
-          description: string;
+          description: string | null;
           websiteUrl: string;
           rank?: number;
           logoFile?: null;
         } = {
           id: editReference.id,
           name: data.name,
-          description: data.description,
+          description: data.description || null,
           websiteUrl: data.websiteUrl,
         };
 

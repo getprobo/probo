@@ -98,8 +98,8 @@ export function CreateDocumentDialog({ trigger, connection }: Props) {
               id="content"
               variant="ghost"
               autogrow
-              placeholder={__("Add description")}
-              aria-label={__("Description")}
+              placeholder={__("Add content")}
+              aria-label={__("Content")}
               {...register("content")}
             />
           </div>

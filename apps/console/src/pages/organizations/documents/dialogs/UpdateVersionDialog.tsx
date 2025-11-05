@@ -175,8 +175,8 @@ export default function UpdateVersionDialog({
             variant="ghost"
             autogrow
             required
-            placeholder={__("Add description")}
-            aria-label={__("Description")}
+            placeholder={__("Add content")}
+            aria-label={__("Content")}
             className="p-6"
             {...register("content")}
           />

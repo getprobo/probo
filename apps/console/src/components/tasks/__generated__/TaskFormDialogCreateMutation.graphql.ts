@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<beed7398f44a7093301b72d7bceeeba1>>
+ * @generated SignedSource<<c196829e8365168f07614d741242296c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,7 @@ import { FragmentRefs } from "relay-runtime";
 export type CreateTaskInput = {
   assignedToId?: string | null | undefined;
   deadline?: any | null | undefined;
-  description: string;
+  description?: string | null | undefined;
   measureId?: string | null | undefined;
   name: string;
   organizationId: string;

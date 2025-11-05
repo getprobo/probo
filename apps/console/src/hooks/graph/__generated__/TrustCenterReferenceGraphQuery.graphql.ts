@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<85556d15b776b3e61e312057a994d482>>
+ * @generated SignedSource<<e7776b4ead5bff52ce340c208ec5bbc6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,7 +21,7 @@ export type TrustCenterReferenceGraphQuery$data = {
         readonly cursor: any;
         readonly node: {
           readonly createdAt: any;
-          readonly description: string;
+          readonly description: string | null | undefined;
           readonly id: string;
           readonly logoUrl: string;
           readonly name: string;

@@ -34,7 +34,7 @@ export type RiskKey = useRiskFormFragment$key & { id: string };
 export const riskSchema = z.object({
   category: z.string().min(1, "Category is required"),
   name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
+  description: z.string().optional().nullable(),
   ownerId: z.string().min(1, "Owner is required"),
   treatment: z.enum(["AVOIDED", "MITIGATED", "TRANSFERRED", "ACCEPTED"]),
   inherentLikelihood: z.number({ coerce: true }).min(1).max(5),
@@ -50,6 +50,7 @@ export const useRiskForm = (riskKey?: RiskKey) => {
     defaultValues: risk
       ? {
           ...risk,
+          description: risk.description ?? undefined,
           ownerId: risk.owner?.id,
         }
       : {

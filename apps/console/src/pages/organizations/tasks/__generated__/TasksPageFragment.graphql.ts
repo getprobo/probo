@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0fbb86bdf90b3ec4e0ec6ea8253eef4c>>
+ * @generated SignedSource<<8bba8d318de0f4b0d28a8fba8b8e0bdf>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,7 +21,7 @@ export type TasksPageFragment$data = {
           readonly fullName: string;
           readonly id: string;
         } | null | undefined;
-        readonly description: string;
+        readonly description: string | null | undefined;
         readonly id: string;
         readonly measure: {
           readonly id: string;

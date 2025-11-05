@@ -26,11 +26,11 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
 )
 
 type (
@@ -41,7 +41,7 @@ type (
 	CreateTrustCenterReferenceRequest struct {
 		TrustCenterID gid.GID
 		Name          string
-		Description   string
+		Description   *string
 		WebsiteURL    string
 		LogoFile      File
 	}
@@ -49,7 +49,7 @@ type (
 	UpdateTrustCenterReferenceRequest struct {
 		ID          gid.GID
 		Name        *string
-		Description *string
+		Description **string
 		WebsiteURL  *string
 		LogoFile    *File
 		Rank        *int

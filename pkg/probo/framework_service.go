@@ -25,6 +25,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
+	"go.gearno.de/x/ref"
 	"go.probo.inc/probo/packages/emails"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
@@ -32,9 +35,6 @@ import (
 	"go.probo.inc/probo/pkg/page"
 	"go.probo.inc/probo/pkg/slug"
 	"go.probo.inc/probo/pkg/soagen"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
-	"go.gearno.de/x/ref"
 )
 
 const (
@@ -51,13 +51,13 @@ type (
 	CreateFrameworkRequest struct {
 		OrganizationID gid.GID
 		Name           string
-		Description    string
+		Description    *string
 	}
 
 	UpdateFrameworkRequest struct {
 		ID          gid.GID
 		Name        *string
-		Description *string
+		Description **string
 	}
 
 	ImportFrameworkRequest struct {
@@ -487,12 +487,13 @@ func (s FrameworkService) Import(
 			controlID := gid.New(organization.ID.TenantID(), coredata.ControlEntityType)
 
 			now := time.Now()
+			description := control.Description
 			control := &coredata.Control{
 				ID:           controlID,
 				FrameworkID:  frameworkID,
 				SectionTitle: control.ID,
 				Name:         control.Name,
-				Description:  control.Description,
+				Description:  &description,
 				Status:       coredata.ControlStatusIncluded,
 				CreatedAt:    now,
 				UpdatedAt:    now,

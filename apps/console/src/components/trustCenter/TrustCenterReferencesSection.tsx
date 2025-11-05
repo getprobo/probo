@@ -30,7 +30,7 @@ type Props = {
 type Reference = {
   id: string;
   name: string;
-  description: string;
+  description?: string | null;
   websiteUrl: string;
   logoUrl: string;
   rank: number;

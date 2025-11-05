@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d6d04868c777f81982de3bffb9a7e73f>>
+ * @generated SignedSource<<1778d9b73cc75e2097e9c24fdfe83631>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type TaskFormDialogFragment$data = {
     readonly id: string;
   } | null | undefined;
   readonly deadline: any | null | undefined;
-  readonly description: string;
+  readonly description: string | null | undefined;
   readonly id: string;
   readonly measure: {
     readonly id: string;

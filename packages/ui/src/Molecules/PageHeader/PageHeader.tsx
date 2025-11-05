@@ -2,7 +2,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 
 type Props = PropsWithChildren<{
     title: ReactNode;
-    description?: string;
+    description?: string | null;
 }>;
 
 export function PageHeader({ title, description, children }: Props) {

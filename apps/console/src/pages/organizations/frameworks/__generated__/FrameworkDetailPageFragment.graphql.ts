@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c6e55821a322dceae5408ac3898cfa48>>
+ * @generated SignedSource<<daf4012a65afffdedc10e4f5c7e2bc3c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -24,7 +24,7 @@ export type FrameworkDetailPageFragment$data = {
       };
     }>;
   };
-  readonly description: string;
+  readonly description: string | null | undefined;
   readonly id: string;
   readonly name: string;
   readonly organization: {

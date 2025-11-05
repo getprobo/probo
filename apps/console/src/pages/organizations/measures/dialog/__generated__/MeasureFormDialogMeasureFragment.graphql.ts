@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ad3cb8a5e721cd1d83d80540320b8313>>
+ * @generated SignedSource<<d4866432b6b5c9e71e6e4893062c1809>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,7 @@ export type MeasureState = "IMPLEMENTED" | "IN_PROGRESS" | "NOT_APPLICABLE" | "N
 import { FragmentRefs } from "relay-runtime";
 export type MeasureFormDialogMeasureFragment$data = {
   readonly category: string;
-  readonly description: string;
+  readonly description: string | null | undefined;
   readonly id: string;
   readonly name: string;
   readonly state: MeasureState;

@@ -19,11 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/crypto/uuid"
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/crypto/uuid"
-	"go.gearno.de/kit/pg"
 )
 
 type (
@@ -34,14 +34,14 @@ type (
 	CreateMeasureRequest struct {
 		OrganizationID gid.GID
 		Name           string
-		Description    string
+		Description    *string
 		Category       string
 	}
 
 	UpdateMeasureRequest struct {
 		ID          gid.GID
 		Name        *string
-		Description *string
+		Description **string
 		Category    *string
 		State       *coredata.MeasureState
 	}
@@ -296,7 +296,7 @@ func (s MeasureService) Import(
 					ID:             measureID,
 					OrganizationID: organization.ID,
 					Name:           req.Measures[i].Name,
-					Description:    "",
+					Description:    nil,
 					Category:       req.Measures[i].Category,
 					State:          coredata.MeasureStateNotStarted,
 					ReferenceID:    req.Measures[i].ReferenceID,
@@ -313,12 +313,13 @@ func (s MeasureService) Import(
 				for j := range req.Measures[i].Tasks {
 					taskID := gid.New(organization.ID.TenantID(), coredata.TaskEntityType)
 
+					taskDescription := req.Measures[i].Tasks[j].Description
 					task := &coredata.Task{
 						ID:             taskID,
 						OrganizationID: organizationID,
 						MeasureID:      &measure.ID,
 						Name:           req.Measures[i].Tasks[j].Name,
-						Description:    req.Measures[i].Tasks[j].Description,
+						Description:    &taskDescription,
 						ReferenceID:    req.Measures[i].Tasks[j].ReferenceID,
 						State:          coredata.TaskStateTodo,
 						CreatedAt:      now,
@@ -332,13 +333,14 @@ func (s MeasureService) Import(
 					for k := range req.Measures[i].Tasks[j].RequestedEvidences {
 						evidenceID := gid.New(organizationID.TenantID(), coredata.EvidenceEntityType)
 
+						evidenceDescription := req.Measures[i].Tasks[j].RequestedEvidences[k].Name
 						evidence := &coredata.Evidence{
 							State:       coredata.EvidenceStateRequested,
 							ID:          evidenceID,
 							TaskID:      &task.ID,
 							ReferenceID: req.Measures[i].Tasks[j].RequestedEvidences[k].ReferenceID,
 							Type:        req.Measures[i].Tasks[j].RequestedEvidences[k].Type,
-							Description: req.Measures[i].Tasks[j].RequestedEvidences[k].Name,
+							Description: &evidenceDescription,
 							CreatedAt:   now,
 							UpdatedAt:   now,
 						}

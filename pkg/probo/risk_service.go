@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"time"
 
+	"go.gearno.de/kit/pg"
 	"go.probo.inc/probo/pkg/coredata"
 	"go.probo.inc/probo/pkg/gid"
 	"go.probo.inc/probo/pkg/page"
-	"go.gearno.de/kit/pg"
 )
 
 type (
@@ -33,7 +33,7 @@ type (
 	CreateRiskRequest struct {
 		OrganizationID     gid.GID
 		Name               string
-		Description        string
+		Description        *string
 		Category           string
 		Treatment          coredata.RiskTreatment
 		OwnerID            *gid.GID
@@ -47,7 +47,7 @@ type (
 	UpdateRiskRequest struct {
 		ID                 gid.GID
 		Name               *string
-		Description        *string
+		Description        **string
 		Category           *string
 		Treatment          *coredata.RiskTreatment
 		OwnerID            **gid.GID

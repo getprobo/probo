@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<66f4e8603a811d1fb363ae88ea697b22>>
+ * @generated SignedSource<<dfc4b37cf499f7cb24c0b1bd1eec3b11>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,7 @@ import { FragmentRefs } from "relay-runtime";
 export type RiskTreatment = "ACCEPTED" | "AVOIDED" | "MITIGATED" | "TRANSFERRED";
 export type CreateRiskInput = {
   category: string;
-  description: string;
+  description?: string | null | undefined;
   inherentImpact: number;
   inherentLikelihood: number;
   name: string;

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ec6bd0c6fff930b82216d940e83d8ef0>>
+ * @generated SignedSource<<9fdc712e118402371c9951169aac320a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type FrameworksPageCardFragment$data = {
-  readonly description: string;
+  readonly description: string | null | undefined;
   readonly id: string;
   readonly name: string;
   readonly " $fragmentType": "FrameworksPageCardFragment";

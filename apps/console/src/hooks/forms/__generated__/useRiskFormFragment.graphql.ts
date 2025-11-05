@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<828d1e2364b7b8c540508d9fb7104b06>>
+ * @generated SignedSource<<759f9a511cc5c589b3ac366de83adbfe>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,7 @@ export type RiskTreatment = "ACCEPTED" | "AVOIDED" | "MITIGATED" | "TRANSFERRED"
 import { FragmentRefs } from "relay-runtime";
 export type useRiskFormFragment$data = {
   readonly category: string;
-  readonly description: string;
+  readonly description: string | null | undefined;
   readonly id: string;
   readonly inherentImpact: number;
   readonly inherentLikelihood: number;
