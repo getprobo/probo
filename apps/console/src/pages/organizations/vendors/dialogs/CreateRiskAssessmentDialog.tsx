@@ -41,7 +41,7 @@ const createRiskAssessmentMutation = graphql`
 const schema = z.object({
   dataSensitivity: z.enum(["NONE", "LOW", "MEDIUM", "HIGH", "CRITICAL"]),
   businessImpact: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 /**
@@ -76,6 +76,7 @@ export function CreateRiskAssessmentDialog({
       variables: {
         input: {
           ...data,
+          notes: data.notes || null,
           vendorId,
           expiresAt: nextYear.toISOString(),
         },
