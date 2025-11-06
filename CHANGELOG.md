@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.86.0] - 2025-11-06
+
+### Added
+
+- Add field validation system
+
 ## [0.85.0] - 2025-11-04
 
 ### Changed
