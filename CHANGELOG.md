@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+## [0.86.2] - 2025-11-06
+
+### Fixed
+
+- Fix vendor url validations
+
 ## [0.86.1] - 2025-11-06
 
 ### Fixed
