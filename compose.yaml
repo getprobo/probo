@@ -104,7 +104,7 @@ services:
       - "--disable-extensions"
 
   pebble:
-    image: "letsencrypt/pebble:latest"
+    image: "ghcr.io/letsencrypt/pebble:latest"
     ports:
       - "14000:14000" # ACME server
       - "15000:15000" # Management interface
@@ -117,7 +117,7 @@ services:
       - "./compose/pebble:/test/config:ro"
 
   pebble-challtestsrv:
-    image: "letsencrypt/pebble-challtestsrv:latest"
+    image: "ghcr.io/letsencrypt/pebble-challtestsrv:latest"
     ports:
       - "8055:8055" # HTTP-01 challenge test server
       - "8053:8053" # DNS server
