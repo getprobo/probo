@@ -7,7 +7,7 @@ import {
     Description,
     Cancel,
 } from "@radix-ui/react-alert-dialog";
-import { useCallback, useState, type ComponentProps } from "react";
+import { useCallback, useState, useEffect, type ComponentProps } from "react";
 import { Button } from "../../Atoms/Button/Button";
 import { Root as Portal } from "@radix-ui/react-portal";
 import { dialog } from "./Dialog";
@@ -79,14 +79,21 @@ export function ConfirmDialog() {
         footer,
     } = dialog();
     const [loading, setLoading] = useState(false);
-    const handleConfirm = () => {
+
+    useEffect(() => {
+        if (!isOpen) {
+            setLoading(false);
+        }
+    }, [isOpen]);
+
+    const handleConfirm = useCallback(() => {
         setLoading(true);
         onConfirm()
             .finally(() => {
-                close();
                 setLoading(false);
+                close();
             });
-    };
+    }, [onConfirm, close]);
 
     return (
         <Root open={isOpen} onOpenChange={close}>

@@ -14,6 +14,7 @@ import {
     isValidElement,
     useRef,
     useState,
+    useEffect,
     type ComponentProps,
     type CSSProperties,
     type HTMLAttributes,
@@ -70,16 +71,18 @@ export function Dialog({
     const { overlay, content, header, title: titleClassname } = dialog();
     const [open, setOpen] = useState(!!defaultOpen);
 
-    if (ref) {
-        ref.current = {
-            open() {
-                setOpen(true);
-            },
-            close() {
-                setOpen(false);
-            },
-        };
-    }
+    useEffect(() => {
+        if (ref) {
+            ref.current = {
+                open() {
+                    setOpen(true);
+                },
+                close() {
+                    setOpen(false);
+                },
+            };
+        }
+    }, [ref]);
 
     const onOpenChange = (open: boolean) => {
         if (!open && !closable) {
